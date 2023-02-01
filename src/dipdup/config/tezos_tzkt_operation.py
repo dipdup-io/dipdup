@@ -240,7 +240,7 @@ class OperationIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['operation']
+    kind: Literal['tezos.tzkt.operation']
     handlers: tuple[OperationHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)
@@ -337,7 +337,7 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['operation_unfiltered']
+    kind: Literal['tezos.tzkt.operation_unfiltered']
     datasource: TzktDatasourceConfig
     callback: str
     types: tuple[OperationType, ...] = (OperationType.transaction,)

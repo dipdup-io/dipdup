@@ -23,7 +23,7 @@ contracts:
 
 templates:
   tzcolors_auction:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: <datasource>
     contracts:
       - <auction>

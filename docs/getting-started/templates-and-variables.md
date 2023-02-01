@@ -36,7 +36,7 @@ Templates allow you to reuse index configuration, e.g., for different networks (
 ```yaml
 templates:
   my_template:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: <datasource>
     contracts:
       - <contract>

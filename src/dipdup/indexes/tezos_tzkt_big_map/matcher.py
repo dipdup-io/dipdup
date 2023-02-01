@@ -3,7 +3,7 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 
-from dipdup.config.tezos_big_map import BigMapHandlerConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapHandlerConfig
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BigMapDiff
 from dipdup.utils.codegen import parse_object

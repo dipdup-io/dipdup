@@ -28,12 +28,12 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config.tezos_big_map import BigMapIndexConfig
-from dipdup.config.tezos_event import EventIndexConfig
-from dipdup.config.tezos_head import HeadIndexConfig
-from dipdup.config.tezos_operation import OperationIndexConfig
-from dipdup.config.tezos_operation import OperationUnfilteredIndexConfig
-from dipdup.config.tezos_token_transfer import TokenTransferIndexConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_event import EventIndexConfig
+from dipdup.config.tezos_tzkt_head import HeadIndexConfig
+from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operation import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfer import TokenTransferIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
@@ -299,11 +299,11 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.big_map.index import BigMapIndex
-        from dipdup.indexes.event.index import EventIndex
-        from dipdup.indexes.head.index import HeadIndex
-        from dipdup.indexes.operation.index import OperationIndex
-        from dipdup.indexes.token_transfer.index import TokenTransferIndex
+        from dipdup.indexes.tezos_tzkt_big_map.index import BigMapIndex
+        from dipdup.indexes.tezos_tzkt_event.index import EventIndex
+        from dipdup.indexes.tezos_tzkt_head.index import HeadIndex
+        from dipdup.indexes.tezos_tzkt_operation.index import OperationIndex
+        from dipdup.indexes.tezos_tzkt_token_transfer.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex

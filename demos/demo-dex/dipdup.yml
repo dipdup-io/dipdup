@@ -29,7 +29,7 @@ advanced:
 
 templates:
   quipuswap_fa12:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt_mainnet
     contracts:
       - <dex_contract>
@@ -92,7 +92,7 @@ templates:
             optional: True
 
   quipuswap_fa2:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt_mainnet
     contracts:
       - <dex_contract>

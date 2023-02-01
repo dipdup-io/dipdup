@@ -11,7 +11,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHTTPConfig
-from dipdup.config.tezos_operation import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operation import OperationIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.enums import OperationType
 from dipdup.exceptions import ConfigurationError

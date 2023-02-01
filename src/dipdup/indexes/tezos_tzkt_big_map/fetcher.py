@@ -4,8 +4,8 @@ import logging
 from typing import AsyncGenerator
 from typing import Iterable
 
-from dipdup.config.tezos_big_map import BigMapHandlerConfig
-from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapHandlerConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level

@@ -18,7 +18,7 @@ Each operation handler contains two required fields:
 ```yaml
 indexes:
   my_index:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - some_contract
@@ -79,7 +79,7 @@ DipDup will try to guess the list of used contracts by handlers' signatures. If 
 ```yaml
 indexes:
   my_index:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - foo
@@ -93,7 +93,7 @@ By default, DipDup processes only transactions, but you can enable other operati
 ```yaml
 indexes:
   my_index:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     types:
       - transaction

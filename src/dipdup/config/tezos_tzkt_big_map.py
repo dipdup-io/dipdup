@@ -101,7 +101,7 @@ class BigMapIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['big_map']
+    kind: Literal['tezos.tzkt.big_map']
     datasource: TzktDatasourceConfig
     handlers: tuple[BigMapHandlerConfig, ...]
 

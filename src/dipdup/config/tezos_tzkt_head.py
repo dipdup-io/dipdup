@@ -36,7 +36,7 @@ class HeadIndexConfig(IndexConfig):
     :param handlers: Mapping of head block handlers
     """
 
-    kind: Literal['head']
+    kind: Literal['tezos.tzkt.head']
     datasource: TzktDatasourceConfig
     handlers: tuple[HeadHandlerConfig, ...]
 

@@ -10,7 +10,7 @@ from typing import cast
 
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config.tezos_head import HeadIndexConfig
+from dipdup.config.tezos_tzkt_head import HeadIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
 from dipdup.datasources import IndexDatasource

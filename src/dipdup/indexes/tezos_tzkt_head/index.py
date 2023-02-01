@@ -1,5 +1,5 @@
-from dipdup.config.tezos_head import HeadHandlerConfig
-from dipdup.config.tezos_head import HeadIndexConfig
+from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
+from dipdup.config.tezos_tzkt_head import HeadIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType

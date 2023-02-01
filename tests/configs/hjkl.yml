@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   hjkl:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - hjkl

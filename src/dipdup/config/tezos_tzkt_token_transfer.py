@@ -50,7 +50,7 @@ class TokenTransferIndexConfig(IndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['token_transfer']
+    kind: Literal['tezos.tzkt.token_transfer']
     datasource: TzktDatasourceConfig
     handlers: tuple[TokenTransferHandlerConfig, ...] = Field(default_factory=tuple)
 

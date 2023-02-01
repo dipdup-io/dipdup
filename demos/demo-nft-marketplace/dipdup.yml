@@ -20,7 +20,7 @@ contracts:
 
 indexes:
   hen_mainnet:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt_mainnet
     contracts:
       - HEN_minter

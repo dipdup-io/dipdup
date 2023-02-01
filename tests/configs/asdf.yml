@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   asdf:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - asdf

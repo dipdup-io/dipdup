@@ -2,8 +2,8 @@ from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
-from dipdup.config.tezos_big_map import BigMapHandlerConfig
-from dipdup.config.tezos_big_map import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapHandlerConfig
+from dipdup.config.tezos_tzkt_big_map import BigMapIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.enums import MessageType
 from dipdup.enums import SkipHistory
@@ -12,9 +12,9 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import extract_level
-from dipdup.indexes.big_map.fetcher import BigMapFetcher
-from dipdup.indexes.big_map.fetcher import get_big_map_pairs
-from dipdup.indexes.big_map.matcher import match_big_maps
+from dipdup.indexes.tezos_tzkt_big_map.fetcher import BigMapFetcher
+from dipdup.indexes.tezos_tzkt_big_map.fetcher import get_big_map_pairs
+from dipdup.indexes.tezos_tzkt_big_map.matcher import match_big_maps
 from dipdup.models.tzkt import BigMapAction
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BigMapDiff

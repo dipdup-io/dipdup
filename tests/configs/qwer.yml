@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   qwer:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - qwer

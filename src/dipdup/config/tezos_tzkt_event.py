@@ -97,7 +97,7 @@ class EventIndexConfig(IndexConfig):
     :param last_level: Last block level to index
     """
 
-    kind: Literal['event']
+    kind: Literal['tezos.tzkt.event']
     datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
 

@@ -16,7 +16,7 @@ contracts:
 
 indexes:
   events:
-    kind: event
+    kind: tezos.tzkt.event
     datasource: tzkt
     handlers:
       - callback: on_move_event

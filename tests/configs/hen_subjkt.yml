@@ -15,7 +15,7 @@ datasources:
 
 indexes:
   hen_subjkt:
-    kind: operation
+    kind: tezos.tzkt.operation
     datasource: tzkt
     contracts:
       - hen_subjkt

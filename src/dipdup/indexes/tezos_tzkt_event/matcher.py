@@ -6,9 +6,9 @@ from typing import Any
 from typing import Iterable
 from typing import Union
 
-from dipdup.config.tezos_event import EventHandlerConfig
-from dipdup.config.tezos_event import EventHandlerConfigU
-from dipdup.config.tezos_event import UnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_event import EventHandlerConfig
+from dipdup.config.tezos_tzkt_event import EventHandlerConfigU
+from dipdup.config.tezos_tzkt_event import UnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tzkt import Event

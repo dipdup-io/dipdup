@@ -7,7 +7,7 @@ Big maps are lazy structures allowing to access and update only exact keys. Gas 
 ```yaml
 indexes:
   token_big_map_index:
-    kind: big_map
+    kind: tezos.tzkt.big_map
     datasource: tzkt
     skip_history: never
     handlers:

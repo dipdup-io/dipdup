@@ -40,12 +40,12 @@ from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
-from dipdup.indexes.big_map.index import BigMapIndex
-from dipdup.indexes.event.index import EventIndex
-from dipdup.indexes.head.index import HeadIndex
-from dipdup.indexes.operation.index import OperationIndex
-from dipdup.indexes.operation.index import extract_operation_subgroups
-from dipdup.indexes.token_transfer.index import TokenTransferIndex
+from dipdup.indexes.tezos_tzkt_big_map.index import BigMapIndex
+from dipdup.indexes.tezos_tzkt_event.index import EventIndex
+from dipdup.indexes.tezos_tzkt_head.index import HeadIndex
+from dipdup.indexes.tezos_tzkt_operation.index import OperationIndex
+from dipdup.indexes.tezos_tzkt_operation.index import extract_operation_subgroups
+from dipdup.indexes.tezos_tzkt_token_transfer.index import TokenTransferIndex
 from dipdup.models import Contract
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
