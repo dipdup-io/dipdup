@@ -17,7 +17,7 @@ from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tzkt import OperationData
-from dipdup.utils.codegen import parse_object
+from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)
 

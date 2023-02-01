@@ -20,9 +20,14 @@ from typing import TypeVar
 from typing import Union
 
 from humps import main as humps
+from pydantic import BaseModel
+from pydantic import ValidationError
 
 from dipdup.exceptions import FrameworkException
+from dipdup.exceptions import InvalidDataError
 from dipdup.exceptions import ProjectImportError
+
+ObjectT = TypeVar('ObjectT', bound=BaseModel)
 
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
@@ -144,3 +149,11 @@ def import_from(module: str, obj: str) -> Any:
         return getattr(importlib.import_module(module), obj)
     except (ImportError, AttributeError) as e:
         raise ProjectImportError(module, obj) from e
+
+
+def parse_object(type_: type[ObjectT], data: Any) -> ObjectT:
+    try:
+        return type_.parse_obj(data)
+    except ValidationError as e:
+        msg = f'Failed to parse: {e.errors()}'
+        raise InvalidDataError(msg, type_, data) from e

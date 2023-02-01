@@ -34,6 +34,10 @@ from dipdup.config.tezos_tzkt_head import HeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
+from dipdup.database import execute_sql
+from dipdup.database import execute_sql_query
+from dipdup.database import get_connection
+from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
@@ -58,10 +62,6 @@ from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import execute_sql
-from dipdup.utils.database import execute_sql_query
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 

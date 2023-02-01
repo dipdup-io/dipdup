@@ -36,7 +36,7 @@ from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_path = Path(__file__).parent.parent / 'sql' / 'truncate_schema.sql'
+_truncate_schema_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
 HEAD_STATUS_TIMEOUT = 3 * 60
@@ -204,7 +204,7 @@ async def generate_schema(
         await Tortoise.generate_schemas()
 
         # NOTE: Create a view for monitoring head status
-        sql_path = Path(__file__).parent.parent / 'sql' / 'dipdup_head_status.sql'
+        sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
         # TODO: Configurable interval
         await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
     else:

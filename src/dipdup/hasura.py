@@ -20,6 +20,8 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHTTPConfig
+from dipdup.database import get_connection
+from dipdup.database import iter_models
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import HasuraError
@@ -28,8 +30,6 @@ from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import iter_models
 
 # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
 vulnerable_versions = {

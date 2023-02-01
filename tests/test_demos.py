@@ -13,10 +13,10 @@ from typing import Callable
 
 import pytest
 
+from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tzkt import OperationType
 from dipdup.utils import import_submodules
-from dipdup.utils.database import tortoise_wrapper
 from tests import CONFIGS_PATH
 from tests import SRC_PATH
 

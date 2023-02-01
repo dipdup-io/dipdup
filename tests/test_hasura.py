@@ -14,13 +14,13 @@ from tortoise import Tortoise
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.database import tortoise_wrapper
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.project import BaseProject
-from dipdup.utils.database import tortoise_wrapper
 
 project_defaults = BaseProject().get_defaults()
 

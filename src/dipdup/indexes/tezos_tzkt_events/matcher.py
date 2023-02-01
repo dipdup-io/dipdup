@@ -14,7 +14,7 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models.tzkt import Event
 from dipdup.models.tzkt import EventData
 from dipdup.models.tzkt import UnknownEvent
-from dipdup.utils.codegen import parse_object
+from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 

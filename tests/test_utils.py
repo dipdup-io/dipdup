@@ -2,13 +2,13 @@ from contextlib import suppress
 
 from tortoise import Tortoise
 
+from dipdup.database import iter_models
+from dipdup.database import tortoise_wrapper
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.database import iter_models
-from dipdup.utils.database import tortoise_wrapper
 
 
 class SomeException(Exception):

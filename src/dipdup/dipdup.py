@@ -28,6 +28,10 @@ from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
+from dipdup.database import generate_schema
+from dipdup.database import get_connection
+from dipdup.database import get_schema_hash
+from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
@@ -58,10 +62,6 @@ from dipdup.models.tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
-from dipdup.utils.database import generate_schema
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import get_schema_hash
-from dipdup.utils.database import tortoise_wrapper
 
 
 class IndexDispatcher:

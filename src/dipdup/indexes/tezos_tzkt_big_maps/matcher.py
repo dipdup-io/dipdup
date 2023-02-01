@@ -6,7 +6,7 @@ from typing import Iterable
 from dipdup.config.tezos_tzkt_big_maps import BigMapHandlerConfig
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BigMapDiff
-from dipdup.utils.codegen import parse_object
+from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 

@@ -14,7 +14,9 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Union
 from typing import cast
 
 import orjson as json
@@ -46,15 +48,53 @@ from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.codegen import load_template
-from dipdup.utils.codegen import touch
-from dipdup.utils.codegen import write
 
 KEEP_MARKER = '.keep'
 PYTHON_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
+
+
+if TYPE_CHECKING:
+    from jinja2 import Template
+
+_logger = logging.getLogger('dipdup.codegen')
+
+
+def touch(path: Path) -> None:
+    """Create empty file, ignore if already exists"""
+    if not path.parent.exists():
+        _logger.info('Creating directory `%s`', path.parent)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not path.is_file():
+        _logger.info('Creating file `%s`', path)
+        path.touch()
+
+
+def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bool:
+    """Write content to file, create directory tree if necessary"""
+    if not path.parent.exists():
+        _logger.info('Creating directory `%s`', path.parent)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+    if path.exists() and not overwrite:
+        return False
+
+    _logger.info('Writing into file `%s`', path)
+    if isinstance(content, str):
+        content = content.encode()
+    path.write_bytes(content)
+    return True
+
+
+def load_template(*path: str) -> 'Template':
+    """Load template from path relative to dipdup package"""
+    from jinja2 import Template
+
+    full_path = Path(__file__).parent.joinpath(*path)
+    return Template(full_path.read_text())
 
 
 def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:

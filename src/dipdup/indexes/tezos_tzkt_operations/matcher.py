@@ -16,7 +16,7 @@ from dipdup.models.tzkt import OperationData
 from dipdup.models.tzkt import OperationType
 from dipdup.models.tzkt import Origination
 from dipdup.models.tzkt import Transaction
-from dipdup.utils.codegen import parse_object
+from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 
