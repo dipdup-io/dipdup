@@ -5,8 +5,8 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.models import IndexStatus
-from dipdup.models import MessageType
 from dipdup.models.tzkt import HeadBlockData
+from dipdup.models.tzkt import MessageType
 
 HeadQueueItem = HeadBlockData
 

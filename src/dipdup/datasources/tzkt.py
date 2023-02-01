@@ -30,13 +30,13 @@ from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.models import MessageType
 from dipdup.models.tzkt import BigMapAction
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BlockData
 from dipdup.models.tzkt import EventData
 from dipdup.models.tzkt import HeadBlockData
 from dipdup.models.tzkt import HeadSubscription
+from dipdup.models.tzkt import MessageType
 from dipdup.models.tzkt import OperationData
 from dipdup.models.tzkt import QuoteData
 from dipdup.models.tzkt import TokenStandard

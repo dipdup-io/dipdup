@@ -92,16 +92,6 @@ class ReindexingAction(Enum):
     ignore = 'ignore'
 
 
-class MessageType(Enum):
-    """Enum for realtime message types"""
-
-    operation = 'operation'
-    big_map = 'big_map'
-    head = 'head'
-    token_transfer = 'token_transfer'
-    event = 'event'
-
-
 class SkipHistory(Enum):
     """Whether to skip indexing operation history and use only current state"""
 

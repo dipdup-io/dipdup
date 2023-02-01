@@ -11,9 +11,9 @@ from dipdup.index import Index
 from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
-from dipdup.models import MessageType
 from dipdup.models.tzkt import Event
 from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import MessageType
 from dipdup.models.tzkt import UnknownEvent
 from dipdup.prometheus import Metrics
 

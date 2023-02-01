@@ -13,11 +13,11 @@ from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
-from dipdup.models import MessageType
 from dipdup.models import SkipHistory
 from dipdup.models.tzkt import BigMapAction
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BigMapDiff
+from dipdup.models.tzkt import MessageType
 from dipdup.prometheus import Metrics
 
 BigMapQueueItem = tuple[BigMapData, ...]

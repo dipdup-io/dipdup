@@ -9,7 +9,7 @@ from dipdup.index import Index
 from dipdup.index import extract_level
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
-from dipdup.models import MessageType
+from dipdup.models.tzkt import MessageType
 from dipdup.models.tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 

@@ -16,9 +16,9 @@ from dipdup.context import rolled_back_indexes
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
-from dipdup.models import MessageType
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import EventData
+from dipdup.models.tzkt import MessageType
 from dipdup.models.tzkt import OperationData
 from dipdup.models.tzkt import Origination
 from dipdup.models.tzkt import TokenTransferData

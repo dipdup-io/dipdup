@@ -51,12 +51,12 @@ from dipdup.models import Contract
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
-from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import EventData
 from dipdup.models.tzkt import HeadBlockData
+from dipdup.models.tzkt import MessageType
 from dipdup.models.tzkt import OperationData
 from dipdup.models.tzkt import TokenTransferData
 from dipdup.prometheus import Metrics

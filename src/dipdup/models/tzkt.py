@@ -41,6 +41,16 @@ class OperationType(Enum):
     migration = 'migration'
 
 
+class MessageType(Enum):
+    """Enum for realtime message types"""
+
+    operation = 'operation'
+    big_map = 'big_map'
+    head = 'head'
+    token_transfer = 'token_transfer'
+    event = 'event'
+
+
 @dataclass(frozen=True)
 class HeadSubscription(Subscription):
     type: Literal['head'] = 'head'
