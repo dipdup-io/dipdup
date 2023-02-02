@@ -17,9 +17,9 @@ from tortoise import fields
 from dipdup import env
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import ResolvedHTTPConfig
+from dipdup.config import ResolvedHttpConfig
 from dipdup.database import get_connection
 from dipdup.database import iter_models
 from dipdup.exceptions import ConfigurationError
@@ -99,7 +99,7 @@ class Field:
 
 
 class HasuraGateway(HTTPGateway):
-    _default_http_config = HTTPConfig(
+    _default_http_config = HttpConfig(
         # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
         retry_sleep=1,
@@ -112,11 +112,11 @@ class HasuraGateway(HTTPGateway):
         package: str,
         hasura_config: HasuraConfig,
         database_config: PostgresDatabaseConfig,
-        http_config: HTTPConfig | None = None,
+        http_config: HttpConfig | None = None,
     ) -> None:
         super().__init__(
             hasura_config.url,
-            ResolvedHTTPConfig.create(self._default_http_config, http_config),
+            ResolvedHttpConfig.create(self._default_http_config, http_config),
         )
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package

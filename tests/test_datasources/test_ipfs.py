@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from dipdup.config import DEFAULT_IPFS_URL
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.datasources.ipfs import IpfsDatasource
 
 
 async def test_ipfs_datasource() -> None:
     ipfs = IpfsDatasource(
         url=DEFAULT_IPFS_URL,
-        http_config=HTTPConfig(
+        http_config=HttpConfig(
             replay_path=str(Path(__file__).parent.parent / 'replays'),
         ),
     )

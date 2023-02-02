@@ -5,7 +5,7 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.datasources import Datasource
 from dipdup.models.coinbase import CandleData
 from dipdup.models.coinbase import CandleInterval
@@ -15,14 +15,14 @@ API_URL = 'https://api.pro.coinbase.com'
 
 
 class CoinbaseDatasource(Datasource):
-    _default_http_config = HTTPConfig(
+    _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
         ratelimit_rate=10,
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str = API_URL, http_config: HTTPConfig | None = None) -> None:
+    def __init__(self, url: str = API_URL, http_config: HttpConfig | None = None) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.coinbase')
 

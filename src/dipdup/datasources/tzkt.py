@@ -25,7 +25,7 @@ from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
 from dipdup import baking_bad
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
@@ -189,7 +189,7 @@ class SignalRDatasource(IndexDatasource, ABC):
 
 
 class TzktDatasource(SignalRDatasource):
-    _default_http_config = HTTPConfig(
+    _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
         retry_count=10,
@@ -202,7 +202,7 @@ class TzktDatasource(SignalRDatasource):
     def __init__(
         self,
         url: str,
-        http_config: HTTPConfig | None = None,
+        http_config: HttpConfig | None = None,
         merge_subscriptions: bool = False,
         buffer_size: int = 0,
     ) -> None:

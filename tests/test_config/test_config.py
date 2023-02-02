@@ -8,9 +8,9 @@ from pydantic import ValidationError
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import ResolvedHTTPConfig
+from dipdup.config import ResolvedHttpConfig
 from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
@@ -100,17 +100,17 @@ async def test_secrets() -> None:
 
 
 async def test_http_config() -> None:
-    config = ResolvedHTTPConfig.create(
-        HTTPConfig(
+    config = ResolvedHttpConfig.create(
+        HttpConfig(
             retry_count=10,
             retry_sleep=10,
         ),
-        HTTPConfig(
+        HttpConfig(
             retry_count=20,
             replay_path='replays',
         ),
     )
-    assert config == ResolvedHTTPConfig(
+    assert config == ResolvedHttpConfig(
         retry_count=20,
         retry_sleep=10,
         retry_multiplier=1.0,

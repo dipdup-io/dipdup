@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 
 
 @dataclass
@@ -19,7 +19,7 @@ class SubsquidDatasourceConfig(DatasourceConfig):
     kind: Literal['subsquid']
     archive_url: str
     node_url: str | None = None
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.archive_url + (self.node_url or ''))

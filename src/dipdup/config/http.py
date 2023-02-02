@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 
 
 @dataclass
@@ -17,7 +17,7 @@ class HttpDatasourceConfig(DatasourceConfig):
 
     kind: Literal['http']
     url: str
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)

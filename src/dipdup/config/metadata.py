@@ -4,7 +4,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup import baking_bad
 from dipdup.config import DatasourceConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.models.metadata import MetadataNetwork
 
 
@@ -21,7 +21,7 @@ class MetadataDatasourceConfig(DatasourceConfig):
     kind: Literal['metadata']
     network: MetadataNetwork
     url: str = baking_bad.METADATA_API_URL
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url + self.network.value)

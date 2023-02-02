@@ -6,7 +6,7 @@ from pydantic.dataclasses import dataclass
 from dipdup import baking_bad
 from dipdup.config import DEFAULT_TZKT_URL
 from dipdup.config import DatasourceConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.exceptions import ConfigurationError
 
 
@@ -22,7 +22,7 @@ class TzktDatasourceConfig(DatasourceConfig):
 
     kind: Literal['tzkt']
     url: str = DEFAULT_TZKT_URL  # type: ignore
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
     buffer_size: int = 0
 
     def __hash__(self) -> int:

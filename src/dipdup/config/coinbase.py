@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 
 
 @dataclass
@@ -23,7 +23,7 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
     secret_key: str | None = field(default=None, repr=False)
     passphrase: str | None = field(default=None, repr=False)
 
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
 
     def __hash__(self) -> int:
         return hash(self.kind)

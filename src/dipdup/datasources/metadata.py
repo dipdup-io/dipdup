@@ -2,13 +2,13 @@ import logging
 from typing import Any
 from typing import cast
 
-from dipdup.config import HTTPConfig
+from dipdup.config import HttpConfig
 from dipdup.datasources import GraphQLDatasource
 from dipdup.models.metadata import MetadataNetwork
 
 
 class MetadataDatasource(GraphQLDatasource):
-    _default_http_config = HTTPConfig(
+    _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
         retry_count=10,
@@ -16,7 +16,7 @@ class MetadataDatasource(GraphQLDatasource):
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str, network: MetadataNetwork, http_config: HTTPConfig | None = None) -> None:
+    def __init__(self, url: str, network: MetadataNetwork, http_config: HttpConfig | None = None) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.metadata')
         self._network = network

@@ -165,7 +165,7 @@ class PostgresDatabaseConfig:
 
 
 @dataclass
-class HTTPConfig:
+class HttpConfig:
     """Advanced configuration of HTTP client
 
     :param retry_count: Number of retries after request failed before giving up
@@ -193,7 +193,7 @@ class HTTPConfig:
 
 
 @dataclass
-class ResolvedHTTPConfig:
+class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
     retry_count: int = sys.maxsize
@@ -210,9 +210,9 @@ class ResolvedHTTPConfig:
     @classmethod
     def create(
         cls,
-        default: HTTPConfig,
-        user: HTTPConfig | None,
-    ) -> 'ResolvedHTTPConfig':
+        default: HttpConfig,
+        user: HttpConfig | None,
+    ) -> 'ResolvedHttpConfig':
         config = cls()
         # NOTE: Apply datasource defaults first
         for merge_config in (default, user):
@@ -271,7 +271,7 @@ class ContractConfig(NameMixin):
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str
-    http: HTTPConfig | None
+    http: HttpConfig | None
 
     # TODO: Pick refactoring from `ref/config-module`
     @abstractmethod
@@ -551,7 +551,7 @@ class HasuraConfig:
     allow_inconsistent_metadata: bool = False
     camel_case: bool = False
     rest: bool = True
-    http: HTTPConfig | None = None
+    http: HttpConfig | None = None
 
     @validator('url', allow_reuse=True)
     def _valid_url(cls, v: str) -> str:

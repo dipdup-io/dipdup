@@ -804,7 +804,7 @@ This release contains no changes except for the version number.
 - index: Fixed `CallbackError` raised instead of `ReindexingRequiredError` in some cases.
 - tzkt: Fixed resubscribing when realtime connectivity is lost for a long time.
 - tzkt: Fixed sending useless subscription requests when adding indexes in runtime.
-- tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
+- tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HttpConfig.batch_size` field.
 - tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
 
 ## Changed

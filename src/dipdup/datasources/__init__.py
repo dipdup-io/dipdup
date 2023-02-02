@@ -6,8 +6,8 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 
-from dipdup.config import HTTPConfig
-from dipdup.config import ResolvedHTTPConfig
+from dipdup.config import HttpConfig
+from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
 from dipdup.models.tzkt import BigMapData
@@ -34,8 +34,8 @@ RollbackCallbackT = Callable[['IndexDatasource', MessageType, int, int], Awaitab
 
 
 class Datasource(HTTPGateway):
-    def __init__(self, url: str, http_config: HTTPConfig | None = None) -> None:
-        config = ResolvedHTTPConfig.create(self._default_http_config, http_config)
+    def __init__(self, url: str, http_config: HttpConfig | None = None) -> None:
+        config = ResolvedHttpConfig.create(self._default_http_config, http_config)
         super().__init__(url, config)
         self._logger = _logger
 
@@ -53,7 +53,7 @@ class GraphQLDatasource(Datasource):
 
 
 class IndexDatasource(Datasource):
-    def __init__(self, url: str, http_config: HTTPConfig | None = None, merge_subscriptions: bool = False) -> None:
+    def __init__(self, url: str, http_config: HttpConfig | None = None, merge_subscriptions: bool = False) -> None:
         super().__init__(url, http_config)
         self._on_connected_callbacks: Set[EmptyCallbackT] = set()
         self._on_disconnected_callbacks: Set[EmptyCallbackT] = set()

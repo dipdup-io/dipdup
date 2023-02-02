@@ -10,7 +10,7 @@
 .. autoclass:: dipdup.config.HeadHandlerConfig
 .. autoclass:: dipdup.config.HeadIndexConfig
 .. autoclass:: dipdup.config.HookConfig
-.. autoclass:: dipdup.config.HTTPConfig
+.. autoclass:: dipdup.config.HttpConfig
 .. autoclass:: dipdup.config.HttpDatasourceConfig
 .. autoclass:: dipdup.config.IndexTemplateConfig
 .. autoclass:: dipdup.config.IpfsDatasourceConfig
