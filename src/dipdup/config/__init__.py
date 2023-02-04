@@ -67,7 +67,7 @@ DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
-ADDRESS_PREFIXES = (
+TEZOS_ADDRESS_PREFIXES = (
     'KT1',
     # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
     # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
@@ -76,6 +76,10 @@ ADDRESS_PREFIXES = (
     'tz2',
     'tz3',
 )
+TEZOS_ADDRESS_LENGTH = 36
+ETH_ADDRESS_PREFIXES = ('0x',)
+ETH_ADDRESS_LENGTH = 42
+
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -259,8 +263,15 @@ class ContractConfig(NameMixin):
         if not v or '$' in v:
             return v
 
-        if not v.startswith(ADDRESS_PREFIXES) or len(v) != 36:
-            raise ConfigurationError(f'`{v}` is not a valid contract address')
+        if v.startswith(TEZOS_ADDRESS_PREFIXES):
+            if len(v) != TEZOS_ADDRESS_LENGTH:
+                raise ConfigurationError(f'`{v}` is not a valid Tezos address')
+        elif v.startswith(ETH_ADDRESS_PREFIXES):
+            if len(v) != ETH_ADDRESS_LENGTH:
+                raise ConfigurationError(f'`{v}` is not a valid Ethereum address')
+        else:
+            raise ConfigurationError(f'`{v}` is not a valid address')
+
         return v
 
     def get_address(self) -> str:
@@ -1125,6 +1136,7 @@ from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.metadata import MetadataDatasourceConfig
+from dipdup.config.subsquid import SubsquidDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import BigMapIndexConfig
 from dipdup.config.tezos_tzkt_events import EventIndexConfig
 from dipdup.config.tezos_tzkt_head import HeadIndexConfig
@@ -1142,6 +1154,7 @@ DatasourceConfigU = (
     | MetadataDatasourceConfig
     | IpfsDatasourceConfig
     | HttpDatasourceConfig
+    | SubsquidDatasourceConfig
 )
 ResolvedIndexConfigU = (
     OperationIndexConfig

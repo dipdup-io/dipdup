@@ -122,3 +122,7 @@ async def test_http_config() -> None:
         batch_size=1000,
         replay_path='replays',
     )
+
+
+async def test_evm() -> None:
+    DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'evm_subsquid.yml'])

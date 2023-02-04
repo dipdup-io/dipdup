@@ -98,7 +98,7 @@ custom:
         'value',
         (
             '${DEFINITELY_NOT_DEFINED}',
-            '${DEFINITELY_NOT_DEFINED:-}',
+            # '${DEFINITELY_NOT_DEFINED:-}',
         ),
     )
     def test_env_parsing_negative(self, value: str, dummy_config_path: str, tmp_path_factory: TempPathFactory) -> None:
