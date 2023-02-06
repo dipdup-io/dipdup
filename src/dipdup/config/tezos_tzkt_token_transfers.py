@@ -9,7 +9,7 @@ from pydantic.fields import Field
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktDatasourceConfig, TzktIndexConfig
 
 
 @dataclass
@@ -39,7 +39,7 @@ class TezosTzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktTokenTransfersIndexConfig(IndexConfig):
+class TezosTzktTokenTransfersIndexConfig(TzktIndexConfig):
     """Token transfer index config
 
     :param kind: always `token_transfer`

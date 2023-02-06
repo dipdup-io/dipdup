@@ -8,7 +8,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
+from dipdup.config.tzkt import TzktIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.models import SkipHistory
@@ -90,7 +90,7 @@ class TezosTzktBigMapsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktBigMapsIndexConfig(IndexConfig):
+class TezosTzktBigMapsIndexConfig(TzktIndexConfig):
     """Big map index config
 
     :param kind: always `big_map`

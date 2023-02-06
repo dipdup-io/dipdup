@@ -15,6 +15,7 @@ from dipdup.config import IndexConfig
 from dipdup.config import ParameterTypeMixin
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
+from dipdup.config import TzktIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -228,7 +229,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
 
 
 @dataclass
-class TezosTzktOperationsIndexConfig(IndexConfig):
+class TezosTzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation`
@@ -241,7 +242,7 @@ class TezosTzktOperationsIndexConfig(IndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations']
-    handlers: tuple[OperationHandlerConfig, ...]
+    handlers: tuple[TezosTzktOperationHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)
 
@@ -279,7 +280,7 @@ OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | Oper
 
 
 @dataclass
-class OperationHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktOperationHandlerConfig(HandlerConfig, kind='handler'):
     """Operation handler config
 
     :param callback: Callback name
@@ -325,7 +326,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktOperationsUnfilteredIndexConfig(IndexConfig):
+class TezosTzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
@@ -353,6 +354,6 @@ class TezosTzktOperationsUnfilteredIndexConfig(IndexConfig):
         self.handler_config.initialize_callback_fn(package)
 
 
-OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
+TezosTzktOperationHandlerConfigU = TezosTzktOperationHandlerConfig | OperationUnfilteredHandlerConfig
 TezosTzktOperationsIndexConfigU = TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig
 HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig

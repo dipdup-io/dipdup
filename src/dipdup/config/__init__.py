@@ -501,19 +501,13 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     """
 
     kind: str
-    datasource: TzktDatasourceConfig
+    datasource: DatasourceConfig
 
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
         SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
-
-    @property
-    def datasource_config(self) -> TzktDatasourceConfig:
-        if not isinstance(self.datasource, TzktDatasourceConfig):
-            raise ConfigInitializationException
-        return self.datasource
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -535,6 +529,7 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     @abstractmethod
     def import_objects(self, package: str) -> None:
         ...
+
 
 
 @dataclass
@@ -1133,6 +1128,8 @@ class DipDupConfig:
 
 
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.metadata import MetadataDatasourceConfig
@@ -1157,7 +1154,9 @@ DatasourceConfigU = (
     | SubsquidDatasourceConfig
 )
 ResolvedIndexConfigU = (
-    TezosTzktOperationsIndexConfig
+    EvmSubsquidEventsIndexConfig
+    | EvmSubsquidOperationsIndexConfig
+    | TezosTzktOperationsIndexConfig
     | TezosTzktBigMapsIndexConfig
     | TezosTzktHeadIndexConfig
     | TezosTzktTokenTransfersIndexConfig

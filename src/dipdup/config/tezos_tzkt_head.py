@@ -7,7 +7,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktDatasourceConfig, TzktIndexConfig
 
 
 @dataclass
@@ -28,7 +28,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktHeadIndexConfig(IndexConfig):
+class TezosTzktHeadIndexConfig(TzktIndexConfig):
     """Head block index config
 
     :param kind: always `head`

@@ -5,8 +5,8 @@ from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerConfigU
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
@@ -32,11 +32,11 @@ class OperationSubgroup:
 
 
 OperationHandlerArgumentU = Transaction | Origination | OperationData | None
-MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfigU, deque[OperationHandlerArgumentU]]
+MatchedOperationsT = tuple[OperationSubgroup, TezosTzktOperationHandlerConfigU, deque[OperationHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
-    handler_config: OperationHandlerConfig,
+    handler_config: TezosTzktOperationHandlerConfig,
     matched_operations: deque[OperationData | None],
 ) -> deque[OperationHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
@@ -141,7 +141,7 @@ def match_operation_unfiltered_subgroup(
 
 
 def match_operation_subgroup(
-    handlers: Iterable[OperationHandlerConfig],
+    handlers: Iterable[TezosTzktOperationHandlerConfig],
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
     """Try to match operation subgroup with all index handlers."""

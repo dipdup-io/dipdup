@@ -4,7 +4,7 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
@@ -46,7 +46,7 @@ async def test_get_origination_filters(
     index_config: TezosTzktOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
-        OperationHandlerConfig(
+        TezosTzktOperationHandlerConfig(
             'address_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -60,7 +60,7 @@ async def test_get_origination_filters(
     assert not hashes
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TezosTzktOperationHandlerConfig(
             'hash_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -74,7 +74,7 @@ async def test_get_origination_filters(
     assert hashes == {-1585533315}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TezosTzktOperationHandlerConfig(
             'hash_address_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -88,7 +88,7 @@ async def test_get_origination_filters(
     assert hashes == {-680664524}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TezosTzktOperationHandlerConfig(
             'address_source',
             (
                 OperationHandlerOriginationPatternConfig(

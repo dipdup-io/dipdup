@@ -3,10 +3,8 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 from typing import Generic
-from typing import Hashable
 from typing import Literal
 from typing import Optional
-from typing import Type
 from typing import TypeVar
 
 from pydantic import BaseModel
@@ -21,11 +19,6 @@ StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 EventType = TypeVar('EventType', bound=BaseModel)
-
-
-IntrospectionError = (KeyError, IndexError, AttributeError)
-
-T = TypeVar('T', Hashable, Type[BaseModel])
 
 
 class TokenStandard(Enum):

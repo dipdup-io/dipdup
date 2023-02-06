@@ -19,7 +19,7 @@
    :members:
    :undoc-members:
 .. autoclass:: dipdup.config.MetadataDatasourceConfig
-.. autoclass:: dipdup.config.OperationHandlerConfig
+.. autoclass:: dipdup.config.TezosTzktOperationHandlerConfig
 .. autoclass:: dipdup.config.OperationHandlerOriginationPatternConfig
 .. autoclass:: dipdup.config.OperationHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.TezosTzktOperationsIndexConfig

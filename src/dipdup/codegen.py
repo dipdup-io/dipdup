@@ -257,14 +257,14 @@ class CodeGenerator:
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
                     operation_pattern_config,
-                    index_config.datasource_config,
+                    index_config.datasource,
                 )
 
     async def _fetch_big_map_index_schema(self, index_config: TezosTzktBigMapsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract
 
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
+            contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
@@ -291,7 +291,7 @@ class CodeGenerator:
 
             contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
-                index_config.datasource_config,
+                index_config.datasource,
                 contract_config,
             )
             contract_schemas_path = self._pkg.schemas / contract_config.module_name

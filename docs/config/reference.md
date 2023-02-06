@@ -336,7 +336,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operation'</em><em>]</em>) – always <cite>operation</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_operation.OperationHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_operation.TezosTzktOperationHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
 <li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>

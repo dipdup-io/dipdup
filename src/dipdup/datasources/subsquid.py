@@ -1,6 +1,6 @@
-from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 
 
-class SubsquidDatasource(Datasource):
+class SubsquidDatasource(IndexDatasource):
     async def run(self) -> None:
         pass
