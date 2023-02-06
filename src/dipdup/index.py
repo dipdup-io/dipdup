@@ -1,4 +1,3 @@
-import logging
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
@@ -17,34 +16,12 @@ from dipdup.datasources.datasource import IndexDatasource
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.exceptions import FrameworkException
-from dipdup.models import BigMapData
-from dipdup.models import EventData
-from dipdup.models import OperationData
-from dipdup.models import Origination
-from dipdup.models import TokenTransferData
-from dipdup.models import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
-
-_logger = logging.getLogger(__name__)
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
-
-OperationHandlerArgumentU = Transaction | Origination | OperationData | None
-
-
-# TODO: Not used in some indexes
-def extract_level(
-    message: tuple[OperationData | BigMapData | TokenTransferData | EventData, ...],
-) -> int:
-    """Safely extract level from raw messages batch"""
-    # TODO: Skip conditionally
-    batch_levels = {(i.level, i.__class__) for i in message}
-    if len(batch_levels) != 1:
-        raise FrameworkException(f'Items in data batch have different levels: {batch_levels}')
-    return batch_levels.pop()[0]
 
 
 class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):

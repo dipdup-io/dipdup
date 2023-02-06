@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: New index kind `operation_unfiltered`.
 -->
 
+## [Unreleased]
+
+### Fixed
+
+- config: Allow using empty string as default env (`{DEFAULT_EMPTY:-}`).
+- codegen: Fixed bug leading to incorrect imports in generated callbacks in some cases.
+- codegen: Fixed validation of created package after `dipdup init`.
+
 ## [6.5.0] - 2023-01-28
 
 ### Added
