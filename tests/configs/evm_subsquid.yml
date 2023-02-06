@@ -26,7 +26,7 @@ indexes:
           - contract: token
             name: Transfer
   uniswap_events:
-    kind: subsquid_evm_events  # tezos.tzkt.events
+    kind: evm.subsquid.events  # tezos.tzkt.events
     datasource: subsquid_eth_mainnet
     handlers:
       - callback: on_new_trade

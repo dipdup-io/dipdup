@@ -10,6 +10,8 @@ from dipdup.models.tzkt import TokenTransferData
 
 
 class TokenTransferFetcher(DataFetcher[TokenTransferData]):
+    _datasource: TzktDatasource
+
     def __init__(
         self,
         datasource: TzktDatasource,

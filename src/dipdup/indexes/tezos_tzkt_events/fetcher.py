@@ -12,9 +12,11 @@ from dipdup.models.tzkt import EventData
 class EventFetcher(DataFetcher[EventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
 
+    _datasource: TzktDatasource
+
     def __init__(
         self,
-        datasource: 'TzktDatasource',
+        datasource: TzktDatasource,
         first_level: int,
         last_level: int,
         event_addresses: set[str],

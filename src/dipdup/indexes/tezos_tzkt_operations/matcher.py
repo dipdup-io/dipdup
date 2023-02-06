@@ -5,10 +5,10 @@ from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage

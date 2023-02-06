@@ -10,7 +10,7 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources import IndexDatasource
 
 
 class HasLevel(Protocol):
@@ -20,6 +20,7 @@ class HasLevel(Protocol):
 Level = int
 FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)
 FetcherFilterT = TypeVar('FetcherFilterT')
+IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 
 
 async def yield_by_level(
@@ -54,7 +55,7 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
         filter: set[FetcherFilterT],
         first_level: int,
         last_level: int,
-        datasource: 'TzktDatasource',
+        datasource: IndexDatasource,
     ) -> None:
         super().__init__()
         self._buffer = buffer
@@ -83,7 +84,7 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
 class DataFetcher(ABC, Generic[FetcherBufferT]):
     def __init__(
         self,
-        datasource: 'TzktDatasource',
+        datasource: IndexDatasource,
         first_level: int,
         last_level: int,
     ) -> None:

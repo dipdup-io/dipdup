@@ -11,12 +11,11 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import CodegenMixin
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
 from dipdup.config import ParameterTypeMixin
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
-from dipdup.config import TzktIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tzkt import OperationType
@@ -242,6 +241,7 @@ class TezosTzktOperationsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations']
+    datasource: TzktDatasourceConfig
     handlers: tuple[TezosTzktOperationHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)

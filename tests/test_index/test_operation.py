@@ -4,8 +4,8 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters

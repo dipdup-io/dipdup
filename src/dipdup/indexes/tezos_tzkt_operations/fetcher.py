@@ -135,6 +135,8 @@ async def get_origination_filters(
 
 
 class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
+    _datasource: TzktDatasource
+
     async def fetch(self) -> None:
         if not self._filter:
             self._head = self._last_level
@@ -156,6 +158,8 @@ class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 
 class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
+    _datasource: TzktDatasource
+
     async def fetch(self) -> None:
         if not self._filter:
             self._head = self._last_level
@@ -180,6 +184,8 @@ class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
 
 
 class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
+    _datasource: TzktDatasource
+
     async def fetch(self) -> None:
         if self._filter:
             raise FrameworkException("Migration origination fetcher channel doesn't support filters")
@@ -206,6 +212,8 @@ class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
 
 
 class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
+    _datasource: TzktDatasource
+
     def __init__(
         self,
         buffer: defaultdict[int, deque[OperationData]],
@@ -245,6 +253,8 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 
 class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
+    _datasource: TzktDatasource
+
     def __init__(
         self,
         buffer: defaultdict[int, deque[OperationData]],
@@ -283,6 +293,8 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
 
 
 class OperationUnfilteredFetcherChannel(FetcherChannel[OperationData, None]):
+    _datasource: TzktDatasource
+
     def __init__(
         self,
         buffer: defaultdict[int, deque[OperationData]],

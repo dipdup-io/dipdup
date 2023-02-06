@@ -531,7 +531,6 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         ...
 
 
-
 @dataclass
 class HasuraConfig:
     """Config for the Hasura integration.
@@ -1187,6 +1186,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
                 # NOTE: All annotations are strings now
                 reload = False
                 for name, annotation in value.__annotations__.items():
+                    annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
                     if new_annotation := replace_table.get(annotation):
                         value.__annotations__[name] = new_annotation
                         reload = True
@@ -1201,6 +1201,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
 
 yaml_annotations = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
+    'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',

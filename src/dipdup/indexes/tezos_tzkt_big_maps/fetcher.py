@@ -44,9 +44,11 @@ def get_big_map_pairs(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[
 class BigMapFetcher(DataFetcher[BigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 
+    _datasource: TzktDatasource
+
     def __init__(
         self,
-        datasource: 'TzktDatasource',
+        datasource: TzktDatasource,
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],

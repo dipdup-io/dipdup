@@ -8,8 +8,8 @@ from pydantic.fields import Field
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig, TzktIndexConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktIndexConfig
 
 
 @dataclass

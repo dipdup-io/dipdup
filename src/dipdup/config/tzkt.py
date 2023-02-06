@@ -4,9 +4,10 @@ from urllib.parse import urlparse
 from pydantic.dataclasses import dataclass
 
 from dipdup import baking_bad
-from dipdup.config import DEFAULT_TZKT_URL, IndexConfig
+from dipdup.config import DEFAULT_TZKT_URL
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
+from dipdup.config import IndexConfig
 from dipdup.exceptions import ConfigurationError
 
 
@@ -42,7 +43,6 @@ class TzktDatasourceConfig(DatasourceConfig):
             return
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
-
 
 
 @dataclass

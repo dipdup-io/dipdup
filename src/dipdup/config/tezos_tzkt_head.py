@@ -6,8 +6,8 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig, TzktIndexConfig
+from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktIndexConfig
 
 
 @dataclass

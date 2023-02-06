@@ -6,10 +6,10 @@ from typing import Iterable
 from typing import Iterator
 from typing import Sequence
 
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig

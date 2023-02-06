@@ -8,8 +8,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.tzkt import TzktIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
+from dipdup.config.tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.models import SkipHistory
 from dipdup.utils import import_from
