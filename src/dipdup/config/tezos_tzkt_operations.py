@@ -228,7 +228,7 @@ class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, 
 
 
 @dataclass
-class OperationIndexConfig(IndexConfig):
+class TezosTzktOperationsIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation`
@@ -325,7 +325,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OperationUnfilteredIndexConfig(IndexConfig):
+class TezosTzktOperationsUnfilteredIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
@@ -354,5 +354,5 @@ class OperationUnfilteredIndexConfig(IndexConfig):
 
 
 OperationHandlerConfigU = OperationHandlerConfig | OperationUnfilteredHandlerConfig
-OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
+TezosTzktOperationsIndexConfigU = TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig
 HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig

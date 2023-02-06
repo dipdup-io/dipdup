@@ -1,9 +1,9 @@
 from contextlib import ExitStack
 from typing import Any
 
-from dipdup.config.tezos_tzkt_events import EventHandlerConfig
-from dipdup.config.tezos_tzkt_events import EventHandlerConfigU
-from dipdup.config.tezos_tzkt_events import EventIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -19,8 +19,8 @@ from dipdup.prometheus import Metrics
 EventQueueItem = tuple[EventData, ...]
 
 
-class EventIndex(
-    Index[EventIndexConfig, EventQueueItem, TzktDatasource],
+class TezosTzktEventsIndex(
+    Index[TezosTzktEventsIndexConfig, EventQueueItem, TzktDatasource],
     message_type=MessageType.event,
 ):
     def push_events(self, events: EventQueueItem) -> None:
@@ -102,9 +102,9 @@ class EventIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: EventHandlerConfigU, event: Event[Any] | UnknownEvent
+        self, handler_config: TezosTzktEventsHandlerConfigU, event: Event[Any] | UnknownEvent
     ) -> None:
-        if isinstance(handler_config, EventHandlerConfig) != isinstance(event, Event):
+        if isinstance(handler_config, TezosTzktEventsHandlerConfig) != isinstance(event, Event):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
 
         if not handler_config.parent:
@@ -129,6 +129,6 @@ class EventIndex(
         """Get tags to fetch events during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            if isinstance(handler_config, EventHandlerConfig):
+            if isinstance(handler_config, TezosTzktEventsHandlerConfig):
                 paths.add(handler_config.tag)
         return paths

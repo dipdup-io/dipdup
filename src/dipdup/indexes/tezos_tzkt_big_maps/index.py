@@ -2,8 +2,8 @@ from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
-from dipdup.config.tezos_tzkt_big_maps import BigMapHandlerConfig
-from dipdup.config.tezos_tzkt_big_maps import BigMapIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -22,8 +22,8 @@ from dipdup.prometheus import Metrics
 BigMapQueueItem = tuple[BigMapData, ...]
 
 
-class BigMapIndex(
-    Index[BigMapIndexConfig, BigMapQueueItem, TzktDatasource],
+class TezosTzktBigMapsIndex(
+    Index[TezosTzktBigMapsIndexConfig, BigMapQueueItem, TzktDatasource],
     message_type=MessageType.big_map,
 ):
     def push_big_maps(self, big_maps: BigMapQueueItem) -> None:
@@ -149,7 +149,7 @@ class BigMapIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: BigMapHandlerConfig, big_map_diff: BigMapDiff[Any, Any]
+        self, handler_config: TezosTzktBigMapsHandlerConfig, big_map_diff: BigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

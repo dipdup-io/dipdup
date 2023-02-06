@@ -13,7 +13,7 @@ from dipdup.config.tzkt import TzktDatasourceConfig
 
 
 @dataclass
-class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
     """Token transfer handler config
 
     :param callback: Callback name
@@ -39,7 +39,7 @@ class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TokenTransferIndexConfig(IndexConfig):
+class TezosTzktTokenTransfersIndexConfig(IndexConfig):
     """Token transfer index config
 
     :param kind: always `token_transfer`
@@ -52,7 +52,7 @@ class TokenTransferIndexConfig(IndexConfig):
 
     kind: Literal['tezos.tzkt.token_transfers']
     datasource: TzktDatasourceConfig
-    handlers: tuple[TokenTransferHandlerConfig, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosTzktTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

@@ -11,7 +11,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tzkt import OperationType
@@ -32,7 +32,7 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
 async def test_load_initialize() -> None:
     config = create_config()
     index_config = config.indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
 
     assert isinstance(config, DipDupConfig)
     destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
@@ -43,22 +43,22 @@ async def test_load_initialize() -> None:
 
 async def test_operation_subscriptions() -> None:
     index_config = create_config(False, False).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
     assert index_config.subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')}
 
     index_config = create_config(True, False).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
     assert index_config.subscriptions == {TransactionSubscription()}
 
     index_config = create_config(False, True).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
     assert index_config.subscriptions == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         OriginationSubscription(),
     }
 
     index_config = create_config(True, True).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
     assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription()}
 
 

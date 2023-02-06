@@ -6,7 +6,7 @@ import pytest
 from dipdup.config import DipDupConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
@@ -21,15 +21,15 @@ async def tzkt() -> AsyncIterator[TzktDatasource]:
 
 
 @pytest.fixture
-def index_config() -> OperationIndexConfig:
+def index_config() -> TezosTzktOperationsIndexConfig:
     config = DipDupConfig.load([CONFIGS_PATH / 'operation_filters.yml'], True)
     config.initialize(skip_imports=True)
-    return cast(OperationIndexConfig, config.indexes['test'])
+    return cast(TezosTzktOperationsIndexConfig, config.indexes['test'])
 
 
 async def test_ignored_type_filter(
     tzkt: TzktDatasource,
-    index_config: OperationIndexConfig,
+    index_config: TezosTzktOperationsIndexConfig,
 ) -> None:
     index_config.types = ()
     addresses, hashes = await get_origination_filters(index_config, tzkt)
@@ -43,7 +43,7 @@ async def test_ignored_type_filter(
 
 async def test_get_origination_filters(
     tzkt: TzktDatasource,
-    index_config: OperationIndexConfig,
+    index_config: TezosTzktOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
         OperationHandlerConfig(
@@ -102,7 +102,7 @@ async def test_get_origination_filters(
     assert hashes == set()
 
 
-# async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: OperationIndexConfig) -> None:
+# async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: TezosTzktOperationsIndexConfig) -> None:
 #     index_config.types = (OperationType.transaction,)
 #     addresses, hashes = await get_transaction_filters(index_config, tzkt)
 #     assert filters == ({'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}, {-680664524, -1585533315})

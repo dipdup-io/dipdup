@@ -18,7 +18,7 @@ from dipdup.utils import snake_to_pascal
 
 
 @dataclass
-class BigMapHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktBigMapsHandlerConfig(HandlerConfig, kind='handler'):
     """Big map handler config
 
     :param callback: Callback name
@@ -90,7 +90,7 @@ class BigMapHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class BigMapIndexConfig(IndexConfig):
+class TezosTzktBigMapsIndexConfig(IndexConfig):
     """Big map index config
 
     :param kind: always `big_map`
@@ -103,7 +103,7 @@ class BigMapIndexConfig(IndexConfig):
 
     kind: Literal['tezos.tzkt.big_maps']
     datasource: TzktDatasourceConfig
-    handlers: tuple[BigMapHandlerConfig, ...]
+    handlers: tuple[TezosTzktBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
 

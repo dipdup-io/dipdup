@@ -28,7 +28,7 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class HeadIndexConfig(IndexConfig):
+class TezosTzktHeadIndexConfig(IndexConfig):
     """Head block index config
 
     :param kind: always `head`

@@ -1,7 +1,7 @@
 from contextlib import ExitStack
 
-from dipdup.config.tezos_tzkt_token_transfers import TokenTransferHandlerConfig
-from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersHandlerConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -16,7 +16,7 @@ TokenTransferQueueItem = tuple[TokenTransferData, ...]
 
 
 class TokenTransferIndex(
-    Index[TokenTransferIndexConfig, TokenTransferQueueItem, TzktDatasource],
+    Index[TezosTzktTokenTransfersIndexConfig, TokenTransferQueueItem, TzktDatasource],
     message_type=MessageType.token_transfer,
 ):
     def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:
@@ -96,7 +96,7 @@ class TokenTransferIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData
+        self, handler_config: TezosTzktTokenTransfersHandlerConfig, token_transfer: TokenTransferData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

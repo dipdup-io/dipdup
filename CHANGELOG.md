@@ -383,7 +383,7 @@ This release contains no changes except for the version number.
 
 ### Fixed
 
-- config: Fixed `OperationIndexConfig.types` field being partially ignored.
+- config: Fixed `TezosTzktOperationsIndexConfig.types` field being partially ignored.
 - index: Allow mixing oneshot and regular indexes in a single config.
 - index: Call rollback hook instead of triggering reindex when single-level rollback has failed.
 - index: Fixed crash with `RuntimeError` after continuous realtime connection loss.
@@ -850,7 +850,7 @@ This release contains no changes except for the version number.
 
 ### Added
 
-- New index class `HeadIndex` (configuration: [`dipdup.config.HeadIndexConfig`](https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/config.py#L778)). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
+- New index class `HeadIndex` (configuration: [`dipdup.config.TezosTzktHeadIndexConfig`](https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/config.py#L778)). Use this index type to handle head (limited block header content) updates. This index type is realtime-only: historical data won't be indexed during the synchronization stage.
 - Added three new commands: `schema approve`, `schema wipe`, and `schema export`. Run `dipdup schema --help` command for details.
 
 ### Changed
@@ -863,7 +863,7 @@ This release contains no changes except for the version number.
 
 - Fixed `ReindexRequiredError` not being raised when running DipDup after reindexing was triggered.
 - Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.
-- Fixed issue in `BigMapIndex` causing the partial loss of big map diffs.
+- Fixed issue in `TezosTzktBigMapsIndex` causing the partial loss of big map diffs.
 - Fixed printing help for CLI commands.
 - Fixed merging storage which contains specific nested structures.
 

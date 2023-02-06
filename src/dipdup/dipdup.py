@@ -41,10 +41,10 @@ from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
-from dipdup.indexes.tezos_tzkt_big_maps.index import BigMapIndex
-from dipdup.indexes.tezos_tzkt_events.index import EventIndex
+from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
+from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import HeadIndex
-from dipdup.indexes.tezos_tzkt_operations.index import OperationIndex
+from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
 from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_tzkt_token_transfers.index import TokenTransferIndex
 from dipdup.models import Contract
@@ -88,7 +88,7 @@ class IndexDispatcher:
         on_synchronized_fired = False
 
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex):
+            if isinstance(index, TezosTzktOperationsIndex):
                 await self._apply_filters(index)
 
         while True:
@@ -117,7 +117,7 @@ class IndexDispatcher:
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
-                if isinstance(index, OperationIndex):
+                if isinstance(index, TezosTzktOperationsIndex):
                     await self._apply_filters(index)
 
             if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.ONESHOT)):
@@ -155,7 +155,7 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
-    async def _apply_filters(self, index: OperationIndex) -> None:
+    async def _apply_filters(self, index: TezosTzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
@@ -282,7 +282,7 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktOperationsIndex) and index.datasource == datasource:
                 index.push_operations(operation_subgroups)
 
     async def _on_token_transfers(
@@ -294,12 +294,12 @@ class IndexDispatcher:
 
     async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[BigMapData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, BigMapIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktBigMapsIndex) and index.datasource == datasource:
                 index.push_big_maps(big_maps)
 
     async def _on_events(self, datasource: IndexDatasource, events: tuple[EventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, EventIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
     async def _on_rollback(

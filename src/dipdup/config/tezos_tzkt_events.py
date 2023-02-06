@@ -18,7 +18,7 @@ from dipdup.utils import snake_to_pascal
 
 
 @dataclass
-class EventHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
     """Event handler config
 
     :param callback: Callback name
@@ -64,7 +64,7 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+class UnknownTezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -83,11 +83,11 @@ class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
         yield 'event', 'UnknownEvent'
 
 
-EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
+TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | UnknownTezosTzktEventsHandlerConfig
 
 
 @dataclass
-class EventIndexConfig(IndexConfig):
+class TezosTzktEventsIndexConfig(IndexConfig):
     """Event index config
 
     :param kind: Index kind
@@ -99,7 +99,7 @@ class EventIndexConfig(IndexConfig):
 
     kind: Literal['tezos.tzkt.events']
     datasource: TzktDatasourceConfig
-    handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
+    handlers: tuple[TezosTzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

@@ -30,7 +30,7 @@ class EventFetcher(DataFetcher[EventData]):
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
         """Iterate over events fetched fetched from REST.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by EventIndex.
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosTzktEventsIndex.
         """
         event_iter = self._datasource.iter_events(
             self._event_addresses,

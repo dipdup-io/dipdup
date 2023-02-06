@@ -8,8 +8,8 @@ from typing import AsyncIterator
 
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
@@ -39,7 +39,7 @@ def get_operations_head(operations: tuple[OperationData, ...]) -> int:
 
 
 async def get_transaction_filters(
-    config: OperationIndexConfig,
+    config: TezosTzktOperationsIndexConfig,
     datasource: TzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch transactions from during initial synchronization"""
@@ -91,7 +91,7 @@ async def get_transaction_filters(
 
 
 async def get_origination_filters(
-    config: OperationIndexConfig,
+    config: TezosTzktOperationsIndexConfig,
     datasource: TzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch origination from during initial synchronization"""
@@ -352,7 +352,7 @@ class OperationFetcher(DataFetcher[OperationData]):
     @classmethod
     async def create(
         cls,
-        config: OperationIndexConfig,
+        config: TezosTzktOperationsIndexConfig,
         datasource: TzktDatasource,
         first_level: int,
         last_level: int,
@@ -374,7 +374,7 @@ class OperationFetcher(DataFetcher[OperationData]):
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosTzktOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,
@@ -452,7 +452,7 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
     @classmethod
     async def create(
         cls,
-        config: OperationUnfilteredIndexConfig,
+        config: TezosTzktOperationsUnfilteredIndexConfig,
         datasource: TzktDatasource,
         first_level: int,
         last_level: int,
@@ -469,7 +469,7 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[OperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by OperationIndex.
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosTzktOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,

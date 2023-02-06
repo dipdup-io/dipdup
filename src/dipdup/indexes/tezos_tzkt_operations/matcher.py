@@ -9,7 +9,7 @@ from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tzkt import OperationData
@@ -128,7 +128,7 @@ def match_origination(
 
 
 def match_operation_unfiltered_subgroup(
-    index: OperationUnfilteredIndexConfig,
+    index: TezosTzktOperationsUnfilteredIndexConfig,
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
     matched_handlers: deque[MatchedOperationsT] = deque()

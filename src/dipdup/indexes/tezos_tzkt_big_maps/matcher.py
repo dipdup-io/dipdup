@@ -3,18 +3,18 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 
-from dipdup.config.tezos_tzkt_big_maps import BigMapHandlerConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
 from dipdup.models.tzkt import BigMapData
 from dipdup.models.tzkt import BigMapDiff
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedBigMapsT = tuple[BigMapHandlerConfig, BigMapDiff[Any, Any]]
+MatchedBigMapsT = tuple[TezosTzktBigMapsHandlerConfig, BigMapDiff[Any, Any]]
 
 
 def prepare_big_map_handler_args(
-    handler_config: BigMapHandlerConfig,
+    handler_config: TezosTzktBigMapsHandlerConfig,
     matched_big_map: BigMapData,
 ) -> BigMapDiff[Any, Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
@@ -41,7 +41,7 @@ def prepare_big_map_handler_args(
 
 
 def match_big_map(
-    handler_config: BigMapHandlerConfig,
+    handler_config: TezosTzktBigMapsHandlerConfig,
     big_map: BigMapData,
 ) -> bool:
     """Match single big map diff with pattern"""
@@ -53,7 +53,7 @@ def match_big_map(
 
 
 def match_big_maps(
-    handlers: Iterable[BigMapHandlerConfig],
+    handlers: Iterable[TezosTzktBigMapsHandlerConfig],
     big_maps: Iterable[BigMapData],
 ) -> deque[MatchedBigMapsT]:
     """Try to match big map diffs with all index handlers."""

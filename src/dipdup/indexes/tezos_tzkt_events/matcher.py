@@ -6,9 +6,9 @@ from typing import Any
 from typing import Iterable
 from typing import Union
 
-from dipdup.config.tezos_tzkt_events import EventHandlerConfig
-from dipdup.config.tezos_tzkt_events import EventHandlerConfigU
-from dipdup.config.tezos_tzkt_events import UnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_tzkt_events import UnknownTezosTzktEventsHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tzkt import Event
@@ -20,19 +20,19 @@ _logger = logging.getLogger('dipdup.matcher')
 
 
 MatchedEventsT = Union[
-    tuple[EventHandlerConfig, Event[Any]],
-    tuple[UnknownEventHandlerConfig, UnknownEvent],
+    tuple[TezosTzktEventsHandlerConfig, Event[Any]],
+    tuple[UnknownTezosTzktEventsHandlerConfig, UnknownEvent],
 ]
 
 
 def prepare_event_handler_args(
-    handler_config: EventHandlerConfigU,
+    handler_config: TezosTzktEventsHandlerConfigU,
     matched_event: EventData,
 ) -> Event[Any] | UnknownEvent | None:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
-    if isinstance(handler_config, UnknownEventHandlerConfig):
+    if isinstance(handler_config, UnknownTezosTzktEventsHandlerConfig):
         return UnknownEvent(
             data=matched_event,
             payload=matched_event.payload,
@@ -49,9 +49,9 @@ def prepare_event_handler_args(
     return None
 
 
-def match_event(handler_config: EventHandlerConfigU, event: EventData) -> bool:
+def match_event(handler_config: TezosTzktEventsHandlerConfigU, event: EventData) -> bool:
     """Match single contract event with pattern"""
-    if isinstance(handler_config, EventHandlerConfig) and handler_config.tag != event.tag:
+    if isinstance(handler_config, TezosTzktEventsHandlerConfig) and handler_config.tag != event.tag:
         return False
     if handler_config.contract.address != event.contract_address:
         return False
@@ -59,7 +59,7 @@ def match_event(handler_config: EventHandlerConfigU, event: EventData) -> bool:
 
 
 def match_events(
-    handlers: Iterable[EventHandlerConfigU],
+    handlers: Iterable[TezosTzktEventsHandlerConfigU],
     events: Iterable[EventData],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
@@ -73,9 +73,9 @@ def match_events(
                 continue
 
             arg = prepare_event_handler_args(handler_config, event)
-            if isinstance(arg, Event) and isinstance(handler_config, EventHandlerConfig):
+            if isinstance(arg, Event) and isinstance(handler_config, TezosTzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
-            elif isinstance(arg, UnknownEvent) and isinstance(handler_config, UnknownEventHandlerConfig):
+            elif isinstance(arg, UnknownEvent) and isinstance(handler_config, UnknownTezosTzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif arg is None:
                 continue

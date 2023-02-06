@@ -10,9 +10,9 @@ from dipdup.config.tezos_tzkt_operations import OperationHandlerConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfigU
-from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -149,14 +149,14 @@ def extract_operation_subgroups(
         )
 
 
-class OperationIndex(
-    Index[OperationIndexConfigU, OperationQueueItem, TzktDatasource],
+class TezosTzktOperationsIndex(
+    Index[TezosTzktOperationsIndexConfigU, OperationQueueItem, TzktDatasource],
     message_type=MessageType.operation,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
-        config: OperationIndexConfigU,
+        config: TezosTzktOperationsIndexConfigU,
         datasource: TzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
@@ -168,7 +168,7 @@ class OperationIndex(
         self.push_realtime_message(operation_subgroups)
 
     async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
-        if isinstance(self._config, OperationUnfilteredIndexConfig):
+        if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
             return set(), set(), set()
 
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
@@ -223,14 +223,14 @@ class OperationIndex(
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
 
         fetcher: OperationFetcher | OperationUnfilteredFetcher
-        if isinstance(self._config, OperationIndexConfig):
+        if isinstance(self._config, TezosTzktOperationsIndexConfig):
             fetcher = await OperationFetcher.create(
                 self._config,
                 self._datasource,
                 first_level,
                 sync_level,
             )
-        elif isinstance(self._config, OperationUnfilteredIndexConfig):
+        elif isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
             fetcher = await OperationUnfilteredFetcher.create(
                 self._config,
                 self._datasource,
@@ -275,7 +275,7 @@ class OperationIndex(
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            if isinstance(self._config, OperationUnfilteredIndexConfig):
+            if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
                     self._config,
                     operation_subgroup,

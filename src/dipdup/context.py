@@ -28,12 +28,12 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config.tezos_tzkt_big_maps import BigMapIndexConfig
-from dipdup.config.tezos_tzkt_events import EventIndexConfig
-from dipdup.config.tezos_tzkt_head import HeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TokenTransferIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.database import execute_sql
 from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
@@ -299,35 +299,35 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.tezos_tzkt_big_maps.index import BigMapIndex
-        from dipdup.indexes.tezos_tzkt_events.index import EventIndex
+        from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
+        from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import HeadIndex
-        from dipdup.indexes.tezos_tzkt_operations.index import OperationIndex
+        from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TokenTransferIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
+        index: TezosTzktOperationsIndex | TezosTzktBigMapsIndex | HeadIndex | TokenTransferIndex | TezosTzktEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
-        if isinstance(index_config, (OperationIndexConfig, OperationUnfilteredIndexConfig)):
-            index = OperationIndex(self, index_config, datasource)
-        elif isinstance(index_config, BigMapIndexConfig):
-            index = BigMapIndex(self, index_config, datasource)
-        elif isinstance(index_config, HeadIndexConfig):
+        if isinstance(index_config, (TezosTzktOperationsIndexConfig, TezosTzktOperationsUnfilteredIndexConfig)):
+            index = TezosTzktOperationsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
+            index = TezosTzktBigMapsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktHeadIndexConfig):
             index = HeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TokenTransferIndexConfig):
+        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
             index = TokenTransferIndex(self, index_config, datasource)
-        elif isinstance(index_config, EventIndexConfig):
-            index = EventIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktEventsIndexConfig):
+            index = TezosTzktEventsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
         await datasource.add_index(index_config)
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, OperationUnfilteredIndexConfig)
+            if isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
