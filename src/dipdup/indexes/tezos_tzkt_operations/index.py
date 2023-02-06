@@ -6,10 +6,10 @@ from typing import Iterable
 from typing import Iterator
 from typing import Sequence
 
-from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
@@ -21,7 +21,7 @@ from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationFetcher
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationUnfilteredFetcher
 from dipdup.indexes.tezos_tzkt_operations.matcher import MatchedOperationsT
-from dipdup.indexes.tezos_tzkt_operations.matcher import OperationHandlerArgumentU
+from dipdup.indexes.tezos_tzkt_operations.matcher import OperationsHandlerArgumentU
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
@@ -34,7 +34,7 @@ _logger = logging.getLogger('dipdup.matcher')
 OperationQueueItem = tuple[OperationSubgroup, ...]
 
 
-def entrypoint_filter(handlers: tuple[TezosTzktOperationHandlerConfig, ...]) -> set[str | None]:
+def entrypoint_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[str | None]:
     """Set of entrypoints to filter operations with before an actual matching"""
     entrypoints = set()
     for handler_config in handlers:
@@ -46,7 +46,7 @@ def entrypoint_filter(handlers: tuple[TezosTzktOperationHandlerConfig, ...]) -> 
     return entrypoints
 
 
-def address_filter(handlers: tuple[TezosTzktOperationHandlerConfig, ...]) -> set[str]:
+def address_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[str]:
     """Set of addresses (any field) to filter operations with before an actual matching"""
     addresses = set()
     for handler_config in handlers:
@@ -70,7 +70,7 @@ def address_filter(handlers: tuple[TezosTzktOperationHandlerConfig, ...]) -> set
     return addresses
 
 
-def code_hash_filter(handlers: tuple[TezosTzktOperationHandlerConfig, ...]) -> set[int | str]:
+def code_hash_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[int | str]:
     """Set of code hashes to filter operations with before an actual matching"""
     code_hashes = set()
     for handler_config in handlers:
@@ -309,9 +309,9 @@ class TezosTzktOperationsIndex(
 
     async def _call_matched_handler(
         self,
-        handler_config: TezosTzktOperationHandlerConfigU,
+        handler_config: TezosTzktOperationsHandlerConfigU,
         operation_subgroup: OperationSubgroup,
-        args: Sequence[OperationHandlerArgumentU],
+        args: Sequence[OperationsHandlerArgumentU],
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

@@ -8,7 +8,7 @@ from typing import Union
 
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import UnknownTezosTzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tzkt import Event
@@ -21,7 +21,7 @@ _logger = logging.getLogger('dipdup.matcher')
 
 MatchedEventsT = Union[
     tuple[TezosTzktEventsHandlerConfig, Event[Any]],
-    tuple[UnknownTezosTzktEventsHandlerConfig, UnknownEvent],
+    tuple[TezosTzktEventsUnknownEventHandlerConfig, UnknownEvent],
 ]
 
 
@@ -32,7 +32,7 @@ def prepare_event_handler_args(
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
-    if isinstance(handler_config, UnknownTezosTzktEventsHandlerConfig):
+    if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
         return UnknownEvent(
             data=matched_event,
             payload=matched_event.payload,
@@ -75,7 +75,7 @@ def match_events(
             arg = prepare_event_handler_args(handler_config, event)
             if isinstance(arg, Event) and isinstance(handler_config, TezosTzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
-            elif isinstance(arg, UnknownEvent) and isinstance(handler_config, UnknownTezosTzktEventsHandlerConfig):
+            elif isinstance(arg, UnknownEvent) and isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif arg is None:
                 continue

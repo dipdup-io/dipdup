@@ -227,7 +227,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>reason</strong> (<em>str</em><em> | </em><a class="reference internal" href="config-reference.html#dipdup.enums.ReindexingReason" title="dipdup.enums.ReindexingReason"><em>ReindexingReason</em></a><em> | </em><em>None</em>) – Reason for reindexing in free-form string</p></li>
+<li><p><strong>reason</strong> (<em>str</em><em> | </em><a class="reference internal" href="config-reference.html#dipdup.models.ReindexingReason" title="dipdup.models.ReindexingReason"><em>ReindexingReason</em></a><em> | </em><em>None</em>) – Reason for reindexing in free-form string</p></li>
 <li><p><strong>context</strong> (<em>Any</em>) – Additional information to include in exception message</p></li>
 </ul>
 </dd>

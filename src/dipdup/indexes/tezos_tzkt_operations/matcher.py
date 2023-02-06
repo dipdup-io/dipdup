@@ -5,10 +5,10 @@ from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationHandlerConfigU
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
@@ -31,16 +31,16 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationHandlerArgumentU = Transaction | Origination | OperationData | None
-MatchedOperationsT = tuple[OperationSubgroup, TezosTzktOperationHandlerConfigU, deque[OperationHandlerArgumentU]]
+OperationsHandlerArgumentU = Transaction | Origination | OperationData | None
+MatchedOperationsT = tuple[OperationSubgroup, TezosTzktOperationsHandlerConfigU, deque[OperationsHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
-    handler_config: TezosTzktOperationHandlerConfig,
+    handler_config: TezosTzktOperationsHandlerConfig,
     matched_operations: deque[OperationData | None],
-) -> deque[OperationHandlerArgumentU]:
+) -> deque[OperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
-    args: deque[OperationHandlerArgumentU] = deque()
+    args: deque[OperationsHandlerArgumentU] = deque()
     for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
         if operation_data is None:
             args.append(None)
@@ -141,7 +141,7 @@ def match_operation_unfiltered_subgroup(
 
 
 def match_operation_subgroup(
-    handlers: Iterable[TezosTzktOperationHandlerConfig],
+    handlers: Iterable[TezosTzktOperationsHandlerConfig],
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
     """Try to match operation subgroup with all index handlers."""

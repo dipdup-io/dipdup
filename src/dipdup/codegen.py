@@ -30,11 +30,11 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_events import UnknownTezosTzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
 from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerPatternConfigU as PatternConfigU
-from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
@@ -286,7 +286,7 @@ class CodeGenerator:
 
     async def _fetch_event_index_schema(self, index_config: TezosTzktEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, UnknownTezosTzktEventsHandlerConfig):
+            if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
                 continue
 
             contract_config = handler_config.contract

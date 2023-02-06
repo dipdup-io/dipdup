@@ -1060,13 +1060,13 @@ class DipDupConfig:
                     # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
                     pattern_config._subgroup_index = idx
 
-                    if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                    if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_contract(pattern_config.source)
 
-                    elif isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
+                    elif isinstance(pattern_config, OperationsHandlerOriginationPatternConfig):
                         # TODO: Remove in 7.0
                         if pattern_config.similar_to:
                             raise FrameworkException('originated_contract` alias, should be replaced in __init__')
@@ -1136,8 +1136,8 @@ from dipdup.config.subsquid import SubsquidDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationHandlerTransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig

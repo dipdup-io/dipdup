@@ -102,7 +102,9 @@ class PatternConfig(CodegenMixin):
 
 
 @dataclass
-class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin):
+class OperationsHandlerTransactionPatternConfig(
+    PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin
+):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -166,7 +168,7 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
 
 
 @dataclass
-class OperationHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
+class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -242,7 +244,7 @@ class TezosTzktOperationsIndexConfig(TzktIndexConfig):
 
     kind: Literal['tezos.tzkt.operations']
     datasource: TzktDatasourceConfig
-    handlers: tuple[TezosTzktOperationHandlerConfig, ...]
+    handlers: tuple[TezosTzktOperationsHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)
 
@@ -268,7 +270,7 @@ class TezosTzktOperationsIndexConfig(TzktIndexConfig):
                 module_name = typed_contract.module_name
                 pattern_config.initialize_storage_cls(package, module_name)
 
-                if isinstance(pattern_config, OperationHandlerTransactionPatternConfig):
+                if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
                     pattern_config.initialize_parameter_cls(
                         package,
                         module_name,
@@ -276,18 +278,18 @@ class TezosTzktOperationsIndexConfig(TzktIndexConfig):
                     )
 
 
-OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+OperationsHandlerPatternConfigU = OperationsHandlerOriginationPatternConfig | OperationsHandlerTransactionPatternConfig
 
 
 @dataclass
-class TezosTzktOperationHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
     """Operation handler config
 
     :param callback: Callback name
     :param pattern: Filters to match operation groups
     """
 
-    pattern: tuple[OperationHandlerPatternConfigU, ...]
+    pattern: tuple[OperationsHandlerPatternConfigU, ...]
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -354,6 +356,6 @@ class TezosTzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
         self.handler_config.initialize_callback_fn(package)
 
 
-TezosTzktOperationHandlerConfigU = TezosTzktOperationHandlerConfig | OperationUnfilteredHandlerConfig
+TezosTzktOperationsHandlerConfigU = TezosTzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig
 TezosTzktOperationsIndexConfigU = TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig
-HandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+HandlerPatternConfigU = OperationsHandlerOriginationPatternConfig | OperationsHandlerTransactionPatternConfig

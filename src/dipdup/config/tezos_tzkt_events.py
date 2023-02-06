@@ -64,7 +64,7 @@ class TezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class UnknownTezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
+class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -83,7 +83,7 @@ class UnknownTezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
         yield 'event', 'UnknownEvent'
 
 
-TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | UnknownTezosTzktEventsHandlerConfig
+TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosTzktEventsUnknownEventHandlerConfig
 
 
 @dataclass

@@ -9,11 +9,11 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>1.2</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#MetadataDatasourceConfig" title="metadata.MetadataDatasourceConfig"><em>metadata.MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#MetadataDatasourceConfig" title="metadata.MetadataDatasourceConfig"><em>metadata.MetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><em>subsquid.SubsquidDatasourceConfig</em><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
 <li><p><strong>database</strong> (<a class="reference internal" href="#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
 <li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
-<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#TezosTzktOperationsIndexConfig" title="tezos_tzkt_operation.TezosTzktOperationsIndexConfig"><em>tezos_tzkt_operation.TezosTzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktBigMapsIndexConfig" title="tezos_tzkt_big_map.TezosTzktBigMapsIndexConfig"><em>tezos_tzkt_big_map.TezosTzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktHeadIndexConfig" title="tezos_tzkt_head.TezosTzktHeadIndexConfig"><em>tezos_tzkt_head.TezosTzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfer.TezosTzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfer.TezosTzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktEventsIndexConfig" title="tezos_tzkt_event.TezosTzktEventsIndexConfig"><em>tezos_tzkt_event.TezosTzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operation.TezosTzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operation.TezosTzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
-<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#TezosTzktOperationsIndexConfig" title="tezos_tzkt_operation.TezosTzktOperationsIndexConfig"><em>tezos_tzkt_operation.TezosTzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktBigMapsIndexConfig" title="tezos_tzkt_big_map.TezosTzktBigMapsIndexConfig"><em>tezos_tzkt_big_map.TezosTzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktHeadIndexConfig" title="tezos_tzkt_head.TezosTzktHeadIndexConfig"><em>tezos_tzkt_head.TezosTzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfer.TezosTzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfer.TezosTzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktEventsIndexConfig" title="tezos_tzkt_event.TezosTzktEventsIndexConfig"><em>tezos_tzkt_event.TezosTzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#TezosTzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operation.TezosTzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operation.TezosTzktOperationsUnfilteredIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
+<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.EvmSubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.EvmSubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TezosTzktOperationsIndexConfig" title="tezos_tzkt_operations.TezosTzktOperationsIndexConfig"><em>tezos_tzkt_operations.TezosTzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TezosTzktHeadIndexConfig" title="tezos_tzkt_head.TezosTzktHeadIndexConfig"><em>tezos_tzkt_head.TezosTzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TezosTzktEventsIndexConfig" title="tezos_tzkt_events.TezosTzktEventsIndexConfig"><em>tezos_tzkt_events.TezosTzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
+<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.EvmSubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.EvmSubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TezosTzktOperationsIndexConfig" title="tezos_tzkt_operations.TezosTzktOperationsIndexConfig"><em>tezos_tzkt_operations.TezosTzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TezosTzktHeadIndexConfig" title="tezos_tzkt_head.TezosTzktHeadIndexConfig"><em>tezos_tzkt_head.TezosTzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TezosTzktEventsIndexConfig" title="tezos_tzkt_events.TezosTzktEventsIndexConfig"><em>tezos_tzkt_events.TezosTzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
 <li><p><strong>jobs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#JobConfig" title="JobConfig"><em>JobConfig</em></a><em>]</em>) – Mapping of job aliases and job configs</p></li>
 <li><p><strong>hooks</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#HookConfig" title="HookConfig"><em>HookConfig</em></a><em>]</em>) – Mapping of hook aliases and hook configs</p></li>
 <li><p><strong>hasura</strong> (<a class="reference internal" href="#HasuraConfig" title="HasuraConfig"><em>HasuraConfig</em></a><em> | </em><em>None</em>) – Hasura integration config</p></li>
@@ -21,7 +21,7 @@
 <li><p><strong>prometheus</strong> (<a class="reference internal" href="#PrometheusConfig" title="PrometheusConfig"><em>PrometheusConfig</em></a><em> | </em><em>None</em>) – Prometheus integration config</p></li>
 <li><p><strong>advanced</strong> (<a class="reference internal" href="#AdvancedConfig" title="AdvancedConfig"><em>AdvancedConfig</em></a>) – Advanced config</p></li>
 <li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
-<li><p><strong>logging</strong> (<a class="reference internal" href="#LoggingValues" title="LoggingValues"><em>LoggingValues</em></a>) – Modify logging verbosity</p></li>
+<li><p><strong>logging</strong> (<a class="reference internal" href="#dipdup.models.LoggingValues" title="dipdup.models.LoggingValues"><em>LoggingValues</em></a>) – Modify logging verbosity</p></li>
 </ul>
 </dd>
 </dl>
@@ -34,7 +34,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#ReindexingReason" title="ReindexingReason"><em>ReindexingReason</em></a><em>, </em><a class="reference internal" href="#ReindexingAction" title="ReindexingAction"><em>ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
+<li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#dipdup.models.ReindexingReason" title="dipdup.models.ReindexingReason"><em>dipdup.models.ReindexingReason</em></a><em>, </em><a class="reference internal" href="#dipdup.models.ReindexingAction" title="dipdup.models.ReindexingAction"><em>dipdup.models.ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
 <li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
@@ -49,16 +49,31 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktBigMapsIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktBigMapsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SkipHistory.never</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktBigMapsIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_big_maps.</span></span><span class="sig-name descname"><span class="pre">TezosTzktBigMapsHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Big map handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract to fetch big map from</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Path to big map (alphanumeric string with dots)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_big_maps.</span></span><span class="sig-name descname"><span class="pre">TezosTzktBigMapsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SkipHistory.never</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Big map index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.big_maps'</em><em>]</em>) – always <cite>big_map</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_big_map.TezosTzktBigMapsHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
-<li><p><strong>skip_history</strong> (<a class="reference internal" href="#SkipHistory" title="SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig" title="tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig"><em>tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
+<li><p><strong>skip_history</strong> (<a class="reference internal" href="#dipdup.models.SkipHistory" title="dipdup.models.SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>
@@ -99,15 +114,30 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktEventsIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktEventsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktEventsIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_events.TezosTzktEventsHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_events.</span></span><span class="sig-name descname"><span class="pre">TezosTzktEventsHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_events.TezosTzktEventsHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
+<li><p><strong>tag</strong> (<em>str</em>) – Event tag</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_events.TezosTzktEventsIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_events.</span></span><span class="sig-name descname"><span class="pre">TezosTzktEventsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_events.TezosTzktEventsIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Event index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.events'</em><em>]</em>) – Index kind</p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_event.TezosTzktEventsHandlerConfig</em><em> | </em><em>tezos_tzkt_event.UnknownTezosTzktEventsHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_events.TezosTzktEventsHandlerConfig" title="tezos_tzkt_events.TezosTzktEventsHandlerConfig"><em>tezos_tzkt_events.TezosTzktEventsHandlerConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig" title="tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig"><em>tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – First block level to index</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Last block level to index</p></li>
 </ul>
@@ -138,15 +168,26 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktHeadIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktHeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktHeadIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_head.HeadHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_head.</span></span><span class="sig-name descname"><span class="pre">HeadHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_head.HeadHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Head block handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>callback</strong> (<em>str</em>) – Callback name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_head.TezosTzktHeadIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_head.</span></span><span class="sig-name descname"><span class="pre">TezosTzktHeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_head.TezosTzktHeadIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Head block index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.head'</em><em>]</em>) – always <cite>head</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_head.HeadHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_head.HeadHandlerConfig" title="tezos_tzkt_head.HeadHandlerConfig"><em>tezos_tzkt_head.HeadHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
 </ul>
 </dd>
 </dl>
@@ -222,8 +263,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="IpfsDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">IpfsDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://ipfs.io/ipfs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#IpfsDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ipfs.IpfsDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ipfs.</span></span><span class="sig-name descname"><span class="pre">IpfsDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://ipfs.io/ipfs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ipfs.IpfsDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>IPFS datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -254,22 +295,22 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="LoggingValues">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">LoggingValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#LoggingValues" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.LoggingValues">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.models.</span></span><span class="sig-name descname"><span class="pre">LoggingValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.models.LoggingValues" title="Permalink to this definition">¶</a></dt>
 <dd><p>Enum for <cite>logging</cite> field values.</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="LoggingValues.default">
-<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'default'</span></em><a class="headerlink" href="#LoggingValues.default" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.LoggingValues.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'default'</span></em><a class="headerlink" href="#dipdup.models.LoggingValues.default" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="LoggingValues.quiet">
-<span class="sig-name descname"><span class="pre">quiet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'quiet'</span></em><a class="headerlink" href="#LoggingValues.quiet" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.LoggingValues.quiet">
+<span class="sig-name descname"><span class="pre">quiet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'quiet'</span></em><a class="headerlink" href="#dipdup.models.LoggingValues.quiet" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="LoggingValues.verbose">
-<span class="sig-name descname"><span class="pre">verbose</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'verbose'</span></em><a class="headerlink" href="#LoggingValues.verbose" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.LoggingValues.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'verbose'</span></em><a class="headerlink" href="#dipdup.models.LoggingValues.verbose" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -291,8 +332,22 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="OperationHandlerOriginationPatternConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerOriginationPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'origination'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">originated_contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#OperationHandlerOriginationPatternConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_operations.TezosTzktOperationsHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">TezosTzktOperationsHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.TezosTzktOperationsHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Operation handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig" title="tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig" title="tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">OperationsHandlerOriginationPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'origination'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">similar_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">originated_contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Origination handler pattern config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -310,8 +365,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="OperationHandlerTransactionPatternConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationHandlerTransactionPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transaction'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entrypoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#OperationHandlerTransactionPatternConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">OperationsHandlerTransactionPatternConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'transaction'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entrypoint</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation handler pattern config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -328,16 +383,16 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktOperationsIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktOperationsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktOperationsIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_operations.TezosTzktOperationsIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">TezosTzktOperationsIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.TezosTzktOperationsIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operation'</em><em>]</em>) – always <cite>operation</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_operation.TezosTzktOperationHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
-<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations'</em><em>]</em>) – always <cite>operation</cite></p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.TezosTzktOperationsHandlerConfig" title="tezos_tzkt_operations.TezosTzktOperationsHandlerConfig"><em>tezos_tzkt_operations.TezosTzktOperationsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
+<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tzkt.OperationType" title="dipdup.models.tzkt.OperationType"><em>dipdup.models.tzkt.OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
 <li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
@@ -347,37 +402,37 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="OperationType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">OperationType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#OperationType" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.tzkt.OperationType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.models.tzkt.</span></span><span class="sig-name descname"><span class="pre">OperationType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.models.tzkt.OperationType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Type of blockchain operation</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="OperationType.migration">
-<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="#OperationType.migration" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.tzkt.OperationType.migration">
+<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="#dipdup.models.tzkt.OperationType.migration" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="OperationType.origination">
-<span class="sig-name descname"><span class="pre">origination</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'origination'</span></em><a class="headerlink" href="#OperationType.origination" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.tzkt.OperationType.origination">
+<span class="sig-name descname"><span class="pre">origination</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'origination'</span></em><a class="headerlink" href="#dipdup.models.tzkt.OperationType.origination" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="OperationType.transaction">
-<span class="sig-name descname"><span class="pre">transaction</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transaction'</span></em><a class="headerlink" href="#OperationType.transaction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.tzkt.OperationType.transaction">
+<span class="sig-name descname"><span class="pre">transaction</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'transaction'</span></em><a class="headerlink" href="#dipdup.models.tzkt.OperationType.transaction" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktOperationsUnfilteredIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktOperationsUnfilteredIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktOperationsUnfilteredIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">TezosTzktOperationsUnfilteredIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types=(&lt;OperationType.transaction:</span> <span class="pre">'transaction'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations_unfiltered'</em><em>]</em>) – always <cite>operation_unfiltered</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#OperationType" title="OperationType"><em>OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
+<li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tzkt.OperationType" title="dipdup.models.tzkt.OperationType"><em>dipdup.models.tzkt.OperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>
@@ -422,53 +477,53 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="ReindexingAction">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ReindexingAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ReindexingAction" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingAction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.models.</span></span><span class="sig-name descname"><span class="pre">ReindexingAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.models.ReindexingAction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Action that should be performed on reindexing</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingAction.exception">
-<span class="sig-name descname"><span class="pre">exception</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'exception'</span></em><a class="headerlink" href="#ReindexingAction.exception" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingAction.exception">
+<span class="sig-name descname"><span class="pre">exception</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'exception'</span></em><a class="headerlink" href="#dipdup.models.ReindexingAction.exception" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingAction.ignore">
-<span class="sig-name descname"><span class="pre">ignore</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ignore'</span></em><a class="headerlink" href="#ReindexingAction.ignore" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingAction.ignore">
+<span class="sig-name descname"><span class="pre">ignore</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ignore'</span></em><a class="headerlink" href="#dipdup.models.ReindexingAction.ignore" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingAction.wipe">
-<span class="sig-name descname"><span class="pre">wipe</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'wipe'</span></em><a class="headerlink" href="#ReindexingAction.wipe" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingAction.wipe">
+<span class="sig-name descname"><span class="pre">wipe</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'wipe'</span></em><a class="headerlink" href="#dipdup.models.ReindexingAction.wipe" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="ReindexingReason">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ReindexingReason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ReindexingReason" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.models.</span></span><span class="sig-name descname"><span class="pre">ReindexingReason</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.models.ReindexingReason" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reason that caused reindexing</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingReason.config_modified">
-<span class="sig-name descname"><span class="pre">config_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config_modified'</span></em><a class="headerlink" href="#ReindexingReason.config_modified" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason.config_modified">
+<span class="sig-name descname"><span class="pre">config_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'config_modified'</span></em><a class="headerlink" href="#dipdup.models.ReindexingReason.config_modified" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingReason.manual">
-<span class="sig-name descname"><span class="pre">manual</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'manual'</span></em><a class="headerlink" href="#ReindexingReason.manual" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason.manual">
+<span class="sig-name descname"><span class="pre">manual</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'manual'</span></em><a class="headerlink" href="#dipdup.models.ReindexingReason.manual" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingReason.migration">
-<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="#ReindexingReason.migration" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason.migration">
+<span class="sig-name descname"><span class="pre">migration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'migration'</span></em><a class="headerlink" href="#dipdup.models.ReindexingReason.migration" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingReason.rollback">
-<span class="sig-name descname"><span class="pre">rollback</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rollback'</span></em><a class="headerlink" href="#ReindexingReason.rollback" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'rollback'</span></em><a class="headerlink" href="#dipdup.models.ReindexingReason.rollback" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="ReindexingReason.schema_modified">
-<span class="sig-name descname"><span class="pre">schema_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'schema_modified'</span></em><a class="headerlink" href="#ReindexingReason.schema_modified" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.ReindexingReason.schema_modified">
+<span class="sig-name descname"><span class="pre">schema_modified</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'schema_modified'</span></em><a class="headerlink" href="#dipdup.models.ReindexingReason.schema_modified" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -492,22 +547,22 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="SkipHistory">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SkipHistory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#SkipHistory" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.SkipHistory">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.models.</span></span><span class="sig-name descname"><span class="pre">SkipHistory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.models.SkipHistory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether to skip indexing operation history and use only current state</p>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="SkipHistory.always">
-<span class="sig-name descname"><span class="pre">always</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'always'</span></em><a class="headerlink" href="#SkipHistory.always" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.SkipHistory.always">
+<span class="sig-name descname"><span class="pre">always</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'always'</span></em><a class="headerlink" href="#dipdup.models.SkipHistory.always" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="SkipHistory.never">
-<span class="sig-name descname"><span class="pre">never</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'never'</span></em><a class="headerlink" href="#SkipHistory.never" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.SkipHistory.never">
+<span class="sig-name descname"><span class="pre">never</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'never'</span></em><a class="headerlink" href="#dipdup.models.SkipHistory.never" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="SkipHistory.once">
-<span class="sig-name descname"><span class="pre">once</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'once'</span></em><a class="headerlink" href="#SkipHistory.once" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="dipdup.models.SkipHistory.once">
+<span class="sig-name descname"><span class="pre">once</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'once'</span></em><a class="headerlink" href="#dipdup.models.SkipHistory.once" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -527,15 +582,33 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TezosTzktTokenTransfersIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TezosTzktTokenTransfersIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=FieldInfo(default=PydanticUndefined</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;class</span> <span class="pre">'tuple'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TezosTzktTokenTransfersIndexConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_token_transfers.</span></span><span class="sig-name descname"><span class="pre">TezosTzktTokenTransfersHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FieldInfo(alias='from',</span> <span class="pre">alias_priority=2,</span> <span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Token transfer handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by contract</p></li>
+<li><p><strong>token_id</strong> (<em>int</em><em> | </em><em>None</em>) – Filter by token ID</p></li>
+<li><p><strong>from</strong> – Filter by sender</p></li>
+<li><p><strong>to</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by recipient</p></li>
+<li><p><strong>from_</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_token_transfers.</span></span><span class="sig-name descname"><span class="pre">TezosTzktTokenTransfersIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers=FieldInfo(default=PydanticUndefined</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;class</span> <span class="pre">'tuple'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra={})</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_level=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_level=0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Token transfer index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.token_transfers'</em><em>]</em>) – always <cite>token_transfer</cite></p></li>
-<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><em>tezos_tzkt_token_transfer.TezosTzktTokenTransfersHandlerConfig</em><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
+<li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tzkt.TzktDatasourceConfig" title="tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
+<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig" title="tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig"><em>tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>
@@ -544,8 +617,8 @@
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="TzktDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="tzkt.TzktDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tzkt.</span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tzkt.TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>TzKT datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -554,6 +627,20 @@
 <li><p><strong>url</strong> (<em>str</em>) – Base API URL, e.g. <a class="reference external" href="https://api.tzkt.io/">https://api.tzkt.io/</a></p></li>
 <li><p><strong>http</strong> (<a class="reference internal" href="#HttpConfig" title="HttpConfig"><em>HttpConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 <li><p><strong>buffer_size</strong> (<em>int</em>) – Number of levels to keep in FIFO buffer before processing</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_events.</span></span><span class="sig-name descname"><span class="pre">TezosTzktEventsUnknownEventHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unknown event handler config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
 </ul>
 </dd>
 </dl>
