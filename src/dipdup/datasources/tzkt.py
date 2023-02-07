@@ -1,7 +1,5 @@
 import asyncio
 import logging
-from abc import ABC
-from abc import abstractmethod
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
@@ -86,6 +84,15 @@ TRANSACTION_OPERATION_FIELDS = (
 )
 
 
+EmptyCallbackT = Callable[[], Awaitable[None]]
+HeadCallbackT = Callable[['TzktDatasource', HeadBlockData], Awaitable[None]]
+OperationsCallbackT = Callable[['TzktDatasource', tuple[OperationData, ...]], Awaitable[None]]
+TokenTransfersCallbackT = Callable[['TzktDatasource', tuple[TokenTransferData, ...]], Awaitable[None]]
+BigMapsCallbackT = Callable[['TzktDatasource', tuple[BigMapData, ...]], Awaitable[None]]
+EventsCallbackT = Callable[['TzktDatasource', tuple[EventData, ...]], Awaitable[None]]
+RollbackCallbackT = Callable[['TzktDatasource', MessageType, int, int], Awaitable[None]]
+
+
 class TzktMessageType(Enum):
     STATE = 0
     DATA = 1
@@ -166,29 +173,7 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class SignalRDatasource(IndexDatasource, ABC):
-    async def run(self) -> None:
-        self._logger.info('Establishing realtime connection')
-        signalr_client = self._get_signalr_client()
-        retry_sleep = self._http_config.retry_sleep
-
-        for _ in range(1, self._http_config.retry_count + 1):
-            try:
-                await signalr_client.run()
-            except pysignalr.exceptions.ConnectionError as e:
-                self._logger.error('Websocket connection error: %s', e)
-                await self.emit_disconnected()
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= self._http_config.retry_multiplier
-
-        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
-
-    @abstractmethod
-    def _get_signalr_client(self) -> SignalRClient:
-        ...
-
-
-class TzktDatasource(SignalRDatasource):
+class TzktDatasource(IndexDatasource):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -211,6 +196,16 @@ class TzktDatasource(SignalRDatasource):
         self._buffer = MessageBuffer(buffer_size)
         self._contract_hashes = ContractHashes()
 
+        self._on_connected_callbacks: set[EmptyCallbackT] = set()
+        self._on_disconnected_callbacks: set[EmptyCallbackT] = set()
+        self._on_head_callbacks: set[HeadCallbackT] = set()
+        self._on_operations_callbacks: set[OperationsCallbackT] = set()
+        self._on_token_transfers_callbacks: set[TokenTransfersCallbackT] = set()
+        self._on_big_maps_callbacks: set[BigMapsCallbackT] = set()
+        self._on_events_callbacks: set[EventsCallbackT] = set()
+        self._on_rollback_callbacks: set[RollbackCallbackT] = set()
+        self._network: str | None = None
+
         self._signalr_client: SignalRClient | None = None
         self._channel_levels: defaultdict[MessageType, int | None] = defaultdict(lambda: None)
 
@@ -232,8 +227,91 @@ class TzktDatasource(SignalRDatasource):
             raise DatasourceError(f'Failed to connect to TzKT: {e}', self.name) from e
 
     @property
+    def network(self) -> str:
+        if not self._network:
+            raise FrameworkException('Network is not set')
+        return self._network
+
+    @property
     def request_limit(self) -> int:
         return self._http_config.batch_size
+
+    async def run(self) -> None:
+        self._logger.info('Establishing realtime connection')
+        signalr_client = self._get_signalr_client()
+        retry_sleep = self._http_config.retry_sleep
+
+        for _ in range(1, self._http_config.retry_count + 1):
+            try:
+                await signalr_client.run()
+            except pysignalr.exceptions.ConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._http_config.retry_multiplier
+
+        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+
+    def call_on_head(self, fn: HeadCallbackT) -> None:
+        self._on_head_callbacks.add(fn)
+
+    def call_on_operations(self, fn: OperationsCallbackT) -> None:
+        self._on_operations_callbacks.add(fn)
+
+    def call_on_token_transfers(self, fn: TokenTransfersCallbackT) -> None:
+        self._on_token_transfers_callbacks.add(fn)
+
+    def call_on_big_maps(self, fn: BigMapsCallbackT) -> None:
+        self._on_big_maps_callbacks.add(fn)
+
+    def call_on_events(self, fn: EventsCallbackT) -> None:
+        self._on_events_callbacks.add(fn)
+
+    def call_on_rollback(self, fn: RollbackCallbackT) -> None:
+        self._on_rollback_callbacks.add(fn)
+
+    def call_on_connected(self, fn: EmptyCallbackT) -> None:
+        self._on_connected_callbacks.add(fn)
+
+    def call_on_disconnected(self, fn: EmptyCallbackT) -> None:
+        self._on_disconnected_callbacks.add(fn)
+
+    async def emit_head(self, head: HeadBlockData) -> None:
+        for fn in self._on_head_callbacks:
+            await fn(self, head)
+
+    async def emit_operations(self, operations: tuple[OperationData, ...]) -> None:
+        for fn in self._on_operations_callbacks:
+            await fn(self, operations)
+
+    async def emit_token_transfers(self, token_transfers: tuple[TokenTransferData, ...]) -> None:
+        for fn in self._on_token_transfers_callbacks:
+            await fn(self, token_transfers)
+
+    async def emit_big_maps(self, big_maps: tuple[BigMapData, ...]) -> None:
+        for fn in self._on_big_maps_callbacks:
+            await fn(self, big_maps)
+
+    async def emit_events(self, events: tuple[EventData, ...]) -> None:
+        for fn in self._on_events_callbacks:
+            await fn(self, events)
+
+    async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
+        for fn in self._on_rollback_callbacks:
+            await fn(self, type_, from_level, to_level)
+
+    async def emit_connected(self) -> None:
+        for fn in self._on_connected_callbacks:
+            await fn()
+
+    async def emit_disconnected(self) -> None:
+        for fn in self._on_disconnected_callbacks:
+            await fn()
+
+    def set_network(self, network: str) -> None:
+        if self._network:
+            raise FrameworkException('Network is already set')
+        self._network = network
 
     def set_logger(self, name: str) -> None:
         super().set_logger(name)

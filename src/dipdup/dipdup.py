@@ -239,7 +239,7 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, IndexDatasource):
+            if not isinstance(datasource, TzktDatasource):
                 continue
             datasource.call_on_head(self._on_head)
             datasource.call_on_operations(self._on_operations)

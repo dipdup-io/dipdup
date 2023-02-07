@@ -980,6 +980,8 @@ class DipDupConfig:
         from dipdup.models.tzkt import TokenTransferSubscription
         from dipdup.models.tzkt import TransactionSubscription
 
+        index_config.subscriptions.add(HeadSubscription())
+
         if isinstance(index_config, TezosTzktOperationsIndexConfig):
             if OperationType.transaction in index_config.types:
                 if self.advanced.merge_subscriptions:

@@ -14,6 +14,7 @@ from dipdup.config import ResolvedHttpConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tzkt import HeadSubscription
 from dipdup.models.tzkt import OperationType
 from dipdup.models.tzkt import OriginationSubscription
 from dipdup.models.tzkt import TransactionSubscription
@@ -44,22 +45,26 @@ async def test_load_initialize() -> None:
 async def test_operation_subscriptions() -> None:
     index_config = create_config(False, False).indexes['hen_mainnet']
     assert isinstance(index_config, TezosTzktOperationsIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')}
+    assert index_config.subscriptions == {
+        TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+        HeadSubscription(),
+    }
 
     index_config = create_config(True, False).indexes['hen_mainnet']
     assert isinstance(index_config, TezosTzktOperationsIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription()}
+    assert index_config.subscriptions == {TransactionSubscription(), HeadSubscription()}
 
     index_config = create_config(False, True).indexes['hen_mainnet']
     assert isinstance(index_config, TezosTzktOperationsIndexConfig)
     assert index_config.subscriptions == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         OriginationSubscription(),
+        HeadSubscription(),
     }
 
     index_config = create_config(True, True).indexes['hen_mainnet']
     assert isinstance(index_config, TezosTzktOperationsIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription()}
+    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription(), HeadSubscription()}
 
 
 async def test_validators() -> None:

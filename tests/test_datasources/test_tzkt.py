@@ -188,6 +188,7 @@ async def test_on_operation_message_data() -> None:
     async with tzkt_replay(batch_size=1) as tzkt:
         emit_mock = AsyncMock()
         tzkt.call_on_operations(emit_mock)
+        tzkt._subscriptions.add(HeadSubscription())
         tzkt.set_sync_level(HeadSubscription(), 1)
 
         level = tzkt.get_channel_level(MessageType.operation)
