@@ -776,7 +776,8 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
         ParentMixin.__post_init_post_parse__(self)
 
 
-OperationHandlerPatternConfigU = OperationHandlerOriginationPatternConfig | OperationHandlerTransactionPatternConfig
+# FIXME: Reversed for new Pydantic. Why?
+OperationHandlerPatternConfigU = OperationHandlerTransactionPatternConfig | OperationHandlerOriginationPatternConfig
 
 
 @dataclass

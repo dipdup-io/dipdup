@@ -128,7 +128,7 @@ def test_is_array() -> None:
 
 
 def test_simple_union_unwrap() -> None:
-    assert unwrap_union_type(Optional[str]) == (True, (str, NoneType))
+    assert unwrap_union_type(Optional[str]) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
     assert unwrap_union_type(Union[int, str]) == (True, (int, str))
 
 
@@ -139,7 +139,7 @@ def test_pydantic_optional_unwrap() -> None:
     class OptionalStr(BaseModel):
         __root__: Optional[str]
 
-    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))
+    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
     assert unwrap_union_type(UnionIntStr) == (True, (int, str))
 
 

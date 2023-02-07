@@ -142,7 +142,7 @@ async def test_cleanup_and_filtering() -> None:
                 await holder.save()
 
         model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
-        assert model_update_levels == [998, 999, 1000, 1001, 1002, 1003, 1004]
+        assert model_update_levels == [998, 999, 1000, 1001, 1002, 1003, 1004]  # type: ignore[comparison-overlap]
 
         # NOTE: Cleanup
         index = Index(
@@ -155,7 +155,7 @@ async def test_cleanup_and_filtering() -> None:
         await dipdup._transactions.cleanup()
 
         model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
-        assert model_update_levels == [1003, 1004]
+        assert model_update_levels == [1003, 1004]  # type: ignore[comparison-overlap]
 
 
 async def test_optionals() -> None:
@@ -244,9 +244,9 @@ async def test_bulk_create_update() -> None:
             await domains_models.Domain.bulk_update(domains, ('token_id',))
 
         owners = await domains_models.TLD.filter().values_list('owner', flat=True)
-        assert owners == ['0', '1', '2']
+        assert owners == ['0', '1', '2']  # type: ignore[comparison-overlap]
         token_ids = await domains_models.Domain.filter().values_list('token_id', flat=True)
-        assert token_ids == [0, 1, 2]
+        assert token_ids == [0, 1, 2]  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 12
@@ -260,7 +260,7 @@ async def test_bulk_create_update() -> None:
         )
 
         owners = await domains_models.TLD.filter().values_list('owner', flat=True)
-        assert owners == ['test'] * 3
+        assert owners == ['test'] * 3  # type: ignore[comparison-overlap]
         token_ids = await domains_models.Domain.filter().values_list('token_id', flat=True)
         assert token_ids == [None] * 3
 
@@ -304,7 +304,7 @@ async def test_update_prefetch() -> None:
             await domains_models.TLD.bulk_create(tlds)
 
         owners = await domains_models.TLD.filter().values_list('owner', flat=True)
-        assert owners == ['test'] * 3
+        assert owners == ['test'] * 3  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 3
@@ -314,7 +314,7 @@ async def test_update_prefetch() -> None:
             await domains_models.TLD.filter().update(owner='foo')
 
         owners = await domains_models.TLD.filter().values_list('owner', flat=True)
-        assert owners == ['foo'] * 3
+        assert owners == ['foo'] * 3  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 6
@@ -328,7 +328,7 @@ async def test_update_prefetch() -> None:
         )
 
         owners = await domains_models.TLD.filter().values_list('owner', flat=True)
-        assert owners == ['test'] * 3
+        assert owners == ['test'] * 3  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 3
@@ -355,7 +355,7 @@ async def test_update_arithmetics() -> None:
                 ).save()
 
         supply = await hen_models.Token.filter().values_list('supply', flat=True)
-        assert supply == [0, 1, 2]
+        assert supply == [0, 1, 2]  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 4
@@ -365,7 +365,7 @@ async def test_update_arithmetics() -> None:
             await hen_models.Token.filter().update(supply=F('supply') * 2)
 
         supply = await hen_models.Token.filter().values_list('supply', flat=True)
-        assert supply == [0, 2, 4]
+        assert supply == [0, 2, 4]  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 7
@@ -379,7 +379,7 @@ async def test_update_arithmetics() -> None:
         )
 
         supply = await hen_models.Token.filter().values_list('supply', flat=True)
-        assert supply == [0, 1, 2]
+        assert supply == [0, 1, 2]  # type: ignore[comparison-overlap]
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 4
