@@ -61,7 +61,8 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
     for match in re.finditer(ENV_VARIABLE_REGEX, config_yaml):
         variable, default_value = match.group('var_name'), match.group('default_value')
         value = env.get(variable, default_value)
-        if not value:
+        # NOTE: Don't fail on ''
+        if value is None:
             raise ConfigurationError(f'Environment variable `{variable}` is not set')
         environment[variable] = value
         placeholder = match.group(0)

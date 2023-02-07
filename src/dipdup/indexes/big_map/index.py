@@ -11,7 +11,6 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.index import extract_level
 from dipdup.indexes.big_map.fetcher import BigMapFetcher
 from dipdup.indexes.big_map.fetcher import get_big_map_pairs
 from dipdup.indexes.big_map.matcher import match_big_maps
@@ -128,7 +127,7 @@ class BigMapIndex(
         if not big_maps:
             return
 
-        batch_level = extract_level(big_maps)
+        batch_level = big_maps[0].level
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')

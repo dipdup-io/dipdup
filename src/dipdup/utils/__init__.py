@@ -29,8 +29,11 @@ from dipdup.exceptions import ProjectImportError
 
 def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     """Recursively import all submodules of a package"""
+    module = importlib.import_module(package)
     results = {}
-    for _, name, is_pkg in pkgutil.walk_packages((package,)):
+    for subpackage in pkgutil.walk_packages(module.__path__):
+        name = subpackage.name
+        is_pkg = subpackage.ispkg
         full_name = package + '.' + name
         results[full_name] = importlib.import_module(full_name)
         if is_pkg:

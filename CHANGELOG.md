@@ -11,6 +11,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: New index kind `operation_unfiltered`.
 -->
 
+## [Unreleased]
+
+### Fixed
+
+- codegen: Fixed bug leading to incorrect imports in generated callbacks in some cases.
+- codegen: Fixed validation of created package after `dipdup init`.
+- config: Allow using empty string as default env (`{DEFAULT_EMPTY:-}`).
+
+### Other
+
+- deps: Updated pydantic to 1.10.4
+- deps: Updated datamodel-code-generator to 0.17.1
+- deps: Updated tortoise-orm to 0.19.3
+
 ## [6.5.0] - 2023-01-28
 
 ### Added

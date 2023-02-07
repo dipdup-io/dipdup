@@ -7,7 +7,6 @@ from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.index import extract_level
 from dipdup.indexes.token_transfer.fetcher import TokenTransferFetcher
 from dipdup.indexes.token_transfer.matcher import match_token_transfers
 from dipdup.models import TokenTransferData
@@ -75,7 +74,7 @@ class TokenTransferIndex(
         if not token_transfers:
             return
 
-        batch_level = extract_level(token_transfers)
+        batch_level = token_transfers[0].level
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
