@@ -2,7 +2,6 @@ import json
 
 import pytest
 
-from dipdup.datasources.tzkt import TzktDatasource
 from dipdup.models.tzkt import BlockData
 
 
@@ -14,14 +13,14 @@ from dipdup.models.tzkt import BlockData
 )
 async def test_deprecated_priority(tzkt_block_json: str) -> None:
     tzkt_block_dict = json.loads(tzkt_block_json)
-    block = TzktDatasource.convert_block(tzkt_block_dict)
+    block = BlockData.from_json(tzkt_block_dict)
     assert block
     assert isinstance(block, BlockData)
     assert block.priority == 0
 
     del tzkt_block_dict['priority']
 
-    block = TzktDatasource.convert_block(tzkt_block_dict)
+    block = BlockData.from_json(tzkt_block_dict)
     assert block
     assert isinstance(block, BlockData)
     assert block.priority is None

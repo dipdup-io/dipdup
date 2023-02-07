@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -19,6 +20,10 @@ StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
 ValueType = TypeVar('ValueType', bound=BaseModel)
 EventType = TypeVar('EventType', bound=BaseModel)
+
+
+def _parse_timestamp(timestamp: str) -> datetime:
+    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
 
 
 class TokenStandard(Enum):
@@ -162,6 +167,95 @@ class OperationData:
     target_code_hash: Optional[int] = None
     sender_code_hash: Optional[int] = None
 
+    @classmethod
+    def from_json(
+        cls,
+        operation_json: dict[str, Any],
+        type_: str | None = None,
+    ) -> 'OperationData':
+        """Convert raw operation message from WS/REST into dataclass"""
+        # NOTE: Migration originations are handled in a separate method
+        sender_json = operation_json.get('sender') or {}
+        target_json = operation_json.get('target') or {}
+        initiator_json = operation_json.get('initiator') or {}
+        delegate_json = operation_json.get('delegate') or {}
+        parameter_json = operation_json.get('parameter') or {}
+        originated_contract_json = operation_json.get('originatedContract') or {}
+
+        if (amount := operation_json.get('contractBalance')) is None:
+            amount = operation_json.get('amount')
+
+        entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
+        if target_json.get('address', '').startswith('KT1'):
+            # NOTE: TzKT returns None for `default` entrypoint
+            if entrypoint is None:
+                entrypoint = 'default'
+
+                # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
+                if parameter is None:
+                    parameter = {}
+
+        return OperationData(
+            type=type_ or operation_json['type'],
+            id=operation_json['id'],
+            level=operation_json['level'],
+            timestamp=_parse_timestamp(operation_json['timestamp']),
+            block=operation_json.get('block'),
+            hash=operation_json['hash'],
+            counter=operation_json['counter'],
+            sender_address=sender_json.get('address'),
+            sender_code_hash=operation_json.get('senderCodeHash'),
+            target_address=target_json.get('address'),
+            target_code_hash=operation_json.get('targetCodeHash'),
+            initiator_address=initiator_json.get('address'),
+            amount=amount,
+            status=operation_json['status'],
+            has_internals=operation_json.get('hasInternals'),
+            sender_alias=operation_json['sender'].get('alias'),
+            nonce=operation_json.get('nonce'),
+            target_alias=target_json.get('alias'),
+            initiator_alias=initiator_json.get('alias'),
+            entrypoint=entrypoint,
+            parameter_json=parameter,
+            originated_contract_address=originated_contract_json.get('address'),
+            originated_contract_alias=originated_contract_json.get('alias'),
+            originated_contract_type_hash=originated_contract_json.get('typeHash'),
+            originated_contract_code_hash=originated_contract_json.get('codeHash'),
+            originated_contract_tzips=originated_contract_json.get('tzips'),
+            storage=operation_json.get('storage'),
+            diffs=operation_json.get('diffs') or (),
+            delegate_address=delegate_json.get('address'),
+            delegate_alias=delegate_json.get('alias'),
+        )
+
+    @classmethod
+    def from_migration_json(
+        cls,
+        migration_origination_json: dict[str, Any],
+    ) -> 'OperationData':
+        """Convert raw migration message from REST into dataclass"""
+        return OperationData(
+            type='migration',
+            id=migration_origination_json['id'],
+            level=migration_origination_json['level'],
+            timestamp=_parse_timestamp(migration_origination_json['timestamp']),
+            block=migration_origination_json.get('block'),
+            originated_contract_address=migration_origination_json['account']['address'],
+            originated_contract_alias=migration_origination_json['account'].get('alias'),
+            amount=migration_origination_json['balanceChange'],
+            storage=migration_origination_json.get('storage'),
+            diffs=migration_origination_json.get('diffs') or (),
+            status='applied',
+            has_internals=False,
+            hash='[none]',
+            counter=0,
+            sender_address='[none]',
+            sender_code_hash=None,
+            target_address=None,
+            target_code_hash=None,
+            initiator_address=None,
+        )
+
 
 @dataclass
 class Transaction(Generic[ParameterType, StorageType]):
@@ -214,6 +308,29 @@ class BigMapData:
     key: Optional[Any] = None
     value: Optional[Any] = None
 
+    @classmethod
+    def from_json(
+        cls,
+        big_map_json: dict[str, Any],
+    ) -> 'BigMapData':
+        """Convert raw big map diff message from WS/REST into dataclass"""
+        action = BigMapAction(big_map_json['action'])
+        active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
+        return BigMapData(
+            id=big_map_json['id'],
+            level=big_map_json['level'],
+            # NOTE: missing `operation_id` field in API to identify operation
+            operation_id=big_map_json['level'],
+            timestamp=_parse_timestamp(big_map_json['timestamp']),
+            bigmap=big_map_json['bigmap'],
+            contract_address=big_map_json['contract']['address'],
+            path=big_map_json['path'],
+            action=action,
+            active=active,
+            key=big_map_json.get('content', {}).get('key'),
+            value=big_map_json.get('content', {}).get('value'),
+        )
+
 
 @dataclass
 class BigMapDiff(Generic[KeyType, ValueType]):
@@ -241,6 +358,27 @@ class BlockData:
     priority: Optional[int] = None
     baker_address: Optional[str] = None
     baker_alias: Optional[str] = None
+
+    @classmethod
+    def from_json(
+        cls,
+        block_json: dict[str, Any],
+    ) -> 'BlockData':
+        """Convert raw block message from REST into dataclass"""
+        return BlockData(
+            level=block_json['level'],
+            hash=block_json['hash'],
+            timestamp=_parse_timestamp(block_json['timestamp']),
+            proto=block_json['proto'],
+            priority=block_json.get('priority'),
+            validations=block_json['validations'],
+            deposit=block_json['deposit'],
+            reward=block_json['reward'],
+            fees=block_json['fees'],
+            nonce_revealed=block_json['nonceRevealed'],
+            baker_address=block_json.get('baker', {}).get('address'),
+            baker_alias=block_json.get('baker', {}).get('alias'),
+        )
 
 
 @dataclass
@@ -270,6 +408,37 @@ class HeadBlockData:
     quote_eth: Decimal
     quote_gbp: Decimal
 
+    @classmethod
+    def from_json(
+        cls,
+        head_block_json: dict[str, Any],
+    ) -> 'HeadBlockData':
+        """Convert raw head block message from WS/REST into dataclass"""
+        return HeadBlockData(
+            chain=head_block_json['chain'],
+            chain_id=head_block_json['chainId'],
+            cycle=head_block_json['cycle'],
+            level=head_block_json['level'],
+            hash=head_block_json['hash'],
+            protocol=head_block_json['protocol'],
+            next_protocol=head_block_json['nextProtocol'],
+            timestamp=_parse_timestamp(head_block_json['timestamp']),
+            voting_epoch=head_block_json['votingEpoch'],
+            voting_period=head_block_json['votingPeriod'],
+            known_level=head_block_json['knownLevel'],
+            last_sync=head_block_json['lastSync'],
+            synced=head_block_json['synced'],
+            quote_level=head_block_json['quoteLevel'],
+            quote_btc=Decimal(head_block_json['quoteBtc']),
+            quote_eur=Decimal(head_block_json['quoteEur']),
+            quote_usd=Decimal(head_block_json['quoteUsd']),
+            quote_cny=Decimal(head_block_json['quoteCny']),
+            quote_jpy=Decimal(head_block_json['quoteJpy']),
+            quote_krw=Decimal(head_block_json['quoteKrw']),
+            quote_eth=Decimal(head_block_json['quoteEth']),
+            quote_gbp=Decimal(head_block_json['quoteGbp']),
+        )
+
 
 @dataclass
 class QuoteData:
@@ -285,6 +454,22 @@ class QuoteData:
     krw: Decimal
     eth: Decimal
     gbp: Decimal
+
+    @classmethod
+    def from_json(cls, quote_json: dict[str, Any]) -> 'QuoteData':
+        """Convert raw quote message from REST into dataclass"""
+        return QuoteData(
+            level=quote_json['level'],
+            timestamp=_parse_timestamp(quote_json['timestamp']),
+            btc=Decimal(quote_json['btc']),
+            eur=Decimal(quote_json['eur']),
+            usd=Decimal(quote_json['usd']),
+            cny=Decimal(quote_json['cny']),
+            jpy=Decimal(quote_json['jpy']),
+            krw=Decimal(quote_json['krw']),
+            eth=Decimal(quote_json['eth']),
+            gbp=Decimal(quote_json['gbp']),
+        )
 
 
 @dataclass
@@ -309,6 +494,35 @@ class TokenTransferData:
     tzkt_origination_id: Optional[int] = None
     tzkt_migration_id: Optional[int] = None
 
+    @classmethod
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TokenTransferData':
+        """Convert raw token transfer message from REST or WS into dataclass"""
+        token_json = token_transfer_json.get('token') or {}
+        contract_json = token_json.get('contract') or {}
+        from_json = token_transfer_json.get('from') or {}
+        to_json = token_transfer_json.get('to') or {}
+        standard = token_json.get('standard')
+        metadata = token_json.get('metadata')
+        return TokenTransferData(
+            id=token_transfer_json['id'],
+            level=token_transfer_json['level'],
+            timestamp=_parse_timestamp(token_transfer_json['timestamp']),
+            tzkt_token_id=token_json['id'],
+            contract_address=contract_json.get('address'),
+            contract_alias=contract_json.get('alias'),
+            token_id=token_json.get('tokenId'),
+            standard=TokenStandard(standard) if standard else None,
+            metadata=metadata if isinstance(metadata, dict) else {},
+            from_alias=from_json.get('alias'),
+            from_address=from_json.get('address'),
+            to_alias=to_json.get('alias'),
+            to_address=to_json.get('address'),
+            amount=token_transfer_json.get('amount'),
+            tzkt_transaction_id=token_transfer_json.get('transactionId'),
+            tzkt_origination_id=token_transfer_json.get('originationId'),
+            tzkt_migration_id=token_transfer_json.get('migrationId'),
+        )
+
 
 @dataclass
 class EventData:
@@ -323,6 +537,21 @@ class EventData:
     contract_alias: Optional[str] = None
     contract_code_hash: Optional[int] = None
     transaction_id: Optional[int] = None
+
+    @classmethod
+    def from_json(cls, event_json: dict[str, Any]) -> 'EventData':
+        """Convert raw event message from WS/REST into dataclass"""
+        return EventData(
+            id=event_json['id'],
+            level=event_json['level'],
+            timestamp=_parse_timestamp(event_json['timestamp']),
+            tag=event_json['tag'],
+            payload=event_json.get('payload'),
+            contract_address=event_json['contract']['address'],
+            contract_alias=event_json['contract'].get('alias'),
+            contract_code_hash=event_json['codeHash'],
+            transaction_id=event_json.get('transactionId'),
+        )
 
 
 @dataclass
