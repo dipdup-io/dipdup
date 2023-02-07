@@ -339,7 +339,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig" title="tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig" title="tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
+<li><p><strong>pattern</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig" title="tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig" title="tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig"><em>tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig</em></a><em>, </em><em>...</em><em>]</em>) – Filters to match operation groups</p></li>
 </ul>
 </dd>
 </dl>
