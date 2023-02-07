@@ -1,22 +1,20 @@
 import hashlib
-import importlib
 import logging
 import re
-from json import dumps as dump_json
-from pathlib import Path
 from typing import Any
 from typing import Iterable
 from typing import Iterator
-from typing import Optional
+from typing import TextIO
 from typing import Union
 from typing import cast
 
-import orjson as json
+import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 
+from dipdup import env
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HTTPConfig
@@ -87,7 +85,7 @@ query introspectionQuery($name: String!) {
 @dataclass
 class Field:
     name: str
-    type: Optional[str] = None
+    type: str | None = None
 
     def camelize(self) -> 'Field':
         return Field(
@@ -114,7 +112,7 @@ class HasuraGateway(HTTPGateway):
         package: str,
         hasura_config: HasuraConfig,
         database_config: PostgresDatabaseConfig,
-        http_config: Optional[HTTPConfig] = None,
+        http_config: HTTPConfig | None = None,
     ) -> None:
         super().__init__(
             hasura_config.url,
@@ -189,6 +187,8 @@ class HasuraGateway(HTTPGateway):
 
         await self._replace_metadata(metadata)
 
+        await self._apply_custom_metadata()
+
         # TODO: Find out why it is necessary
         # NOTE: Fetch metadata once again and save its hash for future comparisons
         metadata = await self._fetch_metadata()
@@ -206,7 +206,7 @@ class HasuraGateway(HTTPGateway):
             return None
 
     async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
-        self._logger.debug('Sending `%s` request: %s', endpoint, dump_json(json))
+        self._logger.debug('Sending `%s` request: %s', endpoint, orjson.dumps(json))
         try:
             result = await self.request(
                 method='get' if json is None else 'post',
@@ -274,17 +274,37 @@ class HasuraGateway(HTTPGateway):
         )
 
     def _hash_metadata(self, metadata: dict[str, Any]) -> str:
-        return hashlib.sha256(json.dumps(metadata)).hexdigest()
+        return hashlib.sha256(orjson.dumps(metadata)).hexdigest()
 
     async def _replace_metadata(self, metadata: dict[str, Any]) -> None:
         self._logger.info('Replacing metadata')
-        endpoint, json = 'query', {
-            'type': 'replace_metadata',
-            'args': {
-                'metadata': metadata,
+        await self._hasura_request(
+            endpoint='metadata',
+            json={
+                'type': 'replace_metadata',
+                'args': {
+                    'metadata': metadata,
+                    'allow_inconsistent_metadata': self._hasura_config.allow_inconsistent_metadata,
+                },
             },
-        }
-        await self._hasura_request(endpoint, json)
+        )
+
+    async def _apply_custom_metadata(self) -> None:
+        for file in self._iterate_metadata_requests():
+            self._logger.info('Executing custom metadata request `%s`', file.name)
+            try:
+                payload = orjson.loads(file.read())
+                await self._hasura_request(
+                    endpoint='metadata',
+                    json=payload,
+                )
+            except orjson.JSONDecodeError:
+                self._logger.error('Invalid JSON in `%s`, skipped', file.name)
+            except HasuraError:
+                if not self._hasura_config.allow_inconsistent_metadata:
+                    raise
+
+                self._logger.error('Failed to apply `%s`, skipped', file.name)
 
     async def _get_views(self) -> list[str]:
         conn = get_connection()
@@ -301,8 +321,7 @@ class HasuraGateway(HTTPGateway):
         return views
 
     def _iterate_graphql_queries(self) -> Iterator[tuple[str, str]]:
-        package = importlib.import_module(self._package)
-        graphql_path = Path(cast(str, package.__file__)) / 'graphql'
+        graphql_path = env.get_package_path(self._package) / 'graphql'
         for file in iter_files(graphql_path, '.graphql'):
             yield file.name.split('/')[-1][:-8], file.read()
 
@@ -642,3 +661,8 @@ class HasuraGateway(HTTPGateway):
         if source_field := field.source_field:
             return field.model._meta.fields_db_projection[source_field]
         return field.model_field_name + '_id'
+
+    def _iterate_metadata_requests(self) -> Iterator[TextIO]:
+        metadata_path = env.get_package_path(self._package) / 'hasura'
+        for file in iter_files(metadata_path, '.json'):
+            yield file

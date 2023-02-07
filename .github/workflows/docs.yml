@@ -7,7 +7,7 @@ on:
     tags:
       - '*.*.*'
     branches:
-      - master
+      - '**'
     paths:
       - 'docs/**'
       - 'scripts/**'
@@ -30,10 +30,12 @@ jobs:
         python-version: '3.11'
         cache: 'poetry'
 
-    - name: Set up mdBook
-      uses: peaceiris/actions-mdbook@v1
+    - name: Set up mdbook
+      uses: jontze/action-mdbook@v2
       with:
-        mdbook-version: '0.4.21'
+        token: ${{secrets.GITHUB_TOKEN}}
+        use-toc: true
+        use-admonish: true
 
     - name: Install project
       run: make install
@@ -51,11 +53,11 @@ jobs:
         destination_dir: docs
 
     - name: Build docs (docs-next)
-      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      if: startsWith(github.ref, 'refs/heads')
       run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs-next)
-      if: startsWith(github.ref, 'refs/heads') || contains(github.ref, 'rc')
+      if: startsWith(github.ref, 'refs/heads/master')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

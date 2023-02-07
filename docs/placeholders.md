@@ -2,28 +2,28 @@
 
 ## Under construction
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+```admonish warning title=""
+This page or paragraph is yet to be written. Come back later.
+```
 
 ## Tip
 
-> 💡 **TIP**
->
-> ...
+```admonish tip
+...
+```
 
 ## Warning
 
-> ⚠ **WARNING**
->
-> ...
+```admonish warning
+...
+```
 
 ## See also
 
-> 💡 **SEE ALSO**
->
-> * [13. Command-line reference](cli-reference.md)
-> * [External link](https://google.com)
+```admonish info title="See Also"
+* [13. Command-line reference](cli-reference.md)
+* [External link](https://google.com)
+```
 
 ## Comments
 

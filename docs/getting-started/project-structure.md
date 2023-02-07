@@ -9,6 +9,7 @@ demo_token
 │   ├── __init__.py
 │   ├── on_mint.py
 │   └── on_transfer.py
+├── hasura
 ├── hooks
 │   ├── __init__.py
 │   ├── on_reindex.py
@@ -33,14 +34,15 @@ demo_token
         └── storage.py
 ```
 
-| path | description |
-| - | - |
-| `graphql` | GraphQL queries for Hasura (`*.graphql`) |
-| `handlers` | User-defined callbacks to process matched operations and big map diffs |
-| `hooks` | User-defined callbacks to run manually or by schedule |
-| `models.py` | Tortoise ORM models |
-| `sql` | SQL scripts to run from callbacks (`*.sql`) |
-| `types` | Codegened Pydantic typeclasses for contract storage/parameter |
+| path        | description                                                            |
+| ----------- | ---------------------------------------------------------------------- |
+| `graphql`   | GraphQL queries for Hasura (`*.graphql`)                               |
+| `handlers`  | User-defined callbacks to process matched operations and big map diffs |
+| `hasura`    | Arbitrary Hasura metadata (`*.json`)                                   |
+| `hooks`     | User-defined callbacks to run manually or by schedule                  |
+| `models.py` | Tortoise ORM models                                                    |
+| `sql`       | SQL scripts to run from callbacks (`*.sql`)                            |
+| `types`     | Codegened Pydantic typeclasses for contract storage/parameter          |
 
 DipDup will generate all the necessary directories and files inside the project's root on `init` command. These include contract type definitions and callback stubs to be implemented by the developer.
 
@@ -88,10 +90,10 @@ indexer
 
 The same rules apply to handler callbacks. Note that the `callback` field must be a valid Python package name - lowercase letters, underscores, and dots.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/defining-models.md }}
-> * {{ #summary getting-started/implementing-handlers.md }}
-> * {{ #summary advanced/hooks.md }}
-> * {{ #summary advanced/sql.md }}
-> * {{ #summary graphql/hasura.md }}
+```admonish info title="See Also"
+* {{ #summary getting-started/defining-models.md }}
+* {{ #summary getting-started/implementing-handlers.md }}
+* {{ #summary advanced/hooks.md }}
+* {{ #summary advanced/sql.md }}
+* {{ #summary graphql/hasura.md }}
+```

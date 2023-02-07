@@ -163,9 +163,10 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
+    init_sentry(_config)
+
     # NOTE: Imports will be loaded later if needed
     _config.initialize(skip_imports=True)
-    init_sentry(_config)
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
@@ -506,12 +507,13 @@ async def schema_export(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+    package_path = env.get_package_path(config.package)
 
     async with tortoise_wrapper(url, models):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
-        project_sql_path = Path(config.package_path) / 'sql' / 'on_reindex'
+        project_sql_path = package_path / 'sql' / 'on_reindex'
 
         for sql_path in (dipdup_sql_path, project_sql_path):
             for file in iter_files(sql_path):

@@ -18,6 +18,8 @@ RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip
 FROM python:3.11-alpine3.16 AS build-image
 RUN adduser -D dipdup
 USER dipdup
+ENV DIPDUP_DOCKER=1
+ENV DIPDUP_DOCKER_IMAGE=slim
 ENV PATH="/opt/dipdup/bin:$PATH"
 ENV PYTHONPATH="/home/dipdup:/home/dipdup/src:/opt/dipdup/src:/opt/dipdup/lib/python3.11/site-packages:$PYTHONPATH"
 WORKDIR /home/dipdup/

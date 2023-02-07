@@ -11,17 +11,29 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: New index kind `operation_unfiltered`.
 -->
 
-## [Unreleased]
+## [6.5.0] - 2023-01-28
+
+### Added
+
+- hasura: Apply arbitrary metadata from `hasura` project directory.
+- config: Added `allow_inconsistent_metadata` option to `hasura` section.
 
 ### Fixed
 
+- config: Do not include coinbase datasource credentials in config repr.
+- database: Fixed crash when schema generation should fail with `schema_modified`.
+- hasura: Stop using deprecated schema/metadata API.
+- index: Fixed unnecessary prefetching of migration originations in `operation` index.
+- index: Remove disabled indexes from the dispatcher queue.
+- sentry: Flush and reopen session daily.
 - tzkt: Fixed `OperationData.type` field value for migration originations.
 - tzkt: Added missing `last_level` argument to migration origination fetching methods.
-- index: Fixed unnecessary prefetching of migration originations in `operation` index.
 
 ### Other
 
-- ci: Enforce markdown linting for docs.
+- tzkt: Updated current testnet protocol (`limanet`).
+- deps: Updated asyncpg to 0.27.0
+- deps: Updated hasura to 2.17.0
 
 ## [6.4.3] - 2023-01-05
 

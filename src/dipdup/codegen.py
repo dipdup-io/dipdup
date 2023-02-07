@@ -19,6 +19,7 @@ from typing import cast
 
 import orjson as json
 
+from dipdup import env
 from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
@@ -101,6 +102,7 @@ class ProjectPaths:
         self.hooks = root / 'hooks'
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
+        self.hasura = root / 'hasura'
 
     def create_package(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -113,6 +115,7 @@ class ProjectPaths:
 
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
+        touch(self.hasura / KEEP_MARKER)
 
         if not self.models.is_file():
             template = load_template('templates', f'{MODELS_MODULE}.j2')
@@ -128,7 +131,7 @@ class CodeGenerator:
         self._config = config
         self._datasources = datasources
         self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
-        self._pkg = ProjectPaths(Path(config.package_path))
+        self._pkg = ProjectPaths(env.get_package_path(config.package))
 
     def create_package(self) -> None:
         self._pkg.create_package()

@@ -88,13 +88,13 @@ class TokenTransferIndex(
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
-            await self.state.update_status(level=batch_level)
+            await self._update_state(level=batch_level)
             return
 
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, token_transfer in matched_handlers:
                 await self._call_matched_handler(handler_config, token_transfer)
-            await self.state.update_status(level=batch_level)
+            await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
         self, handler_config: TokenTransferHandlerConfig, token_transfer: TokenTransferData

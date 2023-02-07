@@ -47,3 +47,8 @@ img.logo {
     height: 1em;
     opacity: 50%;
 }
+
+/* less ugly autodoc references */
+dd .field-odd {
+    margin: 0;
+}

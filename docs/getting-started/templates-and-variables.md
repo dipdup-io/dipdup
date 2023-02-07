@@ -87,7 +87,7 @@ ctx.add_index(
 )
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/index-factories.md }}
-> * {{ #summary config/templates.md }}
+```admonish info title="See Also"
+* {{ #summary advanced/index-factories.md }}
+* {{ #summary config/templates.md }}
+```

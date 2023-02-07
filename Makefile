@@ -32,7 +32,7 @@ test:           ## Run test suite
 docs:           ## Build docs
 	scripts/update_cookiecutter.py
 	cd docs
-	make -s clean docs markdownlint orphans || true
+	make -s clean build lint
 
 ##
 
@@ -60,10 +60,10 @@ image:          ## Build all Docker images
 	make image-slim
 
 image-default:  ## Build default Docker image
-	docker buildx build . --progress plain -t dipdup:${TAG}
+	docker buildx build . --progress plain -t dipdup:${TAG} --build-arg DIPDUP_DOCKER_IMAGE=default
 
 image-pytezos:  ## Build pytezos Docker image
-	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg PYTEZOS=1
+	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg DIPDUP_DOCKER_IMAGE=pytezos
 
 image-slim:     ## Build slim Docker image
 	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim

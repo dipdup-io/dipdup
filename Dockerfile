@@ -1,15 +1,16 @@
 # syntax=docker/dockerfile:1.3-labs
 FROM python:3.11-slim-buster AS compile-image
-ARG PYTEZOS=0
-ENV DIPDUP_PYTEZOS=${PYTEZOS}
+ARG DIPDUP_DOCKER_IMAGE=default
+ENV DIPDUP_DOCKER=1
+ENV DIPDUP_DOCKER_IMAGE=${DIPDUP_DOCKER_IMAGE}
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN <<eot
     apt update
-    apt install -y gcc make git `if [[ $PYTEZOS = "1" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y gcc make git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
-    pip install --no-cache-dir poetry==1.2.2
+    pip install --no-cache-dir poetry==1.3.2
 
     mkdir -p /opt/dipdup
  
@@ -26,23 +27,26 @@ RUN <<eot
     mkdir -p /opt/dipdup/src/dipdup
     touch /opt/dipdup/src/dipdup/__init__.py
 
-    make install DEV=0 PYTEZOS="${PYTEZOS}"
+    make install DEV=0 `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo PYTEZOS=1; fi`
 
     rm -r /root/.cache/
 eot
 
 FROM python:3.11-slim-buster AS build-image
-ARG PYTEZOS=0
-ENV DIPDUP_PYTEZOS=${PYTEZOS}
+
+ARG DIPDUP_DOCKER_IMAGE=default
+ENV DIPDUP_DOCKER=1
+ENV DIPDUP_DOCKER_IMAGE=${DIPDUP_DOCKER_IMAGE}
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
 SHELL ["/bin/bash", "-c"]
 
 RUN <<eot
     useradd -ms /bin/bash dipdup
-    pip install --no-cache-dir poetry==1.2.2 setuptools
+    pip install --no-cache-dir poetry==1.3.2 setuptools
 
     apt update
-    apt install -y --no-install-recommends git `if [[ $PYTEZOS = "1" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y --no-install-recommends git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
     rm -r /var/log/* /var/lib/apt/lists/* /var/cache/* /var/lib/dpkg/status*
 eot

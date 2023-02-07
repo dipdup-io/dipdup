@@ -8,6 +8,7 @@ from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from copy import copy
 from typing import Any
 from typing import Awaitable
 from typing import Dict
@@ -100,7 +101,14 @@ class IndexDispatcher:
                 for datasource in index_datasources:
                     await datasource.subscribe()
 
-            tasks: deque[Awaitable[bool]] = deque(index.process() for index in self._indexes.values())
+            tasks: deque[Awaitable[bool]] = deque()
+            for name, index in copy(self._indexes).items():
+                if index.state.status == IndexStatus.ONESHOT:
+                    del self._indexes[name]
+                    continue
+
+                tasks.append(index.process())
+
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
@@ -112,7 +120,8 @@ class IndexDispatcher:
                 if isinstance(index, OperationIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and self._every_index_is(IndexStatus.ONESHOT):
+            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.ONESHOT)):
+                self._logger.info('No indexes left, exiting')
                 break
 
             if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
@@ -470,26 +479,19 @@ class DipDup:
         schema_name = self._config.schema_name
         conn = get_connection()
 
-        # NOTE: Try to fetch existing schema
-        try:
+        # NOTE: Try to fetch existing schema, but don't fail yet
+        with suppress(OperationalError):
             self._schema = await Schema.get_or_none(name=schema_name)
 
-        # NOTE: No such table yet
+        # NOTE: Call with existing Schema too to create new tables if missing
+        try:
+            await generate_schema(
+                conn,
+                schema_name,
+            )
         except OperationalError:
-            self._schema = None
+            await self._ctx.reindex(ReindexingReason.schema_modified)
 
-        # TODO: Fix Tortoise ORM to raise more specific exception
-        except KeyError:
-            try:
-                self._schema = await Schema.get_or_none(name=schema_name)
-            except KeyError:
-                await self._ctx.reindex(ReindexingReason.schema_modified)
-
-        # NOTE: Call even if Schema is present to create new tables
-        await generate_schema(
-            conn,
-            schema_name,
-        )
         schema_hash = get_schema_hash(conn)
 
         if self._schema is None:

@@ -6,7 +6,7 @@ This page contains tips that may help to increase indexing speed.
 
 [Postgres indexes](https://www.postgresql.org/docs/9.5/indexes-types.html) are tables that Postgres can use to speed up data lookup. A database index acts like a pointer to data in a table, just like an index in a printed book. If you look in the index first, you will find the data much quicker than searching the whole book (or — in this case — database).
 
-You should add indexes on columns often appearing in `WHERE`` clauses in your GraphQL queries and subscriptions.
+You should add indexes on columns often appearing in `WHERE` clauses in your GraphQL queries and subscriptions.
 
 Tortoise ORM uses BTree indexes by default. To set index on a field, add `index=True` to the field definition:
 
@@ -62,20 +62,20 @@ By default, DipDup retries failed requests infinitely, exponentially increasing 
 
 `batch_size` parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. By reducing the `connection_limit` parameter, you can achieve the same effect (limited to synchronizing multiple indexes concurrently).
 
-> 💡 **SEE ALSO**
->
-> * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
-> * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
-> * {{ #summary deployment/database-engines.md}}
-> * {{ #summary deployment/backups.md}}
+```admonish info title="See Also"
+* [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
+* [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
+* {{ #summary deployment/database-engines.md}}
+* {{ #summary deployment/backups.md}}
+```
 
 See [12.4. datasources](../config/datasources.md) for details.
 
 ## Use TimescaleDB for time-series
 
-> 🚧 **UNDER CONSTRUCTION**
->
-> This page or paragraph is yet to be written. Come back later.
+```admonish warning title=""
+This page or paragraph is yet to be written. Come back later.
+```
 
 DipDup is fully compatible with [TimescaleDB](https://docs.timescale.com/). Try its "continuous aggregates" feature, especially if dealing with market data like DEX quotes.
 

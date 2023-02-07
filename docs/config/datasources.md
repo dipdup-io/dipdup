@@ -38,7 +38,7 @@ datasources:
   metadata:
     kind: metadata
     url: https://metadata.dipdup.net
-    network: mainnet|ghostnet|jakartanet|kathmandunet
+    network: mainnet|ghostnet|limanet
 ```
 
 ## ipfs
@@ -50,6 +50,6 @@ datasources:
     url: https://ipfs.io/ipfs
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary advanced/datasources.md}}
+```admonish info title="See Also"
+* {{ #summary advanced/datasources.md}}
+```

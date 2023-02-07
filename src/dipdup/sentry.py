@@ -1,4 +1,5 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
+import asyncio
 import hashlib
 import logging
 import platform
@@ -28,6 +29,17 @@ if TYPE_CHECKING:
 
 
 _logger = logging.getLogger('dipdup.sentry')
+
+
+async def _heartbeat() -> None:
+    """Restart Sentry session every 24 hours"""
+    with suppress(asyncio.CancelledError):
+        while True:
+            await asyncio.sleep(60 * 60 * 24)
+            _logger.info('Reopening Sentry session')
+            sentry_sdk.Hub.current.end_session()
+            sentry_sdk.Hub.current.flush()
+            sentry_sdk.Hub.current.start_session()
 
 
 def save_crashdump(error: Exception) -> str:
@@ -176,3 +188,4 @@ def init_sentry(config: 'DipDupConfig') -> None:
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
+    asyncio.ensure_future(_heartbeat())

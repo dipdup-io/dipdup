@@ -43,10 +43,10 @@ poetry add dipdup
 poetry shell
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/installation.md}}
-> * [Poetry documentation](https://python-poetry.org/docs/)
+```admonish info title="See Also"
+* {{ #summary getting-started/installation.md}}
+* [Poetry documentation](https://python-poetry.org/docs/)
+```
 
 ## Write a configuration file
 
@@ -56,10 +56,10 @@ DipDup configuration is stored in YAML files of a specific format. Create a new 
 {{ #include ../demos/demo-token/dipdup.yml }}
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/templates-and-variables.md}}
-> * {{ #summary config/README.md}}
+```admonish info title="See Also"
+* {{ #summary getting-started/templates-and-variables.md}}
+* {{ #summary config/README.md}}
+```
 
 ## Initialize project tree
 
@@ -104,10 +104,10 @@ demo_token
 
 That's a lot of files and directories! But don't worry, we will need only `models.py` and `handlers` modules in this guide.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/project-structure.md}}
-> * {{ #summary cli-reference.md#init}}
+```admonish info title="See Also"
+* {{ #summary getting-started/project-structure.md}}
+* {{ #summary cli-reference.md#init}}
+```
 
 ## Define data models
 
@@ -125,11 +125,11 @@ Put the following content in the `models.py` file:
 {{ #include ../demos/demo-token/src/demo_token/models.py }}
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/defining-models.md}}
-> * [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
-> * [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
+```admonish info title="See Also"
+* {{ #summary getting-started/defining-models.md}}
+* [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
+* [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
+```
 
 ## Implement handlers
 
@@ -157,9 +157,9 @@ Three methods of tzBTC contract can alter token balances — `transfer`, `mint`,
 
 And that's all! We can run the indexer now.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary getting-started/implementing-handlers.md}}
+```admonish info title="See Also"
+* {{ #summary getting-started/implementing-handlers.md}}
+```
 
 ## Run your indexer
 
@@ -169,6 +169,6 @@ dipdup run
 
 DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary cli-reference.md}}
+```admonish info title="See Also"
+* {{ #summary cli-reference.md}}
+```

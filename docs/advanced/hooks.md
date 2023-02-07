@@ -48,6 +48,6 @@ By default, hooks execute SQL scripts from the corresponding subdirectory of `sq
 
 DipDup will ensure that arguments passed to the hooks have the correct types when possible. `CallbackTypeError` exception will be raised otherwise. Values of an `args` mapping in a hook config should be either built-in types or `__qualname__` of external type like `decimal.Decimal`. Generic types are not supported: hints like `Optional[int] = None` will be correctly parsed during codegen but ignored on type checking.
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary config/hooks.md}}
+```admonish info title="See Also"
+* {{ #summary config/hooks.md}}
+```

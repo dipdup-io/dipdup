@@ -2,14 +2,14 @@
 
 As you can see from the amount of code below, lots of things are going on here:
 
-* YAML (de)serialization
 * Templating indexes and env variables (`<...>` and `${...}` syntax)
 * Config initialization and validation
 * Methods to generate paths for codegen
 * And even importing contract types on demand
 
-Dataclasses are used in this module instead of BaseModel for historical reasons (can't remember why;
-something about ruamel.yaml compatibility), thus "...Mixin" classes to workaround the lack of proper
+* YAML (de)serialization moved to `dipdup.yaml` module.
+
+Dataclasses are used in this module instead of BaseModel for historical reasons, thus "...Mixin" classes to workaround the lack of proper
 inheritance.
 """
 from __future__ import annotations
@@ -26,7 +26,6 @@ from collections import Counter
 from contextlib import suppress
 from dataclasses import field
 from functools import partial
-from io import StringIO
 from pathlib import Path
 from pydoc import locate
 from typing import Any
@@ -43,7 +42,6 @@ from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
-from ruamel.yaml import YAML
 from typing_extensions import Literal
 
 from dipdup import baking_bad
@@ -65,13 +63,11 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.utils import exclude_none
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from dipdup.yaml import DipDupYAMLConfig
 
-# NOTE: ${VARIABLE:-default} | ${VARIABLE}
-ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 DEFAULT_METADATA_URL = baking_bad.METADATA_API_URL
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 DEFAULT_TZKT_URL = next(iter(baking_bad.TZKT_API_URLS.keys()))
@@ -340,8 +336,9 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
 
     kind: Literal['coinbase']
     api_key: str | None = None
-    secret_key: str | None = None
-    passphrase: str | None = None
+    secret_key: str | None = field(default=None, repr=False)
+    passphrase: str | None = field(default=None, repr=False)
+
     http: HTTPConfig | None = None
 
     def __hash__(self) -> int:
@@ -388,9 +385,9 @@ class IpfsDatasourceConfig(DatasourceConfig):
 class HttpDatasourceConfig(DatasourceConfig):
     """Generic HTTP datasource config
 
-    kind: always 'http'
-    url: URL to fetch data from
-    http: HTTP client configuration
+    :param kind: always 'http'
+    :param url: URL to fetch data from
+    :param http: HTTP client configuration
     """
 
     kind: Literal['http']
@@ -838,10 +835,11 @@ class IndexTemplateConfig(NameMixin):
     """Index template config
 
     :param kind: always `template`
-    :param name: Name of index template
-    :param template_values: Values to be substituted in template (`<key>` -> `value`)
+    :param values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
+    :param template: Template alias in `templates` section
+
     """
 
     kind = 'template'
@@ -900,6 +898,7 @@ class OperationIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation`
+    :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
@@ -944,6 +943,11 @@ class OperationIndexConfig(IndexConfig):
 
 @dataclass
 class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+    """Handler of unfiltered operation index
+
+    :param callback: Callback name
+    """
+
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
         yield 'dipdup.models', 'OperationData'
@@ -959,9 +963,10 @@ class OperationUnfilteredIndexConfig(IndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
+    :param datasource: Alias of index datasource in `datasources` section
+    :param callback: Callback name
     :param types: Types of transaction to fetch
 
-    :param callback: Callback name
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
     """
@@ -990,6 +995,7 @@ OperationIndexConfigU = OperationIndexConfig | OperationUnfilteredIndexConfig
 class BigMapHandlerConfig(HandlerConfig, kind='handler'):
     """Big map handler config
 
+    :param callback: Callback name
     :param contract: Contract to fetch big map from
     :param path: Path to big map (alphanumeric string with dots)
     """
@@ -1064,10 +1070,10 @@ class BigMapIndexConfig(IndexConfig):
 
     :param kind: always `big_map`
     :param datasource: Index datasource to fetch big maps with
-    :param handlers: Description of big map diff handlers
+    :param handlers: Mapping of big map diff handlers
     :param skip_history: Fetch only current big map keys ignoring historical changes
     :param first_level: Level to start indexing from
-    :param last_level: Level to stop indexing at (Dipdup will terminate at this level)
+    :param last_level: Level to stop indexing at
     """
 
     kind: Literal['big_map']
@@ -1096,7 +1102,10 @@ class BigMapIndexConfig(IndexConfig):
 
 @dataclass
 class HeadHandlerConfig(HandlerConfig, kind='handler'):
-    """Head block handler config"""
+    """Head block handler config
+
+    :param callback: Callback name
+    """
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -1110,7 +1119,12 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class HeadIndexConfig(IndexConfig):
-    """Head block index config"""
+    """Head block index config
+
+    :param kind: always `head`
+    :param datasource: Index datasource to receive head blocks
+    :param handlers: Mapping of head block handlers
+    """
 
     kind: Literal['head']
     datasource: TzktDatasourceConfig
@@ -1131,6 +1145,15 @@ class HeadIndexConfig(IndexConfig):
 
 @dataclass
 class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
+    """Token transfer handler config
+
+    :param callback: Callback name
+    :param contract: Filter by contract
+    :param token_id: Filter by token ID
+    :param from_: Filter by sender
+    :param to: Filter by recipient
+    """
+
     contract: ContractConfig | None = None
     token_id: int | None = None
     from_: ContractConfig | None = Field(default=None, alias='from')
@@ -1148,7 +1171,15 @@ class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class TokenTransferIndexConfig(IndexConfig):
-    """Token index config"""
+    """Token transfer index config
+
+    :param kind: always `token_transfer`
+    :param datasource: Index datasource to use
+    :param handlers: Mapping of token transfer handlers
+
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at
+    """
 
     kind: Literal['token_transfer']
     datasource: TzktDatasourceConfig
@@ -1164,6 +1195,13 @@ class TokenTransferIndexConfig(IndexConfig):
 
 @dataclass
 class EventHandlerConfig(HandlerConfig, kind='handler'):
+    """Event handler config
+
+    :param callback: Callback name
+    :param contract: Contract which emits event
+    :param tag: Event tag
+    """
+
     contract: ContractConfig
     tag: str
 
@@ -1204,6 +1242,12 @@ class EventHandlerConfig(HandlerConfig, kind='handler'):
 
 @dataclass
 class UnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+    """Unknown event handler config
+
+    :param callback: Callback name
+    :param contract: Contract which emits event
+    """
+
     contract: ContractConfig
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -1221,6 +1265,15 @@ EventHandlerConfigU = EventHandlerConfig | UnknownEventHandlerConfig
 
 @dataclass
 class EventIndexConfig(IndexConfig):
+    """Event index config
+
+    :param kind: Index kind
+    :param datasource: Datasource config
+    :param handlers: Event handlers
+    :param first_level: First block level to index
+    :param last_level: Last block level to index
+    """
+
     kind: Literal['event']
     datasource: TzktDatasourceConfig
     handlers: tuple[EventHandlerConfigU, ...] = field(default_factory=tuple)
@@ -1255,6 +1308,7 @@ class HasuraConfig:
     :param source: Hasura source for DipDup to configure, others will be left untouched.
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
+    :param allow_inconsistent_metadata: Whether to ignore errors when applying Hasura metadata.
     :param camel_case: Whether to use camelCase instead of default pascal_case for the field names (incompatible with `metadata_interface` flag)
     :param rest: Enable REST API both for autogenerated and custom queries.
     :param http: HTTP connection tunables
@@ -1266,6 +1320,7 @@ class HasuraConfig:
     source: str = 'default'
     select_limit: int = 100
     allow_aggregations: bool = True
+    allow_inconsistent_metadata: bool = False
     camel_case: bool = False
     rest: bool = True
     http: HTTPConfig | None = None
@@ -1352,6 +1407,7 @@ class HookConfig(CallbackMixin, kind='hook'):
 
     :param args: Mapping of argument names and annotations (checked lazily when possible)
     :param atomic: Wrap hook in a single database transaction
+    :param callback: Callback name
     """
 
     args: dict[str, str] = field(default_factory=dict)
@@ -1434,7 +1490,7 @@ class AdvancedConfig:
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of specification
+    :param spec_version: Version of config specification, currently always `1.2`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -1447,7 +1503,8 @@ class DipDupConfig:
     :param sentry: Sentry integration config
     :param prometheus: Prometheus integration config
     :param advanced: Advanced config
-    :param custom: User-defined Custom config
+    :param custom: User-defined configuration to use in callbacks
+    :param logging: Modify logging verbosity
     """
 
     spec_version: str
@@ -1476,6 +1533,7 @@ class DipDupConfig:
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
+        self.json = DipDupYAMLConfig()
         self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
         self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
 
@@ -1486,24 +1544,8 @@ class DipDupConfig:
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
-    @property
     def package_path(self) -> Path:
-        """Absolute path to the indexer package, existing or default"""
-        # NOTE: Integration tests run in isolated environment
-        if env.TEST:
-            return Path.cwd() / self.package
-
-        with suppress(ImportError):
-            package = importlib.import_module(self.package)
-            if package.__file__ is None:
-                raise FrameworkException(f'`{package.__name__}` package has no `__file__` attribute')
-            return Path(package.__file__).parent
-
-        # NOTE: Detect src/<package> layout
-        if Path('src').is_dir():
-            return Path('src', self.package)
-
-        return Path(self.package)
+        return env.get_package_path(self.package)
 
     @property
     def oneshot(self) -> bool:
@@ -1514,7 +1556,6 @@ class DipDupConfig:
             return True
         return False
 
-    # TODO: Pick refactoring from `ref/config-module`
     @classmethod
     def load(
         cls,
@@ -1524,40 +1565,19 @@ class DipDupConfig:
         # NOTE: __future__.annotations
         JobConfig.__pydantic_model__.update_forward_refs()  # type: ignore[attr-defined]
 
-        yaml = YAML(typ='base')
-
-        json_config: dict[str, Any] = {}
-        config_environment: dict[str, str] = {}
-        for path in paths:
-            raw_config = cls._load_raw_config(path)
-
-            if environment:
-                raw_config, raw_config_environment = cls._substitute_env_variables(raw_config)
-                config_environment.update(raw_config_environment)
-
-            json_config.update(yaml.load(raw_config))
+        config_json, config_environment = DipDupYAMLConfig.load(paths, environment)
 
         try:
-            config = cls(**json_config)
+            config = cls(**config_json)
         except ConfigurationError:
             raise
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 
-        config.environment = config_environment
         config.paths = paths
+        config.json = config_json
+        config.environment = config_environment
         return config
-
-    def dump(self) -> str:
-        yaml = YAML(typ='unsafe', pure=True)
-        yaml.default_flow_style = False
-        yaml.indent = 2
-
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_yaml = exclude_none(yaml.load(config_json))
-        buffer = StringIO()
-        yaml.dump(config_yaml, buffer)
-        return buffer.getvalue()
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1620,6 +1640,9 @@ class DipDupConfig:
                 raise ConfigInitializationException
             index_config.import_objects(self.package)
 
+    def dump(self) -> str:
+        return DipDupYAMLConfig.dump(self.json)
+
     def add_index(
         self,
         name: str,
@@ -1643,35 +1666,6 @@ class DipDupConfig:
         self._resolve_index_subscriptions(index_config)
         index_config._name = name
         index_config.import_objects(self.package)
-
-    @classmethod
-    def _load_raw_config(cls, path: Path) -> str:
-        _logger.debug('Loading config from %s', path)
-        try:
-            with open(path) as file:
-                return ''.join(filter(cls._filter_commented_lines, file.readlines()))
-        except OSError as e:
-            raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
-
-    @classmethod
-    def _filter_commented_lines(cls, line: str) -> bool:
-        return '#' not in line or line.lstrip()[0] != '#'
-
-    @classmethod
-    def _substitute_env_variables(cls, raw_config: str) -> tuple[str, dict[str, str]]:
-        _logger.debug('Substituting environment variables')
-        environment: dict[str, str] = {}
-
-        for match in re.finditer(ENV_VARIABLE_REGEX, raw_config):
-            variable, default_value = match.group('var_name'), match.group('default_value')
-            value = env.get(variable, default_value)
-            if not value:
-                raise ConfigurationError(f'Environment variable `{variable}` is not set')
-            environment[variable] = value
-            placeholder = match.group(0)
-            raw_config = raw_config.replace(placeholder, value or default_value)
-
-        return raw_config, environment
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface

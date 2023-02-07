@@ -6,7 +6,7 @@ from dipdup import env
 from dipdup.config import HTTPConfig
 from dipdup.datasources.tzkt.datasource import TzktDatasource
 
-env.in_tests()
+env.set_test()
 
 
 CONFIGS_PATH = Path(__file__).parent / 'configs'

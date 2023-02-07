@@ -10,7 +10,7 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 
 ```toml
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.10,<3.12"
 dipdup = "^{{ cookiecutter.dipdup_version }}"
 ```
 
@@ -33,11 +33,11 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config export
 dipdup -c dipdup.yml -c dipdup.prod.yml config env
 ```
 
-> 💡 **SEE ALSO**
->
-> * {{ #summary cli-reference.md#dipdup-config-export }}
-> * {{ #summary cli-reference.md#dipdup-config-env }}
-> * {{ #summary config/README.md }}
+```admonish info title="See Also"
+* {{ #summary cli-reference.md#dipdup-config-export }}
+* {{ #summary cli-reference.md#dipdup-config-env }}
+* {{ #summary config/README.md }}
+```
 
 ## Enable debug logging and crash reporting
 
