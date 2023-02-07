@@ -11,8 +11,6 @@ from contextlib import suppress
 from copy import copy
 from typing import Any
 from typing import Awaitable
-from typing import Dict
-from typing import Optional
 
 from tortoise.exceptions import OperationalError
 
@@ -69,7 +67,7 @@ class IndexDispatcher:
         self._ctx = ctx
 
         self._logger = logging.getLogger('dipdup')
-        self._indexes: Dict[str, Index[Any, Any, Any]] = {}
+        self._indexes: dict[str, Index[Any, Any, Any]] = {}
 
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
@@ -354,8 +352,8 @@ class DipDup:
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger('dipdup')
         self._config = config
-        self._datasources: Dict[str, Datasource] = {}
-        self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
+        self._datasources: dict[str, Datasource] = {}
+        self._datasources_by_config: dict[DatasourceConfigU, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
@@ -368,7 +366,7 @@ class DipDup:
             transactions=self._transactions,
         )
         self._codegen = CodeGenerator(self._config, self._datasources_by_config)
-        self._schema: Optional[Schema] = None
+        self._schema: Schema | None = None
 
     @property
     def schema(self) -> Schema:
