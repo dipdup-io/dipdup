@@ -233,7 +233,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `operation`
+    :param kind: always `tezos.tzkt.operations`
     :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
@@ -332,7 +332,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `operation_unfiltered`
+    :param kind: always `tezos.tzkt.operations_unfiltered`
     :param datasource: Alias of index datasource in `datasources` section
     :param callback: Callback name
     :param types: Types of transaction to fetch

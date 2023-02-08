@@ -42,7 +42,7 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
 class TzktTokenTransfersIndexConfig(TzktIndexConfig):
     """Token transfer index config
 
-    :param kind: always `token_transfer`
+    :param kind: always `tezos.tzkt.token_transfers`
     :param datasource: Index datasource to use
     :param handlers: Mapping of token transfer handlers
 
