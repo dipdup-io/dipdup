@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -181,7 +181,7 @@ def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iter
     return storage
 
 
-def deserialize_storage(operation_data: OperationData, storage_type: Type[StorageType]) -> StorageType:
+def deserialize_storage(operation_data: TzktOperationData, storage_type: Type[StorageType]) -> StorageType:
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 

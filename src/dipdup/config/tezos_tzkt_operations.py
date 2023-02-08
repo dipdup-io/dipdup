@@ -14,11 +14,11 @@ from dipdup.config import HandlerConfig
 from dipdup.config import ParameterTypeMixin
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tezos_tzkt import OperationType
+from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -56,7 +56,7 @@ class PatternConfig(CodegenMixin):
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:
-        return 'dipdup.models.tezos_tzkt', 'OperationData'
+        return 'dipdup.models.tezos_tzkt', 'TzktOperationData'
 
     @classmethod
     def format_origination_argument(
@@ -68,8 +68,8 @@ class PatternConfig(CodegenMixin):
         arg_name = pascal_to_snake(alias or f'{module_name}_origination')
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return arg_name, f'Origination[{storage_cls}] | None'
-        return arg_name, f'Origination[{storage_cls}]'
+            return arg_name, f'TzktOrigination[{storage_cls}] | None'
+        return arg_name, f'TzktOrigination[{storage_cls}]'
 
     @classmethod
     def format_operation_argument(
@@ -84,8 +84,8 @@ class PatternConfig(CodegenMixin):
         parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}] | None'
-        return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}]'
+            return pascal_to_snake(arg_name), f'TzktTransaction[{parameter_cls}, {storage_cls}] | None'
+        return pascal_to_snake(arg_name), f'TzktTransaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
     def format_untyped_operation_argument(
@@ -97,8 +97,8 @@ class PatternConfig(CodegenMixin):
     ) -> tuple[str, str]:
         arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
         if optional:
-            return arg_name, 'OperationData | None'
-        return arg_name, 'OperationData'
+            return arg_name, 'TzktOperationData | None'
+        return arg_name, 'TzktOperationData'
 
 
 @dataclass
@@ -132,7 +132,7 @@ class OperationsHandlerTransactionPatternConfig(
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'Transaction'
+            yield 'dipdup.models.tezos_tzkt', 'TzktTransaction'
             yield self.format_parameter_import(
                 package,
                 module_name,
@@ -199,10 +199,10 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'Origination'
+            yield 'dipdup.models.tezos_tzkt', 'TzktOrigination'
             yield self.format_storage_import(package, module_name)
         else:
-            yield 'dipdup.models.tezos_tzkt', 'OperationData'
+            yield 'dipdup.models.tezos_tzkt', 'TzktOperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -230,7 +230,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
 
 
 @dataclass
-class TezosTzktOperationsIndexConfig(TezosTzktIndexConfig):
+class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation`
@@ -243,10 +243,10 @@ class TezosTzktOperationsIndexConfig(TezosTzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations']
-    datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktOperationsHandlerConfig, ...]
+    datasource: TzktDatasourceConfig
+    handlers: tuple[TzktOperationsHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
+    types: tuple[TzktOperationType, ...] = (TzktOperationType.transaction,)
 
     first_level: int = 0
     last_level: int = 0
@@ -283,7 +283,7 @@ OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | Op
 
 
 @dataclass
-class TezosTzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
     """Operation handler config
 
     :param callback: Callback name
@@ -320,16 +320,16 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'OperationData'
+        yield 'dipdup.models.tezos_tzkt', 'TzktOperationData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'operation', 'OperationData'
+        yield 'operation', 'TzktOperationData'
 
 
 @dataclass
-class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
+class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
@@ -342,9 +342,9 @@ class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations_unfiltered']
-    datasource: TezosTzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     callback: str
-    types: tuple[OperationType, ...] = (OperationType.transaction,)
+    types: tuple[TzktOperationType, ...] = (TzktOperationType.transaction,)
 
     first_level: int = 0
     last_level: int = 0
@@ -357,5 +357,5 @@ class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
         self.handler_config.initialize_callback_fn(package)
 
 
-TezosTzktOperationsHandlerConfigU = TezosTzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig
-TezosTzktOperationsIndexConfigU = TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig
+TzktOperationsHandlerConfigU = TzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig
+TzktOperationsIndexConfigU = TzktOperationsIndexConfig | TzktOperationsUnfilteredIndexConfig

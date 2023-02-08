@@ -6,7 +6,7 @@ This index allows indexing token transfers of contracts compatible with [FA1.2](
 {{ #include ../../demos/demo-token-transfers/dipdup.yml }}
 ```
 
-Callback receives `TokenTransferData` model that optionally contains the transfer sender, receiver, amount, and token metadata.
+Callback receives `TzktTokenTransferData` model that optionally contains the transfer sender, receiver, amount, and token metadata.
 
 ```python
 {{ #include ../../demos/demo-token-transfers/src/demo_token_transfers/handlers/on_token_transfer.py }}

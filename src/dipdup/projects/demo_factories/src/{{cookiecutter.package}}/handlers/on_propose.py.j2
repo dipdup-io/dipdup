@@ -2,12 +2,12 @@ import {{cookiecutter.package}}.models as models
 from {{cookiecutter.package}}.types.registry.parameter.propose import ProposeParameter
 from {{cookiecutter.package}}.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import Transaction
+from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_propose(
     ctx: HandlerContext,
-    propose: Transaction[ProposeParameter, RegistryStorage],
+    propose: TzktTransaction[ProposeParameter, RegistryStorage],
 ) -> None:
     dao = await models.DAO.get(address=propose.data.target_address)
     await models.Proposal(dao=dao).save()

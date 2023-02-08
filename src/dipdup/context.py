@@ -28,12 +28,12 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.database import execute_sql
 from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
@@ -43,7 +43,7 @@ from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.metadata import TezosMetadataDatasource
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -144,7 +144,7 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
@@ -299,35 +299,35 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
-        from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
-        from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
-        from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
-        from dipdup.indexes.tezos_tzkt_token_transfers.index import TokenTransferIndex
+        from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
+        from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
+        from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
+        from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
+        from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TezosTzktOperationsIndex | TezosTzktBigMapsIndex | TezosTzktHeadIndex | TokenTransferIndex | TezosTzktEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
-        if isinstance(index_config, (TezosTzktOperationsIndexConfig, TezosTzktOperationsUnfilteredIndexConfig)):
-            index = TezosTzktOperationsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
-            index = TezosTzktBigMapsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktHeadIndexConfig):
-            index = TezosTzktHeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
-            index = TokenTransferIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktEventsIndexConfig):
-            index = TezosTzktEventsIndex(self, index_config, datasource)
+        if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+            index = TzktOperationsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktBigMapsIndexConfig):
+            index = TzktBigMapsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktHeadIndexConfig):
+            index = TzktHeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+            index = TzktTokenTransfersIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktEventsIndexConfig):
+            index = TzktEventsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
         await datasource.add_index(index_config)
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig)
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -400,9 +400,9 @@ class DipDupContext:
             raise ConfigurationError(f'Datasource `{name}` is not a `{type.__name__}`')
         return datasource
 
-    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
+    def get_tzkt_datasource(self, name: str) -> TzktDatasource:
         """Get `tzkt` datasource by name"""
-        return self._get_datasource(name, TezosTzktDatasource)
+        return self._get_datasource(name, TzktDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""
@@ -519,7 +519,7 @@ class HandlerContext(DipDupContext):
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
     ) -> None:
         super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
@@ -534,7 +534,7 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
     ) -> 'HandlerContext':
         return cls(
             datasources=ctx.datasources,
@@ -583,7 +583,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         index: str,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,

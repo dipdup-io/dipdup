@@ -40,7 +40,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: Fixed unnecessary prefetching of migration originations in `operation` index.
 - index: Remove disabled indexes from the dispatcher queue.
 - sentry: Flush and reopen session daily.
-- tzkt: Fixed `OperationData.type` field value for migration originations.
+- tzkt: Fixed `TzktOperationData.type` field value for migration originations.
 - tzkt: Added missing `last_level` argument to migration origination fetching methods.
 
 ### Other
@@ -94,7 +94,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - index: Filtering by `code_hash` is available for `operation` index.
 - tzkt: Added datasource methods `get_contract_address` and `get_contract_hashes`.
 - tzkt: Originations and operations now can be fetched by contract code hashes.
-- tzkt: Added `sender_code_hash` and `target_code_hash` fields to `OperationData` model.
+- tzkt: Added `sender_code_hash` and `target_code_hash` fields to `TzktOperationData` model.
 
 ### Fixed
 
@@ -160,7 +160,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - http: Fixed caching datasource responses when `replay_path` contains tilde.
 - http: Adjusted per-datasource default config values.
 - project: Use the latest stable version instead of hardcoded values.
-- tzkt: Fixed deserializing of `EventData` and `OperationData` models.
+- tzkt: Fixed deserializing of `TzktEventData` and `TzktOperationData` models.
 - tzkt: Fixed matching migration originations by address.
 
 ### Deprecated
@@ -421,7 +421,7 @@ This release contains no changes except for the version number.
 
 ### Added
 
-- tzkt: Added `originated_contract_tzips` field to `OperationData`.
+- tzkt: Added `originated_contract_tzips` field to `TzktOperationData`.
 
 ### Fixed
 
@@ -546,7 +546,7 @@ This release contains no changes except for the version number.
 
 - metadata: Added `metadata_interface` feature flag to expose metadata in TzKT format.
 - prometheus: Added ability to expose Prometheus metrics.
-- tzkt: Added missing fields to the `HeadBlockData` model.
+- tzkt: Added missing fields to the `TzktHeadBlockData` model.
 - tzkt: Added `iter_...` methods to iterate over item batches.
 
 ### Fixed
@@ -728,12 +728,12 @@ This release contains no changes except for the version number.
 
 ### Added
 
-- tzkt: Added optional `delegate_address` and `delegate_alias` fields to `OperationData`.
+- tzkt: Added optional `delegate_address` and `delegate_alias` fields to `TzktOperationData`.
 
 ### Fixed
 
 - tzkt: Fixed crash due to unprocessed pysignalr exception.
-- tzkt: Fixed parsing `OperationData.amount` field.
+- tzkt: Fixed parsing `TzktOperationData.amount` field.
 - tzkt: Fixed parsing storage with top-level boolean fields.
 
 ## [4.0.1] - 2021-12-30
@@ -901,7 +901,7 @@ This release contains no changes except for the version number.
 
 ### Changes
 
-- Public methods of `TezosTzktDatasource` now return immutable sequences.
+- Public methods of `TzktDatasource` now return immutable sequences.
 
 ## [3.0.3] - 2021-10-01
 

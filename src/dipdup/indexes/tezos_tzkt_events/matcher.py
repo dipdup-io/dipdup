@@ -6,42 +6,42 @@ from typing import Any
 from typing import Iterable
 from typing import Union
 
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfigU
+from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tezos_tzkt import Event
-from dipdup.models.tezos_tzkt import EventData
-from dipdup.models.tezos_tzkt import UnknownEvent
+from dipdup.models.tezos_tzkt import TzktEvent
+from dipdup.models.tezos_tzkt import TzktEventData
+from dipdup.models.tezos_tzkt import TzktUnknownEvent
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 
 
 MatchedEventsT = Union[
-    tuple[TezosTzktEventsHandlerConfig, Event[Any]],
-    tuple[TezosTzktEventsUnknownEventHandlerConfig, UnknownEvent],
+    tuple[TzktEventsHandlerConfig, TzktEvent[Any]],
+    tuple[TzktEventsUnknownEventHandlerConfig, TzktUnknownEvent],
 ]
 
 
 def prepare_event_handler_args(
-    handler_config: TezosTzktEventsHandlerConfigU,
-    matched_event: EventData,
-) -> Event[Any] | UnknownEvent | None:
+    handler_config: TzktEventsHandlerConfigU,
+    matched_event: TzktEventData,
+) -> TzktEvent[Any] | TzktUnknownEvent | None:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
-    if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
-        return UnknownEvent(
+    if isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):
+        return TzktUnknownEvent(
             data=matched_event,
             payload=matched_event.payload,
         )
 
     with suppress(InvalidDataError):
         type_ = handler_config.event_type_cls
-        payload: Event[Any] = parse_object(type_, matched_event.payload)
-        return Event(
+        payload: TzktEvent[Any] = parse_object(type_, matched_event.payload)
+        return TzktEvent(
             data=matched_event,
             payload=payload,
         )
@@ -49,9 +49,9 @@ def prepare_event_handler_args(
     return None
 
 
-def match_event(handler_config: TezosTzktEventsHandlerConfigU, event: EventData) -> bool:
+def match_event(handler_config: TzktEventsHandlerConfigU, event: TzktEventData) -> bool:
     """Match single contract event with pattern"""
-    if isinstance(handler_config, TezosTzktEventsHandlerConfig) and handler_config.tag != event.tag:
+    if isinstance(handler_config, TzktEventsHandlerConfig) and handler_config.tag != event.tag:
         return False
     if handler_config.contract.address != event.contract_address:
         return False
@@ -59,8 +59,8 @@ def match_event(handler_config: TezosTzktEventsHandlerConfigU, event: EventData)
 
 
 def match_events(
-    handlers: Iterable[TezosTzktEventsHandlerConfigU],
-    events: Iterable[EventData],
+    handlers: Iterable[TzktEventsHandlerConfigU],
+    events: Iterable[TzktEventData],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
@@ -73,9 +73,9 @@ def match_events(
                 continue
 
             arg = prepare_event_handler_args(handler_config, event)
-            if isinstance(arg, Event) and isinstance(handler_config, TezosTzktEventsHandlerConfig):
+            if isinstance(arg, TzktEvent) and isinstance(handler_config, TzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
-            elif isinstance(arg, UnknownEvent) and isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
+            elif isinstance(arg, TzktUnknownEvent) and isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif arg is None:
                 continue

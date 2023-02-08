@@ -1,23 +1,23 @@
 from contextlib import ExitStack
 
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersHandlerConfig
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
-from dipdup.models.tezos_tzkt import MessageType
-from dipdup.models.tezos_tzkt import TokenTransferData
+from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.prometheus import Metrics
 
-TokenTransferQueueItem = tuple[TokenTransferData, ...]
+TokenTransferQueueItem = tuple[TzktTokenTransferData, ...]
 
 
-class TokenTransferIndex(
-    Index[TezosTzktTokenTransfersIndexConfig, TokenTransferQueueItem, TezosTzktDatasource],
-    message_type=MessageType.token_transfer,
+class TzktTokenTransfersIndex(
+    Index[TzktTokenTransfersIndexConfig, TokenTransferQueueItem, TzktDatasource],
+    message_type=TzktMessageType.token_transfer,
 ):
     def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:
         self.push_realtime_message(token_transfers)
@@ -68,7 +68,7 @@ class TokenTransferIndex(
 
     async def _process_level_token_transfers(
         self,
-        token_transfers: tuple[TokenTransferData, ...],
+        token_transfers: tuple[TzktTokenTransferData, ...],
         sync_level: int,
     ) -> None:
         if not token_transfers:
@@ -96,7 +96,7 @@ class TokenTransferIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktTokenTransfersHandlerConfig, token_transfer: TokenTransferData
+        self, handler_config: TzktTokenTransfersHandlerConfig, token_transfer: TzktTokenTransferData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

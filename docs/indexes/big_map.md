@@ -31,4 +31,4 @@ Each big map handler contains three required fields:
 
 When the `skip_history` field is set to `once`, DipDup will skip historical changes only on initial sync and switch to regular indexing afterward. When the value is `always`, DipDup will fetch all big map keys on every restart. Preferrable mode depends on your workload.
 
-All big map diffs DipDup passes to handlers during fast sync have the `action` field set to `BigMapAction.ADD_KEY`. Remember that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter them out later by `BigMapDiff.data.active` field if needed.
+All big map diffs DipDup passes to handlers during fast sync have the `action` field set to `TzktBigMapAction.ADD_KEY`. Remember that DipDup fetches all keys in this mode, including ones removed from the big map. You can filter them out later by `TzktBigMapDiff.data.active` field if needed.

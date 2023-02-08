@@ -26,12 +26,12 @@ def _parse_timestamp(timestamp: str) -> datetime:
     return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
 
 
-class TokenStandard(Enum):
+class TzktTokenStandard(Enum):
     FA12 = 'fa1.2'
     FA2 = 'fa2'
 
 
-class OperationType(Enum):
+class TzktOperationType(Enum):
     """Type of blockchain operation"""
 
     transaction = 'transaction'
@@ -39,7 +39,7 @@ class OperationType(Enum):
     migration = 'migration'
 
 
-class MessageType(Enum):
+class TzktMessageType(Enum):
     """Enum for realtime message types"""
 
     operation = 'operation'
@@ -133,7 +133,7 @@ class EventSubscription(Subscription):
 
 
 @dataclass
-class OperationData:
+class TzktOperationData:
     """Basic structure for operations from TzKT response"""
 
     type: str
@@ -172,7 +172,7 @@ class OperationData:
         cls,
         operation_json: dict[str, Any],
         type_: str | None = None,
-    ) -> 'OperationData':
+    ) -> 'TzktOperationData':
         """Convert raw operation message from WS/REST into dataclass"""
         # NOTE: Migration originations are handled in a separate method
         sender_json = operation_json.get('sender') or {}
@@ -195,7 +195,7 @@ class OperationData:
                 if parameter is None:
                     parameter = {}
 
-        return OperationData(
+        return TzktOperationData(
             type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
@@ -232,9 +232,9 @@ class OperationData:
     def from_migration_json(
         cls,
         migration_origination_json: dict[str, Any],
-    ) -> 'OperationData':
+    ) -> 'TzktOperationData':
         """Convert raw migration message from REST into dataclass"""
-        return OperationData(
+        return TzktOperationData(
             type='migration',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
@@ -258,23 +258,23 @@ class OperationData:
 
 
 @dataclass
-class Transaction(Generic[ParameterType, StorageType]):
+class TzktTransaction(Generic[ParameterType, StorageType]):
     """Wrapper for matched transaction with typed data passed to the handler"""
 
-    data: OperationData
+    data: TzktOperationData
     parameter: ParameterType
     storage: StorageType
 
 
 @dataclass
-class Origination(Generic[StorageType]):
+class TzktOrigination(Generic[StorageType]):
     """Wrapper for matched origination with typed data passed to the handler"""
 
-    data: OperationData
+    data: TzktOperationData
     storage: StorageType
 
 
-class BigMapAction(Enum):
+class TzktBigMapAction(Enum):
     """Mapping for action in TzKT response"""
 
     ALLOCATE = 'allocate'
@@ -285,15 +285,15 @@ class BigMapAction(Enum):
 
     @property
     def has_key(self) -> bool:
-        return self in (BigMapAction.ADD_KEY, BigMapAction.UPDATE_KEY, BigMapAction.REMOVE_KEY)
+        return self in (TzktBigMapAction.ADD_KEY, TzktBigMapAction.UPDATE_KEY, TzktBigMapAction.REMOVE_KEY)
 
     @property
     def has_value(self) -> bool:
-        return self in (BigMapAction.ADD_KEY, BigMapAction.UPDATE_KEY)
+        return self in (TzktBigMapAction.ADD_KEY, TzktBigMapAction.UPDATE_KEY)
 
 
 @dataclass
-class BigMapData:
+class TzktBigMapData:
     """Basic structure for big map diffs from TzKT response"""
 
     id: int
@@ -303,7 +303,7 @@ class BigMapData:
     bigmap: int
     contract_address: str
     path: str
-    action: BigMapAction
+    action: TzktBigMapAction
     active: bool
     key: Optional[Any] = None
     value: Optional[Any] = None
@@ -312,11 +312,11 @@ class BigMapData:
     def from_json(
         cls,
         big_map_json: dict[str, Any],
-    ) -> 'BigMapData':
+    ) -> 'TzktBigMapData':
         """Convert raw big map diff message from WS/REST into dataclass"""
-        action = BigMapAction(big_map_json['action'])
-        active = action not in (BigMapAction.REMOVE, BigMapAction.REMOVE_KEY)
-        return BigMapData(
+        action = TzktBigMapAction(big_map_json['action'])
+        active = action not in (TzktBigMapAction.REMOVE, TzktBigMapAction.REMOVE_KEY)
+        return TzktBigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
             # NOTE: missing `operation_id` field in API to identify operation
@@ -333,17 +333,17 @@ class BigMapData:
 
 
 @dataclass
-class BigMapDiff(Generic[KeyType, ValueType]):
+class TzktBigMapDiff(Generic[KeyType, ValueType]):
     """Wrapper for matched big map diff with typed data passed to the handler"""
 
-    action: BigMapAction
-    data: BigMapData
+    action: TzktBigMapAction
+    data: TzktBigMapData
     key: Optional[KeyType]
     value: Optional[ValueType]
 
 
 @dataclass
-class BlockData:
+class TzktBlockData:
     """Basic structure for blocks received from TzKT REST API"""
 
     level: int
@@ -363,9 +363,9 @@ class BlockData:
     def from_json(
         cls,
         block_json: dict[str, Any],
-    ) -> 'BlockData':
+    ) -> 'TzktBlockData':
         """Convert raw block message from REST into dataclass"""
-        return BlockData(
+        return TzktBlockData(
             level=block_json['level'],
             hash=block_json['hash'],
             timestamp=_parse_timestamp(block_json['timestamp']),
@@ -382,7 +382,7 @@ class BlockData:
 
 
 @dataclass
-class HeadBlockData:
+class TzktHeadBlockData:
     """Basic structure for head block received from TzKT SignalR API"""
 
     chain: str
@@ -412,9 +412,9 @@ class HeadBlockData:
     def from_json(
         cls,
         head_block_json: dict[str, Any],
-    ) -> 'HeadBlockData':
+    ) -> 'TzktHeadBlockData':
         """Convert raw head block message from WS/REST into dataclass"""
-        return HeadBlockData(
+        return TzktHeadBlockData(
             chain=head_block_json['chain'],
             chain_id=head_block_json['chainId'],
             cycle=head_block_json['cycle'],
@@ -441,7 +441,7 @@ class HeadBlockData:
 
 
 @dataclass
-class QuoteData:
+class TzktQuoteData:
     """Basic structure for quotes received from TzKT REST API"""
 
     level: int
@@ -456,9 +456,9 @@ class QuoteData:
     gbp: Decimal
 
     @classmethod
-    def from_json(cls, quote_json: dict[str, Any]) -> 'QuoteData':
+    def from_json(cls, quote_json: dict[str, Any]) -> 'TzktQuoteData':
         """Convert raw quote message from REST into dataclass"""
-        return QuoteData(
+        return TzktQuoteData(
             level=quote_json['level'],
             timestamp=_parse_timestamp(quote_json['timestamp']),
             btc=Decimal(quote_json['btc']),
@@ -473,7 +473,7 @@ class QuoteData:
 
 
 @dataclass
-class TokenTransferData:
+class TzktTokenTransferData:
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -483,7 +483,7 @@ class TokenTransferData:
     contract_address: Optional[str] = None
     contract_alias: Optional[str] = None
     token_id: Optional[int] = None
-    standard: Optional[TokenStandard] = None
+    standard: Optional[TzktTokenStandard] = None
     metadata: Optional[dict[str, Any]] = None
     from_alias: Optional[str] = None
     from_address: Optional[str] = None
@@ -495,7 +495,7 @@ class TokenTransferData:
     tzkt_migration_id: Optional[int] = None
 
     @classmethod
-    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TokenTransferData':
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenTransferData':
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         contract_json = token_json.get('contract') or {}
@@ -503,7 +503,7 @@ class TokenTransferData:
         to_json = token_transfer_json.get('to') or {}
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
-        return TokenTransferData(
+        return TzktTokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
             timestamp=_parse_timestamp(token_transfer_json['timestamp']),
@@ -511,7 +511,7 @@ class TokenTransferData:
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=TokenStandard(standard) if standard else None,
+            standard=TzktTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
             from_alias=from_json.get('alias'),
             from_address=from_json.get('address'),
@@ -525,7 +525,7 @@ class TokenTransferData:
 
 
 @dataclass
-class EventData:
+class TzktEventData:
     """Basic structure for events received from TzKT REST API"""
 
     id: int
@@ -539,9 +539,9 @@ class EventData:
     transaction_id: Optional[int] = None
 
     @classmethod
-    def from_json(cls, event_json: dict[str, Any]) -> 'EventData':
+    def from_json(cls, event_json: dict[str, Any]) -> 'TzktEventData':
         """Convert raw event message from WS/REST into dataclass"""
-        return EventData(
+        return TzktEventData(
             id=event_json['id'],
             level=event_json['level'],
             timestamp=_parse_timestamp(event_json['timestamp']),
@@ -555,12 +555,12 @@ class EventData:
 
 
 @dataclass
-class Event(Generic[EventType]):
-    data: EventData
+class TzktEvent(Generic[EventType]):
+    data: TzktEventData
     payload: EventType
 
 
 @dataclass
-class UnknownEvent:
-    data: EventData
+class TzktUnknownEvent:
+    data: TzktEventData
     payload: Any | None

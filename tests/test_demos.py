@@ -15,7 +15,7 @@ import pytest
 
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tezos_tzkt import OperationType
+from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import import_submodules
 from tests import CONFIGS_PATH
 from tests import SRC_PATH
@@ -175,9 +175,9 @@ async def assert_run_factories() -> None:
 async def assert_run_raw() -> None:
     import demo_raw.models
 
-    transactions = await demo_raw.models.Operation.filter(type=OperationType.transaction).count()
-    originations = await demo_raw.models.Operation.filter(type=OperationType.origination).count()
-    migrations = await demo_raw.models.Operation.filter(type=OperationType.migration).count()
+    transactions = await demo_raw.models.Operation.filter(type=TzktOperationType.transaction).count()
+    originations = await demo_raw.models.Operation.filter(type=TzktOperationType.origination).count()
+    migrations = await demo_raw.models.Operation.filter(type=TzktOperationType.migration).count()
 
     assert transactions == 167
     assert originations == 1

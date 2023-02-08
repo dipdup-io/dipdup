@@ -6,8 +6,8 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TzktIndexConfig
 
 
 @dataclass
@@ -19,16 +19,16 @@ class HeadHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'HeadBlockData'
+        yield 'dipdup.models.tezos_tzkt', 'TzktHeadBlockData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'head', 'HeadBlockData'
+        yield 'head', 'TzktHeadBlockData'
 
 
 @dataclass
-class TezosTzktHeadIndexConfig(TezosTzktIndexConfig):
+class TzktHeadIndexConfig(TzktIndexConfig):
     """Head block index config
 
     :param kind: always `tezos.tzkt.head`
@@ -37,7 +37,7 @@ class TezosTzktHeadIndexConfig(TezosTzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.head']
-    datasource: TezosTzktDatasourceConfig
+    datasource: TzktDatasourceConfig
     handlers: tuple[HeadHandlerConfig, ...]
 
     @property

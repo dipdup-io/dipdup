@@ -8,13 +8,13 @@ from typing import Sequence
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfigU
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfigU
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
@@ -25,8 +25,8 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import OperationsHandlerArgume
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
-from dipdup.models.tezos_tzkt import MessageType
-from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -34,7 +34,7 @@ _logger = logging.getLogger('dipdup.matcher')
 OperationQueueItem = tuple[OperationSubgroup, ...]
 
 
-def entrypoint_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[str | None]:
+def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str | None]:
     """Set of entrypoints to filter operations with before an actual matching"""
     entrypoints = set()
     for handler_config in handlers:
@@ -46,7 +46,7 @@ def entrypoint_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) ->
     return entrypoints
 
 
-def address_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[str]:
+def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str]:
     """Set of addresses (any field) to filter operations with before an actual matching"""
     addresses = set()
     for handler_config in handlers:
@@ -70,7 +70,7 @@ def address_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> se
     return addresses
 
 
-def code_hash_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> set[int | str]:
+def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[int | str]:
     """Set of code hashes to filter operations with before an actual matching"""
     code_hashes = set()
     for handler_config in handlers:
@@ -99,14 +99,14 @@ def code_hash_filter(handlers: tuple[TezosTzktOperationsHandlerConfig, ...]) -> 
 
 
 def extract_operation_subgroups(
-    operations: Iterable[OperationData],
+    operations: Iterable[TzktOperationData],
     addresses: set[str],
     entrypoints: set[str | None],
     code_hashes: set[int],
 ) -> Iterator[OperationSubgroup]:
     filtered: int = 0
     levels: set[int] = set()
-    operation_subgroups: defaultdict[tuple[str, int], deque[OperationData]] = defaultdict(deque)
+    operation_subgroups: defaultdict[tuple[str, int], deque[TzktOperationData]] = defaultdict(deque)
 
     _operation_index = -1
     for _operation_index, op in enumerate(operations):
@@ -149,15 +149,15 @@ def extract_operation_subgroups(
         )
 
 
-class TezosTzktOperationsIndex(
-    Index[TezosTzktOperationsIndexConfigU, OperationQueueItem, TezosTzktDatasource],
-    message_type=MessageType.operation,
+class TzktOperationsIndex(
+    Index[TzktOperationsIndexConfigU, OperationQueueItem, TzktDatasource],
+    message_type=TzktMessageType.operation,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
-        config: TezosTzktOperationsIndexConfigU,
-        datasource: TezosTzktDatasource,
+        config: TzktOperationsIndexConfigU,
+        datasource: TzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._entrypoint_filter: set[str | None] = set()
@@ -168,7 +168,7 @@ class TezosTzktOperationsIndex(
         self.push_realtime_message(operation_subgroups)
 
     async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
-        if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+        if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
             return set(), set(), set()
 
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
@@ -223,14 +223,14 @@ class TezosTzktOperationsIndex(
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
 
         fetcher: OperationFetcher | OperationUnfilteredFetcher
-        if isinstance(self._config, TezosTzktOperationsIndexConfig):
+        if isinstance(self._config, TzktOperationsIndexConfig):
             fetcher = await OperationFetcher.create(
                 self._config,
                 self._datasource,
                 first_level,
                 sync_level,
             )
-        elif isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+        elif isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
             fetcher = await OperationUnfilteredFetcher.create(
                 self._config,
                 self._datasource,
@@ -275,7 +275,7 @@ class TezosTzktOperationsIndex(
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+            if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
                     self._config,
                     operation_subgroup,
@@ -309,7 +309,7 @@ class TezosTzktOperationsIndex(
 
     async def _call_matched_handler(
         self,
-        handler_config: TezosTzktOperationsHandlerConfigU,
+        handler_config: TzktOperationsHandlerConfigU,
         operation_subgroup: OperationSubgroup,
         args: Sequence[OperationsHandlerArgumentU],
     ) -> None:

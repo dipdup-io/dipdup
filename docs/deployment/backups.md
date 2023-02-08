@@ -146,7 +146,7 @@ async def run_backups(
     if database_config.kind != "postgres":
         return
 
-    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(TzktMessageType.head)
 
     if level is None:
         return
@@ -163,7 +163,7 @@ async def run_backups(
 async def simulate_reorg(
     ctx: HookContext
 ) -> None:
-    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(TzktMessageType.head)
 
     if level:
         await ctx.fire_hook(

@@ -12,7 +12,7 @@ from dipdup.exceptions import ConfigurationError
 
 
 @dataclass
-class TezosTzktDatasourceConfig(DatasourceConfig):
+class TzktDatasourceConfig(DatasourceConfig):
     """TzKT datasource config
 
     :param kind: always 'tezos.tzkt'
@@ -46,5 +46,5 @@ class TezosTzktDatasourceConfig(DatasourceConfig):
 
 
 @dataclass
-class TezosTzktIndexConfig(IndexConfig):
-    datasource: TezosTzktDatasourceConfig
+class TzktIndexConfig(IndexConfig):
+    datasource: TzktDatasourceConfig

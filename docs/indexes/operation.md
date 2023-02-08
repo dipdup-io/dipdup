@@ -31,7 +31,7 @@ indexes:
 
 You can think of the operation pattern as a regular expression on a sequence of operations (both external and internal) with a global flag enabled (there can be multiple matches). Multiple operation parameters can be used for matching (source, destination, etc.).
 
-You will get slightly different callback argument types depending on whether pattern item is typed or not. If so, DipDup will generate the dataclass for a particular entrypoint/storage, otherwise you will have to handle untyped parameters/storage updates stored in `OperationData` model.
+You will get slightly different callback argument types depending on whether pattern item is typed or not. If so, DipDup will generate the dataclass for a particular entrypoint/storage, otherwise you will have to handle untyped parameters/storage updates stored in `TzktOperationData` model.
 
 ## Matching originations
 

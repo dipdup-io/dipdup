@@ -3,18 +3,18 @@ from __future__ import annotations
 import logging
 from typing import AsyncIterator
 
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models.tezos_tzkt import TokenTransferData
+from dipdup.models.tezos_tzkt import TzktTokenTransferData
 
 
-class TokenTransferFetcher(DataFetcher[TokenTransferData]):
-    _datasource: TezosTzktDatasource
+class TokenTransferFetcher(DataFetcher[TzktTokenTransferData]):
+    _datasource: TzktDatasource
 
     def __init__(
         self,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
         token_addresses: set[str],
         token_ids: set[int],
         from_addresses: set[str],
@@ -29,7 +29,7 @@ class TokenTransferFetcher(DataFetcher[TokenTransferData]):
         self._from_addresses = from_addresses
         self._to_addresses = to_addresses
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TokenTransferData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TzktTokenTransferData, ...]]]:
         token_transfer_iter = self._datasource.iter_token_transfers(
             self._token_addresses,
             self._token_ids,

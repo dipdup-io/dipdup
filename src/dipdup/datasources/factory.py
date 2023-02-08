@@ -3,13 +3,13 @@ from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos_metadata import TezosMetadataDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.metadata import TezosMetadataDatasource
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
 class DatasourceFactory:
@@ -27,8 +27,8 @@ class DatasourceFactory:
     def _build_datasource(cls, name: str, config: DipDupConfig) -> Datasource:
         datasource_config = config.get_datasource(name)
 
-        if isinstance(datasource_config, TezosTzktDatasourceConfig):
-            return TezosTzktDatasource(
+        if isinstance(datasource_config, TzktDatasourceConfig):
+            return TzktDatasource(
                 url=datasource_config.url,
                 http_config=datasource_config.http,
                 merge_subscriptions=config.advanced.merge_subscriptions,

@@ -9,8 +9,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
@@ -18,7 +18,7 @@ from dipdup.utils import snake_to_pascal
 
 
 @dataclass
-class TezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktEventsHandlerConfig(HandlerConfig, kind='handler'):
     """Event handler config
 
     :param callback: Callback name
@@ -64,7 +64,7 @@ class TezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+class TzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -83,11 +83,11 @@ class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
         yield 'event', 'UnknownEvent'
 
 
-TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosTzktEventsUnknownEventHandlerConfig
+TzktEventsHandlerConfigU = TzktEventsHandlerConfig | TzktEventsUnknownEventHandlerConfig
 
 
 @dataclass
-class TezosTzktEventsIndexConfig(TezosTzktIndexConfig):
+class TzktEventsIndexConfig(TzktIndexConfig):
     """Event index config
 
     :param kind: Index kind
@@ -98,8 +98,8 @@ class TezosTzktEventsIndexConfig(TezosTzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.events']
-    datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
+    datasource: TzktDatasourceConfig
+    handlers: tuple[TzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

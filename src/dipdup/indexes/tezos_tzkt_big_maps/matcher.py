@@ -3,20 +3,20 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
-from dipdup.models.tezos_tzkt import BigMapData
-from dipdup.models.tezos_tzkt import BigMapDiff
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
+from dipdup.models.tezos_tzkt import TzktBigMapData
+from dipdup.models.tezos_tzkt import TzktBigMapDiff
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedBigMapsT = tuple[TezosTzktBigMapsHandlerConfig, BigMapDiff[Any, Any]]
+MatchedBigMapsT = tuple[TzktBigMapsHandlerConfig, TzktBigMapDiff[Any, Any]]
 
 
 def prepare_big_map_handler_args(
-    handler_config: TezosTzktBigMapsHandlerConfig,
-    matched_big_map: BigMapData,
-) -> BigMapDiff[Any, Any]:
+    handler_config: TzktBigMapsHandlerConfig,
+    matched_big_map: TzktBigMapData,
+) -> TzktBigMapDiff[Any, Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
@@ -32,7 +32,7 @@ def prepare_big_map_handler_args(
     else:
         value = None
 
-    return BigMapDiff(
+    return TzktBigMapDiff(
         data=matched_big_map,
         action=matched_big_map.action,
         key=key,
@@ -41,8 +41,8 @@ def prepare_big_map_handler_args(
 
 
 def match_big_map(
-    handler_config: TezosTzktBigMapsHandlerConfig,
-    big_map: BigMapData,
+    handler_config: TzktBigMapsHandlerConfig,
+    big_map: TzktBigMapData,
 ) -> bool:
     """Match single big map diff with pattern"""
     if handler_config.path != big_map.path:
@@ -53,8 +53,8 @@ def match_big_map(
 
 
 def match_big_maps(
-    handlers: Iterable[TezosTzktBigMapsHandlerConfig],
-    big_maps: Iterable[BigMapData],
+    handlers: Iterable[TzktBigMapsHandlerConfig],
+    big_maps: Iterable[TzktBigMapData],
 ) -> deque[MatchedBigMapsT]:
     """Try to match big map diffs with all index handlers."""
     matched_handlers: deque[MatchedBigMapsT] = deque()

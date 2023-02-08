@@ -1,27 +1,27 @@
 from contextlib import ExitStack
 from typing import Any
 
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfigU
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
-from dipdup.models.tezos_tzkt import Event
-from dipdup.models.tezos_tzkt import EventData
-from dipdup.models.tezos_tzkt import MessageType
-from dipdup.models.tezos_tzkt import UnknownEvent
+from dipdup.models.tezos_tzkt import TzktEvent
+from dipdup.models.tezos_tzkt import TzktEventData
+from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktUnknownEvent
 from dipdup.prometheus import Metrics
 
-EventQueueItem = tuple[EventData, ...]
+EventQueueItem = tuple[TzktEventData, ...]
 
 
-class TezosTzktEventsIndex(
-    Index[TezosTzktEventsIndexConfig, EventQueueItem, TezosTzktDatasource],
-    message_type=MessageType.event,
+class TzktEventsIndex(
+    Index[TzktEventsIndexConfig, EventQueueItem, TzktDatasource],
+    message_type=TzktMessageType.event,
 ):
     def push_events(self, events: EventQueueItem) -> None:
         self.push_realtime_message(events)
@@ -74,7 +74,7 @@ class TezosTzktEventsIndex(
 
     async def _process_level_events(
         self,
-        events: tuple[EventData, ...],
+        events: tuple[TzktEventData, ...],
         sync_level: int,
     ) -> None:
         if not events:
@@ -102,9 +102,9 @@ class TezosTzktEventsIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktEventsHandlerConfigU, event: Event[Any] | UnknownEvent
+        self, handler_config: TzktEventsHandlerConfigU, event: TzktEvent[Any] | TzktUnknownEvent
     ) -> None:
-        if isinstance(handler_config, TezosTzktEventsHandlerConfig) != isinstance(event, Event):
+        if isinstance(handler_config, TzktEventsHandlerConfig) != isinstance(event, TzktEvent):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
 
         if not handler_config.parent:
@@ -129,6 +129,6 @@ class TezosTzktEventsIndex(
         """Get tags to fetch events during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            if isinstance(handler_config, TezosTzktEventsHandlerConfig):
+            if isinstance(handler_config, TzktEventsHandlerConfig):
                 paths.add(handler_config.tag)
         return paths

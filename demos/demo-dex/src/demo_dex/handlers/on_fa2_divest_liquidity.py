@@ -6,15 +6,15 @@ from demo_dex.types.fa2_token.storage import Fa2TokenStorage
 from demo_dex.types.quipu_fa2.parameter.divest_liquidity import DivestLiquidityParameter
 from demo_dex.types.quipu_fa2.storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import OperationData
-from dipdup.models.tezos_tzkt import Transaction
+from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_fa2_divest_liquidity(
     ctx: HandlerContext,
-    divest_liquidity: Transaction[DivestLiquidityParameter, QuipuFa2Storage],
-    transfer: Transaction[TransferParameter, Fa2TokenStorage],
-    transaction_1: OperationData,
+    divest_liquidity: TzktTransaction[DivestLiquidityParameter, QuipuFa2Storage],
+    transfer: TzktTransaction[TransferParameter, Fa2TokenStorage],
+    transaction_1: TzktOperationData,
 ) -> None:
     storage = divest_liquidity.storage
 

@@ -3,20 +3,20 @@ from __future__ import annotations
 import logging
 from typing import AsyncGenerator
 
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models.tezos_tzkt import EventData
+from dipdup.models.tezos_tzkt import TzktEventData
 
 
-class EventFetcher(DataFetcher[EventData]):
+class EventFetcher(DataFetcher[TzktEventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
 
-    _datasource: TezosTzktDatasource
+    _datasource: TzktDatasource
 
     def __init__(
         self,
-        datasource: TezosTzktDatasource,
+        datasource: TzktDatasource,
         first_level: int,
         last_level: int,
         event_addresses: set[str],
@@ -29,10 +29,10 @@ class EventFetcher(DataFetcher[EventData]):
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[EventData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktEventData, ...]], None]:
         """Iterate over events fetched fetched from REST.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosTzktEventsIndex.
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
         """
         event_iter = self._datasource.iter_events(
             self._event_addresses,

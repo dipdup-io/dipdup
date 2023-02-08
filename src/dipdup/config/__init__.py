@@ -52,7 +52,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.models.tezos_tzkt import OperationType
+from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.subscriptions import Subscription
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
@@ -781,7 +781,7 @@ class DipDupConfig:
     @property
     def oneshot(self) -> bool:
         """Whether all indexes have `last_level` field set"""
-        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, TezosTzktHeadIndexConfig))
+        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, TzktHeadIndexConfig))
         oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
         if len(oneshot_indexes) == len(syncable_indexes) > 0:
             return True
@@ -837,9 +837,9 @@ class DipDupConfig:
         except KeyError as e:
             raise ConfigurationError(f'Hook `{name}` not found in `templates` config section') from e
 
-    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasourceConfig:
+    def get_tzkt_datasource(self, name: str) -> TzktDatasourceConfig:
         datasource = self.get_datasource(name)
-        if not isinstance(datasource, TezosTzktDatasourceConfig):
+        if not isinstance(datasource, TzktDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
@@ -915,7 +915,7 @@ class DipDupConfig:
 
         # NOTE: Conflicting rollback techniques
         for name, datasource_config in self.datasources.items():
-            if not isinstance(datasource_config, TezosTzktDatasourceConfig):
+            if not isinstance(datasource_config, TzktDatasourceConfig):
                 continue
             if datasource_config.buffer_size and self.advanced.rollback_depth:
                 raise ConfigurationError(
@@ -941,7 +941,7 @@ class DipDupConfig:
         new_index_config._template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
-        if not isinstance(new_index_config, TezosTzktHeadIndexConfig):
+        if not isinstance(new_index_config, TzktHeadIndexConfig):
             new_index_config.first_level |= template_config.first_level
             new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
@@ -982,8 +982,8 @@ class DipDupConfig:
 
         index_config.subscriptions.add(HeadSubscription())
 
-        if isinstance(index_config, TezosTzktOperationsIndexConfig):
-            if OperationType.transaction in index_config.types:
+        if isinstance(index_config, TzktOperationsIndexConfig):
+            if TzktOperationType.transaction in index_config.types:
                 if self.advanced.merge_subscriptions:
                     index_config.subscriptions.add(TransactionSubscription())
                 else:
@@ -992,10 +992,10 @@ class DipDupConfig:
                             raise ConfigInitializationException
                         index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
 
-            if OperationType.origination in index_config.types:
+            if TzktOperationType.origination in index_config.types:
                 index_config.subscriptions.add(OriginationSubscription())
 
-        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
+        elif isinstance(index_config, TzktBigMapsIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
             else:
@@ -1003,10 +1003,10 @@ class DipDupConfig:
                     address, path = big_map_handler_config.contract.address, big_map_handler_config.path
                     index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
-        elif isinstance(index_config, TezosTzktHeadIndexConfig):
+        elif isinstance(index_config, TzktHeadIndexConfig):
             index_config.subscriptions.add(HeadSubscription())
 
-        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
+        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(TokenTransferSubscription())
             else:
@@ -1022,10 +1022,10 @@ class DipDupConfig:
                         )
                     )
 
-        elif isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig):
+        elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.subscriptions.add(TransactionSubscription())
 
-        elif isinstance(index_config, TezosTzktEventsIndexConfig):
+        elif isinstance(index_config, TzktEventsIndexConfig):
             if self.advanced.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
             else:
@@ -1050,7 +1050,7 @@ class DipDupConfig:
         if isinstance(index_config.datasource, str):
             index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
 
-        if isinstance(index_config, TezosTzktOperationsIndexConfig):
+        if isinstance(index_config, TzktOperationsIndexConfig):
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
@@ -1079,27 +1079,27 @@ class DipDupConfig:
                         if isinstance(pattern_config.originated_contract, str):
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
-        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
+        elif isinstance(index_config, TzktBigMapsIndexConfig):
             for handler in index_config.handlers:
                 handler.parent = index_config
                 if isinstance(handler.contract, str):
                     handler.contract = self.get_contract(handler.contract)
 
-        elif isinstance(index_config, TezosTzktHeadIndexConfig):
+        elif isinstance(index_config, TzktHeadIndexConfig):
             for head_handler_config in index_config.handlers:
                 head_handler_config.parent = index_config
 
-        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
+        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
                 if isinstance(token_transfer_handler_config.contract, str):
                     token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
-        elif isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig):
+        elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
 
-        elif isinstance(index_config, TezosTzktEventsIndexConfig):
+        elif isinstance(index_config, TzktEventsIndexConfig):
             for event_handler_config in index_config.handlers:
                 event_handler_config.parent = index_config
 
@@ -1135,19 +1135,19 @@ from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConf
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos_metadata import TezosMetadataDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 
 # NOTE: We need unions for Pydantic deserialization
 DatasourceConfigU = (
-    TezosTzktDatasourceConfig
+    TzktDatasourceConfig
     | CoinbaseDatasourceConfig
     | TezosMetadataDatasourceConfig
     | IpfsDatasourceConfig
@@ -1157,12 +1157,12 @@ DatasourceConfigU = (
 ResolvedIndexConfigU = (
     EvmSubsquidEventsIndexConfig
     | EvmSubsquidOperationsIndexConfig
-    | TezosTzktOperationsIndexConfig
-    | TezosTzktBigMapsIndexConfig
-    | TezosTzktHeadIndexConfig
-    | TezosTzktTokenTransfersIndexConfig
-    | TezosTzktEventsIndexConfig
-    | TezosTzktOperationsUnfilteredIndexConfig
+    | TzktOperationsIndexConfig
+    | TzktBigMapsIndexConfig
+    | TzktHeadIndexConfig
+    | TzktTokenTransfersIndexConfig
+    | TzktEventsIndexConfig
+    | TzktOperationsUnfilteredIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
@@ -1202,7 +1202,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
 
 
 yaml_annotations = {
-    'TezosTzktDatasourceConfig': 'str | TezosTzktDatasourceConfig',
+    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
     'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
