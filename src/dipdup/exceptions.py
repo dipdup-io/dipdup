@@ -12,7 +12,6 @@ from tabulate import tabulate
 from tortoise.models import Model
 
 from dipdup import spec_version_mapping
-from dipdup.enums import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
 
@@ -196,7 +195,7 @@ class MigrationRequiredError(Error):
 class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
-    reason: ReindexingReason
+    reason: 'ReindexingReason'
     context: Dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
@@ -403,3 +402,6 @@ class UnsupportedAPIError(Error):
 # TODO: Remove in 7.0
 DipDupException = FrameworkException
 DipDupError = Error
+
+
+from dipdup.models import ReindexingReason

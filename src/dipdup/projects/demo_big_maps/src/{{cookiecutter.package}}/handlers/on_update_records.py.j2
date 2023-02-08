@@ -2,12 +2,12 @@ import {{cookiecutter.package}}.models as models
 from {{cookiecutter.package}}.types.name_registry.big_map.store_records_key import StoreRecordsKey
 from {{cookiecutter.package}}.types.name_registry.big_map.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
-from dipdup.models import BigMapDiff
+from dipdup.models.tezos_tzkt import TzktBigMapDiff
 
 
 async def on_update_records(
     ctx: HandlerContext,
-    store_records: BigMapDiff[StoreRecordsKey, StoreRecordsValue],
+    store_records: TzktBigMapDiff[StoreRecordsKey, StoreRecordsValue],
 ) -> None:
     if not store_records.action.has_value:
         return

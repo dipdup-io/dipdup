@@ -4,12 +4,12 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config import OperationHandlerConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.indexes.operation.fetcher import get_origination_filters
-from dipdup.indexes.operation.fetcher import get_transaction_filters
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
+from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
 from tests import CONFIGS_PATH
 from tests import tzkt_replay
 
@@ -21,15 +21,15 @@ async def tzkt() -> AsyncIterator[TzktDatasource]:
 
 
 @pytest.fixture
-def index_config() -> OperationIndexConfig:
+def index_config() -> TzktOperationsIndexConfig:
     config = DipDupConfig.load([CONFIGS_PATH / 'operation_filters.yml'], True)
     config.initialize(skip_imports=True)
-    return cast(OperationIndexConfig, config.indexes['test'])
+    return cast(TzktOperationsIndexConfig, config.indexes['test'])
 
 
 async def test_ignored_type_filter(
     tzkt: TzktDatasource,
-    index_config: OperationIndexConfig,
+    index_config: TzktOperationsIndexConfig,
 ) -> None:
     index_config.types = ()
     addresses, hashes = await get_origination_filters(index_config, tzkt)
@@ -43,13 +43,13 @@ async def test_ignored_type_filter(
 
 async def test_get_origination_filters(
     tzkt: TzktDatasource,
-    index_config: OperationIndexConfig,
+    index_config: TzktOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
-        OperationHandlerConfig(
+        TzktOperationsHandlerConfig(
             'address_origination',
             (
-                OperationHandlerOriginationPatternConfig(
+                OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[0],
                 ),
             ),
@@ -60,10 +60,10 @@ async def test_get_origination_filters(
     assert not hashes
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TzktOperationsHandlerConfig(
             'hash_origination',
             (
-                OperationHandlerOriginationPatternConfig(
+                OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[1],
                 ),
             ),
@@ -74,10 +74,10 @@ async def test_get_origination_filters(
     assert hashes == {-1585533315}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TzktOperationsHandlerConfig(
             'hash_address_origination',
             (
-                OperationHandlerOriginationPatternConfig(
+                OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[2],
                 ),
             ),
@@ -88,10 +88,10 @@ async def test_get_origination_filters(
     assert hashes == {-680664524}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        TzktOperationsHandlerConfig(
             'address_source',
             (
-                OperationHandlerOriginationPatternConfig(
+                OperationsHandlerOriginationPatternConfig(
                     source=index_config.contracts[0],
                 ),
             ),
@@ -102,8 +102,8 @@ async def test_get_origination_filters(
     assert hashes == set()
 
 
-# async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: OperationIndexConfig) -> None:
-#     index_config.types = (OperationType.transaction,)
+# async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: TzktOperationsIndexConfig) -> None:
+#     index_config.types = (TzktOperationType.transaction,)
 #     addresses, hashes = await get_transaction_filters(index_config, tzkt)
 #     assert filters == ({'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}, {-680664524, -1585533315})
 

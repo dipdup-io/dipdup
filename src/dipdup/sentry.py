@@ -22,7 +22,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from dipdup import __version__
 from dipdup import baking_bad
 from dipdup import env
-from dipdup.utils.sys import is_shutting_down
+from dipdup.sys import is_shutting_down
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig

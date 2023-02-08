@@ -15,7 +15,7 @@ contracts:
 
 indexes:
   factory:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - origination

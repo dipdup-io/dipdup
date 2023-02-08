@@ -21,27 +21,29 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
-from dipdup.config import BigMapIndexConfig
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
-from dipdup.config import EventIndexConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import HeadIndexConfig
 from dipdup.config import HookConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationUnfilteredIndexConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.config import TokenTransferIndexConfig
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.datasource import HttpDatasource
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
-from dipdup.datasources.metadata.datasource import MetadataDatasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.enums import ReindexingAction
-from dipdup.enums import ReindexingReason
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.database import execute_sql
+from dipdup.database import execute_sql_query
+from dipdup.database import get_connection
+from dipdup.database import wipe_schema
+from dipdup.datasources import Datasource
+from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.http import HttpDatasource
+from dipdup.datasources.ipfs import IpfsDatasource
+from dipdup.datasources.metadata import TzipMetadataDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -53,15 +55,13 @@ from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
+from dipdup.models import ReindexingAction
+from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import execute_sql
-from dipdup.utils.database import execute_sql_query
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import wipe_schema
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource)
 
@@ -299,35 +299,35 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.big_map.index import BigMapIndex
-        from dipdup.indexes.event.index import EventIndex
-        from dipdup.indexes.head.index import HeadIndex
-        from dipdup.indexes.operation.index import OperationIndex
-        from dipdup.indexes.token_transfer.index import TokenTransferIndex
+        from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
+        from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
+        from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
+        from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
+        from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: OperationIndex | BigMapIndex | HeadIndex | TokenTransferIndex | EventIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
 
-        if isinstance(index_config, (OperationIndexConfig, OperationUnfilteredIndexConfig)):
-            index = OperationIndex(self, index_config, datasource)
-        elif isinstance(index_config, BigMapIndexConfig):
-            index = BigMapIndex(self, index_config, datasource)
-        elif isinstance(index_config, HeadIndexConfig):
-            index = HeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TokenTransferIndexConfig):
-            index = TokenTransferIndex(self, index_config, datasource)
-        elif isinstance(index_config, EventIndexConfig):
-            index = EventIndex(self, index_config, datasource)
+        if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+            index = TzktOperationsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktBigMapsIndexConfig):
+            index = TzktBigMapsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktHeadIndexConfig):
+            index = TzktHeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+            index = TzktTokenTransfersIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktEventsIndexConfig):
+            index = TzktEventsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
         await datasource.add_index(index_config)
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, OperationUnfilteredIndexConfig)
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -408,9 +408,9 @@ class DipDupContext:
         """Get `coinbase` datasource by name"""
         return self._get_datasource(name, CoinbaseDatasource)
 
-    def get_metadata_datasource(self, name: str) -> MetadataDatasource:
+    def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name"""
-        return self._get_datasource(name, MetadataDatasource)
+        return self._get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         """Get `ipfs` datasource by name"""

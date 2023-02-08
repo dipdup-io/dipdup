@@ -7,8 +7,8 @@ from typing import Set
 from tortoise.transactions import in_transaction
 
 import dipdup.models
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import set_connection
+from dipdup.database import get_connection
+from dipdup.database import set_connection
 
 
 class TransactionManager:

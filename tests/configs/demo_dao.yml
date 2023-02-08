@@ -12,14 +12,14 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 indexes:
   registry_dao:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - transaction

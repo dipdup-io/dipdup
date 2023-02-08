@@ -14,8 +14,8 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 async def on_transaction(
     ctx: HandlerContext,
-    entrypoint_foo: Transaction[EntryPointFooParameter, TypeNameStorage],
-    entrypoint_bar: Transaction[EntryPointBarParameter, TypeNameStorage]
+    entrypoint_foo: TzktTransaction[EntryPointFooParameter, TypeNameStorage],
+    entrypoint_bar: TzktTransaction[EntryPointBarParameter, TypeNameStorage]
 ) -> None:
     ...
 ```
@@ -34,7 +34,7 @@ from <package>.types.<typename>.storage import TypeNameStorage
 
 async def on_origination(
     ctx: HandlerContext,
-    origination: Origination[TypeNameStorage],
+    origination: TzktOrigination[TypeNameStorage],
 )
 ```
 
@@ -49,11 +49,11 @@ from <package>.types.<typename>.big_map.<path>_value import PathValue
 
 async def on_update(
     ctx: HandlerContext,
-    update: BigMapDiff[PathKey, PathValue],
+    update: TzktBigMapDiff[PathKey, PathValue],
 )
 ```
 
-`BigMapDiff` contains action (allocate, update, or remove), nullable key and value (typed).
+`TzktBigMapDiff` contains action (allocate, update, or remove), nullable key and value (typed).
 
 <!--
 TODO: Rewrite
@@ -83,7 +83,7 @@ Here `typename` is defined in the contract inventory, `entrypoint` is specified 
 Indexing operations of multiple contracts with the same entrypoints can lead to name collisions during code generation. In this case DipDup raises a `ConfigurationError` and suggests to set alias for each conflicting handler. That applies to `operation` indexes only. Consider the following index definition, some kind of "chain minting" contract:
 
 ```yaml
-kind: operation
+kind: tezos.tzkt.operations
 handlers:
   - callback: on_mint
     pattern:
@@ -106,8 +106,8 @@ from example.types.bar.storage import BarStorage
 
 async def on_transaction(
     ctx: HandlerContext,
-    foo_mint: Transaction[FooMintParameter, FooStorage],
-    bar_mint: Transaction[BarMintParameter, BarStorage]
+    foo_mint: TzktTransaction[FooMintParameter, FooStorage],
+    bar_mint: TzktTransaction[BarMintParameter, BarStorage]
 ) -> None:
     ...
 ```

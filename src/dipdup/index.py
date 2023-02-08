@@ -8,14 +8,12 @@ from typing import TypeVar
 from typing import cast
 
 import dipdup.models as models
-from dipdup.config import HeadIndexConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
 from dipdup.context import rolled_back_indexes
-from dipdup.datasources.datasource import IndexDatasource
-from dipdup.enums import IndexStatus
-from dipdup.enums import MessageType
+from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
+from dipdup.models import IndexStatus
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
@@ -30,9 +28,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
-    message_type: MessageType
+    message_type: Any
 
-    def __init_subclass__(cls, message_type: MessageType) -> None:
+    def __init_subclass__(cls, message_type: Any) -> None:
         cls.message_type = message_type
         return super().__init_subclass__()
 
@@ -109,7 +107,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return
 
         index_level = 0
-        if not isinstance(self._config, HeadIndexConfig) and self._config.first_level:
+        if self._config.first_level:
             # NOTE: Be careful there: index has not reached the first level yet
             index_level = self._config.first_level - 1
 
@@ -133,7 +131,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             rolled_back_indexes.remove(self.name)
 
         last_level = self._config.last_level
-        if last_level and not isinstance(self._config, HeadIndexConfig):
+        if last_level:
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_sync_duration())

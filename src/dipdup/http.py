@@ -21,8 +21,8 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
-from dipdup.config import HTTPConfig
-from dipdup.config import ResolvedHTTPConfig
+from dipdup.config import HttpConfig
+from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
@@ -38,9 +38,9 @@ safe_exceptions = (
 class HTTPGateway(AbstractAsyncContextManager[None]):
     """Base class for datasources which connect to remote HTTP endpoints"""
 
-    _default_http_config: HTTPConfig
+    _default_http_config: HttpConfig
 
-    def __init__(self, url: str, http_config: ResolvedHTTPConfig) -> None:
+    def __init__(self, url: str, http_config: ResolvedHttpConfig) -> None:
         self._http_config = http_config
         self._http = _HTTPGateway(url, self._http_config)
 
@@ -77,7 +77,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
     Covers caching, retrying failed requests and ratelimiting"""
 
-    def __init__(self, url: str, config: ResolvedHTTPConfig) -> None:
+    def __init__(self, url: str, config: ResolvedHttpConfig) -> None:
         self._logger = logging.getLogger('dipdup.http')
         parsed_url = urlsplit(url)
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))

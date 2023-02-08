@@ -2,12 +2,12 @@ import {{cookiecutter.package}}.models as models
 from {{cookiecutter.package}}.types.tzcolors_auction.parameter.create_auction import CreateAuctionParameter
 from {{cookiecutter.package}}.types.tzcolors_auction.storage import TzcolorsAuctionStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_create_auction(
     ctx: HandlerContext,
-    create_auction: Transaction[CreateAuctionParameter, TzcolorsAuctionStorage],
+    create_auction: TzktTransaction[CreateAuctionParameter, TzcolorsAuctionStorage],
 ) -> None:
 
     holder, _ = await models.User.get_or_create(address=create_auction.data.sender_address)

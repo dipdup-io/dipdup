@@ -7,14 +7,14 @@ database:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       batch_size: 10000
 
 indexes:
   mainnet_operations:
-    kind: operation_unfiltered
+    kind: tezos.tzkt.operations_unfiltered
     datasource: tzkt_mainnet
     types:
       - origination

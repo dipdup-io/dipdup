@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import AsyncIterator
 
 from dipdup import env
-from dipdup.config import HTTPConfig
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config import HttpConfig
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 env.set_test()
 
@@ -19,7 +19,7 @@ async def tzkt_replay(
     url: str = 'https://api.tzkt.io',
     batch_size: int | None = None,
 ) -> AsyncIterator[TzktDatasource]:
-    config = HTTPConfig(
+    config = HttpConfig(
         batch_size=batch_size,
         replay_path=str(Path(__file__).parent / 'replays'),
     )

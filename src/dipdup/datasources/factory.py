@@ -1,15 +1,15 @@
-from dipdup.config import CoinbaseDatasourceConfig
 from dipdup.config import DipDupConfig
-from dipdup.config import HttpDatasourceConfig
-from dipdup.config import IpfsDatasourceConfig
-from dipdup.config import MetadataDatasourceConfig
-from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.coinbase.datasource import CoinbaseDatasource
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.datasource import HttpDatasource
-from dipdup.datasources.ipfs.datasource import IpfsDatasource
-from dipdup.datasources.metadata.datasource import MetadataDatasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.http import HttpDatasourceConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+from dipdup.datasources import Datasource
+from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.http import HttpDatasource
+from dipdup.datasources.ipfs import IpfsDatasource
+from dipdup.datasources.metadata import TzipMetadataDatasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
 class DatasourceFactory:
@@ -40,8 +40,8 @@ class DatasourceFactory:
                 http_config=datasource_config.http,
             )
 
-        if isinstance(datasource_config, MetadataDatasourceConfig):
-            return MetadataDatasource(
+        if isinstance(datasource_config, TzipMetadataDatasourceConfig):
+            return TzipMetadataDatasource(
                 url=datasource_config.url,
                 network=datasource_config.network,
                 http_config=datasource_config.http,

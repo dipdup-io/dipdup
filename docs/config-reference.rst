@@ -1,46 +1,46 @@
 .. autoclass:: dipdup.config.DipDupConfig
 .. autoclass:: dipdup.config.AdvancedConfig
-.. autoclass:: dipdup.config.BigMapHandlerConfig
-.. autoclass:: dipdup.config.BigMapIndexConfig
+.. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsIndexConfig
 .. autoclass:: dipdup.config.CoinbaseDatasourceConfig
 .. autoclass:: dipdup.config.ContractConfig
-.. autoclass:: dipdup.config.EventHandlerConfig
-.. autoclass:: dipdup.config.EventIndexConfig
+.. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsIndexConfig
 .. autoclass:: dipdup.config.HasuraConfig
-.. autoclass:: dipdup.config.HeadHandlerConfig
-.. autoclass:: dipdup.config.HeadIndexConfig
+.. autoclass:: dipdup.config.tezos_tzkt_head.HeadHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_head.TzktHeadIndexConfig
 .. autoclass:: dipdup.config.HookConfig
-.. autoclass:: dipdup.config.HTTPConfig
+.. autoclass:: dipdup.config.HttpConfig
 .. autoclass:: dipdup.config.HttpDatasourceConfig
 .. autoclass:: dipdup.config.IndexTemplateConfig
-.. autoclass:: dipdup.config.IpfsDatasourceConfig
+.. autoclass:: dipdup.config.ipfs.IpfsDatasourceConfig
 .. autoclass:: dipdup.config.JobConfig
-.. autoclass:: dipdup.enums.LoggingValues
+.. autoclass:: dipdup.models.LoggingValues
    :members:
    :undoc-members:
-.. autoclass:: dipdup.config.MetadataDatasourceConfig
-.. autoclass:: dipdup.config.OperationHandlerConfig
-.. autoclass:: dipdup.config.OperationHandlerOriginationPatternConfig
-.. autoclass:: dipdup.config.OperationHandlerTransactionPatternConfig
-.. autoclass:: dipdup.config.OperationIndexConfig
-.. autoclass:: dipdup.enums.OperationType
+.. autoclass:: dipdup.config.tezos_metadata.TzipMetadataDatasourceConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsIndexConfig
+.. autoclass:: dipdup.models.tezos_tzkt.TzktOperationType
    :members:
    :undoc-members:
-.. autoclass:: dipdup.config.OperationUnfilteredIndexConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig
 .. autoclass:: dipdup.config.PostgresDatabaseConfig
 .. autoclass:: dipdup.config.PrometheusConfig
-.. autoclass:: dipdup.enums.ReindexingAction
+.. autoclass:: dipdup.models.ReindexingAction
    :members:
    :undoc-members:
-.. autoclass:: dipdup.enums.ReindexingReason
+.. autoclass:: dipdup.models.ReindexingReason
    :members:
    :undoc-members:
 .. autoclass:: dipdup.config.SentryConfig
-.. autoclass:: dipdup.enums.SkipHistory
+.. autoclass:: dipdup.models.SkipHistory
    :members:
    :undoc-members:
 .. autoclass:: dipdup.config.SqliteDatabaseConfig
-.. autoclass:: dipdup.config.TokenTransferHandlerConfig
-.. autoclass:: dipdup.config.TokenTransferIndexConfig
-.. autoclass:: dipdup.config.TzktDatasourceConfig
-.. autoclass:: dipdup.config.UnknownEventHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig
+.. autoclass:: dipdup.config.tezos_tzkt.TzktDatasourceConfig
+.. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig

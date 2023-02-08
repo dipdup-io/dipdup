@@ -9,8 +9,8 @@ import demo_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
-from dipdup.enums import IndexType
 from dipdup.models import Index
+from dipdup.models import IndexType
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 
@@ -147,7 +147,7 @@ async def test_cleanup_and_filtering() -> None:
         # NOTE: Cleanup
         index = Index(
             name='test',
-            type=IndexType.operation,
+            type=IndexType.tezos_tzkt_operations,
             config_hash='',
             level=1005,
         )

@@ -15,12 +15,12 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
   auction:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: <datasource>
     contracts:
       - <auction>

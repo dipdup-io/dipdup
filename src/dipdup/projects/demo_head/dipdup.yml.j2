@@ -7,12 +7,12 @@ database:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 indexes:
   mainnet_head:
-    kind: head
+    kind: tezos.tzkt.head
     datasource: tzkt_mainnet
     handlers:
       - callback: on_mainnet_head

@@ -7,7 +7,7 @@ database:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.ghostnet.tzkt.io
 
 contracts:
@@ -16,7 +16,7 @@ contracts:
 
 indexes:
   events:
-    kind: event
+    kind: tezos.tzkt.events
     datasource: tzkt
     handlers:
       - callback: on_move_event

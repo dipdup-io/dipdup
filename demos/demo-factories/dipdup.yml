@@ -12,12 +12,12 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
   registry_dao:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - transaction
@@ -37,7 +37,7 @@ templates:
 
 indexes:
   factory:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - origination

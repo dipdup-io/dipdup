@@ -9,10 +9,10 @@ from dipdup.config import DipDupConfig
 from dipdup.context import pending_indexes
 from dipdup.dipdup import DipDup
 from dipdup.dipdup import IndexDispatcher
-from dipdup.enums import IndexStatus
-from dipdup.enums import IndexType
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
+from dipdup.models import IndexStatus
+from dipdup.models import IndexType
 
 
 async def _create_index(hash_: str) -> None:
@@ -25,7 +25,7 @@ async def _create_index(hash_: str) -> None:
         template_values={},
         status=IndexStatus.NEW,
         updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
-        type=IndexType.operation,
+        type=IndexType.tezos_tzkt_operations,
     )
 
 

@@ -10,9 +10,9 @@ from pydantic import Field
 from tabulate import tabulate
 
 from dipdup import major_version
+from dipdup.codegen import load_template
+from dipdup.codegen import write
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils.codegen import load_template
-from dipdup.utils.codegen import write
 
 _logger = logging.getLogger('dipdup.project')
 
@@ -178,7 +178,7 @@ class Project(BaseModel):
             _logger.warning('File `%s` already exists, skipping', output_path)
 
         _logger.info('Generating `%s`', output_path)
-        template = load_template(template_path)
+        template = load_template(str(template_path))
         content = template.render(cookiecutter=self.answers)
         write(output_path, content, overwrite=force)
 

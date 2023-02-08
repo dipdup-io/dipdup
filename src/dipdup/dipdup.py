@@ -11,8 +11,6 @@ from contextlib import suppress
 from copy import copy
 from typing import Any
 from typing import Awaitable
-from typing import Dict
-from typing import Optional
 
 from tortoise.exceptions import OperationalError
 
@@ -28,40 +26,40 @@ from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.context import pending_indexes
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.datasource import IndexDatasource
+from dipdup.database import generate_schema
+from dipdup.database import get_connection
+from dipdup.database import get_schema_hash
+from dipdup.database import tortoise_wrapper
+from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
-from dipdup.datasources.tzkt.datasource import TzktDatasource
-from dipdup.enums import IndexStatus
-from dipdup.enums import MessageType
-from dipdup.enums import ReindexingReason
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
-from dipdup.indexes.big_map.index import BigMapIndex
-from dipdup.indexes.event.index import EventIndex
-from dipdup.indexes.head.index import HeadIndex
-from dipdup.indexes.operation.index import OperationIndex
-from dipdup.indexes.operation.index import extract_operation_subgroups
-from dipdup.indexes.token_transfer.index import TokenTransferIndex
-from dipdup.models import BigMapData
+from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
+from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
+from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
+from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
+from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
+from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 from dipdup.models import Contract
-from dipdup.models import EventData
 from dipdup.models import Head
-from dipdup.models import HeadBlockData
 from dipdup.models import Index as IndexState
-from dipdup.models import OperationData
+from dipdup.models import IndexStatus
+from dipdup.models import ReindexingReason
 from dipdup.models import Schema
-from dipdup.models import TokenTransferData
+from dipdup.models.tezos_tzkt import TzktBigMapData
+from dipdup.models.tezos_tzkt import TzktEventData
+from dipdup.models.tezos_tzkt import TzktHeadBlockData
+from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
-from dipdup.utils.database import generate_schema
-from dipdup.utils.database import get_connection
-from dipdup.utils.database import get_schema_hash
-from dipdup.utils.database import tortoise_wrapper
 
 
 class IndexDispatcher:
@@ -69,7 +67,7 @@ class IndexDispatcher:
         self._ctx = ctx
 
         self._logger = logging.getLogger('dipdup')
-        self._indexes: Dict[str, Index[Any, Any, Any]] = {}
+        self._indexes: dict[str, Index[Any, Any, Any]] = {}
 
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
@@ -88,7 +86,7 @@ class IndexDispatcher:
         on_synchronized_fired = False
 
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex):
+            if isinstance(index, TzktOperationsIndex):
                 await self._apply_filters(index)
 
         while True:
@@ -117,7 +115,7 @@ class IndexDispatcher:
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
-                if isinstance(index, OperationIndex):
+                if isinstance(index, TzktOperationsIndex):
                     await self._apply_filters(index)
 
             if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.ONESHOT)):
@@ -155,7 +153,7 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
-    async def _apply_filters(self, index: OperationIndex) -> None:
+    async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
@@ -241,7 +239,7 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, IndexDatasource):
+            if not isinstance(datasource, TzktDatasource):
                 continue
             datasource.call_on_head(self._on_head)
             datasource.call_on_operations(self._on_operations)
@@ -250,7 +248,7 @@ class IndexDispatcher:
             datasource.call_on_events(self._on_events)
             datasource.call_on_rollback(self._on_rollback)
 
-    async def _on_head(self, datasource: IndexDatasource, head: HeadBlockData) -> None:
+    async def _on_head(self, datasource: IndexDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
         asyncio.ensure_future(
             Head.update_or_create(
@@ -265,10 +263,10 @@ class IndexDispatcher:
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, HeadIndex) and index.datasource == datasource:
+            if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: IndexDatasource, operations: tuple[OperationData, ...]) -> None:
+    async def _on_operations(self, datasource: IndexDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -282,28 +280,28 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, OperationIndex) and index.datasource == datasource:
+            if isinstance(index, TzktOperationsIndex) and index.datasource == datasource:
                 index.push_operations(operation_subgroups)
 
     async def _on_token_transfers(
-        self, datasource: IndexDatasource, token_transfers: tuple[TokenTransferData, ...]
+        self, datasource: IndexDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TokenTransferIndex) and index.datasource == datasource:
+            if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
                 index.push_token_transfers(token_transfers)
 
-    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[BigMapData, ...]) -> None:
+    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, BigMapIndex) and index.datasource == datasource:
+            if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
                 index.push_big_maps(big_maps)
 
-    async def _on_events(self, datasource: IndexDatasource, events: tuple[EventData, ...]) -> None:
+    async def _on_events(self, datasource: IndexDatasource, events: tuple[TzktEventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, EventIndex) and index.datasource == datasource:
+            if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
     async def _on_rollback(
-        self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int
+        self, datasource: IndexDatasource, type_: TzktMessageType, from_level: int, to_level: int
     ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
@@ -354,8 +352,8 @@ class DipDup:
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger('dipdup')
         self._config = config
-        self._datasources: Dict[str, Datasource] = {}
-        self._datasources_by_config: Dict[DatasourceConfigU, Datasource] = {}
+        self._datasources: dict[str, Datasource] = {}
+        self._datasources_by_config: dict[DatasourceConfigU, Datasource] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
@@ -368,7 +366,7 @@ class DipDup:
             transactions=self._transactions,
         )
         self._codegen = CodeGenerator(self._config, self._datasources_by_config)
-        self._schema: Optional[Schema] = None
+        self._schema: Schema | None = None
 
     @property
     def schema(self) -> Schema:

@@ -7,14 +7,14 @@ database:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 indexes:
   mainnet_operations:
-    kind: operation_unfiltered
+    kind: tezos.tzkt.operations_unfiltered
     datasource: tzkt
     types:
       - transaction
@@ -24,7 +24,7 @@ indexes:
     last_level: 1589247
 
   mainnet_originations:
-    kind: operation_unfiltered
+    kind: tezos.tzkt.operations_unfiltered
     datasource: tzkt
     types:
       - origination

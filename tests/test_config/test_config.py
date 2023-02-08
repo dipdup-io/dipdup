@@ -8,15 +8,16 @@ from pydantic import ValidationError
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
-from dipdup.config import HTTPConfig
-from dipdup.config import OperationIndexConfig
+from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import ResolvedHTTPConfig
-from dipdup.config import TzktDatasourceConfig
-from dipdup.datasources.tzkt.models import OriginationSubscription
-from dipdup.datasources.tzkt.models import TransactionSubscription
-from dipdup.enums import OperationType
+from dipdup.config import ResolvedHttpConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.models.tezos_tzkt import TzktOperationType
 
 
 def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:
@@ -24,7 +25,7 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
     config = DipDupConfig.load([path])
     config.advanced.merge_subscriptions = merge_subs
     if origs:
-        config.indexes['hen_mainnet'].types += (OperationType.origination,)  # type: ignore[union-attr]
+        config.indexes['hen_mainnet'].types += (TzktOperationType.origination,)  # type: ignore[union-attr]
     config.initialize()
     return config
 
@@ -32,7 +33,7 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
 async def test_load_initialize() -> None:
     config = create_config()
     index_config = config.indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TzktOperationsIndexConfig)
 
     assert isinstance(config, DipDupConfig)
     destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
@@ -43,23 +44,27 @@ async def test_load_initialize() -> None:
 
 async def test_operation_subscriptions() -> None:
     index_config = create_config(False, False).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9')}
+    assert isinstance(index_config, TzktOperationsIndexConfig)
+    assert index_config.subscriptions == {
+        TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
+        HeadSubscription(),
+    }
 
     index_config = create_config(True, False).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription()}
+    assert isinstance(index_config, TzktOperationsIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(), HeadSubscription()}
 
     index_config = create_config(False, True).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
+    assert isinstance(index_config, TzktOperationsIndexConfig)
     assert index_config.subscriptions == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         OriginationSubscription(),
+        HeadSubscription(),
     }
 
     index_config = create_config(True, True).indexes['hen_mainnet']
-    assert isinstance(index_config, OperationIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription()}
+    assert isinstance(index_config, TzktOperationsIndexConfig)
+    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription(), HeadSubscription()}
 
 
 async def test_validators() -> None:
@@ -69,7 +74,7 @@ async def test_validators() -> None:
     with pytest.raises(ValidationError):
         ContractConfig(address='lalalalalalalalalalalalalalalalalala')
     with pytest.raises(ConfigurationError):
-        TzktDatasourceConfig(kind='tzkt', url='not_an_url')
+        TzktDatasourceConfig(kind='tezos.tzkt', url='not_an_url')
 
 
 async def test_dump() -> None:
@@ -100,17 +105,17 @@ async def test_secrets() -> None:
 
 
 async def test_http_config() -> None:
-    config = ResolvedHTTPConfig.create(
-        HTTPConfig(
+    config = ResolvedHttpConfig.create(
+        HttpConfig(
             retry_count=10,
             retry_sleep=10,
         ),
-        HTTPConfig(
+        HttpConfig(
             retry_count=20,
             replay_path='replays',
         ),
     )
-    assert config == ResolvedHTTPConfig(
+    assert config == ResolvedHttpConfig(
         retry_count=20,
         retry_sleep=10,
         retry_multiplier=1.0,
@@ -122,3 +127,7 @@ async def test_http_config() -> None:
         batch_size=1000,
         replay_path='replays',
     )
+
+
+async def test_evm() -> None:
+    DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'evm_subsquid.yml'])

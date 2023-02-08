@@ -8,14 +8,14 @@ contracts:
 
 datasources:
   tzkt_testnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.hangzhou2net.tzkt.io/
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 indexes:
   yupana:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt_testnet
     contracts:
       - yupana

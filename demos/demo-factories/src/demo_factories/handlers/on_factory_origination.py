@@ -2,12 +2,12 @@ from typing import cast
 
 from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Origination
+from dipdup.models.tezos_tzkt import TzktOrigination
 
 
 async def on_factory_origination(
     ctx: HandlerContext,
-    registry_origination: Origination[RegistryStorage],
+    registry_origination: TzktOrigination[RegistryStorage],
 ) -> None:
     originated_contract = cast(str, registry_origination.data.originated_contract_address)
     name = f'registry_dao_{originated_contract}'

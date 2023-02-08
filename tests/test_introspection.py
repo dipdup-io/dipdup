@@ -7,12 +7,12 @@ from typing import Union
 import pytest
 from pydantic import BaseModel
 
-from dipdup.datasources.tzkt.models import IntrospectionError
-from dipdup.datasources.tzkt.models import extract_root_outer_type
-from dipdup.datasources.tzkt.models import get_dict_value_type
-from dipdup.datasources.tzkt.models import get_list_elt_type
-from dipdup.datasources.tzkt.models import is_array_type
-from dipdup.datasources.tzkt.models import unwrap_union_type
+from dipdup.indexes.tezos_tzkt_operations.parser import IntrospectionError
+from dipdup.indexes.tezos_tzkt_operations.parser import extract_root_outer_type
+from dipdup.indexes.tezos_tzkt_operations.parser import get_dict_value_type
+from dipdup.indexes.tezos_tzkt_operations.parser import get_list_elt_type
+from dipdup.indexes.tezos_tzkt_operations.parser import is_array_type
+from dipdup.indexes.tezos_tzkt_operations.parser import unwrap_union_type
 
 NoneType = type(None)
 

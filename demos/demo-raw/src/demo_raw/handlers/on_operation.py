@@ -1,11 +1,11 @@
 from demo_raw import models
 from dipdup.context import HandlerContext
-from dipdup.models import OperationData
+from dipdup.models.tezos_tzkt import TzktOperationData
 
 
 async def on_operation(
     ctx: HandlerContext,
-    operation: OperationData,
+    operation: TzktOperationData,
 ) -> None:
     await models.Operation.create(
         hash=operation.hash,

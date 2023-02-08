@@ -6,13 +6,13 @@ from demo_dex.types.fa12_token.storage import Fa12TokenStorage
 from demo_dex.types.quipu_fa12.parameter.invest_liquidity import InvestLiquidityParameter
 from demo_dex.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models import Transaction
+from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_fa12_invest_liquidity(
     ctx: HandlerContext,
-    invest_liquidity: Transaction[InvestLiquidityParameter, QuipuFa12Storage],
-    transfer: Transaction[TransferParameter, Fa12TokenStorage],
+    invest_liquidity: TzktTransaction[InvestLiquidityParameter, QuipuFa12Storage],
+    transfer: TzktTransaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
     storage = invest_liquidity.storage
 

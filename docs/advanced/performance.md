@@ -29,7 +29,7 @@ All datasources now share the same code under the hood to communicate with under
 ```yaml
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     ...
     http:
       retry_count: 10

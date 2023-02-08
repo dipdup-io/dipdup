@@ -20,7 +20,7 @@ contracts:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.tzkt.io
   my_api:
     kind: http
@@ -31,7 +31,7 @@ datasources:
   coinbase:
     kind: coinbase
   metadata:
-    kind: metadata
+    kind: tzip_metadata
     url: https://metadata.dipdup.net
     network: mainnet
 
@@ -52,7 +52,7 @@ indexes:
     skip_history: never
 
   factory:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - origination
@@ -66,7 +66,7 @@ indexes:
 
 templates:
   operation_template:
-    kind: operation
+    kind: tezos.tzkt.operations
     datasource: <datasource>
     types:
       - origination
@@ -85,7 +85,7 @@ templates:
             entrypoint: some_call
 
   big_map_template:
-    kind: big_map
+    kind: tezos.tzkt.big_maps
     datasource: <datasource>
     handlers:
       - callback: on_update_records

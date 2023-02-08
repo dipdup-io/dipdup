@@ -12,12 +12,12 @@ contracts:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
   big_maps:
-    kind: big_map
+    kind: tezos.tzkt.big_maps
     datasource: <datasource>
     skip_history: once
     handlers:

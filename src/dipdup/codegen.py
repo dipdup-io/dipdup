@@ -14,31 +14,33 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Union
 from typing import cast
 
 import orjson as json
 
 from dipdup import env
-from dipdup.config import BigMapIndexConfig
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
-from dipdup.config import EventIndexConfig
-from dipdup.config import HeadIndexConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import OperationHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config import OperationHandlerPatternConfigU as PatternConfigU
-from dipdup.config import OperationHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config import OperationIndexConfig
-from dipdup.config import OperationUnfilteredIndexConfig
-from dipdup.config import TokenTransferIndexConfig
-from dipdup.config import TzktDatasourceConfig
-from dipdup.config import UnknownEventHandlerConfig
 from dipdup.config import event_hooks
-from dipdup.datasources.datasource import Datasource
-from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.datasources import Datasource
+from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
@@ -46,15 +48,53 @@ from dipdup.exceptions import FrameworkException
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils.codegen import load_template
-from dipdup.utils.codegen import touch
-from dipdup.utils.codegen import write
 
 KEEP_MARKER = '.keep'
 PYTHON_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 CALLBACK_TEMPLATE = 'callback.py.j2'
+
+
+if TYPE_CHECKING:
+    from jinja2 import Template
+
+_logger = logging.getLogger('dipdup.codegen')
+
+
+def touch(path: Path) -> None:
+    """Create empty file, ignore if already exists"""
+    if not path.parent.exists():
+        _logger.info('Creating directory `%s`', path.parent)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not path.is_file():
+        _logger.info('Creating file `%s`', path)
+        path.touch()
+
+
+def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bool:
+    """Write content to file, create directory tree if necessary"""
+    if not path.parent.exists():
+        _logger.info('Creating directory `%s`', path.parent)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+    if path.exists() and not overwrite:
+        return False
+
+    _logger.info('Writing into file `%s`', path)
+    if isinstance(content, str):
+        content = content.encode()
+    path.write_bytes(content)
+    return True
+
+
+def load_template(*path: str) -> 'Template':
+    """Load template from path relative to dipdup package"""
+    from jinja2 import Template
+
+    full_path = Path(__file__).parent.joinpath(*path)
+    return Template(full_path.read_text())
 
 
 def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
@@ -212,19 +252,19 @@ class CodeGenerator:
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
                 )
 
-    async def _fetch_operation_index_schema(self, index_config: OperationIndexConfig) -> None:
+    async def _fetch_operation_index_schema(self, index_config: TzktOperationsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
                     operation_pattern_config,
-                    index_config.datasource_config,
+                    index_config.datasource,
                 )
 
-    async def _fetch_big_map_index_schema(self, index_config: BigMapIndexConfig) -> None:
+    async def _fetch_big_map_index_schema(self, index_config: TzktBigMapsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract
 
-            contract_schemas = await self._get_schema(index_config.datasource_config, contract_config)
+            contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
@@ -244,14 +284,14 @@ class CodeGenerator:
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
             write(big_map_value_schema_path, json.dumps(big_map_value_schema, option=json.OPT_INDENT_2))
 
-    async def _fetch_event_index_schema(self, index_config: EventIndexConfig) -> None:
+    async def _fetch_event_index_schema(self, index_config: TzktEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, UnknownEventHandlerConfig):
+            if isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):
                 continue
 
             contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
-                index_config.datasource_config,
+                index_config.datasource,
                 contract_config,
             )
             contract_schemas_path = self._pkg.schemas / contract_config.module_name
@@ -273,23 +313,25 @@ class CodeGenerator:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
 
-        unused_operation_templates = [t for t in self._config.templates.values() if isinstance(t, OperationIndexConfig)]
+        unused_operation_templates = [
+            t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
+        ]
 
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, OperationIndexConfig):
+            if isinstance(index_config, TzktOperationsIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-                template = cast(OperationIndexConfig, index_config.parent)
+                template = cast(TzktOperationsIndexConfig, index_config.parent)
                 if template in unused_operation_templates:
                     unused_operation_templates.remove(template)
-            elif isinstance(index_config, BigMapIndexConfig):
+            elif isinstance(index_config, TzktBigMapsIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
-            elif isinstance(index_config, EventIndexConfig):
+            elif isinstance(index_config, TzktEventsIndexConfig):
                 await self._fetch_event_index_schema(index_config)
-            elif isinstance(index_config, HeadIndexConfig):
+            elif isinstance(index_config, TzktHeadIndexConfig):
                 pass
-            elif isinstance(index_config, TokenTransferIndexConfig):
+            elif isinstance(index_config, TzktTokenTransfersIndexConfig):
                 pass
-            elif isinstance(index_config, OperationUnfilteredIndexConfig):
+            elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
                 pass
             elif isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException
@@ -395,7 +437,7 @@ class CodeGenerator:
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 continue
-            if isinstance(index_config, OperationUnfilteredIndexConfig):
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
                 await self._generate_callback(index_config.handler_config)
                 continue
 

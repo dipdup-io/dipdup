@@ -20,9 +20,9 @@ from dipdup import __version__
 from dipdup import env
 from dipdup import spec_reindex_mapping
 from dipdup import spec_version_mapping
-from dipdup.utils.sys import IGNORE_CONFIG_CMDS
-from dipdup.utils.sys import set_up_logging
-from dipdup.utils.sys import set_up_process
+from dipdup.sys import IGNORE_CONFIG_CMDS
+from dipdup.sys import set_up_logging
+from dipdup.sys import set_up_process
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
@@ -250,8 +250,8 @@ async def migrate(ctx: click.Context) -> None:
 async def status(ctx: click.Context) -> None:
     """Show the current status of indexes in the database."""
     from dipdup.config import DipDupConfig
+    from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
-    from dipdup.utils.database import tortoise_wrapper
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -337,9 +337,9 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     from dipdup.config import DipDupConfig
     from dipdup.config import PostgresDatabaseConfig
+    from dipdup.database import tortoise_wrapper
     from dipdup.exceptions import ConfigurationError
     from dipdup.hasura import HasuraGateway
-    from dipdup.utils.database import tortoise_wrapper
 
     config: DipDupConfig = ctx.obj.config
     if not config.hasura:
@@ -377,9 +377,9 @@ async def schema(ctx: click.Context) -> None:
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
     from dipdup.config import DipDupConfig
+    from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
     from dipdup.models import Schema
-    from dipdup.utils.database import tortoise_wrapper
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -415,9 +415,9 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     from dipdup.config import DipDupConfig
     from dipdup.config import PostgresDatabaseConfig
-    from dipdup.utils.database import get_connection
-    from dipdup.utils.database import tortoise_wrapper
-    from dipdup.utils.database import wipe_schema
+    from dipdup.database import get_connection
+    from dipdup.database import tortoise_wrapper
+    from dipdup.database import wipe_schema
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -463,9 +463,9 @@ async def schema_init(ctx: click.Context) -> None:
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
     from dipdup.config import DipDupConfig
+    from dipdup.database import generate_schema
+    from dipdup.database import get_connection
     from dipdup.dipdup import DipDup
-    from dipdup.utils.database import generate_schema
-    from dipdup.utils.database import get_connection
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -500,9 +500,9 @@ async def schema_export(ctx: click.Context) -> None:
     from tortoise.utils import get_schema_sql
 
     from dipdup.config import DipDupConfig
+    from dipdup.database import get_connection
+    from dipdup.database import tortoise_wrapper
     from dipdup.utils import iter_files
-    from dipdup.utils.database import get_connection
-    from dipdup.utils.database import tortoise_wrapper
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string

@@ -12,14 +12,14 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
 
 templates:
   big_maps:
-    kind: big_map
+    kind: tezos.tzkt.big_maps
     datasource: <datasource>
     handlers:
       - callback: on_update_records
