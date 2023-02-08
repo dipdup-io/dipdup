@@ -31,7 +31,7 @@ datasources:
   coinbase:
     kind: coinbase
   metadata:
-    kind: tezos.metadata
+    kind: tzip_metadata
     url: https://metadata.dipdup.net
     network: mainnet
 

@@ -4,10 +4,10 @@ from typing import cast
 
 from dipdup.config import HttpConfig
 from dipdup.datasources import GraphQLDatasource
-from dipdup.models.tezos_metadata import MetadataNetwork
+from dipdup.models.tzip_metadata import TzipMetadataNetwork
 
 
-class TezosMetadataDatasource(GraphQLDatasource):
+class TzipMetadataDatasource(GraphQLDatasource):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -16,7 +16,7 @@ class TezosMetadataDatasource(GraphQLDatasource):
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str, network: MetadataNetwork, http_config: HttpConfig | None = None) -> None:
+    def __init__(self, url: str, network: TzipMetadataNetwork, http_config: HttpConfig | None = None) -> None:
         super().__init__(url, http_config)
         self._logger = logging.getLogger('dipdup.metadata')
         self._network = network

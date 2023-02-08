@@ -2,13 +2,13 @@ from dipdup.config import DipDupConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
-from dipdup.config.tezos_metadata import TezosMetadataDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
-from dipdup.datasources.metadata import TezosMetadataDatasource
+from dipdup.datasources.metadata import TzipMetadataDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
@@ -40,8 +40,8 @@ class DatasourceFactory:
                 http_config=datasource_config.http,
             )
 
-        if isinstance(datasource_config, TezosMetadataDatasourceConfig):
-            return TezosMetadataDatasource(
+        if isinstance(datasource_config, TzipMetadataDatasourceConfig):
+            return TzipMetadataDatasource(
                 url=datasource_config.url,
                 network=datasource_config.network,
                 http_config=datasource_config.http,

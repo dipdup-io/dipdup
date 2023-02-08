@@ -42,7 +42,7 @@ from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
-from dipdup.datasources.metadata import TezosMetadataDatasource
+from dipdup.datasources.metadata import TzipMetadataDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
@@ -408,9 +408,9 @@ class DipDupContext:
         """Get `coinbase` datasource by name"""
         return self._get_datasource(name, CoinbaseDatasource)
 
-    def get_metadata_datasource(self, name: str) -> TezosMetadataDatasource:
+    def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name"""
-        return self._get_datasource(name, TezosMetadataDatasource)
+        return self._get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         """Get `ipfs` datasource by name"""

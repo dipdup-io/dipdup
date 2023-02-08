@@ -79,7 +79,7 @@ Please note that Coinbase can't replace TzKT being an index datasource. But you 
 ```yaml
 datasources:
   metadata:
-    kind: tezos.metadata
+    kind: tzip_metadata
     url: https://metadata.dipdup.net
     network: mainnet | ithacanet
 ```

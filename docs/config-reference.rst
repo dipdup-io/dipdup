@@ -18,7 +18,7 @@
 .. autoclass:: dipdup.models.LoggingValues
    :members:
    :undoc-members:
-.. autoclass:: dipdup.config.tezos_metadata.TezosMetadataDatasourceConfig
+.. autoclass:: dipdup.config.tezos_metadata.TzipMetadataDatasourceConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig

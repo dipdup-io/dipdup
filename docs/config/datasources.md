@@ -36,7 +36,7 @@ datasources:
 ```yaml
 datasources:
   metadata:
-    kind: tezos.metadata
+    kind: tzip_metadata
     url: https://metadata.dipdup.net
     network: mainnet|ghostnet|limanet
 ```

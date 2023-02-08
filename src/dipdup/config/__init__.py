@@ -1134,7 +1134,6 @@ from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
-from dipdup.config.tezos_metadata import TezosMetadataDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -1144,12 +1143,13 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatt
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: We need unions for Pydantic deserialization
 DatasourceConfigU = (
     TzktDatasourceConfig
     | CoinbaseDatasourceConfig
-    | TezosMetadataDatasourceConfig
+    | TzipMetadataDatasourceConfig
     | IpfsDatasourceConfig
     | HttpDatasourceConfig
     | EvmSubsquidDatasourceConfig

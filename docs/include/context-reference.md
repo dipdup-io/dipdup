@@ -201,7 +201,7 @@
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>TezosMetadataDatasource</em></p>
+<dd class="field-even"><p><em>TzipMetadataDatasource</em></p>
 </dd>
 </dl>
 </dd></dl>
