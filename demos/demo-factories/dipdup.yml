@@ -12,7 +12,7 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:

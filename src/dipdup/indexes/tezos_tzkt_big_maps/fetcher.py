@@ -6,10 +6,10 @@ from typing import Iterable
 
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models.tzkt import BigMapData
+from dipdup.models.tezos_tzkt import BigMapData
 
 
 def get_big_map_addresses(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[str]:
@@ -44,11 +44,11 @@ def get_big_map_pairs(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[
 class BigMapFetcher(DataFetcher[BigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],
@@ -63,7 +63,7 @@ class BigMapFetcher(DataFetcher[BigMapData]):
     def create(
         cls,
         config: TezosTzktBigMapsIndexConfig,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
     ) -> BigMapFetcher:

@@ -8,13 +8,13 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import IndexConfig
-from dipdup.config.subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 
 
 @dataclass
 class EvmSubsquidOperationsIndexConfig(IndexConfig):
     kind: Literal['evm.subsquid.operations']
-    datasource: SubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig
     handlers: tuple[Any, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
 

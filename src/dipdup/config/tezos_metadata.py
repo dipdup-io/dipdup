@@ -5,11 +5,11 @@ from pydantic.dataclasses import dataclass
 from dipdup import baking_bad
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
-from dipdup.models.metadata import MetadataNetwork
+from dipdup.models.tezos_metadata import MetadataNetwork
 
 
 @dataclass
-class MetadataDatasourceConfig(DatasourceConfig):
+class TezosMetadataDatasourceConfig(DatasourceConfig):
     """DipDup Metadata datasource config
 
     :param kind: always 'metadata'
@@ -18,7 +18,7 @@ class MetadataDatasourceConfig(DatasourceConfig):
     :param http: HTTP client configuration
     """
 
-    kind: Literal['metadata']
+    kind: Literal['tezos.metadata']
     network: MetadataNetwork
     url: str = baking_bad.METADATA_API_URL
     http: HttpConfig | None = None

@@ -14,11 +14,11 @@ from dipdup.config import HandlerConfig
 from dipdup.config import ParameterTypeMixin
 from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
-from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.config.tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tzkt import OperationType
+from dipdup.models.tezos_tzkt import OperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -56,7 +56,7 @@ class PatternConfig(CodegenMixin):
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:
-        return 'dipdup.models.tzkt', 'OperationData'
+        return 'dipdup.models.tezos_tzkt', 'OperationData'
 
     @classmethod
     def format_origination_argument(
@@ -132,7 +132,7 @@ class OperationsHandlerTransactionPatternConfig(
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tzkt', 'Transaction'
+            yield 'dipdup.models.tezos_tzkt', 'Transaction'
             yield self.format_parameter_import(
                 package,
                 module_name,
@@ -199,10 +199,10 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tzkt', 'Origination'
+            yield 'dipdup.models.tezos_tzkt', 'Origination'
             yield self.format_storage_import(package, module_name)
         else:
-            yield 'dipdup.models.tzkt', 'OperationData'
+            yield 'dipdup.models.tezos_tzkt', 'OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -230,7 +230,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
 
 
 @dataclass
-class TezosTzktOperationsIndexConfig(TzktIndexConfig):
+class TezosTzktOperationsIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation`
@@ -243,7 +243,7 @@ class TezosTzktOperationsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosTzktOperationsHandlerConfig, ...]
     contracts: list[ContractConfig] = field(default_factory=list)
     types: tuple[OperationType, ...] = (OperationType.transaction,)
@@ -320,7 +320,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tzkt', 'OperationData'
+        yield 'dipdup.models.tezos_tzkt', 'OperationData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -329,7 +329,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
+class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 
     :param kind: always `operation_unfiltered`
@@ -342,7 +342,7 @@ class TezosTzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.operations_unfiltered']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     callback: str
     types: tuple[OperationType, ...] = (OperationType.transaction,)
 

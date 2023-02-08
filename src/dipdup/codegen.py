@@ -28,6 +28,7 @@ from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
@@ -38,9 +39,8 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatt
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.datasources import Datasource
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
@@ -170,7 +170,7 @@ class CodeGenerator:
         self._logger = logging.getLogger('dipdup.codegen')
         self._config = config
         self._datasources = datasources
-        self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
+        self._schemas: dict[TezosTzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
         self._pkg = ProjectPaths(env.get_package_path(config.package))
 
     def create_package(self) -> None:
@@ -191,7 +191,7 @@ class CodeGenerator:
     async def _fetch_operation_pattern_schema(
         self,
         operation_pattern_config: PatternConfigU,
-        datasource_config: TzktDatasourceConfig,
+        datasource_config: TezosTzktDatasourceConfig,
     ) -> None:
         contract_config = operation_pattern_config.typed_contract
         if contract_config is None:
@@ -352,7 +352,7 @@ class CodeGenerator:
             else:
                 self._logger.info('Unresolved `datasource` field, trying to guess it.')
                 for possible_datasource_config in self._config.datasources.values():
-                    if not isinstance(possible_datasource_config, TzktDatasourceConfig):
+                    if not isinstance(possible_datasource_config, TezosTzktDatasourceConfig):
                         continue
                     # NOTE: Do not modify config without necessity
                     template_config.datasource = possible_datasource_config
@@ -459,12 +459,12 @@ class CodeGenerator:
 
     async def _get_schema(
         self,
-        datasource_config: TzktDatasourceConfig,
+        datasource_config: TezosTzktDatasourceConfig,
         contract_config: ContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources[datasource_config]
-        if not isinstance(datasource, TzktDatasource):
+        if not isinstance(datasource, TezosTzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
         if isinstance(contract_config.address, str):

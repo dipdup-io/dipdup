@@ -1,7 +1,7 @@
 from demo_events import models as models
 from demo_events.types.events_contract.event.move import MovePayload
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import Event
+from dipdup.models.tezos_tzkt import Event
 
 
 async def on_move_event(

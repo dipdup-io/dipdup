@@ -4,7 +4,7 @@ from typing import Any
 
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -13,17 +13,17 @@ from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
 from dipdup.models import SkipHistory
-from dipdup.models.tzkt import BigMapAction
-from dipdup.models.tzkt import BigMapData
-from dipdup.models.tzkt import BigMapDiff
-from dipdup.models.tzkt import MessageType
+from dipdup.models.tezos_tzkt import BigMapAction
+from dipdup.models.tezos_tzkt import BigMapData
+from dipdup.models.tezos_tzkt import BigMapDiff
+from dipdup.models.tezos_tzkt import MessageType
 from dipdup.prometheus import Metrics
 
 BigMapQueueItem = tuple[BigMapData, ...]
 
 
 class TezosTzktBigMapsIndex(
-    Index[TezosTzktBigMapsIndexConfig, BigMapQueueItem, TzktDatasource],
+    Index[TezosTzktBigMapsIndexConfig, BigMapQueueItem, TezosTzktDatasource],
     message_type=MessageType.big_map,
 ):
     def push_big_maps(self, big_maps: BigMapQueueItem) -> None:

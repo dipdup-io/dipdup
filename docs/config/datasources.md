@@ -9,7 +9,7 @@ A datasource config entry is an alias for the endpoint URI; there's no network m
 ```yaml
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       retry_count:  # retry infinetely
@@ -36,7 +36,7 @@ datasources:
 ```yaml
 datasources:
   metadata:
-    kind: metadata
+    kind: tezos.metadata
     url: https://metadata.dipdup.net
     network: mainnet|ghostnet|limanet
 ```

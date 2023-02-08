@@ -8,8 +8,8 @@ from pydantic.fields import Field
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.config.tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 
 
 @dataclass
@@ -30,7 +30,7 @@ class TezosTzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tzkt', 'TokenTransferData'
+        yield 'dipdup.models.tezos_tzkt', 'TokenTransferData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -39,7 +39,7 @@ class TezosTzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktTokenTransfersIndexConfig(TzktIndexConfig):
+class TezosTzktTokenTransfersIndexConfig(TezosTzktIndexConfig):
     """Token transfer index config
 
     :param kind: always `token_transfer`
@@ -51,7 +51,7 @@ class TezosTzktTokenTransfersIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.token_transfers']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosTzktTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

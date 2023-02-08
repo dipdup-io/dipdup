@@ -11,9 +11,9 @@ from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tzkt import Event
-from dipdup.models.tzkt import EventData
-from dipdup.models.tzkt import UnknownEvent
+from dipdup.models.tezos_tzkt import Event
+from dipdup.models.tezos_tzkt import EventData
+from dipdup.models.tezos_tzkt import UnknownEvent
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')

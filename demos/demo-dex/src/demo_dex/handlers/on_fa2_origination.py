@@ -1,7 +1,7 @@
 import demo_dex.models as models
 from demo_dex.types.quipu_fa2.storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import Origination
+from dipdup.models.tezos_tzkt import Origination
 
 
 async def on_fa2_origination(

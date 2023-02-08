@@ -901,7 +901,7 @@ This release contains no changes except for the version number.
 
 ### Changes
 
-- Public methods of `TzktDatasource` now return immutable sequences.
+- Public methods of `TezosTzktDatasource` now return immutable sequences.
 
 ## [3.0.3] - 2021-10-01
 

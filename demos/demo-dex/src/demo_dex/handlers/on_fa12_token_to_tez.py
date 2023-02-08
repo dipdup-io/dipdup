@@ -6,8 +6,8 @@ from demo_dex.types.fa12_token.storage import Fa12TokenStorage
 from demo_dex.types.quipu_fa12.parameter.token_to_tez_payment import TokenToTezPaymentParameter
 from demo_dex.types.quipu_fa12.storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import Transaction
+from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import Transaction
 
 
 async def on_fa12_token_to_tez(

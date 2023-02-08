@@ -2,21 +2,21 @@ from contextlib import ExitStack
 
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersHandlerConfig
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import TokenTransferData
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 
 TokenTransferQueueItem = tuple[TokenTransferData, ...]
 
 
 class TokenTransferIndex(
-    Index[TezosTzktTokenTransfersIndexConfig, TokenTransferQueueItem, TzktDatasource],
+    Index[TezosTzktTokenTransfersIndexConfig, TokenTransferQueueItem, TezosTzktDatasource],
     message_type=MessageType.token_transfer,
 ):
     def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:

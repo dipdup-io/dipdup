@@ -25,15 +25,15 @@ from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tzkt import BigMapData
-from dipdup.models.tzkt import BlockData
-from dipdup.models.tzkt import EventData
-from dipdup.models.tzkt import HeadBlockData
-from dipdup.models.tzkt import HeadSubscription
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import QuoteData
-from dipdup.models.tzkt import TokenTransferData
+from dipdup.models.tezos_tzkt import BigMapData
+from dipdup.models.tezos_tzkt import BlockData
+from dipdup.models.tezos_tzkt import EventData
+from dipdup.models.tezos_tzkt import HeadBlockData
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import QuoteData
+from dipdup.models.tezos_tzkt import TokenTransferData
 from dipdup.subscriptions import Subscription
 from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
@@ -80,12 +80,12 @@ TRANSACTION_OPERATION_FIELDS = (
 
 
 EmptyCallbackT = Callable[[], Awaitable[None]]
-HeadCallbackT = Callable[['TzktDatasource', HeadBlockData], Awaitable[None]]
-OperationsCallbackT = Callable[['TzktDatasource', tuple[OperationData, ...]], Awaitable[None]]
-TokenTransfersCallbackT = Callable[['TzktDatasource', tuple[TokenTransferData, ...]], Awaitable[None]]
-BigMapsCallbackT = Callable[['TzktDatasource', tuple[BigMapData, ...]], Awaitable[None]]
-EventsCallbackT = Callable[['TzktDatasource', tuple[EventData, ...]], Awaitable[None]]
-RollbackCallbackT = Callable[['TzktDatasource', MessageType, int, int], Awaitable[None]]
+HeadCallbackT = Callable[['TezosTzktDatasource', HeadBlockData], Awaitable[None]]
+OperationsCallbackT = Callable[['TezosTzktDatasource', tuple[OperationData, ...]], Awaitable[None]]
+TokenTransfersCallbackT = Callable[['TezosTzktDatasource', tuple[TokenTransferData, ...]], Awaitable[None]]
+BigMapsCallbackT = Callable[['TezosTzktDatasource', tuple[BigMapData, ...]], Awaitable[None]]
+EventsCallbackT = Callable[['TezosTzktDatasource', tuple[EventData, ...]], Awaitable[None]]
+RollbackCallbackT = Callable[['TezosTzktDatasource', MessageType, int, int], Awaitable[None]]
 
 
 class TzktMessageType(Enum):
@@ -168,7 +168,7 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource):
+class TezosTzktDatasource(IndexDatasource):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,

@@ -7,14 +7,14 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import IndexConfig
-from dipdup.config.subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 
 
 @dataclass
 class EvmSubsquidEventsIndexConfig(IndexConfig):
 
     kind: Literal['evm.subsquid.events']
-    datasource: SubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig
     handlers: tuple[Any, ...] = field(default_factory=tuple)
 
     first_level: int = 0

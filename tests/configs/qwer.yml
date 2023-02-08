@@ -8,7 +8,7 @@ contracts:
 
 datasources:
   tzkt:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.hangzhou2net.tzkt.io
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}

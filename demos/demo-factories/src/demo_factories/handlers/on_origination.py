@@ -1,7 +1,7 @@
 import demo_factories.models as models
 from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import Origination
+from dipdup.models.tezos_tzkt import Origination
 
 
 async def on_origination(

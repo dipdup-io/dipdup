@@ -18,12 +18,12 @@
 .. autoclass:: dipdup.models.LoggingValues
    :members:
    :undoc-members:
-.. autoclass:: dipdup.config.MetadataDatasourceConfig
+.. autoclass:: dipdup.config.TezosMetadataDatasourceConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TezosTzktOperationsHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TezosTzktOperationsIndexConfig
-.. autoclass:: dipdup.models.tzkt.OperationType
+.. autoclass:: dipdup.models.tezos_tzkt.OperationType
    :members:
    :undoc-members:
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TezosTzktOperationsUnfilteredIndexConfig
@@ -42,5 +42,5 @@
 .. autoclass:: dipdup.config.SqliteDatabaseConfig
 .. autoclass:: dipdup.config.tezos_tzkt_token_transfers.TezosTzktTokenTransfersHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_token_transfers.TezosTzktTokenTransfersIndexConfig
-.. autoclass:: dipdup.config.tzkt.TzktDatasourceConfig
+.. autoclass:: dipdup.config.tzkt.TezosTzktDatasourceConfig
 .. autoclass:: dipdup.config.tezos_tzkt_events.TezosTzktEventsUnknownEventHandlerConfig

@@ -7,16 +7,16 @@ from dipdup.config import HttpConfig
 
 
 @dataclass
-class SubsquidDatasourceConfig(DatasourceConfig):
+class EvmSubsquidDatasourceConfig(DatasourceConfig):
     """Subsquid datasource config
 
-    :param kind: always 'subsquid'
+    :param kind: always 'evm.subsquid'
     :param archive_url: URL of Subsquid archive API
     :param node_url: URL of Ethereum node
     :param http: HTTP client configuration
     """
 
-    kind: Literal['subsquid']
+    kind: Literal['evm.subsquid']
     archive_url: str
     node_url: str | None = None
     http: HttpConfig | None = None

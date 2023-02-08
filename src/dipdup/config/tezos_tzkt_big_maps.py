@@ -8,8 +8,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.config.tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.models import SkipHistory
 from dipdup.utils import import_from
@@ -54,7 +54,7 @@ class TezosTzktBigMapsHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tzkt', 'BigMapDiff'
+        yield 'dipdup.models.tezos_tzkt', 'BigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)
@@ -90,7 +90,7 @@ class TezosTzktBigMapsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TezosTzktBigMapsIndexConfig(TzktIndexConfig):
+class TezosTzktBigMapsIndexConfig(TezosTzktIndexConfig):
     """Big map index config
 
     :param kind: always `big_map`
@@ -102,7 +102,7 @@ class TezosTzktBigMapsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.big_maps']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosTzktBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never

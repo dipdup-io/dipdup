@@ -1,18 +1,18 @@
 from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
 from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.models import IndexStatus
-from dipdup.models.tzkt import HeadBlockData
-from dipdup.models.tzkt import MessageType
+from dipdup.models.tezos_tzkt import HeadBlockData
+from dipdup.models.tezos_tzkt import MessageType
 
 HeadQueueItem = HeadBlockData
 
 
-class HeadIndex(
-    Index[TezosTzktHeadIndexConfig, HeadQueueItem, TzktDatasource],
+class TezosTzktHeadIndex(
+    Index[TezosTzktHeadIndexConfig, HeadQueueItem, TezosTzktDatasource],
     message_type=MessageType.head,
 ):
     def push_head(self, events: HeadQueueItem) -> None:

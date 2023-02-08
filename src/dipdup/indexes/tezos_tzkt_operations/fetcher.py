@@ -10,12 +10,12 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
-from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import OperationType
+from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import OperationType
 
 _logger = logging.getLogger('dipdup.fetcher')
 
@@ -40,7 +40,7 @@ def get_operations_head(operations: tuple[OperationData, ...]) -> int:
 
 async def get_transaction_filters(
     config: TezosTzktOperationsIndexConfig,
-    datasource: TzktDatasource,
+    datasource: TezosTzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch transactions from during initial synchronization"""
     if OperationType.transaction not in config.types:
@@ -92,7 +92,7 @@ async def get_transaction_filters(
 
 async def get_origination_filters(
     config: TezosTzktOperationsIndexConfig,
-    datasource: TzktDatasource,
+    datasource: TezosTzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch origination from during initial synchronization"""
     if OperationType.origination not in config.types:
@@ -135,7 +135,7 @@ async def get_origination_filters(
 
 
 class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     async def fetch(self) -> None:
         if not self._filter:
@@ -158,7 +158,7 @@ class OriginationAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 
 class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     async def fetch(self) -> None:
         if not self._filter:
@@ -184,7 +184,7 @@ class OriginationHashFetcherChannel(FetcherChannel[OperationData, int]):
 
 
 class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     async def fetch(self) -> None:
         if self._filter:
@@ -212,7 +212,7 @@ class MigrationOriginationFetcherChannel(FetcherChannel[OperationData, None]):
 
 
 class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
@@ -220,7 +220,7 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
         filter: set[str],
         first_level: int,
         last_level: int,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         field: str,
     ) -> None:
         super().__init__(buffer, filter, first_level, last_level, datasource)
@@ -253,7 +253,7 @@ class TransactionAddressFetcherChannel(FetcherChannel[OperationData, str]):
 
 
 class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
@@ -261,7 +261,7 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
         filter: set[int],
         first_level: int,
         last_level: int,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         field: str,
     ) -> None:
         super().__init__(buffer, filter, first_level, last_level, datasource)
@@ -293,14 +293,14 @@ class TransactionHashFetcherChannel(FetcherChannel[OperationData, int]):
 
 
 class OperationUnfilteredFetcherChannel(FetcherChannel[OperationData, None]):
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
         buffer: defaultdict[int, deque[OperationData]],
         first_level: int,
         last_level: int,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         type: OperationType,
     ) -> None:
         super().__init__(buffer, set(), first_level, last_level, datasource)
@@ -345,7 +345,7 @@ class OperationFetcher(DataFetcher[OperationData]):
 
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         transaction_addresses: set[str],
@@ -365,7 +365,7 @@ class OperationFetcher(DataFetcher[OperationData]):
     async def create(
         cls,
         config: TezosTzktOperationsIndexConfig,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
     ) -> OperationFetcher:
@@ -449,7 +449,7 @@ class OperationFetcher(DataFetcher[OperationData]):
 class OperationUnfilteredFetcher(DataFetcher[OperationData]):
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         transactions: bool,
@@ -465,7 +465,7 @@ class OperationUnfilteredFetcher(DataFetcher[OperationData]):
     async def create(
         cls,
         config: TezosTzktOperationsUnfilteredIndexConfig,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
     ) -> OperationUnfilteredFetcher:

@@ -1,6 +1,6 @@
 from dipdup.datasources import IndexDatasource
 
 
-class SubsquidDatasource(IndexDatasource):
+class EvmSubsquidDatasource(IndexDatasource):
     async def run(self) -> None:
         pass

@@ -12,16 +12,16 @@ from dipdup.exceptions import ConfigurationError
 
 
 @dataclass
-class TzktDatasourceConfig(DatasourceConfig):
+class TezosTzktDatasourceConfig(DatasourceConfig):
     """TzKT datasource config
 
-    :param kind: always 'tzkt'
+    :param kind: always 'tezos.tzkt'
     :param url: Base API URL, e.g. https://api.tzkt.io/
     :param http: HTTP client configuration
     :param buffer_size: Number of levels to keep in FIFO buffer before processing
     """
 
-    kind: Literal['tzkt']
+    kind: Literal['tezos.tzkt']
     url: str = DEFAULT_TZKT_URL  # type: ignore
     http: HttpConfig | None = None
     buffer_size: int = 0
@@ -46,5 +46,5 @@ class TzktDatasourceConfig(DatasourceConfig):
 
 
 @dataclass
-class TzktIndexConfig(IndexConfig):
-    datasource: TzktDatasourceConfig
+class TezosTzktIndexConfig(IndexConfig):
+    datasource: TezosTzktDatasourceConfig

@@ -1,13 +1,13 @@
 from typing import Any
 
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
-from dipdup.datasources.subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.index import Index
-from dipdup.models.tzkt import MessageType
+from dipdup.models.tezos_tzkt import MessageType
 
 
 class EvmSubsquidEventsIndex(
-    Index[EvmSubsquidEventsIndexConfig, Any, SubsquidDatasource],
+    Index[EvmSubsquidEventsIndexConfig, Any, EvmSubsquidDatasource],
     message_type=MessageType.event,
 ):
     ...

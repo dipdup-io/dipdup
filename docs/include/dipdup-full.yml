@@ -20,7 +20,7 @@ contracts:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.tzkt.io
   my_api:
     kind: http
@@ -31,7 +31,7 @@ datasources:
   coinbase:
     kind: coinbase
   metadata:
-    kind: metadata
+    kind: tezos.metadata
     url: https://metadata.dipdup.net
     network: mainnet
 

@@ -4,23 +4,23 @@ from typing import Any
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
-from dipdup.models.tzkt import Event
-from dipdup.models.tzkt import EventData
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import UnknownEvent
+from dipdup.models.tezos_tzkt import Event
+from dipdup.models.tezos_tzkt import EventData
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import UnknownEvent
 from dipdup.prometheus import Metrics
 
 EventQueueItem = tuple[EventData, ...]
 
 
 class TezosTzktEventsIndex(
-    Index[TezosTzktEventsIndexConfig, EventQueueItem, TzktDatasource],
+    Index[TezosTzktEventsIndexConfig, EventQueueItem, TezosTzktDatasource],
     message_type=MessageType.event,
 ):
     def push_events(self, events: EventQueueItem) -> None:

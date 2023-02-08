@@ -4,8 +4,8 @@ from typing import Any
 from typing import Iterable
 
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
-from dipdup.models.tzkt import BigMapData
-from dipdup.models.tzkt import BigMapDiff
+from dipdup.models.tezos_tzkt import BigMapData
+from dipdup.models.tezos_tzkt import BigMapDiff
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')

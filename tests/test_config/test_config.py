@@ -11,13 +11,13 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
-from dipdup.models.tzkt import HeadSubscription
-from dipdup.models.tzkt import OperationType
-from dipdup.models.tzkt import OriginationSubscription
-from dipdup.models.tzkt import TransactionSubscription
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import OperationType
+from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import TransactionSubscription
 
 
 def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:
@@ -74,7 +74,7 @@ async def test_validators() -> None:
     with pytest.raises(ValidationError):
         ContractConfig(address='lalalalalalalalalalalalalalalalalala')
     with pytest.raises(ConfigurationError):
-        TzktDatasourceConfig(kind='tzkt', url='not_an_url')
+        TezosTzktDatasourceConfig(kind='tezos.tzkt', url='not_an_url')
 
 
 async def test_dump() -> None:

@@ -22,7 +22,7 @@ Datasources are DipDup connectors to various APIs. The table below shows how dif
 ```yaml
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: https://api.tzkt.io
 ```
 
@@ -79,7 +79,7 @@ Please note that Coinbase can't replace TzKT being an index datasource. But you 
 ```yaml
 datasources:
   metadata:
-    kind: metadata
+    kind: tezos.metadata
     url: https://metadata.dipdup.net
     network: mainnet | ithacanet
 ```

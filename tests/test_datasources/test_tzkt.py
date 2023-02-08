@@ -11,9 +11,9 @@ import pytest
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
-from dipdup.models.tzkt import HeadSubscription
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import OperationData
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import OperationData
 from tests import tzkt_replay
 
 T = TypeVar('T')

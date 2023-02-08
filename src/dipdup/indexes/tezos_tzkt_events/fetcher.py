@@ -3,20 +3,20 @@ from __future__ import annotations
 import logging
 from typing import AsyncGenerator
 
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
-from dipdup.models.tzkt import EventData
+from dipdup.models.tezos_tzkt import EventData
 
 
 class EventFetcher(DataFetcher[EventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
 
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         event_addresses: set[str],

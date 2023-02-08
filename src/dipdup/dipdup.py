@@ -33,7 +33,7 @@ from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
@@ -41,7 +41,7 @@ from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
-from dipdup.indexes.tezos_tzkt_head.index import HeadIndex
+from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
 from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
 from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_tzkt_token_transfers.index import TokenTransferIndex
@@ -51,12 +51,12 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
-from dipdup.models.tzkt import BigMapData
-from dipdup.models.tzkt import EventData
-from dipdup.models.tzkt import HeadBlockData
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import OperationData
-from dipdup.models.tzkt import TokenTransferData
+from dipdup.models.tezos_tzkt import BigMapData
+from dipdup.models.tezos_tzkt import EventData
+from dipdup.models.tezos_tzkt import HeadBlockData
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import OperationData
+from dipdup.models.tezos_tzkt import TokenTransferData
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -239,7 +239,7 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, TzktDatasource):
+            if not isinstance(datasource, TezosTzktDatasource):
                 continue
             datasource.call_on_head(self._on_head)
             datasource.call_on_operations(self._on_operations)
@@ -263,7 +263,7 @@ class IndexDispatcher:
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, HeadIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
     async def _on_operations(self, datasource: IndexDatasource, operations: tuple[OperationData, ...]) -> None:
@@ -567,7 +567,7 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
-            if not isinstance(datasource, TzktDatasource):
+            if not isinstance(datasource, TezosTzktDatasource):
                 continue
 
             head_block = await datasource.get_head_block()

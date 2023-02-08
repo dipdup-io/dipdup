@@ -1,8 +1,8 @@
 import pytest
 
-from dipdup.datasources.tzkt import BufferedMessage
-from dipdup.datasources.tzkt import MessageBuffer
-from dipdup.models.tzkt import MessageType
+from dipdup.datasources.tezos_tzkt import BufferedMessage
+from dipdup.datasources.tezos_tzkt import MessageBuffer
+from dipdup.models.tezos_tzkt import MessageType
 
 
 @pytest.fixture

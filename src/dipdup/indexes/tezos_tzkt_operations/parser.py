@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tzkt import OperationData
+from dipdup.models.tezos_tzkt import OperationData
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)

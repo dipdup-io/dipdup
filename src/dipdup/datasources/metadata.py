@@ -4,10 +4,10 @@ from typing import cast
 
 from dipdup.config import HttpConfig
 from dipdup.datasources import GraphQLDatasource
-from dipdup.models.metadata import MetadataNetwork
+from dipdup.models.tezos_metadata import MetadataNetwork
 
 
-class MetadataDatasource(GraphQLDatasource):
+class TezosMetadataDatasource(GraphQLDatasource):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,

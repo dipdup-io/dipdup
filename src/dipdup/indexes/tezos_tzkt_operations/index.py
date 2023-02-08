@@ -14,7 +14,7 @@ from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
@@ -25,8 +25,8 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import OperationsHandlerArgume
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
-from dipdup.models.tzkt import MessageType
-from dipdup.models.tzkt import OperationData
+from dipdup.models.tezos_tzkt import MessageType
+from dipdup.models.tezos_tzkt import OperationData
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -150,14 +150,14 @@ def extract_operation_subgroups(
 
 
 class TezosTzktOperationsIndex(
-    Index[TezosTzktOperationsIndexConfigU, OperationQueueItem, TzktDatasource],
+    Index[TezosTzktOperationsIndexConfigU, OperationQueueItem, TezosTzktDatasource],
     message_type=MessageType.operation,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
         config: TezosTzktOperationsIndexConfigU,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._entrypoint_filter: set[str | None] = set()

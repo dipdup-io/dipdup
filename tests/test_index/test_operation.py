@@ -7,7 +7,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.datasources.tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
 from tests import CONFIGS_PATH
@@ -15,7 +15,7 @@ from tests import tzkt_replay
 
 
 @pytest.fixture
-async def tzkt() -> AsyncIterator[TzktDatasource]:
+async def tzkt() -> AsyncIterator[TezosTzktDatasource]:
     async with tzkt_replay() as tzkt:
         yield tzkt
 
@@ -28,7 +28,7 @@ def index_config() -> TezosTzktOperationsIndexConfig:
 
 
 async def test_ignored_type_filter(
-    tzkt: TzktDatasource,
+    tzkt: TezosTzktDatasource,
     index_config: TezosTzktOperationsIndexConfig,
 ) -> None:
     index_config.types = ()
@@ -42,7 +42,7 @@ async def test_ignored_type_filter(
 
 
 async def test_get_origination_filters(
-    tzkt: TzktDatasource,
+    tzkt: TezosTzktDatasource,
     index_config: TezosTzktOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
@@ -102,7 +102,7 @@ async def test_get_origination_filters(
     assert hashes == set()
 
 
-# async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: TezosTzktOperationsIndexConfig) -> None:
+# async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: TezosTzktOperationsIndexConfig) -> None:
 #     index_config.types = (OperationType.transaction,)
 #     addresses, hashes = await get_transaction_filters(index_config, tzkt)
 #     assert filters == ({'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}, {-680664524, -1585533315})

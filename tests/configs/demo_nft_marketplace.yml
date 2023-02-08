@@ -15,7 +15,7 @@ contracts:
 
 datasources:
   tzkt_mainnet:
-    kind: tzkt
+    kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}

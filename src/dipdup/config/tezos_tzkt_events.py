@@ -9,8 +9,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
-from dipdup.config.tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
@@ -49,7 +49,7 @@ class TezosTzktEventsHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tzkt', 'Event'
+        yield 'dipdup.models.tezos_tzkt', 'Event'
         yield package, 'models as models'
 
         event_cls = snake_to_pascal(self.tag + '_payload')
@@ -75,7 +75,7 @@ class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tzkt', 'UnknownEvent'
+        yield 'dipdup.models.tezos_tzkt', 'UnknownEvent'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -87,7 +87,7 @@ TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosTzktEventsUn
 
 
 @dataclass
-class TezosTzktEventsIndexConfig(TzktIndexConfig):
+class TezosTzktEventsIndexConfig(TezosTzktIndexConfig):
     """Event index config
 
     :param kind: Index kind
@@ -98,7 +98,7 @@ class TezosTzktEventsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.events']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosTzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0

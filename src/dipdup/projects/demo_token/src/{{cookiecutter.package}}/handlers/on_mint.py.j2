@@ -4,7 +4,7 @@ from {{ cookiecutter.package }}.handlers.on_balance_update import on_balance_upd
 from {{ cookiecutter.package }}.types.tzbtc.parameter.mint import MintParameter
 from {{ cookiecutter.package }}.types.tzbtc.storage import TzbtcStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import Transaction
+from dipdup.models.tezos_tzkt import Transaction
 
 
 async def on_mint(

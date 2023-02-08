@@ -52,7 +52,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.models.tzkt import OperationType
+from dipdup.models.tezos_tzkt import OperationType
 from dipdup.subscriptions import Subscription
 from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
@@ -837,9 +837,9 @@ class DipDupConfig:
         except KeyError as e:
             raise ConfigurationError(f'Hook `{name}` not found in `templates` config section') from e
 
-    def get_tzkt_datasource(self, name: str) -> TzktDatasourceConfig:
+    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasourceConfig:
         datasource = self.get_datasource(name)
-        if not isinstance(datasource, TzktDatasourceConfig):
+        if not isinstance(datasource, TezosTzktDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
@@ -915,7 +915,7 @@ class DipDupConfig:
 
         # NOTE: Conflicting rollback techniques
         for name, datasource_config in self.datasources.items():
-            if not isinstance(datasource_config, TzktDatasourceConfig):
+            if not isinstance(datasource_config, TezosTzktDatasourceConfig):
                 continue
             if datasource_config.buffer_size and self.advanced.rollback_depth:
                 raise ConfigurationError(
@@ -973,12 +973,12 @@ class DipDupConfig:
         if index_config.subscriptions:
             return
 
-        from dipdup.models.tzkt import BigMapSubscription
-        from dipdup.models.tzkt import EventSubscription
-        from dipdup.models.tzkt import HeadSubscription
-        from dipdup.models.tzkt import OriginationSubscription
-        from dipdup.models.tzkt import TokenTransferSubscription
-        from dipdup.models.tzkt import TransactionSubscription
+        from dipdup.models.tezos_tzkt import BigMapSubscription
+        from dipdup.models.tezos_tzkt import EventSubscription
+        from dipdup.models.tezos_tzkt import HeadSubscription
+        from dipdup.models.tezos_tzkt import OriginationSubscription
+        from dipdup.models.tezos_tzkt import TokenTransferSubscription
+        from dipdup.models.tezos_tzkt import TransactionSubscription
 
         index_config.subscriptions.add(HeadSubscription())
 
@@ -1129,12 +1129,13 @@ class DipDupConfig:
 
 
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
-from dipdup.config.metadata import MetadataDatasourceConfig
-from dipdup.config.subsquid import SubsquidDatasourceConfig
+from dipdup.config.tezos_metadata import TezosMetadataDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
@@ -1143,16 +1144,15 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatt
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
-from dipdup.config.tzkt import TzktDatasourceConfig
 
 # NOTE: We need unions for Pydantic deserialization
 DatasourceConfigU = (
-    TzktDatasourceConfig
+    TezosTzktDatasourceConfig
     | CoinbaseDatasourceConfig
-    | MetadataDatasourceConfig
+    | TezosMetadataDatasourceConfig
     | IpfsDatasourceConfig
     | HttpDatasourceConfig
-    | SubsquidDatasourceConfig
+    | EvmSubsquidDatasourceConfig
 )
 ResolvedIndexConfigU = (
     EvmSubsquidEventsIndexConfig
@@ -1202,8 +1202,8 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
 
 
 yaml_annotations = {
-    'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
-    'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
+    'TezosTzktDatasourceConfig': 'str | TezosTzktDatasourceConfig',
+    'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',

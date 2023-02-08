@@ -1,6 +1,6 @@
 from demo_raw import models
 from dipdup.context import HandlerContext
-from dipdup.models.tzkt import OperationData
+from dipdup.models.tezos_tzkt import OperationData
 
 
 async def on_operation(

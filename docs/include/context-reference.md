@@ -25,7 +25,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>handler_config</strong> (<em>HandlerConfig</em>) – Configuration of the current handler</p></li>
-<li><p><strong>datasource</strong> (<em>TzktDatasource</em>) – Index datasource instance</p></li>
+<li><p><strong>datasource</strong> (<em>TezosTzktDatasource</em>) – Index datasource instance</p></li>
 <li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>]</em>) – </p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
@@ -201,7 +201,7 @@
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>MetadataDatasource</em></p>
+<dd class="field-even"><p><em>TezosMetadataDatasource</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -215,7 +215,7 @@
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – </p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>TzktDatasource</em></p>
+<dd class="field-even"><p><em>TezosTzktDatasource</em></p>
 </dd>
 </dl>
 </dd></dl>
