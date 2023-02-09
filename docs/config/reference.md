@@ -9,7 +9,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>1.2</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>tezos_tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><em>tzip_metadata.TzipMetadataDatasourceConfig</em><em> | </em><a class="reference internal" href="#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><em>evm_subsquid.EvmSubsquidDatasourceConfig</em><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>tezos_tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><em>tzip_metadata.TzipMetadataDatasourceConfig</em><em> | </em><a class="reference internal" href="#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><em>evm_subsquid.SubsquidDatasourceConfig</em><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
 <li><p><strong>database</strong> (<a class="reference internal" href="#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
 <li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
 <li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.EvmSubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.EvmSubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsIndexConfig" title="tezos_tzkt_operations.TzktOperationsIndexConfig"><em>tezos_tzkt_operations.TzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="tezos_tzkt_head.TzktHeadIndexConfig"><em>tezos_tzkt_head.TzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsIndexConfig" title="tezos_tzkt_events.TzktEventsIndexConfig"><em>tezos_tzkt_events.TzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
@@ -70,7 +70,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.big_maps'</em><em>]</em>) – always <cite>big_map</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.big_maps'</em><em>]</em>) – always <cite>tezos.tzkt.big_maps</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsHandlerConfig" title="tezos_tzkt_big_maps.TzktBigMapsHandlerConfig"><em>tezos_tzkt_big_maps.TzktBigMapsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
 <li><p><strong>skip_history</strong> (<a class="reference internal" href="#dipdup.models.SkipHistory" title="dipdup.models.SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
@@ -135,7 +135,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.events'</em><em>]</em>) – Index kind</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.events'</em><em>]</em>) – always <cite>tezos.tzkt.events</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsHandlerConfig" title="tezos_tzkt_events.TzktEventsHandlerConfig"><em>tezos_tzkt_events.TzktEventsHandlerConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig" title="tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig"><em>tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – First block level to index</p></li>
@@ -373,7 +373,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations'</em><em>]</em>) – always <cite>operation</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations'</em><em>]</em>) – always <cite>tezos.tzkt.operations</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsHandlerConfig" title="tezos_tzkt_operations.TzktOperationsHandlerConfig"><em>tezos_tzkt_operations.TzktOperationsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tezos_tzkt.TzktOperationType" title="dipdup.models.tezos_tzkt.TzktOperationType"><em>dipdup.models.tezos_tzkt.TzktOperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
@@ -413,7 +413,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations_unfiltered'</em><em>]</em>) – always <cite>operation_unfiltered</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations_unfiltered'</em><em>]</em>) – always <cite>tezos.tzkt.operations_unfiltered</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tezos_tzkt.TzktOperationType" title="dipdup.models.tezos_tzkt.TzktOperationType"><em>dipdup.models.tezos_tzkt.TzktOperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
@@ -590,7 +590,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.token_transfers'</em><em>]</em>) – always <cite>token_transfer</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.token_transfers'</em><em>]</em>) – always <cite>tezos.tzkt.token_transfers</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>

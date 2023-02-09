@@ -1,11 +1,13 @@
 from dipdup.config import DipDupConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.metadata import TzipMetadataDatasource
@@ -56,6 +58,13 @@ class DatasourceFactory:
         if isinstance(datasource_config, HttpDatasourceConfig):
             return HttpDatasource(
                 url=datasource_config.url,
+                http_config=datasource_config.http,
+            )
+
+        if isinstance(datasource_config, SubsquidDatasourceConfig):
+            return EvmSubsquidDatasource(
+                archive_url=datasource_config.archive_url,
+                node_url=datasource_config.node_url,
                 http_config=datasource_config.http,
             )
 

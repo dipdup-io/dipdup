@@ -7,7 +7,7 @@ from dipdup.config import HttpConfig
 
 
 @dataclass
-class EvmSubsquidDatasourceConfig(DatasourceConfig):
+class SubsquidDatasourceConfig(DatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'

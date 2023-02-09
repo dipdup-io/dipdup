@@ -30,6 +30,7 @@ class DipDupPackage:
         self.hooks = root / 'hooks'
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
+        self.abi = root / 'abi'
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -46,6 +47,7 @@ class DipDupPackage:
 
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
+        touch(self.abi / KEEP_MARKER)
 
     # def get_storage_type(self, typename: str) -> type[BaseModel]:
     #     cls_name = snake_to_pascal(typename) + 'Storage'

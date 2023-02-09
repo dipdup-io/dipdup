@@ -844,6 +844,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def get_subsquid_datasource(self, name: str) -> SubsquidDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, SubsquidDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
         level = {
             LoggingValues.default: logging.INFO,
@@ -1034,6 +1040,12 @@ class DipDupConfig:
                     address = event_handler_config.contract.address
                     index_config.subscriptions.add(EventSubscription(address=address))
 
+        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+            ...
+
+        elif isinstance(index_config, EvmSubsquidOperationsIndexConfig):
+            ...
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1047,9 +1059,16 @@ class DipDupConfig:
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
         """
+        handler_config: HandlerConfig
+
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
-            index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+            if 'tzkt' in index_config.kind:
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+            elif 'subsquid' in index_config.kind:
+                index_config.datasource = self.get_subsquid_datasource(index_config.datasource)
+            else:
+                raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if index_config.contracts is not None:
@@ -1081,31 +1100,41 @@ class DipDupConfig:
                             pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
 
         elif isinstance(index_config, TzktBigMapsIndexConfig):
-            for handler in index_config.handlers:
-                handler.parent = index_config
-                if isinstance(handler.contract, str):
-                    handler.contract = self.get_contract(handler.contract)
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            for head_handler_config in index_config.handlers:
-                head_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-            for token_transfer_handler_config in index_config.handlers:
-                token_transfer_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
-                if isinstance(token_transfer_handler_config.contract, str):
-                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TzktEventsIndexConfig):
-            for event_handler_config in index_config.handlers:
-                event_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
-                if isinstance(event_handler_config.contract, str):
-                    event_handler_config.contract = self.get_contract(event_handler_config.contract)
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_contract(handler_config.contract)
+
+        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_contract(handler_config.contract)
+
+        elif isinstance(index_config, EvmSubsquidOperationsIndexConfig):
+            ...
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1130,7 +1159,7 @@ class DipDupConfig:
 
 
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
@@ -1153,7 +1182,7 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | IpfsDatasourceConfig
     | HttpDatasourceConfig
-    | EvmSubsquidDatasourceConfig
+    | SubsquidDatasourceConfig
 )
 ResolvedIndexConfigU = (
     EvmSubsquidEventsIndexConfig
@@ -1204,7 +1233,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
 
 yaml_annotations = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
-    'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
+    'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'list[ContractConfig]': 'list[str | ContractConfig]',
