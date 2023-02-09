@@ -14,14 +14,11 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
-from typing import TYPE_CHECKING
 from typing import Any
-from typing import Union
 from typing import cast
 
 import orjson as json
 
-from dipdup import env
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DatasourceConfigU
@@ -45,56 +42,15 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.exceptions import FrameworkException
+from dipdup.package import KEEP_MARKER
+from dipdup.package import PYTHON_MARKER
+from dipdup.package import DipDupPackage
 from dipdup.utils import import_submodules
+from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-
-KEEP_MARKER = '.keep'
-PYTHON_MARKER = '__init__.py'
-PEP_561_MARKER = 'py.typed'
-MODELS_MODULE = 'models.py'
-CALLBACK_TEMPLATE = 'callback.py.j2'
-
-
-if TYPE_CHECKING:
-    from jinja2 import Template
-
-_logger = logging.getLogger('dipdup.codegen')
-
-
-def touch(path: Path) -> None:
-    """Create empty file, ignore if already exists"""
-    if not path.parent.exists():
-        _logger.info('Creating directory `%s`', path.parent)
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-    if not path.is_file():
-        _logger.info('Creating file `%s`', path)
-        path.touch()
-
-
-def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bool:
-    """Write content to file, create directory tree if necessary"""
-    if not path.parent.exists():
-        _logger.info('Creating directory `%s`', path.parent)
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-    if path.exists() and not overwrite:
-        return False
-
-    _logger.info('Writing into file `%s`', path)
-    if isinstance(content, str):
-        content = content.encode()
-    path.write_bytes(content)
-    return True
-
-
-def load_template(*path: str) -> 'Template':
-    """Load template from path relative to dipdup package"""
-    from jinja2 import Template
-
-    full_path = Path(__file__).parent.joinpath(*path)
-    return Template(full_path.read_text())
+from dipdup.utils import touch
+from dipdup.utils import write
 
 
 def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
@@ -131,50 +87,23 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
         return schema
 
 
-# TODO: Pick refactoring from `ref/config-module`
-class ProjectPaths:
-    def __init__(self, root: Path) -> None:
-        self.root = root
-        self.models = root / MODELS_MODULE
-        self.schemas = root / 'schemas'
-        self.types = root / 'types'
-        self.handlers = root / 'handlers'
-        self.hooks = root / 'hooks'
-        self.sql = root / 'sql'
-        self.graphql = root / 'graphql'
-        self.hasura = root / 'hasura'
-
-    def create_package(self) -> None:
-        """Create Python package skeleton if not exists"""
-        touch(self.root / PYTHON_MARKER)
-        touch(self.root / PEP_561_MARKER)
-
-        touch(self.types / PYTHON_MARKER)
-        touch(self.handlers / PYTHON_MARKER)
-        touch(self.hooks / PYTHON_MARKER)
-
-        touch(self.sql / KEEP_MARKER)
-        touch(self.graphql / KEEP_MARKER)
-        touch(self.hasura / KEEP_MARKER)
-
-        if not self.models.is_file():
-            template = load_template('templates', f'{MODELS_MODULE}.j2')
-            models_code = template.render()
-            write(self.models, models_code)
-
-
 class CodeGenerator:
     """Generates package based on config, invoked from `init` CLI command"""
 
-    def __init__(self, config: DipDupConfig, datasources: dict[DatasourceConfigU, Datasource]) -> None:
+    def __init__(
+        self,
+        package: DipDupPackage,
+        config: DipDupConfig,
+        datasources: dict[DatasourceConfigU, Datasource],
+    ) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
+        self._package = package
         self._config = config
         self._datasources = datasources
         self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
-        self._pkg = ProjectPaths(env.get_package_path(config.package))
 
     def create_package(self) -> None:
-        self._pkg.create_package()
+        self._package.create()
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         self._logger.info('Initializing project')
@@ -221,7 +150,7 @@ class CodeGenerator:
             return
 
         contract_schemas = await self._get_schema(datasource_config, contract_config)
-        contract_schemas_path = self._pkg.schemas / contract_config.module_name
+        contract_schemas_path = self._package.schemas / contract_config.module_name
 
         storage_schema_path = contract_schemas_path / 'storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
@@ -266,7 +195,7 @@ class CodeGenerator:
 
             contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
-            contract_schemas_path = self._pkg.schemas / contract_config.module_name
+            contract_schemas_path = self._package.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'big_map'
 
             try:
@@ -294,7 +223,7 @@ class CodeGenerator:
                 index_config.datasource,
                 contract_config,
             )
-            contract_schemas_path = self._pkg.schemas / contract_config.module_name
+            contract_schemas_path = self._package.schemas / contract_config.module_name
             event_schemas_path = contract_schemas_path / 'event'
 
             try:
@@ -363,8 +292,8 @@ class CodeGenerator:
                         continue
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        rel_path = schema_path.relative_to(self._pkg.schemas)
-        type_pkg_path = self._pkg.types / rel_path
+        rel_path = schema_path.relative_to(self._package.schemas)
+        type_pkg_path = self._package.types / rel_path
 
         if schema_path.is_dir():
             touch(type_pkg_path / PYTHON_MARKER)
@@ -427,9 +356,9 @@ class CodeGenerator:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
-        touch(self._pkg.types / PYTHON_MARKER)
+        touch(self._package.types / PYTHON_MARKER)
 
-        for path in self._pkg.schemas.glob('**/*'):
+        for path in self._package.schemas.glob('**/*'):
             await self._generate_type(path, overwrite_types)
 
     async def generate_handlers(self) -> None:
@@ -452,7 +381,7 @@ class CodeGenerator:
     async def cleanup(self) -> None:
         """Remove fetched JSONSchemas"""
         self._logger.info('Cleaning up')
-        rmtree(self._pkg.schemas, ignore_errors=True)
+        rmtree(self._package.schemas, ignore_errors=True)
 
     async def verify_package(self) -> None:
         import_submodules(self._config.package)
@@ -490,7 +419,7 @@ class CodeGenerator:
         subpackages, callback = subpackages[:-1], subpackages[-1]
 
         callback_path = Path(
-            self._pkg.root,
+            self._package.root,
             f'{callback_config.kind}s',
             *subpackages,
             f'{callback}.py',
@@ -500,7 +429,7 @@ class CodeGenerator:
             return
 
         self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
-        callback_template = load_template('templates', CALLBACK_TEMPLATE)
+        callback_template = load_template('templates', 'callback.py.j2')
 
         arguments = callback_config.format_arguments()
         imports = set(callback_config.format_imports(self._config.package))
@@ -535,7 +464,7 @@ class CodeGenerator:
 
         # NOTE: Preserve the same structure as in `handlers`
         sql_path = Path(
-            self._pkg.sql,
+            self._package.sql,
             *subpackages,
             callback,
             KEEP_MARKER,

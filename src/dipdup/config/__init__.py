@@ -775,6 +775,7 @@ class DipDupConfig:
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
+    @property
     def package_path(self) -> Path:
         return env.get_package_path(self.package)
 

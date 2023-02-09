@@ -153,11 +153,11 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     from dataclasses import dataclass
 
-    from dipdup.codegen import CodeGenerator
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.exceptions import MigrationRequiredError
+    from dipdup.package import DipDupPackage
     from dipdup.sentry import init_sentry
 
     _config = DipDupConfig.load(config_paths)
@@ -172,9 +172,10 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
         asyncio.ensure_future(_check_version())
 
-    # NOTE: Avoid import errors if project package is incomplete
     try:
-        CodeGenerator(_config, {}).create_package()
+        # NOTE: Avoid early import errors if project package is incomplete.
+        # NOTE: `ConfigurationError` will be raised with more details.
+        DipDupPackage(_config.package_path).create()
     except Exception as e:
         raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 

@@ -57,6 +57,7 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -365,7 +366,6 @@ class DipDup:
             callbacks=self._callbacks,
             transactions=self._transactions,
         )
-        self._codegen = CodeGenerator(self._config, self._datasources_by_config)
         self._schema: Schema | None = None
 
     @property
@@ -415,7 +415,9 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init(overwrite_types, keep_schemas)
+            package = DipDupPackage(self._config.package_path)
+            codegen = CodeGenerator(package, self._config, self._datasources_by_config)
+            await codegen.init(overwrite_types, keep_schemas)
 
     async def run(self) -> None:
         """Run indexing process"""
