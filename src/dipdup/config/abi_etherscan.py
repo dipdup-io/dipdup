@@ -9,7 +9,7 @@ API_URL = 'https://api.etherscan.io/api'
 
 
 @dataclass
-class AbiEtherscanDatasourceConfig(DatasourceConfig):
+class EtherscanDatasourceConfig(DatasourceConfig):
     """Coinbase datasource config
 
     :param kind: always 'evm.abi_etherscan'

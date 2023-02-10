@@ -2,11 +2,11 @@ from typing import Any
 from typing import cast
 
 from dipdup.config import HttpConfig
-from dipdup.config.evm_abi_etherscan import AbiEtherscanDatasourceConfig
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.datasources import Datasource
 
 
-class AbiEtherscanDatasource(Datasource[AbiEtherscanDatasourceConfig]):
+class EtherscanDatasource(Datasource[EtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=5,
         ratelimit_period=1,
