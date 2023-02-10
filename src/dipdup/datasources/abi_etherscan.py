@@ -3,10 +3,10 @@ from typing import cast
 
 from dipdup.config import HttpConfig
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
-from dipdup.datasources import Datasource
+from dipdup.datasources import AbiDatasource
 
 
-class EtherscanDatasource(Datasource[EtherscanDatasourceConfig]):
+class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=5,
         ratelimit_period=1,

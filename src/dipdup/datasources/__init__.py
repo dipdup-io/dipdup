@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 
@@ -31,6 +32,12 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
 
     def set_logger(self, name: str) -> None:
         self._logger = FormattedLogger(self._logger.name, name + ': {}')
+
+
+class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
+    @abstractmethod
+    async def get_abi(self, address: str) -> dict[str, Any]:
+        ...
 
 
 class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourceConfigT]):
