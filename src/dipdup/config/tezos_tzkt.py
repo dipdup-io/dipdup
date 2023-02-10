@@ -5,14 +5,14 @@ from pydantic.dataclasses import dataclass
 
 from dipdup import baking_bad
 from dipdup.config import DEFAULT_TZKT_URL
-from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
+from dipdup.config import IndexDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 
 @dataclass
-class TzktDatasourceConfig(DatasourceConfig):
+class TzktDatasourceConfig(IndexDatasourceConfig):
     """TzKT datasource config
 
     :param kind: always 'tezos.tzkt'
@@ -25,6 +25,7 @@ class TzktDatasourceConfig(DatasourceConfig):
     url: str = DEFAULT_TZKT_URL  # type: ignore
     http: HttpConfig | None = None
     buffer_size: int = 0
+    merge_subscriptions: bool = False
 
     def __hash__(self) -> int:
         return hash(self.kind + self.url)

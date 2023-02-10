@@ -1,13 +1,12 @@
-import logging
 from typing import Any
 from typing import cast
 
 from dipdup.config import HttpConfig
-from dipdup.datasources import GraphQLDatasource
-from dipdup.models.tzip_metadata import TzipMetadataNetwork
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+from dipdup.datasources import Datasource
 
 
-class TzipMetadataDatasource(GraphQLDatasource):
+class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -16,17 +15,12 @@ class TzipMetadataDatasource(GraphQLDatasource):
         ratelimit_period=1,
     )
 
-    def __init__(self, url: str, network: TzipMetadataNetwork, http_config: HttpConfig | None = None) -> None:
-        super().__init__(url, http_config)
-        self._logger = logging.getLogger('dipdup.metadata')
-        self._network = network
-
     async def get_contract_metadata(self, address: str) -> dict[str, Any] | None:
         response = await self.request(
             'get',
             url='api/rest/contract_metadata',
             params={
-                'network': self._network.value,
+                'network': self._config.network.value,
                 'contract': address,
             },
         )
@@ -40,7 +34,7 @@ class TzipMetadataDatasource(GraphQLDatasource):
             'get',
             url='api/rest/token_metadata',
             params={
-                'network': self._network.value,
+                'network': self._config.network.value,
                 'contract': address,
                 'token_id': token_id,
             },

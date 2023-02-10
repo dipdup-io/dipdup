@@ -4,6 +4,7 @@ from typing import AsyncIterator
 
 from dipdup import env
 from dipdup.config import HttpConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 env.set_test()
@@ -19,10 +20,15 @@ async def tzkt_replay(
     url: str = 'https://api.tzkt.io',
     batch_size: int | None = None,
 ) -> AsyncIterator[TzktDatasource]:
-    config = HttpConfig(
+    http_config = HttpConfig(
         batch_size=batch_size,
         replay_path=str(Path(__file__).parent / 'replays'),
     )
-    datasource = TzktDatasource(url, config)
+    config = TzktDatasourceConfig(
+        kind='tezos.tzkt',
+        url=url,
+        http=http_config,
+    )
+    datasource = TzktDatasource(config)
     async with datasource:
         yield datasource

@@ -282,12 +282,17 @@ class ContractConfig(NameMixin):
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str
+    url: str
     http: HttpConfig | None
 
     # TODO: Pick refactoring from `ref/config-module`
     @abstractmethod
     def __hash__(self) -> int:
         ...
+
+
+class IndexDatasourceConfig(DatasourceConfig):
+    ...
 
 
 @dataclass
@@ -701,7 +706,6 @@ class AdvancedConfig:
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
     :param early_realtime: Establish realtime connection immediately after startup
-    :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
@@ -712,7 +716,6 @@ class AdvancedConfig:
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
-    merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
     rollback_depth: int = 2
@@ -991,7 +994,7 @@ class DipDupConfig:
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if TzktOperationType.transaction in index_config.types:
-                if self.advanced.merge_subscriptions:
+                if index_config.datasource.merge_subscriptions:
                     index_config.subscriptions.add(TransactionSubscription())
                 else:
                     for contract_config in index_config.contracts:
@@ -1003,7 +1006,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(OriginationSubscription())
 
         elif isinstance(index_config, TzktBigMapsIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
             else:
                 for big_map_handler_config in index_config.handlers:
@@ -1014,7 +1017,7 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(TokenTransferSubscription())
             else:
                 for handler_config in index_config.handlers:
@@ -1033,7 +1036,7 @@ class DipDupConfig:
             index_config.subscriptions.add(TransactionSubscription())
 
         elif isinstance(index_config, TzktEventsIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
             else:
                 for event_handler_config in index_config.handlers:

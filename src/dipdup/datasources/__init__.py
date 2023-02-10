@@ -1,7 +1,10 @@
 import logging
 from abc import abstractmethod
+from typing import Generic
+from typing import TypeVar
 
-from dipdup.config import HttpConfig
+from dipdup.config import DatasourceConfig
+from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.http import HTTPGateway
 from dipdup.subscriptions import Subscription
@@ -11,10 +14,15 @@ from dipdup.utils import FormattedLogger
 _logger = logging.getLogger('dipdup.datasource')
 
 
-class Datasource(HTTPGateway):
-    def __init__(self, url: str, http_config: HttpConfig | None = None) -> None:
-        config = ResolvedHttpConfig.create(self._default_http_config, http_config)
-        super().__init__(url, config)
+DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
+IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)
+
+
+class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
+    def __init__(self, config: DatasourceConfigT) -> None:
+        self._config = config
+        http_config = ResolvedHttpConfig.create(self._default_http_config, config.http)
+        super().__init__(config.url, http_config)
         self._logger = _logger
 
     @abstractmethod
@@ -25,19 +33,13 @@ class Datasource(HTTPGateway):
         self._logger = FormattedLogger(self._logger.name, name + ': {}')
 
 
-# TODO: Generic interface
-class GraphQLDatasource(Datasource):
-    ...
-
-
-class IndexDatasource(Datasource):
+class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourceConfigT]):
     def __init__(
         self,
-        url: str,
-        http_config: HttpConfig | None = None,
+        config: IndexDatasourceConfigT,
         merge_subscriptions: bool = False,
     ) -> None:
-        super().__init__(url, http_config)
+        super().__init__(config)
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
 
     @property

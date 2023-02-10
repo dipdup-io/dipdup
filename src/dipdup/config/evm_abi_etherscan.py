@@ -12,12 +12,12 @@ API_URL = 'https://api.etherscan.io/api'
 class AbiEtherscanDatasourceConfig(DatasourceConfig):
     """Coinbase datasource config
 
-    :param kind: always 'evm.abi.etherscan'
+    :param kind: always 'evm.abi_etherscan'
     :param url: API URL
     :param api_key: API key
     """
 
-    kind: Literal['evm.abi.etherscan']
+    kind: Literal['evm.abi_etherscan']
     url: str = API_URL
     api_key: str | None = None
 

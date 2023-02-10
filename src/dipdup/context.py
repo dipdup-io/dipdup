@@ -39,6 +39,7 @@ from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
 from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -63,7 +64,7 @@ from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
 
-DatasourceT = TypeVar('DatasourceT', bound=Datasource)
+DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
 # FIXME: Singletons shared by all contexts
@@ -110,7 +111,7 @@ class DipDupContext:
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
+        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
@@ -144,7 +145,7 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
@@ -429,7 +430,7 @@ class HookContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
+        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
@@ -513,13 +514,13 @@ class HandlerContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
+        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
     ) -> None:
         super().__init__(datasources, config, callbacks, transactions)
         self.logger = logger
@@ -534,7 +535,7 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
     ) -> 'HandlerContext':
         return cls(
             datasources=ctx.datasources,
@@ -583,7 +584,7 @@ class CallbackManager:
         ctx: 'DipDupContext',
         name: str,
         index: str,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,

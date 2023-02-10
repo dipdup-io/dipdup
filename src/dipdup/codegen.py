@@ -94,7 +94,7 @@ class CodeGenerator:
         self,
         package: DipDupPackage,
         config: DipDupConfig,
-        datasources: dict[DatasourceConfigU, Datasource],
+        datasources: dict[DatasourceConfigU, Datasource[Any]],
     ) -> None:
         self._logger = logging.getLogger('dipdup.codegen')
         self._package = package

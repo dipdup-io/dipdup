@@ -2,12 +2,12 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
+from dipdup.config import IndexDatasourceConfig
 
 
 @dataclass
-class SubsquidDatasourceConfig(DatasourceConfig):
+class SubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'

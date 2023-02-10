@@ -4,6 +4,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
+from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
 from typing import Generic
@@ -20,7 +21,6 @@ class HasLevel(Protocol):
 Level = int
 FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)
 FetcherFilterT = TypeVar('FetcherFilterT')
-IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
 
 
 async def yield_by_level(
@@ -55,7 +55,7 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
         filter: set[FetcherFilterT],
         first_level: int,
         last_level: int,
-        datasource: IndexDatasource,
+        datasource: IndexDatasource[Any],
     ) -> None:
         super().__init__()
         self._buffer = buffer
@@ -84,7 +84,7 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
 class DataFetcher(ABC, Generic[FetcherBufferT]):
     def __init__(
         self,
-        datasource: IndexDatasource,
+        datasource: IndexDatasource[Any],
         first_level: int,
         last_level: int,
     ) -> None:

@@ -22,6 +22,7 @@ from pysignalr.messages import CompletionMessage
 from dipdup import baking_bad
 from dipdup.config import HttpConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -168,7 +169,7 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource):
+class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -181,14 +182,11 @@ class TzktDatasource(IndexDatasource):
 
     def __init__(
         self,
-        url: str,
-        http_config: HttpConfig | None = None,
-        merge_subscriptions: bool = False,
-        buffer_size: int = 0,
+        config: TzktDatasourceConfig,
     ) -> None:
-        super().__init__(url, http_config, merge_subscriptions)
+        super().__init__(config)
         self._logger = logging.getLogger('dipdup.tzkt')
-        self._buffer = MessageBuffer(buffer_size)
+        self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
         self._on_connected_callbacks: set[EmptyCallbackT] = set()

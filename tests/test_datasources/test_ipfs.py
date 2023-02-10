@@ -2,16 +2,19 @@ from pathlib import Path
 
 from dipdup.config import DEFAULT_IPFS_URL
 from dipdup.config import HttpConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.datasources.ipfs import IpfsDatasource
 
 
 async def test_ipfs_datasource() -> None:
-    ipfs = IpfsDatasource(
+    config = IpfsDatasourceConfig(
+        kind='ipfs',
         url=DEFAULT_IPFS_URL,
-        http_config=HttpConfig(
+        http=HttpConfig(
             replay_path=str(Path(__file__).parent.parent / 'replays'),
         ),
     )
+    ipfs = IpfsDatasource(config)
     async with ipfs:
         file = await ipfs.get('bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m')
         assert file[:5].decode() == 'Hello'
