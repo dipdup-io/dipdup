@@ -45,6 +45,7 @@ from pydantic.json import pydantic_encoder
 
 from dipdup import baking_bad
 from dipdup import env
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -289,6 +290,10 @@ class DatasourceConfig(ABC, NameMixin):
     @abstractmethod
     def __hash__(self) -> int:
         ...
+
+
+class AbiDatasourceConfig(DatasourceConfig):
+    ...
 
 
 class IndexDatasourceConfig(DatasourceConfig):
@@ -1186,6 +1191,7 @@ DatasourceConfigU = (
     | IpfsDatasourceConfig
     | HttpDatasourceConfig
     | SubsquidDatasourceConfig
+    | EtherscanDatasourceConfig
 )
 ResolvedIndexConfigU = (
     EvmSubsquidEventsIndexConfig

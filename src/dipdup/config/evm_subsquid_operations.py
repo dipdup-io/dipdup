@@ -37,4 +37,4 @@ class EvmSubsquidOperationsIndexConfig(IndexConfig):
     last_level: int = 0
 
     def import_objects(self, package: str) -> None:
-        ...
+        raise NotImplementedError

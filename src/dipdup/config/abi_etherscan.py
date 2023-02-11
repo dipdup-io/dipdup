@@ -2,22 +2,22 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import DatasourceConfig
+from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HttpConfig
 
 API_URL = 'https://api.etherscan.io/api'
 
 
 @dataclass
-class EtherscanDatasourceConfig(DatasourceConfig):
+class EtherscanDatasourceConfig(AbiDatasourceConfig):
     """Coinbase datasource config
 
-    :param kind: always 'evm.abi_etherscan'
+    :param kind: always 'abi.etherscan'
     :param url: API URL
     :param api_key: API key
     """
 
-    kind: Literal['evm.abi_etherscan']
+    kind: Literal['abi.etherscan']
     url: str = API_URL
     api_key: str | None = None
 
