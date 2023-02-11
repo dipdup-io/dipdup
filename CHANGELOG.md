@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-<!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
-<!--
+
+## [7.0]
+
 ### Added
 
-- index: New index kind `operation_unfiltered`.
--->
+- abi.etherscan: New datasource for fetching contract ABIs from Etherscan.
+- tezos.tzkt.operation_unfiltered: New index for fetching unfiltered operations from TzKT.
 
 ## [Unreleased]
 

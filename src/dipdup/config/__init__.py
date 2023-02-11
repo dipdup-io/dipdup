@@ -45,7 +45,6 @@ from pydantic.json import pydantic_encoder
 
 from dipdup import baking_bad
 from dipdup import env
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -1166,6 +1165,8 @@ class DipDupConfig:
                 config._name = name
 
 
+# NOTE: Reimport to avoid circular imports
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
@@ -1183,7 +1184,7 @@ from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexCon
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
-# NOTE: We need unions for Pydantic deserialization
+# NOTE: Unions for Pydantic config deserialization
 DatasourceConfigU = (
     TzktDatasourceConfig
     | CoinbaseDatasourceConfig
