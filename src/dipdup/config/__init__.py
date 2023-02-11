@@ -1165,6 +1165,10 @@ class DipDupConfig:
                 config._name = name
 
 
+"""
+WARNING: A very dark magic ahead. Be extra careful when editing code below.
+"""
+
 # NOTE: Reimport to avoid circular imports
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
@@ -1186,23 +1190,23 @@ from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
 DatasourceConfigU = (
-    TzktDatasourceConfig
-    | CoinbaseDatasourceConfig
-    | TzipMetadataDatasourceConfig
-    | IpfsDatasourceConfig
-    | HttpDatasourceConfig
-    | SubsquidDatasourceConfig
+    CoinbaseDatasourceConfig
     | EtherscanDatasourceConfig
+    | HttpDatasourceConfig
+    | IpfsDatasourceConfig
+    | SubsquidDatasourceConfig
+    | TzipMetadataDatasourceConfig
+    | TzktDatasourceConfig
 )
 ResolvedIndexConfigU = (
     EvmSubsquidEventsIndexConfig
     | EvmSubsquidOperationsIndexConfig
-    | TzktOperationsIndexConfig
     | TzktBigMapsIndexConfig
-    | TzktHeadIndexConfig
-    | TzktTokenTransfersIndexConfig
     | TzktEventsIndexConfig
+    | TzktHeadIndexConfig
+    | TzktOperationsIndexConfig
     | TzktOperationsUnfilteredIndexConfig
+    | TzktTokenTransfersIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
