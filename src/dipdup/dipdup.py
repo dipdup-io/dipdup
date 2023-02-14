@@ -14,7 +14,6 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
-from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
@@ -406,6 +405,9 @@ class DipDup:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
+        from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
+        from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
+
         await self._create_datasources()
 
         async with AsyncExitStack() as stack:
@@ -413,8 +415,10 @@ class DipDup:
                 await stack.enter_async_context(datasource)
 
             package = DipDupPackage(self._config.package_path)
-            codegen = TzktCodeGenerator(package, self._config, self._datasources)
-            await codegen.init(overwrite_types, keep_schemas)
+
+            for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
+                codegen = codegen_cls(package, self._config, self._datasources)
+                await codegen.init(overwrite_types, keep_schemas)
 
     async def run(self) -> None:
         """Run indexing process"""

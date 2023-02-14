@@ -1,13 +1,11 @@
 import logging
 from abc import ABC
 from abc import abstractmethod
-from shutil import rmtree
 from typing import Any
 
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.package import DipDupPackage
-from dipdup.utils import import_submodules
 
 
 class CodeGenerator(ABC):
@@ -32,16 +30,11 @@ class CodeGenerator(ABC):
         await self.generate_types(force)
         await self.generate_hooks()
         await self.generate_handlers()
-        self.verify_package()
 
+        self._package.verify()
         if keep_schemas:
             return
-
-        rmtree(self._package.schemas, ignore_errors=True)
-        rmtree(self._package.abi, ignore_errors=True)
-
-    def verify_package(self) -> None:
-        import_submodules(self._config.package)
+        self._package.cleanup()
 
     @abstractmethod
     async def generate_abi(self) -> None:

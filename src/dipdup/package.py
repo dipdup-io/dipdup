@@ -1,10 +1,16 @@
+from functools import cache
 from pathlib import Path
+from shutil import rmtree
+from typing import Any
+from typing import Callable
 
 from dipdup.exceptions import ProjectImportError
 
 # from dipdup.utils import import_from
 # from dipdup.utils import pascal_to_snake
 # from dipdup.utils import snake_to_pascal
+from dipdup.utils import import_from
+from dipdup.utils import import_submodules
 from dipdup.utils import touch
 
 # from typing import Awaitable
@@ -31,11 +37,11 @@ class DipDupPackage:
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
         self.abi = root / 'abi'
+        self.import_from: Callable[[str, str], Any] = cache(import_from)
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
-        if self.root.exists() and not self.root.is_dir():
-            raise ProjectImportError(f'`{self.root}` is not a valid DipDup package path')
+        self.check()
 
         touch(self.root / PYTHON_MARKER)
         touch(self.root / PEP_561_MARKER)
@@ -48,6 +54,17 @@ class DipDupPackage:
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
         touch(self.abi / KEEP_MARKER)
+
+    def check(self) -> None:
+        if self.root.exists() and not self.root.is_dir():
+            raise ProjectImportError(f'`{self.root}` is not a valid DipDup package path')
+
+    def verify(self) -> None:
+        import_submodules(self.package)
+
+    def cleanup(self) -> None:
+        rmtree(self.schemas, ignore_errors=True)
+        rmtree(self.abi, ignore_errors=True)
 
     # def get_storage_type(self, typename: str) -> type[BaseModel]:
     #     cls_name = snake_to_pascal(typename) + 'Storage'
