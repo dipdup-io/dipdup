@@ -22,6 +22,3 @@ class EtherscanDatasourceConfig(AbiDatasourceConfig):
     api_key: str | None = None
 
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind)

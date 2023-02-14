@@ -19,6 +19,3 @@ class IpfsDatasourceConfig(DatasourceConfig):
     kind: Literal['ipfs']
     url: str = DEFAULT_IPFS_URL
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)

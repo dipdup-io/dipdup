@@ -16,7 +16,7 @@ class CodeGenerator(ABC):
         self,
         package: DipDupPackage,
         config: DipDupConfig,
-        datasources: dict[DatasourceConfig, Datasource[Any]],
+        datasources: dict[str, Datasource[Any]],
     ) -> None:
         self._package = package
         self._config = config

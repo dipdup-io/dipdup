@@ -24,6 +24,3 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
     passphrase: str | None = field(default=None, repr=False)
 
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind)

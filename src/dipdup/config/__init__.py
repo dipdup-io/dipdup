@@ -285,11 +285,6 @@ class DatasourceConfig(ABC, NameMixin):
     url: str
     http: HttpConfig | None
 
-    # TODO: Pick refactoring from `ref/config-module`
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
-
 
 class AbiDatasourceConfig(DatasourceConfig):
     ...

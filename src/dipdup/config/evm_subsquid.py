@@ -20,6 +20,3 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     url: str
     node_url: str | None = None
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url + (self.node_url or ''))

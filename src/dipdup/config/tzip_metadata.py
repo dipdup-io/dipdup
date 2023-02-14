@@ -22,6 +22,3 @@ class TzipMetadataDatasourceConfig(DatasourceConfig):
     network: TzipMetadataNetwork
     url: str = baking_bad.METADATA_API_URL
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url + self.network.value)

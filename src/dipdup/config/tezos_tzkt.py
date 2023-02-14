@@ -27,9 +27,6 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
     buffer_size: int = 0
     merge_subscriptions: bool = False
 
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)
-
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self.url = self.url.rstrip('/')

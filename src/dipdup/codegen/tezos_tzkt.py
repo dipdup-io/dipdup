@@ -28,16 +28,13 @@ from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerPatternConfigU as PatternConfigU
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.exceptions import FrameworkException
@@ -92,10 +89,10 @@ class TzktCodeGenerator(CodeGenerator):
         self,
         package: DipDupPackage,
         config: DipDupConfig,
-        datasources: dict[DatasourceConfig, Datasource[Any]],
+        datasources: dict[str, Datasource[Any]],
     ) -> None:
         super().__init__(package, config, datasources)
-        self._schemas: dict[TzktDatasourceConfig, dict[str, dict[str, Any]]] = {}
+        self._schemas: dict[str, dict[str, dict[str, Any]]] = {}
 
     async def _get_schema(
         self,
@@ -103,7 +100,7 @@ class TzktCodeGenerator(CodeGenerator):
         contract_config: ContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
-        datasource = self._datasources[datasource_config]
+        datasource = self._datasources[datasource_config.name]
         if not isinstance(datasource, TzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
@@ -116,13 +113,14 @@ class TzktCodeGenerator(CodeGenerator):
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 
-        if datasource_config not in self._schemas:
-            self._schemas[datasource_config] = {}
-        if address not in self._schemas[datasource_config]:
+        name = datasource_config.name
+        if name not in self._schemas:
+            self._schemas[name] = {}
+        if address not in self._schemas[name]:
             self._logger.info('Fetching schemas for contract `%s`', address)
             address_schemas_json = await datasource.get_jsonschemas(address)
-            self._schemas[datasource_config][address] = address_schemas_json
-        return self._schemas[datasource_config][address]
+            self._schemas[name][address] = address_schemas_json
+        return self._schemas[name][address]
 
     async def _fetch_operation_pattern_schema(
         self,
@@ -263,16 +261,8 @@ class TzktCodeGenerator(CodeGenerator):
                 await self._fetch_big_map_index_schema(index_config)
             elif isinstance(index_config, TzktEventsIndexConfig):
                 await self._fetch_event_index_schema(index_config)
-            elif isinstance(index_config, TzktHeadIndexConfig):
-                pass
-            elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-                pass
-            elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
-                pass
-            elif isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
             else:
-                raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+                pass
 
         # NOTE: Euristics for complex cases like templated `similar_to` factories.
         # NOTE: Try different contracts and datasources from config until one succeeds.
