@@ -7,8 +7,6 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
-from enum import Flag
-from enum import auto
 from functools import cache
 from typing import Any
 from typing import DefaultDict
@@ -63,12 +61,6 @@ class IndexType(Enum):
     tezos_tzkt_events = 'tezos.tzkt.events'
     evm_subsquid_operations = 'evm.subsquid.operations'
     evm_subsquid_events = 'evm.subsquid.events'
-
-
-class DatasourceCapability(Flag):
-    tezos = auto()
-    evm = auto()
-    abi = auto()
 
 
 class IndexStatus(Enum):

@@ -14,9 +14,9 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
-from dipdup.codegen import CodeGenerator
+from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigU
+from dipdup.config import DatasourceConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -353,7 +353,7 @@ class DipDup:
         self._logger = logging.getLogger('dipdup')
         self._config = config
         self._datasources: dict[str, Datasource[Any]] = {}
-        self._datasources_by_config: dict[DatasourceConfigU, Datasource[Any]] = {}
+        self._datasources_by_config: dict[DatasourceConfig, Datasource[Any]] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
@@ -415,7 +415,7 @@ class DipDup:
                 await stack.enter_async_context(datasource)
 
             package = DipDupPackage(self._config.package_path)
-            codegen = CodeGenerator(package, self._config, self._datasources_by_config)
+            codegen = TzktCodeGenerator(package, self._config, self._datasources_by_config)
             await codegen.init(overwrite_types, keep_schemas)
 
     async def run(self) -> None:
