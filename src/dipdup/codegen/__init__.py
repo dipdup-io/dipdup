@@ -4,7 +4,6 @@ from abc import abstractmethod
 from shutil import rmtree
 from typing import Any
 
-from dipdup.config import DatasourceConfig
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.package import DipDupPackage

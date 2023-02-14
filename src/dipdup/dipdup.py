@@ -462,7 +462,7 @@ class DipDup:
 
     async def _create_datasources(self) -> None:
         datasource: Datasource[Any]
-        for name, datasource_config in self._config.datasources.items():
+        for name in self._config.datasources.keys():
             if name in self._datasources:
                 continue
 

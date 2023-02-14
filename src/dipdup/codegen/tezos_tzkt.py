@@ -20,7 +20,6 @@ import orjson as json
 from dipdup.codegen import CodeGenerator
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
