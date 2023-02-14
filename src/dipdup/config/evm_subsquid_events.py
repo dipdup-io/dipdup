@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import AbiDatasourceConfig
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
@@ -30,6 +31,7 @@ class EvmSubsquidEventsIndexConfig(IndexConfig):
     kind: Literal['evm.subsquid.events']
     datasource: SubsquidDatasourceConfig
     handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = field(default_factory=tuple)
+    abi: tuple[AbiDatasourceConfig, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0
