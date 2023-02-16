@@ -282,6 +282,7 @@ class TzktOperationsIndex(
                 )
             else:
                 subgroup_handlers = match_operation_subgroup(
+                    self._ctx.package,
                     self._config.handlers,
                     operation_subgroup,
                 )

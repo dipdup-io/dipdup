@@ -5,6 +5,8 @@ from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
+from dipdup.codegen.tezos_tzkt import get_parameter_type
+from dipdup.codegen.tezos_tzkt import get_storage_type
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
@@ -16,6 +18,7 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.models.tezos_tzkt import TzktOrigination
 from dipdup.models.tezos_tzkt import TzktTransaction
+from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -36,6 +39,7 @@ MatchedOperationsT = tuple[OperationSubgroup, TzktOperationsHandlerConfigU, dequ
 
 
 def prepare_operation_handler_args(
+    package: DipDupPackage,
     handler_config: TzktOperationsHandlerConfig,
     matched_operations: deque[TzktOperationData | None],
 ) -> deque[OperationsHandlerArgumentU]:
@@ -46,14 +50,15 @@ def prepare_operation_handler_args(
             args.append(None)
 
         elif isinstance(pattern_config, TransactionPatternConfig):
-            if not pattern_config.entrypoint:
+            if not pattern_config.typed_contract or not pattern_config.entrypoint:
                 args.append(operation_data)
                 continue
 
-            type_ = pattern_config.parameter_type_cls
+            typename = pattern_config.typed_contract.module_name
+            type_ = get_parameter_type(package, typename, pattern_config.entrypoint)
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
 
-            storage_type = pattern_config.storage_type_cls
+            storage_type = get_storage_type(package, typename)
             storage = deserialize_storage(operation_data, storage_type)
 
             typed_transaction: TzktTransaction[Any, Any] = TzktTransaction(
@@ -64,14 +69,12 @@ def prepare_operation_handler_args(
             args.append(typed_transaction)
 
         elif isinstance(pattern_config, OriginationPatternConfig):
-            if pattern_config.originated_contract or pattern_config.similar_to:
-                pass
-            # NOTE: `source` is always untyped
-            else:
+            if not pattern_config.typed_contract:
                 args.append(operation_data)
                 continue
 
-            storage_type = pattern_config.storage_type_cls
+            typename = pattern_config.typed_contract.module_name
+            storage_type = get_storage_type(package, typename)
             storage = deserialize_storage(operation_data, storage_type)
 
             typed_origination = TzktOrigination(
@@ -141,6 +144,7 @@ def match_operation_unfiltered_subgroup(
 
 
 def match_operation_subgroup(
+    package: DipDupPackage,
     handlers: Iterable[TzktOperationsHandlerConfig],
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
@@ -181,7 +185,7 @@ def match_operation_subgroup(
             if pattern_index == len(handler_config.pattern):
                 _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
-                args = prepare_operation_handler_args(handler_config, matched_operations)
+                args = prepare_operation_handler_args(package, handler_config, matched_operations)
                 matched_handlers.append((operation_subgroup, handler_config, args))
 
                 matched_operations.clear()
@@ -190,7 +194,7 @@ def match_operation_subgroup(
         if len(matched_operations) >= sum(0 if x.optional else 1 for x in handler_config.pattern):
             _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
-            args = prepare_operation_handler_args(handler_config, matched_operations)
+            args = prepare_operation_handler_args(package, handler_config, matched_operations)
             matched_handlers.append((operation_subgroup, handler_config, args))
 
     return matched_handlers

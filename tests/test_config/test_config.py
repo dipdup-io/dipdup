@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-from typing import Callable
 
 import pytest
 from pydantic import ValidationError
@@ -38,8 +37,6 @@ async def test_load_initialize() -> None:
     assert isinstance(config, DipDupConfig)
     destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
     assert destination == config.contracts['HEN_minter']
-    assert isinstance(index_config.handlers[0].callback_fn, Callable)  # type: ignore[arg-type]
-    assert isinstance(index_config.handlers[0].pattern[0].parameter_type_cls, type)  # type: ignore[union-attr]
 
 
 async def test_operation_subscriptions() -> None:

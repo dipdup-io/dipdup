@@ -13,7 +13,7 @@ from dipdup.config.tezos_tzkt import TzktIndexConfig
 
 
 @dataclass
-class TzktTokenTransfersHandlerConfig(HandlerConfig, kind='handler'):
+class TzktTokenTransfersHandlerConfig(HandlerConfig):
     """Token transfer handler config
 
     :param callback: Callback name
@@ -56,7 +56,3 @@ class TzktTokenTransfersIndexConfig(TzktIndexConfig):
 
     first_level: int = 0
     last_level: int = 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)

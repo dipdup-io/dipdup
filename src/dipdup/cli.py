@@ -166,7 +166,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     init_sentry(_config)
 
     # NOTE: Imports will be loaded later if needed
-    _config.initialize(skip_imports=True)
+    _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
@@ -296,7 +296,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
         environment=unsafe,
     )
     if full:
-        config.initialize(skip_imports=True)
+        config.initialize()
     echo(config.dump())
 
 

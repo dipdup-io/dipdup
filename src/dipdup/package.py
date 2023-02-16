@@ -1,24 +1,15 @@
-from functools import cache
 from pathlib import Path
 from shutil import rmtree
-from typing import Any
+from typing import Awaitable
 from typing import Callable
 
-from dipdup.exceptions import ProjectImportError
+from pydantic import BaseModel
 
-# from dipdup.utils import import_from
-# from dipdup.utils import pascal_to_snake
-# from dipdup.utils import snake_to_pascal
+from dipdup.exceptions import ProjectImportError
 from dipdup.utils import import_from
 from dipdup.utils import import_submodules
+from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
-
-# from typing import Awaitable
-# from typing import Callable
-# from typing import cast
-
-# from pydantic import BaseModel
-
 
 KEEP_MARKER = '.keep'
 PYTHON_MARKER = '__init__.py'
@@ -26,10 +17,15 @@ PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 
 
+IMPORTED_TYPES: dict[str, type[BaseModel]] = {}
+IMPORTED_CALLBACKS: dict[str, Callable[..., Awaitable[None]]] = {}
+
+
 class DipDupPackage:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, debug: bool = False) -> None:
         self.root = root
-        self.package = root.name
+        self.debug = debug
+        self.name = root.name
         self.schemas = root / 'schemas'
         self.types = root / 'types'
         self.handlers = root / 'handlers'
@@ -37,11 +33,10 @@ class DipDupPackage:
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
         self.abi = root / 'abi'
-        self.import_from: Callable[[str, str], Any] = cache(import_from)
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
-        self.check()
+        self.pre_init()
 
         touch(self.root / PYTHON_MARKER)
         touch(self.root / PEP_561_MARKER)
@@ -55,65 +50,35 @@ class DipDupPackage:
         touch(self.graphql / KEEP_MARKER)
         touch(self.abi / KEEP_MARKER)
 
-    def check(self) -> None:
+        self.post_init()
+
+    def pre_init(self) -> None:
+        if self.name != pascal_to_snake(self.name):
+            raise ProjectImportError(f'`{self.name}` is not a valid Python package name')
         if self.root.exists() and not self.root.is_dir():
-            raise ProjectImportError(f'`{self.root}` is not a valid DipDup package path')
+            raise ProjectImportError(f'`{self.root}` must be a directory')
 
-    def verify(self) -> None:
-        import_submodules(self.package)
+    def post_init(self) -> None:
+        import_submodules(self.name)
 
-    def cleanup(self) -> None:
-        rmtree(self.schemas, ignore_errors=True)
-        rmtree(self.abi, ignore_errors=True)
+        if not self.debug:
+            rmtree(self.schemas, ignore_errors=True)
+            rmtree(self.abi, ignore_errors=True)
 
-    # def get_storage_type(self, typename: str) -> type[BaseModel]:
-    #     cls_name = snake_to_pascal(typename) + 'Storage'
-    #     module_name = f'{self.package}.types.{typename}.storage'
-    #     return cast(
-    #         type[BaseModel],
-    #         import_from(module_name, cls_name),
-    #     )
+    def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
+        path = f'{self.name}.types.{typename}.{module}'
+        key = f'{path}.{name}'
+        if key not in IMPORTED_TYPES:
+            type_ = IMPORTED_TYPES[key] = import_from(path, name)
+            if not isinstance(type_, type):
+                raise ProjectImportError(f'`{key}` is not a valid type')
+        return IMPORTED_TYPES[key]
 
-    # def get_parameter_type(self, typename: str, entrypoint: str) -> type[BaseModel]:
-    #     entrypoint = entrypoint.lstrip('_')
-    #     module_name = f'{self.package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
-    #     cls_name = snake_to_pascal(entrypoint) + 'Parameter'
-    #     return cast(
-    #         type[BaseModel],
-    #         import_from(module_name, cls_name),
-    #     )
-
-    # def get_event_type(self, typename: str, tag: str) -> type[BaseModel]:
-    #     tag = pascal_to_snake(tag.replace('.', '_'))
-    #     module_name = f'{self.package}.types.{typename}.event.{tag}'
-    #     cls_name = snake_to_pascal(f'{tag}_payload')
-    #     return cast(
-    #         type[BaseModel],
-    #         import_from(module_name, cls_name),
-    #     )
-
-    # def get_big_map_key_type(self, typename: str, path: str) -> type[BaseModel]:
-    #     path = pascal_to_snake(path.replace('.', '_'))
-    #     module_name = f'{self.package}.types.{typename}.big_map.{path}_key'
-    #     cls_name = snake_to_pascal(path + '_key')
-    #     return cast(
-    #         type[BaseModel],
-    #         import_from(module_name, cls_name),
-    #     )
-
-    # def get_big_map_value_type(self, typename: str, path: str) -> type[BaseModel]:
-    #     path = pascal_to_snake(path.replace('.', '_'))
-    #     module_name = f'{self.package}.types.{typename}.big_map.{path}_value'
-    #     cls_name = snake_to_pascal(path + '_value')
-    #     return cast(
-    #         type[BaseModel],
-    #         import_from(module_name, cls_name),
-    #     )
-
-    # def get_callback_fn(self, kind: str, callback: str) -> Callable[..., Awaitable[None]]:
-    #     module_name = f'{self.package}.{kind}s.{callback}'
-    #     fn_name = callback.rsplit('.', 1)[-1]
-    #     return cast(
-    #         Callable[..., Awaitable[None]],
-    #         import_from(module_name, fn_name),
-    #     )
+    def get_callback(self, kind: str, module: str, name: str) -> Callable[..., Awaitable[None]]:
+        path = f'{self.name}.{kind}.{module}'
+        key = f'{path}.{name}'
+        if key not in IMPORTED_CALLBACKS:
+            callback = IMPORTED_CALLBACKS[key] = import_from(path, name)
+            if not callable(callback):
+                raise ProjectImportError(f'`{key}` is not a valid callback')
+        return IMPORTED_CALLBACKS[key]

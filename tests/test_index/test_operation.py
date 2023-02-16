@@ -23,7 +23,7 @@ async def tzkt() -> AsyncIterator[TzktDatasource]:
 @pytest.fixture
 def index_config() -> TzktOperationsIndexConfig:
     config = DipDupConfig.load([CONFIGS_PATH / 'operation_filters.yml'], True)
-    config.initialize(skip_imports=True)
+    config.initialize()
     return cast(TzktOperationsIndexConfig, config.indexes['test'])
 
 

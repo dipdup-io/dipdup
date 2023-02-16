@@ -184,7 +184,7 @@ class IndexDispatcher:
                 )
                 self._ctx.config.contracts[contract.name] = contract_config
 
-        self._ctx.config.initialize(skip_imports=True)
+        self._ctx.config.initialize()
 
     async def _load_index_state(self) -> None:
         if self._indexes:
@@ -358,6 +358,7 @@ class DipDup:
         )
         self._ctx = DipDupContext(
             config=self._config,
+            package=DipDupPackage(config.package_path),
             datasources=self._datasources,
             callbacks=self._callbacks,
             transactions=self._transactions,
@@ -392,7 +393,7 @@ class DipDup:
                 kind='sqlite',
                 path=':memory:',
             )
-        config.initialize(skip_imports=True)
+        config.initialize()
 
         dipdup = DipDup(config)
         await dipdup._create_datasources()
@@ -417,7 +418,7 @@ class DipDup:
             package = DipDupPackage(self._config.package_path)
 
             for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
-                codegen = codegen_cls(package, self._config, self._datasources)
+                codegen = codegen_cls(self._config, package, self._datasources)
                 await codegen.init(overwrite_types, keep_schemas)
 
     async def run(self) -> None:

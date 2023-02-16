@@ -3,9 +3,12 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 
+from dipdup.codegen.tezos_tzkt import get_big_map_key_type
+from dipdup.codegen.tezos_tzkt import get_big_map_value_type
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
+from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -14,6 +17,7 @@ MatchedBigMapsT = tuple[TzktBigMapsHandlerConfig, TzktBigMapDiff[Any, Any]]
 
 
 def prepare_big_map_handler_args(
+    package: DipDupPackage,
     handler_config: TzktBigMapsHandlerConfig,
     matched_big_map: TzktBigMapData,
 ) -> TzktBigMapDiff[Any, Any]:
@@ -21,13 +25,13 @@ def prepare_big_map_handler_args(
     _logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
     if matched_big_map.action.has_key:
-        type_ = handler_config.key_type_cls
+        type_ = get_big_map_key_type(package, handler_config.contract.module_name, handler_config.path)
         key = parse_object(type_, matched_big_map.key) if type_ else None
     else:
         key = None
 
     if matched_big_map.action.has_value:
-        type_ = handler_config.value_type_cls
+        type_ = get_big_map_value_type(package, handler_config.contract.module_name, handler_config.path)
         value = parse_object(type_, matched_big_map.value) if type_ else None
     else:
         value = None
@@ -53,6 +57,7 @@ def match_big_map(
 
 
 def match_big_maps(
+    package: DipDupPackage,
     handlers: Iterable[TzktBigMapsHandlerConfig],
     big_maps: Iterable[TzktBigMapData],
 ) -> deque[MatchedBigMapsT]:
@@ -63,7 +68,7 @@ def match_big_maps(
         for big_map in big_maps:
             big_map_matched = match_big_map(handler_config, big_map)
             if big_map_matched:
-                arg = prepare_big_map_handler_args(handler_config, big_map)
+                arg = prepare_big_map_handler_args(package, handler_config, big_map)
                 matched_handlers.append((handler_config, arg))
 
     return matched_handlers

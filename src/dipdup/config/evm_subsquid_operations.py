@@ -15,7 +15,7 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 
 
 @dataclass
-class EvmSubsquidOperationsHandlerConfig(HandlerConfig, kind='handler'):
+class EvmSubsquidOperationsHandlerConfig(HandlerConfig):
     contract: ContractConfig
     method: str
     events: tuple[Any, ...]
@@ -38,5 +38,5 @@ class EvmSubsquidOperationsIndexConfig(IndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    def import_objects(self, package: str) -> None:
-        raise NotImplementedError
+    # def import_objects(self, package: str) -> None:
+    #     raise NotImplementedError

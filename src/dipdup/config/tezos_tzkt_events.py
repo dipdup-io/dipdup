@@ -18,7 +18,7 @@ from dipdup.utils import snake_to_pascal
 
 
 @dataclass
-class TzktEventsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktEventsHandlerConfig(HandlerConfig):
     """Event handler config
 
     :param callback: Callback name
@@ -64,7 +64,7 @@ class TzktEventsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class TzktEventsUnknownEventHandlerConfig(HandlerConfig, kind='handler'):
+class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -103,7 +103,3 @@ class TzktEventsIndexConfig(TzktIndexConfig):
 
     first_level: int = 0
     last_level: int = 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)

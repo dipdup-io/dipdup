@@ -95,7 +95,7 @@ async def test_configure_hasura() -> None:
     config.database = await run_postgres_container()
     config.hasura = await run_hasura_container(config.database.host)
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
-    config.initialize(skip_imports=True)
+    config.initialize()
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack)

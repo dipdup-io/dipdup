@@ -18,7 +18,7 @@ from dipdup.utils import snake_to_pascal
 
 
 @dataclass
-class TzktBigMapsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktBigMapsHandlerConfig(HandlerConfig):
     """Big map handler config
 
     :param callback: Callback name
@@ -118,8 +118,3 @@ class TzktBigMapsIndexConfig(TzktIndexConfig):
     def strip(cls, config_dict: dict[str, Any]) -> None:
         super().strip(config_dict)
         config_dict.pop('skip_history', None)
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-            handler_config.initialize_big_map_type(package)

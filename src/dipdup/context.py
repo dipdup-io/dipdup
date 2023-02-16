@@ -60,6 +60,7 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
@@ -104,20 +105,23 @@ class MetadataCursor:
 class DipDupContext:
     """Common execution context for handler and hook callbacks.
 
-    :param datasources: Mapping of available datasources
     :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
     :param logger: Context-aware logger instance
     """
 
     def __init__(
         self,
-        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
     ) -> None:
-        self.datasources = datasources
         self.config = config
+        self.package = package
+        self.datasources = datasources
         self._callbacks = callbacks
         self._transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
@@ -430,14 +434,21 @@ class HookContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            callbacks=callbacks,
+            transactions=transactions,
+        )
         self.logger = logger
         self.hook_config = hook_config
 
@@ -449,8 +460,9 @@ class HookContext(DipDupContext):
         hook_config: HookConfig,
     ) -> 'HookContext':
         return cls(
-            datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -514,15 +526,22 @@ class HandlerContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource[Any]],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: IndexDatasource[Any],
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            callbacks=callbacks,
+            transactions=transactions,
+        )
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
@@ -538,8 +557,9 @@ class HandlerContext(DipDupContext):
         datasource: IndexDatasource[Any],
     ) -> 'HandlerContext':
         return cls(
-            datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -571,13 +591,11 @@ class CallbackManager:
         key = (handler_config.callback, handler_config.parent.name)
         if key not in self._handlers:
             self._handlers[key] = handler_config
-            handler_config.initialize_callback_fn(self._package)
 
     def register_hook(self, hook_config: HookConfig) -> None:
         key = hook_config.callback
         if key not in self._hooks:
             self._hooks[key] = hook_config
-            hook_config.initialize_callback_fn(self._package)
 
     async def _fire_handler(
         self,
@@ -599,7 +617,8 @@ class CallbackManager:
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            await handler_config.callback_fn(new_ctx, *args, **kwargs)
+            fn = ctx.package.get_callback('handlers', name, name)
+            await fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
         self,
@@ -632,7 +651,8 @@ class CallbackManager:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx._transactions.in_transaction())
 
-                await hook_config.callback_fn(new_ctx, *args, **kwargs)
+                fn = ctx.package.get_callback('hooks', name, name)
+                await fn(new_ctx, *args, **kwargs)
 
         if wait:
             await _wrapper()

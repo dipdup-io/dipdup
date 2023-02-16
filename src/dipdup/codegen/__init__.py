@@ -2,21 +2,30 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
+from typing import Awaitable
+from typing import Callable
+from typing import Iterable
+
+from pydantic import BaseModel
 
 from dipdup.config import DipDupConfig
+from dipdup.config import HandlerConfig
 from dipdup.datasources import Datasource
 from dipdup.package import DipDupPackage
+
+CallbackT = Callable[..., Awaitable[None]]
+TypeT = type[BaseModel]
 
 
 class CodeGenerator(ABC):
     def __init__(
         self,
-        package: DipDupPackage,
         config: DipDupConfig,
+        package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
     ) -> None:
-        self._package = package
         self._config = config
+        self._package = package
         self._datasources = datasources
         self._logger = logging.getLogger('dipdup.codegen')
 
@@ -25,16 +34,18 @@ class CodeGenerator(ABC):
         force: bool = False,
         keep_schemas: bool = False,
     ) -> None:
+        self._package.pre_init()
+        self._package.create()
+
         await self.generate_abi()
         await self.generate_schemas()
         await self.generate_types(force)
+
         await self.generate_hooks()
+        await self.generate_event_hooks()
         await self.generate_handlers()
 
-        self._package.verify()
-        if keep_schemas:
-            return
-        self._package.cleanup()
+        self._package.post_init()
 
     @abstractmethod
     async def generate_abi(self) -> None:
@@ -53,5 +64,27 @@ class CodeGenerator(ABC):
         ...
 
     @abstractmethod
+    async def generate_event_hooks(self) -> None:
+        ...
+
+    @abstractmethod
     async def generate_handlers(self) -> None:
+        ...
+
+
+class IndexCodeGenerator(CodeGenerator):
+    @abstractmethod
+    def get_handler_imports(self, config: HandlerConfig) -> Iterable[tuple[str, str]]:
+        ...
+
+    @abstractmethod
+    def get_handler_args(self, config: HandlerConfig) -> Iterable[tuple[str, str]]:
+        ...
+
+    @abstractmethod
+    def get_handler_fn(self, config: HandlerConfig) -> Callable[..., Awaitable[None]]:
+        ...
+
+    @abstractmethod
+    def get_handler_types(self, config: HandlerConfig) -> dict[str, type[BaseModel]]:
         ...

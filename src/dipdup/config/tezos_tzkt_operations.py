@@ -11,8 +11,6 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import CodegenMixin
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import ParameterTypeMixin
-from dipdup.config import StorageTypeMixin
 from dipdup.config import SubgroupIndexMixin
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
@@ -102,9 +100,7 @@ class PatternConfig(CodegenMixin):
 
 
 @dataclass
-class OperationsHandlerTransactionPatternConfig(
-    PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin
-):
+class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -123,8 +119,6 @@ class OperationsHandlerTransactionPatternConfig(
     alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
-        StorageTypeMixin.__post_init_post_parse__(self)
-        ParameterTypeMixin.__post_init_post_parse__(self)
         SubgroupIndexMixin.__post_init_post_parse__(self)
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
@@ -168,7 +162,7 @@ class OperationsHandlerTransactionPatternConfig(
 
 
 @dataclass
-class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
+class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -258,32 +252,13 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
             for item in handler['pattern']:
                 item.pop('alias', None)
 
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-            for pattern_config in handler_config.pattern:
-                typed_contract = pattern_config.typed_contract
-                if not typed_contract:
-                    continue
-
-                module_name = typed_contract.module_name
-                pattern_config.initialize_storage_cls(package, module_name)
-
-                if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
-                    pattern_config.initialize_parameter_cls(
-                        package,
-                        module_name,
-                        cast(str, pattern_config.entrypoint),
-                    )
-
 
 # FIXME: Reversed for new Pydantic. Why?
 OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig
 
 
 @dataclass
-class TzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktOperationsHandlerConfig(HandlerConfig):
     """Operation handler config
 
     :param callback: Callback name
@@ -312,7 +287,7 @@ class TzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+class OperationUnfilteredHandlerConfig(HandlerConfig):
     """Handler of unfiltered operation index
 
     :param callback: Callback name
@@ -352,9 +327,6 @@ class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
-
-    def import_objects(self, package: str) -> None:
-        self.handler_config.initialize_callback_fn(package)
 
 
 TzktOperationsHandlerConfigU = TzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig

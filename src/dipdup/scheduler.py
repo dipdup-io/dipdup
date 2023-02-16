@@ -91,6 +91,7 @@ class SchedulerManager:
             nonlocal job_config, hook_config
             job_ctx = HookContext(
                 config=ctx.config,
+                package=ctx.package,
                 datasources=ctx.datasources,
                 callbacks=ctx._callbacks,
                 transactions=ctx._transactions,

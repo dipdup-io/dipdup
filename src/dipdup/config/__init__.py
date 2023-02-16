@@ -29,8 +29,6 @@ from dataclasses import field
 from pathlib import Path
 from pydoc import locate
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import Generic
 from typing import Iterator
 from typing import Literal
@@ -54,9 +52,7 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.subscriptions import Subscription
-from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
 from dipdup.yaml import DipDupYAMLConfig
 
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
@@ -330,26 +326,6 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-@dataclass
-class StorageTypeMixin:
-    """`storage_type_cls` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._storage_type_cls: type[Any] | None = None
-
-    @property
-    def storage_type_cls(self) -> type[Any]:
-        if self._storage_type_cls is None:
-            raise ConfigInitializationException
-        return self._storage_type_cls
-
-    def initialize_storage_cls(self, package: str, module_name: str) -> None:
-        _logger.debug('Registering `%s` storage type', module_name)
-        cls_name = snake_to_pascal(module_name) + 'Storage'
-        module_name = f'{package}.types.{module_name}.storage'
-        self._storage_type_cls = import_from(module_name, cls_name)
-
-
 ParentT = TypeVar('ParentT')
 
 
@@ -367,31 +343,6 @@ class ParentMixin(Generic[ParentT]):
     @parent.setter
     def parent(self, value: ParentT) -> None:
         self._parent = value
-
-
-@dataclass
-class ParameterTypeMixin:
-    """`parameter_type_cls` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls: type | None = None
-
-    @property
-    def parameter_type_cls(self) -> type:
-        if self._parameter_type_cls is None:
-            raise ConfigInitializationException
-        return self._parameter_type_cls
-
-    @parameter_type_cls.setter
-    def parameter_type_cls(self, value: type) -> None:
-        self._parameter_type_cls = value
-
-    def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
-        _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
-        entrypoint = entrypoint.lstrip('_')
-        module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
-        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
-        self.parameter_type_cls = import_from(module_name, cls_name)
 
 
 @dataclass
@@ -424,35 +375,13 @@ class CallbackMixin(CodegenMixin):
 
     callback: str
 
-    def __init_subclass__(cls, kind: str) -> None:
-        cls._kind = kind  # type: ignore[attr-defined]
-
     def __post_init_post_parse__(self) -> None:
-        self._callback_fn = None
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
-    @property
-    def kind(self) -> str:
-        return self._kind  # type: ignore[attr-defined,no-any-return]
-
-    @property
-    def callback_fn(self) -> Callable[..., Awaitable[None]]:
-        if self._callback_fn is None:
-            raise ConfigInitializationException
-        return self._callback_fn
-
-    def initialize_callback_fn(self, package: str) -> None:
-        if self._callback_fn:
-            return
-        _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
-        module_name = f'{package}.{self.kind}s.{self.callback}'
-        fn_name = self.callback.rsplit('.', 1)[-1]
-        self._callback_fn = import_from(module_name, fn_name)
-
 
 @dataclass
-class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
+class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
@@ -530,9 +459,9 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
 
-    @abstractmethod
-    def import_objects(self, package: str) -> None:
-        ...
+    # @abstractmethod
+    # def import_objects(self, package: str) -> None:
+    #     ...
 
 
 @dataclass
@@ -639,7 +568,7 @@ class PrometheusConfig:
 
 
 @dataclass
-class HookConfig(CallbackMixin, kind='hook'):
+class HookConfig(CallbackMixin):
     """Hook config
 
     :param args: Mapping of argument names and annotations (checked lazily when possible)
@@ -664,7 +593,7 @@ class HookConfig(CallbackMixin, kind='hook'):
 
 
 @dataclass
-class EventHookConfig(HookConfig, kind='hook'):
+class EventHookConfig(HookConfig):
     pass
 
 
@@ -863,19 +792,11 @@ class DipDupConfig:
         if isinstance(self.package, str):
             logging.getLogger(self.package).setLevel(level)
 
-    def initialize(self, skip_imports: bool = False) -> None:
+    def initialize(self) -> None:
         self._set_names()
         self._resolve_templates()
         self._resolve_links()
         self._validate()
-
-        if skip_imports:
-            return
-
-        for index_config in self.indexes.values():
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-            index_config.import_objects(self.package)
 
     def dump(self) -> str:
         return DipDupYAMLConfig.dump(self.json)
@@ -902,7 +823,7 @@ class DipDupConfig:
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
         index_config._name = name
-        index_config.import_objects(self.package)
+        # index_config.import_objects(self.package)
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface

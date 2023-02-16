@@ -18,6 +18,7 @@ from typing import cast
 import orjson as json
 
 from dipdup.codegen import CodeGenerator
+from dipdup.codegen import TypeT
 from dipdup.config import CallbackMixin
 from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
@@ -86,11 +87,15 @@ class TzktCodeGenerator(CodeGenerator):
 
     def __init__(
         self,
-        package: DipDupPackage,
         config: DipDupConfig,
+        package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
     ) -> None:
-        super().__init__(package, config, datasources)
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+        )
         self._schemas: dict[str, dict[str, dict[str, Any]]] = {}
 
     async def _get_schema(
@@ -366,25 +371,28 @@ class TzktCodeGenerator(CodeGenerator):
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             if isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
-                await self._generate_callback(index_config.handler_config)
+                await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
             for handler_config in index_config.handlers:
-                await self._generate_callback(handler_config)
+                await self._generate_callback(handler_config, 'handlers')
 
     async def generate_hooks(self) -> None:
         for hook_configs in self._config.hooks.values(), event_hooks.values():
             for hook_config in hook_configs:
-                await self._generate_callback(hook_config, sql=True)
+                await self._generate_callback(hook_config, 'hooks', sql=True)
 
-    async def _generate_callback(self, callback_config: CallbackMixin, sql: bool = False) -> None:
+    async def generate_event_hooks(self) -> None:
+        ...
+
+    async def _generate_callback(self, callback_config: CallbackMixin, kind: str, sql: bool = False) -> None:
         original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
 
         callback_path = Path(
             self._package.root,
-            f'{callback_config.kind}s',
+            kind,
             *subpackages,
             f'{callback}.py',
         )
@@ -392,7 +400,7 @@ class TzktCodeGenerator(CodeGenerator):
         if callback_path.exists():
             return
 
-        self._logger.info('Generating %s callback `%s`', callback_config.kind, callback)
+        self._logger.info('Generating %s callback `%s`', kind, callback)
         callback_template = load_template('templates', 'callback.py.j2')
 
         arguments = callback_config.format_arguments()
@@ -459,3 +467,36 @@ class TzktCodeGenerator(CodeGenerator):
             address_schemas_json = await datasource.get_jsonschemas(address)
             schemas[datasource.name][address] = address_schemas_json
         return cast(dict[str, Any], schemas[datasource.name][address])
+
+
+def get_storage_type(package: DipDupPackage, typename: str) -> TypeT:
+    cls_name = snake_to_pascal(typename) + 'Storage'
+    return package.get_type(typename, 'storage', cls_name)
+
+
+def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -> TypeT:
+    entrypoint = entrypoint.lstrip('_')
+    module_name = f'parameter.{pascal_to_snake(entrypoint)}'
+    cls_name = snake_to_pascal(entrypoint) + 'Parameter'
+    return package.get_type(typename, module_name, cls_name)
+
+
+def get_event_type(package: DipDupPackage, typename: str, tag: str) -> TypeT:
+    tag = pascal_to_snake(tag.replace('.', '_'))
+    module_name = f'event.{tag}'
+    cls_name = snake_to_pascal(f'{tag}_payload')
+    return package.get_type(typename, module_name, cls_name)
+
+
+def get_big_map_key_type(package: DipDupPackage, typename: str, path: str) -> TypeT:
+    path = pascal_to_snake(path.replace('.', '_'))
+    module_name = f'big_map.{path}_key'
+    cls_name = snake_to_pascal(path + '_key')
+    return package.get_type(typename, module_name, cls_name)
+
+
+def get_big_map_value_type(package: DipDupPackage, typename: str, path: str) -> TypeT:
+    path = pascal_to_snake(path.replace('.', '_'))
+    module_name = f'big_map.{path}_value'
+    cls_name = snake_to_pascal(path + '_value')
+    return package.get_type(typename, module_name, cls_name)
