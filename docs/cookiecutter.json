@@ -8,7 +8,7 @@
   "license": "MIT",
   "author": "John Smith <john_smith@localhost.lan>",
   "postgresql_image": "postgres:14",
-  "hasura_image": "hasura/graphql-engine:v2.18.0",
+  "hasura_image": "hasura/graphql-engine:v2.19.0",
   "crash_reporting": false,
   "linters": "default",
   "line_length": "120"
