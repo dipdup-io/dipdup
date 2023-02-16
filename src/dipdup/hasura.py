@@ -246,8 +246,8 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Connected to Hasura %s', version)
 
         tested_version = BaseProject().get_defaults()['hasura_image'].split(':')[1]
-        if version < tested_version:
-            self._logger.info('Hasura %s is available and tested with DipDup; consider upgrading', tested_version)
+        if version.split('-')[0] > tested_version:
+            self._logger.info('Hasura version is newer than the one tested with DipDup (%s)', tested_version)
 
     async def _create_source(self) -> dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
