@@ -400,14 +400,6 @@ class TemplateValuesMixin:
 
 
 @dataclass
-class SubscriptionsMixin:
-    """`subscriptions` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self.subscriptions: set[Subscription] = set()
-
-
-@dataclass
 class IndexTemplateConfig(NameMixin):
     """Index template config
 
@@ -427,7 +419,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigU']):
+class IndexConfig(ABC, TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -439,8 +431,8 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     def __post_init_post_parse__(self) -> None:
         TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
-        SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
+        self.subscriptions: set[Subscription] = set()
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -458,10 +450,6 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         """Strip config from tunables that are not needed for hash calculation."""
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
-
-    # @abstractmethod
-    # def import_objects(self, package: str) -> None:
-    #     ...
 
 
 @dataclass
@@ -823,7 +811,6 @@ class DipDupConfig:
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
         index_config._name = name
-        # index_config.import_objects(self.package)
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface
@@ -887,7 +874,6 @@ class DipDupConfig:
                 raise ConfigInitializationException('Index templates must be resolved first')
 
             self._resolve_index_links(index_config)
-            # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
 
         for job_config in self.jobs.values():
@@ -897,6 +883,7 @@ class DipDupConfig:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
+    # FIXME: Definitely not the best place for this
     def _resolve_index_subscriptions(self, index_config: IndexConfigU) -> None:
         if isinstance(index_config, IndexTemplateConfig):
             return
