@@ -2522,7 +2522,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.17.1
+    image: hasura/graphql-engine:v2.19.0
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -2634,7 +2634,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.17.1
+    image: hasura/graphql-engine:v2.19.0
     depends_on:
       - db
     environment:
@@ -4480,12 +4480,6 @@ templates:
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
-<!--
-### Added
-
-- index: New index kind `operation_unfiltered`.
--->
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.3...HEAD">Unreleased</a></a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
@@ -4495,9 +4489,10 @@ templates:
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
-<li>deps: Updated pydantic to 1.10.4</li>
+<li>deps: Updated pydantic to 1.10.5</li>
 <li>deps: Updated datamodel-code-generator to 0.17.1</li>
 <li>deps: Updated tortoise-orm to 0.19.3</li>
+<li>deps: Updated Hasura to 2.19.0</li>
 </ul>
 <h2 id="650---2023-01-28"><a class="header" href="#650---2023-01-28">[6.5.0] - 2023-01-28</a></h2>
 <h3 id="added"><a class="header" href="#added">Added</a></h3>
