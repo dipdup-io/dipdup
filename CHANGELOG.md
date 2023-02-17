@@ -4,7 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-
 ## [7.0]
 
 ### Added
@@ -22,9 +21,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- deps: Updated pydantic to 1.10.4
+- deps: Updated pydantic to 1.10.5
 - deps: Updated datamodel-code-generator to 0.17.1
 - deps: Updated tortoise-orm to 0.19.3
+- deps: Updated Hasura to 2.19.0
 
 ## [6.5.0] - 2023-01-28
 

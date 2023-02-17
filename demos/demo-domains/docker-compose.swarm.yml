@@ -53,7 +53,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.17.1
+    image: hasura/graphql-engine:v2.19.0
     depends_on:
       - db
     environment:
