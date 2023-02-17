@@ -20,11 +20,17 @@ class SubsquidOperationsHandlerConfig(HandlerConfig):
     method: str
     events: tuple[Any, ...]
 
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        raise NotImplementedError
-
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        raise NotImplementedError
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.models.evm_subsquid', 'SubsquidOperation'
+        yield package, 'models as models'
+
+        ...
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+
+        ...
 
 
 @dataclass

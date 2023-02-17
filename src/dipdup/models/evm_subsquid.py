@@ -1,2 +1,6 @@
-class Event:
+class SubsquidEvent:
+    ...
+
+
+class SubsquidOperation:
     ...
