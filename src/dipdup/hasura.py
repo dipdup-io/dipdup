@@ -26,7 +26,6 @@ from dipdup.exceptions import HasuraError
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.http import HTTPGateway
 from dipdup.models import Schema
-from dipdup.project import BaseProject
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 from dipdup.utils.database import get_connection
@@ -52,7 +51,6 @@ vulnerable_versions = {
     'v2.10.1-pro.1': 'v2.10.2',
     'v2.10.0-pro.1': 'v2.10.2',
 }
-
 
 RelationalFieldT = Union[
     fields.relational.ForeignKeyFieldInstance,
@@ -229,7 +227,6 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Connecting to Hasura instance')
         version_json = await self._hasura_request('version')
         version = version_json['version']
-
         if version.startswith('v1'):
             raise UnsupportedAPIError(
                 self.url, 'hasura', 'API v1 is not supported; upgrade to the latest stable version.'
@@ -244,10 +241,6 @@ class HasuraGateway(HTTPGateway):
             )
 
         self._logger.info('Connected to Hasura %s', version)
-
-        tested_version = BaseProject().get_defaults()['hasura_image'].split(':')[1]
-        if version.split('-')[0] > tested_version:
-            self._logger.info('Hasura version is newer than the one tested with DipDup (%s)', tested_version)
 
     async def _create_source(self) -> dict[str, Any]:
         self._logger.info(f'Adding source `{self._hasura_config.source}`')
