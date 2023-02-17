@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Any
 from typing import Iterator
 from typing import Literal
 
@@ -11,8 +10,6 @@ from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
-from dipdup.exceptions import ConfigInitializationException
-from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -28,24 +25,6 @@ class TzktEventsHandlerConfig(HandlerConfig):
 
     contract: ContractConfig
     tag: str
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        self._event_type_cls: type[Any] | None = None
-
-    @property
-    def event_type_cls(self) -> type:
-        if self._event_type_cls is None:
-            raise ConfigInitializationException
-        return self._event_type_cls
-
-    def initialize_event_type(self, package: str) -> None:
-        """Resolve imports and initialize key and value type classes"""
-        tag = pascal_to_snake(self.tag.replace('.', '_'))
-
-        module_name = f'{package}.types.{self.contract.module_name}.event.{tag}'
-        cls_name = snake_to_pascal(f'{tag}_payload')
-        self._event_type_cls = import_from(module_name, cls_name)
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'

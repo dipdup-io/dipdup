@@ -481,7 +481,7 @@ def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -
     return package.get_type(typename, module_name, cls_name)
 
 
-def get_event_type(package: DipDupPackage, typename: str, tag: str) -> TypeT:
+def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeT:
     tag = pascal_to_snake(tag.replace('.', '_'))
     module_name = f'event.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
