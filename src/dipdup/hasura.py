@@ -17,11 +17,9 @@ from tortoise import fields
 from dipdup import env
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
-from dipdup.config import HttpConfig
+from dipdup.config import HTTPConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import ResolvedHttpConfig
-from dipdup.database import get_connection
-from dipdup.database import iter_models
+from dipdup.config import ResolvedHTTPConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import HasuraError
@@ -30,6 +28,8 @@ from dipdup.http import HTTPGateway
 from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
+from dipdup.utils.database import get_connection
+from dipdup.utils.database import iter_models
 
 # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
 vulnerable_versions = {
@@ -99,7 +99,7 @@ class Field:
 
 
 class HasuraGateway(HTTPGateway):
-    _default_http_config = HttpConfig(
+    _default_http_config = HTTPConfig(
         # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
         retry_sleep=1,
@@ -112,11 +112,11 @@ class HasuraGateway(HTTPGateway):
         package: str,
         hasura_config: HasuraConfig,
         database_config: PostgresDatabaseConfig,
-        http_config: HttpConfig | None = None,
+        http_config: HTTPConfig | None = None,
     ) -> None:
         super().__init__(
             hasura_config.url,
-            ResolvedHttpConfig.create(self._default_http_config, http_config),
+            ResolvedHTTPConfig.create(self._default_http_config, http_config),
         )
         self._logger = logging.getLogger('dipdup.hasura')
         self._package = package
