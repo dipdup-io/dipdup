@@ -4,12 +4,10 @@ from abc import abstractmethod
 from typing import Any
 from typing import Awaitable
 from typing import Callable
-from typing import Iterable
 
 from pydantic import BaseModel
 
 from dipdup.config import DipDupConfig
-from dipdup.config import HandlerConfig
 from dipdup.datasources import Datasource
 from dipdup.package import DipDupPackage
 
@@ -69,22 +67,4 @@ class CodeGenerator(ABC):
 
     @abstractmethod
     async def generate_handlers(self) -> None:
-        ...
-
-
-class IndexCodeGenerator(CodeGenerator):
-    @abstractmethod
-    def get_handler_imports(self, config: HandlerConfig) -> Iterable[tuple[str, str]]:
-        ...
-
-    @abstractmethod
-    def get_handler_args(self, config: HandlerConfig) -> Iterable[tuple[str, str]]:
-        ...
-
-    @abstractmethod
-    def get_handler_fn(self, config: HandlerConfig) -> Callable[..., Awaitable[None]]:
-        ...
-
-    @abstractmethod
-    def get_handler_types(self, config: HandlerConfig) -> dict[str, type[BaseModel]]:
         ...

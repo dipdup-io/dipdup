@@ -50,7 +50,6 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -896,6 +895,7 @@ class DipDupConfig:
         from dipdup.models.tezos_tzkt import OriginationSubscription
         from dipdup.models.tezos_tzkt import TokenTransferSubscription
         from dipdup.models.tezos_tzkt import TransactionSubscription
+        from dipdup.models.tezos_tzkt import TzktOperationType
 
         index_config.subscriptions.add(HeadSubscription())
 
@@ -950,10 +950,10 @@ class DipDupConfig:
                     address = event_handler_config.contract.address
                     index_config.subscriptions.add(EventSubscription(address=address))
 
-        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+        elif isinstance(index_config, SubsquidEventsIndexConfig):
             ...
 
-        elif isinstance(index_config, EvmSubsquidOperationsIndexConfig):
+        elif isinstance(index_config, SubsquidOperationsIndexConfig):
             ...
 
         else:
@@ -1036,14 +1036,14 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+        elif isinstance(index_config, SubsquidEventsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmSubsquidOperationsIndexConfig):
+        elif isinstance(index_config, SubsquidOperationsIndexConfig):
             ...
 
         else:
@@ -1076,8 +1076,8 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
@@ -1102,8 +1102,8 @@ DatasourceConfigU = (
     | TzktDatasourceConfig
 )
 ResolvedIndexConfigU = (
-    EvmSubsquidEventsIndexConfig
-    | EvmSubsquidOperationsIndexConfig
+    SubsquidEventsIndexConfig
+    | SubsquidOperationsIndexConfig
     | TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig
