@@ -7,6 +7,7 @@ from typing import TypeVar
 from dipdup.config import DatasourceConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
@@ -62,3 +63,32 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
     def get_sync_level(self, subscription: Subscription) -> int | None:
         return self._subscriptions.get_sync_level(subscription)
+
+
+def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
+    from dipdup.config.coinbase import CoinbaseDatasourceConfig
+    from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+    from dipdup.config.http import HttpDatasourceConfig
+    from dipdup.config.ipfs import IpfsDatasourceConfig
+    from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+    from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+    from dipdup.datasources.coinbase import CoinbaseDatasource
+    from dipdup.datasources.evm_subsquid import SubsquidDatasource
+    from dipdup.datasources.http import HttpDatasource
+    from dipdup.datasources.ipfs import IpfsDatasource
+    from dipdup.datasources.metadata import TzipMetadataDatasource
+    from dipdup.datasources.tezos_tzkt import TzktDatasource
+
+    by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
+        CoinbaseDatasourceConfig: CoinbaseDatasource,
+        TzktDatasourceConfig: TzktDatasource,
+        TzipMetadataDatasourceConfig: TzipMetadataDatasource,
+        HttpDatasourceConfig: HttpDatasource,
+        IpfsDatasourceConfig: IpfsDatasource,
+        SubsquidDatasourceConfig: SubsquidDatasource,
+    }
+
+    try:
+        return by_config[type(config)](config)
+    except KeyError:
+        raise FrameworkException(f'Unknown datasource type: {type(config)}')

@@ -29,7 +29,7 @@ from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
 from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
-from dipdup.datasources.factory import DatasourceFactory
+from dipdup.datasources import create_datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
@@ -466,14 +466,9 @@ class DipDup:
             await gather(*tasks)
 
     async def _create_datasources(self) -> None:
-        datasource: Datasource[Any]
-        for name in self._config.datasources.keys():
-            if name in self._datasources:
-                continue
-
-            datasource = DatasourceFactory.build(name, self._config)
-
-            self._datasources[name] = datasource
+        for name, config in self._config.datasources.items():
+            if name not in self._datasources:
+                self._datasources[name] = create_datasource(config)
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')
