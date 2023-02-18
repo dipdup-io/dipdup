@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "amountMinimum": {
+      "type": "integer"
+    },
+    "recipient": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "amountMinimum",
+    "recipient"
+  ],
+  "additionalProperties": false
+}

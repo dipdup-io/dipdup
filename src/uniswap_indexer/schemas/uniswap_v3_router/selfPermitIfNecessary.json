@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "value": {
+      "type": "integer"
+    },
+    "deadline": {
+      "type": "integer"
+    },
+    "v": {
+      "type": "integer"
+    },
+    "r": {
+      "type": "string"
+    },
+    "s": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "token",
+    "value",
+    "deadline",
+    "v",
+    "r",
+    "s"
+  ],
+  "additionalProperties": false
+}

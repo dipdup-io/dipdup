@@ -186,7 +186,11 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        url = f"{self._path.rstrip('/')}/{url}"
+        if url:
+            url = f"{self._path.rstrip('/')}/{url}"
+        else:
+            url = self._path
+
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 

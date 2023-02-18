@@ -196,7 +196,7 @@ class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
     retry_count: int = sys.maxsize
-    retry_sleep: float = 0.0
+    retry_sleep: float = 1.0
     retry_multiplier: float = 1.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
@@ -705,6 +705,10 @@ class DipDupConfig:
         if len(oneshot_indexes) == len(syncable_indexes) > 0:
             return True
         return False
+
+    @property
+    def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
+        return tuple(c for c in self.datasources.values() if isinstance(c, AbiDatasourceConfig))
 
     @classmethod
     def load(

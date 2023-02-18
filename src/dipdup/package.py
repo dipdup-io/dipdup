@@ -49,8 +49,7 @@ class DipDupPackage:
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
         touch(self.abi / KEEP_MARKER)
-
-        self.post_init()
+        touch(self.schemas / KEEP_MARKER)
 
     def pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):

@@ -66,12 +66,14 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
 
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
+    from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
     from dipdup.config.coinbase import CoinbaseDatasourceConfig
     from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
     from dipdup.config.tezos_tzkt import TzktDatasourceConfig
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+    from dipdup.datasources.abi_etherscan import EtherscanDatasource
     from dipdup.datasources.coinbase import CoinbaseDatasource
     from dipdup.datasources.evm_subsquid import SubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
@@ -80,6 +82,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.datasources.tezos_tzkt import TzktDatasource
 
     by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
+        EtherscanDatasourceConfig: EtherscanDatasource,
         CoinbaseDatasourceConfig: CoinbaseDatasource,
         TzktDatasourceConfig: TzktDatasource,
         TzipMetadataDatasourceConfig: TzipMetadataDatasource,

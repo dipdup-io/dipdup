@@ -177,7 +177,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         # NOTE: `ConfigurationError` will be raised with more details.
         DipDupPackage(_config.package_path).create()
     except Exception as e:
-        raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
+        if ctx.invoked_subcommand != 'init':
+            raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
     # NOTE: Ensure that `spec_version` is valid and supported
     if _config.spec_version not in spec_version_mapping:
