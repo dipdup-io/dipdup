@@ -1,5 +1,5 @@
+from itertools import chain
 from pathlib import Path
-from shutil import rmtree
 from typing import Awaitable
 from typing import Callable
 
@@ -26,13 +26,14 @@ class DipDupPackage:
         self.root = root
         self.debug = debug
         self.name = root.name
+        self.abi = root / 'abi'
         self.schemas = root / 'schemas'
         self.types = root / 'types'
         self.handlers = root / 'handlers'
         self.hooks = root / 'hooks'
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
-        self.abi = root / 'abi'
+        self.hasura = root / 'hasura'
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -42,14 +43,16 @@ class DipDupPackage:
         touch(self.root / PEP_561_MARKER)
         touch(self.root / MODELS_MODULE)
 
+        touch(self.abi / KEEP_MARKER)
+        touch(self.schemas / KEEP_MARKER)
+
         touch(self.types / PYTHON_MARKER)
         touch(self.handlers / PYTHON_MARKER)
         touch(self.hooks / PYTHON_MARKER)
 
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
-        touch(self.abi / KEEP_MARKER)
-        touch(self.schemas / KEEP_MARKER)
+        touch(self.hasura / KEEP_MARKER)
 
     def pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):
@@ -61,8 +64,8 @@ class DipDupPackage:
         import_submodules(self.name)
 
         if not self.debug:
-            rmtree(self.schemas, ignore_errors=True)
-            rmtree(self.abi, ignore_errors=True)
+            for path in chain(self.schemas.glob('**/*.json'), self.abi.glob('**/*.json')):
+                path.unlink()
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         path = f'{self.name}.types.{typename}.{module}'
