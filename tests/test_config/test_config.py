@@ -4,12 +4,12 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.exceptions import ConfigurationError
@@ -67,9 +67,9 @@ async def test_operation_subscriptions() -> None:
 async def test_validators() -> None:
     # NOTE: @validator wrapped with `ConfigurationError` in `DipDupConfig.load`
     with pytest.raises(ValidationError):
-        ContractConfig(address='KT1lalala')
+        TezosContractConfig(kind='tezos', address='KT1lalala')
     with pytest.raises(ValidationError):
-        ContractConfig(address='lalalalalalalalalalalalalalalalalala')
+        TezosContractConfig(kind='tezos', address='lalalalalalalalalalalalalalalalalala')
     with pytest.raises(ConfigurationError):
         TzktDatasourceConfig(kind='tezos.tzkt', url='not_an_url')
 

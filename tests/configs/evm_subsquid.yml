@@ -9,6 +9,7 @@ datasources:
 
 contracts:
   uniswap_router_mainnet:
+    kind: evm
     address: 0xE592427A0AEce92De3Edee1F18E0157C05861564
     typename: uniswap_v3_router
 

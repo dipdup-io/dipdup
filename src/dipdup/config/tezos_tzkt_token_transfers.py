@@ -6,8 +6,8 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 
@@ -23,10 +23,10 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig):
     :param to: Filter by recipient
     """
 
-    contract: ContractConfig | None = None
+    contract: TezosContractConfig | None = None
     token_id: int | None = None
-    from_: ContractConfig | None = Field(default=None, alias='from')
-    to: ContractConfig | None = None
+    from_: TezosContractConfig | None = Field(default=None, alias='from')
+    to: TezosContractConfig | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'

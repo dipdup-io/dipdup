@@ -62,19 +62,6 @@ DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
-TEZOS_ADDRESS_PREFIXES = (
-    'KT1',
-    # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
-    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
-    # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
-    'tz1',
-    'tz2',
-    'tz3',
-)
-TEZOS_ADDRESS_LENGTH = 36
-ETH_ADDRESS_PREFIXES = ('0x',)
-ETH_ADDRESS_LENGTH = 42
-
 
 _logger = logging.getLogger('dipdup.config')
 
@@ -239,40 +226,15 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param address: Contract address
-    :param code_hash: Contract code hash or address to fetch it from
     :param typename: User-defined alias for the contract script
     """
 
-    address: str | None = None
-    code_hash: int | str | None = None
-    typename: str | None = None
+    kind: str
+    typename: str | None
 
     @property
     def module_name(self) -> str:
         return self.typename or self.name
-
-    @validator('address', allow_reuse=True)
-    def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: Environment substitution was disabled during export, skip validation
-        if not v or '$' in v:
-            return v
-
-        if v.startswith(TEZOS_ADDRESS_PREFIXES):
-            if len(v) != TEZOS_ADDRESS_LENGTH:
-                raise ConfigurationError(f'`{v}` is not a valid Tezos address')
-        elif v.startswith(ETH_ADDRESS_PREFIXES):
-            if len(v) != ETH_ADDRESS_LENGTH:
-                raise ConfigurationError(f'`{v}` is not a valid Ethereum address')
-        else:
-            raise ConfigurationError(f'`{v}` is not a valid address')
-
-        return v
-
-    def get_address(self) -> str:
-        if self.address is None:
-            raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
-        return self.address
 
 
 class DatasourceConfig(ABC, NameMixin):
@@ -662,7 +624,7 @@ class DipDupConfig:
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
-    contracts: dict[str, ContractConfig] = field(default_factory=dict)
+    contracts: dict[str, ContractConfigU] = field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
     jobs: dict[str, JobConfig] = field(default_factory=dict)
@@ -683,8 +645,17 @@ class DipDupConfig:
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
         self.json = DipDupYAMLConfig()
-        self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
-        self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
+        # FIXME: Tezos-specific config validation
+        self._contract_addresses = {
+            v.address: k
+            for k, v in self.contracts.items()
+            if isinstance(v, TezosContractConfig) and v.address is not None
+        }
+        self._contract_code_hashes = {
+            v.code_hash: k
+            for k, v in self.contracts.items()
+            if isinstance(v, TezosContractConfig) and v.code_hash is not None
+        }
 
     @property
     def schema_name(self) -> str:
@@ -735,6 +706,18 @@ class DipDupConfig:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
+
+    def get_tezos_contract(self, name: str) -> TezosContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, TezosContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not a Tezos contract')
+        return contract
+
+    def get_evm_contract(self, name: str) -> EvmContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, EvmContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
+        return contract
 
     def get_datasource(self, name: str) -> DatasourceConfigU:
         try:
@@ -988,7 +971,7 @@ class DipDupConfig:
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
-                        index_config.contracts[i] = self.get_contract(contract)
+                        index_config.contracts[i] = self.get_tezos_contract(contract)
 
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -998,9 +981,9 @@ class DipDupConfig:
 
                     if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
-                            pattern_config.destination = self.get_contract(pattern_config.destination)
+                            pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
-                            pattern_config.source = self.get_contract(pattern_config.source)
+                            pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationsHandlerOriginationPatternConfig):
                         # TODO: Remove in 7.0
@@ -1008,16 +991,18 @@ class DipDupConfig:
                             raise FrameworkException('originated_contract` alias, should be replaced in __init__')
 
                         if isinstance(pattern_config.source, str):
-                            pattern_config.source = self.get_contract(pattern_config.source)
+                            pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                         if isinstance(pattern_config.originated_contract, str):
-                            pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
+                            pattern_config.originated_contract = self.get_tezos_contract(
+                                pattern_config.originated_contract
+                            )
 
         elif isinstance(index_config, TzktBigMapsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
             for handler_config in index_config.handlers:
@@ -1028,7 +1013,7 @@ class DipDupConfig:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
@@ -1038,14 +1023,14 @@ class DipDupConfig:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_evm_contract(handler_config.contract)
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
             ...
@@ -1079,11 +1064,13 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 # NOTE: Reimport to avoid circular imports
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -1096,6 +1083,7 @@ from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConf
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
+ContractConfigU = EvmContractConfig | TezosContractConfig
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
     | EtherscanDatasourceConfig
@@ -1157,7 +1145,11 @@ yaml_annotations = {
     'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
-    'list[ContractConfig]': 'list[str | ContractConfig]',
+    'TezosContractConfig': 'str | TezosContractConfig',
+    'TezosContractConfig | None': 'str | TezosContractConfig | None',
+    'EvmContractConfig': 'str | EvmContractConfig',
+    'EvmContractConfig | None': 'str | EvmContractConfig | None',
+    'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
 }
 orinal_annotations = {v: k for k, v in yaml_annotations.items()}

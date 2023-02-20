@@ -3,6 +3,7 @@ package: yupana
 
 contracts:
   yupana:
+    kind: tezos
     address: KT1LTqpmGJ11EebMVWAzJ7DWd9msgExvHM94
     typename: yupana
 

@@ -7,9 +7,9 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -17,7 +17,7 @@ from dipdup.utils import snake_to_pascal
 
 @dataclass
 class SubsquidEventsHandlerConfig(HandlerConfig):
-    contract: ContractConfig
+    contract: EvmContractConfig
     name: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:

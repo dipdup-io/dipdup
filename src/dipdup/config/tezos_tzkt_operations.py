@@ -9,9 +9,9 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import SubgroupIndexMixin
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigurationError
@@ -112,8 +112,8 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: ContractConfig | None = None
-    destination: ContractConfig | None = None
+    source: TezosContractConfig | None = None
+    destination: TezosContractConfig | None = None
     entrypoint: str | None = None
     optional: bool = False
     alias: str | None = None
@@ -155,7 +155,7 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
             )
 
     @property
-    def typed_contract(self) -> ContractConfig | None:
+    def typed_contract(self) -> TezosContractConfig | None:
         if self.entrypoint and self.destination:
             return self.destination
         return None
@@ -175,9 +175,9 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
     """
 
     type: Literal['origination'] = 'origination'
-    source: ContractConfig | None = None
-    similar_to: ContractConfig | None = None
-    originated_contract: ContractConfig | None = None
+    source: TezosContractConfig | None = None
+    similar_to: TezosContractConfig | None = None
+    originated_contract: TezosContractConfig | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
@@ -214,7 +214,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
             )
 
     @property
-    def typed_contract(self) -> ContractConfig | None:
+    def typed_contract(self) -> TezosContractConfig | None:
         if self.originated_contract:
             return self.originated_contract
         # TODO: Remove in 7.0
@@ -239,7 +239,7 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
     kind: Literal['tezos.tzkt.operations']
     datasource: TzktDatasourceConfig
     handlers: tuple[TzktOperationsHandlerConfig, ...]
-    contracts: list[ContractConfig] = field(default_factory=list)
+    contracts: list[TezosContractConfig] = field(default_factory=list)
     types: tuple[TzktOperationType, ...] = (TzktOperationType.transaction,)
 
     first_level: int = 0

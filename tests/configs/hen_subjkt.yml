@@ -3,6 +3,7 @@ package: hen_subjkt
 
 contracts:
   hen_subjkt:
+    kind: tezos
     address: KT1My1wDZHDGweCrJnQJi3wcFaS67iksirvj
     typename: hen_subjkt
 

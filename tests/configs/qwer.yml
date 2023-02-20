@@ -3,6 +3,7 @@ package: qwer
 
 contracts:
   qwer:
+    kind: tezos
     address: KT1DX7tM6GPJbzXkqwNN7z8DrsPDcnyuaatk
     typename: qwer
 

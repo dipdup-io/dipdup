@@ -7,15 +7,19 @@ database:
 
 contracts:
   kusd_dex_mainnet:
+    kind: tezos
     address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
     typename: quipu_fa12
   kusd_token_mainnet:
+    kind: tezos
     address: KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV
     typename: fa12_token
   hdao_dex_mainnet:
+    kind: tezos
     address: KT1QxLqukyfohPV5kPkw97Rs6cw1DDDvYgbB
     typename: quipu_fa2
   hdao_token_mainnet:
+    kind: tezos
     address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
     typename: fa2_token
 

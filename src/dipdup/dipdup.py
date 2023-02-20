@@ -14,12 +14,12 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
-from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -177,7 +177,8 @@ class IndexDispatcher:
                 address, code_hash = contract.address, None
 
             if contract.name not in self._ctx.config.contracts:
-                contract_config = ContractConfig(
+                contract_config = TezosContractConfig(
+                    kind='tezos',
                     address=address or None,
                     code_hash=code_hash or None,
                     typename=contract.typename,

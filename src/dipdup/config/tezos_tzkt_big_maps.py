@@ -8,6 +8,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.models import SkipHistory
@@ -24,7 +25,7 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: ContractConfig
+    contract: TezosContractConfig
     path: str
 
     @classmethod

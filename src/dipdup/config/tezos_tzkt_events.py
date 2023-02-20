@@ -6,8 +6,8 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.utils import pascal_to_snake
@@ -23,7 +23,7 @@ class TzktEventsHandlerConfig(HandlerConfig):
     :param tag: Event tag
     """
 
-    contract: ContractConfig
+    contract: TezosContractConfig
     tag: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -50,7 +50,7 @@ class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
     :param contract: Contract which emits event
     """
 
-    contract: ContractConfig
+    contract: TezosContractConfig
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'

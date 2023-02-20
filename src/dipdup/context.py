@@ -21,13 +21,13 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
-from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
@@ -263,7 +263,8 @@ class DipDupContext:
                 raise ContractAlreadyExistsError(code_hashes[code_hash])
             code_hashes[code_hash] = name
 
-        contract_config = ContractConfig(
+        contract_config = TezosContractConfig(
+            kind='tezos',
             address=address,
             code_hash=code_hash,
             typename=typename,

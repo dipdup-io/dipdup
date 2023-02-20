@@ -15,10 +15,10 @@ import orjson
 
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeT
-from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -132,7 +132,9 @@ class TzktCodeGenerator(CodeGenerator):
                         continue
                     # NOTE: Do not modify config without necessity
                     template_config.datasource = possible_datasource_config
-                    template_config.contracts = list(self._config.contracts.values())
+                    template_config.contracts = [
+                        c for c in self._config.contracts.values() if isinstance(c, TezosContractConfig)
+                    ]
                     try:
                         await self._fetch_operation_index_schema(template_config)
                     except FrameworkException:
@@ -170,7 +172,7 @@ class TzktCodeGenerator(CodeGenerator):
     async def _get_schema(
         self,
         datasource_config: TzktDatasourceConfig,
-        contract_config: ContractConfig,
+        contract_config: TezosContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources[datasource_config.name]
@@ -206,11 +208,14 @@ class TzktCodeGenerator(CodeGenerator):
 
         # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
         elif isinstance(contract_config, str) and contract_config in self._config.contracts:
-            contract_config = self._config.contracts[contract_config]
+            contract_config = self._config.get_tezos_contract(contract_config)
 
         elif isinstance(contract_config, str):
             self._logger.info('Unresolved `contract` field, trying to guess it.')
             for possible_contract_config in self._config.contracts.values():
+                if not isinstance(possible_contract_config, TezosContractConfig):
+                    continue
+
                 if isinstance(operation_pattern_config, TransactionPatternConfig):
                     operation_pattern_config.destination = possible_contract_config
                 elif isinstance(operation_pattern_config, OriginationPatternConfig):
@@ -325,7 +330,7 @@ class TzktCodeGenerator(CodeGenerator):
     async def get_schemas(
         self,
         datasource: TzktDatasource,
-        contract_config: ContractConfig,
+        contract_config: TezosContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         schemas: dict[str, Any] = {}

@@ -3,6 +3,7 @@ package: hjkl
 
 contracts:
   hjkl:
+    kind: tezos
     address: KT1WvYvgUhxYEe4NhqqazwXUhUEhcjMcdjHA
     typename: hjkl
 
