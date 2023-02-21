@@ -60,11 +60,12 @@ class DipDupPackage:
             raise ProjectImportError(f'`{self.root}` must be a directory')
 
     def post_init(self) -> None:
-        import_submodules(self.name)
-
         if not self.debug:
             for path in self.schemas.glob('**/*.json'):
                 path.unlink()
+
+    def verify(self) -> None:
+        import_submodules(self.name)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         path = f'{self.name}.types.{typename}.{module}'
