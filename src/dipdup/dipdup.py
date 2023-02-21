@@ -416,11 +416,14 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            package = DipDupPackage(self._config.package_path)
+            package = DipDupPackage(
+                root=self._config.package_path,
+                debug=keep_schemas,
+            )
 
             for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
                 codegen = codegen_cls(self._config, package, self._datasources)
-                await codegen.init(overwrite_types, keep_schemas)
+                await codegen.init(force=overwrite_types)
 
     async def run(self) -> None:
         """Run indexing process"""

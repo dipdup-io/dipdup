@@ -1,4 +1,3 @@
-from itertools import chain
 from pathlib import Path
 from typing import Awaitable
 from typing import Callable
@@ -64,7 +63,7 @@ class DipDupPackage:
         import_submodules(self.name)
 
         if not self.debug:
-            for path in chain(self.schemas.glob('**/*.json'), self.abi.glob('**/*.json')):
+            for path in self.schemas.glob('**/*.json'):
                 path.unlink()
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:

@@ -43,7 +43,6 @@ class CodeGenerator(ABC):
     async def init(
         self,
         force: bool = False,
-        keep_schemas: bool = False,
     ) -> None:
         self._package.pre_init()
         self._package.create()
@@ -56,8 +55,7 @@ class CodeGenerator(ABC):
         await self.generate_event_hooks()
         await self.generate_handlers()
 
-        if not keep_schemas:
-            self._package.post_init()
+        self._package.post_init()
 
     @abstractmethod
     async def generate_abi(self) -> None:
