@@ -405,7 +405,7 @@ class DipDupContext:
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
         if not isinstance(datasource, type_):
-            raise ConfigurationError(f'Datasource `{name}` is not a `{type.__name__}`')
+            raise ConfigurationError(f'Datasource `{name}` is not a `{type_.__name__}`')
         return datasource
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:

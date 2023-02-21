@@ -20,7 +20,6 @@ from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 from dipdup.utils import write
 
@@ -56,7 +55,7 @@ class CodeGenerator(ABC):
         await self.generate_handlers()
 
         self._package.post_init()
-        self._package.verify()
+        # self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:
@@ -122,7 +121,6 @@ class CodeGenerator(ABC):
             )
 
         class_name = self.get_typeclass_name(schema_path)
-        class_name = snake_to_pascal(class_name).strip('_')
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)

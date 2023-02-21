@@ -1,5 +1,5 @@
 spec_version: 1.2
-package: uniswap_indexer
+package: eth_usdt
 
 datasources:
   ethscan:
@@ -11,28 +11,28 @@ datasources:
     node_url: ${INFURA_URI:-}
 
 contracts:
-  uniswap_router_mainnet:
+  eth_usdt:
     kind: evm
-    address: 0xE592427A0AEce92De3Edee1F18E0157C05861564
-    typename: uniswap_v3_router
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
 
 indexes:
-  uniswap_swaps:
-    kind: evm.subsquid.operations  # evm.digdug.operations, tezos.tzkt.operations
+  # usdt_swaps:
+  #   kind: evm.subsquid.operations  # evm.digdug.operations, tezos.tzkt.operations
+  #   datasource: subsquid_eth_mainnet
+  #   handlers:
+  #     - callback: on_multicall
+  #       contract: usdt_router_mainnet
+  #       method: multicall  # multicall(int256)
+  #       events:  # unordered list of possible events (not mandatory)
+  #         - contract: usdt_router_mainnet
+  #           name: NewTrade
+  #         - contract: token
+  #           name: Transfer
+  eth_usdt_events:
+    kind: evm.subsquid.events
     datasource: subsquid_eth_mainnet
     handlers:
-      - callback: on_multicall
-        contract: uniswap_router_mainnet
-        method: multicall  # multicall(int256)
-        events:  # unordered list of possible events (not mandatory)
-          - contract: uniswap_router_mainnet
-            name: NewTrade
-          - contract: token
-            name: Transfer
-  uniswap_events:
-    kind: evm.subsquid.events  # tezos.tzkt.events
-    datasource: subsquid_eth_mainnet
-    handlers:
-      - callback: on_new_trade
-        contract: uniswap_router_mainnet
-        name: NewTrade
+      - callback: on_transfer
+        contract: eth_usdt
+        name: Transfer

@@ -1,7 +1,8 @@
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 
-PayloadT = TypeVar('PayloadT', bound=None)
+PayloadT = TypeVar('PayloadT', bound=Any)
 
 
 class SubsquidEvent(Generic[PayloadT]):

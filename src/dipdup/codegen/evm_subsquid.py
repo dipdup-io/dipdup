@@ -58,7 +58,7 @@ class SubsquidCodeGenerator(CodeGenerator):
             if isinstance(index_config, SubsquidEventsIndexConfig):
                 await self._fetch_abi(index_config)
             elif isinstance(index_config, SubsquidOperationsIndexConfig):
-                ...
+                raise NotImplementedError
 
     async def generate_schemas(self) -> None:
         await self._convert_abi()
@@ -111,14 +111,25 @@ class SubsquidCodeGenerator(CodeGenerator):
     async def _convert_abi(self) -> None:
         for path in self._package.abi.glob('**/*.json'):
             abi = orjson.loads(path.read_bytes())
-            for function_json in abi:
-                if function_json['type'] != 'function':
+            for item in abi:
+                if item['type'] == 'function':
+                    schema = jsonschema_from_abi(item)
+                    schema_path = self._package.schemas / path.stem / 'evm_functions' / f'{item["name"]}.json'
+                elif item['type'] == 'event':
+                    schema = jsonschema_from_abi(item)
+                    schema_path = self._package.schemas / path.stem / 'evm_events' / f'{item["name"]}.json'
+                else:
                     continue
 
-                function_schema = jsonschema_from_abi(function_json)
-                schema_path = self._package.schemas / path.stem / f'{function_json["name"]}.json'
                 touch(schema_path)
-                schema_path.write_bytes(orjson.dumps(function_schema, option=orjson.OPT_INDENT_2))
+                schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
-        raise NotImplementedError
+        module_name = schema_path.stem
+        # if schema_path.parent.name == 'evm_events':
+        #     class_name = f'{module_name}_event'
+        # elif schema_path.parent.name == 'evm_functions':
+        #     class_name = f'{module_name}_function'
+        # else:
+        #     class_name = module_name
+        return module_name

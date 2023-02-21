@@ -25,13 +25,13 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
         yield 'dipdup.models.evm_subsquid', 'SubsquidEvent'
         yield package, 'models as models'
 
-        event_cls = snake_to_pascal(self.name + '_payload')
+        event_cls = snake_to_pascal(self.name)
         event_module = pascal_to_snake(self.name)
         module_name = self.contract.module_name
-        yield f'{package}.types.{module_name}.event.{event_module}', event_cls
+        yield f'{package}.types.{module_name}.evm_events.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        event_cls = snake_to_pascal(self.name + '_payload')
+        event_cls = snake_to_pascal(self.name)
         yield 'ctx', 'HandlerContext'
         yield 'event', f'SubsquidEvent[{event_cls}]'
 
