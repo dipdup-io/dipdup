@@ -3,6 +3,8 @@ import re
 import subprocess
 from abc import ABC
 from abc import abstractmethod
+from collections import defaultdict
+from collections import deque
 from pathlib import Path
 from shutil import which
 from typing import Any
@@ -18,6 +20,7 @@ from dipdup.exceptions import FeatureAvailabilityError
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.utils import import_submodules
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -39,24 +42,6 @@ class CodeGenerator(ABC):
         self._package = package
         self._datasources = datasources
         self._logger = logging.getLogger('dipdup.codegen')
-
-    async def init(
-        self,
-        force: bool = False,
-    ) -> None:
-        self._package.pre_init()
-        self._package.create()
-
-        await self.generate_abi()
-        await self.generate_schemas()
-        await self.generate_types(force)
-
-        await self.generate_hooks()
-        await self.generate_event_hooks()
-        await self.generate_handlers()
-
-        self._package.post_init()
-        self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:
@@ -81,6 +66,46 @@ class CodeGenerator(ABC):
     @abstractmethod
     async def generate_handlers(self) -> None:
         ...
+
+    async def init(
+        self,
+        force: bool = False,
+    ) -> None:
+        self._package.pre_init()
+        self._package.create()
+
+        await self.generate_abi()
+        await self.generate_schemas()
+        await self.generate_types(force)
+        await self.generate_type_aliases(force)
+
+        await self.generate_hooks()
+        await self.generate_event_hooks()
+        await self.generate_handlers()
+
+        self._package.post_init()
+        self._package.verify()
+
+    async def generate_type_aliases(self, force: bool) -> None:
+        type_aliases_path = self._package.root / 'types' / '__init__.py'
+        if not force and (not type_aliases_path.exists() or type_aliases_path.read_text().strip()):
+            return
+
+        imports: defaultdict[str, deque[str]] = defaultdict(deque)
+        for module in import_submodules(f'{self._package.name}.types').values():
+            for obj in module.__dict__.values():
+                if isinstance(obj, type) and issubclass(obj, BaseModel) and obj.__name__ != 'BaseModel':
+                    imports[obj.__name__].append(module.__name__)
+
+        import_lines: list[str] = []
+        for import_name, module_names in imports.items():
+            prefix = '' if len(module_names) == 1 else '# '
+            if prefix:
+                self._logger.info('Type `%s` is defined in multiple modules; skipping alias', import_name)
+            for module_name in module_names:
+                import_lines.append(f'{prefix}from {module_name} import {import_name}  # noqa: F401')
+
+        write(type_aliases_path, '\n'.join(import_lines), overwrite=True)
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._package.schemas)
