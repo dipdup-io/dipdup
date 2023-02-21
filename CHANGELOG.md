@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - deps: Updated pydantic to 1.10.5
 - deps: Updated datamodel-code-generator to 0.17.1
 - deps: Updated tortoise-orm to 0.19.3
-- deps: Updated Hasura to 2.19.0
+- deps: Updated pytezos to 3.8.0
 
 ## [6.5.0] - 2023-01-28
 
