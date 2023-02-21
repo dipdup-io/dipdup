@@ -8,6 +8,7 @@ For `dipdup new` templates processing see `dipdup.project` module.
 
 Please, keep imports lazy to speed up startup.
 """
+from pathlib import Path
 from typing import Any
 from typing import cast
 
@@ -167,7 +168,19 @@ class TzktCodeGenerator(CodeGenerator):
                 await self._generate_callback(hook_config, 'hooks', sql=True)
 
     async def generate_event_hooks(self) -> None:
-        ...
+        pass
+
+    def get_typeclass_name(self, schema_path: Path) -> str:
+        module_name = schema_path.stem
+        if schema_path.name == 'storage.json':
+            class_name = f'{schema_path.parent.name}_storage'
+        elif schema_path.parent.name == 'parameter':
+            class_name = f'{module_name}_parameter'
+        elif schema_path.parent.name == 'event':
+            class_name = f'{module_name}_payload'
+        else:
+            class_name = module_name
+        return class_name
 
     async def _get_schema(
         self,

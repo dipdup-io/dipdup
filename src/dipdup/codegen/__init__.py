@@ -67,6 +67,10 @@ class CodeGenerator(ABC):
     async def generate_handlers(self) -> None:
         ...
 
+    @abstractmethod
+    def get_typeclass_name(self, schema_path: Path) -> str:
+        ...
+
     async def init(
         self,
         force: bool = False,
@@ -142,16 +146,8 @@ class CodeGenerator(ABC):
                 reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
             )
 
-        if schema_path.name == 'storage.json':
-            class_name = f'{schema_path.parent.name}_storage'
-        elif schema_path.parent.name == 'parameter':
-            class_name = f'{module_name}_parameter'
-        elif schema_path.parent.name == 'event':
-            class_name = f'{module_name}_payload'
-        else:
-            class_name = module_name
-
-        class_name = snake_to_pascal(class_name).lstrip('_')
+        class_name = self.get_typeclass_name(schema_path)
+        class_name = snake_to_pascal(class_name).strip('_')
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)

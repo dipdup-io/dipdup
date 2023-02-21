@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 from typing import cast
 
@@ -118,3 +119,6 @@ class SubsquidCodeGenerator(CodeGenerator):
                 schema_path = self._package.schemas / path.stem / f'{function_json["name"]}.json'
                 touch(schema_path)
                 schema_path.write_bytes(orjson.dumps(function_schema, option=orjson.OPT_INDENT_2))
+
+    def get_typeclass_name(self, schema_path: Path) -> str:
+        raise NotImplementedError
