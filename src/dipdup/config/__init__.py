@@ -1106,7 +1106,7 @@ ResolvedIndexConfigU = (
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
-def patch_annotations(replace_table: dict[str, str]) -> None:
+def _patch_annotations(replace_table: dict[str, str]) -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
     DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
@@ -1140,7 +1140,7 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
                 value.__pydantic_model__.update_forward_refs()
 
 
-yaml_annotations = {
+_original_to_aliased = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
     'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
@@ -1152,5 +1152,4 @@ yaml_annotations = {
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
 }
-orinal_annotations = {v: k for k, v in yaml_annotations.items()}
-patch_annotations(yaml_annotations)
+_patch_annotations(_original_to_aliased)
