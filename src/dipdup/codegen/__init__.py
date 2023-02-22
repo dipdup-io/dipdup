@@ -23,8 +23,8 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 from dipdup.utils import write
 
-CallbackT = Callable[..., Awaitable[None]]
-TypeT = type[BaseModel]
+Callback = Callable[..., Awaitable[None]]
+TypeClass = type[BaseModel]
 
 
 class CodeGenerator(ABC):
@@ -55,7 +55,7 @@ class CodeGenerator(ABC):
         await self.generate_handlers()
 
         self._package.post_init()
-        # self._package.verify()
+        self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:

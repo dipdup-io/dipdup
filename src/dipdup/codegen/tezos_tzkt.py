@@ -15,7 +15,7 @@ from typing import cast
 import orjson
 
 from dipdup.codegen import CodeGenerator
-from dipdup.codegen import TypeT
+from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import event_hooks
@@ -366,33 +366,33 @@ class TzktCodeGenerator(CodeGenerator):
         return cast(dict[str, Any], schemas[datasource.name][address])
 
 
-def get_storage_type(package: DipDupPackage, typename: str) -> TypeT:
+def get_storage_type(package: DipDupPackage, typename: str) -> TypeClass:
     cls_name = snake_to_pascal(typename) + 'Storage'
     return package.get_type(typename, 'storage', cls_name)
 
 
-def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -> TypeT:
+def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -> TypeClass:
     entrypoint = entrypoint.lstrip('_')
     module_name = f'parameter.{pascal_to_snake(entrypoint)}'
     cls_name = snake_to_pascal(entrypoint) + 'Parameter'
     return package.get_type(typename, module_name, cls_name)
 
 
-def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeT:
+def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeClass:
     tag = pascal_to_snake(tag.replace('.', '_'))
     module_name = f'event.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return package.get_type(typename, module_name, cls_name)
 
 
-def get_big_map_key_type(package: DipDupPackage, typename: str, path: str) -> TypeT:
+def get_big_map_key_type(package: DipDupPackage, typename: str, path: str) -> TypeClass:
     path = pascal_to_snake(path.replace('.', '_'))
     module_name = f'big_map.{path}_key'
     cls_name = snake_to_pascal(path + '_key')
     return package.get_type(typename, module_name, cls_name)
 
 
-def get_big_map_value_type(package: DipDupPackage, typename: str, path: str) -> TypeT:
+def get_big_map_value_type(package: DipDupPackage, typename: str, path: str) -> TypeClass:
     path = pascal_to_snake(path.replace('.', '_'))
     module_name = f'big_map.{path}_value'
     cls_name = snake_to_pascal(path + '_value')

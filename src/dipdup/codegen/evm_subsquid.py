@@ -14,7 +14,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.utils import touch
 
-type_map: dict[str, str] = {
+_abi_type_map: dict[str, str] = {
     'int': 'integer',
     'uint': 'integer',
     'address': 'string',
@@ -23,22 +23,22 @@ type_map: dict[str, str] = {
     'bytes': 'string',
     'bool': 'boolean',
     'string': 'string',
+    # TODO: arrays and tuples
+    # https://docs.soliditylang.org/en/develop/abi-spec.html#types
     'tuple': 'object',
 }
-# TODO: arrays and tuples
-# https://docs.soliditylang.org/en/develop/abi-spec.html#types
 
 
-def convert_type(abi_type: str) -> str:
-    if abi_type in type_map:
-        return type_map[abi_type]
-    for k, v in type_map.items():
+def _convert_type(abi_type: str) -> str:
+    if abi_type in _abi_type_map:
+        return _abi_type_map[abi_type]
+    for k, v in _abi_type_map.items():
         if abi_type.startswith(k):
             return v
     raise FrameworkException(f'`{abi_type}` ABI type is not supported')
 
 
-def convert_name(name: str) -> str:
+def _convert_name(name: str) -> str:
     return name.lstrip('_')
 
 
@@ -46,8 +46,8 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     return {
         '$schema': 'http://json-schema.org/draft/2019-09/schema#',
         'type': 'object',
-        'properties': {convert_name(i['name']): {'type': convert_type(i['type'])} for i in abi['inputs']},
-        'required': [convert_name(i['name']) for i in abi['inputs']],
+        'properties': {_convert_name(i['name']): {'type': _convert_type(i['type'])} for i in abi['inputs']},
+        'required': [_convert_name(i['name']) for i in abi['inputs']],
         'additionalProperties': False,
     }
 
@@ -91,8 +91,6 @@ class SubsquidCodeGenerator(CodeGenerator):
                 continue
 
             address = handler_config.contract.address
-            if address is None:
-                raise FrameworkException('Only EVM contract addresses are supported for now')
 
             for datasource_config in datasource_configs:
                 if not isinstance(datasource_config, AbiDatasourceConfig):
