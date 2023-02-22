@@ -10,15 +10,36 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
-from dipdup.config import SubgroupIndexMixin
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+
+@dataclass
+class SubgroupIndexMixin:
+    """`subgroup_index` field to track index of operation in group
+
+    :param subgroup_index:
+    """
+
+    def __post_init_post_parse__(self) -> None:
+        self._subgroup_index: int | None = None
+
+    @property
+    def subgroup_index(self) -> int:
+        if self._subgroup_index is None:
+            raise ConfigInitializationException
+        return self._subgroup_index
+
+    @subgroup_index.setter
+    def subgroup_index(self, value: int) -> None:
+        self._subgroup_index = value
 
 
 class PatternConfig(CodegenMixin):

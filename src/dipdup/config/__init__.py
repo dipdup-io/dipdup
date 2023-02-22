@@ -307,27 +307,6 @@ class ParentMixin(Generic[ParentT]):
 
 
 @dataclass
-class SubgroupIndexMixin:
-    """`subgroup_index` field to track index of operation in group
-
-    :param subgroup_index:
-    """
-
-    def __post_init_post_parse__(self) -> None:
-        self._subgroup_index: int | None = None
-
-    @property
-    def subgroup_index(self) -> int:
-        if self._subgroup_index is None:
-            raise ConfigInitializationException
-        return self._subgroup_index
-
-    @subgroup_index.setter
-    def subgroup_index(self, value: int) -> None:
-        self._subgroup_index = value
-
-
-@dataclass
 class CallbackMixin(CodegenMixin):
     """Mixin for callback configs
 
@@ -346,18 +325,6 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
-
-
-@dataclass
-class TemplateValuesMixin:
-    """`template_values` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._template_values: dict[str, str] = {}
-
-    @property
-    def template_values(self) -> dict[str, str]:
-        return self._template_values
 
 
 @dataclass
@@ -380,7 +347,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(ABC, TemplateValuesMixin, NameMixin, ParentMixin['ResolvedIndexConfigU']):
+class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -390,9 +357,10 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, ParentMixin['ResolvedInde
     datasource: DatasourceConfig
 
     def __post_init_post_parse__(self) -> None:
-        TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
+
+        self.template_values: dict[str, str] = {}
         self.subscriptions: set[Subscription] = set()
 
     def hash(self) -> str:
@@ -841,7 +809,7 @@ class DipDupConfig:
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config._template_values = template_config.values
+        new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
         if not isinstance(new_index_config, TzktHeadIndexConfig):
