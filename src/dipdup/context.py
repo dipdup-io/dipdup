@@ -43,8 +43,8 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
-from dipdup.datasources.metadata import TzipMetadataDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError

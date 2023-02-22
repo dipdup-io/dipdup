@@ -78,8 +78,8 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.datasources.evm_subsquid import SubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
-    from dipdup.datasources.metadata import TzipMetadataDatasource
     from dipdup.datasources.tezos_tzkt import TzktDatasource
+    from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 
     by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
         EtherscanDatasourceConfig: EtherscanDatasource,
