@@ -41,7 +41,6 @@ from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 
-from dipdup import baking_bad
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -54,8 +53,6 @@ from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
-DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
-DEFAULT_TZKT_URL = str(next(iter(baking_bad.TZKT_API_URLS.keys())))
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'

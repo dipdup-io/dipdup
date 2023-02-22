@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from dipdup.config import DEFAULT_IPFS_URL
 from dipdup.config import HttpConfig
+from dipdup.config.ipfs import DEFAULT_IPFS_URL
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.datasources.ipfs import IpfsDatasource
 

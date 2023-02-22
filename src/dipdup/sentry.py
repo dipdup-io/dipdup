@@ -20,9 +20,11 @@ from sentry_sdk.integrations.atexit import AtexitIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
-from dipdup import baking_bad
 from dipdup import env
 from dipdup.sys import is_shutting_down
+
+DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
+
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
@@ -105,7 +107,7 @@ def init_sentry(config: 'DipDupConfig') -> None:
     if dsn:
         pass
     elif crash_reporting:
-        dsn = baking_bad.SENTRY_DSN
+        dsn = DEFAULT_SENTRY_DSN
     else:
         return
 

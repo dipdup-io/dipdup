@@ -19,9 +19,9 @@ import pysignalr.exceptions
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
-from dipdup import baking_bad
 from dipdup.config import HttpConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
@@ -208,7 +208,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
             protocol = await self.request('get', 'v1/protocols/current')
             category = 'self-hosted'
-            if (instance := baking_bad.TZKT_API_URLS.get(self.url)) is not None:
+            if (instance := TZKT_API_URLS.get(self.url)) is not None:
                 category = f'hosted ({instance})'
             self._logger.info(
                 '%s, protocol v%s (%s)',

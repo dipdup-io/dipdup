@@ -2,10 +2,11 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
-from dipdup import baking_bad
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.models.tzip_metadata import TzipMetadataNetwork
+
+DEFAULT_TZIP_METADATA_URL = 'https://metadata.dipdup.net'
 
 
 @dataclass
@@ -20,5 +21,5 @@ class TzipMetadataDatasourceConfig(DatasourceConfig):
 
     kind: Literal['tzip_metadata']
     network: TzipMetadataNetwork
-    url: str = baking_bad.METADATA_API_URL
+    url: str = DEFAULT_TZIP_METADATA_URL
     http: HttpConfig | None = None
