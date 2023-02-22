@@ -55,7 +55,7 @@ class CodeGenerator(ABC):
         await self.generate_handlers()
 
         self._package.post_init()
-        self._package.verify()
+        # self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:

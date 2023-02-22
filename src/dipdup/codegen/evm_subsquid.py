@@ -61,7 +61,14 @@ class SubsquidCodeGenerator(CodeGenerator):
                 raise NotImplementedError
 
     async def generate_schemas(self) -> None:
-        await self._convert_abi()
+        events: set[str] = set()
+        for index_config in self._config.indexes.values():
+            if isinstance(index_config, SubsquidEventsIndexConfig):
+                for handler_config in index_config.handlers:
+                    events.add(handler_config.name)
+            elif isinstance(index_config, SubsquidOperationsIndexConfig):
+                raise NotImplementedError
+        await self._convert_abi(events, set())
 
     # FIXME: tzkt copypaste
     async def generate_types(self, force: bool = False) -> None:
@@ -74,13 +81,13 @@ class SubsquidCodeGenerator(CodeGenerator):
             await self._generate_type(path, force)
 
     async def generate_hooks(self) -> None:
-        ...
+        pass
 
     async def generate_event_hooks(self) -> None:
-        ...
+        pass
 
     async def generate_handlers(self) -> None:
-        ...
+        pass
 
     async def _fetch_abi(self, index_config: SubsquidEventsIndexConfig) -> None:
         datasource_configs = index_config.abi or self._config.abi_datasources
@@ -106,14 +113,14 @@ class SubsquidCodeGenerator(CodeGenerator):
             abi_path.touch()
             abi_path.write_bytes(orjson.dumps(abi_json, option=orjson.OPT_INDENT_2))
 
-    async def _convert_abi(self) -> None:
+    async def _convert_abi(self, events: set[str], functions: set[str]) -> None:
         for path in self._package.abi.glob('**/*.json'):
             abi = orjson.loads(path.read_bytes())
             for item in abi:
-                if item['type'] == 'function':
+                if item['type'] == 'function' and item['name'] in functions:
                     schema = jsonschema_from_abi(item)
                     schema_path = self._package.schemas / path.stem / 'evm_functions' / f'{item["name"]}.json'
-                elif item['type'] == 'event':
+                elif item['type'] == 'event' and item['name'] in events:
                     schema = jsonschema_from_abi(item)
                     schema_path = self._package.schemas / path.stem / 'evm_events' / f'{item["name"]}.json'
                 else:
@@ -121,6 +128,14 @@ class SubsquidCodeGenerator(CodeGenerator):
 
                 touch(schema_path)
                 schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
+
+    async def _generate_events_index_schema(self, index_config: SubsquidEventsIndexConfig) -> None:
+        for handler_config in index_config.handlers:
+            ...
+
+    async def _generate_operations_index_schema(self, index_config: SubsquidOperationsIndexConfig) -> None:
+        ...
+
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
