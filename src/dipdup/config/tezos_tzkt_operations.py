@@ -55,7 +55,7 @@ class PatternConfig(CodegenMixin):
         module_name: str,
     ) -> tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'{package}.types.{module_name}.storage', storage_cls
+        return f'{package}.types.{module_name}.tezos_storage', storage_cls
 
     @classmethod
     def format_parameter_import(
@@ -71,7 +71,7 @@ class PatternConfig(CodegenMixin):
         if alias:
             parameter_cls += f' as {snake_to_pascal(alias)}Parameter'
 
-        return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
+        return f'{package}.types.{module_name}.tezos_parameters.{parameter_module}', parameter_cls
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:

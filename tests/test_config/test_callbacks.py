@@ -21,8 +21,8 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     assert tuple(pattern.iter_arguments()) == (('foo_bar', 'TzktTransaction[FooBarParameter, DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
         ('dipdup.models.tezos_tzkt', 'TzktTransaction'),
-        ('test.types.dex_contract.parameter.foo_bar', 'FooBarParameter'),
-        ('test.types.dex_contract.storage', 'DexContractStorage'),
+        ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter'),
+        ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: With alias and optional
@@ -34,8 +34,8 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     )
     assert tuple(pattern.iter_imports('test')) == (
         ('dipdup.models.tezos_tzkt', 'TzktTransaction'),
-        ('test.types.dex_contract.parameter.foo_bar', 'FooBarParameter as AliasedParameter'),
-        ('test.types.dex_contract.storage', 'DexContractStorage'),
+        ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter as AliasedParameter'),
+        ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: Untyped `transaction`
@@ -63,7 +63,7 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     assert tuple(pattern.iter_arguments()) == (('dex_contract_origination', 'TzktOrigination[DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
         ('dipdup.models.tezos_tzkt', 'TzktOrigination'),
-        ('test.types.dex_contract.storage', 'DexContractStorage'),
+        ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: With alias and optional
@@ -73,7 +73,7 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     assert tuple(pattern.iter_arguments()) == (('aliased', 'TzktOrigination[DexContractStorage] | None'),)
     assert tuple(pattern.iter_imports('test')) == (
         ('dipdup.models.tezos_tzkt', 'TzktOrigination'),
-        ('test.types.dex_contract.storage', 'DexContractStorage'),
+        ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: Untyped `origination`

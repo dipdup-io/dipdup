@@ -18,12 +18,12 @@ contracts:
 
 indexes:
   # usdt_swaps:
-  #   kind: evm.subsquid.operations  # evm.digdug.operations, tezos.tzkt.operations
+  #   kind: evm.subsquid.operations
   #   datasource: subsquid_eth_mainnet
   #   handlers:
-  #     - callback: on_multicall
-  #       contract: usdt_router_mainnet
-  #       method: multicall  # multicall(int256)
+  #     - callback: on_transfer_ownership
+  #       contract: eth_usdt
+  #       method: transferOwnership
   #       events:  # unordered list of possible events (not mandatory)
   #         - contract: usdt_router_mainnet
   #           name: NewTrade

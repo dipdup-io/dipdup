@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 import demo_dex.models as models
-from demo_dex.types.fa12_token.parameter.transfer import TransferParameter
-from demo_dex.types.fa12_token.storage import Fa12TokenStorage
-from demo_dex.types.quipu_fa12.parameter.token_to_tez_payment import TokenToTezPaymentParameter
-from demo_dex.types.quipu_fa12.storage import QuipuFa12Storage
+from demo_dex.types.fa12_token.tezos_parameters.transfer import TransferParameter
+from demo_dex.types.fa12_token.tezos_storage import Fa12TokenStorage
+from demo_dex.types.quipu_fa12.tezos_parameters.token_to_tez_payment import TokenToTezPaymentParameter
+from demo_dex.types.quipu_fa12.tezos_storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTransaction

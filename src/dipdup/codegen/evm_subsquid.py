@@ -129,14 +129,6 @@ class SubsquidCodeGenerator(CodeGenerator):
                 touch(schema_path)
                 schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
 
-    async def _generate_events_index_schema(self, index_config: SubsquidEventsIndexConfig) -> None:
-        for handler_config in index_config.handlers:
-            ...
-
-    async def _generate_operations_index_schema(self, index_config: SubsquidOperationsIndexConfig) -> None:
-        ...
-
-
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
         # if schema_path.parent.name == 'evm_events':

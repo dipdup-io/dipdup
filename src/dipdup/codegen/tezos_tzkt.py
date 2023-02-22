@@ -172,11 +172,11 @@ class TzktCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        if schema_path.name == 'storage.json':
+        if schema_path.name == 'tezos_storage.json':
             class_name = f'{schema_path.parent.name}_storage'
-        elif schema_path.parent.name == 'parameter':
+        elif schema_path.parent.name == 'tezos_parameters':
             class_name = f'{module_name}_parameter'
-        elif schema_path.parent.name == 'event':
+        elif schema_path.parent.name == 'tezos_events':
             class_name = f'{module_name}_payload'
         else:
             class_name = module_name
@@ -248,7 +248,7 @@ class TzktCodeGenerator(CodeGenerator):
         contract_schemas = await self._get_schema(datasource_config, contract_config)
         contract_schemas_path = self._package.schemas / contract_config.module_name
 
-        storage_schema_path = contract_schemas_path / 'storage.json'
+        storage_schema_path = contract_schemas_path / 'tezos_storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
         write(storage_schema_path, orjson.dumps(storage_schema, option=orjson.OPT_INDENT_2))
@@ -256,7 +256,7 @@ class TzktCodeGenerator(CodeGenerator):
         if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
 
-        parameter_schemas_path = contract_schemas_path / 'parameter'
+        parameter_schemas_path = contract_schemas_path / 'tezos_parameters'
         entrypoint = cast(str, operation_pattern_config.entrypoint)
 
         try:
@@ -292,7 +292,7 @@ class TzktCodeGenerator(CodeGenerator):
             contract_schemas = await self._get_schema(index_config.datasource, contract_config)
 
             contract_schemas_path = self._package.schemas / contract_config.module_name
-            big_map_schemas_path = contract_schemas_path / 'big_map'
+            big_map_schemas_path = contract_schemas_path / 'tezos_big_maps'
 
             try:
                 big_map_schema = next(ep for ep in contract_schemas['bigMaps'] if ep['path'] == handler_config.path)
@@ -326,7 +326,7 @@ class TzktCodeGenerator(CodeGenerator):
                 contract_config,
             )
             contract_schemas_path = self._package.schemas / contract_config.module_name
-            event_schemas_path = contract_schemas_path / 'event'
+            event_schemas_path = contract_schemas_path / 'tezos_events'
 
             try:
                 event_schema = next(ep for ep in contract_schemas['events'] if ep['tag'] == handler_config.tag)
@@ -368,32 +368,32 @@ class TzktCodeGenerator(CodeGenerator):
 
 def get_storage_type(package: DipDupPackage, typename: str) -> TypeClass:
     cls_name = snake_to_pascal(typename) + 'Storage'
-    return package.get_type(typename, 'storage', cls_name)
+    return package.get_type(typename, 'tezos_storage', cls_name)
 
 
 def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -> TypeClass:
     entrypoint = entrypoint.lstrip('_')
-    module_name = f'parameter.{pascal_to_snake(entrypoint)}'
+    module_name = f'tezos_parameters.{pascal_to_snake(entrypoint)}'
     cls_name = snake_to_pascal(entrypoint) + 'Parameter'
     return package.get_type(typename, module_name, cls_name)
 
 
 def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeClass:
     tag = pascal_to_snake(tag.replace('.', '_'))
-    module_name = f'event.{tag}'
+    module_name = f'tezos_event.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return package.get_type(typename, module_name, cls_name)
 
 
 def get_big_map_key_type(package: DipDupPackage, typename: str, path: str) -> TypeClass:
     path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'big_map.{path}_key'
+    module_name = f'tezos_big_maps.{path}_key'
     cls_name = snake_to_pascal(path + '_key')
     return package.get_type(typename, module_name, cls_name)
 
 
 def get_big_map_value_type(package: DipDupPackage, typename: str, path: str) -> TypeClass:
     path = pascal_to_snake(path.replace('.', '_'))
-    module_name = f'big_map.{path}_value'
+    module_name = f'tezos_big_maps.{path}_value'
     cls_name = snake_to_pascal(path + '_value')
     return package.get_type(typename, module_name, cls_name)

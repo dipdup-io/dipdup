@@ -55,6 +55,7 @@ class CodeGenerator(ABC):
         await self.generate_handlers()
 
         self._package.post_init()
+        # FIXME: Called before types are generated?
         # self._package.verify()
 
     @abstractmethod
@@ -89,6 +90,7 @@ class CodeGenerator(ABC):
         rel_path = schema_path.relative_to(self._package.schemas)
         type_pkg_path = self._package.types / rel_path
 
+        # TODO: Stop generating Python markers
         if schema_path.is_dir():
             touch(type_pkg_path / PYTHON_MARKER)
             return
@@ -124,6 +126,7 @@ class CodeGenerator(ABC):
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        # TODO: Stop generating Python markers
         (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
@@ -171,6 +174,7 @@ class CodeGenerator(ABC):
         else:
             code.append('...')
 
+        # FIXME: Not needed anymore?
         # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
         processed_arguments = tuple(
             f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments

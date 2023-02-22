@@ -32,13 +32,13 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
     def format_key_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
         key_cls = f'{snake_to_pascal(path)}Key'
         key_module = f'{pascal_to_snake(path)}_key'
-        return f'{package}.types.{module_name}.big_map.{key_module}', key_cls
+        return f'{package}.types.{module_name}.tezos_big_maps.{key_module}', key_cls
 
     @classmethod
     def format_value_import(cls, package: str, module_name: str, path: str) -> tuple[str, str]:
         value_cls = f'{snake_to_pascal(path)}Value'
         value_module = f'{pascal_to_snake(path)}_value'
-        return f'{package}.types.{module_name}.big_map.{value_module}', value_cls
+        return f'{package}.types.{module_name}.tezos_big_maps.{value_module}', value_cls
 
     @classmethod
     def format_big_map_diff_argument(cls, path: str) -> tuple[str, str]:
