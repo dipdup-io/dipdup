@@ -500,13 +500,13 @@ class PatternConfig(CodegenMixin):
         optional: bool,
         alias: str | None,
     ) -> tuple[str, str]:
-        arg_name = pascal_to_snake(alias or entrypoint)
+        arg_name = alias or entrypoint
         entrypoint = entrypoint.lstrip('_')
         parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return arg_name, f'Transaction[{parameter_cls}, {storage_cls}] | None'
-        return arg_name, f'Transaction[{parameter_cls}, {storage_cls}]'
+            return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}] | None'
+        return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
     def format_untyped_operation_argument(
@@ -777,7 +777,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
         ParentMixin.__post_init_post_parse__(self)
 
 
-# FIXME: Reversed for Python 3.11. Why?
+# FIXME: Reversed for new Pydantic. Why?
 OperationHandlerPatternConfigU = OperationHandlerTransactionPatternConfig | OperationHandlerOriginationPatternConfig
 
 

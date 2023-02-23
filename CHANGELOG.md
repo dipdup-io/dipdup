@@ -4,12 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-<!-- NOTE: Undocumented until 7.0; breaks schema compatibility -->
-<!--
-### Added
+## [6.5.1] - 2023-02-21
 
-- index: New index kind `operation_unfiltered`.
--->
+### Fixed
+
+- codegen: Fixed bug leading to incorrect imports in generated callbacks in some cases.
+- codegen: Fixed validation of created package after `dipdup init`.
+- config: Allow using empty string as default env (`{DEFAULT_EMPTY:-}`).
+
+### Other
+
+- deps: Updated pydantic to 1.10.5
+- deps: Updated datamodel-code-generator to 0.17.1
+- deps: Updated tortoise-orm to 0.19.3
+- deps: Updated pytezos to 3.8.0
 
 ## [6.5.0] - 2023-01-28
 
@@ -938,7 +946,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.4.3...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.1...HEAD
+[6.5.1]: https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1
+[6.5.0]: https://github.com/dipdup-io/dipdup/compare/6.4.3...6.5.0
 [6.4.3]: https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3
 [6.4.2]: https://github.com/dipdup-io/dipdup/compare/6.4.1...6.4.2
 [6.4.1]: https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1
