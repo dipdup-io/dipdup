@@ -17,7 +17,7 @@ dipdup = "^6"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
-flakeheaven = "*"
+ruff = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
@@ -32,12 +32,9 @@ line-length = 120
 target-version = ['py310']
 skip-string-normalization = true
 
-[tool.flakeheaven]
-max_line_length = 120
-
-[tool.flakeheaven.plugins]
-"*" = ["+*"]
-pycodestyle = ["-*"]
+[tool.ruff]
+line-length = 120
+target-version = 'py310'
 
 [tool.mypy]
 python_version = "3.10"
