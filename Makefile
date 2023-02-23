@@ -24,7 +24,7 @@ install:        ## Install project dependencies
 	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
-	make isort blue flake mypy
+	make isort blue ruff mypy
 
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
@@ -42,8 +42,8 @@ isort:          ## Format with isort
 blue:           ## Format with blue
 	poetry run blue src tests scripts
 
-flake:          ## Lint with flake8
-	poetry run flakeheaven lint src tests scripts
+ruff:           ## Lint with ruff
+	poetry run ruff check src tests scripts
 
 mypy:           ## Lint with mypy
 	poetry run mypy --strict src tests scripts
@@ -72,8 +72,6 @@ image-slim:     ## Build slim Docker image
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
-	rm -r ~/.cache/flakeheaven
-	rm -r ~/.cache/dipdup
 
 update:         ## Update dependencies, export requirements.txt
 	git checkout HEAD requirements.* poetry.lock

@@ -44,7 +44,7 @@ async def test_model_updates() -> None:
         assert model_update.level == 1000
         assert model_update.model_name == 'Holder'
         assert model_update.model_pk == 'tz1deadbeaf'
-        assert model_update.data == None
+        assert model_update.data is None
 
         model_update = await ModelUpdate.filter(id=2).get()
         assert model_update.action == ModelUpdateAction.INSERT
@@ -52,7 +52,7 @@ async def test_model_updates() -> None:
         assert model_update.level == 1000
         assert model_update.model_name == 'Swap'
         assert model_update.model_pk == '1'
-        assert model_update.data == None
+        assert model_update.data is None
 
         # NOTE: UPDATE
         async with in_transaction(level=1001, index='test'):

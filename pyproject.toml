@@ -56,9 +56,7 @@ pytezos = {version = "3.8.0", optional = true}
 blue = "*"
 diff-cover = "*"
 docker = "*"
-flake8-comprehensions = "*"
-flake8-bugbear = "*"
-flakeheaven = "*"
+ruff = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
@@ -87,12 +85,12 @@ force_single_line = true
 line-length = 120
 target-version = ["py310"]
 
-[tool.flakeheaven]
-max_line_length = 120
-
-[tool.flakeheaven.plugins]
-"*" = ["+*", "-B028"]
-pycodestyle = ["-*"]
+[tool.ruff]
+line-length = 120
+ignore = ['E501', 'B905']
+target-version = 'py310'
+extend-select = ['B', 'C4', 'Q']  # todo: G, PTH, RET, RUF, S, TCH
+flake8-quotes = {inline-quotes = 'single', multiline-quotes = 'double'}
 
 [tool.mypy]
 python_version = "3.10"
