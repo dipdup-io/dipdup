@@ -9,7 +9,7 @@ DipDup provides multiple prebuilt images for different environments hosted on [D
 | base image                  |          `python:3.11-slim`         |              `python:3.11-slim`             |           `python:3.11-alpine`           |
 | platforms                   |           `amd64`, `arm64`          |               `amd64`, `arm64`              |             `amd64`, `arm64`             |
 | latest tag                  | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
-| image size                  |                 356M                |                     476M                    |                   139M                   |
+| image size                  |                 352M                |                     511M                    |                   104M                   |
 | `dipdup init` command       |                  ✅                  |                      ✅                      |                     ❌                    |
 | `git` and `poetry` included |                  ✅                  |                      ✅                      |                     ❌                    |
 | PyTezos included            |                  ❌                  |                      ✅                      |                     ❌                    |
