@@ -6,6 +6,7 @@ from typing import Any
 from typing import Iterable
 from typing import Union
 
+from dipdup.codegen.tezos_tzkt import get_event_payload_type
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfigU
 from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
@@ -14,6 +15,7 @@ from dipdup.exceptions import InvalidDataError
 from dipdup.models.tezos_tzkt import TzktEvent
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktUnknownEvent
+from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -26,6 +28,7 @@ MatchedEventsT = Union[
 
 
 def prepare_event_handler_args(
+    package: DipDupPackage,
     handler_config: TzktEventsHandlerConfigU,
     matched_event: TzktEventData,
 ) -> TzktEvent[Any] | TzktUnknownEvent | None:
@@ -38,12 +41,16 @@ def prepare_event_handler_args(
             payload=matched_event.payload,
         )
 
+    type_ = get_event_payload_type(
+        package=package,
+        typename=handler_config.contract.module_name,
+        tag=handler_config.tag,
+    )
     with suppress(InvalidDataError):
-        type_ = handler_config.event_type_cls
-        payload: TzktEvent[Any] = parse_object(type_, matched_event.payload)
+        typed_payload = parse_object(type_, matched_event.payload)
         return TzktEvent(
             data=matched_event,
-            payload=payload,
+            payload=typed_payload,
         )
 
     return None
@@ -59,6 +66,7 @@ def match_event(handler_config: TzktEventsHandlerConfigU, event: TzktEventData) 
 
 
 def match_events(
+    package: DipDupPackage,
     handlers: Iterable[TzktEventsHandlerConfigU],
     events: Iterable[TzktEventData],
 ) -> deque[MatchedEventsT]:
@@ -72,7 +80,7 @@ def match_events(
             if not match_event(handler_config, event):
                 continue
 
-            arg = prepare_event_handler_args(handler_config, event)
+            arg = prepare_event_handler_args(package, handler_config, event)
             if isinstance(arg, TzktEvent) and isinstance(handler_config, TzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif isinstance(arg, TzktUnknownEvent) and isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):

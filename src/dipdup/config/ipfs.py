@@ -2,9 +2,10 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import DEFAULT_IPFS_URL
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
+
+DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 
 
 @dataclass
@@ -19,6 +20,3 @@ class IpfsDatasourceConfig(DatasourceConfig):
     kind: Literal['ipfs']
     url: str = DEFAULT_IPFS_URL
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)

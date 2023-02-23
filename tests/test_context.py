@@ -57,8 +57,8 @@ async def test_add_contract(dummy_dipdup: DipDup) -> None:
     with pytest.raises(ContractAlreadyExistsError):
         await ctx.add_contract('code_hash', None, None, 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNK0000')
 
-    assert ctx.config.get_contract('address').address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
-    assert ctx.config.get_contract('code_hash').code_hash == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
+    assert ctx.config.get_tezos_contract('address').address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
+    assert ctx.config.get_tezos_contract('code_hash').code_hash == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
 
     assert (await Contract.get(name='address')).address == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
     assert (await Contract.get(name='code_hash')).address == ':KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'

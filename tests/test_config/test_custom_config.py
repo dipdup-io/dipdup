@@ -49,14 +49,14 @@ custom:
     @staticmethod
     def test_empty_custom_section(dummy_config_path: str) -> None:
         config = DipDupConfig.load([Path(dummy_config_path)], False)
-        config.initialize(True)
+        config.initialize()
         assert hasattr(config, 'custom')
         assert config.custom == {}
 
     @staticmethod
     def test_custom_section_items(config_with_custom_section_path: str) -> None:
         config = DipDupConfig.load([Path(config_with_custom_section_path)], False)
-        config.initialize(True)
+        config.initialize()
 
         assert hasattr(config, 'custom')
         assert isinstance(config.custom, dict)
@@ -87,7 +87,7 @@ custom:
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
         config = DipDupConfig.load([Path(config_path)], True)
-        config.initialize(True)
+        config.initialize()
 
         assert hasattr(config, 'custom')
         assert isinstance(config.custom, dict)

@@ -2,18 +2,18 @@
 
   <dl class="py class">
 <dt class="sig sig-object py" id="DipDupConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=SentryConfig(dsn=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging=LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DipDupConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=SentryConfig(dsn=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging=LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DipDupConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main indexer config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>1.2</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>tezos_tzkt.TzktDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><em>tzip_metadata.TzipMetadataDatasourceConfig</em><em> | </em><a class="reference internal" href="#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><em>evm_subsquid.EvmSubsquidDatasourceConfig</em><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><em>abi_etherscan.EtherscanDatasourceConfig</em><em> | </em><a class="reference internal" href="#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><em>evm_subsquid.SubsquidDatasourceConfig</em><em> | </em><a class="reference internal" href="#tzip_metadata.TzipMetadataDatasourceConfig" title="tzip_metadata.TzipMetadataDatasourceConfig"><em>tzip_metadata.TzipMetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>tezos_tzkt.TzktDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
 <li><p><strong>database</strong> (<a class="reference internal" href="#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
-<li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
-<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.EvmSubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.EvmSubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsIndexConfig" title="tezos_tzkt_operations.TzktOperationsIndexConfig"><em>tezos_tzkt_operations.TzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="tezos_tzkt_head.TzktHeadIndexConfig"><em>tezos_tzkt_head.TzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsIndexConfig" title="tezos_tzkt_events.TzktEventsIndexConfig"><em>tezos_tzkt_events.TzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
-<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.EvmSubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.EvmSubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsIndexConfig" title="tezos_tzkt_operations.TzktOperationsIndexConfig"><em>tezos_tzkt_operations.TzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="tezos_tzkt_head.TzktHeadIndexConfig"><em>tezos_tzkt_head.TzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsIndexConfig" title="tezos_tzkt_events.TzktEventsIndexConfig"><em>tezos_tzkt_events.TzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
+<li><p><strong>contracts</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm.EvmContractConfig</em><em> | </em><em>tezos.TezosContractConfig</em><em>]</em>) – Mapping of contract aliases and contract configs</p></li>
+<li><p><strong>indexes</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.SubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.SubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsIndexConfig" title="tezos_tzkt_events.TzktEventsIndexConfig"><em>tezos_tzkt_events.TzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="tezos_tzkt_head.TzktHeadIndexConfig"><em>tezos_tzkt_head.TzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsIndexConfig" title="tezos_tzkt_operations.TzktOperationsIndexConfig"><em>tezos_tzkt_operations.TzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig</em></a><em> | </em><a class="reference internal" href="#IndexTemplateConfig" title="IndexTemplateConfig"><em>IndexTemplateConfig</em></a><em>]</em>) – Mapping of index aliases and index configs</p></li>
+<li><p><strong>templates</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>evm_subsquid_events.SubsquidEventsIndexConfig</em><em> | </em><em>evm_subsquid_operations.SubsquidOperationsIndexConfig</em><em> | </em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsIndexConfig" title="tezos_tzkt_big_maps.TzktBigMapsIndexConfig"><em>tezos_tzkt_big_maps.TzktBigMapsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsIndexConfig" title="tezos_tzkt_events.TzktEventsIndexConfig"><em>tezos_tzkt_events.TzktEventsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="tezos_tzkt_head.TzktHeadIndexConfig"><em>tezos_tzkt_head.TzktHeadIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsIndexConfig" title="tezos_tzkt_operations.TzktOperationsIndexConfig"><em>tezos_tzkt_operations.TzktOperationsIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig" title="tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig"><em>tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig</em></a><em>]</em>) – Mapping of template aliases and index templates</p></li>
 <li><p><strong>jobs</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#JobConfig" title="JobConfig"><em>JobConfig</em></a><em>]</em>) – Mapping of job aliases and job configs</p></li>
 <li><p><strong>hooks</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#HookConfig" title="HookConfig"><em>HookConfig</em></a><em>]</em>) – Mapping of hook aliases and hook configs</p></li>
 <li><p><strong>hasura</strong> (<a class="reference internal" href="#HasuraConfig" title="HasuraConfig"><em>HasuraConfig</em></a><em> | </em><em>None</em>) – Hasura integration config</p></li>
@@ -29,7 +29,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -38,7 +38,6 @@
 <li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
-<li><p><strong>merge_subscriptions</strong> (<em>bool</em>) – Subscribe to all operations instead of exact channels</p></li>
 <li><p><strong>metadata_interface</strong> (<em>bool</em>) – Expose metadata interface for TzKT</p></li>
 <li><p><strong>skip_version_check</strong> (<em>bool</em>) – Do not check for new DipDup versions on startup</p></li>
 <li><p><strong>rollback_depth</strong> (<em>int</em>) – A number of levels to keep for rollback</p></li>
@@ -56,7 +55,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract to fetch big map from</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em>) – Contract to fetch big map from</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – Path to big map (alphanumeric string with dots)</p></li>
 </ul>
 </dd>
@@ -70,7 +69,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.big_maps'</em><em>]</em>) – always <cite>big_map</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.big_maps'</em><em>]</em>) – always <cite>tezos.tzkt.big_maps</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to fetch big maps with</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_big_maps.TzktBigMapsHandlerConfig" title="tezos_tzkt_big_maps.TzktBigMapsHandlerConfig"><em>tezos_tzkt_big_maps.TzktBigMapsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of big map diff handlers</p></li>
 <li><p><strong>skip_history</strong> (<a class="reference internal" href="#dipdup.models.SkipHistory" title="dipdup.models.SkipHistory"><em>SkipHistory</em></a>) – Fetch only current big map keys ignoring historical changes</p></li>
@@ -100,14 +99,13 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="ContractConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ContractConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">ContractConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ContractConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Contract config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>address</strong> (<em>str</em><em> | </em><em>None</em>) – Contract address</p></li>
-<li><p><strong>code_hash</strong> (<em>int</em><em> | </em><em>str</em><em> | </em><em>None</em>) – Contract code hash or address to fetch it from</p></li>
 <li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – User-defined alias for the contract script</p></li>
+<li><p><strong>kind</strong> (<em>str</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -121,7 +119,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em>) – Contract which emits event</p></li>
 <li><p><strong>tag</strong> (<em>str</em>) – Event tag</p></li>
 </ul>
 </dd>
@@ -135,7 +133,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.events'</em><em>]</em>) – Index kind</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.events'</em><em>]</em>) – always <cite>tezos.tzkt.events</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Datasource config</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsHandlerConfig" title="tezos_tzkt_events.TzktEventsHandlerConfig"><em>tezos_tzkt_events.TzktEventsHandlerConfig</em></a><em> | </em><a class="reference internal" href="#tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig" title="tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig"><em>tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Event handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – First block level to index</p></li>
@@ -316,6 +314,22 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="tzip_metadata.TzipMetadataDatasourceConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tzip_metadata.</span></span><span class="sig-name descname"><span class="pre">TzipMetadataDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://metadata.dipdup.net'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tzip_metadata.TzipMetadataDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>DipDup Metadata datasource config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tzip_metadata'</em><em>]</em>) – always ‘tzip_metadata’</p></li>
+<li><p><strong>network</strong> (<em>TzipMetadataNetwork</em>) – Network name, e.g. mainnet, ghostnet, etc.</p></li>
+<li><p><strong>url</strong> (<em>str</em>) – GraphQL API URL, e.g. <a class="reference external" href="https://metadata.dipdup.net">https://metadata.dipdup.net</a></p></li>
+<li><p><strong>http</strong> (<a class="reference internal" href="#HttpConfig" title="HttpConfig"><em>HttpConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="tezos_tzkt_operations.TzktOperationsHandlerConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_operations.</span></span><span class="sig-name descname"><span class="pre">TzktOperationsHandlerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callback</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_operations.TzktOperationsHandlerConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Operation handler config</p>
@@ -337,9 +351,9 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'origination'</em><em>]</em>) – always ‘origination’</p></li>
-<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
-<li><p><strong>similar_to</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations which have the same code/signature (depending on <cite>strict</cite> field)</p></li>
-<li><p><strong>originated_contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match origination of exact contract</p></li>
+<li><p><strong>source</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
+<li><p><strong>similar_to</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Match operations which have the same code/signature (depending on <cite>strict</cite> field)</p></li>
+<li><p><strong>originated_contract</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Match origination of exact contract</p></li>
 <li><p><strong>optional</strong> (<em>bool</em>) – Whether can operation be missing in operation group</p></li>
 <li><p><strong>strict</strong> (<em>bool</em>) – Match operations by storage only or by the whole code</p></li>
 <li><p><strong>alias</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for transaction (helps to avoid duplicates)</p></li>
@@ -356,8 +370,8 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>type</strong> (<em>Literal</em><em>[</em><em>'transaction'</em><em>]</em>) – always ‘transaction’</p></li>
-<li><p><strong>source</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
-<li><p><strong>destination</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Match operations by destination contract alias</p></li>
+<li><p><strong>source</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Match operations by source contract alias</p></li>
+<li><p><strong>destination</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Match operations by destination contract alias</p></li>
 <li><p><strong>entrypoint</strong> (<em>str</em><em> | </em><em>None</em>) – Match operations by contract entrypoint</p></li>
 <li><p><strong>optional</strong> (<em>bool</em>) – Whether can operation be missing in operation group</p></li>
 <li><p><strong>alias</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for transaction (helps to avoid duplicates)</p></li>
@@ -373,11 +387,11 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations'</em><em>]</em>) – always <cite>operation</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations'</em><em>]</em>) – always <cite>tezos.tzkt.operations</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_operations.TzktOperationsHandlerConfig" title="tezos_tzkt_operations.TzktOperationsHandlerConfig"><em>tezos_tzkt_operations.TzktOperationsHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – List of indexer handlers</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tezos_tzkt.TzktOperationType" title="dipdup.models.tezos_tzkt.TzktOperationType"><em>dipdup.models.tezos_tzkt.TzktOperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
-<li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
+<li><p><strong>contracts</strong> (<em>list</em><em>[</em><em>str</em><em> | </em><em>tezos.TezosContractConfig</em><em>]</em>) – Aliases of contracts being indexed in <cite>contracts</cite> section</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – Level to stop indexing at</p></li>
 </ul>
@@ -413,7 +427,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations_unfiltered'</em><em>]</em>) – always <cite>operation_unfiltered</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.operations_unfiltered'</em><em>]</em>) – always <cite>tezos.tzkt.operations_unfiltered</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Alias of index datasource in <cite>datasources</cite> section</p></li>
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
 <li><p><strong>types</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#dipdup.models.tezos_tzkt.TzktOperationType" title="dipdup.models.tezos_tzkt.TzktOperationType"><em>dipdup.models.tezos_tzkt.TzktOperationType</em></a><em>, </em><em>...</em><em>]</em>) – Types of transaction to fetch</p></li>
@@ -573,11 +587,11 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by contract</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Filter by contract</p></li>
 <li><p><strong>token_id</strong> (<em>int</em><em> | </em><em>None</em>) – Filter by token ID</p></li>
 <li><p><strong>from</strong> – Filter by sender</p></li>
-<li><p><strong>to</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – Filter by recipient</p></li>
-<li><p><strong>from_</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a><em> | </em><em>None</em>) – </p></li>
+<li><p><strong>to</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – Filter by recipient</p></li>
+<li><p><strong>from_</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -590,7 +604,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.token_transfers'</em><em>]</em>) – always <cite>token_transfer</cite></p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.token_transfers'</em><em>]</em>) – always <cite>tezos.tzkt.token_transfers</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to use</p></li>
 <li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig" title="tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig"><em>tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of token transfer handlers</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – Level to start indexing from</p></li>
@@ -602,7 +616,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="tezos_tzkt.TzktDatasourceConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt.</span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt.TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt.</span></span><span class="sig-name descname"><span class="pre">TzktDatasourceConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'https://api.tzkt.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt.TzktDatasourceConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>TzKT datasource config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -611,6 +625,7 @@
 <li><p><strong>url</strong> (<em>str</em>) – Base API URL, e.g. <a class="reference external" href="https://api.tzkt.io/">https://api.tzkt.io/</a></p></li>
 <li><p><strong>http</strong> (<a class="reference internal" href="#HttpConfig" title="HttpConfig"><em>HttpConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 <li><p><strong>buffer_size</strong> (<em>int</em>) – Number of levels to keep in FIFO buffer before processing</p></li>
+<li><p><strong>merge_subscriptions</strong> (<em>bool</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -624,7 +639,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>callback</strong> (<em>str</em>) – Callback name</p></li>
-<li><p><strong>contract</strong> (<em>str</em><em> | </em><a class="reference internal" href="#ContractConfig" title="ContractConfig"><em>ContractConfig</em></a>) – Contract which emits event</p></li>
+<li><p><strong>contract</strong> (<em>str</em><em> | </em><em>TezosContractConfig</em>) – Contract which emits event</p></li>
 </ul>
 </dd>
 </dl>

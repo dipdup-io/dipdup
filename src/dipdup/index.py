@@ -19,7 +19,7 @@ from dipdup.utils import FormattedLogger
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
-IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource)
+IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource[Any])
 
 
 class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):

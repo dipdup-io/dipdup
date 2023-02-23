@@ -21,13 +21,13 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
-from dipdup.config import ContractConfig
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
@@ -39,11 +39,12 @@ from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
 from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
-from dipdup.datasources.metadata import TzipMetadataDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
@@ -59,11 +60,12 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
 
-DatasourceT = TypeVar('DatasourceT', bound=Datasource)
+DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
 # FIXME: Singletons shared by all contexts
@@ -103,20 +105,23 @@ class MetadataCursor:
 class DipDupContext:
     """Common execution context for handler and hook callbacks.
 
-    :param datasources: Mapping of available datasources
     :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
     :param logger: Context-aware logger instance
     """
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
     ) -> None:
-        self.datasources = datasources
         self.config = config
+        self.package = package
+        self.datasources = datasources
         self._callbacks = callbacks
         self._transactions = transactions
         self.logger = FormattedLogger('dipdup.context')
@@ -144,7 +149,7 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
@@ -258,7 +263,8 @@ class DipDupContext:
                 raise ContractAlreadyExistsError(code_hashes[code_hash])
             code_hashes[code_hash] = name
 
-        contract_config = ContractConfig(
+        contract_config = TezosContractConfig(
+            kind='tezos',
             address=address,
             code_hash=code_hash,
             typename=typename,
@@ -299,6 +305,8 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
+        from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+        from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -306,7 +314,7 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidOperationsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource = self.get_tzkt_datasource(datasource_name)
@@ -397,7 +405,7 @@ class DipDupContext:
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
         if not isinstance(datasource, type_):
-            raise ConfigurationError(f'Datasource `{name}` is not a `{type.__name__}`')
+            raise ConfigurationError(f'Datasource `{name}` is not a `{type_.__name__}`')
         return datasource
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:
@@ -429,14 +437,21 @@ class HookContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            callbacks=callbacks,
+            transactions=transactions,
+        )
         self.logger = logger
         self.hook_config = hook_config
 
@@ -448,8 +463,9 @@ class HookContext(DipDupContext):
         hook_config: HookConfig,
     ) -> 'HookContext':
         return cls(
-            datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -513,15 +529,22 @@ class HandlerContext(DipDupContext):
 
     def __init__(
         self,
-        datasources: dict[str, Datasource],
         config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
         callbacks: 'CallbackManager',
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
     ) -> None:
-        super().__init__(datasources, config, callbacks, transactions)
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            callbacks=callbacks,
+            transactions=transactions,
+        )
         self.logger = logger
         self.handler_config = handler_config
         self.datasource = datasource
@@ -534,11 +557,12 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
     ) -> 'HandlerContext':
         return cls(
-            datasources=ctx.datasources,
             config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
             callbacks=ctx._callbacks,
             transactions=ctx._transactions,
             logger=logger,
@@ -570,20 +594,18 @@ class CallbackManager:
         key = (handler_config.callback, handler_config.parent.name)
         if key not in self._handlers:
             self._handlers[key] = handler_config
-            handler_config.initialize_callback_fn(self._package)
 
     def register_hook(self, hook_config: HookConfig) -> None:
         key = hook_config.callback
         if key not in self._hooks:
             self._hooks[key] = hook_config
-            hook_config.initialize_callback_fn(self._package)
 
     async def _fire_handler(
         self,
         ctx: 'DipDupContext',
         name: str,
         index: str,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
@@ -598,7 +620,8 @@ class CallbackManager:
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            await handler_config.callback_fn(new_ctx, *args, **kwargs)
+            fn = ctx.package.get_callback('handlers', name, name)
+            await fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
         self,
@@ -631,7 +654,8 @@ class CallbackManager:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx._transactions.in_transaction())
 
-                await hook_config.callback_fn(new_ctx, *args, **kwargs)
+                fn = ctx.package.get_callback('hooks', name, name)
+                await fn(new_ctx, *args, **kwargs)
 
         if wait:
             await _wrapper()

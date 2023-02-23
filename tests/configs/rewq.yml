@@ -3,6 +3,7 @@ package: rewq
 
 contracts:
   rewq:
+    kind: tezos
     address: KT1T8Xvopnfr9n2jMV6wJHPBkB7VFi3rXAY9
     typename: rewq
 

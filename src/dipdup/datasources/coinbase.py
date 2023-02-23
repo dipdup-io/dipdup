@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -6,6 +5,7 @@ from typing import Any
 from typing import cast
 
 from dipdup.config import HttpConfig
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.models.coinbase import CandleData
 from dipdup.models.coinbase import CandleInterval
@@ -14,17 +14,13 @@ CANDLES_REQUEST_LIMIT = 300
 API_URL = 'https://api.pro.coinbase.com'
 
 
-class CoinbaseDatasource(Datasource):
+class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
         ratelimit_rate=10,
         ratelimit_period=1,
     )
-
-    def __init__(self, url: str = API_URL, http_config: HttpConfig | None = None) -> None:
-        super().__init__(url, http_config)
-        self._logger = logging.getLogger('dipdup.coinbase')
 
     async def run(self) -> None:
         pass

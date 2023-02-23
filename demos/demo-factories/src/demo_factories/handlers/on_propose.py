@@ -1,6 +1,6 @@
 import demo_factories.models as models
-from demo_factories.types.registry.parameter.propose import ProposeParameter
-from demo_factories.types.registry.storage import RegistryStorage
+from demo_factories.types.registry.tezos_parameters.propose import ProposeParameter
+from demo_factories.types.registry.tezos_storage import RegistryStorage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktTransaction
 

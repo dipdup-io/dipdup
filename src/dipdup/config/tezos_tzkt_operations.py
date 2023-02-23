@@ -9,18 +9,37 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import ParameterTypeMixin
-from dipdup.config import StorageTypeMixin
-from dipdup.config import SubgroupIndexMixin
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+
+@dataclass
+class SubgroupIndexMixin:
+    """`subgroup_index` field to track index of operation in group
+
+    :param subgroup_index:
+    """
+
+    def __post_init_post_parse__(self) -> None:
+        self._subgroup_index: int | None = None
+
+    @property
+    def subgroup_index(self) -> int:
+        if self._subgroup_index is None:
+            raise ConfigInitializationException
+        return self._subgroup_index
+
+    @subgroup_index.setter
+    def subgroup_index(self, value: int) -> None:
+        self._subgroup_index = value
 
 
 class PatternConfig(CodegenMixin):
@@ -36,7 +55,7 @@ class PatternConfig(CodegenMixin):
         module_name: str,
     ) -> tuple[str, str]:
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
-        return f'{package}.types.{module_name}.storage', storage_cls
+        return f'{package}.types.{module_name}.tezos_storage', storage_cls
 
     @classmethod
     def format_parameter_import(
@@ -52,7 +71,7 @@ class PatternConfig(CodegenMixin):
         if alias:
             parameter_cls += f' as {snake_to_pascal(alias)}Parameter'
 
-        return f'{package}.types.{module_name}.parameter.{parameter_module}', parameter_cls
+        return f'{package}.types.{module_name}.tezos_parameters.{parameter_module}', parameter_cls
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:
@@ -102,9 +121,7 @@ class PatternConfig(CodegenMixin):
 
 
 @dataclass
-class OperationsHandlerTransactionPatternConfig(
-    PatternConfig, StorageTypeMixin, ParameterTypeMixin, SubgroupIndexMixin
-):
+class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
     :param type: always 'transaction'
@@ -116,15 +133,13 @@ class OperationsHandlerTransactionPatternConfig(
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: ContractConfig | None = None
-    destination: ContractConfig | None = None
+    source: TezosContractConfig | None = None
+    destination: TezosContractConfig | None = None
     entrypoint: str | None = None
     optional: bool = False
     alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
-        StorageTypeMixin.__post_init_post_parse__(self)
-        ParameterTypeMixin.__post_init_post_parse__(self)
         SubgroupIndexMixin.__post_init_post_parse__(self)
         if self.entrypoint and not self.destination:
             raise ConfigurationError('Transactions with entrypoint must also have destination')
@@ -161,14 +176,14 @@ class OperationsHandlerTransactionPatternConfig(
             )
 
     @property
-    def typed_contract(self) -> ContractConfig | None:
+    def typed_contract(self) -> TezosContractConfig | None:
         if self.entrypoint and self.destination:
             return self.destination
         return None
 
 
 @dataclass
-class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin, SubgroupIndexMixin):
+class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -181,9 +196,9 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
     """
 
     type: Literal['origination'] = 'origination'
-    source: ContractConfig | None = None
-    similar_to: ContractConfig | None = None
-    originated_contract: ContractConfig | None = None
+    source: TezosContractConfig | None = None
+    similar_to: TezosContractConfig | None = None
+    originated_contract: TezosContractConfig | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
@@ -220,7 +235,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, StorageTypeMixin,
             )
 
     @property
-    def typed_contract(self) -> ContractConfig | None:
+    def typed_contract(self) -> TezosContractConfig | None:
         if self.originated_contract:
             return self.originated_contract
         # TODO: Remove in 7.0
@@ -245,7 +260,7 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
     kind: Literal['tezos.tzkt.operations']
     datasource: TzktDatasourceConfig
     handlers: tuple[TzktOperationsHandlerConfig, ...]
-    contracts: list[ContractConfig] = field(default_factory=list)
+    contracts: list[TezosContractConfig] = field(default_factory=list)
     types: tuple[TzktOperationType, ...] = (TzktOperationType.transaction,)
 
     first_level: int = 0
@@ -258,32 +273,13 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
             for item in handler['pattern']:
                 item.pop('alias', None)
 
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
-
-            for pattern_config in handler_config.pattern:
-                typed_contract = pattern_config.typed_contract
-                if not typed_contract:
-                    continue
-
-                module_name = typed_contract.module_name
-                pattern_config.initialize_storage_cls(package, module_name)
-
-                if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
-                    pattern_config.initialize_parameter_cls(
-                        package,
-                        module_name,
-                        cast(str, pattern_config.entrypoint),
-                    )
-
 
 # FIXME: Reversed for new Pydantic. Why?
 OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig
 
 
 @dataclass
-class TzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
+class TzktOperationsHandlerConfig(HandlerConfig):
     """Operation handler config
 
     :param callback: Callback name
@@ -312,7 +308,7 @@ class TzktOperationsHandlerConfig(HandlerConfig, kind='handler'):
 
 
 @dataclass
-class OperationUnfilteredHandlerConfig(HandlerConfig, kind='handler'):
+class OperationUnfilteredHandlerConfig(HandlerConfig):
     """Handler of unfiltered operation index
 
     :param callback: Callback name
@@ -352,9 +348,6 @@ class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
-
-    def import_objects(self, package: str) -> None:
-        self.handler_config.initialize_callback_fn(package)
 
 
 TzktOperationsHandlerConfigU = TzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig

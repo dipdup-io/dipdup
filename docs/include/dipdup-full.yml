@@ -15,6 +15,7 @@ database:
 
 contracts:
   some_dex:
+    kind: tezos
     address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
     typename: quipu_fa12
 

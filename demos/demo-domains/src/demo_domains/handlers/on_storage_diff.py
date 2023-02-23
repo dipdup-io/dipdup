@@ -1,5 +1,5 @@
 import demo_domains.models as models
-from demo_domains.types.name_registry.storage import NameRegistryStorage
+from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
 from dipdup.context import HandlerContext
 
 

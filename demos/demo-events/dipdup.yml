@@ -12,6 +12,7 @@ datasources:
 
 contracts:
   events_contract:
+    kind: tezos
     code_hash: KT1Up6AMehze2VTdt3w85xaZPtrEWn1AeyR3
 
 indexes:

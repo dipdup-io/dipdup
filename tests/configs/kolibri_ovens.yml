@@ -3,6 +3,7 @@ package: kolibri_ovens
 
 contracts:
   kolibri_ovens:
+    kind: tezos
     address: KT1KV31DTzktr8t7edCLUzzgEN54cQtksJou
     typename: kolibri_ovens
 

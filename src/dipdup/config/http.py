@@ -18,6 +18,3 @@ class HttpDatasourceConfig(DatasourceConfig):
     kind: Literal['http']
     url: str
     http: HttpConfig | None = None
-
-    def __hash__(self) -> int:
-        return hash(self.kind + self.url)

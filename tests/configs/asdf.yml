@@ -3,6 +3,7 @@ package: asdf
 
 contracts:
   asdf:
+    kind: tezos
     address: KT1DykwBRr4GGN88GNKNKzrTH4VjhRRUHrkg
     typename: asdf
 

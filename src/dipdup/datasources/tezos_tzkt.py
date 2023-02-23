@@ -19,9 +19,10 @@ import pysignalr.exceptions
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
-from dipdup import baking_bad
 from dipdup.config import HttpConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.tezos_tzkt import TZKT_API_URLS
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -79,13 +80,13 @@ TRANSACTION_OPERATION_FIELDS = (
 )
 
 
-EmptyCallbackT = Callable[[], Awaitable[None]]
-HeadCallbackT = Callable[['TzktDatasource', TzktHeadBlockData], Awaitable[None]]
-OperationsCallbackT = Callable[['TzktDatasource', tuple[TzktOperationData, ...]], Awaitable[None]]
-TokenTransfersCallbackT = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
-BigMapsCallbackT = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
-EventsCallbackT = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
-RollbackCallbackT = Callable[['TzktDatasource', TzktMessageType, int, int], Awaitable[None]]
+EmptyCallback = Callable[[], Awaitable[None]]
+HeadCallback = Callable[['TzktDatasource', TzktHeadBlockData], Awaitable[None]]
+OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]], Awaitable[None]]
+TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
+BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
+EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
+RollbackCallback = Callable[['TzktDatasource', TzktMessageType, int, int], Awaitable[None]]
 
 
 class TzktTzktMessageType(Enum):
@@ -168,7 +169,7 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource):
+class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -181,24 +182,21 @@ class TzktDatasource(IndexDatasource):
 
     def __init__(
         self,
-        url: str,
-        http_config: HttpConfig | None = None,
-        merge_subscriptions: bool = False,
-        buffer_size: int = 0,
+        config: TzktDatasourceConfig,
     ) -> None:
-        super().__init__(url, http_config, merge_subscriptions)
+        super().__init__(config)
         self._logger = logging.getLogger('dipdup.tzkt')
-        self._buffer = MessageBuffer(buffer_size)
+        self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
-        self._on_connected_callbacks: set[EmptyCallbackT] = set()
-        self._on_disconnected_callbacks: set[EmptyCallbackT] = set()
-        self._on_head_callbacks: set[HeadCallbackT] = set()
-        self._on_operations_callbacks: set[OperationsCallbackT] = set()
-        self._on_token_transfers_callbacks: set[TokenTransfersCallbackT] = set()
-        self._on_big_maps_callbacks: set[BigMapsCallbackT] = set()
-        self._on_events_callbacks: set[EventsCallbackT] = set()
-        self._on_rollback_callbacks: set[RollbackCallbackT] = set()
+        self._on_connected_callbacks: set[EmptyCallback] = set()
+        self._on_disconnected_callbacks: set[EmptyCallback] = set()
+        self._on_head_callbacks: set[HeadCallback] = set()
+        self._on_operations_callbacks: set[OperationsCallback] = set()
+        self._on_token_transfers_callbacks: set[TokenTransfersCallback] = set()
+        self._on_big_maps_callbacks: set[BigMapsCallback] = set()
+        self._on_events_callbacks: set[EventsCallback] = set()
+        self._on_rollback_callbacks: set[RollbackCallback] = set()
         self._network: str | None = None
 
         self._signalr_client: SignalRClient | None = None
@@ -210,7 +208,7 @@ class TzktDatasource(IndexDatasource):
 
             protocol = await self.request('get', 'v1/protocols/current')
             category = 'self-hosted'
-            if (instance := baking_bad.TZKT_API_URLS.get(self.url)) is not None:
+            if (instance := TZKT_API_URLS.get(self.url)) is not None:
                 category = f'hosted ({instance})'
             self._logger.info(
                 '%s, protocol v%s (%s)',
@@ -247,28 +245,28 @@ class TzktDatasource(IndexDatasource):
 
         raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
 
-    def call_on_head(self, fn: HeadCallbackT) -> None:
+    def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
 
-    def call_on_operations(self, fn: OperationsCallbackT) -> None:
+    def call_on_operations(self, fn: OperationsCallback) -> None:
         self._on_operations_callbacks.add(fn)
 
-    def call_on_token_transfers(self, fn: TokenTransfersCallbackT) -> None:
+    def call_on_token_transfers(self, fn: TokenTransfersCallback) -> None:
         self._on_token_transfers_callbacks.add(fn)
 
-    def call_on_big_maps(self, fn: BigMapsCallbackT) -> None:
+    def call_on_big_maps(self, fn: BigMapsCallback) -> None:
         self._on_big_maps_callbacks.add(fn)
 
-    def call_on_events(self, fn: EventsCallbackT) -> None:
+    def call_on_events(self, fn: EventsCallback) -> None:
         self._on_events_callbacks.add(fn)
 
-    def call_on_rollback(self, fn: RollbackCallbackT) -> None:
+    def call_on_rollback(self, fn: RollbackCallback) -> None:
         self._on_rollback_callbacks.add(fn)
 
-    def call_on_connected(self, fn: EmptyCallbackT) -> None:
+    def call_on_connected(self, fn: EmptyCallback) -> None:
         self._on_connected_callbacks.add(fn)
 
-    def call_on_disconnected(self, fn: EmptyCallbackT) -> None:
+    def call_on_disconnected(self, fn: EmptyCallback) -> None:
         self._on_disconnected_callbacks.add(fn)
 
     async def emit_head(self, head: TzktHeadBlockData) -> None:

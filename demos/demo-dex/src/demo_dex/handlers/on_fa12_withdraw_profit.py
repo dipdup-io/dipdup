@@ -2,8 +2,8 @@ from decimal import Decimal
 from typing import Optional
 
 import demo_dex.models as models
-from demo_dex.types.quipu_fa12.parameter.withdraw_profit import WithdrawProfitParameter
-from demo_dex.types.quipu_fa12.storage import QuipuFa12Storage
+from demo_dex.types.quipu_fa12.tezos_parameters.withdraw_profit import WithdrawProfitParameter
+from demo_dex.types.quipu_fa12.tezos_storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTransaction

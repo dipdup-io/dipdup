@@ -1,6 +1,6 @@
 import demo_big_maps.models as models
-from demo_big_maps.types.name_registry.big_map.store_records_key import StoreRecordsKey
-from demo_big_maps.types.name_registry.big_map.store_records_value import StoreRecordsValue
+from demo_big_maps.types.name_registry.tezos_big_maps.store_records_key import StoreRecordsKey
+from demo_big_maps.types.name_registry.tezos_big_maps.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
 

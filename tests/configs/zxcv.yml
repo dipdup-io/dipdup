@@ -3,6 +3,7 @@ package: zxcv
 
 contracts:
   zxcv:
+    kind: tezos
     address: KT1M2tyRxLyD5svocpnzaKeDM3uUvFRTmkN3
     typename: zxcv
 

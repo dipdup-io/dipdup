@@ -10,9 +10,9 @@ from pydantic import Field
 from tabulate import tabulate
 
 from dipdup import major_version
-from dipdup.codegen import load_template
-from dipdup.codegen import write
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import load_template
+from dipdup.utils import write
 
 _logger = logging.getLogger('dipdup.project')
 

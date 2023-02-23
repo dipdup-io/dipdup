@@ -1,6 +1,6 @@
 import demo_nft_marketplace.models as models
-from demo_nft_marketplace.types.hen_minter.parameter.collect import CollectParameter
-from demo_nft_marketplace.types.hen_minter.storage import HenMinterStorage
+from demo_nft_marketplace.types.hen_minter.tezos_parameters.collect import CollectParameter
+from demo_nft_marketplace.types.hen_minter.tezos_storage import HenMinterStorage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktTransaction
 

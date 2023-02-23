@@ -1,5 +1,5 @@
 from demo_events import models as models
-from demo_events.types.events_contract.event.move import MovePayload
+from demo_events.types.events_contract.tezos_events.move import MovePayload
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktEvent
 

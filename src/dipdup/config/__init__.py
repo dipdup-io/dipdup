@@ -29,8 +29,6 @@ from dataclasses import field
 from pathlib import Path
 from pydoc import locate
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import Generic
 from typing import Iterator
 from typing import Literal
@@ -43,7 +41,6 @@ from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 
-from dipdup import baking_bad
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -52,33 +49,15 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.subscriptions import Subscription
-from dipdup.utils import import_from
 from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
 from dipdup.yaml import DipDupYAMLConfig
 
-DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
-DEFAULT_TZKT_URL = str(next(iter(baking_bad.TZKT_API_URLS.keys())))
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
-
-TEZOS_ADDRESS_PREFIXES = (
-    'KT1',
-    # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
-    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
-    # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
-    'tz1',
-    'tz2',
-    'tz3',
-)
-TEZOS_ADDRESS_LENGTH = 36
-ETH_ADDRESS_PREFIXES = ('0x',)
-ETH_ADDRESS_LENGTH = 42
 
 
 _logger = logging.getLogger('dipdup.config')
@@ -201,7 +180,7 @@ class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
     retry_count: int = sys.maxsize
-    retry_sleep: float = 0.0
+    retry_sleep: float = 1.0
     retry_multiplier: float = 1.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
@@ -244,50 +223,29 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param address: Contract address
-    :param code_hash: Contract code hash or address to fetch it from
     :param typename: User-defined alias for the contract script
     """
 
-    address: str | None = None
-    code_hash: int | str | None = None
-    typename: str | None = None
+    kind: str
+    typename: str | None
 
     @property
     def module_name(self) -> str:
         return self.typename or self.name
 
-    @validator('address', allow_reuse=True)
-    def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: Environment substitution was disabled during export, skip validation
-        if not v or '$' in v:
-            return v
-
-        if v.startswith(TEZOS_ADDRESS_PREFIXES):
-            if len(v) != TEZOS_ADDRESS_LENGTH:
-                raise ConfigurationError(f'`{v}` is not a valid Tezos address')
-        elif v.startswith(ETH_ADDRESS_PREFIXES):
-            if len(v) != ETH_ADDRESS_LENGTH:
-                raise ConfigurationError(f'`{v}` is not a valid Ethereum address')
-        else:
-            raise ConfigurationError(f'`{v}` is not a valid address')
-
-        return v
-
-    def get_address(self) -> str:
-        if self.address is None:
-            raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
-        return self.address
-
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str
+    url: str
     http: HttpConfig | None
 
-    # TODO: Pick refactoring from `ref/config-module`
-    @abstractmethod
-    def __hash__(self) -> int:
-        ...
+
+class AbiDatasourceConfig(DatasourceConfig):
+    ...
+
+
+class IndexDatasourceConfig(DatasourceConfig):
+    ...
 
 
 @dataclass
@@ -326,26 +284,6 @@ class CodegenMixin(ABC):
         return kwargs
 
 
-@dataclass
-class StorageTypeMixin:
-    """`storage_type_cls` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._storage_type_cls: type[Any] | None = None
-
-    @property
-    def storage_type_cls(self) -> type[Any]:
-        if self._storage_type_cls is None:
-            raise ConfigInitializationException
-        return self._storage_type_cls
-
-    def initialize_storage_cls(self, package: str, module_name: str) -> None:
-        _logger.debug('Registering `%s` storage type', module_name)
-        cls_name = snake_to_pascal(module_name) + 'Storage'
-        module_name = f'{package}.types.{module_name}.storage'
-        self._storage_type_cls = import_from(module_name, cls_name)
-
-
 ParentT = TypeVar('ParentT')
 
 
@@ -366,52 +304,6 @@ class ParentMixin(Generic[ParentT]):
 
 
 @dataclass
-class ParameterTypeMixin:
-    """`parameter_type_cls` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._parameter_type_cls: type | None = None
-
-    @property
-    def parameter_type_cls(self) -> type:
-        if self._parameter_type_cls is None:
-            raise ConfigInitializationException
-        return self._parameter_type_cls
-
-    @parameter_type_cls.setter
-    def parameter_type_cls(self, value: type) -> None:
-        self._parameter_type_cls = value
-
-    def initialize_parameter_cls(self, package: str, typename: str, entrypoint: str) -> None:
-        _logger.debug('Registering parameter type for entrypoint `%s`', entrypoint)
-        entrypoint = entrypoint.lstrip('_')
-        module_name = f'{package}.types.{typename}.parameter.{pascal_to_snake(entrypoint)}'
-        cls_name = snake_to_pascal(entrypoint) + 'Parameter'
-        self.parameter_type_cls = import_from(module_name, cls_name)
-
-
-@dataclass
-class SubgroupIndexMixin:
-    """`subgroup_index` field to track index of operation in group
-
-    :param subgroup_index:
-    """
-
-    def __post_init_post_parse__(self) -> None:
-        self._subgroup_index: int | None = None
-
-    @property
-    def subgroup_index(self) -> int:
-        if self._subgroup_index is None:
-            raise ConfigInitializationException
-        return self._subgroup_index
-
-    @subgroup_index.setter
-    def subgroup_index(self, value: int) -> None:
-        self._subgroup_index = value
-
-
-@dataclass
 class CallbackMixin(CodegenMixin):
     """Mixin for callback configs
 
@@ -420,58 +312,16 @@ class CallbackMixin(CodegenMixin):
 
     callback: str
 
-    def __init_subclass__(cls, kind: str) -> None:
-        cls._kind = kind  # type: ignore[attr-defined]
-
     def __post_init_post_parse__(self) -> None:
-        self._callback_fn = None
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
-    @property
-    def kind(self) -> str:
-        return self._kind  # type: ignore[attr-defined,no-any-return]
-
-    @property
-    def callback_fn(self) -> Callable[..., Awaitable[None]]:
-        if self._callback_fn is None:
-            raise ConfigInitializationException
-        return self._callback_fn
-
-    def initialize_callback_fn(self, package: str) -> None:
-        if self._callback_fn:
-            return
-        _logger.debug('Registering %s callback `%s`', self.kind, self.callback)
-        module_name = f'{package}.{self.kind}s.{self.callback}'
-        fn_name = self.callback.rsplit('.', 1)[-1]
-        self._callback_fn = import_from(module_name, fn_name)
-
 
 @dataclass
-class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig'], kind='handler'):
+class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
-
-
-@dataclass
-class TemplateValuesMixin:
-    """`template_values` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self._template_values: dict[str, str] = {}
-
-    @property
-    def template_values(self) -> dict[str, str]:
-        return self._template_values
-
-
-@dataclass
-class SubscriptionsMixin:
-    """`subscriptions` field"""
-
-    def __post_init_post_parse__(self) -> None:
-        self.subscriptions: set[Subscription] = set()
 
 
 @dataclass
@@ -494,7 +344,7 @@ class IndexTemplateConfig(NameMixin):
 
 
 @dataclass
-class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, ParentMixin['ResolvedIndexConfigU']):
+class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param datasource: Alias of index datasource in `datasources` section
@@ -504,10 +354,11 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
     datasource: DatasourceConfig
 
     def __post_init_post_parse__(self) -> None:
-        TemplateValuesMixin.__post_init_post_parse__(self)
         NameMixin.__post_init_post_parse__(self)
-        SubscriptionsMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
+
+        self.template_values: dict[str, str] = {}
+        self.subscriptions: set[Subscription] = set()
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -525,10 +376,6 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         """Strip config from tunables that are not needed for hash calculation."""
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
-
-    @abstractmethod
-    def import_objects(self, package: str) -> None:
-        ...
 
 
 @dataclass
@@ -635,7 +482,7 @@ class PrometheusConfig:
 
 
 @dataclass
-class HookConfig(CallbackMixin, kind='hook'):
+class HookConfig(CallbackMixin):
     """Hook config
 
     :param args: Mapping of argument names and annotations (checked lazily when possible)
@@ -660,7 +507,7 @@ class HookConfig(CallbackMixin, kind='hook'):
 
 
 @dataclass
-class EventHookConfig(HookConfig, kind='hook'):
+class EventHookConfig(HookConfig):
     pass
 
 
@@ -701,7 +548,6 @@ class AdvancedConfig:
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
     :param early_realtime: Establish realtime connection immediately after startup
-    :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
@@ -712,7 +558,6 @@ class AdvancedConfig:
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
-    merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
     rollback_depth: int = 2
@@ -744,7 +589,7 @@ class DipDupConfig:
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
-    contracts: dict[str, ContractConfig] = field(default_factory=dict)
+    contracts: dict[str, ContractConfigU] = field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
     jobs: dict[str, JobConfig] = field(default_factory=dict)
@@ -765,8 +610,17 @@ class DipDupConfig:
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
         self.json = DipDupYAMLConfig()
-        self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
-        self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
+        # FIXME: Tezos-specific config validation
+        self._contract_addresses = {
+            v.address: k
+            for k, v in self.contracts.items()
+            if isinstance(v, TezosContractConfig) and v.address is not None
+        }
+        self._contract_code_hashes = {
+            v.code_hash: k
+            for k, v in self.contracts.items()
+            if isinstance(v, TezosContractConfig) and v.code_hash is not None
+        }
 
     @property
     def schema_name(self) -> str:
@@ -775,6 +629,7 @@ class DipDupConfig:
         # NOTE: Not exactly correct; historical reason
         return DEFAULT_POSTGRES_SCHEMA
 
+    @property
     def package_path(self) -> Path:
         return env.get_package_path(self.package)
 
@@ -786,6 +641,10 @@ class DipDupConfig:
         if len(oneshot_indexes) == len(syncable_indexes) > 0:
             return True
         return False
+
+    @property
+    def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
+        return tuple(c for c in self.datasources.values() if isinstance(c, AbiDatasourceConfig))
 
     @classmethod
     def load(
@@ -812,6 +671,18 @@ class DipDupConfig:
             return self.contracts[name]
         except KeyError as e:
             raise ConfigurationError(f'Contract `{name}` not found in `contracts` config section') from e
+
+    def get_tezos_contract(self, name: str) -> TezosContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, TezosContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not a Tezos contract')
+        return contract
+
+    def get_evm_contract(self, name: str) -> EvmContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, EvmContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
+        return contract
 
     def get_datasource(self, name: str) -> DatasourceConfigU:
         try:
@@ -843,6 +714,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def get_subsquid_datasource(self, name: str) -> SubsquidDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, SubsquidDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
         level = {
             LoggingValues.default: logging.INFO,
@@ -854,19 +731,11 @@ class DipDupConfig:
         if isinstance(self.package, str):
             logging.getLogger(self.package).setLevel(level)
 
-    def initialize(self, skip_imports: bool = False) -> None:
+    def initialize(self) -> None:
         self._set_names()
         self._resolve_templates()
         self._resolve_links()
         self._validate()
-
-        if skip_imports:
-            return
-
-        for index_config in self.indexes.values():
-            if isinstance(index_config, IndexTemplateConfig):
-                raise ConfigInitializationException
-            index_config.import_objects(self.package)
 
     def dump(self) -> str:
         return DipDupYAMLConfig.dump(self.json)
@@ -893,7 +762,6 @@ class DipDupConfig:
         self._resolve_index_links(index_config)
         self._resolve_index_subscriptions(index_config)
         index_config._name = name
-        index_config.import_objects(self.package)
 
     def _validate(self) -> None:
         # NOTE: Hasura and metadata interface
@@ -938,7 +806,7 @@ class DipDupConfig:
 
         json_template = json.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config._template_values = template_config.values
+        new_index_config.template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
         if not isinstance(new_index_config, TzktHeadIndexConfig):
@@ -957,7 +825,6 @@ class DipDupConfig:
                 raise ConfigInitializationException('Index templates must be resolved first')
 
             self._resolve_index_links(index_config)
-            # TODO: Not exactly link resolving, move somewhere else
             self._resolve_index_subscriptions(index_config)
 
         for job_config in self.jobs.values():
@@ -967,6 +834,7 @@ class DipDupConfig:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
+    # FIXME: Definitely not the best place for this
     def _resolve_index_subscriptions(self, index_config: IndexConfigU) -> None:
         if isinstance(index_config, IndexTemplateConfig):
             return
@@ -979,12 +847,13 @@ class DipDupConfig:
         from dipdup.models.tezos_tzkt import OriginationSubscription
         from dipdup.models.tezos_tzkt import TokenTransferSubscription
         from dipdup.models.tezos_tzkt import TransactionSubscription
+        from dipdup.models.tezos_tzkt import TzktOperationType
 
         index_config.subscriptions.add(HeadSubscription())
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if TzktOperationType.transaction in index_config.types:
-                if self.advanced.merge_subscriptions:
+                if index_config.datasource.merge_subscriptions:
                     index_config.subscriptions.add(TransactionSubscription())
                 else:
                     for contract_config in index_config.contracts:
@@ -996,7 +865,7 @@ class DipDupConfig:
                 index_config.subscriptions.add(OriginationSubscription())
 
         elif isinstance(index_config, TzktBigMapsIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(BigMapSubscription())
             else:
                 for big_map_handler_config in index_config.handlers:
@@ -1007,7 +876,7 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(TokenTransferSubscription())
             else:
                 for handler_config in index_config.handlers:
@@ -1026,12 +895,18 @@ class DipDupConfig:
             index_config.subscriptions.add(TransactionSubscription())
 
         elif isinstance(index_config, TzktEventsIndexConfig):
-            if self.advanced.merge_subscriptions:
+            if index_config.datasource.merge_subscriptions:
                 index_config.subscriptions.add(EventSubscription())
             else:
                 for event_handler_config in index_config.handlers:
                     address = event_handler_config.contract.address
                     index_config.subscriptions.add(EventSubscription(address=address))
+
+        elif isinstance(index_config, SubsquidEventsIndexConfig):
+            ...
+
+        elif isinstance(index_config, SubsquidOperationsIndexConfig):
+            ...
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1046,15 +921,22 @@ class DipDupConfig:
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
         """
+        handler_config: HandlerConfig
+
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
-            index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+            if 'tzkt' in index_config.kind:
+                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
+            elif 'subsquid' in index_config.kind:
+                index_config.datasource = self.get_subsquid_datasource(index_config.datasource)
+            else:
+                raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
-                        index_config.contracts[i] = self.get_contract(contract)
+                        index_config.contracts[i] = self.get_tezos_contract(contract)
 
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -1064,9 +946,9 @@ class DipDupConfig:
 
                     if isinstance(pattern_config, OperationsHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
-                            pattern_config.destination = self.get_contract(pattern_config.destination)
+                            pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
-                            pattern_config.source = self.get_contract(pattern_config.source)
+                            pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationsHandlerOriginationPatternConfig):
                         # TODO: Remove in 7.0
@@ -1074,37 +956,49 @@ class DipDupConfig:
                             raise FrameworkException('originated_contract` alias, should be replaced in __init__')
 
                         if isinstance(pattern_config.source, str):
-                            pattern_config.source = self.get_contract(pattern_config.source)
+                            pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                         if isinstance(pattern_config.originated_contract, str):
-                            pattern_config.originated_contract = self.get_contract(pattern_config.originated_contract)
+                            pattern_config.originated_contract = self.get_tezos_contract(
+                                pattern_config.originated_contract
+                            )
 
         elif isinstance(index_config, TzktBigMapsIndexConfig):
-            for handler in index_config.handlers:
-                handler.parent = index_config
-                if isinstance(handler.contract, str):
-                    handler.contract = self.get_contract(handler.contract)
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            for head_handler_config in index_config.handlers:
-                head_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-            for token_transfer_handler_config in index_config.handlers:
-                token_transfer_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
-                if isinstance(token_transfer_handler_config.contract, str):
-                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TzktEventsIndexConfig):
-            for event_handler_config in index_config.handlers:
-                event_handler_config.parent = index_config
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
 
-                if isinstance(event_handler_config.contract, str):
-                    event_handler_config.contract = self.get_contract(event_handler_config.contract)
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
+
+        elif isinstance(index_config, SubsquidEventsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_evm_contract(handler_config.contract)
+
+        elif isinstance(index_config, SubsquidOperationsIndexConfig):
+            ...
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1128,12 +1022,20 @@ class DipDupConfig:
                 config._name = name
 
 
+"""
+WARNING: A very dark magic ahead. Be extra careful when editing code below.
+"""
+
+# NOTE: Reimport to avoid circular imports
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import EvmSubsquidOperationsIndexConfig
+from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -1145,29 +1047,31 @@ from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexCon
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
-# NOTE: We need unions for Pydantic deserialization
+# NOTE: Unions for Pydantic config deserialization
+ContractConfigU = EvmContractConfig | TezosContractConfig
 DatasourceConfigU = (
-    TzktDatasourceConfig
-    | CoinbaseDatasourceConfig
-    | TzipMetadataDatasourceConfig
-    | IpfsDatasourceConfig
+    CoinbaseDatasourceConfig
+    | EtherscanDatasourceConfig
     | HttpDatasourceConfig
-    | EvmSubsquidDatasourceConfig
+    | IpfsDatasourceConfig
+    | SubsquidDatasourceConfig
+    | TzipMetadataDatasourceConfig
+    | TzktDatasourceConfig
 )
 ResolvedIndexConfigU = (
-    EvmSubsquidEventsIndexConfig
-    | EvmSubsquidOperationsIndexConfig
-    | TzktOperationsIndexConfig
+    SubsquidEventsIndexConfig
+    | SubsquidOperationsIndexConfig
     | TzktBigMapsIndexConfig
-    | TzktHeadIndexConfig
-    | TzktTokenTransfersIndexConfig
     | TzktEventsIndexConfig
+    | TzktHeadIndexConfig
+    | TzktOperationsIndexConfig
     | TzktOperationsUnfilteredIndexConfig
+    | TzktTokenTransfersIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
-def patch_annotations(replace_table: dict[str, str]) -> None:
+def _patch_annotations(replace_table: dict[str, str]) -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
     DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
@@ -1201,13 +1105,16 @@ def patch_annotations(replace_table: dict[str, str]) -> None:
                 value.__pydantic_model__.update_forward_refs()
 
 
-yaml_annotations = {
+_original_to_aliased = {
     'TzktDatasourceConfig': 'str | TzktDatasourceConfig',
-    'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
+    'SubsquidDatasourceConfig': 'str | SubsquidDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
-    'list[ContractConfig]': 'list[str | ContractConfig]',
+    'TezosContractConfig': 'str | TezosContractConfig',
+    'TezosContractConfig | None': 'str | TezosContractConfig | None',
+    'EvmContractConfig': 'str | EvmContractConfig',
+    'EvmContractConfig | None': 'str | EvmContractConfig | None',
+    'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
 }
-orinal_annotations = {v: k for k, v in yaml_annotations.items()}
-patch_annotations(yaml_annotations)
+_patch_annotations(_original_to_aliased)

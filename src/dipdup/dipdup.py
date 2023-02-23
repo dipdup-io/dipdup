@@ -14,14 +14,12 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
-from dipdup.codegen import CodeGenerator
-from dipdup.config import ContractConfig
-from dipdup.config import DatasourceConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -31,8 +29,7 @@ from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
 from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
-from dipdup.datasources import IndexDatasource
-from dipdup.datasources.factory import DatasourceFactory
+from dipdup.datasources import create_datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
@@ -57,6 +54,7 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
+from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -179,14 +177,15 @@ class IndexDispatcher:
                 address, code_hash = contract.address, None
 
             if contract.name not in self._ctx.config.contracts:
-                contract_config = ContractConfig(
+                contract_config = TezosContractConfig(
+                    kind='tezos',
                     address=address or None,
                     code_hash=code_hash or None,
                     typename=contract.typename,
                 )
                 self._ctx.config.contracts[contract.name] = contract_config
 
-        self._ctx.config.initialize(skip_imports=True)
+        self._ctx.config.initialize()
 
     async def _load_index_state(self) -> None:
         if self._indexes:
@@ -248,7 +247,7 @@ class IndexDispatcher:
             datasource.call_on_events(self._on_events)
             datasource.call_on_rollback(self._on_rollback)
 
-    async def _on_head(self, datasource: IndexDatasource, head: TzktHeadBlockData) -> None:
+    async def _on_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
         asyncio.ensure_future(
             Head.update_or_create(
@@ -266,7 +265,7 @@ class IndexDispatcher:
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: IndexDatasource, operations: tuple[TzktOperationData, ...]) -> None:
+    async def _on_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -284,24 +283,24 @@ class IndexDispatcher:
                 index.push_operations(operation_subgroups)
 
     async def _on_token_transfers(
-        self, datasource: IndexDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
+        self, datasource: TzktDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
                 index.push_token_transfers(token_transfers)
 
-    async def _on_big_maps(self, datasource: IndexDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
+    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
                 index.push_big_maps(big_maps)
 
-    async def _on_events(self, datasource: IndexDatasource, events: tuple[TzktEventData, ...]) -> None:
+    async def _on_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
     async def _on_rollback(
-        self, datasource: IndexDatasource, type_: TzktMessageType, from_level: int, to_level: int
+        self, datasource: TzktDatasource, type_: TzktMessageType, from_level: int, to_level: int
     ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
@@ -352,8 +351,7 @@ class DipDup:
     def __init__(self, config: DipDupConfig) -> None:
         self._logger = logging.getLogger('dipdup')
         self._config = config
-        self._datasources: dict[str, Datasource] = {}
-        self._datasources_by_config: dict[DatasourceConfigU, Datasource] = {}
+        self._datasources: dict[str, Datasource[Any]] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
@@ -361,11 +359,11 @@ class DipDup:
         )
         self._ctx = DipDupContext(
             config=self._config,
+            package=DipDupPackage(config.package_path),
             datasources=self._datasources,
             callbacks=self._callbacks,
             transactions=self._transactions,
         )
-        self._codegen = CodeGenerator(self._config, self._datasources_by_config)
         self._schema: Schema | None = None
 
     @property
@@ -396,7 +394,7 @@ class DipDup:
                 kind='sqlite',
                 path=':memory:',
             )
-        config.initialize(skip_imports=True)
+        config.initialize()
 
         dipdup = DipDup(config)
         await dipdup._create_datasources()
@@ -409,13 +407,23 @@ class DipDup:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
+        from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
+        from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
+
         await self._create_datasources()
 
         async with AsyncExitStack() as stack:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            await self._codegen.init(overwrite_types, keep_schemas)
+            package = DipDupPackage(
+                root=self._config.package_path,
+                debug=keep_schemas,
+            )
+
+            for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
+                codegen = codegen_cls(self._config, package, self._datasources)
+                await codegen.init(force=overwrite_types)
 
     async def run(self) -> None:
         """Run indexing process"""
@@ -462,15 +470,9 @@ class DipDup:
             await gather(*tasks)
 
     async def _create_datasources(self) -> None:
-        datasource: Datasource
-        for name, datasource_config in self._config.datasources.items():
-            if name in self._datasources:
-                continue
-
-            datasource = DatasourceFactory.build(name, self._config)
-
-            self._datasources[name] = datasource
-            self._datasources_by_config[datasource_config] = datasource
+        for name, config in self._config.datasources.items():
+            if name not in self._datasources:
+                self._datasources[name] = create_datasource(config)
 
     async def _initialize_schema(self) -> None:
         self._logger.info('Initializing database schema')

@@ -113,7 +113,7 @@ class TzktBigMapsIndex(
                         )
                         for big_map_key in big_map_keys
                     )
-                    matched_handlers = match_big_maps(self._config.handlers, big_map_data)
+                    matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
                     for handler_config, big_map_diff in matched_handlers:
                         await self._call_matched_handler(handler_config, big_map_diff)
 
@@ -133,7 +133,7 @@ class TzktBigMapsIndex(
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing big map diffs of level %s', batch_level)
-        matched_handlers = match_big_maps(self._config.handlers, big_maps)
+        matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_maps)
 
         if Metrics.enabled:
             Metrics.set_index_handlers_matched(len(matched_handlers))

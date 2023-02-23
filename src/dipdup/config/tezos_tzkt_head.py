@@ -11,7 +11,7 @@ from dipdup.config.tezos_tzkt import TzktIndexConfig
 
 
 @dataclass
-class HeadHandlerConfig(HandlerConfig, kind='handler'):
+class HeadHandlerConfig(HandlerConfig):
     """Head block handler config
 
     :param callback: Callback name
@@ -47,7 +47,3 @@ class TzktHeadIndexConfig(TzktIndexConfig):
     @property
     def last_level(self) -> int:
         return 0
-
-    def import_objects(self, package: str) -> None:
-        for handler_config in self.handlers:
-            handler_config.initialize_callback_fn(package)
