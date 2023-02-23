@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- sentry: Fixed bug leading to crash reports not being sent in some cases.
+- sentry: Fixed crash report grouping.
+
 ## [6.5.1] - 2023-02-21
 
 ### Fixed
