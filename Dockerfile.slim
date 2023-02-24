@@ -1,4 +1,4 @@
-FROM python:3.11-alpine3.17 AS compile-image
+FROM python:3.11-alpine3.16 AS compile-image
 # FIXME: https://github.com/ijl/orjson/issues/155
 RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev rustup && \
     rustup-init -y --default-toolchain nightly
@@ -15,7 +15,7 @@ COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 
 RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --no-deps -r /opt/dipdup/requirements.slim.txt -e .
 
-FROM python:3.11-alpine3.17 AS build-image
+FROM python:3.11-alpine3.16 AS build-image
 RUN adduser -D dipdup
 USER dipdup
 ENV DIPDUP_DOCKER=1
