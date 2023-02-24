@@ -1,5 +1,9 @@
 FROM python:3.11-alpine3.17 AS compile-image
-RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev cargo && \
+# FIXME: https://github.com/ijl/orjson/issues/155
+RUN apk add --update --no-cache build-base gcc musl-dev python3-dev libffi-dev openssl-dev rustup && \
+    rustup-init -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup update && \
     python -m venv --without-pip --system-site-packages /opt/dipdup && \
     mkdir -p /opt/dipdup/src/dipdup/ && \
     touch /opt/dipdup/src/dipdup/__init__.py
