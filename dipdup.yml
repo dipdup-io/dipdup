@@ -7,7 +7,7 @@ datasources:
 
   subsquid_eth_mainnet:
     kind: evm.subsquid
-    url: ${ARCHIVE_URI:-https://eth.archive.subsquid.io}
+    url: ${ARCHIVE_URI:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
     node_url: ${INFURA_URI:-}
 
 contracts:
