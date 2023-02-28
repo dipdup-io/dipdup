@@ -43,6 +43,7 @@ APScheduler = "^3.8.0"
 asyncclick = "^8.0.1"
 orjson = "^3.6.6"
 prometheus-client = "^0.14.1"
+pyarrow = "^11.0.0"
 pyhumps = "^3.0.2"
 python-dotenv = "^0.19.0"
 "ruamel.yaml" = "^0.17.2"
@@ -51,6 +52,7 @@ sqlparse = "^0.4.2"
 tabulate = "^0.9.0"
 
 pytezos = {version = "3.8.0", optional = true}
+pysha3 = "^1.0.2"
 
 [tool.poetry.group.dev.dependencies]
 blue = "*"
