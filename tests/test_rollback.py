@@ -44,7 +44,7 @@ async def test_model_updates() -> None:
         assert model_update.level == 1000
         assert model_update.model_name == 'Holder'
         assert model_update.model_pk == 'tz1deadbeaf'
-        assert model_update.data == None
+        assert model_update.data is None
 
         model_update = await ModelUpdate.filter(id=2).get()
         assert model_update.action == ModelUpdateAction.INSERT
@@ -52,7 +52,7 @@ async def test_model_updates() -> None:
         assert model_update.level == 1000
         assert model_update.model_name == 'Swap'
         assert model_update.model_pk == '1'
-        assert model_update.data == None
+        assert model_update.data is None
 
         # NOTE: UPDATE
         async with in_transaction(level=1001, index='test'):
@@ -91,7 +91,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback DELETE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1002,
             to_level=1001,
@@ -102,7 +102,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback UPDATE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1001,
             to_level=1000,
@@ -113,7 +113,7 @@ async def test_model_updates() -> None:
 
         # NOTE: Rollback INSERT
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1000,
             to_level=999,

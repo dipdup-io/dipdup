@@ -18,7 +18,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## Codestyle
 
-- We use the following combo of linters and formatters: `isort`, `black`, `flake8`, `mypy`. All linter checks MUST pass before merging code to `master` (CI will fail otherwise).
+- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging code to `master` (CI will fail otherwise).
 - Single quotes are RECOMMENDED for string literals.
 - Meaningful comments are highly RECOMMENDED to begin with `# NOTE:`, `# TODO:`, or `# FIXME:`.
 - f-string formatting is RECOMMENDED over other methods. Logging is an exception to this rule.

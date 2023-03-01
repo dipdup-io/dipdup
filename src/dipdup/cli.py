@@ -64,9 +64,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             from dipdup.sentry import save_crashdump
 
             crashdump_path = save_crashdump(e)
-            _logger.error(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
             _print_help(e)
-            raise
+            raise e
 
     return cast(WrappedCommandT, wrapper)
 
