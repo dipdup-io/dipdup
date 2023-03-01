@@ -311,12 +311,10 @@ class BaseProject(Project):
             default=0,
             choices=(
                 'default',
-                'advanced',
                 'none',
             ),
             comments=(
-                'Classic set: black, isort, flake8, mypy, pytest',
-                'Same, plus coverage and more flake8 plugins',
+                'Classic set: black, isort, ruff, mypy, pytest',
                 'None',
             ),
         ),

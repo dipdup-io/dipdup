@@ -56,7 +56,7 @@ def get_path(key: str) -> Path | None:
 def set_test() -> None:
     global TEST, REPLAY_PATH
     TEST = True
-    REPLAY_PATH = str(Path(__file__).parent.parent.parent.parent / 'tests' / 'replays')
+    REPLAY_PATH = str(Path(__file__).parent.parent.parent / 'tests' / 'replays')
     env['DIPDUP_REPLAY_PATH'] = REPLAY_PATH
 
 

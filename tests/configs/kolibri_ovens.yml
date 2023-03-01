@@ -12,7 +12,7 @@ datasources:
     kind: tezos.tzkt
     url: https://api.tzkt.io
     http:
-      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 indexes:
   kolibri_ovens:

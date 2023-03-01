@@ -17,7 +17,7 @@ dipdup = "^{{ cookiecutter.dipdup_version }}"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
-flakeheaven = "*"
+ruff = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
@@ -32,20 +32,13 @@ line-length = {{ cookiecutter.line_length }}
 target-version = ['py310']
 skip-string-normalization = true
 
-[tool.flakeheaven]
-max_line_length = {{ cookiecutter.line_length }}
-
-[tool.flakeheaven.plugins]
-"*" = ["+*"]
-pycodestyle = ["-*"]
+[tool.ruff]
+line-length = {{ cookiecutter.line_length }}
+target-version = 'py310'
 
 [tool.mypy]
 python_version = "3.10"
 plugins = ["pydantic.mypy"]
-
-[[tool.mypy.overrides]]
-module = "ruamel"
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'

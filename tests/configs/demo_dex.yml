@@ -28,7 +28,7 @@ datasources:
     kind: tezos.tzkt
     url: https://api.tzkt.io
     http:
-      replay_path: ${DIPDUP_REPLAY_PATH:-~/.cache/dipdup/replays}
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 templates:
   quipuswap_fa12:
