@@ -849,7 +849,8 @@ class DipDupConfig:
         from dipdup.models.tezos_tzkt import TransactionSubscription
         from dipdup.models.tezos_tzkt import TzktOperationType
 
-        index_config.subscriptions.add(HeadSubscription())
+        if isinstance(index_config, TzktIndexConfig):
+            index_config.subscriptions.add(HeadSubscription())
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if TzktOperationType.transaction in index_config.types:
@@ -873,7 +874,7 @@ class DipDupConfig:
                     index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            index_config.subscriptions.add(HeadSubscription())
+            pass
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             if index_config.datasource.merge_subscriptions:
@@ -1037,6 +1038,7 @@ from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
 from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
 from dipdup.config.tezos import TezosContractConfig  # noqa: E402
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
+from dipdup.config.tezos_tzkt import TzktIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402

@@ -10,4 +10,8 @@ class SubsquidEventsIndex(
     Index[SubsquidEventsIndexConfig, Any, SubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
-    ...
+    async def _process_queue(self) -> None:
+        ...
+
+    async def _synchronize(self, sync_level: int) -> None:
+        ...

@@ -8,6 +8,7 @@ import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
 
 from dipdup.config import HttpConfig
+from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.http import _HTTPGateway
@@ -122,6 +123,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def subscribe(self) -> None:
         pass
+
+    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
+        ...
 
     async def get_event_logs(
         self,

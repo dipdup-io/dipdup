@@ -342,7 +342,8 @@ class DipDupContext:
             index = SubsquidEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
-            index = SubsquidOperationsIndex(self, index_config, datasource)
+            # index = SubsquidOperationsIndex(self, index_config, datasource)
+            raise NotImplementedError
         else:
             raise NotImplementedError
 
