@@ -1027,25 +1027,25 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 """
 
 # NOTE: Reimport to avoid circular imports
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
-from dipdup.config.coinbase import CoinbaseDatasourceConfig
-from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
-from dipdup.config.http import HttpDatasourceConfig
-from dipdup.config.ipfs import IpfsDatasourceConfig
-from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
-from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig  # noqa: E402
+from dipdup.config.coinbase import CoinbaseDatasourceConfig  # noqa: E402
+from dipdup.config.evm import EvmContractConfig  # noqa: E402
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig  # noqa: E402
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig  # noqa: E402
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig  # noqa: E402
+from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
+from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
+from dipdup.config.tezos import TezosContractConfig  # noqa: E402
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 
 # NOTE: Unions for Pydantic config deserialization
 ContractConfigU = EvmContractConfig | TezosContractConfig

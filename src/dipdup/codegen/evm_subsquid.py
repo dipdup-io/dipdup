@@ -124,7 +124,6 @@ class SubsquidCodeGenerator(CodeGenerator):
 
     async def _convert_abi(self, events: set[str], functions: set[str]) -> None:
         for path in self._package.abi.glob('**/abi.json'):
-
             event_topics: dict[str, str] = {}
             abi = orjson.loads(path.read_bytes())
             for item in abi:

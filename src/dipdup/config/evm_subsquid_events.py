@@ -38,7 +38,6 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
 @dataclass
 class SubsquidEventsIndexConfig(IndexConfig):
-
     kind: Literal['evm.subsquid.events']
     datasource: SubsquidDatasourceConfig
     handlers: tuple[SubsquidEventsHandlerConfig, ...] = field(default_factory=tuple)
