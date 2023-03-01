@@ -58,7 +58,7 @@ def topic_from_abi(event: dict[str, Any]) -> str:
         raise FrameworkException(f'`{event["name"]}` is not an event')
 
     signature = f'{event["name"]}({",".join([i["type"] for i in event["inputs"]])})'
-    return eth_utils.crypto.keccak(text=signature).hex()
+    return '0x' + eth_utils.crypto.keccak(text=signature).hex()
 
 
 class SubsquidCodeGenerator(CodeGenerator):
