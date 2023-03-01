@@ -53,7 +53,6 @@ def test_transaction_callbacks(contract: ContractConfig) -> None:
 
 
 def test_origination_callbacks(contract: ContractConfig) -> None:
-
     # NOTE: Typed `origination`
     pattern = OperationHandlerOriginationPatternConfig(
         originated_contract=contract,
