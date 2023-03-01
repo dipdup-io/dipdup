@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import eth_utils
 import orjson
-import sha3  # type: ignore[import]
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
@@ -58,7 +58,7 @@ def topic_from_abi(event: dict[str, Any]) -> str:
         raise FrameworkException(f'`{event["name"]}` is not an event')
 
     signature = f'{event["name"]}({",".join([i["type"] for i in event["inputs"]])})'
-    return f'0x{sha3.keccak_256(signature.encode()).hexdigest()}'
+    return eth_utils.crypto.keccak(text=signature).hex()
 
 
 class SubsquidCodeGenerator(CodeGenerator):

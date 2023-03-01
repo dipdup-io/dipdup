@@ -1,37 +1,18 @@
-# import zipfile
-# from io import BytesIO
+import zipfile
+from io import BytesIO
+from typing import Any
 from typing import TypedDict
 
-# import pyarrow.ipc
-# from pydantic.dataclasses import dataclass
+import aiohttp
+import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
-
-DEFAULT_QUERY = (
-    {
-        'logs': [
-            {
-                'address': ['0x2e645469f354bb4f5c8a05b3b30a929361cf77ec'],
-                'topic0': [
-                    '0x9ab3aefb2ba6dc12910ac1bce4692cf5c3c0d06cff16327c64a3ef78228b130b',
-                    '0x76571b7a897a1509c641587568218a290018fbdc8b9a724f17b77ff0eec22c0c',
-                ],
-            }
-        ],
-        'fields': {
-            'block': {
-                'number': True,
-                'hash': True,
-                'parentHash': True,
-            },
-            'log': {'topics': True, 'data': True},
-        },
-    },
-)
-
+from dipdup.http import _HTTPGateway
+from dipdup.models.evm_subsquid import SubsquidEventData
+from dipdup.models.evm_subsquid import SubsquidMessageType
 
 FieldMap = dict[str, bool]
 
@@ -56,7 +37,25 @@ class Query(TypedDict):
     fields: NotRequired[FieldSelection]
     logs: NotRequired[list[LogFilter]]
     transactions: NotRequired[list[TxFilter]]
+    fromBlock: NotRequired[int]
+    toBlock: NotRequired[int]
 
+
+_log_fields: FieldSelection = {
+    'log': {
+        'topics': True,
+        'data': True,
+    },
+}
+
+
+# _block_fields: FieldSelection = {
+#     'block': {
+#         'number': True,
+#         'hash': True,
+#         'parentHash': True,
+#     },
+# }
 
 # def dump(
 #         archive_url: str,
@@ -90,27 +89,14 @@ class Query(TypedDict):
 #             unpack_data(res.content)
 
 
-# def unpack_data(content: bytes):
-#     with zipfile.ZipFile(BytesIO(content), 'r') as arch:
-#         for item in arch.filelist:  # The set of files depends on requested data
-#             print()
-#             print(item.filename.upper())
-#             with arch.open(item) as f, \
-#                 pyarrow.ipc.open_stream(f) as reader:
-#                 table: pyarrow.Table = reader.read_all()
-#                 # checkout https://arrow.apache.org/docs/python/data.html#tables
-#                 # for what can be done with pyarrow tables
-#                 print(table.to_pylist())
-#             print()
-
-
-# if __name__ == '__main__':
-#     dump(
-#         'https://v2.archive.subsquid.io/network/ethereum-mainnet',
-#         query=
-#         first_block=5_000_000,
-#         last_block=8_500_000
-#     )
+def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
+    data = {}
+    with zipfile.ZipFile(BytesIO(content), 'r') as arch:
+        for item in arch.filelist:  # The set of files depends on requested data
+            with arch.open(item) as f, pyarrow.ipc.open_stream(f) as reader:
+                table: pyarrow.Table = reader.read_all()
+                data[item.filename] = table.to_pylist()
+    return data
 
 
 # Notes:
@@ -137,22 +123,48 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     async def subscribe(self) -> None:
         pass
 
-    # async def get_logs(
-    #     self,
-    #     field: str,
-    #     addresses: set[str] | None,
-    #     code_hashes: set[int] | None,
-    #     first_level: int | None = None,
-    #     last_level: int | None = None,
-    #     offset: int | None = None,
-    #     limit: int | None = None,
-    # ) -> tuple[TzktOperationData, ...]:
-    #     params = self._get_request_params(
-    #         first_level,
-    #         last_level,
-    #         offset,
-    #         limit,
-    #         TRANSACTION_OPERATION_FIELDS,
-    #         cursor=True,
-    #         status='applied',
-    #     )
+    async def get_event_logs(
+        self,
+        addresses: set[str] | None,
+        topics: set[str] | None,
+        first_level: int,
+        last_level: int,
+    ) -> tuple[SubsquidEventData, ...]:
+        query: Query = {
+            'fields': _log_fields,
+            'logs': [
+                {
+                    'address': list(addresses or ()),
+                    'topic0': list(topics or ()),
+                }
+            ],
+            'fromBlock': first_level,
+            'toBlock': last_level,
+        }
+
+        worker_url = await self.request('get', f'{first_level}/worker')
+        worker_http = _HTTPGateway(
+            url=worker_url,
+            config=self._http_config,
+        )
+        async with worker_http:
+            response: aiohttp.ClientResponse = await worker_http._request(
+                'post',
+                worker_url,
+                1,
+                True,
+                json=query,
+            )
+
+            # FIXME: Not used yet
+            _last_processed_block = int(response.headers['x-sqd-last-processed-block'])  # noqa: F841
+            data = unpack_data(await response.read())
+            raw_logs = data.get(SubsquidMessageType.logs.value, [])
+
+        return tuple(
+            SubsquidEventData(
+                level=raw_log['block_number'],
+                **raw_log,
+            )
+            for raw_log in raw_logs
+        )
