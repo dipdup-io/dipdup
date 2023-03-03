@@ -1,11 +1,15 @@
 from enum import Enum
 from typing import Any
 from typing import Generic
+from typing import Literal
 from typing import TypeVar
 
+from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
-PayloadT = TypeVar('PayloadT', bound=Any)
+from dipdup.subscriptions import Subscription
+
+PayloadT = TypeVar('PayloadT', bound=BaseModel)
 
 
 class SubsquidMessageType(Enum):
@@ -13,14 +17,6 @@ class SubsquidMessageType(Enum):
 
     blocks = 'blocks.arrow_stream'
     logs = 'logs.arrow_stream'
-
-
-class SubsquidEvent(Generic[PayloadT]):
-    ...
-
-
-class SubsquidOperation:
-    ...
 
 
 @dataclass
@@ -33,5 +29,24 @@ class SubsquidEventData:
     topic2: str | None
     topic3: str | None
     data: str
-    # FIXME: temporary for HasLevel
+    # FIXME: temporary field for HasLevel protocol, set somewhere
     level: int
+
+
+@dataclass
+class SubsquidEvent(Generic[PayloadT]):
+    data: SubsquidEventData
+    payload: PayloadT
+
+
+class SubsquidOperation:
+    ...
+
+
+@dataclass(frozen=True)
+class EventLogSubscription(Subscription):
+    type: Literal['event_log'] = 'event_log'
+    method = ''
+
+    def get_request(self) -> list[dict[str, Any]]:
+        return []

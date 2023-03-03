@@ -1,6 +1,7 @@
 spec_version: 1.2
 package: eth_usdt
 
+
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -36,3 +37,7 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
+    first_level: 16_000_000
+    last_level: 16_744_000
+
+logging: verbose

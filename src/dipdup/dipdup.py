@@ -29,6 +29,7 @@ from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
 from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -569,30 +570,9 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         for datasource in self._datasources.values():
-            if not isinstance(datasource, TzktDatasource):
+            if not isinstance(datasource, IndexDatasource):
                 continue
-
-            head_block = await datasource.get_head_block()
-            datasource.set_network(head_block.chain)
-            datasource.set_sync_level(
-                subscription=None,
-                level=head_block.level,
-            )
-
-            db_head = await Head.filter(name=datasource.name).first()
-            if not db_head:
-                continue
-
-            # NOTE: Ensure that no reorgs happened while we were offline
-            actual_head = await datasource.get_block(db_head.level)
-            if db_head.hash != actual_head.hash:
-                await self._ctx.reindex(
-                    ReindexingReason.rollback,
-                    datasource=datasource.name,
-                    level=db_head.level,
-                    stored_block_hash=db_head.hash,
-                    actual_block_hash=actual_head.hash,
-                )
+            await datasource.initialize()
 
     async def _set_up_index_dispatcher(
         self,

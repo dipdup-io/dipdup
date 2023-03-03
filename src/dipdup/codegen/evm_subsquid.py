@@ -6,6 +6,7 @@ import eth_utils
 import orjson
 
 from dipdup.codegen import CodeGenerator
+from dipdup.codegen import TypeClass
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
@@ -13,6 +14,9 @@ from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
+from dipdup.package import DipDupPackage
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -149,6 +153,7 @@ class SubsquidCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
+        # FIXME: Prefixes, postfixes?
         # if schema_path.parent.name == 'evm_events':
         #     class_name = f'{module_name}_event'
         # elif schema_path.parent.name == 'evm_functions':
@@ -156,3 +161,18 @@ class SubsquidCodeGenerator(CodeGenerator):
         # else:
         #     class_name = module_name
         return module_name
+
+
+def get_event_log_type(package: DipDupPackage, typename: str, name: str) -> TypeClass:
+    name = pascal_to_snake(name.replace('.', '_'))
+    module_name = f'evm_events.{name}'
+    cls_name = snake_to_pascal(name)
+    return package.get_type(typename, module_name, cls_name)
+
+
+# FIXME: Move to package
+def get_event_topic(package: DipDupPackage, typename: str, name: str) -> str:
+    abi_path = package.abi / typename / 'topics.json'
+    if not abi_path.exists():
+        raise FrameworkException(f'ABI for contract `{name}` not found')
+    return cast(str, orjson.loads(abi_path.read_bytes())[name])

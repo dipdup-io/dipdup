@@ -236,8 +236,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             if raw:
+                await response.read()
                 return response
 
+            # FIXME: TzKT stuff
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):

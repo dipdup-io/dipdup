@@ -1,6 +1,7 @@
 import zipfile
 from io import BytesIO
 from typing import Any
+from typing import AsyncIterator
 from typing import TypedDict
 
 import aiohttp
@@ -12,6 +13,7 @@ from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.http import _HTTPGateway
+from dipdup.models.evm_subsquid import EventLogSubscription
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 
@@ -125,7 +127,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         pass
 
     async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
-        ...
+        """Register index config in internal mappings and matchers. Find and register subscriptions."""
+        for subscription in index_config.subscriptions:
+            self._subscriptions.add(subscription)
 
     async def get_event_logs(
         self,
@@ -146,7 +150,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             'toBlock': last_level,
         }
 
-        worker_url = await self.request('get', f'{first_level}/worker')
+        worker_url: str = (await self.request('get', f'{first_level}/worker')).decode()
         worker_http = _HTTPGateway(
             url=worker_url,
             config=self._http_config,
@@ -154,15 +158,19 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         async with worker_http:
             response: aiohttp.ClientResponse = await worker_http._request(
                 'post',
-                worker_url,
+                '',
                 1,
                 True,
                 json=query,
             )
+            if response.status != 200:
+                raise Exception(f'Unexpected response status: {response.status}')
 
-            # FIXME: Not used yet
-            _last_processed_block = int(response.headers['x-sqd-last-processed-block'])  # noqa: F841
-            data = unpack_data(await response.read())
+            # FIXME: Getter modifies state; fix asap!
+            current_level = int(response.headers['x-sqd-last-processed-block'])
+            self.set_sync_level(EventLogSubscription(), current_level)
+
+            data = unpack_data(response._body)
             raw_logs = data.get(SubsquidMessageType.logs.value, [])
 
         return tuple(
@@ -171,4 +179,37 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 **raw_log,
             )
             for raw_log in raw_logs
+        )
+
+    async def iter_event_logs(
+        self,
+        addresses: set[str],
+        topics: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+        current_level = first_level
+        while current_level <= last_level:
+            logs = await self.get_event_logs(
+                addresses,
+                topics,
+                current_level,
+                last_level,
+            )
+            if not logs:
+                return
+
+            yield logs
+
+            # FIXME: Getter modifies state; fix asap!
+            sync_level = self.get_sync_level(EventLogSubscription())
+            if sync_level is None:
+                raise RuntimeError('sync level is not set')
+            current_level = sync_level + 1
+
+    async def initialize(self) -> None:
+        self._subscriptions.add(EventLogSubscription())
+        self.set_sync_level(
+            subscription=EventLogSubscription(),
+            level=1_000_000,
         )

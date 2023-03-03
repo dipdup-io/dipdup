@@ -841,6 +841,7 @@ class DipDupConfig:
         if index_config.subscriptions:
             return
 
+        from dipdup.models.evm_subsquid import EventLogSubscription
         from dipdup.models.tezos_tzkt import BigMapSubscription
         from dipdup.models.tezos_tzkt import EventSubscription
         from dipdup.models.tezos_tzkt import HeadSubscription
@@ -904,10 +905,12 @@ class DipDupConfig:
                     index_config.subscriptions.add(EventSubscription(address=address))
 
         elif isinstance(index_config, SubsquidEventsIndexConfig):
-            ...
+            # FIXME: Per channel subscriptions
+            index_config.subscriptions.add(EventLogSubscription())
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            ...
+            # FIXME: Per channel subscriptions
+            index_config.subscriptions.add(EventLogSubscription())
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
