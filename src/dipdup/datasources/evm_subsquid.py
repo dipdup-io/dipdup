@@ -52,46 +52,6 @@ _log_fields: FieldSelection = {
 }
 
 
-# _block_fields: FieldSelection = {
-#     'block': {
-#         'number': True,
-#         'hash': True,
-#         'parentHash': True,
-#     },
-# }
-
-# def dump(
-#         archive_url: str,
-#         query: Query,
-#         first_block: int,
-#         last_block: int
-# ) -> None:
-#     assert 0 <= first_block <= last_block
-
-#     query = dict(query)  # copy query to mess with it later
-#     next_block = first_block
-
-#     while next_block <= last_block:
-#         # FIXME: retries for 503, 504, 502 and network failures
-#         #        are required for a sequence of 2 queries below
-
-#         res = requests.get(f'{archive_url}/{next_block}/worker')
-#         res.raise_for_status()
-#         worker_url = res.text
-
-#         query['fromBlock'] = next_block
-#         query['toBlock'] = last_block
-#         res = requests.post(worker_url, json=query)
-#         res.raise_for_status()
-
-#         last_processed_block = int(res.headers['x-sqd-last-processed-block'])
-#         print(f'processed data from block {next_block} to {last_processed_block}')
-#         next_block = last_processed_block + 1
-
-#         if res.status_code == 200:  # Might also get 204, if nothing were found at the current round
-#             unpack_data(res.content)
-
-
 def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     data = {}
     with zipfile.ZipFile(BytesIO(content), 'r') as arch:
@@ -100,21 +60,6 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
                 table: pyarrow.Table = reader.read_all()
                 data[item.filename] = table.to_pylist()
     return data
-
-
-# Notes:
-
-# At the moment archive router doesn't expose information about the height of archived data
-# (because it doesn't always know it).
-
-# Attempt to request data beyond archived height leads to HTTP 503.
-# The same error is returned in case of any temporal service unavailability, e.g. due upgrades.
-
-# The suggestion is to check the chain height at the start of processing via online data source,
-# and if we get HTTP 503 not far away from the head, then to switch to online data source,
-# otherwise to keep retrying.
-
-# We'll try to do something about that quirk later.
 
 
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):

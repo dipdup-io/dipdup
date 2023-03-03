@@ -9,4 +9,5 @@ async def on_transfer(
     ctx: HandlerContext,
     event: SubsquidEvent[Transfer],
 ) -> None:
-    ...
+    print(event.data)
+    print(event.payload)

@@ -1,14 +1,11 @@
 import logging
 from collections import deque
-from contextlib import suppress
 from copy import copy
 from typing import Any
 from typing import Iterable
 
 from dipdup.codegen.evm_subsquid import get_event_log_type
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
-from dipdup.exceptions import FrameworkException
-from dipdup.exceptions import InvalidDataError
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
@@ -24,7 +21,7 @@ def prepare_event_handler_args(
     package: DipDupPackage,
     handler_config: SubsquidEventsHandlerConfig,
     matched_event: SubsquidEventData,
-) -> SubsquidEvent[Any] | None:
+) -> SubsquidEvent[Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
@@ -34,15 +31,13 @@ def prepare_event_handler_args(
         name=handler_config.name,
     )
 
-    matched_event.data
-    with suppress(InvalidDataError):
-        typed_payload = parse_object(type_, matched_event.data)
-        return SubsquidEvent(
-            data=matched_event,
-            payload=typed_payload,
-        )
+    # FIXME: Decoding here
 
-    return None
+    typed_payload = parse_object(type_, matched_event.data)
+    return SubsquidEvent(
+        data=matched_event,
+        payload=typed_payload,
+    )
 
 
 def match_event(handler_config: SubsquidEventsHandlerConfig, event: SubsquidEventData, topics: dict[str, str]) -> bool:
@@ -72,12 +67,7 @@ def match_events(
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
-            if isinstance(arg, SubsquidEvent) and isinstance(handler_config, SubsquidEventsHandlerConfig):
-                matched_handlers.append((handler_config, arg))
-            elif arg is None:
-                continue
-            else:
-                raise FrameworkException(f'Unexpected handler config type: {type(handler_config)}')
+            matched_handlers.append((handler_config, arg))
 
             events.remove(event)
 
