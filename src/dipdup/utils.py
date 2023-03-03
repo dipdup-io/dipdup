@@ -193,9 +193,14 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-def parse_object(type_: type[ObjectT], data: Any) -> ObjectT:
+def parse_object(type_: type[ObjectT], data: Mapping | Sequence) -> ObjectT:
     try:
-        return type_.parse_obj(data)
+        if isinstance(data, Mapping):
+            return type_.parse_obj(data)
+        elif isinstance(data, Sequence):
+            model_keys = tuple(type_.__fields__.keys())
+            return type_(**dict(zip(model_keys, data)))
+
     except ValidationError as e:
         msg = f'Failed to parse: {e.errors()}'
         raise InvalidDataError(msg, type_, data) from e

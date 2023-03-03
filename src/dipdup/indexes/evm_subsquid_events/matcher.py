@@ -4,6 +4,9 @@ from copy import copy
 from typing import Any
 from typing import Iterable
 
+from eth_abi import decode as decode_abi
+from eth_utils import decode_hex
+
 from dipdup.codegen.evm_subsquid import get_event_log_type
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
@@ -32,8 +35,13 @@ def prepare_event_handler_args(
     )
 
     # FIXME: Decoding here
+    byte_data = decode_hex(matched_event.data)
+    data = decode_abi(
+        ['address', 'address', 'uint256'],
+        byte_data,
+    )
 
-    typed_payload = parse_object(type_, matched_event.data)
+    typed_payload = parse_object(type_, data)
     return SubsquidEvent(
         data=matched_event,
         payload=typed_payload,
