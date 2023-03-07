@@ -47,6 +47,8 @@ def prepare_event_handler_args(
         tag=handler_config.tag,
     )
     with suppress(InvalidDataError):
+        if not matched_event.payload:
+            raise FrameworkException('Event payload is empty')
         typed_payload = parse_object(type_, matched_event.payload)
         return TzktEvent(
             data=matched_event,

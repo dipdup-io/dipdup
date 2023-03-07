@@ -1,5 +1,7 @@
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
+from typing import TypedDict
 from typing import cast
 
 import eth_utils
@@ -34,6 +36,12 @@ _abi_type_map: dict[str, str] = {
 }
 
 
+class EventDict(TypedDict):
+    name: str
+    topic0: str
+    inputs: tuple[str, ...]
+
+
 def _convert_type(abi_type: str) -> str:
     if abi_type in _abi_type_map:
         return _abi_type_map[abi_type]
@@ -57,6 +65,50 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
+    for abi_path in package.abi.glob('**/abi.json'):
+        abi = orjson.loads(abi_path.read_bytes())
+        event_extras: defaultdict[str, EventDict] = defaultdict(dict)
+
+        for abi_item in abi:
+            if abi_item['type'] == 'function':
+                name = abi_item['name']
+                if name not in functions:
+                    continue
+                schema = jsonschema_from_abi(abi_item)
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_functions' / f'{abi_item["name"]}.json'
+            elif abi_item['type'] == 'event':
+                name = abi_item['name']
+                extra = event_extras[name]
+                if extra:
+                    raise NotImplementedError('wow much overload many signatures')
+                extra['name'] = name
+                extra['topic0'] = topic_from_abi(abi_item)
+                extra['inputs'] = inputs_from_abi(abi_item)
+                if name not in events:
+                    continue
+
+                schema = jsonschema_from_abi(abi_item)
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_events' / f'{abi_item["name"]}.json'
+            else:
+                continue
+
+            touch(schema_path)
+            schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
+
+        if event_extras:
+            event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
+            touch(event_extras_path)
+            event_extras_path.write_bytes(orjson.dumps(event_extras, option=orjson.OPT_INDENT_2))
+
+
+def inputs_from_abi(event: dict[str, Any]) -> tuple[str, ...]:
+    if event.get('type') != 'event':
+        raise FrameworkException(f'`{event["name"]}` is not an event')
+
+    return tuple(i['type'] for i in event['inputs'])
+
+
 def topic_from_abi(event: dict[str, Any]) -> str:
     if event.get('type') != 'event':
         raise FrameworkException(f'`{event["name"]}` is not an event')
@@ -75,13 +127,16 @@ class SubsquidCodeGenerator(CodeGenerator):
 
     async def generate_schemas(self) -> None:
         events: set[str] = set()
+        functions: set[str] = set()
+
         for index_config in self._config.indexes.values():
             if isinstance(index_config, SubsquidEventsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
             elif isinstance(index_config, SubsquidOperationsIndexConfig):
                 raise NotImplementedError
-        await self._convert_abi(events, set())
+
+        convert_abi(self._package, events, functions)
 
     # FIXME: tzkt copypaste
     async def generate_types(self, force: bool = False) -> None:
@@ -125,31 +180,6 @@ class SubsquidCodeGenerator(CodeGenerator):
 
             touch(abi_path)
             abi_path.write_bytes(orjson.dumps(abi_json, option=orjson.OPT_INDENT_2))
-
-    async def _convert_abi(self, events: set[str], functions: set[str]) -> None:
-        for path in self._package.abi.glob('**/abi.json'):
-            event_topics: dict[str, str] = {}
-            abi = orjson.loads(path.read_bytes())
-            for item in abi:
-                if item['type'] == 'function' and item['name'] in functions:
-                    schema = jsonschema_from_abi(item)
-                    schema_path = self._package.schemas / path.parent.stem / 'evm_functions' / f'{item["name"]}.json'
-                elif item['type'] == 'event':
-                    event_topics[item['name']] = topic_from_abi(item)
-                    if item['name'] not in events:
-                        continue
-                    schema = jsonschema_from_abi(item)
-                    schema_path = self._package.schemas / path.parent.stem / 'evm_events' / f'{item["name"]}.json'
-                else:
-                    continue
-
-                touch(schema_path)
-                schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
-
-                if event_topics:
-                    topics_path = self._package.abi / path.parent.stem / 'topics.json'
-                    touch(topics_path)
-                    topics_path.write_bytes(orjson.dumps(event_topics, option=orjson.OPT_INDENT_2))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem

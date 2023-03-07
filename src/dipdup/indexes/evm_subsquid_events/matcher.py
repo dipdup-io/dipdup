@@ -4,8 +4,8 @@ from copy import copy
 from typing import Any
 from typing import Iterable
 
-from eth_abi import decode as decode_abi
-from eth_utils import decode_hex
+from eth_abi.abi import decode as decode_abi
+from eth_utils.hexadecimal import decode_hex
 
 from dipdup.codegen.evm_subsquid import get_event_log_type
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig

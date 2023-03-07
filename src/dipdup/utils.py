@@ -193,7 +193,7 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-def parse_object(type_: type[ObjectT], data: Mapping | Sequence) -> ObjectT:
+def parse_object(type_: type[ObjectT], data: Mapping[str, Any] | Sequence[Any]) -> ObjectT:
     try:
         if isinstance(data, Mapping):
             return type_.parse_obj(data)
