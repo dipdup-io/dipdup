@@ -8,7 +8,7 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN <<eot
     apt update
-    apt install -y gcc make git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    apt install -y gcc make git build-essential rustc `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
     pip install --no-cache-dir poetry==1.3.2
 
