@@ -84,3 +84,9 @@ class DipDupPackage:
             if not callable(callback):
                 raise ProjectImportError(f'`{key}` is not a valid callback')
         return IMPORTED_CALLBACKS[key]
+
+    # def get_evm_abi_path(self, name: str) -> Path:
+    #     path = self.abi / f'{name}.json'
+    #     if not path.exists():
+    #         raise ProjectImportError(f'`{path}` does not exist')
+    #     return orjson.loads(path.read_text())

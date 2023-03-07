@@ -198,7 +198,7 @@ def parse_object(type_: type[ObjectT], data: Mapping[str, Any] | Sequence[Any]) 
         if isinstance(data, Mapping):
             return type_.parse_obj(data)
         elif isinstance(data, Sequence):
-            model_keys = tuple(type_.__fields__.keys())
+            model_keys = tuple(field.alias for field in type_.__fields__.values())
             return type_(**dict(zip(model_keys, data)))
 
     except ValidationError as e:

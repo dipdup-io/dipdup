@@ -7,6 +7,7 @@ from typing import Iterable
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
+from dipdup.codegen.evm_subsquid import get_abi_events
 from dipdup.codegen.evm_subsquid import get_event_log_type
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
@@ -28,16 +29,20 @@ def prepare_event_handler_args(
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
+    module_name = handler_config.contract.module_name
+    event_abi = get_abi_events(package, module_name)[handler_config.name]
+    topic1 = decode_hex(matched_event.topic1 or '')
+    topic2 = decode_hex(matched_event.topic2 or '')
+
     type_ = get_event_log_type(
         package=package,
-        typename=handler_config.contract.module_name,
+        typename=module_name,
         name=handler_config.name,
     )
 
-    # FIXME: Decoding here
-    byte_data = decode_hex(matched_event.data)
-    data = decode_abi(
-        ['address', 'address', 'uint256'],
+    byte_data = topic1 + topic2 + decode_hex(matched_event.data)
+    data = decode_abi(  # type: ignore[no-untyped-call]
+        event_abi['inputs'],
         byte_data,
     )
 

@@ -68,7 +68,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
-        event_extras: defaultdict[str, EventDict] = defaultdict(dict)
+        event_extras: defaultdict[str, EventDict] = defaultdict(EventDict)  # type: ignore[arg-type]
 
         for abi_item in abi:
             if abi_item['type'] == 'function':
@@ -201,8 +201,8 @@ def get_event_log_type(package: DipDupPackage, typename: str, name: str) -> Type
 
 
 # FIXME: Move to package
-def get_event_topic(package: DipDupPackage, typename: str, name: str) -> str:
-    abi_path = package.abi / typename / 'topics.json'
+def get_abi_events(package: DipDupPackage, name: str) -> dict[str, EventDict]:
+    abi_path = package.abi / name / 'events.json'
     if not abi_path.exists():
         raise FrameworkException(f'ABI for contract `{name}` not found')
-    return cast(str, orjson.loads(abi_path.read_bytes())[name])
+    return cast(dict[str, EventDict], orjson.loads(abi_path.read_bytes()))
