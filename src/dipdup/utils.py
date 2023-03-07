@@ -193,13 +193,17 @@ def import_from(module: str, obj: str) -> Any:
         raise ProjectImportError(module, obj) from e
 
 
-def parse_object(type_: type[ObjectT], data: Mapping[str, Any] | Sequence[Any]) -> ObjectT:
+def parse_object(
+    type_: type[ObjectT],
+    data: Mapping[str, Any] | Sequence[Any],
+    plain: bool = False,
+) -> ObjectT:
     try:
-        if isinstance(data, Mapping):
+        if plain is False:
             return type_.parse_obj(data)
-        elif isinstance(data, Sequence):
-            model_keys = tuple(field.alias for field in type_.__fields__.values())
-            return type_(**dict(zip(model_keys, data)))
+
+        model_keys = tuple(field.alias for field in type_.__fields__.values())
+        return type_(**dict(zip(model_keys, data)))
 
     except ValidationError as e:
         msg = f'Failed to parse: {e.errors()}'

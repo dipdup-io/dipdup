@@ -46,7 +46,7 @@ def prepare_event_handler_args(
         byte_data,
     )
 
-    typed_payload = parse_object(type_, data)
+    typed_payload = parse_object(type_, data, plain=True)
     return SubsquidEvent(
         data=matched_event,
         payload=typed_payload,

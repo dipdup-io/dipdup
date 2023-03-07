@@ -29,11 +29,11 @@ def prepare_big_map_handler_args(
     key: BaseModel | None = None
     value: BaseModel | None = None
 
-    if matched_big_map.action.has_key and matched_big_map.key:
+    if matched_big_map.action.has_key and matched_big_map.key is not None:
         type_ = get_big_map_key_type(package, handler_config.contract.module_name, handler_config.path)
         key = parse_object(type_, matched_big_map.key) if type_ else None
 
-    if matched_big_map.action.has_value and matched_big_map.value:
+    if matched_big_map.action.has_value and matched_big_map.value is not None:
         type_ = get_big_map_value_type(package, handler_config.contract.module_name, handler_config.path)
         value = parse_object(type_, matched_big_map.value) if type_ else None
 

@@ -5,3 +5,4 @@ class TzipMetadataNetwork(Enum):
     mainnet = 'mainnet'
     ghostnet = 'ghostnet'
     limanet = 'limanet'
+    mumbainet = 'mumbainet'
