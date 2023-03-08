@@ -9,5 +9,6 @@ TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
     'https://api.ghostnet.tzkt.io': 'ghostnet',
     'https://api.limanet.tzkt.io': 'limanet',
+    'https://api.mumbainet.tzkt.io': 'mumbainet',
     'https://staging.api.tzkt.io': 'staging',
 }
