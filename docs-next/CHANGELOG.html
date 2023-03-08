@@ -179,8 +179,13 @@
 <h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.1...HEAD">Unreleased</a></a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
+<li>metadata: Add &quot;mumbainet&quot; to available networks.</li>
 <li>sentry: Fixed bug leading to crash reports not being sent in some cases.</li>
 <li>sentry: Fixed crash report grouping.</li>
+</ul>
+<h3 id="deprecated"><a class="header" href="#deprecated">Deprecated</a></h3>
+<ul>
+<li>ci: <code>-slim</code> images will be based on Ubuntu instead of Alpine in the next major release.</li>
 </ul>
 <h2 id="651---2023-02-21"><a class="header" href="#651---2023-02-21"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1">6.5.1</a> - 2023-02-21</a></h2>
 <h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
@@ -276,7 +281,7 @@
 <li>exceptions: Known exceptions are inherited from <code>FrameworkError</code>.</li>
 <li>tzkt: Some datasource methods have changed their signatures.</li>
 </ul>
-<h3 id="deprecated"><a class="header" href="#deprecated">Deprecated</a></h3>
+<h3 id="deprecated-1"><a class="header" href="#deprecated-1">Deprecated</a></h3>
 <ul>
 <li>config: <code>similar_to.address</code> filter is an alias for <code>originated_contract.code_hash</code> and will be removed in the next major release.</li>
 <li>config: <code>DipDupError</code> is an alias for <code>FrameworkError</code> and will be removed in the next major release.</li>
@@ -326,7 +331,7 @@
 <li>tzkt: Fixed deserializing of <code>EventData</code> and <code>OperationData</code> models.</li>
 <li>tzkt: Fixed matching migration originations by address.</li>
 </ul>
-<h3 id="deprecated-1"><a class="header" href="#deprecated-1">Deprecated</a></h3>
+<h3 id="deprecated-2"><a class="header" href="#deprecated-2">Deprecated</a></h3>
 <ul>
 <li>ci: <code>pytezos</code> extra and corresponding Docker image are deprecated. </li>
 </ul>
@@ -506,7 +511,7 @@
 <ul>
 <li>hasura: Do not apply table customizations to tables from other sources.</li>
 </ul>
-<h3 id="deprecated-2"><a class="header" href="#deprecated-2">Deprecated</a></h3>
+<h3 id="deprecated-3"><a class="header" href="#deprecated-3">Deprecated</a></h3>
 <ul>
 <li>cli: <code>--logging-config</code> option is deprecated.</li>
 <li>cli: All <code>run</code> command flags are deprecated. Use the <code>advanced</code> section of the config.</li>
@@ -593,7 +598,7 @@
 <li>tzkt: Fixed possible data corruption when using the <code>buffer_size</code> option.</li>
 <li>tzkt: Fixed reconnection due to <code>websockets</code> message size limit.</li>
 </ul>
-<h3 id="deprecated-3"><a class="header" href="#deprecated-3">Deprecated</a></h3>
+<h3 id="deprecated-4"><a class="header" href="#deprecated-4">Deprecated</a></h3>
 <ul>
 <li>hooks: The <code>on_rollback</code> default hook is superseded by <code>on_index_rollback</code> and will be removed later.</li>
 </ul>
@@ -760,7 +765,7 @@
 <li>http: Removed dangerous method <code>close_session</code>.</li>
 <li>context: Fixed help message of <code>IndexAlreadyExistsError</code> exception.</li>
 </ul>
-<h3 id="deprecated-4"><a class="header" href="#deprecated-4">Deprecated</a></h3>
+<h3 id="deprecated-5"><a class="header" href="#deprecated-5">Deprecated</a></h3>
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
@@ -935,7 +940,7 @@
 <li>cli: <code>dipdup schema approve</code> command now also causes a recalculation of schema and index config hashes.</li>
 <li>index: DipDup will recalculate respective hashes if reindexing is triggered with <code>config_modified: ignore</code> or <code>schema_modified: ignore</code> in advanced config.</li>
 </ul>
-<h3 id="deprecated-5"><a class="header" href="#deprecated-5">Deprecated</a></h3>
+<h3 id="deprecated-6"><a class="header" href="#deprecated-6">Deprecated</a></h3>
 <ul>
 <li>cli: <code>run --oneshot</code> option is deprecated and will be removed in the next major release. The oneshot mode applies automatically when <code>last_level</code> field is set in the index config.</li>
 <li>cli: <code>clear-cache</code> command is deprecated and will be removed in the next major release. Use <code>cache clear</code> command instead.</li>
