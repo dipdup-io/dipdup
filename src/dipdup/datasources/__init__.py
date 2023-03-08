@@ -97,5 +97,5 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
 
     try:
         return by_config[type(config)](config)
-    except KeyError:
-        raise FrameworkException(f'Unknown datasource type: {type(config)}') from None
+    except KeyError as e:
+        raise FrameworkException(f'Unknown datasource type: {type(config)}') from e
