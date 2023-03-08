@@ -403,4 +403,4 @@ DipDupException = FrameworkException
 DipDupError = Error
 
 
-from dipdup.models import ReindexingReason
+from dipdup.models import ReindexingReason  # noqa: E402

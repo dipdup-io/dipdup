@@ -22,7 +22,7 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.project import BaseProject
 
-project_defaults = BaseProject().get_defaults()
+project_defaults = BaseProject().get_defaults()  # type: ignore[call-arg]
 
 
 def get_docker_client() -> DockerClient:
@@ -127,8 +127,8 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
     fake_client: TestClient = await aiohttp_client(fake_api)
 
     fake_client_url = f'http://{fake_client.server.host}:{fake_client.server.port}'
-    hasura_config = HasuraConfig(fake_client_url)
-    postgres_config = PostgresDatabaseConfig('postgres', 'localhost')
+    hasura_config = HasuraConfig(fake_client_url)  # type: ignore[misc]
+    postgres_config = PostgresDatabaseConfig('postgres', 'localhost')  # type: ignore[misc]
 
     hasura_gateway = HasuraGateway('demo_nft_marketplace', hasura_config, postgres_config)
 

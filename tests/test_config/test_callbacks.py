@@ -55,7 +55,6 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
 
 
 def test_origination_callbacks(contract: TezosContractConfig) -> None:
-
     # NOTE: Typed `origination`
     pattern = OperationsHandlerOriginationPatternConfig(
         originated_contract=contract,

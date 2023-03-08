@@ -877,7 +877,7 @@ class DipDupConfig:
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             if index_config.datasource.merge_subscriptions:
-                index_config.subscriptions.add(TokenTransferSubscription())
+                index_config.subscriptions.add(TokenTransferSubscription())  # type: ignore[call-arg]
             else:
                 for handler_config in index_config.handlers:
                     contract = (
@@ -886,7 +886,7 @@ class DipDupConfig:
                     from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
                     to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
                     index_config.subscriptions.add(
-                        TokenTransferSubscription(
+                        TokenTransferSubscription(  # type: ignore[call-arg]
                             contract=contract, from_=from_, to=to, token_id=handler_config.token_id
                         )
                     )
