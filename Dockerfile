@@ -8,8 +8,8 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
 RUN <<eot
     apt update
-    apt install -y gcc make git build-essential rustc `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
-
+    apt install -y gcc make git curl build-essential `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
+    curl https://sh.rustup.rs -sSf | bash -s -- -y
     pip install --no-cache-dir poetry==1.3.2
 
     mkdir -p /opt/dipdup
@@ -19,6 +19,7 @@ eot
 
 WORKDIR /opt/dipdup
 ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+ENV PATH="/root/.cargo/bin:$PATH"
 
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /opt/dipdup/
 
