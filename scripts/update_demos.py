@@ -28,7 +28,7 @@ for project_path in _get_projects():
         continue
 
     print(f'=> Updating {project_path.name}')
-    project = BaseProject()  # type: ignore[call-arg]
+    project = BaseProject()
     project.run(quiet=True, replay=str(project_path))
     project.render(force=True)
 
