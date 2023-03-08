@@ -35,7 +35,7 @@ black:          ## Format with black
 	poetry run black src tests
 
 ruff:           ## Lint with ruff
-	poetry run ruff check src tests scripts
+	poetry run ruff check src tests
 
 mypy:           ## Lint with mypy
 	poetry run mypy src tests
