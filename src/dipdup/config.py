@@ -1767,9 +1767,8 @@ class DipDupConfig:
             index_config.subscriptions.add(HeadSubscription())
 
         elif isinstance(index_config, TokenTransferIndexConfig):
-            # NOTE: mypy fails to parse "from_" alias
             if self.advanced.merge_subscriptions:
-                index_config.subscriptions.add(TokenTransferSubscription())  # type: ignore[call-arg]
+                index_config.subscriptions.add(TokenTransferSubscription())
             else:
                 for handler_config in index_config.handlers:
                     contract = (
@@ -1778,8 +1777,11 @@ class DipDupConfig:
                     from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
                     to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
                     index_config.subscriptions.add(
-                        TokenTransferSubscription(  # type: ignore[call-arg]
-                            contract=contract, from_=from_, to=to, token_id=handler_config.token_id
+                        TokenTransferSubscription(
+                            contract=contract,
+                            from_=from_,  # type: ignore[call-arg]
+                            to=to,
+                            token_id=handler_config.token_id,
                         )
                     )
 

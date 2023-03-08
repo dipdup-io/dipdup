@@ -84,7 +84,7 @@ class TokenTransferSubscription(Subscription):
     method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
     contract: str | None = None
     token_id: int | None = None
-    from_: str | None = Field(None, alias='from')
+    from_: str | None = Field(default=None, alias='from')
     to: str | None = None
 
     def get_request(self) -> list[dict[str, Any]]:
