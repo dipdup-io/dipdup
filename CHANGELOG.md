@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - sentry: Fixed bug leading to crash reports not being sent in some cases.
 - sentry: Fixed crash report grouping.
 
+### Deprecated
+
+- ci: `-slim` images will be based on Ubuntu instead of Alpine in the next major release.
+
 ## [6.5.1] - 2023-02-21
 
 ### Fixed

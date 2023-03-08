@@ -2,6 +2,10 @@
 
 ## Base images
 
+```admonish warning
+`-pytezos` tag is deprecated and will be removed in the next major release. Also `-slim` images will be based on Ubuntu instead of Alpine.
+```
+
 DipDup provides multiple prebuilt images for different environments hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). Choose the one according to your needs from the table below.
 
 |                             |               default               |                   pytezos                   |                   slim                   |
@@ -9,7 +13,7 @@ DipDup provides multiple prebuilt images for different environments hosted on [D
 | base image                  |          `python:3.10-slim`         |              `python:3.10-slim`             |           `python:3.10-alpine`           |
 | platforms                   |           `amd64`, `arm64`          |               `amd64`, `arm64`              |             `amd64`, `arm64`             |
 | latest tag                  | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
-| image size                  |                 368M                |                     489M                    |                   139M                   |
+| image size                  |                 376M                |                     496M                    |                    97M                   |
 | `dipdup init` command       |                  ✅                  |                      ✅                      |                     ❌                    |
 | `git` and `poetry` included |                  ✅                  |                      ✅                      |                     ❌                    |
 | PyTezos included            |                  ❌                  |                      ✅                      |                     ❌                    |
