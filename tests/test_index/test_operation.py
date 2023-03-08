@@ -46,7 +46,7 @@ async def test_get_origination_filters(
     index_config: OperationIndexConfig,
 ) -> None:
     index_config.handlers = (
-        OperationHandlerConfig(
+        OperationHandlerConfig(  # type: ignore[misc]
             'address_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -60,7 +60,7 @@ async def test_get_origination_filters(
     assert not hashes
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        OperationHandlerConfig(  # type: ignore[misc]
             'hash_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -74,7 +74,7 @@ async def test_get_origination_filters(
     assert hashes == {-1585533315}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        OperationHandlerConfig(  # type: ignore[misc]
             'hash_address_origination',
             (
                 OperationHandlerOriginationPatternConfig(
@@ -88,7 +88,7 @@ async def test_get_origination_filters(
     assert hashes == {-680664524}
 
     index_config.handlers = (
-        OperationHandlerConfig(
+        OperationHandlerConfig(  # type: ignore[misc]
             'address_source',
             (
                 OperationHandlerOriginationPatternConfig(

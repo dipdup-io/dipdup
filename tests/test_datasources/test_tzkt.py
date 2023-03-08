@@ -212,7 +212,7 @@ async def test_signalr_client() -> None:
     async with tzkt_replay(batch_size=1) as tzkt:
         tzkt._http_config.retry_sleep = 0
         signalr_client = tzkt._get_signalr_client()
-        signalr_client.run = fail_mock  # type: ignore[assignment]
+        signalr_client.run = fail_mock  # type: ignore[method-assign]
 
         with pytest.raises(DatasourceError):
             await tzkt.run()
