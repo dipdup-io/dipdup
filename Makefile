@@ -60,13 +60,13 @@ image:          ## Build all Docker images
 	make image-slim
 
 image-default:  ## Build default Docker image
-	docker buildx build . --progress plain -t dipdup:${TAG} --build-arg DIPDUP_DOCKER_IMAGE=default
+	docker buildx build . --load --progress plain -t dipdup:${TAG} --build-arg DIPDUP_DOCKER_IMAGE=default
 
 image-pytezos:  ## Build pytezos Docker image
-	docker buildx build . --progress plain -t dipdup:${TAG}-pytezos --build-arg DIPDUP_DOCKER_IMAGE=pytezos
+	docker buildx build . --load --progress plain -t dipdup:${TAG}-pytezos --build-arg DIPDUP_DOCKER_IMAGE=pytezos
 
 image-slim:     ## Build slim Docker image
-	docker buildx build . --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
+	docker buildx build . --load --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
 
 ##
 
