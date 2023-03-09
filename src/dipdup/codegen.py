@@ -149,7 +149,9 @@ class CodeGenerator:
         await self.verify_package()
 
     @staticmethod
-    def __match_entrypoint_schema(entrypoint_name, entrypoint_schemas) -> dict:
+    def __match_entrypoint_schema(
+        entrypoint_name: str, entrypoint_schemas: list[dict[str, dict[str, Any] | Any]]
+    ) -> dict[str, Any]:
         if entrypoint_name == 'default' and len(entrypoint_schemas) == 1:
             return entrypoint_schemas[0]['parameterSchema']
 
