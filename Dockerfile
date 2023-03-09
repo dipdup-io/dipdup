@@ -10,6 +10,10 @@ RUN <<eot
     apt update
     apt install -y gcc make git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
+    # FIXME: orjson arm64 build
+    curl https://sh.rustup.rs -sSf | sh
+    export PATH="$HOME/.cargo/bin:$PATH"
+
     pip install --no-cache-dir poetry==1.4.0
 
     mkdir -p /opt/dipdup
