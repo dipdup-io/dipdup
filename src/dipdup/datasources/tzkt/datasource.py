@@ -353,7 +353,7 @@ class TzktDatasource(SignalRDatasource):
                 },
             )
             if not response:
-                raise ValueError(f'Contract with code hash `{code_hash}` not found')
+                raise ValueError(f'Contract with code hash `{code_hash}` not found') from None
             address = cast(str, response[0]['address'])
             self._contract_hashes.add(address, code_hash, type_hash)
             return address

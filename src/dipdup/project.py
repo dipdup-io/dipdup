@@ -208,6 +208,7 @@ class Project(BaseModel):
 
 
 class BaseProject(Project):
+    # FIXME: Replace defaults with fields
     path = Path('base')
     description = 'Default DipDup project, ex. cookiecutter template'
     questions: tuple[Question, ...] = (
@@ -285,8 +286,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.19.0',
-                'hasura/graphql-engine:v2.19.0-beta.1',
+                'hasura/graphql-engine:v2.20.0',
+                'hasura/graphql-engine:v2.20.0-beta.1',
             ),
             comments=(
                 'stable',
@@ -311,12 +312,10 @@ class BaseProject(Project):
             default=0,
             choices=(
                 'default',
-                'advanced',
                 'none',
             ),
             comments=(
-                'Classic set: black, isort, flake8, mypy, pytest',
-                'Same, plus coverage and more flake8 plugins',
+                'Classic set: black, isort, ruff, mypy, pytest',
                 'None',
             ),
         ),

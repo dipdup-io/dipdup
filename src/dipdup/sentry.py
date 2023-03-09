@@ -82,7 +82,7 @@ def before_send(
             return None
 
         # NOTE: User-generated events (e.g. from `ctx.logger`)
-        if not event['logger'].startswith('dipdup'):
+        if not event.get('logger', 'dipdup').startswith('dipdup'):
             return None
 
     # NOTE: Dark magic ahead. Merge `CallbackError` and its cause when possible.

@@ -2,6 +2,10 @@
 
 ## Base images
 
+```admonish warning
+`-pytezos` tag is deprecated and will be removed in the next major release. Also `-slim` images will be based on Ubuntu instead of Alpine.
+```
+
 DipDup provides multiple prebuilt images for different environments hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). Choose the one according to your needs from the table below.
 
 |                             |               default               |                   pytezos                   |                   slim                   |

@@ -1781,7 +1781,10 @@ class DipDupConfig:
                     to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
                     index_config.subscriptions.add(
                         TokenTransferSubscription(
-                            contract=contract, from_=from_, to=to, token_id=handler_config.token_id
+                            contract=contract,
+                            from_=from_,  # type: ignore[call-arg]
+                            to=to,
+                            token_id=handler_config.token_id,
                         )
                     )
 

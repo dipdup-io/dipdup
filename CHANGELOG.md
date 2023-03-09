@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [6.5.2] - 2023-03-09
+
+### Fixed
+
+- codegen: Fixed type generation for contracts with "default" entrypoint.
+- metadata: Add "mumbainet" to available networks.
+- sentry: Fixed bug leading to crash reports not being sent in some cases.
+- sentry: Fixed crash report grouping.
+
+### Deprecated
+
+- ci: `-slim` images will be based on Ubuntu instead of Alpine in the next major release.
+
 ## [6.5.1] - 2023-02-21
 
 ### Fixed
@@ -946,7 +959,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.2...HEAD
+[6.5.2]: https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2
 [6.5.1]: https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1
 [6.5.0]: https://github.com/dipdup-io/dipdup/compare/6.4.3...6.5.0
 [6.4.3]: https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3

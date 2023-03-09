@@ -148,6 +148,15 @@ class CodeGenerator:
             await self.cleanup()
         await self.verify_package()
 
+    @staticmethod
+    def __match_entrypoint_schema(
+        entrypoint_name: str, entrypoint_schemas: list[dict[str, dict[str, Any] | Any]]
+    ) -> dict[str, Any]:
+        if entrypoint_name == 'default' and len(entrypoint_schemas) == 1:
+            return entrypoint_schemas[0]['parameterSchema']
+
+        return next(ep['parameterSchema'] for ep in entrypoint_schemas if ep['name'] == entrypoint_name)
+
     async def _fetch_operation_pattern_schema(
         self,
         operation_pattern_config: PatternConfigU,
@@ -195,8 +204,9 @@ class CodeGenerator:
         entrypoint = cast(str, operation_pattern_config.entrypoint)
 
         try:
-            entrypoint_schema = next(
-                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
+            entrypoint_schema = self.__match_entrypoint_schema(
+                entrypoint,
+                contract_schemas['entrypoints'],
             )
         except StopIteration as e:
             raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e

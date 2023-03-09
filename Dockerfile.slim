@@ -9,7 +9,6 @@ RUN rustup update && \
     touch /opt/dipdup/src/dipdup/__init__.py
 WORKDIR /opt/dipdup
 ENV PATH="/opt/dipdup/bin:$PATH"
-ENV PYTHON_PATH="/opt/dipdup/src:$PATH"
 
 COPY pyproject.toml requirements.slim.txt README.md /opt/dipdup/
 

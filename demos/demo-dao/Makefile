@@ -21,7 +21,7 @@ install:        ## Install project dependencies
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 lint:           ## Lint with all tools
-	make isort black flake mypy
+	make isort black ruff mypy
 
 test:           ## Run test suite
 	poetry run pytest tests
@@ -34,8 +34,8 @@ isort:          ## Format with isort
 black:          ## Format with black
 	poetry run black src tests
 
-flake:          ## Lint with flake8
-	poetry run flakeheaven lint src tests
+ruff:           ## Lint with ruff
+	poetry run ruff check src tests
 
 mypy:           ## Lint with mypy
 	poetry run mypy src tests
