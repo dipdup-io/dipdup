@@ -12,7 +12,6 @@ RUN <<eot
 
     # FIXME: orjson arm64 build
     curl https://sh.rustup.rs -sSf | sh -s -- -y
-    export PATH="$HOME/.cargo/bin:$PATH"
 
     pip install --no-cache-dir poetry==1.4.0
 
@@ -22,7 +21,7 @@ RUN <<eot
 eot
 
 WORKDIR /opt/dipdup
-ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+ENV PATH="/opt/dipdup/.venv/bin:$HOME/.cargo/bin:$PATH"
 
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /opt/dipdup/
 
