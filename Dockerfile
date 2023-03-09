@@ -21,7 +21,7 @@ RUN <<eot
 eot
 
 WORKDIR /opt/dipdup
-ENV PATH="/opt/dipdup/.venv/bin:$HOME/.cargo/bin:$PATH"
+ENV PATH="/opt/dipdup/.venv/bin:/root/.cargo/bin:$PATH"
 
 COPY --chown=dipdup Makefile pyproject.toml poetry.lock README.md /opt/dipdup/
 
