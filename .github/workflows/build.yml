@@ -27,11 +27,12 @@ jobs:
     strategy:
       matrix:
         image:
-          # - name: default
-          #   suffix: ''
-          #   platforms: linux/amd64,linux/arm64
-          #   dockerfile: Dockerfile
-          #   build_args: 'DIPDUP_DOCKER_IMAGE=default'
+          # FIXME: Revert after fixing orjson build
+          - name: default
+            suffix: ''
+            platforms: linux/amd64,linux/arm64
+            dockerfile: Dockerfile
+            build_args: 'DIPDUP_DOCKER_IMAGE=default'
 
           # - name: pytezos
           #   suffix: -pytezos

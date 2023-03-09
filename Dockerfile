@@ -10,7 +10,7 @@ RUN <<eot
     apt update
     apt install -y gcc make git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi`
 
-    pip install --no-cache-dir poetry==1.3.2
+    pip install --no-cache-dir poetry==1.4.0
 
     mkdir -p /opt/dipdup
  
@@ -43,7 +43,7 @@ SHELL ["/bin/bash", "-c"]
 
 RUN <<eot
     useradd -ms /bin/bash dipdup
-    pip install --no-cache-dir poetry==1.3.2 setuptools
+    pip install --no-cache-dir poetry==1.4.0 setuptools
 
     apt update
     apt install -y --no-install-recommends git `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo libsodium-dev libsecp256k1-dev libgmp-dev; fi`
