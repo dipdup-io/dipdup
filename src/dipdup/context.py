@@ -13,7 +13,6 @@ from pprint import pformat
 from typing import Any
 from typing import Awaitable
 from typing import Iterator
-from typing import NoReturn
 from typing import TypeVar
 from typing import cast
 
@@ -71,18 +70,21 @@ from dipdup.utils import FormattedLogger
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
-# FIXME: Singletons shared by all contexts
-pending_indexes: deque[Any] = deque()
-pending_hooks: deque[Awaitable[None]] = deque()
-rolled_back_indexes: set[str] = set()
+class StateQueue:
+    pending_indexes: deque[Any] = deque()
+    pending_hooks: deque[Awaitable[None]] = deque()
+    rolled_back_indexes: set[str] = set()
+
+    def __init__(self) -> None:
+        raise FrameworkException('StateQueue is a singleton class')
 
 
 class MetadataCursor:
     _contract = 0
     _token = 0
 
-    def __call__(cls) -> NoReturn:
-        raise NotImplementedError('MetadataCursor is a singleton class')
+    def __init__(self) -> None:
+        raise FrameworkException('MetadataCursor is a singleton class')
 
     @classmethod
     async def initialize(cls) -> None:
@@ -358,7 +360,7 @@ class DipDupContext:
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
-        pending_indexes.append(index)
+        StateQueue.pending_indexes.append(index)
 
     # TODO: disable_index(name: str)
 
@@ -520,7 +522,7 @@ class HookContext(DipDupContext):
                 await update.revert(model)
 
         await Index.filter(name=index).update(level=to_level)
-        rolled_back_indexes.add(index)
+        StateQueue.rolled_back_indexes.add(index)
 
 
 class TemplateValuesdict(dict[str, Any]):
@@ -600,8 +602,8 @@ class CallbackManager:
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
         while True:
-            while pending_hooks:
-                await pending_hooks.popleft()
+            while StateQueue.pending_hooks:
+                await StateQueue.pending_hooks.popleft()
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
@@ -679,7 +681,7 @@ class CallbackManager:
         if wait:
             await _wrapper()
         else:
-            pending_hooks.append(_wrapper())
+            StateQueue.pending_hooks.append(_wrapper())
 
     async def execute_sql(
         self,

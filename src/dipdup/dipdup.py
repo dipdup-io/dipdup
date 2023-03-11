@@ -23,7 +23,7 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
-from dipdup.context import pending_indexes
+from dipdup.context import StateQueue
 from dipdup.database import generate_schema
 from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
@@ -109,8 +109,8 @@ class IndexDispatcher:
             indexes_processed = await gather(*tasks)
 
             indexes_spawned = False
-            while pending_indexes:
-                index = pending_indexes.popleft()
+            while StateQueue.pending_indexes:
+                index = StateQueue.pending_indexes.popleft()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
@@ -143,7 +143,7 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
 
             active, synced, realtime = 0, 0, 0
-            for index in tuple(self._indexes.values()) + tuple(pending_indexes):
+            for index in tuple(self._indexes.values()) + tuple(StateQueue.pending_indexes):
                 active += 1
                 if index.synchronized:
                     synced += 1

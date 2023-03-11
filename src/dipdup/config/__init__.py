@@ -588,16 +588,18 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
+        default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
+    )
     contracts: dict[str, ContractConfigU] = field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = SentryConfig()
+    sentry: SentryConfig = field(default_factory=SentryConfig)
     prometheus: PrometheusConfig | None = None
-    advanced: AdvancedConfig = AdvancedConfig()
+    advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
