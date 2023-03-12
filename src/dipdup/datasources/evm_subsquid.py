@@ -91,7 +91,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
         current_level = first_level
 
-        async def _fetch() -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+        while current_level <= last_level:
             query: Query = {
                 'logs': [
                     {
@@ -100,7 +100,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                         'fieldSelection': _log_fields,
                     }
                 ],
-                'fromBlock': first_level,
+                'fromBlock': current_level,
                 'toBlock': last_level,
             }
 
@@ -110,12 +110,11 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 json=query,
             )
 
-            nonlocal current_level
             current_level = response['nextBlock']
             await self.update_head(response['archiveHeight'])
 
+            logs: list[SubsquidEventData] = []
             for level in response['data']:
-                logs: list[SubsquidEventData] = []
                 for transaction in level:
                     for raw_log in transaction['logs']:
                         logs.append(
@@ -126,11 +125,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                                 level=raw_log['blockNumber'],
                             )
                         )
-                yield tuple(logs)
-
-        while current_level <= last_level:
-            async for level_logs in _fetch():
-                yield level_logs
+            yield tuple(logs)
 
     async def initialize(self) -> None:
         await self.update_head()
