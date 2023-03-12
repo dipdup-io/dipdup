@@ -41,6 +41,13 @@ from dipdup.utils import touch
 from dipdup.utils import write
 
 
+def match_entrypoint_schema(entrypoint_name: str, entrypoint_schemas: list[dict[str, Any]]) -> dict[str, Any]:
+    if entrypoint_name == 'default' and len(entrypoint_schemas) == 1:
+        return entrypoint_schemas[0]['parameterSchema']  # type: ignore[no-any-return]
+
+    return next(ep['parameterSchema'] for ep in entrypoint_schemas if ep['name'] == entrypoint_name)
+
+
 def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     """Preprocess `big_map` sections in JSONSchema.
 
@@ -260,8 +267,9 @@ class TzktCodeGenerator(CodeGenerator):
         entrypoint = cast(str, operation_pattern_config.entrypoint)
 
         try:
-            entrypoint_schema = next(
-                ep['parameterSchema'] for ep in contract_schemas['entrypoints'] if ep['name'] == entrypoint
+            entrypoint_schema = match_entrypoint_schema(
+                entrypoint,
+                contract_schemas['entrypoints'],
             )
         except StopIteration as e:
             raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e

@@ -54,7 +54,7 @@ class TransactionManager:
 
                 if level and index and self._depth:
                     if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.VersionedTransaction(  # type: ignore[misc]
+                        self._transaction = dipdup.models.VersionedTransaction(
                             level,
                             index,
                             self._immune_tables,
