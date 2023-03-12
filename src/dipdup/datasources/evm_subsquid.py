@@ -67,7 +67,6 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
-        self._event_levels: dict[str, int] = {}
 
     async def run(self) -> None:
         # FIXME: No true realtime yet
@@ -83,48 +82,6 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for subscription in index_config.subscriptions:
             self._subscriptions.add(subscription)
 
-    async def get_event_logs(
-        self,
-        addresses: set[str] | None,
-        topics: set[str] | None,
-        first_level: int,
-        last_level: int,
-    ) -> tuple[SubsquidEventData, ...]:
-        query: Query = {
-            'logs': [
-                {
-                    'address': list(addresses or ()),
-                    'topics': [list(topics or ())],
-                    'fieldSelection': _log_fields,
-                }
-            ],
-            'fromBlock': first_level,
-            'toBlock': last_level,
-        }
-
-        response: dict[str, Any] = await self.request(
-            'post',
-            url='query',
-            json=query,
-        )
-
-        key = f'{addresses}{topics}{last_level}'
-        self._event_levels[key] = response['nextBlock']
-        await self.update_head(response['archiveHeight'])
-
-        # FIXME: Why so nested?
-        raw_logs = response['data'][0][0]['logs']
-
-        return tuple(
-            SubsquidEventData(
-                address=raw_log['address'],
-                data=raw_log['data'],
-                topics=raw_log['topics'],
-                level=raw_log['blockNumber'],
-            )
-            for raw_log in raw_logs
-        )
-
     async def iter_event_logs(
         self,
         addresses: set[str],
@@ -133,20 +90,47 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         last_level: int,
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
         current_level = first_level
-        while current_level <= last_level:
-            logs = await self.get_event_logs(
-                addresses,
-                topics,
-                current_level,
-                last_level,
+
+        async def _fetch() -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+            query: Query = {
+                'logs': [
+                    {
+                        'address': list(addresses or ()),
+                        'topics': [list(topics or ())],
+                        'fieldSelection': _log_fields,
+                    }
+                ],
+                'fromBlock': first_level,
+                'toBlock': last_level,
+            }
+
+            response: dict[str, Any] = await self.request(
+                'post',
+                url='query',
+                json=query,
             )
-            if not logs:
-                return
 
-            yield logs
+            nonlocal current_level
+            current_level = response['nextBlock']
+            await self.update_head(response['archiveHeight'])
 
-            key = f'{addresses}{topics}{last_level}'
-            current_level = self._event_levels[key]
+            for level in response['data']:
+                logs: list[SubsquidEventData] = []
+                for transaction in level:
+                    for raw_log in transaction['logs']:
+                        logs.append(
+                            SubsquidEventData(
+                                address=raw_log['address'],
+                                data=raw_log['data'],
+                                topics=raw_log['topics'],
+                                level=raw_log['blockNumber'],
+                            )
+                        )
+                yield tuple(logs)
+
+        while current_level <= last_level:
+            async for level_logs in _fetch():
+                yield level_logs
 
     async def initialize(self) -> None:
         await self.update_head()

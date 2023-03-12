@@ -12,6 +12,7 @@ from dipdup.subscriptions import Subscription
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 
 
+# FIXME: Outdated values
 class SubsquidMessageType(Enum):
     """Enum for filenames in squid archives"""
 
@@ -45,8 +46,8 @@ class SubsquidOperation:
 
 
 @dataclass(frozen=True)
-class EventLogSubscription(Subscription):
-    type: Literal['event_log'] = 'event_log'
+class ArchiveSubscription(Subscription):
+    type: Literal['archive'] = 'archive'
     method = ''
 
     def get_request(self) -> list[dict[str, Any]]:
