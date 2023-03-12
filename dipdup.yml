@@ -8,7 +8,9 @@ datasources:
 
   subsquid_eth_mainnet:
     kind: evm.subsquid
-    url: ${ARCHIVE_URI:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    # url: ${ARCHIVE_URI:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    url: ${ARCHIVE_URI:-https://eth.archive.subsquid.io}
+    # url: ${ARCHIVE_URI:-http://127.0.0.1:8080}
     node_url: ${INFURA_URI:-}
 
 contracts:

@@ -4,7 +4,6 @@ from typing import Any
 from typing import AsyncIterator
 from typing import TypedDict
 
-import aiohttp
 import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
 
@@ -12,10 +11,8 @@ from dipdup.config import HttpConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
-from dipdup.http import _HTTPGateway
-from dipdup.models.evm_subsquid import EventLogSubscription
+from dipdup.exceptions import DatasourceError
 from dipdup.models.evm_subsquid import SubsquidEventData
-from dipdup.models.evm_subsquid import SubsquidMessageType
 
 FieldMap = dict[str, bool]
 
@@ -28,7 +25,8 @@ class FieldSelection(TypedDict):
 
 class LogFilter(TypedDict):
     address: NotRequired[list[str]]
-    topic0: NotRequired[list[str]]
+    topics: NotRequired[list[list[str]]]
+    fieldSelection: NotRequired[FieldSelection]
 
 
 class TxFilter(TypedDict):
@@ -37,7 +35,6 @@ class TxFilter(TypedDict):
 
 
 class Query(TypedDict):
-    fields: NotRequired[FieldSelection]
     logs: NotRequired[list[LogFilter]]
     transactions: NotRequired[list[TxFilter]]
     fromBlock: NotRequired[int]
@@ -46,8 +43,10 @@ class Query(TypedDict):
 
 _log_fields: FieldSelection = {
     'log': {
-        'topics': True,
+        'address': True,
+        'blockNumber': True,
         'data': True,
+        'topics': True,
     },
 }
 
@@ -88,44 +87,36 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         last_level: int,
     ) -> tuple[SubsquidEventData, ...]:
         query: Query = {
-            'fields': _log_fields,
             'logs': [
                 {
                     'address': list(addresses or ()),
-                    'topic0': list(topics or ()),
+                    'topics': [list(topics or ())],
+                    'fieldSelection': _log_fields,
                 }
             ],
             'fromBlock': first_level,
             'toBlock': last_level,
         }
 
-        worker_url: str = (await self.request('get', f'{first_level}/worker')).decode()
-        worker_http = _HTTPGateway(
-            url=worker_url,
-            config=self._http_config,
+        response: dict[str, Any] = await self.request(
+            'post',
+            url='query',
+            json=query,
         )
-        async with worker_http:
-            response: aiohttp.ClientResponse = await worker_http._request(
-                'post',
-                '',
-                1,
-                True,
-                json=query,
-            )
-            if response.status != 200:
-                raise Exception(f'Unexpected response status: {response.status}')
 
-            current_level = int(response.headers['x-sqd-last-processed-block'])
-            key = f'{addresses}{topics}{first_level}{last_level}'
-            self._event_levels[key] = current_level
+        key = f'{addresses}{topics}{last_level}'
+        self._event_levels[key] = response['nextBlock']
+        await self.update_head(response['archiveHeight'])
 
-            data = unpack_data(response._body)
-            raw_logs = data.get(SubsquidMessageType.logs.value, [])
+        # FIXME: Why so nested?
+        raw_logs = response['data'][0][0]['logs']
 
         return tuple(
             SubsquidEventData(
-                level=raw_log['block_number'],
-                **raw_log,
+                address=raw_log['address'],
+                data=raw_log['data'],
+                topics=raw_log['topics'],
+                level=raw_log['blockNumber'],
             )
             for raw_log in raw_logs
         )
@@ -150,12 +141,17 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             yield logs
 
-            key = f'{addresses}{topics}{first_level}{last_level}'
-            current_level = self._event_levels[key] + 1
+            key = f'{addresses}{topics}{last_level}'
+            current_level = self._event_levels[key]
 
     async def initialize(self) -> None:
-        self._subscriptions.add(EventLogSubscription())
-        self.set_sync_level(
-            subscription=EventLogSubscription(),
-            level=1_000_000,
-        )
+        await self.update_head()
+
+    async def update_head(self, level: int | None = None) -> None:
+        if level is None:
+            response = await self.request('get', 'height')
+            level = response.get('height')
+
+        if level is None:
+            raise DatasourceError('Archive is not ready yet', self.name)
+        self.set_sync_level(None, level)

@@ -21,14 +21,15 @@ class SubsquidMessageType(Enum):
 
 @dataclass
 class SubsquidEventData:
-    block_number: int
-    log_index: int
-    transaction_index: int
-    topic0: str
-    topic1: str | None
-    topic2: str | None
-    topic3: str | None
+    address: str
+    # block_hash: str
+    # block_number: int
     data: str
+    # index: int
+    # removed: bool
+    topics: tuple[str, ...]
+    # transaction_hash: str
+    # transaction_index: int
     # FIXME: temporary field for HasLevel protocol, set somewhere
     level: int
 

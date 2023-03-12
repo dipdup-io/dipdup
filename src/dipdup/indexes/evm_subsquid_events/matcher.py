@@ -11,7 +11,7 @@ from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
-from dipdup.utils import parse_object
+from dipdup.utils import parse_object, pascal_to_snake
 
 _logger = logging.getLogger('dipdup.matcher')
 
@@ -27,14 +27,14 @@ def prepare_event_handler_args(
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
-    module_name = handler_config.contract.module_name
-    event_abi = package.get_evm_events(module_name)[handler_config.name]
-    topic1 = decode_hex(matched_event.topic1 or '')
-    topic2 = decode_hex(matched_event.topic2 or '')
+    typename = handler_config.contract.module_name
+    event_abi = package.get_evm_events(typename)[handler_config.name]
+    topic1 = decode_hex(matched_event.topics[1] or '')
+    topic2 = decode_hex(matched_event.topics[2] or '')
 
     type_ = package.get_type(
-        typename=module_name,
-        module='evm_events',
+        typename=typename,
+        module=f'evm_events.{pascal_to_snake(handler_config.name)}',
         name=handler_config.name,
     )
 
@@ -53,7 +53,7 @@ def prepare_event_handler_args(
 
 def match_event(handler_config: SubsquidEventsHandlerConfig, event: SubsquidEventData, topics: dict[str, str]) -> bool:
     """Match single contract event with pattern"""
-    return topics[handler_config.name] == event.topic0
+    return topics[handler_config.name] == event.topics[0]
 
 
 def match_events(
