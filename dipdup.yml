@@ -39,7 +39,6 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
-    first_level: 16_000_000
-    last_level: 16_744_000
+    first_level: 16_814_174
 
 logging: verbose

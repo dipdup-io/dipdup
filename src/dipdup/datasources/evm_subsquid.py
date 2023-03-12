@@ -1,3 +1,4 @@
+import asyncio
 import zipfile
 from io import BytesIO
 from typing import Any
@@ -69,7 +70,10 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         self._event_levels: dict[str, int] = {}
 
     async def run(self) -> None:
-        pass
+        # FIXME: No true realtime yet
+        while True:
+            await asyncio.sleep(1)
+            await self.update_head()
 
     async def subscribe(self) -> None:
         pass

@@ -11,7 +11,8 @@ from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
-from dipdup.utils import parse_object, pascal_to_snake
+from dipdup.utils import parse_object
+from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.matcher')
 
