@@ -239,7 +239,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 await response.read()
                 return response
 
-            # FIXME: TzKT stuff
+            # NOTE: Use raw=True if fail on 204 is not a desired behavior
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):

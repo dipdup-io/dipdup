@@ -1,14 +1,12 @@
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
-from typing import TypedDict
 from typing import cast
 
 import eth_utils
 import orjson
 
 from dipdup.codegen import CodeGenerator
-from dipdup.codegen import TypeClass
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
@@ -17,8 +15,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
-from dipdup.utils import pascal_to_snake
-from dipdup.utils import snake_to_pascal
+from dipdup.package import EventDict
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -34,12 +31,6 @@ _abi_type_map: dict[str, str] = {
     # https://docs.soliditylang.org/en/develop/abi-spec.html#types
     'tuple': 'object',
 }
-
-
-class EventDict(TypedDict):
-    name: str
-    topic0: str
-    inputs: tuple[str, ...]
 
 
 def _convert_type(abi_type: str) -> str:
@@ -191,18 +182,3 @@ class SubsquidCodeGenerator(CodeGenerator):
         # else:
         #     class_name = module_name
         return module_name
-
-
-def get_event_log_type(package: DipDupPackage, typename: str, name: str) -> TypeClass:
-    name = pascal_to_snake(name.replace('.', '_'))
-    module_name = f'evm_events.{name}'
-    cls_name = snake_to_pascal(name)
-    return package.get_type(typename, module_name, cls_name)
-
-
-# FIXME: Move to package
-def get_abi_events(package: DipDupPackage, name: str) -> dict[str, EventDict]:
-    abi_path = package.abi / name / 'events.json'
-    if not abi_path.exists():
-        raise FrameworkException(f'ABI for contract `{name}` not found')
-    return cast(dict[str, EventDict], orjson.loads(abi_path.read_bytes()))

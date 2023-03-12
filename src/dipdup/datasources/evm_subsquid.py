@@ -65,6 +65,10 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     _default_http_config = HttpConfig()
 
+    def __init__(self, config: SubsquidDatasourceConfig) -> None:
+        super().__init__(config, False)
+        self._event_levels: dict[str, int] = {}
+
     async def run(self) -> None:
         pass
 
@@ -111,9 +115,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             if response.status != 200:
                 raise Exception(f'Unexpected response status: {response.status}')
 
-            # FIXME: Getter modifies state; fix asap!
             current_level = int(response.headers['x-sqd-last-processed-block'])
-            self.set_sync_level(EventLogSubscription(), current_level)
+            key = f'{addresses}{topics}{first_level}{last_level}'
+            self._event_levels[key] = current_level
 
             data = unpack_data(response._body)
             raw_logs = data.get(SubsquidMessageType.logs.value, [])
@@ -146,11 +150,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             yield logs
 
-            # FIXME: Getter modifies state; fix asap!
-            sync_level = self.get_sync_level(EventLogSubscription())
-            if sync_level is None:
-                raise RuntimeError('sync level is not set')
-            current_level = sync_level + 1
+            key = f'{addresses}{topics}{first_level}{last_level}'
+            current_level = self._event_levels[key] + 1
 
     async def initialize(self) -> None:
         self._subscriptions.add(EventLogSubscription())

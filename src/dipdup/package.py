@@ -1,7 +1,12 @@
+from functools import lru_cache
 from pathlib import Path
+from typing import Any
 from typing import Awaitable
 from typing import Callable
+from typing import TypedDict
+from typing import cast
 
+import orjson
 from pydantic import BaseModel
 
 from dipdup.exceptions import ProjectImportError
@@ -16,8 +21,10 @@ PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 
 
-IMPORTED_TYPES: dict[str, type[BaseModel]] = {}
-IMPORTED_CALLBACKS: dict[str, Callable[..., Awaitable[None]]] = {}
+class EventDict(TypedDict):
+    name: str
+    topic0: str
+    inputs: tuple[str, ...]
 
 
 class DipDupPackage:
@@ -33,6 +40,11 @@ class DipDupPackage:
         self.sql = root / 'sql'
         self.graphql = root / 'graphql'
         self.hasura = root / 'hasura'
+
+        self.get_callback = lru_cache(maxsize=10_000)(self.get_callback)  # type: ignore[method-assign]
+        self.get_type = lru_cache(maxsize=10_000)(self.get_type)  # type: ignore[method-assign]
+        self.get_evm_abi = lru_cache(maxsize=10_000)(self.get_evm_abi)  # type: ignore[method-assign]
+        self.get_evm_events = lru_cache(maxsize=10_000)(self.get_evm_events)  # type: ignore[method-assign]
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -69,24 +81,26 @@ class DipDupPackage:
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         path = f'{self.name}.types.{typename}.{module}'
-        key = f'{path}.{name}'
-        if key not in IMPORTED_TYPES:
-            type_ = IMPORTED_TYPES[key] = import_from(path, name)
-            if not isinstance(type_, type):
-                raise ProjectImportError(f'`{key}` is not a valid type')
-        return IMPORTED_TYPES[key]
+        type_ = import_from(path, name)
+        if not isinstance(type_, type):
+            raise ProjectImportError(f'`{path}.{name}` is not a valid type')
+        return type_
 
     def get_callback(self, kind: str, module: str, name: str) -> Callable[..., Awaitable[None]]:
         path = f'{self.name}.{kind}.{module}'
-        key = f'{path}.{name}'
-        if key not in IMPORTED_CALLBACKS:
-            callback = IMPORTED_CALLBACKS[key] = import_from(path, name)
-            if not callable(callback):
-                raise ProjectImportError(f'`{key}` is not a valid callback')
-        return IMPORTED_CALLBACKS[key]
+        callback = import_from(path, name)
+        if not callable(callback):
+            raise ProjectImportError(f'`{path}.{name}` is not a valid callback')
+        return cast(Callable[..., Awaitable[None]], callback)
 
-    # def get_evm_abi_path(self, name: str) -> Path:
-    #     path = self.abi / f'{name}.json'
-    #     if not path.exists():
-    #         raise ProjectImportError(f'`{path}` does not exist')
-    #     return orjson.loads(path.read_text())
+    def get_evm_abi(self, typename: str) -> dict[str, Any]:
+        path = self.abi / typename / 'abi.json'
+        if not path.exists():
+            raise ProjectImportError(f'`{path}` does not exist')
+        return cast(dict[str, Any], orjson.loads(path.read_text()))
+
+    def get_evm_events(self, typename: str) -> dict[str, EventDict]:
+        path = self.abi / typename / 'events.json'
+        if not path.exists():
+            raise ProjectImportError(f'`{path}` does not exist')
+        return cast(dict[str, EventDict], orjson.loads(path.read_text()))

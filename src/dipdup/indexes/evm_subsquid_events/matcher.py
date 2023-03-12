@@ -7,8 +7,6 @@ from typing import Iterable
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
-from dipdup.codegen.evm_subsquid import get_abi_events
-from dipdup.codegen.evm_subsquid import get_event_log_type
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
@@ -30,13 +28,13 @@ def prepare_event_handler_args(
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     module_name = handler_config.contract.module_name
-    event_abi = get_abi_events(package, module_name)[handler_config.name]
+    event_abi = package.get_evm_events(module_name)[handler_config.name]
     topic1 = decode_hex(matched_event.topic1 or '')
     topic2 = decode_hex(matched_event.topic2 or '')
 
-    type_ = get_event_log_type(
-        package=package,
+    type_ = package.get_type(
         typename=module_name,
+        module='evm_events',
         name=handler_config.name,
     )
 
@@ -55,13 +53,7 @@ def prepare_event_handler_args(
 
 def match_event(handler_config: SubsquidEventsHandlerConfig, event: SubsquidEventData, topics: dict[str, str]) -> bool:
     """Match single contract event with pattern"""
-
-    # FIXME: No topic-name mapping here; set on config load
-    # if handler_config.topic != event.topic0:
-    #     return False
-    # if handler_config.contract.address != event.address:
-    #     return False
-    return True
+    return topics[handler_config.name] == event.topic0
 
 
 def match_events(
@@ -74,9 +66,11 @@ def match_events(
     events = deque(events)
 
     for handler_config in handlers:
+        topics = {k: v['topic0'] for k, v in package.get_evm_events(handler_config.contract.module_name).items()}
+
         # NOTE: Matched events are dropped after processing
         for event in copy(events):
-            if not match_event(handler_config, event, {}):
+            if not match_event(handler_config, event, topics):
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)

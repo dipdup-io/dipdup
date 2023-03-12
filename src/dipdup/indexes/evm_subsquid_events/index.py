@@ -1,7 +1,6 @@
 from contextlib import ExitStack
 from typing import Any
 
-from dipdup.codegen.evm_subsquid import get_abi_events
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
@@ -93,7 +92,7 @@ class SubsquidEventsIndex(
         """Get tags to fetch events during initial synchronization"""
         topics = set()
         for handler_config in self._config.handlers:
-            event_abi = get_abi_events(self._ctx.package, handler_config.contract.module_name)[handler_config.name]
+            event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
             topics.add(event_abi['topic0'])
         return topics
 
