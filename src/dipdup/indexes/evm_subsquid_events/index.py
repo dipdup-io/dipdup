@@ -42,8 +42,16 @@ class SubsquidEventsIndex(
         await self._exit_sync_state(sync_level)
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventLogFetcher:
-        addresses = self._get_addresses()
-        topics = self._get_topics()
+        """Get addresses to fetch events during initial synchronization"""
+        addresses = set()
+        topics = set()
+
+        for handler_config in self._config.handlers:
+            addresses.add(handler_config.contract.address)
+
+            event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
+            topics.add(event_abi['topic0'])
+
         return EventLogFetcher(
             datasource=self._datasource,
             first_level=first_level,
@@ -80,21 +88,6 @@ class SubsquidEventsIndex(
             for handler_config, event in matched_handlers:
                 await self._call_matched_handler(handler_config, event)
             await self._update_state(level=batch_level)
-
-    def _get_addresses(self) -> set[str]:
-        """Get addresses to fetch events during initial synchronization"""
-        addresses = set()
-        for handler_config in self._config.handlers:
-            addresses.add(handler_config.contract.address)
-        return addresses
-
-    def _get_topics(self) -> set[str]:
-        """Get tags to fetch events during initial synchronization"""
-        topics = set()
-        for handler_config in self._config.handlers:
-            event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
-            topics.add(event_abi['topic0'])
-        return topics
 
     async def _call_matched_handler(
         self,

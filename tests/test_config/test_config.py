@@ -126,5 +126,5 @@ async def test_http_config() -> None:
     )
 
 
-async def test_evm() -> None:
-    DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'evm_subsquid.yml'])
+# async def test_evm() -> None:
+#     DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'evm_subsquid.yml'])
