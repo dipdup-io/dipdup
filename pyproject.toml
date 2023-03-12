@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "6.5.1"
+version = "6.5.2"
 license = "MIT"
 authors = [
     "Lev Gorodetskiy <dipdup@drsr.io>",
@@ -32,7 +32,7 @@ python = ">=3.10,<3.11"
 
 asyncpg = "0.27.0"
 datamodel-code-generator = "0.17.1"
-pydantic = "1.10.5"
+pydantic = "1.10.6"
 pysignalr = "0.1.2"
 tortoise-orm = "0.19.3"
 

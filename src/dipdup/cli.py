@@ -541,7 +541,7 @@ async def new(
     """Create a new project interactively."""
     from dipdup.project import BaseProject
 
-    project = BaseProject()  # type: ignore[call-arg]
+    project = BaseProject()
     project.run(quiet, replay)
     project.render(force)
 
