@@ -11,8 +11,6 @@ from typing import Type
 from tabulate import tabulate
 from tortoise.models import Model
 
-from dipdup import spec_version_mapping
-
 tab = ('_' * 80) + '\n\n'
 
 
@@ -169,6 +167,8 @@ class MigrationRequiredError(Error):
     reindex: bool = False
 
     def _help(self) -> str:
+        from dipdup.cli import spec_version_mapping
+
         version_table = tabulate(
             [
                 ['current', self.from_, spec_version_mapping[self.from_]],

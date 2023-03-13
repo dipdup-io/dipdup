@@ -18,8 +18,6 @@ import asyncclick as click
 from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import env
-from dipdup import spec_reindex_mapping
-from dipdup import spec_version_mapping
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
@@ -28,6 +26,16 @@ DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
 
 _logger = logging.getLogger('dipdup.cli')
+
+
+spec_version_mapping = {
+    '1.2': '>=3.0, <7.0',
+    '2.0': '>=7.0',
+}
+spec_reindex_mapping = {
+    '1.2': True,
+    '2.0': True,
+}
 
 
 def echo(message: str) -> None:
