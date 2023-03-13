@@ -43,8 +43,8 @@ An `Origination` model contains the origination script, initial storage (typed),
 A _Big\_map_ update handler will look like the following:
 
 ```python
-from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.<typename>.big_map.<path>_value import PathValue
+from <package>.types.<typename>.tezos_big_maps.<path>_key import PathKey
+from <package>.types.<typename>.tezos_big_maps.<path>_value import PathValue
 
 
 async def on_update(
@@ -72,8 +72,8 @@ A typical imports section of `big_map` handler callback looks like this:
 ```python
 from <package>.types.<typename>.storage import TypeNameStorage
 from <package>.types.<typename>.parameter.<entrypoint> import EntryPointParameter
-from <package>.types.<typename>.big_map.<path>_key import PathKey
-from <package>.types.<typename>.big_map.<path>_value import PathValue
+from <package>.types.<typename>.tezos_big_maps.<path>_key import PathKey
+from <package>.types.<typename>.tezos_big_maps.<path>_value import PathValue
 ```
 
 Here `typename` is defined in the contract inventory, `entrypoint` is specified in the handler pattern, and `path` is in the handler config.
