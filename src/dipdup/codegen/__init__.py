@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
-from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import FrameworkException
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
