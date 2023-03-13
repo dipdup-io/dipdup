@@ -2,27 +2,17 @@
 
 ## Base images
 
-```admonish warning
-`-pytezos` tag is deprecated and will be removed in the next major release. Also `-slim` images will be based on Ubuntu instead of Alpine.
-```
-
 DipDup provides multiple prebuilt images for different environments hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). Choose the one according to your needs from the table below.
 
-|                             |               default               |                   pytezos                   |                   slim                   |
-| --------------------------- |:-----------------------------------:|:-------------------------------------------:|:----------------------------------------:|
-| base image                  |          `python:3.10-slim`         |              `python:3.10-slim`             |           `python:3.10-alpine`           |
-| platforms                   |           `amd64`, `arm64`          |               `amd64`, `arm64`              |             `amd64`, `arm64`             |
-| latest tag                  | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-pytezos` | `{{ cookiecutter.dipdup_version }}-slim` |
-| image size                  |                 376M                |                     496M                    |                    97M                   |
-| `dipdup init` command       |                  ✅                  |                      ✅                      |                     ❌                    |
-| `git` and `poetry` included |                  ✅                  |                      ✅                      |                     ❌                    |
-| PyTezos included            |                  ❌                  |                      ✅                      |                     ❌                    |
+|                       |               default               |                   slim                   |
+| --------------------- |:-----------------------------------:|:----------------------------------------:|
+| base image            |          `python:3.10-slim`         |           `python:3.10-alpine`           |
+| platforms             |           `amd64`, `arm64`          |             `amd64`, `arm64`             |
+| latest tag            | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-slim` |
+| image size            |                 376M                |                    97M                   |
+| `dipdup init` command |                  ✅                  |                     ❌                    |
 
-The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image.
-
-`-slim` image based on Alpine Linux, thus is much smaller than the default one. Also, it doesn't include codegen functionality (`init` command, unlikely to be useful in production). This image will eventually become the default one.
-
-`-pytezos` image includes pre-installed PyTezos library. DipDup doesn't provide any further PyTezos integration. Having some patience, you can build a trading robot or something like that using this image.
+The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image. `-slim` doesn't include codegen functionality (`init` command, unlikely to be useful in production).
 
 ### Nightly builds (ghcr.io)
 
@@ -47,7 +37,6 @@ A typical Dockerfile looks like this:
 {{ #include ../../src/dipdup/projects/base/Dockerfile.j2 }}
 ```
 
-Note that Poetry integration is not available in the slim image.
 
 ## Deploying with `docker-compose`
 
