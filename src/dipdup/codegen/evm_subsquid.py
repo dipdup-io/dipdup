@@ -15,7 +15,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
-from dipdup.package import EventDict
+from dipdup.package import EventAbiExtra
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -59,7 +59,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
-        event_extras: defaultdict[str, EventDict] = defaultdict(EventDict)  # type: ignore[arg-type]
+        event_extras: defaultdict[str, EventAbiExtra] = defaultdict(EventAbiExtra)  # type: ignore[arg-type]
 
         for abi_item in abi:
             if abi_item['type'] == 'function':

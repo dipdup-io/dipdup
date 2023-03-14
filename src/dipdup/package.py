@@ -21,7 +21,7 @@ PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 
 
-class EventDict(TypedDict):
+class EventAbiExtra(TypedDict):
     name: str
     topic0: str
     inputs: tuple[str, ...]
@@ -99,8 +99,8 @@ class DipDupPackage:
             raise ProjectImportError(f'`{path}` does not exist')
         return cast(dict[str, Any], orjson.loads(path.read_text()))
 
-    def get_evm_events(self, typename: str) -> dict[str, EventDict]:
+    def get_evm_events(self, typename: str) -> dict[str, EventAbiExtra]:
         path = self.abi / typename / 'events.json'
         if not path.exists():
             raise ProjectImportError(f'`{path}` does not exist')
-        return cast(dict[str, EventDict], orjson.loads(path.read_text()))
+        return cast(dict[str, EventAbiExtra], orjson.loads(path.read_text()))

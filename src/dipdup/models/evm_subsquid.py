@@ -20,7 +20,7 @@ class SubsquidMessageType(Enum):
     logs = 'logs.arrow_stream'
 
 
-@dataclass
+@dataclass(frozen=True)
 class SubsquidEventData:
     address: str
     # block_hash: str
@@ -29,10 +29,26 @@ class SubsquidEventData:
     # index: int
     # removed: bool
     topics: tuple[str, ...]
+    # TODO: Either hash or id required for merging logs into txs (for operation index)
     # transaction_hash: str
     # transaction_index: int
-    # FIXME: temporary field for HasLevel protocol, set somewhere
     level: int
+
+    @classmethod
+    def from_json(
+        cls,
+        event_json: dict[str, Any],
+    ) -> 'SubsquidEventData':
+        return SubsquidEventData(
+            address=event_json['address'],
+            data=event_json['data'],
+            topics=tuple(event_json['topics']),
+            level=event_json['blockNumber'],
+        )
+
+    @property
+    def block_number(self) -> int:
+        return self.level
 
 
 @dataclass

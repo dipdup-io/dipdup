@@ -11,6 +11,7 @@ from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
+from dipdup.package import EventAbiExtra
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 
@@ -18,6 +19,14 @@ _logger = logging.getLogger('dipdup.matcher')
 
 
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
+
+
+def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> Any:
+    byte_data = b''.join([decode_hex(topic) for topic in topics[1:]]) + decode_hex(data)
+    return decode_abi(  # type: ignore[no-untyped-call]
+        event_abi['inputs'],
+        byte_data,
+    )
 
 
 def prepare_event_handler_args(
@@ -30,8 +39,6 @@ def prepare_event_handler_args(
 
     typename = handler_config.contract.module_name
     event_abi = package.get_evm_events(typename)[handler_config.name]
-    topic1 = decode_hex(matched_event.topics[1] or '')
-    topic2 = decode_hex(matched_event.topics[2] or '')
 
     type_ = package.get_type(
         typename=typename,
@@ -39,20 +46,28 @@ def prepare_event_handler_args(
         name=handler_config.name,
     )
 
-    byte_data = topic1 + topic2 + decode_hex(matched_event.data)
-    data = decode_abi(  # type: ignore[no-untyped-call]
-        event_abi['inputs'],
-        byte_data,
+    data = decode_event_data(
+        data=matched_event.data,
+        topics=matched_event.topics,
+        event_abi=event_abi,
     )
 
-    typed_payload = parse_object(type_, data, plain=True)
+    typed_payload = parse_object(
+        type_=type_,
+        data=data,
+        plain=True,
+    )
     return SubsquidEvent(
         data=matched_event,
         payload=typed_payload,
     )
 
 
-def match_event(handler_config: SubsquidEventsHandlerConfig, event: SubsquidEventData, topics: dict[str, str]) -> bool:
+def match_event(
+    handler_config: SubsquidEventsHandlerConfig,
+    event: SubsquidEventData,
+    topics: dict[str, str],
+) -> bool:
     """Match single contract event with pattern"""
     return topics[handler_config.name] == event.topics[0]
 

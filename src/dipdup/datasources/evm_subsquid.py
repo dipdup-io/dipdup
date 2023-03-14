@@ -118,12 +118,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 for transaction in level:
                     for raw_log in transaction['logs']:
                         logs.append(
-                            SubsquidEventData(
-                                address=raw_log['address'],
-                                data=raw_log['data'],
-                                topics=raw_log['topics'],
-                                level=raw_log['blockNumber'],
-                            )
+                            SubsquidEventData.from_json(raw_log),
                         )
             yield tuple(logs)
 
