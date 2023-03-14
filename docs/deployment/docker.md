@@ -1,29 +1,23 @@
 # Running in Docker
 
-## Base images
+DipDup provides prebuilt Docker images hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). They are based on `python:3.10-slim` image and support both amd64 and arm64 architectures.
 
-DipDup provides multiple prebuilt images for different environments hosted on [Docker Hub](https://hub.docker.com/r/dipdup/dipdup). Choose the one according to your needs from the table below.
+## Usage
 
-|                       |               default               |                   slim                   |
-| --------------------- |:-----------------------------------:|:----------------------------------------:|
-| base image            |          `python:3.10-slim`         |           `python:3.10-alpine`           |
-| platforms             |           `amd64`, `arm64`          |             `amd64`, `arm64`             |
-| latest tag            | `{{ cookiecutter.dipdup_version }}` | `{{ cookiecutter.dipdup_version }}-slim` |
-| image size            |                 376M                |                    97M                   |
-| `dipdup init` command |                  ✅                  |                     ❌                    |
+DipDup container runs as `dipdup` user with home directory `/home/dipdup`. The entrypoint is `dipdup` command. 
 
-The default DipDup image is suitable for development and testing. It also includes some tools to make package management easier. If unsure, use this image. `-slim` doesn't include codegen functionality (`init` command, unlikely to be useful in production).
+DipDup venv is placed in `/opt/dipdup` directory. The `dipdup` user has write access to `/opt/dipdup` and `/home/dipdup` directories.
 
-### Nightly builds (ghcr.io)
+Here's an example of running DipDup container with bind mounts:
 
-In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Container Registry](https://github.com/dipdup-io/dipdup/pkgs/container/dipdup). Builds are triggered on push to any branch for developers' convenience, but only Alpine images are published. Do not use nightlies in production!
-
-```Dockerfile
-# Latest image for `aux/arm64` branch
-FROM ghcr.io/dipdup-io/dipdup:aux-arm64
+```shell
+docker run -it --rm \
+  -v dipdup.yml:dipdup.yml \
+  -v src:src \
+  {{ cookiecutter.dipdup_version }}
 ```
 
-## Writing Dockerfile
+## Building your own image
 
 Start with creating `.dockerignore` for your project if it's missing.
 
@@ -31,12 +25,28 @@ Start with creating `.dockerignore` for your project if it's missing.
 {{ #include ../../src/dipdup/projects/base/.dockerignore.j2 }}
 ```
 
-A typical Dockerfile looks like this:
+Then copy your code and config file to the image:
 
 ```Dockerfile
 {{ #include ../../src/dipdup/projects/base/Dockerfile.j2 }}
 ```
 
+If you need to include additional Python dependencies, just call pip directly during the build stage:
+
+```Dockerfile
+RUN pip install -r requirements.txt
+```
+
+## Nightly builds (ghcr.io)
+
+In addition to [Docker Hub](https://hub.docker.com/r/dipdup/dipdup) we also publish images on [GitHub Container Registry](https://github.com/dipdup-io/dipdup/pkgs/container/dipdup) aka GHCR. Builds are triggered on push to any branch for developers' convenience. Do not use nightlies in production!
+
+```Dockerfile
+# Latest image for `feat/foobar` branch
+FROM ghcr.io/dipdup-io/dipdup:feat-foobar
+```
+
+## Writing Dockerfile
 
 ## Deploying with `docker-compose`
 
