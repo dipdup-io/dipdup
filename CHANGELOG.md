@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
-- ci: Docker images no longer contain git, poetry and inject_dependencies script.
+- ci: Docker images no longer contain git, poetry and install_dependencies script.
 
 ## [6.5.2] - 2023-03-09
 
