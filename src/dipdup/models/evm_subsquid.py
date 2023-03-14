@@ -20,7 +20,7 @@ class SubsquidMessageType(Enum):
     logs = 'logs.arrow_stream'
 
 
-@dataclass(frozen=True)
+@dataclass
 class SubsquidEventData:
     address: str
     # block_hash: str

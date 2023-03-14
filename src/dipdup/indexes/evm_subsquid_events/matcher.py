@@ -24,7 +24,7 @@ MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> Any:
     byte_data = b''.join([decode_hex(topic) for topic in topics[1:]]) + decode_hex(data)
     return decode_abi(  # type: ignore[no-untyped-call]
-        event_abi['inputs'],
+        event_abi.inputs,
         byte_data,
     )
 
@@ -82,7 +82,7 @@ def match_events(
     events = deque(events)
 
     for handler_config in handlers:
-        topics = {k: v['topic0'] for k, v in package.get_evm_events(handler_config.contract.module_name).items()}
+        topics = {k: v.topic0 for k, v in package.get_evm_events(handler_config.contract.module_name).items()}
 
         # NOTE: Matched events are dropped after processing
         for event in copy(events):

@@ -70,12 +70,13 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 schema_path = package.schemas / abi_path.parent.stem / 'evm_functions' / f'{abi_item["name"]}.json'
             elif abi_item['type'] == 'event':
                 name = abi_item['name']
-                extra = event_extras[name]
-                if extra:
+                if name in event_extras:
                     raise NotImplementedError('wow much overload many signatures')
-                extra['name'] = name
-                extra['topic0'] = topic_from_abi(abi_item)
-                extra['inputs'] = inputs_from_abi(abi_item)
+                event_extras[name] = EventAbiExtra(
+                    name=name,
+                    topic0=topic_from_abi(abi_item),
+                    inputs=inputs_from_abi(abi_item),
+                )
                 if name not in events:
                     continue
 

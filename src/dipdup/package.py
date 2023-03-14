@@ -3,11 +3,11 @@ from pathlib import Path
 from typing import Any
 from typing import Awaitable
 from typing import Callable
-from typing import TypedDict
 from typing import cast
 
 import orjson
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import ProjectImportError
 from dipdup.utils import import_from
@@ -21,7 +21,8 @@ PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 
 
-class EventAbiExtra(TypedDict):
+@dataclass(frozen=True)
+class EventAbiExtra:
     name: str
     topic0: str
     inputs: tuple[str, ...]
@@ -103,4 +104,5 @@ class DipDupPackage:
         path = self.abi / typename / 'events.json'
         if not path.exists():
             raise ProjectImportError(f'`{path}` does not exist')
-        return cast(dict[str, EventAbiExtra], orjson.loads(path.read_text()))
+        extra_json = orjson.loads(path.read_text())
+        return {k: EventAbiExtra(**v) for k, v in extra_json.items()}

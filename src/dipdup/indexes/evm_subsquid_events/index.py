@@ -50,7 +50,7 @@ class SubsquidEventsIndex(
             addresses.add(handler_config.contract.address)
 
             event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
-            topics.add(event_abi['topic0'])
+            topics.add(event_abi.topic0)
 
         return EventLogFetcher(
             datasource=self._datasource,
