@@ -64,7 +64,8 @@ class SubsquidOperation:
 @dataclass(frozen=True)
 class ArchiveSubscription(Subscription):
     type: Literal['archive'] = 'archive'
-    method = ''
 
-    def get_request(self) -> list[dict[str, Any]]:
-        return []
+
+@dataclass(frozen=True)
+class NodeSubscription(Subscription):
+    type: Literal['node'] = 'node'

@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
@@ -49,8 +50,17 @@ class TzktMessageType(Enum):
     event = 'event'
 
 
+class TzktSubscription(Subscription):
+    type: str
+    method: str
+
+    @abstractmethod
+    def get_request(self) -> Any:
+        ...
+
+
 @dataclass(frozen=True)
-class HeadSubscription(Subscription):
+class HeadSubscription(TzktSubscription):
     type: Literal['head'] = 'head'
     method: Literal['SubscribeToHead'] = 'SubscribeToHead'
 
@@ -59,7 +69,7 @@ class HeadSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class OriginationSubscription(Subscription):
+class OriginationSubscription(TzktSubscription):
     type: Literal['origination'] = 'origination'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
 
@@ -68,7 +78,7 @@ class OriginationSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class TransactionSubscription(Subscription):
+class TransactionSubscription(TzktSubscription):
     type: Literal['transaction'] = 'transaction'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
     address: str | None = None
@@ -82,7 +92,7 @@ class TransactionSubscription(Subscription):
 
 # TODO: Add `ptr` and `tags` filters?
 @dataclass(frozen=True)
-class BigMapSubscription(Subscription):
+class BigMapSubscription(TzktSubscription):
     type: Literal['big_map'] = 'big_map'
     method: Literal['SubscribeToBigMaps'] = 'SubscribeToBigMaps'
     address: str | None = None
@@ -98,7 +108,7 @@ class BigMapSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class TokenTransferSubscription(Subscription):
+class TokenTransferSubscription(TzktSubscription):
     type: Literal['token_transfer'] = 'token_transfer'
     method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
     contract: str | None = None
@@ -120,7 +130,7 @@ class TokenTransferSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class EventSubscription(Subscription):
+class EventSubscription(TzktSubscription):
     type: Literal['event'] = 'event'
     method: Literal['SubscribeToEvents'] = 'SubscribeToEvents'
     address: str | None = None

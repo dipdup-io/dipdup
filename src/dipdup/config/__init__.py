@@ -49,6 +49,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
+from dipdup.models.evm_subsquid import NodeSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -908,9 +909,11 @@ class DipDupConfig:
 
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             index_config.subscriptions.add(ArchiveSubscription())
+            if index_config.datasource.node_url:
+                index_config.subscriptions.add(NodeSubscription())
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            index_config.subscriptions.add(ArchiveSubscription())
+            raise NotImplementedError
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')

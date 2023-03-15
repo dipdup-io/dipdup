@@ -62,11 +62,25 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
+class _NodeDatasource(IndexDatasource[SubsquidDatasourceConfig]):
+    _default_http_config = HttpConfig()
+
+    async def initialize(self) -> None:
+        ...
+
+    async def run(self) -> None:
+        ...
+
+    async def subscribe(self) -> None:
+        ...
+
+
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     _default_http_config = HttpConfig()
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
+        self._node = _NodeDatasource(config) if config.node_url else None
 
     async def run(self) -> None:
         # FIXME: No true realtime yet

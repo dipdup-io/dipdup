@@ -35,8 +35,8 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
+from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.subscriptions import Subscription
 from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
@@ -898,11 +898,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
-        tasks = (self._subscribe(subscription) for subscription in missing_subscriptions)
-        await asyncio.gather(*tasks)
+        for subscription in missing_subscriptions:
+            if not isinstance(subscription, TzktSubscription):
+                raise FrameworkException(f'Expected TzktSubscription, got {subscription}')
+            await self._subscribe(subscription)
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
-    async def _subscribe(self, subscription: Subscription) -> None:
+    async def _subscribe(self, subscription: TzktSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         method = subscription.method
         request: list[dict[str, Any]] = subscription.get_request()

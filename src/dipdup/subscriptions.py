@@ -1,6 +1,4 @@
 import logging
-from abc import abstractmethod
-from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Set
@@ -11,12 +9,7 @@ _logger = logging.getLogger('dipdup.datasource')
 
 
 class Subscription:
-    type: str
-    method: str
-
-    @abstractmethod
-    def get_request(self) -> Any:
-        ...
+    pass
 
 
 class SubscriptionManager:
