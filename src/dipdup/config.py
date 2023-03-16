@@ -1856,8 +1856,16 @@ class DipDupConfig:
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
-                if isinstance(token_transfer_handler_config.contract, str):
-                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
+                for attribute_name in ['contract', 'from_', 'to']:
+                    attribute_value = getattr(token_transfer_handler_config, attribute_name)
+                    if isinstance(attribute_value, str):
+                        setattr(
+                            token_transfer_handler_config,
+                            attribute_name,
+                            self.get_contract(attribute_value),
+                        )
+
+                assert token_transfer_handler_config
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
