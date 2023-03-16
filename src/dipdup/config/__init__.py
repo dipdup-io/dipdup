@@ -49,7 +49,6 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.models.evm_subsquid import NodeSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -845,6 +844,7 @@ class DipDupConfig:
             return
 
         from dipdup.models.evm_subsquid import ArchiveSubscription
+        from dipdup.models.evm_subsquid import NodeHeadSubscription
         from dipdup.models.tezos_tzkt import BigMapSubscription
         from dipdup.models.tezos_tzkt import EventSubscription
         from dipdup.models.tezos_tzkt import HeadSubscription
@@ -910,7 +910,7 @@ class DipDupConfig:
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             index_config.subscriptions.add(ArchiveSubscription())
             if index_config.datasource.node_url:
-                index_config.subscriptions.add(NodeSubscription())
+                index_config.subscriptions.add(NodeHeadSubscription())
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
             raise NotImplementedError

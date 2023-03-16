@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
@@ -20,7 +21,21 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     kind: Literal['evm.subsquid']
     url: str
     node_url: str | None = None
+    node_ws_url: str | None = None
     http: HttpConfig | None = None
+
+    # FIXME: Update validators
+    @validator('url', allow_reuse=True)
+    def _valid_url(cls, v: str) -> str:
+        if not v.startswith(('http', 'https')):
+            raise ValueError('Node URL must start with http(s) or ws(s)')
+        return v
+
+    @validator('node_url', allow_reuse=True)
+    def _valid_node_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith(('http', 'https')):
+            raise ValueError('Node URL must start with http(s) or ws(s)')
+        return v
 
 
 @dataclass

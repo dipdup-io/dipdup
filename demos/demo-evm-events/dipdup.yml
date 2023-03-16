@@ -12,7 +12,8 @@ datasources:
   subsquid_eth_mainnet:
     kind: evm.subsquid
     url: ${ARCHIVE_URL:-https://eth.archive.subsquid.io}
-    node_url: ${NODE_URL:-}
+    node_url: https://mainnet.infura.io/v3/${INFURA_KEY}
+    node_ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
 
 contracts:
   eth_usdt:
@@ -28,3 +29,7 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
+
+advanced:
+  early_realtime: True
+logger: verbose
