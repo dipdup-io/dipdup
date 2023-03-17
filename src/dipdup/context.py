@@ -42,6 +42,7 @@ from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -323,6 +324,7 @@ class DipDupContext:
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
+        node_datasource: EvmNodeDatasource | None = None
 
         if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
             datasource = self.get_tzkt_datasource(datasource_name)
@@ -341,15 +343,19 @@ class DipDupContext:
             index = TzktEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
+            node_config = index_config.datasource.node
+            if node_config:
+                node_datasource = self.get_evm_node_datasource(node_config.name)
             index = SubsquidEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            datasource = self.get_subsquid_datasource(datasource_name)
-            # index = SubsquidOperationsIndex(self, index_config, datasource)
             raise NotImplementedError
         else:
             raise NotImplementedError
 
         await datasource.add_index(index_config)
+        if node_datasource:
+            await node_datasource.add_index(index_config)
+
         handlers = (
             (index_config.handler_config,)
             if isinstance(index_config, TzktOperationsUnfilteredIndexConfig)
@@ -432,6 +438,10 @@ class DipDupContext:
     def get_subsquid_datasource(self, name: str) -> SubsquidDatasource:
         """Get `subsquid` datasource by name"""
         return self._get_datasource(name, SubsquidDatasource)
+
+    def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
+        """Get `subsquid` datasource by name"""
+        return self._get_datasource(name, EvmNodeDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""

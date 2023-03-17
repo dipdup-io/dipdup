@@ -9,11 +9,15 @@ datasources:
   ethscan:
     kind: abi.etherscan
 
-  subsquid_eth_mainnet:
+  mainnet_node:
+    kind: evm.node
+    url: https://mainnet.infura.io/v3/${INFURA_KEY}
+    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
+
+  mainnet_subsquid:
     kind: evm.subsquid
     url: ${ARCHIVE_URL:-https://eth.archive.subsquid.io}
-    node_url: https://mainnet.infura.io/v3/${INFURA_KEY}
-    node_ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
+    node: mainnet_node
 
 contracts:
   eth_usdt:
@@ -24,7 +28,7 @@ contracts:
 indexes:
   eth_usdt_events:
     kind: evm.subsquid.events
-    datasource: subsquid_eth_mainnet
+    datasource: mainnet_subsquid
     handlers:
       - callback: on_transfer
         contract: eth_usdt

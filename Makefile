@@ -43,7 +43,7 @@ black:          ## Format with black
 	poetry run black src tests scripts
 
 ruff:           ## Lint with ruff
-	poetry run ruff check src tests scripts
+	poetry run ruff check --fix src tests scripts
 
 mypy:           ## Lint with mypy
 	poetry run mypy --strict src tests scripts

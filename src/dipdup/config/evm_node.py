@@ -1,29 +1,25 @@
-from __future__ import annotations
-
 from typing import Literal
 
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
-from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
 
 
 @dataclass
-class SubsquidDatasourceConfig(IndexDatasourceConfig):
+class EvmNodeDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
-    :param kind: always 'evm.subsquid'
+    :param kind: always 'evm.node'
     :param url: URL of Subsquid archive API
     :param node_url: URL of Ethereum node
     :param http: HTTP client configuration
     """
 
-    kind: Literal['evm.subsquid']
+    kind: Literal['evm.node']
     url: str
-    node: EvmNodeDatasourceConfig | None = None
+    ws_url: str
     http: HttpConfig | None = None
 
     # FIXME: Update validators
@@ -32,8 +28,3 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
         if not v.startswith(('http', 'https')):
             raise ValueError('Node URL must start with http(s) or ws(s)')
         return v
-
-
-@dataclass
-class SubsquidIndexConfig(IndexConfig):
-    datasource: SubsquidDatasourceConfig

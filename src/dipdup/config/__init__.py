@@ -822,6 +822,12 @@ class DipDupConfig:
                 self._resolve_template(index_config)
 
     def _resolve_links(self) -> None:
+        for datasource_config in self.datasources.values():
+            if not isinstance(datasource_config, SubsquidDatasourceConfig):
+                continue
+            if isinstance(datasource_config.node, str):
+                datasource_config.node = self.datasources[datasource_config.node]
+
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException('Index templates must be resolved first')
@@ -843,8 +849,8 @@ class DipDupConfig:
         if index_config.subscriptions:
             return
 
+        from dipdup.models.evm_node import NodeHeadSubscription
         from dipdup.models.evm_subsquid import ArchiveSubscription
-        from dipdup.models.evm_subsquid import NodeHeadSubscription
         from dipdup.models.tezos_tzkt import BigMapSubscription
         from dipdup.models.tezos_tzkt import EventSubscription
         from dipdup.models.tezos_tzkt import HeadSubscription
@@ -909,8 +915,7 @@ class DipDupConfig:
 
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             index_config.subscriptions.add(ArchiveSubscription())
-            if index_config.datasource.node_url:
-                index_config.subscriptions.add(NodeHeadSubscription())
+            index_config.subscriptions.add(NodeHeadSubscription())
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
             raise NotImplementedError
@@ -1043,6 +1048,7 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig  # noqa: E402
 from dipdup.config.coinbase import CoinbaseDatasourceConfig  # noqa: E402
 from dipdup.config.evm import EvmContractConfig  # noqa: E402
+from dipdup.config.evm_node import EvmNodeDatasourceConfig  # noqa: E402
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig  # noqa: E402
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig  # noqa: E402
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig  # noqa: E402
@@ -1069,6 +1075,7 @@ DatasourceConfigU = (
     | HttpDatasourceConfig
     | IpfsDatasourceConfig
     | SubsquidDatasourceConfig
+    | EvmNodeDatasourceConfig
     | TzipMetadataDatasourceConfig
     | TzktDatasourceConfig
 )
@@ -1130,5 +1137,6 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
+    'EvmNodeDatasourceConfig | None': 'str | EvmNodeDatasourceConfig | None',
 }
 _patch_annotations(_original_to_aliased)
