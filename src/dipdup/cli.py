@@ -3,6 +3,8 @@ import asyncio
 import atexit
 import logging
 import sys
+import re
+import traceback
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from functools import wraps
@@ -48,6 +50,14 @@ def _print_help(error: Exception) -> None:
     atexit.register(_print)
 
 
+def _print_error() -> None:
+    exclude_patter = '(^Traceback|^  File|^    )'
+    filtered = [x for x in traceback.format_exc().split('\n') if x]
+    filtered = [x for x in filtered if not re.findall(exclude_patter, x)]
+
+    click.echo('\n'.join(filtered), err=True)
+
+
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
 
 
@@ -65,8 +75,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
             crashdump_path = save_crashdump(e)
             _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            _print_error()
             _print_help(e)
-            raise e
+
+            sys.exit(1)
 
     return cast(WrappedCommandT, wrapper)
 
