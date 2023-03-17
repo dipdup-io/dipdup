@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- config: Fixed crash when `token_transfer` index has `from` or `to` filter.
+
 ## [6.5.2] - 2023-03-09
 
 ### Fixed
