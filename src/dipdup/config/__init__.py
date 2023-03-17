@@ -588,16 +588,18 @@ class DipDupConfig:
     spec_version: str
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = SqliteDatabaseConfig(kind='sqlite')
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
+        default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
+    )
     contracts: dict[str, ContractConfigU] = field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = SentryConfig()
+    sentry: SentryConfig = field(default_factory=SentryConfig)
     prometheus: PrometheusConfig | None = None
-    advanced: AdvancedConfig = AdvancedConfig()
+    advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
 
@@ -841,6 +843,7 @@ class DipDupConfig:
         if index_config.subscriptions:
             return
 
+        from dipdup.models.evm_subsquid import ArchiveSubscription
         from dipdup.models.tezos_tzkt import BigMapSubscription
         from dipdup.models.tezos_tzkt import EventSubscription
         from dipdup.models.tezos_tzkt import HeadSubscription
@@ -849,7 +852,8 @@ class DipDupConfig:
         from dipdup.models.tezos_tzkt import TransactionSubscription
         from dipdup.models.tezos_tzkt import TzktOperationType
 
-        index_config.subscriptions.add(HeadSubscription())
+        if isinstance(index_config, TzktIndexConfig):
+            index_config.subscriptions.add(HeadSubscription())
 
         if isinstance(index_config, TzktOperationsIndexConfig):
             if TzktOperationType.transaction in index_config.types:
@@ -873,7 +877,7 @@ class DipDupConfig:
                     index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            index_config.subscriptions.add(HeadSubscription())
+            pass
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             if index_config.datasource.merge_subscriptions:
@@ -903,10 +907,10 @@ class DipDupConfig:
                     index_config.subscriptions.add(EventSubscription(address=address))
 
         elif isinstance(index_config, SubsquidEventsIndexConfig):
-            ...
+            index_config.subscriptions.add(ArchiveSubscription())
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            ...
+            index_config.subscriptions.add(ArchiveSubscription())
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1027,25 +1031,26 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 """
 
 # NOTE: Reimport to avoid circular imports
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
-from dipdup.config.coinbase import CoinbaseDatasourceConfig
-from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
-from dipdup.config.http import HttpDatasourceConfig
-from dipdup.config.ipfs import IpfsDatasourceConfig
-from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
-from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig  # noqa: E402
+from dipdup.config.coinbase import CoinbaseDatasourceConfig  # noqa: E402
+from dipdup.config.evm import EvmContractConfig  # noqa: E402
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig  # noqa: E402
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig  # noqa: E402
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig  # noqa: E402
+from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
+from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
+from dipdup.config.tezos import TezosContractConfig  # noqa: E402
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
+from dipdup.config.tezos_tzkt import TzktIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 
 # NOTE: Unions for Pydantic config deserialization
 ContractConfigU = EvmContractConfig | TezosContractConfig

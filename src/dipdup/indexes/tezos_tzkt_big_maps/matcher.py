@@ -3,6 +3,8 @@ from collections import deque
 from typing import Any
 from typing import Iterable
 
+from pydantic import BaseModel
+
 from dipdup.codegen.tezos_tzkt import get_big_map_key_type
 from dipdup.codegen.tezos_tzkt import get_big_map_value_type
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
@@ -24,17 +26,16 @@ def prepare_big_map_handler_args(
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
-    if matched_big_map.action.has_key:
+    key: BaseModel | None = None
+    value: BaseModel | None = None
+
+    if matched_big_map.action.has_key and matched_big_map.key is not None:
         type_ = get_big_map_key_type(package, handler_config.contract.module_name, handler_config.path)
         key = parse_object(type_, matched_big_map.key) if type_ else None
-    else:
-        key = None
 
-    if matched_big_map.action.has_value:
+    if matched_big_map.action.has_value and matched_big_map.value is not None:
         type_ = get_big_map_value_type(package, handler_config.contract.module_name, handler_config.path)
         value = parse_object(type_, matched_big_map.value) if type_ else None
-    else:
-        value = None
 
     return TzktBigMapDiff(
         data=matched_big_map,

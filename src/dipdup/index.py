@@ -10,7 +10,7 @@ from typing import cast
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
-from dipdup.context import rolled_back_indexes
+from dipdup.context import StateQueue
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
@@ -126,9 +126,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         if self.state.status == IndexStatus.ONESHOT:
             raise FrameworkException('Index is in oneshot state and cannot be processed')
 
-        if self.name in rolled_back_indexes:
+        if self.name in StateQueue.rolled_back_indexes:
             await self.state.refresh_from_db(('level',))
-            rolled_back_indexes.remove(self.name)
+            StateQueue.rolled_back_indexes.remove(self.name)
 
         last_level = self._config.last_level
         if last_level:

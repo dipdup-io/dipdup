@@ -74,12 +74,9 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
 update:         ## Update dependencies, export requirements.txt
-	git checkout HEAD requirements.* poetry.lock
-
-	make install
-	poetry update
-
 	cp pyproject.toml pyproject.toml.bak
+	rm poetry.lock requirements*
+	make install
 	cp poetry.lock poetry.lock.bak
 
 	poetry export --without-hashes -o requirements.txt
@@ -90,7 +87,6 @@ update:         ## Update dependencies, export requirements.txt
 
 	mv pyproject.toml.bak pyproject.toml
 	mv poetry.lock.bak poetry.lock
-
 	make install
 
 demos:          ## Recreate demos from templates

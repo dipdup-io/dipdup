@@ -27,7 +27,6 @@ jobs:
     strategy:
       matrix:
         image:
-          # FIXME: Revert after fixing orjson build
           - name: default
             suffix: ''
             platforms: linux/amd64,linux/arm64
@@ -40,17 +39,15 @@ jobs:
           #   dockerfile: Dockerfile
           #   build_args: 'DIPDUP_DOCKER_IMAGE=pytezos'
 
-          - name: slim
-            suffix: ''
-            dockerfile: Dockerfile.slim
-            platforms: linux/amd64,linux/arm64
-            build_args: ''
+          # - name: slim
+          #   suffix: ''
+          #   dockerfile: Dockerfile.slim
+          #   platforms: linux/amd64,linux/arm64
+          #   build_args: ''
 
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2

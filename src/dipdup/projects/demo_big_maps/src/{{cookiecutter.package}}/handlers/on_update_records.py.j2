@@ -22,10 +22,10 @@ async def on_update_records(
         ctx.logger.error('Invalid record `%s`: expected %s chunks, got %s', record_name, store_records.value.level, len(record_path))
         return
 
-    if store_records.value.level == "1":
+    if store_records.value.level == '1':
         await models.TLD.update_or_create(id=record_name, defaults={'owner': store_records.value.owner})
     else:
-        if store_records.value.level == "2":
+        if store_records.value.level == '2':
             await models.Domain.update_or_create(
                 id=record_name,
                 defaults={

@@ -6,13 +6,15 @@ ENV DIPDUP_DOCKER_IMAGE=${DIPDUP_DOCKER_IMAGE}
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt update && \
-    apt install -y gcc make git curl `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi` && \
+    apt install -y gcc make git curl build-essential `if [[ $DIPDUP_DOCKER_IMAGE = "pytezos" ]]; then echo build-essential pkg-config libsodium-dev libsecp256k1-dev libgmp-dev; fi` && \
+    curl https://sh.rustup.rs -sSf | bash -s -- -y && \
     python -m venv --without-pip --system-site-packages /opt/dipdup && \
     mkdir -p /opt/dipdup/src/dipdup/ && \
     touch /opt/dipdup/src/dipdup/__init__.py && \
     rm -r /var/log/* /var/lib/apt/lists/* /var/cache/* /var/lib/dpkg/status*
 WORKDIR /opt/dipdup
-ENV PATH="/opt/dipdup/bin:$PATH"
+ENV PATH="/opt/dipdup/.venv/bin:$PATH"
+ENV PATH="/root/.cargo/bin:$PATH"
 
 COPY pyproject.toml requirements.txt requirements.pytezos.txt README.md /opt/dipdup/
 
