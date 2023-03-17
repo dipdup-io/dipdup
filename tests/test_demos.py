@@ -216,7 +216,7 @@ test_params = (
         'demo_token_transfers_4.yml',
         'demo_token_transfers',
         'run',
-        partial(assert_run_token_transfers, 2, '-0.00767376'),
+        partial(assert_run_token_transfers, 2, '-0.02302128'),
     ),
     ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
     ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),

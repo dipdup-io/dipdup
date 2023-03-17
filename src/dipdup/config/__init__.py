@@ -977,12 +977,18 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
-        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+        elif isinstance(index_config, TzktTokenTransfersHandlerConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
-                if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
+                for attribute_name in ['contract', 'from_', 'to']:
+                    attribute_value = getattr(handler_config, attribute_name)
+                    if isinstance(attribute_value, str):
+                        setattr(
+                            handler_config,
+                            attribute_name,
+                            self.get_contract(attribute_value),
+                        )
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
@@ -1049,7 +1055,7 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig, TzktTokenTransfersIndexConfig  # noqa: E402
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 
 # NOTE: Unions for Pydantic config deserialization
