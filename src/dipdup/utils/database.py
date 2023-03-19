@@ -14,6 +14,7 @@ from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -27,7 +28,6 @@ from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.fields import DecimalField
-from tortoise.transactions import in_transaction
 from tortoise.utils import get_schema_sql
 
 from dipdup.exceptions import DatabaseConfigurationError
@@ -44,7 +44,7 @@ def get_connection() -> BaseDBAsyncClient:
     return connections.get(DEFAULT_CONNECTION_NAME)
 
 
-def _set_connection(conn: BaseDBAsyncClient) -> None:
+def set_connection(conn: BaseDBAsyncClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
@@ -83,18 +83,6 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
         yield
     finally:
         await Tortoise.close_connections()
-
-
-@asynccontextmanager
-async def in_global_transaction():
-    """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-    try:
-        original_conn = get_connection()
-        async with in_transaction() as conn:
-            _set_connection(conn)
-            yield
-    finally:
-        _set_connection(original_conn)
 
 
 def is_model_class(obj: Any) -> bool:
@@ -191,7 +179,7 @@ async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
     await conn.execute_script(f"SELECT truncate_schema('{name}')")
 
 
-async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Tuple[str, ...]) -> None:
+async def wipe_schema(conn: BaseDBAsyncClient, name: str, immune_tables: Set[str]) -> None:
     if isinstance(conn, SqliteClient):
         raise NotImplementedError
 
@@ -234,7 +222,6 @@ def prepare_models(package: Optional[str]) -> None:
     prec = decimal_context.prec
 
     for app, model in iter_models(package):
-
         # NOTE: Enforce our class for user models
         if app == 'models' and not issubclass(model, Model):
             raise DatabaseConfigurationError('Project models must be subclassed from `dipdup.models.Model`', model)

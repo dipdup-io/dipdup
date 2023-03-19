@@ -127,7 +127,7 @@ class PostgresDatabaseConfig:
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
     password: str = field(default='', repr=False)
-    immune_tables: Tuple[str, ...] = field(default_factory=tuple)
+    immune_tables: Set[str] = field(default_factory=set)
     connection_timeout: int = 60
 
     @cached_property
@@ -1187,6 +1187,7 @@ class AdvancedConfig:
     :param merge_subscriptions: Subscribe to all operations instead of exact channels
     :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
+    :param rollback_depth: A number of levels to keep for rollback
     """
 
     reindex: Dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1196,6 +1197,7 @@ class AdvancedConfig:
     merge_subscriptions: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
+    rollback_depth: int = 2
 
 
 @dataclass
@@ -1645,7 +1647,6 @@ class LoggingConfig:
         cls,
         path: str,
     ) -> 'LoggingConfig':
-
         current_workdir = os.path.join(os.getcwd())
         path = os.path.join(current_workdir, path)
 

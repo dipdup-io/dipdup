@@ -38,6 +38,7 @@ from dipdup.config import SkipHistory
 from dipdup.config import TokenTransferHandlerConfig
 from dipdup.config import TokenTransferIndexConfig
 from dipdup.context import DipDupContext
+from dipdup.context import rolled_back_indexes
 from dipdup.datasources.tzkt.datasource import BigMapFetcher
 from dipdup.datasources.tzkt.datasource import OperationFetcher
 from dipdup.datasources.tzkt.datasource import TokenTransferFetcher
@@ -47,7 +48,6 @@ from dipdup.enums import MessageType
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import InvalidDataError
-from dipdup.exceptions import ReindexingReason
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
@@ -59,7 +59,6 @@ from dipdup.models import TokenTransferData
 from dipdup.models import Transaction
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
-from dipdup.utils.database import in_global_transaction
 
 _logger = logging.getLogger(__name__)
 
@@ -200,7 +199,11 @@ class Index:
             },
         )
 
-    async def process(self) -> None:
+    async def process(self) -> bool:
+        if self.name in rolled_back_indexes:
+            await self.state.refresh_from_db(('level',))
+            rolled_back_indexes.remove(self.name)
+
         if not isinstance(self._config, HeadIndexConfig) and self._config.last_level:
             head_level = self._config.last_level
             with ExitStack() as stack:
@@ -233,6 +236,9 @@ class Index:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_total_realtime_duration())
                 await self._process_queue()
+        else:
+            return False
+        return True
 
     @abstractmethod
     async def _synchronize(self, head_level: int) -> None:
@@ -280,7 +286,7 @@ class OperationIndex(Index):
 
     def __init__(self, ctx: DipDupContext, config: OperationIndexConfig, datasource: TzktDatasource) -> None:
         super().__init__(ctx, config, datasource)
-        self._queue: Deque[OperationQueueItemT] = deque()
+        self._queue: Deque[Tuple[OperationSubgroup, ...]] = deque()
         self._contract_hashes: Dict[str, Tuple[int, int]] = {}
         self._next_head_level: Optional[int] = None
         self._head_hashes: Dict[str, bool] = {}
@@ -463,7 +469,7 @@ class OperationIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction():
+        async with self._ctx._transactions.in_transaction(batch_level, head_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self.state.update_status(level=batch_level)
@@ -519,7 +525,6 @@ class OperationIndex(Index):
                 operation_matched = await self._match_operation(pattern_config, operation)
 
                 if operation.type == 'origination' and isinstance(pattern_config, OperationHandlerOriginationPatternConfig):
-
                     if operation_matched is True and pattern_config.origination_processed(cast(str, operation.originated_contract_address)):
                         operation_matched = False
 
@@ -735,7 +740,7 @@ class BigMapIndex(Index):
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
-        async with in_global_transaction():
+        async with self._ctx._transactions.in_transaction(head_level, head_level, self.name):
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
@@ -778,7 +783,7 @@ class BigMapIndex(Index):
             await self.state.update_status(level=batch_level)
             return
 
-        async with in_global_transaction():
+        async with self._ctx._transactions.in_transaction(batch_level, index_level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=batch_level)
@@ -907,7 +912,7 @@ class HeadIndex(Index):
             if batch_level <= index_level:
                 raise RuntimeError(f'Level of head must be higher than index state level: {batch_level} <= {index_level}')
 
-            async with in_global_transaction():
+            async with self._ctx._transactions.in_transaction(batch_level, index_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
                     await self._call_matched_handler(handler_config, head)
@@ -986,7 +991,7 @@ class TokenTransferIndex(Index):
             await self.state.update_status(level=level)
             return
 
-        async with in_global_transaction():
+        async with self._ctx._transactions.in_transaction(level, self.state.level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self.state.update_status(level=level)

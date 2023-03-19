@@ -260,7 +260,6 @@ class InvalidDataError(DipDupError):
     parsed_object: Any
 
     def _help(self) -> str:
-
         return f"""
             Failed to validate datasource message against generated type class.
 

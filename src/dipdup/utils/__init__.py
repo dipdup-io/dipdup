@@ -8,6 +8,7 @@ import types
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from contextlib import suppress
+from decimal import Decimal
 from functools import partial
 from functools import reduce
 from logging import Logger
@@ -30,9 +31,9 @@ from typing import TextIO
 from typing import TypeVar
 from typing import Union
 from typing import cast
-from unittest import skip
 
 import humps
+import orjson
 from genericpath import isdir
 from genericpath import isfile
 
@@ -194,3 +195,13 @@ def exclude_none(config_json: Any) -> Any:
     if isinstance(config_json, dict):
         return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
     return config_json
+
+
+def _dumps_default(obj):
+    if isinstance(obj, Decimal):
+        return str(obj)
+    raise TypeError
+
+
+def json_dumps(obj):
+    return orjson.dumps(obj, default=_dumps_default).decode()

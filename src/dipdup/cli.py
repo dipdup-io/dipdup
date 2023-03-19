@@ -511,7 +511,7 @@ async def schema_wipe(ctx, immune: bool, force: bool) -> None:
                 conn=conn,
                 name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=config.database.immune_tables if not immune else (),
+                immune_tables=config.database.immune_tables if not immune else set(),
             )
         else:
             await Tortoise._drop_databases()
