@@ -26,6 +26,7 @@ from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
+from dipdup.models import Head
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
@@ -244,6 +245,30 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 retry_sleep *= self._http_config.retry_multiplier
 
         raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+
+    async def initialize(self) -> None:
+        head_block = await self.get_head_block()
+        self.set_network(head_block.chain)
+        self.set_sync_level(
+            subscription=None,
+            level=head_block.level,
+        )
+
+        db_head = await Head.filter(name=self.name).first()
+        if not db_head:
+            return
+
+        # FIXME: No ctx to throw reorg; VERY IMPORTANT CHECK
+        # NOTE: Ensure that no reorgs happened while we were offline
+        # actual_head = await self.get_block(db_head.level)
+        # if db_head.hash != actual_head.hash:
+        #     await self._ctx.reindex(
+        #         ReindexingReason.rollback,
+        #         datasource=self.name,
+        #         level=db_head.level,
+        #         stored_block_hash=db_head.hash,
+        #         actual_block_hash=actual_head.hash,
+        #     )
 
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)

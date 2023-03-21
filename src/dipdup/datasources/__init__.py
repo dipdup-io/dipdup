@@ -58,6 +58,10 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     async def subscribe(self) -> None:
         ...
 
+    @abstractmethod
+    async def initialize(self) -> None:
+        ...
+
     def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
         self._subscriptions.set_sync_level(subscription, level)
 

@@ -171,8 +171,7 @@ class CodeGenerator(ABC):
         else:
             code.append('...')
 
-        # FIXME: Not needed anymore?
-        # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
+        # FIXME: Missing generic type annotation to comply with `mypy --strict`
         processed_arguments = tuple(
             f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments
         )

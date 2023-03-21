@@ -9,9 +9,11 @@ from http import HTTPStatus
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
+from typing import Literal
 from typing import Mapping
 from typing import Optional
 from typing import cast
+from typing import overload
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
 
@@ -178,11 +180,35 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 if not ratelimit_sleep:
                     retry_sleep *= self._config.retry_multiplier
 
+    # FIXME: Temporary overload for Subsquid; move to public method
+    @overload
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        weight: int,
+        raw: Literal[True],
+        **kwargs: Any,
+    ) -> aiohttp.ClientResponse:
+        ...
+
+    @overload
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        weight: int,
+        raw: Literal[False],
+        **kwargs: Any,
+    ) -> Any:
+        ...
+
     async def _request(
         self,
         method: str,
         url: str,
         weight: int = 1,
+        raw: bool = False,
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
@@ -209,6 +235,11 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             raise_for_status=True,
             **kwargs,
         ) as response:
+            if raw:
+                await response.read()
+                return response
+
+            # NOTE: Use raw=True if fail on 204 is not a desired behavior
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):

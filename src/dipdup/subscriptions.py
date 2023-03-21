@@ -49,7 +49,7 @@ class SubscriptionManager:
             # NOTE: Updating sync level with merge_subscriptions=True will cause resync
             if self._merge_subscriptions:
                 return
-            _logger.warning('%s sync level updated: %s -> %s', subscription, self._subscriptions[subscription], level)
+            _logger.debug('%s sync level updated: %s -> %s', subscription, self._subscriptions[subscription], level)
 
         self._subscriptions[subscription] = level
 
