@@ -1,0 +1,237 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js coal">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>MIT License - DipDup Documentation</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="book.css">
+        <link rel="stylesheet" href="mdbook-admonish.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <!-- NOTE: Fixed coal -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = "coal";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('coal')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="index.html">Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">User Guide</li><li class="chapter-item expanded "><a href="quickstart.html"><strong aria-hidden="true">1.</strong> Quickstart</a></li><li class="chapter-item expanded "><a href="getting-started/index.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="getting-started/installation.html"><strong aria-hidden="true">2.1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="getting-started/core-concepts.html"><strong aria-hidden="true">2.2.</strong> Core concepts</a></li><li class="chapter-item expanded "><a href="getting-started/creating-config.html"><strong aria-hidden="true">2.3.</strong> Creating config</a></li><li class="chapter-item expanded "><a href="getting-started/project-structure.html"><strong aria-hidden="true">2.4.</strong> Project structure</a></li><li class="chapter-item expanded "><a href="getting-started/defining-models.html"><strong aria-hidden="true">2.5.</strong> Defining models</a></li><li class="chapter-item expanded "><a href="getting-started/implementing-handlers.html"><strong aria-hidden="true">2.6.</strong> Implementing handlers</a></li><li class="chapter-item expanded "><a href="getting-started/templates-and-variables.html"><strong aria-hidden="true">2.7.</strong> Templates and variables</a></li></ol></li><li class="chapter-item expanded "><a href="indexes/index.html"><strong aria-hidden="true">3.</strong> Indexes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="indexes/big_map.html"><strong aria-hidden="true">3.1.</strong> Big map keys</a></li><li class="chapter-item expanded "><a href="indexes/event.html"><strong aria-hidden="true">3.2.</strong> Contract events</a></li><li class="chapter-item expanded "><a href="indexes/head.html"><strong aria-hidden="true">3.3.</strong> Head blocks</a></li><li class="chapter-item expanded "><a href="indexes/operation.html"><strong aria-hidden="true">3.4.</strong> Operations</a></li><li class="chapter-item expanded "><a href="indexes/token_transfer.html"><strong aria-hidden="true">3.5.</strong> Token transfers</a></li></ol></li><li class="chapter-item expanded "><a href="graphql/index.html"><strong aria-hidden="true">4.</strong> GraphQL API</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="graphql/hasura.html"><strong aria-hidden="true">4.1.</strong> Hasura integration</a></li><li class="chapter-item expanded "><a href="graphql/rest.html"><strong aria-hidden="true">4.2.</strong> REST endpoints</a></li><li class="chapter-item expanded "><a href="graphql/genql.html"><strong aria-hidden="true">4.3.</strong> GenQL</a></li></ol></li><li class="chapter-item expanded "><a href="advanced/index.html"><strong aria-hidden="true">5.</strong> Advanced usage</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="advanced/datasources.html"><strong aria-hidden="true">5.1.</strong> Datasources</a></li><li class="chapter-item expanded "><a href="advanced/hooks.html"><strong aria-hidden="true">5.2.</strong> Hooks</a></li><li class="chapter-item expanded "><a href="advanced/event-hooks.html"><strong aria-hidden="true">5.3.</strong> Event hooks</a></li><li class="chapter-item expanded "><a href="advanced/jobs.html"><strong aria-hidden="true">5.4.</strong> Job scheduler</a></li><li class="chapter-item expanded "><a href="advanced/reindexing.html"><strong aria-hidden="true">5.5.</strong> Reindexing</a></li><li class="chapter-item expanded "><a href="advanced/feature-flags.html"><strong aria-hidden="true">5.6.</strong> Feature flags</a></li><li class="chapter-item expanded "><a href="advanced/sql.html"><strong aria-hidden="true">5.7.</strong> SQL scripts</a></li><li class="chapter-item expanded "><a href="advanced/performance.html"><strong aria-hidden="true">5.8.</strong> Improving performance</a></li><li class="chapter-item expanded "><a href="advanced/context.html"><strong aria-hidden="true">5.9.</strong> Callback context (ctx)</a></li><li class="chapter-item expanded "><a href="advanced/internal-models.html"><strong aria-hidden="true">5.10.</strong> Internal models</a></li><li class="chapter-item expanded "><a href="advanced/index-factories.html"><strong aria-hidden="true">5.11.</strong> Index factories</a></li><li class="chapter-item expanded "><a href="advanced/metadata-interface.html"><strong aria-hidden="true">5.12.</strong> Metadata interface</a></li></ol></li><li class="chapter-item expanded "><a href="deployment/index.html"><strong aria-hidden="true">6.</strong> Deployment and operations</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="deployment/database-engines.html"><strong aria-hidden="true">6.1.</strong> Database engines</a></li><li class="chapter-item expanded "><a href="deployment/docker.html"><strong aria-hidden="true">6.2.</strong> Running in Docker</a></li><li class="chapter-item expanded "><a href="deployment/sentry.html"><strong aria-hidden="true">6.3.</strong> Sentry integration</a></li><li class="chapter-item expanded "><a href="deployment/prometheus.html"><strong aria-hidden="true">6.4.</strong> Prometheus integration</a></li><li class="chapter-item expanded "><a href="deployment/logging.html"><strong aria-hidden="true">6.5.</strong> Logging</a></li><li class="chapter-item expanded "><a href="deployment/backups.html"><strong aria-hidden="true">6.6.</strong> Backup and restore</a></li><li class="chapter-item expanded "><a href="deployment/monitoring.html"><strong aria-hidden="true">6.7.</strong> Monitoring</a></li></ol></li><li class="chapter-item expanded "><a href="faq.html"><strong aria-hidden="true">7.</strong> F.A.Q.</a></li><li class="chapter-item expanded "><a href="troubleshooting.html"><strong aria-hidden="true">8.</strong> Troubleshooting</a></li><li class="chapter-item expanded affix "><li class="part-title">Examples</li><li class="chapter-item expanded "><a href="examples/demo-projects.html"><strong aria-hidden="true">9.</strong> Demo projects</a></li><li class="chapter-item expanded "><a href="examples/built-with-dipdup.html"><strong aria-hidden="true">10.</strong> Built with DipDup</a></li><li class="chapter-item expanded affix "><li class="part-title">Standalone Services</li><li class="chapter-item expanded "><a href="services/mempool.html"><strong aria-hidden="true">11.</strong> mempool</a></li><li class="chapter-item expanded "><a href="services/metadata.html"><strong aria-hidden="true">12.</strong> metadata</a></li><li class="chapter-item expanded affix "><li class="part-title">Reference Guide</li><li class="chapter-item expanded "><a href="cli-reference.html"><strong aria-hidden="true">13.</strong> Command-line reference</a></li><li class="chapter-item expanded "><a href="config/index.html"><strong aria-hidden="true">14.</strong> Config file reference</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="config/reference.html"><strong aria-hidden="true">14.1.</strong> Full reference</a></li><li class="chapter-item expanded "><a href="config/advanced.html"><strong aria-hidden="true">14.2.</strong> advanced</a></li><li class="chapter-item expanded "><a href="config/contracts.html"><strong aria-hidden="true">14.3.</strong> contracts</a></li><li class="chapter-item expanded "><a href="config/custom.html"><strong aria-hidden="true">14.4.</strong> custom</a></li><li class="chapter-item expanded "><a href="config/database.html"><strong aria-hidden="true">14.5.</strong> database</a></li><li class="chapter-item expanded "><a href="config/datasources.html"><strong aria-hidden="true">14.6.</strong> datasources</a></li><li class="chapter-item expanded "><a href="config/hasura.html"><strong aria-hidden="true">14.7.</strong> hasura</a></li><li class="chapter-item expanded "><a href="config/hooks.html"><strong aria-hidden="true">14.8.</strong> hooks</a></li><li class="chapter-item expanded "><a href="config/indexes.html"><strong aria-hidden="true">14.9.</strong> indexes</a></li><li class="chapter-item expanded "><a href="config/jobs.html"><strong aria-hidden="true">14.10.</strong> jobs</a></li><li class="chapter-item expanded "><a href="config/logging.html"><strong aria-hidden="true">14.11.</strong> logging</a></li><li class="chapter-item expanded "><a href="config/package.html"><strong aria-hidden="true">14.12.</strong> package</a></li><li class="chapter-item expanded "><a href="config/prometheus.html"><strong aria-hidden="true">14.13.</strong> prometheus</a></li><li class="chapter-item expanded "><a href="config/sentry.html"><strong aria-hidden="true">14.14.</strong> sentry</a></li><li class="chapter-item expanded "><a href="config/spec_version.html"><strong aria-hidden="true">14.15.</strong> spec_version</a></li><li class="chapter-item expanded "><a href="config/templates.html"><strong aria-hidden="true">14.16.</strong> templates</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">What's New</li><li class="chapter-item expanded "><a href="CHANGELOG.html"><strong aria-hidden="true">15.</strong> Changelog</a></li><li class="chapter-item expanded "><a href="release-notes/index.html"><strong aria-hidden="true">16.</strong> Release notes</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="release-notes/6.2.0.html"><strong aria-hidden="true">16.1.</strong> 6.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/6.0.0.html"><strong aria-hidden="true">16.2.</strong> 6.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.1.0.html"><strong aria-hidden="true">16.3.</strong> 5.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/5.0.0.html"><strong aria-hidden="true">16.4.</strong> 5.0.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.2.0.html"><strong aria-hidden="true">16.5.</strong> 4.2.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.1.0.html"><strong aria-hidden="true">16.6.</strong> 4.1.0</a></li><li class="chapter-item expanded "><a href="release-notes/4.0.0.html"><strong aria-hidden="true">16.7.</strong> 4.0.0</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">Community</li><li class="chapter-item expanded "><a href="CONTRIBUTING.html"><strong aria-hidden="true">17.</strong> Contribution guide</a></li><li class="chapter-item expanded "><a href="LICENSE.html" class="active"><strong aria-hidden="true">18.</strong> MIT License</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-button">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <div id="theme-list" class="hidden"></div>
+
+                        <script type="text/javascript">
+                            var theme_toggle = document.getElementById('theme-toggle');
+
+                            function toggleTheme() {
+                                var html = document.querySelector('html');
+                                var theme = html.classList.contains('coal') ? 'light' : 'coal';
+                                html.classList.remove('light');
+                                html.classList.remove('coal');
+                                html.classList.add(theme);
+                                try { localStorage.setItem('mdbook-theme', theme); } catch(e) { }
+                            }
+
+                            theme_toggle.addEventListener('click', toggleTheme);
+                        </script>
+                        <a class="icon-button" id="stable">stable</a>
+                        <a class="icon-button" id="latest">latest</a>
+                        <script type="text/javascript">
+                            stable_a = document.getElementById("stable");
+                            latest_a = document.getElementById("latest");
+                            if (window.location.href.includes("docs.")) {
+                                stable_a.style.color = "dimgray";
+                                latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
+                            }
+                            else if (window.location.href.includes('docs-next.')) {
+                                latest_a.style.color = "dimgray";
+                                stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
+                            }
+                        </script>
+
+                    </div>
+
+                    <div class="menu-title">
+                        <img class="logo" src="/theme/header.png" alt="DipDup logo" />
+                    </div>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/dipdup-io/dipdup.git" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <!-- markdownlint-disable first-line-h1 -->
+<p>MIT License</p>
+<p>Copyright (c) 2021 Baking Bad</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="CONTRIBUTING.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="CONTRIBUTING.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </body>
+</html>

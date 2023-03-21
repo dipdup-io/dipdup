@@ -10,8 +10,8 @@ create-missing = false
 
 [output.html]
 default-theme = "coal"
-additional-css = ["book.css"]
-git-repository-url = "https://github.com/dipdup-net/dipdup.git"
+additional-css = ["book.css", "mdbook-admonish.css"]
+git-repository-url = "https://github.com/dipdup-io/dipdup.git"
 
 [preprocessor.summary]
 command = "python mdbook-summary"
@@ -19,3 +19,7 @@ command = "python mdbook-summary"
 [preprocessor.cookiecutter]
 command = "python mdbook-cookiecutter"
 after = [ "links" ]
+
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "2.0.0" # do not edit: managed by `mdbook-admonish install`
