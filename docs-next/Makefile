@@ -1,35 +1,44 @@
-.ONESHELL:
-.PHONY: $(MAKECMDGOALS)
+# Minimal makefile for Sphinx documentation
+#
 
-##
+# You can set these variables from the command line, and also
+# from the environment for the first two.
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= sphinx-build
+SOURCEDIR     = .
+BUILDDIR      = _build
 
-help:           ## Show this help (default)
-	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+# Put it first so that "make" without argument is like "make help".
+help:
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-build:
-	poetry run sphinx-build -M html . _build
+.PHONY: help Makefile
 
-	# FIXME: Using generated Sphinx HTML as a source for mdbook; looks terrible 
-	echo '<!-- markdownlint-disable first-line-h1 -->' > cli-reference.md
-	echo '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->' > config/reference.md
-	echo '<!-- markdownlint-disable first-line-h1 -->' > include/context-reference.md
-	tail -n '+32' _build/html/cli-reference.html | head -n '-63' >> cli-reference.md
-	tail -n '+32' _build/html/config-reference.html | head -n '-63' | sed "s/dipdup.config.//g" | sed "s/dipdup.enums.//g" >> config/reference.md
-	tail -n '+32' _build/html/context-reference.html | head -n '-63' >> include/context-reference.md
+# Catch-all target: route all unknown targets to Sphinx using the new
+# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+%: Makefile
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+docs:
+	poetry run make html
+	# NOTE: A hack to include generated references in mdbook pages
+	tail -n '+35' _build/html/cli-reference.html | head -n '-63' > cli-reference.md
+	tail -n '+35' _build/html/config-reference.html | head -n '-63' > config/reference.md
+	tail -n '+35' _build/html/context-reference.html | head -n '-63' > include/context-reference.md
 	mdbook build  --dest-dir=dist/docs
 
-lint: markdownlint orphans
+homepage:
+	npm i
+	npm run build
 
 serve:
-	make clean build
-	mdbook serve
+	mdbook serve -o
 
 wc:
 	find . -name \*.md -type f -exec wc {} \;
 
 markdownlint:
-	npx markdownlint-cli -f . --disable line-length --disable no-inline-html
+	markdownlint -f . --disable=MD013 --disable=MD033  || true
 
 clean:
 	git clean -Xdf
@@ -45,7 +54,6 @@ orphans:
 		-e "SUMMARY.md" \
 		-e "mdbook-summary" \
 		-e "mdbook-cookiecutter" \
-		-e "mdbook-admonish" \
 		-e "include" \
 		| cut -c "3-" | sort -o existing.tmp
 	diff --color mentioned.tmp existing.tmp

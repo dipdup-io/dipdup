@@ -4,16 +4,14 @@
 window.onunload = function () { };
 
 // Global variable, shared between modules
-function playground_text(playground, hidden = true) {
+function playground_text(playground) {
     let code_block = playground.querySelector("code");
 
     if (window.ace && code_block.classList.contains("editable")) {
         let editor = window.ace.edit(code_block);
         return editor.getValue();
-    } else if (hidden) {
-        return code_block.textContent;
     } else {
-        return code_block.innerText;
+        return code_block.textContent;
     }
 }
 
@@ -168,6 +166,7 @@ function playground_text(playground, hidden = true) {
             .filter(function (node) {return node.classList.contains("editable"); })
             .forEach(function (block) { block.classList.remove('language-rust'); });
 
+        Array
         code_nodes
             .filter(function (node) {return !node.classList.contains("editable"); })
             .forEach(function (block) { hljs.highlightBlock(block); });
@@ -301,13 +300,6 @@ function playground_text(playground, hidden = true) {
         themePopup.querySelector("button#" + get_theme()).focus();
     }
 
-    function updateThemeSelected() {
-        themePopup.querySelectorAll('.theme-selected').forEach(function (el) {
-            el.classList.remove('theme-selected');
-        });
-        themePopup.querySelector("button#" + get_theme()).classList.add('theme-selected');
-    }
-
     function hideThemes() {
         themePopup.style.display = 'none';
         themeToggleButton.setAttribute('aria-expanded', false);
@@ -363,7 +355,6 @@ function playground_text(playground, hidden = true) {
 
         html.classList.remove(previousTheme);
         html.classList.add(theme);
-        updateThemeSelected();
     }
 
     // Set theme
@@ -601,7 +592,7 @@ function playground_text(playground, hidden = true) {
         text: function (trigger) {
             hideTooltip(trigger);
             let playground = trigger.closest("pre");
-            return playground_text(playground, false);
+            return playground_text(playground);
         }
     });
 
