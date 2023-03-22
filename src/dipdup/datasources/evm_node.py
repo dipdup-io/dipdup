@@ -3,7 +3,6 @@ from typing import Any
 from uuid import uuid4
 
 from dipdup.config import HttpConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
@@ -40,11 +39,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             if isinstance(subscription, NodeSubscription):
                 await self._subscribe(subscription)
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
-
-    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
-        """Register index config in internal mappings and matchers. Find and register subscriptions."""
-        for subscription in index_config.get_subscriptions():
-            self._subscriptions.add(subscription)
 
     async def _subscribe(self, subscription: NodeSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)

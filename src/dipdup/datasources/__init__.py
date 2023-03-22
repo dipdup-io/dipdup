@@ -5,6 +5,7 @@ from typing import Generic
 from typing import TypeVar
 
 from dipdup.config import DatasourceConfig
+from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
@@ -61,6 +62,11 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     @abstractmethod
     async def initialize(self) -> None:
         ...
+
+    def add_index(self, index_config: IndexConfig) -> None:
+        """Register index config in internal mappings and matchers. Find and register subscriptions."""
+        for subscription in index_config.get_subscriptions():
+            self._subscriptions.add(subscription)
 
     def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
         self._subscriptions.set_sync_level(subscription, level)

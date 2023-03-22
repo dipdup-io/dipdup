@@ -352,9 +352,9 @@ class DipDupContext:
         else:
             raise NotImplementedError
 
-        await datasource.add_index(index_config)
+        datasource.add_index(index_config)
         if node_datasource:
-            await node_datasource.add_index(index_config)
+            node_datasource.add_index(index_config)
 
         handlers = (
             (index_config.handler_config,)

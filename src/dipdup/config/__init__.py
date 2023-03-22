@@ -765,7 +765,6 @@ class DipDupConfig:
         self._resolve_template(template_config)
         index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
-        # self._resolve_index_subscriptions(index_config)
         index_config._name = name
 
     def _validate(self) -> None:

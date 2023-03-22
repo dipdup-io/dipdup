@@ -9,7 +9,6 @@ import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
 
 from dipdup.config import HttpConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
@@ -76,11 +75,6 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def subscribe(self) -> None:
         pass
-
-    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
-        """Register index config in internal mappings and matchers. Find and register subscriptions."""
-        for subscription in index_config.get_subscriptions():
-            self._subscriptions.add(subscription)
 
     async def iter_event_logs(
         self,

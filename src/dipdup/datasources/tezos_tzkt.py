@@ -20,7 +20,6 @@ from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
 from dipdup.config import HttpConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
@@ -886,11 +885,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             cursor=False,
         ):
             yield batch
-
-    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
-        """Register index config in internal mappings and matchers. Find and register subscriptions."""
-        for subscription in index_config.get_subscriptions():
-            self._subscriptions.add(subscription)
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
