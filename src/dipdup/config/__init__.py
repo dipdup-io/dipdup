@@ -986,10 +986,10 @@ class DipDupConfig:
                 handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersHandlerConfig):
-            for handler_config in index_config.handlers:
+            for handler_config in index_config.handlers:  # type: ignore[union-attr]
                 handler_config.parent = index_config
 
-                for attribute_name in ['contract', 'from_', 'to']:
+                for attribute_name in ('contract', 'from_', 'to'):
                     attribute_value = getattr(handler_config, attribute_name)
                     if isinstance(attribute_value, str):
                         setattr(
@@ -1064,7 +1064,8 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig, TzktTokenTransfersIndexConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig  # noqa: E402
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 
 # NOTE: Unions for Pydantic config deserialization
