@@ -11,6 +11,7 @@ contracts:
     address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
     typename: tzbtc
   tzbtc_holder_mainnet:
+    kind: tezos
     address: tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk
 
 datasources:

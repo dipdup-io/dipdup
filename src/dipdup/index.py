@@ -89,7 +89,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
-        sync_levels = {self.datasource.get_sync_level(s) for s in self._config.subscriptions}
+        subs = self._config.get_subscriptions()
+        sync_levels = {self.datasource.get_sync_level(s) for s in subs}
         if not sync_levels:
             raise FrameworkException('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:

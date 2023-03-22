@@ -358,7 +358,10 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         ParentMixin.__post_init_post_parse__(self)
 
         self.template_values: dict[str, str] = {}
-        self.subscriptions: set[Subscription] = set()
+
+    @abstractmethod
+    def get_subscriptions(self) -> set[Subscription]:
+        ...
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -762,7 +765,7 @@ class DipDupConfig:
         self._resolve_template(template_config)
         index_config = cast(ResolvedIndexConfigU, self.indexes[name])
         self._resolve_index_links(index_config)
-        self._resolve_index_subscriptions(index_config)
+        # self._resolve_index_subscriptions(index_config)
         index_config._name = name
 
     def _validate(self) -> None:
@@ -833,7 +836,6 @@ class DipDupConfig:
                 raise ConfigInitializationException('Index templates must be resolved first')
 
             self._resolve_index_links(index_config)
-            self._resolve_index_subscriptions(index_config)
 
         for job_config in self.jobs.values():
             if isinstance(job_config.hook, str):
@@ -841,92 +843,6 @@ class DipDupConfig:
                 if job_config.daemon and hook_config.atomic:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
-
-    # FIXME: Definitely not the best place for this
-    def _resolve_index_subscriptions(self, index_config: IndexConfigU) -> None:
-        if isinstance(index_config, IndexTemplateConfig):
-            return
-        if index_config.subscriptions:
-            return
-
-        from dipdup.models.evm_node import NodeHeadSubscription
-        from dipdup.models.evm_subsquid import ArchiveSubscription
-        from dipdup.models.tezos_tzkt import BigMapSubscription
-        from dipdup.models.tezos_tzkt import EventSubscription
-        from dipdup.models.tezos_tzkt import HeadSubscription
-        from dipdup.models.tezos_tzkt import OriginationSubscription
-        from dipdup.models.tezos_tzkt import TokenTransferSubscription
-        from dipdup.models.tezos_tzkt import TransactionSubscription
-        from dipdup.models.tezos_tzkt import TzktOperationType
-
-        if isinstance(index_config, TzktIndexConfig):
-            index_config.subscriptions.add(HeadSubscription())
-
-        if isinstance(index_config, TzktOperationsIndexConfig):
-            if TzktOperationType.transaction in index_config.types:
-                if index_config.datasource.merge_subscriptions:
-                    index_config.subscriptions.add(TransactionSubscription())
-                else:
-                    for contract_config in index_config.contracts:
-                        if not isinstance(contract_config, ContractConfig):
-                            raise ConfigInitializationException
-                        index_config.subscriptions.add(TransactionSubscription(address=contract_config.address))
-
-            if TzktOperationType.origination in index_config.types:
-                index_config.subscriptions.add(OriginationSubscription())
-
-        elif isinstance(index_config, TzktBigMapsIndexConfig):
-            if index_config.datasource.merge_subscriptions:
-                index_config.subscriptions.add(BigMapSubscription())
-            else:
-                for big_map_handler_config in index_config.handlers:
-                    address, path = big_map_handler_config.contract.address, big_map_handler_config.path
-                    index_config.subscriptions.add(BigMapSubscription(address=address, path=path))
-
-        elif isinstance(index_config, TzktHeadIndexConfig):
-            pass
-
-        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
-            if index_config.datasource.merge_subscriptions:
-                index_config.subscriptions.add(TokenTransferSubscription())  # type: ignore[call-arg]
-            else:
-                for handler_config in index_config.handlers:
-                    contract = (
-                        handler_config.contract.address if isinstance(handler_config.contract, ContractConfig) else None
-                    )
-                    from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
-                    to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
-                    index_config.subscriptions.add(
-                        TokenTransferSubscription(  # type: ignore[call-arg]
-                            contract=contract, from_=from_, to=to, token_id=handler_config.token_id
-                        )
-                    )
-
-        elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
-            index_config.subscriptions.add(TransactionSubscription())
-
-        elif isinstance(index_config, TzktEventsIndexConfig):
-            if index_config.datasource.merge_subscriptions:
-                index_config.subscriptions.add(EventSubscription())
-            else:
-                for event_handler_config in index_config.handlers:
-                    address = event_handler_config.contract.address
-                    index_config.subscriptions.add(EventSubscription(address=address))
-
-        elif isinstance(index_config, SubsquidEventsIndexConfig):
-            index_config.subscriptions.add(ArchiveSubscription())
-            index_config.subscriptions.add(NodeHeadSubscription())
-
-        elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            raise NotImplementedError
-
-        else:
-            raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
-
-        if not index_config.subscriptions:
-            raise ConfigurationError(
-                f'`{index_config.name}` index has no subscriptions; ensure that config is correct.'
-            )
 
     def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
         """Resolve contract and datasource configs by aliases.
@@ -985,8 +901,8 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
-        elif isinstance(index_config, TzktTokenTransfersHandlerConfig):
-            for handler_config in index_config.handlers:  # type: ignore[union-attr]
+        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+            for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
                 for attribute_name in ('contract', 'from_', 'to'):
@@ -1016,7 +932,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            ...
+            raise NotImplementedError
 
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
@@ -1056,7 +972,6 @@ from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
 from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
 from dipdup.config.tezos import TezosContractConfig  # noqa: E402
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
-from dipdup.config.tezos_tzkt import TzktIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402
@@ -1064,7 +979,6 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 

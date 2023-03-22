@@ -10,6 +10,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.models.tezos_tzkt import EventSubscription
+from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -82,3 +84,13 @@ class TzktEventsIndexConfig(TzktIndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    def get_subscriptions(self) -> set[Subscription]:
+        subs = super().get_subscriptions()
+        if self.datasource.merge_subscriptions:
+            subs.add(EventSubscription())
+        else:
+            for handler_config in self.handlers:
+                address = handler_config.contract.address
+                subs.add(EventSubscription(address=address))
+        return subs

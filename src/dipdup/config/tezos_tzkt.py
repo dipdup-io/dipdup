@@ -7,6 +7,8 @@ from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions import Subscription
 
 TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
@@ -55,3 +57,6 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
 @dataclass
 class TzktIndexConfig(IndexConfig):
     datasource: TzktDatasourceConfig
+
+    def get_subscriptions(self) -> set[Subscription]:
+        return {HeadSubscription()}

@@ -79,7 +79,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
-        for subscription in index_config.subscriptions:
+        for subscription in index_config.get_subscriptions():
             self._subscriptions.add(subscription)
 
     async def iter_event_logs(

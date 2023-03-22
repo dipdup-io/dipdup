@@ -6,10 +6,13 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
+from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.models.tezos_tzkt import TokenTransferSubscription
+from dipdup.subscriptions import Subscription
 
 
 @dataclass
@@ -56,3 +59,24 @@ class TzktTokenTransfersIndexConfig(TzktIndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    def get_subscriptions(self) -> set[Subscription]:
+        subs = super().get_subscriptions()
+        if self.datasource.merge_subscriptions:
+            subs.add(TokenTransferSubscription())  # type: ignore[call-arg]
+        else:
+            for handler_config in self.handlers:
+                contract = (
+                    handler_config.contract.address if isinstance(handler_config.contract, ContractConfig) else None
+                )
+                from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
+                to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
+                subs.add(
+                    TokenTransferSubscription(  # type: ignore[call-arg]
+                        contract=contract,
+                        from_=from_,
+                        to=to,
+                        token_id=handler_config.token_id,
+                    )
+                )
+        return subs

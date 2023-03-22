@@ -42,18 +42,18 @@ async def test_load_initialize() -> None:
 async def test_operation_subscriptions() -> None:
     index_config = create_config(False, False).indexes['hen_mainnet']
     assert isinstance(index_config, TzktOperationsIndexConfig)
-    assert index_config.subscriptions == {
+    assert index_config.get_subscriptions() == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         HeadSubscription(),
     }
 
     index_config = create_config(True, False).indexes['hen_mainnet']
     assert isinstance(index_config, TzktOperationsIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(), HeadSubscription()}
+    assert index_config.get_subscriptions() == {TransactionSubscription(), HeadSubscription()}
 
     index_config = create_config(False, True).indexes['hen_mainnet']
     assert isinstance(index_config, TzktOperationsIndexConfig)
-    assert index_config.subscriptions == {
+    assert index_config.get_subscriptions() == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         OriginationSubscription(),
         HeadSubscription(),
@@ -61,7 +61,11 @@ async def test_operation_subscriptions() -> None:
 
     index_config = create_config(True, True).indexes['hen_mainnet']
     assert isinstance(index_config, TzktOperationsIndexConfig)
-    assert index_config.subscriptions == {TransactionSubscription(), OriginationSubscription(), HeadSubscription()}
+    assert index_config.get_subscriptions() == {
+        TransactionSubscription(),
+        OriginationSubscription(),
+        HeadSubscription(),
+    }
 
 
 async def test_validators() -> None:
