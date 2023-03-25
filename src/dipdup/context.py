@@ -602,6 +602,7 @@ class HandlerContext(DipDupContext):
         )
 
 
+# TODO: Use DipDupPackage
 class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')

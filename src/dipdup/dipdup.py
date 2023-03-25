@@ -31,6 +31,7 @@ from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import DipDupException
@@ -47,12 +48,12 @@ from dipdup.models import Contract
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
+from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
-from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
@@ -239,16 +240,17 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
-            if not isinstance(datasource, TzktDatasource):
-                continue
-            datasource.call_on_head(self._on_head)
-            datasource.call_on_operations(self._on_operations)
-            datasource.call_on_token_transfers(self._on_token_transfers)
-            datasource.call_on_big_maps(self._on_big_maps)
-            datasource.call_on_events(self._on_events)
-            datasource.call_on_rollback(self._on_rollback)
+            if isinstance(datasource, TzktDatasource):
+                datasource.call_on_head(self._on_tzkt_head)
+                datasource.call_on_operations(self._on_tzkt_operations)
+                datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
+                datasource.call_on_big_maps(self._on_tzkt_big_maps)
+                datasource.call_on_events(self._on_tzkt_events)
+                datasource.call_on_rollback(self._on_rollback)
+            elif isinstance(datasource, EvmNodeDatasource):
+                raise NotImplementedError
 
-    async def _on_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
+    async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
         asyncio.ensure_future(
             Head.update_or_create(
@@ -266,7 +268,7 @@ class IndexDispatcher:
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
+    async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -283,25 +285,29 @@ class IndexDispatcher:
             if isinstance(index, TzktOperationsIndex) and index.datasource == datasource:
                 index.push_operations(operation_subgroups)
 
-    async def _on_token_transfers(
+    async def _on_tzkt_token_transfers(
         self, datasource: TzktDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
                 index.push_token_transfers(token_transfers)
 
-    async def _on_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
+    async def _on_tzkt_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
                 index.push_big_maps(big_maps)
 
-    async def _on_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
+    async def _on_tzkt_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
     async def _on_rollback(
-        self, datasource: TzktDatasource, type_: TzktMessageType, from_level: int, to_level: int
+        self,
+        datasource: IndexDatasource[Any],
+        type_: MessageType,
+        from_level: int,
+        to_level: int,
     ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:

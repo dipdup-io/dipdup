@@ -42,11 +42,14 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def _subscribe(self, subscription: NodeSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
-        response = await self._request('eth_subscribe', subscription.get_params())
+        response = await self._jsonrpc_request(
+            'eth_subscribe',
+            subscription.get_params(),
+        )
         self._subscription_ids[response['result']] = subscription
         self._subscriptions.set_sync_level(subscription, 0)
 
-    async def _request(
+    async def _jsonrpc_request(
         self,
         method: str,
         params: Any,
@@ -93,6 +96,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)
         else:
             raise DatasourceError(f'Unknown message: {data}', self.name)
+
+    async def _handle_subscription(self, subscription: NodeSubscription, data: Any) -> None:
+        raise NotImplementedError
 
     async def _on_error(self, message: WebsocketMessage) -> None:
         raise DatasourceError(f'Node error: {message.data}', self.name)

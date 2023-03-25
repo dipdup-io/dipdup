@@ -63,6 +63,10 @@ class IndexType(Enum):
     evm_subsquid_events = 'evm.subsquid.events'
 
 
+class MessageType:
+    value: str
+
+
 class IndexStatus(Enum):
     NEW = 'NEW'
     SYNCING = 'SYNCING'

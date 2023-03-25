@@ -1,4 +1,5 @@
 import asyncio
+import time
 import zipfile
 from io import BytesIO
 from typing import Any
@@ -13,6 +14,7 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.models.evm_subsquid import SubsquidEventData
+from dipdup.subscriptions import Subscription
 
 FieldMap = dict[str, bool]
 
@@ -66,15 +68,21 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
+        self._updated_at: float = 0
 
     async def run(self) -> None:
         # FIXME: No true realtime yet
         while True:
+            if time.time() - self._updated_at > 10:
+                await self.initialize()
             await asyncio.sleep(1)
-            await self.update_head()
 
     async def subscribe(self) -> None:
         pass
+
+    def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
+        self._updated_at = time.time()
+        return super().set_sync_level(subscription, level)
 
     async def iter_event_logs(
         self,
@@ -105,7 +113,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             )
 
             current_level = response['nextBlock']
-            await self.update_head(response['archiveHeight'])
+            sync_level = response['archiveHeight']
+            self.set_sync_level(None, sync_level)
 
             logs: list[SubsquidEventData] = []
             for level in response['data']:
@@ -117,12 +126,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             yield tuple(logs)
 
     async def initialize(self) -> None:
-        await self.update_head()
-
-    async def update_head(self, level: int | None = None) -> None:
-        if level is None:
-            response = await self.request('get', 'height')
-            level = response.get('height')
+        response = await self.request('get', 'height')
+        level = response.get('height')
 
         if level is None:
             raise DatasourceError('Archive is not ready yet', self.name)

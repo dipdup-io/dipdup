@@ -14,6 +14,7 @@ from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import FrameworkException
+from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
@@ -40,7 +41,7 @@ class TzktOperationType(Enum):
     migration = 'migration'
 
 
-class TzktMessageType(Enum):
+class TzktMessageType(MessageType, Enum):
     """Enum for realtime message types"""
 
     operation = 'operation'
