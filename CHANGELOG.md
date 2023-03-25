@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - config: Fixed crash when `token_transfer` index has `from` or `to` filter.
+- cli: Don't enforce logging `DeprecationWarning` warnings.
+- cli: Fixed `BrokenPipeError` messages when interrupting with DipDup with SIGINT.
 
 ### Security
 
