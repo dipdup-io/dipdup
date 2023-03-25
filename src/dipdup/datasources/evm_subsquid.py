@@ -1,5 +1,3 @@
-import asyncio
-import time
 import zipfile
 from io import BytesIO
 from typing import Any
@@ -14,7 +12,6 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.models.evm_subsquid import SubsquidEventData
-from dipdup.subscriptions import Subscription
 
 FieldMap = dict[str, bool]
 
@@ -68,21 +65,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
-        self._updated_at: float = 0
 
+    # NOTE: Realtime subscriptions are covered by EvmNodeDatasource
     async def run(self) -> None:
-        # FIXME: No true realtime yet
-        while True:
-            if time.time() - self._updated_at > 10:
-                await self.initialize()
-            await asyncio.sleep(1)
+        pass
 
     async def subscribe(self) -> None:
         pass
-
-    def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
-        self._updated_at = time.time()
-        return super().set_sync_level(subscription, level)
 
     async def iter_event_logs(
         self,

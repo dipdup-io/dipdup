@@ -95,8 +95,9 @@ class IndexDispatcher:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
-                index_datasources = {i.datasource for i in self._indexes.values()}
-                for datasource in index_datasources:
+                for datasource in self._ctx.datasources.values():
+                    if not isinstance(datasource, IndexDatasource):
+                        continue
                     await datasource.subscribe()
 
             tasks: deque[Awaitable[bool]] = deque()
@@ -248,7 +249,7 @@ class IndexDispatcher:
                 datasource.call_on_events(self._on_tzkt_events)
                 datasource.call_on_rollback(self._on_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
-                raise NotImplementedError
+                datasource.call_on_head(self._on_evm_node_head)
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
@@ -267,6 +268,9 @@ class IndexDispatcher:
         for index in self._indexes.values():
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
+
+    async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: dict[str, Any]) -> None:
+        ...
 
     async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(

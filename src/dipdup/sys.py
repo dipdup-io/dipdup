@@ -13,7 +13,6 @@ IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update'}
 IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
 
 _is_shutting_down = False
-_logger = logging.getLogger(__name__)
 
 
 async def _shutdown() -> None:  # pragma: no cover
@@ -22,7 +21,9 @@ async def _shutdown() -> None:  # pragma: no cover
         return
     _is_shutting_down = True
 
-    _logger.info('Shutting down')
+    # NOTE: Prevents BrokenPipeError when piping output to another process
+    sys.stderr.close()
+
     tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
     list(map(asyncio.Task.cancel, tasks))
     await asyncio.gather(*tasks, return_exceptions=True)
@@ -63,5 +64,4 @@ def set_up_process(cmd: str | None) -> None:
 
     # NOTE: Format warnings as normal log messages
     logging.captureWarnings(True)
-    warnings.simplefilter('always', DeprecationWarning)
     warnings.formatwarning = lambda msg, *a, **kw: str(msg)

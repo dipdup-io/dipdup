@@ -231,7 +231,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     def request_limit(self) -> int:
         return self._http_config.batch_size
 
-    # FIXME: Merge retry logic with other index datasources
+    # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
         signalr_client = self._get_signalr_client()
