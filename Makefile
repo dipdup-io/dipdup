@@ -99,3 +99,13 @@ replays:        ## Recreate replays for tests
 	make test
 
 ##
+
+DEMO="demo-evm-events"
+
+demo_run:
+	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" run | tee ${DEMO}.log
+
+demo_init:
+	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
+
+##
