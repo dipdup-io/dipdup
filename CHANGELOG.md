@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - hasura: Forbid using Hasura instances affected by [GHSA-c9rw-rw2f-mj4x](https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x)
 
+### Other
+
+- deps: Updated pydantic to 1.10.7
+
 ## [6.5.2] - 2023-03-09
 
 ### Fixed
