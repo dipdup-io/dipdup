@@ -4,21 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.5.3] - 2022-03-28
 
 ### Fixed
 
-- config: Fixed crash when `token_transfer` index has `from` or `to` filter.
 - cli: Don't enforce logging `DeprecationWarning` warnings.
 - cli: Fixed `BrokenPipeError` messages when interrupting with DipDup with SIGINT.
+- config: Fixed crash when `token_transfer` index has `from` or `to` filter.
 
 ### Security
 
-- hasura: Forbid using Hasura instances affected by [GHSA-c9rw-rw2f-mj4x](https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x)
-
-### Other
-
-- deps: Updated pydantic to 1.10.7
+- hasura: Forbid using Hasura instances affected by [GHSA-c9rw-rw2f-mj4x](https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x).
 
 ## [6.5.2] - 2023-03-09
 
@@ -975,7 +971,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.3...HEAD
+[6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3
 [6.5.2]: https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2
 [6.5.1]: https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1
 [6.5.0]: https://github.com/dipdup-io/dipdup/compare/6.4.3...6.5.0
