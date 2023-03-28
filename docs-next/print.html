@@ -3464,7 +3464,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <section id="dipdup-run">
 <h2 id="run"><a class="header" href="#run">run<a class="headerlink" href="cli-reference.html#dipdup-run" title="Permalink to this heading">¶</a></a></h2>
 <p>Run indexer.</p>
-<p>Execution can be gracefully interrupted with <cite>Ctrl+C</cite> or <cite>SIGTERM</cite> signal.</p>
+<p>Execution can be gracefully interrupted with <cite>Ctrl+C</cite> or <cite>SIGINT</cite> signal.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>run<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
@@ -4493,10 +4493,16 @@ templates:
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
 <li>config: Fixed crash when <code>token_transfer</code> index has <code>from</code> or <code>to</code> filter.</li>
+<li>cli: Don't enforce logging <code>DeprecationWarning</code> warnings.</li>
+<li>cli: Fixed <code>BrokenPipeError</code> messages when interrupting with DipDup with SIGINT.</li>
 </ul>
 <h3 id="security"><a class="header" href="#security">Security</a></h3>
 <ul>
 <li>hasura: Forbid using Hasura instances affected by <a href="https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x">GHSA-c9rw-rw2f-mj4x</a></li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>deps: Updated pydantic to 1.10.7</li>
 </ul>
 <h2 id="652---2023-03-09"><a class="header" href="#652---2023-03-09"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2">6.5.2</a> - 2023-03-09</a></h2>
 <h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
@@ -4517,7 +4523,7 @@ templates:
 <li>codegen: Fixed validation of created package after <code>dipdup init</code>.</li>
 <li>config: Allow using empty string as default env (<code>{DEFAULT_EMPTY:-}</code>).</li>
 </ul>
-<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
 <ul>
 <li>deps: Updated pydantic to 1.10.5</li>
 <li>deps: Updated datamodel-code-generator to 0.17.1</li>
@@ -4541,7 +4547,7 @@ templates:
 <li>tzkt: Fixed <code>OperationData.type</code> field value for migration originations.</li>
 <li>tzkt: Added missing <code>last_level</code> argument to migration origination fetching methods.</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
 <ul>
 <li>tzkt: Updated current testnet protocol (<code>limanet</code>).</li>
 <li>deps: Updated asyncpg to 0.27.0</li>
@@ -4628,7 +4634,7 @@ templates:
 <ul>
 <li>hasura: Forbid using Hasura instances running vulnerable versions (<a href="https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg">GHSA-g7mj-g7f4-hgrg</a>)</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>ci: <code>mypy --strict</code> is now enforced on a codebase.</li>
 <li>ci: Finished migration to <code>pytest</code>.</li>
@@ -4692,7 +4698,7 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -4708,7 +4714,7 @@ templates:
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
 <li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -4856,7 +4862,7 @@ templates:
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
@@ -4897,7 +4903,7 @@ templates:
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
+<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
@@ -5048,7 +5054,7 @@ templates:
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
+<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
@@ -5092,7 +5098,7 @@ templates:
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
+<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -5155,7 +5161,7 @@ templates:
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
+<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
@@ -5454,7 +5460,7 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
+<h3 id="other-11"><a class="header" href="#other-11">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -6048,16 +6054,22 @@ hooks:
 </ul>
 <h2 id="github"><a class="header" href="#github">GitHub</a></h2>
 <ul>
-<li>Branch names MUST follow <code>prefix/short-description</code> format. Prefixes currently in use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>aux</code> for miscellaneous, <code>exp</code> for experiments.</li>
+<li>Branch names MUST follow <code>prefix/short-description</code> format. Prefixes currently in use: <code>feat</code> for features, <code>fix</code> for bugfixes, <code>docs</code> for documentation, <code>exp</code> for experiments, <code>aux</code> for everything else.</li>
 <li>Commits in pull requests MUST be squashed when merging to <code>master</code>.</li>
 <li>Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.</li>
 </ul>
 <h2 id="codestyle"><a class="header" href="#codestyle">Codestyle</a></h2>
 <ul>
 <li>We use the following combo of linters and formatters: <code>isort</code>, <code>black</code>, <code>ruff</code>, <code>mypy</code>. All linter checks MUST pass before merging code to <code>master</code> (CI will fail otherwise).</li>
-<li>Single quotes are RECOMMENDED for string literals.</li>
+<li>Single quotes MUST be used for string literals.</li>
 <li>Meaningful comments are highly RECOMMENDED to begin with <code># NOTE:</code>, <code># TODO:</code>, or <code># FIXME:</code>.</li>
 <li>f-string formatting is RECOMMENDED over other methods. Logging is an exception to this rule.</li>
+</ul>
+<h2 id="packaging"><a class="header" href="#packaging">Packaging</a></h2>
+<ul>
+<li>All dependencies MUST be declared in <code>pyproject.toml</code> file.</li>
+<li>Non-development dependencies MUST be pinned to non-breaking versions (e.g. <code>^1.2.3</code>).</li>
+<li>Core dependencies that we patch MUST be pinned to specific versions (e.g. <code>1.2.3</code>).</li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
 <ul>
@@ -6080,6 +6092,7 @@ hooks:
 <h2 id="security-4"><a class="header" href="#security-4">Security</a></h2>
 <ul>
 <li>GitHub alerts about dependencies that contain vulnerabilities MUST be investigated and resolved as soon as possible.</li>
+<li>Security-related bugfixes MUST be mentioned in the changelog under the &quot;Security&quot; section.</li>
 </ul>
 <h2 id="privacy"><a class="header" href="#privacy">Privacy</a></h2>
 <ul>
@@ -6089,7 +6102,7 @@ hooks:
 </ul>
 <h2 id="docker-images"><a class="header" href="#docker-images">Docker images</a></h2>
 <ul>
-<li>DipDup dockerfiles use autogenerated <code>requirements.txt</code> files. Maintainers SHOULD run <code>make update</code> script on every change in dependencies.</li>
+<li>DipDup dockerfiles use autogenerated <code>requirements.txt</code> files. Maintainers MUST run <code>make update</code> script on every change in dependencies.</li>
 <li>Docker images for stable releases MUST be published on Docker Hub. They MAY also be published on GHCR.</li>
 <li>Maintainers MAY publish arbitrary images on GHCR and remove them when not needed.</li>
 </ul>
