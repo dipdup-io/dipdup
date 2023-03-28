@@ -361,15 +361,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(
             offset=offset,
             limit=limit,
-            select=('id', 'address'),
+            select=('address', ),
+            values=True
         )
         response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
             params=params,
         )
-        # FIXME: No cursor iteration, need 'id' in select
-        return tuple(item['address'] for item in response)
+        # FIXME: No cursor iteration, need 'id' in select  # old comment didnt get it, what is the reason for id in request
+        return tuple(response)
 
     async def iter_similar_contracts(
         self,
@@ -926,6 +927,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
+        values: bool = False,  # return only list of chosen values instead of dict
         cursor: bool = False,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -942,7 +944,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             else:
                 params['offset'] = offset
         if select:
-            params['select'] = ','.join(select)
+            #  filter fields
+            params['select.values' if values else 'select'] = ','.join(select)
         return {
             **params,
             **kwargs,
