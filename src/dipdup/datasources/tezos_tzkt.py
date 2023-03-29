@@ -396,15 +396,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(
             offset=offset,
             limit=limit,
-            select=('id', 'address'),
+            select=('address', ),
+            values=True
         )
         response = await self.request(
             'get',
             url=f'v1/accounts/{address}/contracts',
             params=params,
         )
-        # FIXME: No cursor iteration, need 'id' in select
-        return tuple(item['address'] for item in response)
+        # FIXME: No cursor iteration, need 'id' in select  # old comment didnt get it, what is the reason for id in request
+        return tuple(response)
 
     async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
         async for batch in self._iter_batches(
