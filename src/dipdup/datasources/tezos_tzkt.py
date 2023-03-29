@@ -391,7 +391,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(offset=offset, limit=limit, select=('address',), values=True)
         response = await self.request(
             'get',
-            url=f'v1/contracts',
+            url='v1/contracts',
             params={
                 'creator.eq': address,
                 **params,
