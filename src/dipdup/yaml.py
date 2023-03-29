@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging.config
 import re
+from copy import copy
 from io import StringIO
 from os import environ as env
 from pathlib import Path
@@ -71,6 +72,18 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
     return config_yaml, environment
 
 
+def fix_dataclass_field_aliases(config: dict[str, Any]) -> None:
+    for k, v in copy(config).items():
+        if 'callack' in config and k == 'from':
+            config['from_'] = config.pop('from')
+        elif isinstance(v, dict):
+            fix_dataclass_field_aliases(v)
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    fix_dataclass_field_aliases(item)
+
+
 class DipDupYAMLConfig(dict[str, Any]):
     @classmethod
     def load(
@@ -91,6 +104,10 @@ class DipDupYAMLConfig(dict[str, Any]):
                 config_environment.update(path_environment)
 
             config.update(yaml.load(path_yaml))
+
+        # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
+        # FIXME: See https://github.com/pydantic/pydantic/issues/4286
+        fix_dataclass_field_aliases(config)
 
         return config, config_environment
 
