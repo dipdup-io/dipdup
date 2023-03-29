@@ -358,12 +358,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
 
-        params = self._get_request_params(
-            offset=offset,
-            limit=limit,
-            select=('address', ),
-            values=True
-        )
+        params = self._get_request_params(offset=offset, limit=limit, select=('address',), values=True)
         response = await self.request(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
@@ -393,16 +388,14 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     ) -> tuple[str, ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s`', address)
-        params = self._get_request_params(
-            offset=offset,
-            limit=limit,
-            select=('address', ),
-            values=True
-        )
+        params = self._get_request_params(offset=offset, limit=limit, select=('address',), values=True)
         response = await self.request(
             'get',
-            url=f'v1/accounts/{address}/contracts',
-            params=params,
+            url=f'v1/contracts',
+            params={
+                'creator.eq': address,
+                **params,
+            },
         )
         # FIXME: No cursor iteration, need 'id' in select  # old comment didnt get it, what is the reason for id in request
         return tuple(response)
