@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- config: Fixed incorrest parsing of `token_transfer` index filters. 
+
 ## [6.5.3] - 2022-03-28
 
 ### Fixed
