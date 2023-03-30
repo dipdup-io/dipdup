@@ -94,7 +94,7 @@ async def run_hasura_container(postgres_port: int) -> HasuraConfig:
     hasura_port: int = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostPort']
 
     return HasuraConfig(
-        url=f'http://{hasura_ip}:{hasura_port}',
+        url=f'http://localhost:{hasura_port}',
         source='new_source',
         create_source=True,
     )
