@@ -90,7 +90,7 @@ async def run_hasura_container(postgres_port: int) -> HasuraConfig:
         await asyncio.sleep(0.2)
         hasura_container.reload()
 
-    hasura_ip = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostIp']
+    # hasura_ip = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostIp']
     hasura_port: int = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostPort']
 
     return HasuraConfig(
