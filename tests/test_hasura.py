@@ -2,6 +2,7 @@ import asyncio
 import atexit
 from contextlib import AsyncExitStack
 from pathlib import Path
+import os
 
 import orjson as json
 import pytest
@@ -89,6 +90,9 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
 
 
 async def test_configure_hasura() -> None:
+    if os.uname().sysname != 'Linux' or 'windows' in os.uname().release:
+        pytest.skip('Test is not supported for os archetecture', allow_module_level=True)
+
     config_path = Path(__file__).parent / 'configs' / 'demo_nft_marketplace.yml'
 
     config = DipDupConfig.load([config_path])
