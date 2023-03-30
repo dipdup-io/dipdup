@@ -53,6 +53,10 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
     )
     atexit.register(postgres_container.stop)
     postgres_container.reload()
+    while not postgres_container.attrs['NetworkSettings']['Ports']['5432/tcp']:
+        await asyncio.sleep(0.2)
+        postgres_container.reload()
+
     postgres_ip: str = postgres_container.attrs['NetworkSettings']['Ports']['5432/tcp'][0]['HostIp']
     postgres_port: int = postgres_container.attrs['NetworkSettings']['Ports']['5432/tcp'][0]['HostPort']
 
@@ -82,6 +86,10 @@ async def run_hasura_container(postgres_port: int) -> HasuraConfig:
     )
     atexit.register(hasura_container.stop)
     hasura_container.reload()
+    while not hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp']:
+        await asyncio.sleep(0.2)
+        hasura_container.reload()
+
     hasura_ip = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostIp']
     hasura_port: int = hasura_container.attrs['NetworkSettings']['Ports']['8080/tcp'][0]['HostPort']
 
