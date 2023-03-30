@@ -135,7 +135,7 @@ class PostgresDatabaseConfig:
             'username': self.user,
             'password': self.password,
             'database': self.database,
-            'host': self.host,
+            'host': self.host if self.host != '0.0.0.0' else 'host.docker.internal',
             'port': self.port,
         }
 

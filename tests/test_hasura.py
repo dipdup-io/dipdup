@@ -69,12 +69,12 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
     )
 
 
-async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
+async def run_hasura_container(postgres_port: int) -> HasuraConfig:
     docker = get_docker_client()
     hasura_container = docker.containers.run(
         image=project_defaults['hasura_image'],
         environment={
-            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
+            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@host.docker.internal:{postgres_port}',
         },
         detach=True,
         remove=True,
@@ -97,7 +97,7 @@ async def test_configure_hasura() -> None:
 
     config = DipDupConfig.load([config_path])
     config.database = await run_postgres_container()
-    config.hasura = await run_hasura_container(config.database.host)
+    config.hasura = await run_hasura_container(config.database.port)
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
     config.initialize()
 
