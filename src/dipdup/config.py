@@ -37,7 +37,6 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
-from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -1155,7 +1154,9 @@ class TokenTransferHandlerConfig(HandlerConfig, kind='handler'):
 
     contract: ContractConfig | None = None
     token_id: int | None = None
-    from_: ContractConfig | None = Field(default=None, alias='from')
+    # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
+    # FIXME: See https://github.com/pydantic/pydantic/issues/4286
+    from_: ContractConfig | None = None
     to: ContractConfig | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -1856,16 +1857,14 @@ class DipDupConfig:
             for token_transfer_handler_config in index_config.handlers:
                 token_transfer_handler_config.parent = index_config
 
-                for attribute_name in ['contract', 'from_', 'to']:
-                    attribute_value = getattr(token_transfer_handler_config, attribute_name)
-                    if isinstance(attribute_value, str):
-                        setattr(
-                            token_transfer_handler_config,
-                            attribute_name,
-                            self.get_contract(attribute_value),
-                        )
+                if isinstance(token_transfer_handler_config.contract, str):
+                    token_transfer_handler_config.contract = self.get_contract(token_transfer_handler_config.contract)
 
-                assert token_transfer_handler_config
+                if isinstance(token_transfer_handler_config.from_, str):
+                    token_transfer_handler_config.from_ = self.get_contract(token_transfer_handler_config.from_)
+
+                if isinstance(token_transfer_handler_config.to, str):
+                    token_transfer_handler_config.to = self.get_contract(token_transfer_handler_config.to)
 
         elif isinstance(index_config, OperationUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
