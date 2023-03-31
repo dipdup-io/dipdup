@@ -231,19 +231,18 @@ zookeeper = ["kazoo"]
 
 [[package]]
 name = "argcomplete"
-version = "2.1.2"
+version = "3.0.5"
 description = "Bash tab completion for argparse"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "argcomplete-2.1.2-py3-none-any.whl", hash = "sha256:4ba9cdaa28c361d251edce884cd50b4b1215d65cdc881bd204426cdde9f52731"},
-    {file = "argcomplete-2.1.2.tar.gz", hash = "sha256:fc82ef070c607b1559b5c720529d63b54d9dcf2dcfc2632b10e6372314a34457"},
+    {file = "argcomplete-3.0.5-py3-none-any.whl", hash = "sha256:e858595eee91732440e7291dbb49ae73d3fb9bfcc073429a16d54b7b374a7a3d"},
+    {file = "argcomplete-3.0.5.tar.gz", hash = "sha256:fe3ce77125f434a0dd1bffe5f4643e64126d5731ce8d173d36f62fa43d6eb6f7"},
 ]
 
 [package.extras]
-lint = ["flake8", "mypy"]
-test = ["coverage", "flake8", "mypy", "pexpect", "wheel"]
+test = ["coverage", "mypy", "pexpect", "ruff", "wheel"]
 
 [[package]]
 name = "argon2-cffi"
@@ -1048,18 +1047,18 @@ cython = ["cython"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.17.1"
+version = "0.17.2"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "datamodel_code_generator-0.17.1-py3-none-any.whl", hash = "sha256:8e3bf374dff69ce65e07feed3322f5b83432cc7d3974169865ede69c4b98bf92"},
-    {file = "datamodel_code_generator-0.17.1.tar.gz", hash = "sha256:a22e1f71b76c149a0fbb8214f7b1e4926c01bf5bc94ce5264a932d65599fb4a9"},
+    {file = "datamodel_code_generator-0.17.2-py3-none-any.whl", hash = "sha256:b42b8b4da4055ea96ddf303efecfa37316bb025e88513fffc4dad960cb56b43c"},
+    {file = "datamodel_code_generator-0.17.2.tar.gz", hash = "sha256:e88e000b254b07937a45902e95c08c9edec21eee3492c3a3ad4b6a4115345924"},
 ]
 
 [package.dependencies]
-argcomplete = ">=1.10,<3.0"
+argcomplete = ">=1.10,<4.0"
 black = ">=19.10b0"
 genson = ">=1.2.1,<2.0"
 inflect = ">=4.1.0,<6.0"
@@ -4735,4 +4734,4 @@ pytezos = ["pytezos"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "6b9930ccf987f32353f2b0dbaa1a89a71848caca58dc132207c0bad51762764c"
+content-hash = "4bc7acf831ebd0fce5522fcc16029efbd5f85e139ca4a5000739b7abe2bcee21"
