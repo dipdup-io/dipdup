@@ -29,8 +29,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up metadata (default)
-        id: meta-default
+      - name: Set up metadata
+        id: meta
         uses: docker/metadata-action@v3
         with:
           images: dipdup/dipdup
@@ -40,30 +40,6 @@ jobs:
             type=pep440,pattern={{version}}
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
-
-      - name: Set up metadata (pytezos)
-        id: meta-pytezos
-        uses: docker/metadata-action@v3
-        with:
-          images: dipdup/dipdup
-          flavor: |
-            latest=false
-          tags: |
-            type=pep440,pattern={{version}}-pytezos
-            type=pep440,pattern={{major}}-pytezos
-            type=pep440,pattern={{major}}.{{minor}}-pytezos
-
-      - name: Set up metadata (slim)
-        id: meta-slim
-        uses: docker/metadata-action@v3
-        with:
-          images: dipdup/dipdup
-          flavor: |
-            latest=false
-          tags: |
-            type=pep440,pattern={{version}}-slim
-            type=pep440,pattern={{major}}-slim
-            type=pep440,pattern={{major}}.{{minor}}-slim
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -82,38 +58,15 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Publish stable image (default)
+      - name: Publish stable image
         uses: docker/build-push-action@v3
         with:
           context: .
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta-default.outputs.tags }}
-          labels: ${{ steps.meta-default.outputs.labels }}
-          build-args: DIPDUP_DOCKER_IMAGE=default
-
-
-      - name: Publish stable image (pytezos)
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta-pytezos.outputs.tags }}
-          labels: ${{ steps.meta-pytezos.outputs.labels }}
-          build-args: DIPDUP_DOCKER_IMAGE=pytezos
-
-      - name: Publish stable image (slim)
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile.slim
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta-slim.outputs.tags }}
-          labels: ${{ steps.meta-slim.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Publish package on PyPi
         run: |
