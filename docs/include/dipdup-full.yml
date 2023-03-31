@@ -127,7 +127,6 @@ hasura:
   select_limit: 100
 
 advanced:
-  early_realtime: True
   merge_subscriptions: False
   postpone_jobs: False
   metadata_interface: False
