@@ -122,11 +122,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     Issues: https://github.com/dipdup-io/dipdup/issues
     """
-    if env.DOCKER_IMAGE == 'pytezos':
-        _logger.warning('`-pytezos` image is deprecated and will be removed in the next major release')
-    elif env.DOCKER_IMAGE == 'slim':
-        _logger.warning('`-slim` image will be based on Ubuntu instead of Alpine in the next major release')
-
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
     if '--help' in args or args in (['config'], ['hasura'], ['schema']):

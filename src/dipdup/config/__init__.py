@@ -978,7 +978,7 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
 
 # NOTE: Unions for Pydantic config deserialization

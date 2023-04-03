@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Removed
+
+- ci: `-slim` and `-pytezos` Docker images are no longer published.
+- ci: Docker images no longer contain git, poetry and install_dependencies script.
+
+## [Unreleased]
+
 ### Fixed
 
 - config: Fixed crash when `token_transfer` index has `from` or `to` filter.
