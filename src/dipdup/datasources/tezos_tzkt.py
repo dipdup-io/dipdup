@@ -244,7 +244,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= self._http_config.retry_multiplier
 
-        raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
+        raise DatasourceError('Websocket connection failed', self.name)
 
     async def initialize(self) -> None:
         head_block = await self.get_head_block()
@@ -353,30 +353,37 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         strict: bool = False,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[str, ...]:
+    ) -> tuple[dict[str, str], ...]:
         """Get addresses of contracts that share the same code hash or type hash"""
         entrypoint = 'same' if strict else 'similar'
         self._logger.info('Fetching `%s` contracts for address `%s`', entrypoint, address)
 
-        params = self._get_request_params(offset=offset, limit=limit, select=('address',), values=True)
-        response = await self.request(
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=(
+                'id',
+                'address',
+            ),
+            values=True,
+            cursor=True,
+        )
+        return await self._request_values_dict(
             'get',
             url=f'v1/contracts/{address}/{entrypoint}',
             params=params,
         )
-        # FIXME: No cursor iteration, need 'id' in select  # old comment didnt get it, what is the reason for id in request
-        return tuple(response)
 
     async def iter_similar_contracts(
         self,
         address: str,
         strict: bool = False,
-    ) -> AsyncIterator[tuple[str, ...]]:
+    ) -> AsyncIterator[tuple[dict[str, str], ...]]:
         async for batch in self._iter_batches(
             self.get_similar_contracts,
             address,
             strict,
-            cursor=False,
+            cursor=True,
         ):
             yield batch
 
@@ -385,11 +392,20 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         address: str,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[str, ...]:
+    ) -> tuple[dict[str, str], ...]:
         """Get addresses of contracts originated from given address"""
         self._logger.info('Fetching originated contracts for address `%s`', address)
-        params = self._get_request_params(offset=offset, limit=limit, select=('address',), values=True)
-        response = await self.request(
+        params = self._get_request_params(
+            offset=offset,
+            limit=limit,
+            select=(
+                'id',
+                'address',
+            ),
+            values=True,
+            cursor=True,
+        )
+        return await self._request_values_dict(
             'get',
             url='v1/contracts',
             params={
@@ -397,14 +413,12 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 **params,
             },
         )
-        # FIXME: No cursor iteration, need 'id' in select  # old comment didnt get it, what is the reason for id in request
-        return tuple(response)
 
-    async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[str, ...]]:
+    async def iter_originated_contracts(self, address: str) -> AsyncIterator[tuple[dict[str, str], ...]]:
         async for batch in self._iter_batches(
             self.get_originated_contracts,
             address,
-            cursor=False,
+            cursor=True,
         ):
             yield batch
 
@@ -668,6 +682,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             limit,
             TRANSACTION_OPERATION_FIELDS,
             cursor=True,
+            values=True,
             status='applied',
         )
         if addresses and not code_hashes:
@@ -675,7 +690,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         elif code_hashes and not addresses:
             params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
 
-        raw_transactions = await self.request(
+        raw_transactions = await self._request_values_dict(
             'get',
             url='v1/operations/transactions',
             params=params,
@@ -913,6 +928,22 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         await self._send(method, request, _on_subscribe)
         await event.wait()
+
+    async def _request_values_dict(self, *args, **kwargs) -> tuple[dict[str, Any], ...]:
+        # NOTE: basicaly this function create dict from list of tuples request
+        # NOTE: this is necessary because for TZKT API cursor iteration is more efficient and asking only values is more efficient too """
+        try:
+            fields = kwargs.get('params', {})['select.values'].split(',')
+        except KeyError as e:
+            raise DatasourceError('No fields selected, no select.values param in request', self.name) from e
+        if len(fields) == 1:
+            raise DatasourceError(
+                '_request_values_dict does not support one field request because tzkt will return plain list', self.name
+            )
+
+        # NOTE: select.values supported for methods with multiple objects in response only
+        response: list[list[str]] = await self.request(*args, **kwargs)
+        return tuple([{f: v for f, v in zip(fields, values)} for values in response])
 
     def _get_request_params(
         self,
