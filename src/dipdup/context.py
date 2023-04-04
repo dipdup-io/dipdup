@@ -652,7 +652,7 @@ class CallbackManager:
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            fn = ctx.package.get_callback('handlers', name, name)
+            fn = ctx.package.get_callback('handlers', name, name.split('.')[-1])
             await fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(

@@ -732,9 +732,6 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
-        # FIXME: Hack for some mocked tests; possibly outdated
-        if isinstance(self.package, str):
-            logging.getLogger(self.package).setLevel(level)
 
     def initialize(self) -> None:
         self._set_names()

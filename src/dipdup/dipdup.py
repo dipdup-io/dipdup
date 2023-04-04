@@ -154,6 +154,30 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
+    async def _update_summary(self, update_interval: float) -> None:
+        last_levels_indexed = 0.0
+        while True:
+            while not self._indexes:
+                await asyncio.sleep(5)
+
+            levels_indexed = sum(index.state.level for index in self._indexes.values()) / 1000
+            levels_total = sum(index.get_sync_level() for index in self._indexes.values()) / 1000
+            levels_per_interval = levels_indexed - last_levels_indexed
+            indexing_speed = levels_per_interval / update_interval
+            time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
+            percent = levels_indexed / levels_total * 100
+
+            summary = f'syncing {percent:.2f}%'
+            if time_left:
+                summary += f' | {indexing_speed:.2f}K/s | {time_left}m left'
+            else:
+                summary += ' | ...K/s | ...m left'
+            print(summary)
+
+            last_levels_indexed = levels_indexed
+            await asyncio.sleep(update_interval)
+
+
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
@@ -603,6 +627,7 @@ class DipDup:
         )
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
+        tasks.add(create_task(index_dispatcher._update_summary(60)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

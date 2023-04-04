@@ -10,9 +10,9 @@ from dipdup.datasources import AbiDatasource
 
 class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
-        ratelimit_rate=5,
-        ratelimit_period=1,
-        retry_multiplier=3,
+        ratelimit_rate=1,
+        ratelimit_period=5,
+        ratelimit_sleep=5,
     )
 
     async def run(self) -> None:
