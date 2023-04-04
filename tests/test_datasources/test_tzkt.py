@@ -1,13 +1,19 @@
 from pathlib import Path
-from typing import AsyncIterator, Tuple, TypeVar
+from typing import AsyncIterator
+from typing import Tuple
+from typing import TypeVar
 from unittest.mock import AsyncMock
 
 import orjson as json
 import pysignalr.exceptions
 import pytest
-from dipdup.exceptions import DatasourceError, FrameworkException, InvalidRequestError
-from dipdup.models.tezos_tzkt import HeadSubscription, TzktMessageType, TzktOperationData
 
+from dipdup.exceptions import DatasourceError
+from dipdup.exceptions import FrameworkException
+from dipdup.exceptions import InvalidRequestError
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktOperationData
 from tests import tzkt_replay
 
 T = TypeVar('T')
