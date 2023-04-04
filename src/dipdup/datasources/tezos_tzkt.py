@@ -839,22 +839,22 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         limit: int | None = None,
     ) -> tuple[TzktTokenTransferData, ...]:
         """Get token transfers for contract"""
-        filters = {
-            'token.contract.in': ','.join(token_addresses),
-            'token.id.in': ','.join(str(token_id) for token_id in token_ids),
-            'from.in': ','.join(from_addresses),
-            'to.in': ','.join(to_addresses),
-            'level.ge': first_level,
-            'level.le': last_level,
-        }
-        params = self._get_request_params(
+        params = self._get_request_params( 
+            first_level,
+            last_level,
             offset=offset or 0,
             limit=limit,
             select=tuple(f.name for f in fields(TzktTokenTransferData)),
             values=True,
             cursor=True,
+            **{
+                'token.contract.in': ','.join(token_addresses),
+                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
+                'from.in': ','.join(from_addresses),
+                'to.in': ','.join(to_addresses),
+            }
         )
-        raw_token_transfers = await self.request('get', url='v1/tokens/transfers', params={**params, **filters})
+        raw_token_transfers = await self._request_values_dict('get', url='v1/tokens/transfers', params=params)
         return tuple(TzktTokenTransferData.from_json(item) for item in raw_token_transfers)
 
     async def iter_token_transfers(
