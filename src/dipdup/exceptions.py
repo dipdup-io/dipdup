@@ -398,9 +398,4 @@ class UnsupportedAPIError(Error):
         """
 
 
-# TODO: Remove in 7.0
-DipDupException = FrameworkException
-DipDupError = Error
-
-
 from dipdup.models import ReindexingReason  # noqa: E402

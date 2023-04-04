@@ -64,13 +64,11 @@ class IndexType(Enum):
 
 
 class IndexStatus(Enum):
-    NEW = 'NEW'
-    SYNCING = 'SYNCING'
-    REALTIME = 'REALTIME'
-    # TODO: Remove in 7.0
-    ROLLBACK = 'ROLLBACK'
-    # TODO: Rename to DISABLED or something one day
-    ONESHOT = 'ONESHOT'
+    new = 'new'
+    syncing = 'syncing'
+    realtime = 'realtime'
+    disabled = 'disabled'
+    failed = 'failed'
 
 
 # NOTE: Used as a key in config, must inherit from str
@@ -511,7 +509,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 
 class Schema(TortoiseModel):
     name = fields.CharField(256, pk=True)
-    hash = fields.CharField(256)
+    hash = fields.CharField(256, null=True)
     reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -524,7 +522,7 @@ class Schema(TortoiseModel):
 class Head(TortoiseModel):
     name = fields.CharField(256, pk=True)
     level = fields.IntField()
-    hash = fields.CharField(64)
+    hash = fields.CharField(64, null=True)
     timestamp = fields.DatetimeField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -537,7 +535,7 @@ class Head(TortoiseModel):
 class Index(TortoiseModel):
     name = fields.CharField(256, pk=True)
     type = fields.CharEnumField(IndexType)
-    status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
+    status = fields.CharEnumField(IndexStatus, default=IndexStatus.new)
 
     config_hash = fields.CharField(256)
     template = fields.CharField(256, null=True)
@@ -554,8 +552,8 @@ class Index(TortoiseModel):
 
 class Contract(TortoiseModel):
     name = fields.CharField(256, pk=True)
-    address = fields.CharField(256)
-    # TODO: Add `code_hash` field
+    address = fields.CharField(256, null=True)
+    code_hash = fields.BigIntField(null=True)
     typename = fields.CharField(256, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)

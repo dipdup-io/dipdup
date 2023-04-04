@@ -277,16 +277,11 @@ class DipDupContext:
         contract_config._name = name
         self.config.contracts[name] = contract_config
 
-        # FIXME: No `code_hash` field in the database
-        if code_hash:
-            joined_address: str | None = f'{address or ""}:{code_hash or ""}'
-        else:
-            joined_address = address
-
         with suppress(OperationalError):
             await Contract(
                 name=contract_config.name,
-                address=joined_address,
+                address=contract_config.address,
+                code_hash=contract_config.code_hash,
                 typename=contract_config.typename,
             ).save()
 

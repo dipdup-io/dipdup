@@ -387,13 +387,12 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Approving schema `%s`', url)
 
     async with tortoise_wrapper(url, models):
-        # TODO: Non-nullable fields, remove in 7.0
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
-            hash='',
+            hash=None,
         )
         await Index.filter().update(
-            config_hash='',
+            config_hash=None,
         )
 
     _logger.info('Schema approved')
