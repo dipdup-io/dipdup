@@ -968,7 +968,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         # NOTE: select.values supported for methods with multiple objects in response only
         response: list[list[str]] = await self.request(*args, **kwargs)
-        return tuple([{f: v for f, v in zip(fields, values)} for values in response])
+        return tuple([dict(zip(fields, values)) for values in response])
 
     def _get_request_params(
         self,
