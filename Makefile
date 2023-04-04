@@ -5,8 +5,6 @@
 ##
 ## DEV=1                Install dev dependencies
 DEV=1
-## PYTEZOS=0            Install PyTezos
-PYTEZOS=0
 ## TAG=latest           Tag for the `image` command
 TAG=latest
 
@@ -20,7 +18,6 @@ all:            ## Run a whole CI pipeline: formatters, linters and tests
 
 install:        ## Install project dependencies
 	poetry install \
-	`if [ "${PYTEZOS}" = "1" ]; then echo "-E pytezos "; fi` \
 	`if [ "${DEV}" = "0" ]; then echo "--without dev"; fi`
 
 lint:           ## Lint with all tools
@@ -54,19 +51,8 @@ cover:          ## Print coverage for the current branch
 build:          ## Build Python wheel package
 	poetry build
 
-image:          ## Build all Docker images
-	make image-default
-	make image-pytezos
-	make image-slim
-
-image-default:  ## Build default Docker image
-	docker buildx build . --load --progress plain -t dipdup:${TAG} --build-arg DIPDUP_DOCKER_IMAGE=default
-
-image-pytezos:  ## Build pytezos Docker image
-	docker buildx build . --load --progress plain -t dipdup:${TAG}-pytezos --build-arg DIPDUP_DOCKER_IMAGE=pytezos
-
-image-slim:     ## Build slim Docker image
-	docker buildx build . --load --progress plain -t dipdup:${TAG}-slim -f Dockerfile.slim
+image:          ## Build Docker image
+	docker buildx build . --load --progress plain -t dipdup:${TAG}
 
 ##
 
@@ -74,20 +60,9 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
 update:         ## Update dependencies, export requirements.txt
-	cp pyproject.toml pyproject.toml.bak
-	rm poetry.lock requirements*
-	make install
-	cp poetry.lock poetry.lock.bak
-
+	poetry update
 	poetry export --without-hashes -o requirements.txt
-	poetry export --without-hashes -o requirements.pytezos.txt -E pytezos
 	poetry export --without-hashes -o requirements.dev.txt --with dev
-	poetry remove datamodel-code-generator
-	poetry export --without-hashes -o requirements.slim.txt
-
-	mv pyproject.toml.bak pyproject.toml
-	mv poetry.lock.bak poetry.lock
-	make install
 
 demos:          ## Recreate demos from templates
 	python scripts/update_cookiecutter.py

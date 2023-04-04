@@ -7,7 +7,6 @@
 !poetry.lock
 !README.md
 !requirements**
-!scripts/install_dependencies.sh
 
 # Add code
 !src/dipdup/
