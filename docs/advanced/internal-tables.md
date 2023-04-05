@@ -2,15 +2,16 @@
 
 This page describes the internal tables used by DipDup. They are created automatically and are not intended to be modified by the user. However, they can be useful for external monitoring and debugging.
 
-| table                      | description                                                                                                   |
-|:-------------------------- |:------------------------------------------------------------------------------------------------------------- |
-| `dipdup_schema`            | Information about database schema in use including hash to detect changes that require reindexing.            |
-| `dipdup_head`              | The latest block received by index datasources in realtime state. Indicates that underlying datasource is ok. |
-| `dipdup_index`             | Everything about specific indexes from config: status, current level, template and it's values if applicable. |
-| `dipdup_contract`          | Info about contracts used by all indexes, including ones added in runtime.                                    |
-| `dipdup_model_update`      | Service table to store model diffs for database rollback. Configured by `advanced.rollback_depth`             |
-| `dipdup_contract_metadata` | See {{ #summary advanced/metadata-interface.md}}                                                              |
-| `dipdup_token_metadata`    | See {{ #summary advanced/metadata-interface.md}}                                                              |
+| table                      | description                                                                                                                               |
+|:-------------------------- |:----------------------------------------------------------------------------------------------------------------------------------------- |
+| `dipdup_schema`            | Information about database schema in use including hash to detect changes that require reindexing.                                        |
+| `dipdup_head`              | The latest block received by index datasources in realtime state. Indicates that underlying datasource is ok.                             |
+| `dipdup_index`             | Everything about specific indexes from config: status, current level, template and it's values if applicable.                             |
+| `dipdup_contract`          | Info about contracts used by all indexes, including ones added in runtime.                                                                |
+| `dipdup_model_update`      | Service table to store model diffs for database rollback. Configured by `advanced.rollback_depth`                                         |
+| `dipdup_meta`              | Arbitrary key-value storage for DipDup internal use. Survives reindexing. You can use it too, but don't touch keys with `dipdup_` prefix. |
+| `dipdup_contract_metadata` | See {{ #summary advanced/metadata-interface.md}}                                                                                          |
+| `dipdup_token_metadata`    | See {{ #summary advanced/metadata-interface.md}}                                                                                          |
 
 See [`dipdup.models` module](https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/models.py) for exact table definitions.
 

@@ -226,10 +226,11 @@ class DipDupContext:
         elif action == ReindexingAction.wipe:
             conn = get_connection()
             if isinstance(self.config.database, PostgresDatabaseConfig):
+                immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
                 await wipe_schema(
                     conn=conn,
                     schema_name=self.config.database.schema_name,
-                    immune_tables=self.config.database.immune_tables,
+                    immune_tables=immune_tables,
                 )
             else:
                 await Tortoise._drop_databases()
