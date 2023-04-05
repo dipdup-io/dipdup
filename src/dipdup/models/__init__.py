@@ -569,7 +569,7 @@ class Contract(TortoiseModel):
 class ContractMetadata(Model):
     network = fields.CharField(51)
     contract = fields.CharField(36)
-    metadata = fields.JSONField()
+    metadata = fields.JSONField(null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -584,7 +584,7 @@ class TokenMetadata(Model):
     network = fields.CharField(51)
     contract = fields.CharField(36)
     token_id = fields.TextField()
-    metadata = fields.JSONField()
+    metadata = fields.JSONField(null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)

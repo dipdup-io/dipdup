@@ -363,7 +363,7 @@ class DipDupContext:
         self,
         network: str,
         address: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_contract_metadata` table
@@ -387,7 +387,7 @@ class DipDupContext:
         network: str,
         address: str,
         token_id: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_token_metadata` table
