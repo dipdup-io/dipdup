@@ -34,7 +34,7 @@
   * [SQL scripts](advanced/sql.md)
   * [Improving performance](advanced/performance.md)
   * [Callback context (ctx)](advanced/context.md)
-  * [Internal models](advanced/internal-models.md)
+  * [Internal tables](advanced/internal-tables.md)
   * [Index factories](advanced/index-factories.md)
   * [Metadata interface](advanced/metadata-interface.md)
 * [Deployment and operations](deployment/README.md)

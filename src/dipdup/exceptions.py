@@ -135,7 +135,7 @@ class InvalidModelsError(Error):
 
             See https://docs.dipdup.io/getting-started/defining-models
             See https://docs.dipdup.io/config/database
-            See https://docs.dipdup.io/advanced/internal-models
+            See https://docs.dipdup.io/advanced/internal-tables
         """
 
 
