@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import cast
 
 import orjson
+import tortoise
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -39,6 +40,11 @@ _logger = logging.getLogger(__name__)
 
 
 versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
+
+
+# NOTE: We only support PostgreSQL and SQLite, so it's safe patch `tortoise.fields.TextField` to be indexable
+tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
+tortoise.fields.TextField.indexable = True
 
 
 def json_dumps_decimals(obj: Any) -> str:
