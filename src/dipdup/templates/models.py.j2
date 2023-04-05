@@ -3,5 +3,5 @@ from dipdup.models import Model
 
 
 class User(Model):
-    address = fields.CharField(36, pk=True)
+    address = fields.TextField(pk=True)
     balance = fields.IntField()

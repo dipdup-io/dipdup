@@ -12,8 +12,8 @@ class TradeSide(IntEnum):
 
 class Trade(Model):
     id = fields.IntField(pk=True)
-    symbol = fields.CharField(max_length=5)
-    trader = fields.CharField(36)
+    symbol = fields.TextField()
+    trader = fields.TextField()
     side = fields.IntEnumField(enum_type=TradeSide)
     quantity = fields.DecimalField(decimal_places=6, max_digits=20)
     price = fields.DecimalField(decimal_places=6, max_digits=20)
@@ -24,8 +24,8 @@ class Trade(Model):
 
 class Position(Model):
     id = fields.IntField(pk=True)
-    symbol = fields.CharField(max_length=5)
-    trader = fields.CharField(36)
+    symbol = fields.TextField()
+    trader = fields.TextField()
     shares_qty = fields.BigIntField(default=0)
     avg_share_px = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
     realized_pl = fields.DecimalField(decimal_places=6, max_digits=20, default=0)
