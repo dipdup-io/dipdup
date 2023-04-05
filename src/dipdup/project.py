@@ -268,9 +268,9 @@ class BaseProject(Project):
             description=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
             default=0,
             choices=(
-                'postgres:14',
-                'timescale/timescaledb:latest-pg14',
-                'timescale/timescaledb-ha:pg14-latest',
+                'postgres:15',
+                'timescale/timescaledb:latest-pg15',
+                'timescale/timescaledb-ha:pg15-latest',
             ),
             comments=(
                 'PostgreSQL',
@@ -286,8 +286,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.20.0',
-                'hasura/graphql-engine:v2.20.0-beta.1',
+                'hasura/graphql-engine:v2.22.0',
+                'hasura/graphql-engine:v2.23.0-beta.1',
             ),
             comments=(
                 'stable',
