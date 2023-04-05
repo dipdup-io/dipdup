@@ -94,6 +94,18 @@ BIGMAP_FIELDS = (
     'keyType',
     'valueType',
 )
+TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
+    'token',
+    'from',
+    'to',
+    'id',
+    'level',
+    'timestamp',
+    'amount',
+    'transactionId',
+    'originationId',
+    'migrationId',
+)
 
 
 EmptyCallback = Callable[[], Awaitable[None]]
@@ -839,12 +851,12 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         limit: int | None = None,
     ) -> tuple[TzktTokenTransferData, ...]:
         """Get token transfers for contract"""
-        params = self._get_request_params( 
+        params = self._get_request_params(
             first_level,
             last_level,
             offset=offset or 0,
             limit=limit,
-            select=tuple(f.name for f in fields(TzktTokenTransferData)),
+            select=TZKT_TOKEN_TRANSFER_DATA_FIELDS,
             values=True,
             cursor=True,
             **{
@@ -852,7 +864,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 'token.id.in': ','.join(str(token_id) for token_id in token_ids),
                 'from.in': ','.join(from_addresses),
                 'to.in': ','.join(to_addresses),
-            }
+            },
         )
         raw_token_transfers = await self._request_values_dict('get', url='v1/tokens/transfers', params=params)
         return tuple(TzktTokenTransferData.from_json(item) for item in raw_token_transfers)
