@@ -1071,7 +1071,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
     ) -> None:
         client = self._get_signalr_client()
-        await client.send(method, arguments, on_invocation)
+        await client.send(method, arguments, on_invocation)  # type: ignore[arg-type]
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')

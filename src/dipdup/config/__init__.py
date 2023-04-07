@@ -985,7 +985,6 @@ class DipDupConfig:
                 if isinstance(handler_config.from_, str):
                     handler_config.from_ = self.get_contract(handler_config.from_)
 
-                assert handler_config
                 if isinstance(handler_config.to, str):
                     handler_config.to = self.get_contract(handler_config.to)
 
