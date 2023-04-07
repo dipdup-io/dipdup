@@ -42,7 +42,11 @@ _logger = logging.getLogger(__name__)
 versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
 
 
-# NOTE: We only support PostgreSQL and SQLite, so it's safe patch `tortoise.fields.TextField` to be indexable
+# NOTE: Below is one of several patches to Tortoise ORM to make it work with DipDup.
+# By default, Tortoise forbids index=True on TextField, and shows warning when it's pk=True.
+# However, we only support SQLite and PostgreSQL and have no plans for others.
+# For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference between TEXT and VARCHAR
+# except for length constraint. So we can safely use TEXT for both to avoid unnecessary schema changes.
 tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
 tortoise.fields.TextField.indexable = True
 
