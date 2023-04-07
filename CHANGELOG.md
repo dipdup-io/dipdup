@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Changed
+
+- tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+
+### Performance
+
+- tzkt: Request plain values instead of mappings from TzKT when possible.
+
+## [Unreleased]
+
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
