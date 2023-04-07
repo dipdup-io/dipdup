@@ -449,7 +449,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
             await wipe_schema(
                 conn=conn,
                 schema_name=config.database.schema_name,
-                immune_tables=immune_tables,
+                immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
             )
         else:
             await Tortoise._drop_databases()
