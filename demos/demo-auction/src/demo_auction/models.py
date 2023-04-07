@@ -12,12 +12,12 @@ class AuctionStatus(IntEnum):
 
 
 class User(Model):
-    address = fields.CharField(36, pk=True)
+    address = fields.TextField(pk=True)
 
 
 class Token(Model):
     id = fields.BigIntField(pk=True)
-    address = fields.CharField(36)
+    address = fields.TextField()
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

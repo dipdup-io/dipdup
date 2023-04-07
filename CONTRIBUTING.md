@@ -35,6 +35,12 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise).
 - Lines describing changes MUST be sorted and begin with DipDup module name (`index: Added ...`).
 
+Use the following categories (in this order):
+
+Groups: Added, Fixed, Changed, Deprecated, Removed, Performance, Security, Other.
+
+Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, dipdup (?), docs, exceptions, hasura, hooks, http, index, install, ipfs, jobs, metadata, models, projects, prometheus, sentry, tzkt.
+
 ## Documentation
 
 - A page in Release Notes SHOULD accompany all major releases.

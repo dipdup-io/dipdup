@@ -605,9 +605,7 @@ class DipDupConfig:
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
-            # TODO: Remove in 7.0
-            # raise ConfigurationError('Python package name must be in snake_case.')
-            _logger.warning('Python package name must be in snake_case.')
+            raise ConfigurationError('Python package name must be in snake_case.')
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}

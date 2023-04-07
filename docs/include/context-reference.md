@@ -261,7 +261,7 @@ to provide a generic metadata interface (see docs).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>network</strong> (<em>str</em>) – Network name (e.g. <cite>mainnet</cite>)</p></li>
 <li><p><strong>address</strong> (<em>str</em>) – Contract address</p></li>
-<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Contract metadata to insert/update</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Contract metadata to insert/update</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -281,7 +281,7 @@ to provide a generic metadata interface (see docs).</p>
 <li><p><strong>network</strong> (<em>str</em>) – Network name (e.g. <cite>mainnet</cite>)</p></li>
 <li><p><strong>address</strong> (<em>str</em>) – Contract address</p></li>
 <li><p><strong>token_id</strong> (<em>str</em>) – Token ID</p></li>
-<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Token metadata to insert/update</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Token metadata to insert/update</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

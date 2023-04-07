@@ -20,6 +20,7 @@ from typing import TypeVar
 from typing import cast
 
 import orjson
+import tortoise
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -39,6 +40,15 @@ _logger = logging.getLogger(__name__)
 
 
 versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
+
+
+# NOTE: Below is one of several patches to Tortoise ORM to make it work with DipDup.
+# By default, Tortoise forbids index=True on TextField, and shows warning when it's pk=True.
+# However, we only support SQLite and PostgreSQL and have no plans for others.
+# For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference between TEXT and VARCHAR
+# except for length constraint. So we can safely use TEXT for both to avoid unnecessary schema changes.
+tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
+tortoise.fields.TextField.indexable = True
 
 
 def json_dumps_decimals(obj: Any) -> str:
@@ -64,13 +74,11 @@ class IndexType(Enum):
 
 
 class IndexStatus(Enum):
-    NEW = 'NEW'
-    SYNCING = 'SYNCING'
-    REALTIME = 'REALTIME'
-    # TODO: Remove in 7.0
-    ROLLBACK = 'ROLLBACK'
-    # TODO: Rename to DISABLED or something one day
-    ONESHOT = 'ONESHOT'
+    new = 'new'
+    syncing = 'syncing'
+    realtime = 'realtime'
+    disabled = 'disabled'
+    failed = 'failed'
 
 
 # NOTE: Used as a key in config, must inherit from str
@@ -140,10 +148,10 @@ class ModelUpdateAction(Enum):
 class ModelUpdate(TortoiseModel):
     """Model update created within versioned transactions"""
 
-    model_name = fields.CharField(256)
-    model_pk = fields.CharField(256)
+    model_name = fields.TextField()
+    model_pk = fields.TextField()
     level = fields.IntField()
-    index = fields.CharField(256)
+    index = fields.TextField()
 
     action = fields.CharEnumField(ModelUpdateAction)
     data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
@@ -510,8 +518,8 @@ ModelT = TypeVar('ModelT', bound=Model)
 
 
 class Schema(TortoiseModel):
-    name = fields.CharField(256, pk=True)
-    hash = fields.CharField(256)
+    name = fields.TextField(pk=True)
+    hash = fields.TextField(null=True)
     reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -522,9 +530,9 @@ class Schema(TortoiseModel):
 
 
 class Head(TortoiseModel):
-    name = fields.CharField(256, pk=True)
+    name = fields.TextField(pk=True)
     level = fields.IntField()
-    hash = fields.CharField(64)
+    hash = fields.TextField(null=True)
     timestamp = fields.DatetimeField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -535,12 +543,12 @@ class Head(TortoiseModel):
 
 
 class Index(TortoiseModel):
-    name = fields.CharField(256, pk=True)
+    name = fields.TextField(pk=True)
     type = fields.CharEnumField(IndexType)
-    status = fields.CharEnumField(IndexStatus, default=IndexStatus.NEW)
+    status = fields.CharEnumField(IndexStatus, default=IndexStatus.new)
 
-    config_hash = fields.CharField(256)
-    template = fields.CharField(256, null=True)
+    config_hash = fields.TextField()
+    template = fields.TextField(null=True)
     template_values: Dict[str, Any] = fields.JSONField(null=True)
 
     level = fields.IntField(default=0)
@@ -553,10 +561,10 @@ class Index(TortoiseModel):
 
 
 class Contract(TortoiseModel):
-    name = fields.CharField(256, pk=True)
-    address = fields.CharField(256)
-    # TODO: Add `code_hash` field
-    typename = fields.CharField(256, null=True)
+    name = fields.TextField(pk=True)
+    address = fields.TextField(null=True)
+    code_hash = fields.BigIntField(null=True)
+    typename = fields.TextField(null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -565,13 +573,24 @@ class Contract(TortoiseModel):
         table = 'dipdup_contract'
 
 
+class Meta(TortoiseModel):
+    key = fields.TextField(pk=True)
+    value = fields.JSONField(null=True)
+
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = 'dipdup_meta'
+
+
 # ===> Built-in Models (versioned)
 
 
 class ContractMetadata(Model):
-    network = fields.CharField(51)
-    contract = fields.CharField(36)
-    metadata = fields.JSONField()
+    network = fields.TextField()
+    contract = fields.TextField()
+    metadata = fields.JSONField(null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -583,10 +602,10 @@ class ContractMetadata(Model):
 
 
 class TokenMetadata(Model):
-    network = fields.CharField(51)
-    contract = fields.CharField(36)
+    network = fields.TextField()
+    contract = fields.TextField()
     token_id = fields.TextField()
-    metadata = fields.JSONField()
+    metadata = fields.JSONField(null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)

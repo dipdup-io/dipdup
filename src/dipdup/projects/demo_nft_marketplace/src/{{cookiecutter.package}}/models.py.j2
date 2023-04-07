@@ -13,7 +13,7 @@ class SwapStatus(IntEnum):
 
 
 class Holder(Model):
-    address = fields.CharField(36, pk=True)
+    address = fields.TextField(pk=True)
 
 
 class Token(Model):

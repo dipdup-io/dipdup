@@ -23,7 +23,7 @@ async def _create_index(hash_: str) -> None:
         config_hash=hash_,
         created_at=datetime(2021, 10, 8, 18, 43, 35, 744412, tzinfo=UTC),
         template_values={},
-        status=IndexStatus.NEW,
+        status=IndexStatus.new,
         updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
         type=IndexType.tezos_tzkt_operations,
     )

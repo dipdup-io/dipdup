@@ -226,10 +226,11 @@ class DipDupContext:
         elif action == ReindexingAction.wipe:
             conn = get_connection()
             if isinstance(self.config.database, PostgresDatabaseConfig):
+                immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
                 await wipe_schema(
                     conn=conn,
                     schema_name=self.config.database.schema_name,
-                    immune_tables=self.config.database.immune_tables,
+                    immune_tables=immune_tables,
                 )
             else:
                 await Tortoise._drop_databases()
@@ -277,16 +278,11 @@ class DipDupContext:
         contract_config._name = name
         self.config.contracts[name] = contract_config
 
-        # FIXME: No `code_hash` field in the database
-        if code_hash:
-            joined_address: str | None = f'{address or ""}:{code_hash or ""}'
-        else:
-            joined_address = address
-
         with suppress(OperationalError):
             await Contract(
                 name=contract_config.name,
-                address=joined_address,
+                address=contract_config.address,
+                code_hash=contract_config.code_hash,
                 typename=contract_config.typename,
             ).save()
 
@@ -368,7 +364,7 @@ class DipDupContext:
         self,
         network: str,
         address: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_contract_metadata` table
@@ -392,7 +388,7 @@ class DipDupContext:
         network: str,
         address: str,
         token_id: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_token_metadata` table

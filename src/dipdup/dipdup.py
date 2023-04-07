@@ -33,7 +33,6 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.exceptions import DipDupException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
@@ -90,7 +89,7 @@ class IndexDispatcher:
 
         while True:
             if not spawn_datasources_event.is_set():
-                if (self._every_index_is(IndexStatus.REALTIME) or early_realtime) and not self._ctx.config.oneshot:
+                if (self._every_index_is(IndexStatus.realtime) or early_realtime) and not self._ctx.config.oneshot:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
@@ -100,7 +99,7 @@ class IndexDispatcher:
 
             tasks: deque[Awaitable[bool]] = deque()
             for name, index in copy(self._indexes).items():
-                if index.state.status == IndexStatus.ONESHOT:
+                if index.state.status == IndexStatus.disabled:
                     del self._indexes[name]
                     continue
 
@@ -117,11 +116,11 @@ class IndexDispatcher:
                 if isinstance(index, TzktOperationsIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.ONESHOT)):
+            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.disabled)):
                 self._logger.info('No indexes left, exiting')
                 break
 
-            if self._every_index_is(IndexStatus.REALTIME) and not indexes_spawned:
+            if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
                     on_synchronized_fired = True
                     await self._ctx.fire_hook('on_synchronized')
@@ -171,20 +170,16 @@ class IndexDispatcher:
         self._logger.info('%s contracts fetched from database', len(contracts))
 
         for contract in contracts:
-            # FIXME: No `code_hash` field in the database
-            if ':' in contract.address:
-                address, code_hash = contract.address.split(':')
-            else:
-                address, code_hash = contract.address, None
+            if contract.name in self._ctx.config.contracts:
+                continue
 
-            if contract.name not in self._ctx.config.contracts:
-                contract_config = TezosContractConfig(
-                    kind='tezos',
-                    address=address or None,
-                    code_hash=code_hash or None,
-                    typename=contract.typename,
-                )
-                self._ctx.config.contracts[contract.name] = contract_config
+            contract_config = TezosContractConfig(
+                kind='tezos',
+                address=contract.address,
+                code_hash=contract.code_hash,
+                typename=contract.typename,
+            )
+            self._ctx.config.contracts[contract.name] = contract_config
 
         self._ctx.config.initialize()
 
@@ -370,7 +365,7 @@ class DipDup:
     @property
     def schema(self) -> Schema:
         if self._schema is None:
-            raise DipDupException('Schema is not initialized')
+            raise FrameworkException('Schema is not initialized')
         return self._schema
 
     @classmethod

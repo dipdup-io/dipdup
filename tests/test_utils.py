@@ -67,6 +67,6 @@ async def test_humps_helpers() -> None:
 
 async def test_iter_models() -> None:
     models = list(iter_models('demo_token'))
-    assert len(models) == 8
+    assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
