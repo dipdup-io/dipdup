@@ -439,16 +439,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     async with tortoise_wrapper(url, models):
         conn = get_connection()
         if isinstance(config.database, PostgresDatabaseConfig):
-            # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-            if immune:
-                immune_tables: set[str] = set()
-            else:
-                immune_tables = config.database.immune_tables
-                immune_tables.add('dipdup_meta')
-
             await wipe_schema(
                 conn=conn,
                 schema_name=config.database.schema_name,
+                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
                 immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
             )
         else:
