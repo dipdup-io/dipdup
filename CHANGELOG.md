@@ -10,22 +10,36 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
 
-### Performance
-
-- tzkt: Request plain values instead of mappings from TzKT when possible.
-
-## [Unreleased]
-
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
 - ci: Docker images no longer contain git, poetry and install_dependencies script.
 
-## [Unreleased]
+### Performance
+
+- tzkt: Request plain values instead of mappings from TzKT when possible.
+
+## [6.5.4] - 2022-03-31
 
 ### Fixed
 
+- config: Fixed incorrest parsing of `token_transfer` index filters. 
+
+### Other
+
+- deps: Updated pytezos to 3.9.0.
+
+## [6.5.3] - 2022-03-28
+
+### Fixed
+
+- cli: Don't enforce logging `DeprecationWarning` warnings.
+- cli: Fixed `BrokenPipeError` messages when interrupting with DipDup with SIGINT.
 - config: Fixed crash when `token_transfer` index has `from` or `to` filter.
+
+### Security
+
+- hasura: Forbid using Hasura instances affected by [GHSA-c9rw-rw2f-mj4x](https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x).
 
 ## [6.5.2] - 2023-03-09
 
@@ -982,7 +996,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.4...HEAD
+[6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
+[6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3
 [6.5.2]: https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2
 [6.5.1]: https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1
 [6.5.0]: https://github.com/dipdup-io/dipdup/compare/6.4.3...6.5.0

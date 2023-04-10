@@ -201,7 +201,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 async def run(ctx: click.Context) -> None:
     """Run indexer.
 
-    Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
+    Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
     from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup

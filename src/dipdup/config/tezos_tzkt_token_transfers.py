@@ -25,7 +25,9 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig):
 
     contract: TezosContractConfig | None = None
     token_id: int | None = None
-    from_: TezosContractConfig | None = Field(default=None, alias='from')
+    # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
+    # FIXME: See https://github.com/pydantic/pydantic/issues/4286
+    from_: TezosContractConfig | None = None
     to: TezosContractConfig | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:

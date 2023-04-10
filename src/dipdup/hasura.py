@@ -31,25 +31,32 @@ from dipdup.models import Schema
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
-# NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
 vulnerable_versions = {
+    # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x
+    # NOTE: See https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg
+    'v2.21.0-beta': 'v2.21.0-beta.1',
     'v2.15.1': 'v2.15.2',
     'v2.15.0': 'v2.15.2',
     'v2.14.0': 'v2.14.1',
     'v2.13.1': 'v2.13.2',
     'v2.13.0': 'v2.13.2',
     'v2.12.0': 'v2.12.1',
-    'v2.11.2': 'v2.11.3',
-    'v2.11.1': 'v2.11.3',
-    'v2.11.0': 'v2.11.3',
+    'v2.11.4': 'v2.11.5',
+    'v2.11.3': 'v2.11.5',
+    'v2.11.2': 'v2.11.5',
+    'v2.11.1': 'v2.11.5',
+    'v2.11.0': 'v2.11.5',
     'v2.10.1': 'v2.10.2',
     'v2.10.0': 'v2.10.2',
-    # NOTE: Starting with v2.12.0, Community and Enterprise editions are on the same release
     'v2.11.2-pro.1': 'v2.11.3',
     'v2.11.1-pro.1': 'v2.11.3',
     'v2.11.0-pro.1': 'v2.11.3',
     'v2.10.1-pro.1': 'v2.10.2',
     'v2.10.0-pro.1': 'v2.10.2',
+    'v1.3.3': 'v1.3.4',
+    'v1.3.2': 'v1.3.4',
+    'v1.3.1': 'v1.3.4',
+    'v1.3.0': 'v1.3.4',
 }
 
 RelationalFieldT = Union[
