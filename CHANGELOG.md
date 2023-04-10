@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- http: Fixed crash when using custom datasources.
+
 ## [6.5.4] - 2022-03-31
 
 ### Fixed
