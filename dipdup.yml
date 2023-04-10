@@ -89,5 +89,5 @@ indexes:
   #   first_level: 12369621
 
 advanced:
-  early_realtime: False
+  early_realtime: True
 logging: quiet
