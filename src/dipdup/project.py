@@ -286,8 +286,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.21.0',
-                'hasura/graphql-engine:v2.21.0',
+                'hasura/graphql-engine:v2.22.1',
+                'hasura/graphql-engine:v2.22.1',
             ),
             comments=(
                 'stable',
