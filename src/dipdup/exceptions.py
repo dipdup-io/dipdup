@@ -11,7 +11,6 @@ from typing import Type
 from tabulate import tabulate
 from tortoise.models import Model
 
-from dipdup import spec_version_mapping
 from dipdup.enums import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
@@ -160,6 +159,19 @@ class DatabaseEngineError(Error):
             See https://docs.dipdup.io/config/database
         """
 
+
+spec_version_mapping = {
+    '0.1': '<=0.4.3',
+    '1.0': '>=1.0.0, <=1.1.2',
+    '1.1': '>=2.0.0, <=2.0.9',
+    '1.2': '>=3.0.0',
+}
+spec_reindex_mapping = {
+    '0.1': False,
+    '1.0': False,
+    '1.1': True,
+    '1.2': True,
+}
 
 @dataclass(repr=False)
 class MigrationRequiredError(Error):
