@@ -1,0 +1,30 @@
+spec_version: 2.0
+package: {{ cookiecutter.package }}
+
+database:
+  kind: sqlite
+  path: {{ cookiecutter.project_name }}.sqlite3
+
+datasources:
+  ethscan:
+    kind: abi.etherscan
+
+  subsquid_eth_mainnet:
+    kind: evm.subsquid
+    url: ${ARCHIVE_URL:-https://eth.archive.subsquid.io}
+    node_url: ${NODE_URL:-}
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_events:
+    kind: evm.subsquid.events
+    datasource: subsquid_eth_mainnet
+    handlers:
+      - callback: on_transfer
+        contract: eth_usdt
+        name: Transfer

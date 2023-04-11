@@ -13,7 +13,6 @@ from pprint import pformat
 from typing import Any
 from typing import Awaitable
 from typing import Iterator
-from typing import NoReturn
 from typing import TypeVar
 from typing import cast
 
@@ -27,6 +26,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -41,6 +42,7 @@ from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
@@ -68,18 +70,21 @@ from dipdup.utils import FormattedLogger
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
-# FIXME: Singletons shared by all contexts
-pending_indexes: deque[Any] = deque()
-pending_hooks: deque[Awaitable[None]] = deque()
-rolled_back_indexes: set[str] = set()
+class StateQueue:
+    pending_indexes: deque[Any] = deque()
+    pending_hooks: deque[Awaitable[None]] = deque()
+    rolled_back_indexes: set[str] = set()
+
+    def __init__(self) -> None:
+        raise FrameworkException('StateQueue is a singleton class')
 
 
 class MetadataCursor:
     _contract = 0
     _token = 0
 
-    def __call__(cls) -> NoReturn:
-        raise NotImplementedError('MetadataCursor is a singleton class')
+    def __init__(self) -> None:
+        raise FrameworkException('MetadataCursor is a singleton class')
 
     @classmethod
     async def initialize(cls) -> None:
@@ -221,10 +226,11 @@ class DipDupContext:
         elif action == ReindexingAction.wipe:
             conn = get_connection()
             if isinstance(self.config.database, PostgresDatabaseConfig):
+                immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
                 await wipe_schema(
                     conn=conn,
                     schema_name=self.config.database.schema_name,
-                    immune_tables=self.config.database.immune_tables,
+                    immune_tables=immune_tables,
                 )
             else:
                 await Tortoise._drop_databases()
@@ -272,16 +278,11 @@ class DipDupContext:
         contract_config._name = name
         self.config.contracts[name] = contract_config
 
-        # FIXME: No `code_hash` field in the database
-        if code_hash:
-            joined_address: str | None = f'{address or ""}:{code_hash or ""}'
-        else:
-            joined_address = address
-
         with suppress(OperationalError):
             await Contract(
                 name=contract_config.name,
-                address=joined_address,
+                address=contract_config.address,
+                code_hash=contract_config.code_hash,
                 typename=contract_config.typename,
             ).save()
 
@@ -317,18 +318,30 @@ class DipDupContext:
         index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidOperationsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
-        datasource = self.get_tzkt_datasource(datasource_name)
+        datasource: TzktDatasource | SubsquidDatasource
 
         if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+            datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktOperationsIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktBigMapsIndexConfig):
+            datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktBigMapsIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktHeadIndexConfig):
+            datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktHeadIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+            datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktTokenTransfersIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktEventsIndexConfig):
+            datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, SubsquidEventsIndexConfig):
+            datasource = self.get_subsquid_datasource(datasource_name)
+            index = SubsquidEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, SubsquidOperationsIndexConfig):
+            datasource = self.get_subsquid_datasource(datasource_name)
+            # index = SubsquidOperationsIndex(self, index_config, datasource)
+            raise NotImplementedError
         else:
             raise NotImplementedError
 
@@ -343,7 +356,7 @@ class DipDupContext:
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
-        pending_indexes.append(index)
+        StateQueue.pending_indexes.append(index)
 
     # TODO: disable_index(name: str)
 
@@ -351,7 +364,7 @@ class DipDupContext:
         self,
         network: str,
         address: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_contract_metadata` table
@@ -375,7 +388,7 @@ class DipDupContext:
         network: str,
         address: str,
         token_id: str,
-        metadata: dict[str, Any],
+        metadata: dict[str, Any] | None,
     ) -> None:
         """
         Inserts or updates corresponding rows in the internal `dipdup_token_metadata` table
@@ -411,6 +424,10 @@ class DipDupContext:
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:
         """Get `tzkt` datasource by name"""
         return self._get_datasource(name, TzktDatasource)
+
+    def get_subsquid_datasource(self, name: str) -> SubsquidDatasource:
+        """Get `subsquid` datasource by name"""
+        return self._get_datasource(name, SubsquidDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""
@@ -501,7 +518,7 @@ class HookContext(DipDupContext):
                 await update.revert(model)
 
         await Index.filter(name=index).update(level=to_level)
-        rolled_back_indexes.add(index)
+        StateQueue.rolled_back_indexes.add(index)
 
 
 class TemplateValuesdict(dict[str, Any]):
@@ -581,8 +598,8 @@ class CallbackManager:
     async def run(self) -> None:
         self._logger.debug('Starting CallbackManager loop')
         while True:
-            while pending_hooks:
-                await pending_hooks.popleft()
+            while StateQueue.pending_hooks:
+                await StateQueue.pending_hooks.popleft()
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
@@ -660,7 +677,7 @@ class CallbackManager:
         if wait:
             await _wrapper()
         else:
-            pending_hooks.append(_wrapper())
+            StateQueue.pending_hooks.append(_wrapper())
 
     async def execute_sql(
         self,

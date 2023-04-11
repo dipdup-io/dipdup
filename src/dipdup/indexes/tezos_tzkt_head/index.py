@@ -20,7 +20,7 @@ class TzktHeadIndex(
 
     async def _synchronize(self, sync_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', sync_level)
-        await self._update_state(status=IndexStatus.REALTIME, level=sync_level)
+        await self._update_state(status=IndexStatus.realtime, level=sync_level)
 
     async def _process_queue(self) -> None:
         while self._queue:

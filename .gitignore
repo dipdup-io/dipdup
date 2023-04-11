@@ -50,6 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tests/replays/
 
 # Translations
 *.mo
@@ -145,6 +146,6 @@ cython_debug/
 
 .noseids
 
-secrets.env
+*.env
 
 *.out*

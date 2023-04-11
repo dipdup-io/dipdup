@@ -6,7 +6,7 @@ import pytest
 from pytz import UTC
 
 from dipdup.config import DipDupConfig
-from dipdup.context import pending_indexes
+from dipdup.context import StateQueue
 from dipdup.dipdup import DipDup
 from dipdup.dipdup import IndexDispatcher
 from dipdup.exceptions import ReindexingRequiredError
@@ -23,7 +23,7 @@ async def _create_index(hash_: str) -> None:
         config_hash=hash_,
         created_at=datetime(2021, 10, 8, 18, 43, 35, 744412, tzinfo=UTC),
         template_values={},
-        status=IndexStatus.NEW,
+        status=IndexStatus.new,
         updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
         type=IndexType.tezos_tzkt_operations,
     )
@@ -31,7 +31,7 @@ async def _create_index(hash_: str) -> None:
 
 async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
     await dispatcher._ctx._spawn_index(name)
-    dispatcher._indexes[name] = pending_indexes.pop()
+    dispatcher._indexes[name] = StateQueue.pending_indexes.pop()
 
 
 class IndexStateTest:

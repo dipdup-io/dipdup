@@ -126,7 +126,7 @@ async def get_origination_filters(
                 )
                 if address := pattern_config.source.address:
                     async for batch in datasource.iter_originated_contracts(address):
-                        addresses.update(batch)
+                        addresses.update(item['address'] for item in batch)
                 if code_hash := pattern_config.source.code_hash:
                     raise FrameworkException('Invalid transaction filter `source.code_hash`')
 

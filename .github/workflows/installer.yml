@@ -47,17 +47,17 @@ jobs:
       - name: dipdup init
         run: cd dipdup-indexer; dipdup init
 
-      - name: make install
-        run: cd dipdup-indexer; make install
+      # FIXME: Fails on `next`
+      # - name: make install
+      #   run: cd dipdup-indexer; make install
 
-      # TODO: Reenable after pydantic is bumped
       # - name: make lint
-      # run: cd dipdup-indexer; make lint
+      #   run: cd dipdup-indexer; make lint
 
-      - name: Deploy scripts to GH Pages
-        if: contains(github.ref, 'master')
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./scripts
-          keep_files: true
+      # - name: Deploy scripts to GH Pages
+      #   if: contains(github.ref, 'master')
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./scripts
+      #     keep_files: true

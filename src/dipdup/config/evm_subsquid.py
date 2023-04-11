@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
+from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 
 
@@ -20,3 +21,8 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     url: str
     node_url: str | None = None
     http: HttpConfig | None = None
+
+
+@dataclass
+class SubsquidIndexConfig(IndexConfig):
+    datasource: SubsquidDatasourceConfig

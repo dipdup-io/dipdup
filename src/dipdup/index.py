@@ -10,7 +10,7 @@ from typing import cast
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
-from dipdup.context import rolled_back_indexes
+from dipdup.context import StateQueue
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
@@ -81,11 +81,11 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     @property
     def synchronized(self) -> bool:
-        return self.state.status == IndexStatus.REALTIME
+        return self.state.status == IndexStatus.realtime
 
     @property
     def realtime(self) -> bool:
-        return self.state.status == IndexStatus.REALTIME and not self._queue
+        return self.state.status == IndexStatus.realtime and not self._queue
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -123,12 +123,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         )
 
     async def process(self) -> bool:
-        if self.state.status == IndexStatus.ONESHOT:
+        if self.state.status == IndexStatus.disabled:
             raise FrameworkException('Index is in oneshot state and cannot be processed')
 
-        if self.name in rolled_back_indexes:
+        if self.name in StateQueue.rolled_back_indexes:
             await self.state.refresh_from_db(('level',))
-            rolled_back_indexes.remove(self.name)
+            StateQueue.rolled_back_indexes.remove(self.name)
 
         last_level = self._config.last_level
         if last_level:
@@ -170,20 +170,20 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             raise FrameworkException(f'Attempt to synchronize index from level {index_level} to level {head_level}')
 
         self._logger.info('Synchronizing index to level %s', head_level)
-        await self._update_state(status=IndexStatus.SYNCING, level=index_level)
+        await self._update_state(status=IndexStatus.syncing, level=index_level)
         return index_level
 
     async def _exit_sync_state(self, head_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', head_level)
         if Metrics.enabled:
             Metrics.set_levels_to_sync(self._config.name, 0)
-        await self._update_state(status=IndexStatus.REALTIME, level=head_level)
+        await self._update_state(status=IndexStatus.realtime, level=head_level)
 
     async def _enter_disabled_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
         if Metrics.enabled:
             Metrics.set_levels_to_sync(self._config.name, 0)
-        await self._update_state(status=IndexStatus.ONESHOT, level=last_level)
+        await self._update_state(status=IndexStatus.disabled, level=last_level)
 
     async def _update_state(
         self,

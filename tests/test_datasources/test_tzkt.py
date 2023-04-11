@@ -36,13 +36,19 @@ async def test_get_similar_contracts() -> None:
             address='KT1WBLrLE2vG8SedBqiSJFm4VVAZZBytJYHc',
             strict=False,
         )
-        assert contracts == ('KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+        assert (contracts[0]['address'], contracts[1]['address']) == (
+            'KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT',
+            'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6',
+        )
 
         contracts = await tzkt.get_similar_contracts(
             address='KT1WBLrLE2vG8SedBqiSJFm4VVAZZBytJYHc',
             strict=True,
         )
-        assert contracts == ('KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+        assert (contracts[0]['address'], contracts[1]['address']) == (
+            'KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT',
+            'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6',
+        )
 
 
 async def test_iter_similar_contracts() -> None:
@@ -53,7 +59,10 @@ async def test_iter_similar_contracts() -> None:
                 strict=False,
             )
         )
-        assert contracts == ('KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+        assert (contracts[0]['address'], contracts[1]['address']) == (
+            'KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT',
+            'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6',
+        )
 
         contracts = await take_two(
             tzkt.iter_similar_contracts(
@@ -61,7 +70,10 @@ async def test_iter_similar_contracts() -> None:
                 strict=True,
             )
         )
-        assert contracts == ('KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
+        assert (contracts[0]['address'], contracts[1]['address']) == (
+            'KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT',
+            'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6',
+        )
 
 
 async def test_get_originated_contracts() -> None:
@@ -69,8 +81,8 @@ async def test_get_originated_contracts() -> None:
         contracts = await tzkt.get_originated_contracts(
             address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
         )
-        assert contracts[0] == 'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z'
-        assert contracts[1] == 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b'
+        assert contracts[0]['address'] == 'KT1W3VGRUjvS869r4ror8kdaxqJAZUbPyjMT'
+        assert contracts[1]['address'] == 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6'
 
 
 async def iter_originated_contracts() -> None:
@@ -80,8 +92,8 @@ async def iter_originated_contracts() -> None:
                 address='KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD',
             )
         )
-        assert contracts[0] == 'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z'
-        assert contracts[1] == 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b'
+        assert contracts[0]['address'] == 'KT1X1LgNkQShpF9nRLYw3Dgdy4qp38MX617z'
+        assert contracts[1]['address'] == 'KT1BgezWwHBxA9NrczwK9x3zfgFnUkc7JJ4b'
 
 
 async def test_get_contract_summary() -> None:

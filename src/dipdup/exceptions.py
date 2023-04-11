@@ -133,7 +133,7 @@ class InvalidModelsError(Error):
 
             See https://docs.dipdup.io/getting-started/defining-models
             See https://docs.dipdup.io/config/database
-            See https://docs.dipdup.io/advanced/internal-models
+            See https://docs.dipdup.io/advanced/internal-tables
         """
 
 
@@ -396,11 +396,6 @@ class UnsupportedAPIError(Error):
 
             {self.reason}
         """
-
-
-# TODO: Remove in 7.0
-DipDupException = FrameworkException
-DipDupError = Error
 
 
 from dipdup.models import ReindexingReason  # noqa: E402

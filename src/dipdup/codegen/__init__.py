@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
-from dipdup.exceptions import FeatureAvailabilityError
+from dipdup.exceptions import FrameworkException
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
@@ -117,10 +117,7 @@ class CodeGenerator(ABC):
 
         datamodel_codegen = which('datamodel-codegen')
         if not datamodel_codegen:
-            raise FeatureAvailabilityError(
-                feature='codegen',
-                reason='datamodel-codegen is not installed. Are you in the `-slim` Docker image? If not - run `dipdup-install`.',
-            )
+            raise FrameworkException('datamodel-codegen is not installed')
 
         class_name = self.get_typeclass_name(schema_path)
 
@@ -174,8 +171,7 @@ class CodeGenerator(ABC):
         else:
             code.append('...')
 
-        # FIXME: Not needed anymore?
-        # NOTE: Fix missing generic type annotation for `Index[IndexConfig]` to comply with `mypy --strict`
+        # FIXME: Missing generic type annotation to comply with `mypy --strict`
         processed_arguments = tuple(
             f'{a},  # type: ignore[type-arg]' if a.startswith('index: Index') else a for a in arguments
         )

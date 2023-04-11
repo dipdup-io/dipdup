@@ -23,4 +23,4 @@ The following metrics are exposed under `dipdup` namespace:
 | `dipdup_http_errors_total` | Number of http errors |
 | `dipdup_callback_duration_seconds` | Duration of callback execution |
 
-You can also query {{ #summary advanced/internal-models.md}} for monitoring purposes.
+You can also query {{ #summary advanced/internal-tables.md}} for monitoring purposes.

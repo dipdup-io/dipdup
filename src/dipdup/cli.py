@@ -130,11 +130,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     Issues: https://github.com/dipdup-io/dipdup/issues
     """
-    if env.DOCKER_IMAGE == 'pytezos':
-        _logger.warning('`-pytezos` image is deprecated and will be removed in the next major release')
-    elif env.DOCKER_IMAGE == 'slim':
-        _logger.warning('`-slim` image will be based on Ubuntu instead of Alpine in the next major release')
-
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
     if '--help' in args or args in (['config'], ['hasura'], ['schema']):
@@ -214,7 +209,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 async def run(ctx: click.Context) -> None:
     """Run indexer.
 
-    Execution can be gracefully interrupted with `Ctrl+C` or `SIGTERM` signal.
+    Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
     from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
@@ -400,13 +395,12 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Approving schema `%s`', url)
 
     async with tortoise_wrapper(url, models):
-        # TODO: Non-nullable fields, remove in 7.0
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
-            hash='',
+            hash=None,
         )
         await Index.filter().update(
-            config_hash='',
+            config_hash=None,
         )
 
     _logger.info('Schema approved')
@@ -457,7 +451,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
                 conn=conn,
                 schema_name=config.database.schema_name,
                 # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=config.database.immune_tables if not immune else set(),
+                immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
             )
         else:
             await Tortoise._drop_databases()

@@ -27,7 +27,7 @@ for project_path in _get_projects():
     if not project_path.name.endswith('.json'):
         continue
 
-    print(f'=> Updating {project_path.name}')
+    print(f'=> Rendering {project_path.name}')
     project = BaseProject()
     project.run(quiet=True, replay=str(project_path))
     project.render(force=True)
@@ -36,22 +36,16 @@ for project_path in _get_projects():
     package = project.answers['package']
     subprocess.run(['mv', project_name, 'demos'], check=True)
 
-for demo in _get_demos():
-    if not demo.is_dir():
-        continue
-
-    print(f'=> Initializing `{demo.name}`')
+    print(f'=> Linking `{project_name}`')
     subprocess.run(
-        ['dipdup', 'init', '--overwrite-types'],
-        cwd=demo,
+        ['ln', '-sf', f'../demos/{project_name}/src/{package}', package],
+        cwd=Path(__file__).parent.parent / 'src',
         check=True,
     )
 
-    demo_pkg = demo.name.replace('-', '_')
-    args = ['ln', '-sf', f'../demos/{demo.name}/src/{demo_pkg}', demo_pkg]
-    print(f'=> Linking `{demo.name}`: {" ".join(args)}')
+    print(f'=> Initializing `{project_name}`')
     subprocess.run(
-        args,
-        cwd=Path(__file__).parent.parent / 'src',
+        ['dipdup', 'init', '--overwrite-types'],
+        cwd=Path(__file__).parent.parent / 'demos' / project_name,
         check=True,
     )
