@@ -1692,6 +1692,13 @@ class DipDupConfig:
                     f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
                 )
 
+        # NOTE: Bigmap indexes with `skip_history` require early realtime
+        for name, index_config in self.indexes.items():
+            if isinstance(index_config, BigMapIndexConfig) and index_config.skip_history != SkipHistory.never:
+                _logger.warning('`%s` index is configured to skip history; enabling early realtime', name)
+                self.advanced.early_realtime = True
+                break
+
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
