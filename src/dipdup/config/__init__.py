@@ -608,9 +608,7 @@ class DipDupConfig:
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
-            # TODO: Remove in 7.0
-            # raise ConfigurationError('Python package name must be in snake_case.')
-            _logger.warning('Python package name must be in snake_case.')
+            raise ConfigurationError('Python package name must be in snake_case.')
 
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
@@ -901,14 +899,14 @@ class DipDupConfig:
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
-                for attribute_name in ('contract', 'from_', 'to'):
-                    attribute_value = getattr(handler_config, attribute_name)
-                    if isinstance(attribute_value, str):
-                        setattr(
-                            handler_config,
-                            attribute_name,
-                            self.get_contract(attribute_value),
-                        )
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_contract(handler_config.contract)
+
+                if isinstance(handler_config.from_, str):
+                    handler_config.from_ = self.get_contract(handler_config.from_)
+
+                if isinstance(handler_config.to, str):
+                    handler_config.to = self.get_contract(handler_config.to)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config

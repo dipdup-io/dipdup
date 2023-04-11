@@ -5,11 +5,11 @@ from dipdup.models import Model
 
 
 class DAO(Model):
-    address = fields.CharField(36, pk=True)
+    address = fields.TextField(pk=True)
 
 
 class User(Model):
-    address = fields.CharField(36, pk=True)
+    address = fields.TextField(pk=True)
     balance = fields.IntField()
 
 

@@ -5,6 +5,6 @@ from dipdup.models.tezos_tzkt import TzktOperationType
 
 
 class Operation(Model):
-    hash = fields.CharField(51)
+    hash = fields.TextField()
     level = fields.IntField()
     type = fields.CharEnumField(TzktOperationType)
