@@ -8,7 +8,6 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 
-from tabulate import tabulate
 from tortoise.models import Model
 
 tab = ('_' * 80) + '\n\n'
@@ -155,47 +154,6 @@ class DatabaseEngineError(Error):
             See https://docs.dipdup.io/deployment/database-engines
             See https://docs.dipdup.io/advanced/sql
             See https://docs.dipdup.io/config/database
-        """
-
-
-spec_version_mapping = {
-    '1.2': '>=3.0, <7.0',
-    '2.0': '>=7.0',
-}
-spec_reindex_mapping = {
-    '1.2': True,
-    '2.0': True,
-}
-
-@dataclass(repr=False)
-class MigrationRequiredError(Error):
-    """Project and DipDup spec versions don't match"""
-
-    from_: str
-    to: str
-    reindex: bool = False
-
-    def _help(self) -> str:
-
-        version_table = tabulate(
-            [
-                ['current', self.from_, spec_version_mapping[self.from_]],
-                ['required', self.to, spec_version_mapping[self.to]],
-            ],
-            headers=['', 'spec_version', 'DipDup version'],
-        )
-        reindex = '\n\n' + tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
-        return f"""
-            Project migration required!
-
-            {version_table.strip()}
-
-            Perform the following actions:
-
-              1. Run `dipdup migrate`.
-              2. Review and commit changes.
-
-            See https://docs.dipdup.io/release-notes for more information. {reindex}
         """
 
 

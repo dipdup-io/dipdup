@@ -25,8 +25,8 @@ from typing import Any
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 
-from dipdup.exceptions import ConfigurationError
 from dipdup import __spec_version__
+from dipdup.exceptions import ConfigurationError
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -124,7 +124,9 @@ class DipDupYAMLConfig(dict[str, Any]):
         buffer = StringIO()
         yaml.dump(config_yaml, buffer)
         return buffer.getvalue()
-    
+
     def validate_version(self) -> None:
         if self['spec_version'] != __spec_version__:
-            raise ConfigurationError(f"Unknown spec version {self['spec_version']}; see https://docs.dipdup.io/config/spec_version")
+            raise ConfigurationError(
+                f"Unknown spec version {self['spec_version']}; see https://docs.dipdup.io/config/spec_version"
+            )
