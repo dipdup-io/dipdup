@@ -36,6 +36,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+from pydantic import BaseModel
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -528,6 +529,14 @@ class StorageTypeMixin:
 
     @property
     def storage_type_cls(self) -> type[Any]:
+        match self:
+            case OperationHandlerTransactionPatternConfig(
+                type='transaction',
+                source=ContractConfig(),
+                destination=None,
+                entrypoint='transfer' | 'default',
+            ):
+                self._storage_type_cls = BaseModel
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
@@ -567,6 +576,14 @@ class ParameterTypeMixin:
 
     @property
     def parameter_type_cls(self) -> type:
+        match self:
+            case OperationHandlerTransactionPatternConfig(
+                type='transaction',
+                source=ContractConfig(),
+                destination=None,
+                entrypoint='transfer' | 'default',
+            ):
+                self.parameter_type_cls = BaseModel
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls

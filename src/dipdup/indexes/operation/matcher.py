@@ -193,4 +193,22 @@ def match_operation_subgroup(
             args = prepare_operation_handler_args(handler_config, matched_operations)
             matched_handlers.append((operation_subgroup, handler_config, args))
 
+    if len(matched_handlers) > 1:
+        index_list = list(range(len(matched_handlers)))
+        id_list = []
+        for _ in matched_handlers:
+            transaction = _[2][-1]
+            if isinstance(transaction, OperationData):
+                id_list.append(transaction.id)
+            if isinstance(transaction, Transaction):
+                id_list.append(transaction.data.id)
+
+        sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
+        if index_list != sorted_index_list:
+            sorted_matched_handlers: deque[MatchedOperationsT] = deque()
+            for index in sorted_index_list:
+                sorted_matched_handlers.append(matched_handlers[index])
+
+            return sorted_matched_handlers
+
     return matched_handlers
