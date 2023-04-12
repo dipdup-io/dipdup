@@ -127,4 +127,4 @@ class DipDupYAMLConfig(dict[str, Any]):
     
     def validate_version(self) -> None:
         if self['spec_version'] != __spec_version__:
-            raise ConfigurationError(f"Inappropriate configuration version expected {__spec_version__} got {self['spec_version']} check https://docs.dipdup.io/config/spec_version")
+            raise ConfigurationError(f"Unknown spec version {self['spec_version']}; see https://docs.dipdup.io/config/spec_version")

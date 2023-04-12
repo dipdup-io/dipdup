@@ -158,6 +158,15 @@ class DatabaseEngineError(Error):
         """
 
 
+spec_version_mapping = {
+    '1.2': '>=3.0, <7.0',
+    '2.0': '>=7.0',
+}
+spec_reindex_mapping = {
+    '1.2': True,
+    '2.0': True,
+}
+
 @dataclass(repr=False)
 class MigrationRequiredError(Error):
     """Project and DipDup spec versions don't match"""
@@ -167,7 +176,6 @@ class MigrationRequiredError(Error):
     reindex: bool = False
 
     def _help(self) -> str:
-        from dipdup.cli import spec_version_mapping
 
         version_table = tabulate(
             [

@@ -27,16 +27,6 @@ DEFAULT_CONFIG_NAME = 'dipdup.yml'
 _logger = logging.getLogger('dipdup.cli')
 
 
-spec_version_mapping = {
-    '1.2': '>=3.0, <7.0',
-    '2.0': '>=7.0',
-}
-spec_reindex_mapping = {
-    '1.2': True,
-    '2.0': True,
-}
-
-
 def echo(message: str) -> None:
     with suppress(BrokenPipeError):
         click.echo(message)
