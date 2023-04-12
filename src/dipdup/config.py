@@ -37,6 +37,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+from pydantic import BaseModel
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -529,6 +530,14 @@ class StorageTypeMixin:
 
     @property
     def storage_type_cls(self) -> type[Any]:
+        match self:
+            case OperationHandlerTransactionPatternConfig(
+                type='transaction',
+                source=ContractConfig(code_hash=int()),
+                destination=None,
+                entrypoint='transfer',
+            ):
+                self._storage_type_cls = BaseModel
         if self._storage_type_cls is None:
             raise ConfigInitializationException
         return self._storage_type_cls
@@ -568,6 +577,14 @@ class ParameterTypeMixin:
 
     @property
     def parameter_type_cls(self) -> type:
+        match self:
+            case OperationHandlerTransactionPatternConfig(
+                type='transaction',
+                source=ContractConfig(code_hash=int()),
+                destination=None,
+                entrypoint='transfer',
+            ):
+                self.parameter_type_cls = BaseModel
         if self._parameter_type_cls is None:
             raise ConfigInitializationException
         return self._parameter_type_cls
@@ -629,7 +646,16 @@ class OperationHandlerTransactionPatternConfig(PatternConfig, StorageTypeMixin, 
         ParameterTypeMixin.__post_init_post_parse__(self)
         SubgroupIndexMixin.__post_init_post_parse__(self)
         if self.entrypoint and not self.destination:
-            raise ConfigurationError('Transactions with entrypoint must also have destination')
+            match self:
+                case OperationHandlerTransactionPatternConfig(
+                    type='transaction',
+                    source=ContractConfig(code_hash=int()),
+                    destination=None,
+                    entrypoint='transfer',
+                ):
+                    pass
+                case _:
+                    raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
