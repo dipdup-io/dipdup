@@ -156,7 +156,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
-    from dipdup.exceptions import MigrationRequiredError
     from dipdup.sentry import init_sentry
 
     _config = DipDupConfig.load(config_paths)
