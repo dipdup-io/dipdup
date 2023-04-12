@@ -26,6 +26,7 @@ from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 
 from dipdup.exceptions import ConfigurationError
+from dipdup import __spec_version__
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -105,6 +106,8 @@ class DipDupYAMLConfig(dict[str, Any]):
 
             config.update(yaml.load(path_yaml))
 
+        config.validate_version()
+
         # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
         # FIXME: See https://github.com/pydantic/pydantic/issues/4286
         fix_dataclass_field_aliases(config)
@@ -121,3 +124,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         buffer = StringIO()
         yaml.dump(config_yaml, buffer)
         return buffer.getvalue()
+    
+    def validate_version(self) -> None:
+        if self['spec_version'] != __spec_version__:
+            raise ConfigurationError(f"Inappropriate configuration version expected {__spec_version__} got {self['spec_version']} check https://docs.dipdup.io/config/spec_version")
