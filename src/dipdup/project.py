@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from tabulate import tabulate
 
-from dipdup import major_version
+from dipdup import __version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils.codegen import load_template
 from dipdup.utils.codegen import write
@@ -123,7 +123,7 @@ class ChoiceQuestion(Question):
 class JinjaAnswers(dict[str, Any]):
     def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self['dipdup_version'] = major_version
+        self['dipdup_version'] = __version__
 
     def __getattr__(self, item: str) -> Any:
         return self[item]
