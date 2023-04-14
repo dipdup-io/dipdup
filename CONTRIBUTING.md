@@ -1,26 +1,38 @@
 # DipDup contribution guide
 
+This document describes the contribution process for DipDup. It's a living document and is subject to change. Some rules are enforced by CI, others are just recommendations. Feel free to ask maintainers when in doubt.
+
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
+
+Last updated: 2023-04-12
 
 ## General
 
 - All code in this repository MUST be licensed under the [MIT License](./LICENSE.md).
-- Python code in this repository MUST run on Python 3.10. It also SHOULD run on Python 3.11. Using modern language features is encouraged.
-- Python code in this repository MUST run in Linux, macOS, Docker, and `amd64`/`arm64` environments. Windows SHOULD be supported as well.
-- We use the [Poetry](https://python-poetry.org/docs/#installation) package manager and GNU Make to set up the development environment. You SHOULD install both tools and run `make help` to see available shortcuts.
+- Python code MUST run on Python 3.10 and 3.11.
+- Python code MUST run in Linux, macOS, Docker, and `amd64`/`arm64` environments.
 - Developers SHOULD have fun while contributing to the project.
+
+## Dev environment
+
+- Contributors MUST use Docker or virtualenvs to run DipDup locally. Don't install it globally.
+- Python packages in dev environment MUST be in sync with `requirements.txt` or `poetry.lock` lockfiles to ensure that environment is reproducible. We currently use [Poetry](https://python-poetry.org/docs/#installation) package manager to set up the development environment (but it's NOT RECOMMENDED to anyone lol).
+- We provide Makefile shortcuts for common contributor tasks. Run `make help` to see available commands and environment variables.
 
 ## GitHub
 
-- Branch names MUST follow `prefix/short-description` format. Prefixes currently in use: `feat` for features, `fix` for bugfixes, `docs` for documentation, `exp` for experiments, `aux` for everything else.
-- Commits in pull requests MUST be squashed when merging to `master`.
+- We use GitHub as a main source of truth for DipDup development. All dev-related issues, pull requests, and discussions SHOULD be created in this repository.
+- Current main branches: `next` for upcoming major release, `master` for the current stable release backports (6.5.x).
+- Branch names MUST follow `prefix/short-description` format. See [Appendix A](#appendix-a-branch-prefixes) for a list of prefixes.
+- Commits in pull requests MUST be squashed when merging to the main branch.
 - Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.
 
 ## Codestyle
 
-- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging code to `master` (CI will fail otherwise).
+- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging the code (CI will fail otherwise).
+- Using modern language features is RECOMMENDED.
 - Single quotes MUST be used for string literals.
-- Meaningful comments are highly RECOMMENDED to begin with `# NOTE:`, `# TODO:`, or `# FIXME:`.
+- Meaningful comments SHOULD begin with `# NOTE:`, `# TODO:`, or `# FIXME:` for better discoverability.
 - f-string formatting is RECOMMENDED over other methods. Logging is an exception to this rule.
 
 ## Packaging
@@ -38,14 +50,9 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 - All changes that affect user (developer) experience MUST be documented in the CHANGELOG.md file.
 - Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.
-- The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise).
-- Lines describing changes MUST be sorted and begin with DipDup module name (`index: Added ...`).
-
-Use the following categories (in this order):
-
-Groups: Added, Fixed, Changed, Deprecated, Removed, Performance, Security, Other.
-
-Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, dipdup (?), docs, exceptions, hasura, hooks, http, index, install, ipfs, jobs, metadata, models, projects, prometheus, sentry, tzkt.
+- The changelog MUST conform to the "Keep a Changelog" specification (as it's parsed by release workflow).
+- Changelog items MUST be grouped by change type and sorted alphabetically. See [Appendix B](#appendix-b-changelog-categories) for a list of categories.
+- Each line MUST be a single sencence prefixed with a component name. See [Appendix C](#appendix-c-component-names) for a list of component names.
 
 ## Documentation
 
@@ -55,19 +62,19 @@ Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, 
 
 ## Security
 
-- GitHub alerts about dependencies that contain vulnerabilities MUST be investigated and resolved as soon as possible.
+- GitHub Dependabot alerts about vulnerable dependencies MUST be investigated and resolved as soon as possible.
 - Security-related bugfixes MUST be mentioned in the changelog under the "Security" section.
 
 ## Privacy
 
 - Crash reporting MUST be opt-in (disabled by default) both in config and project templates.
-- Sentry events and crash reports MUST NOT contain any sensitive information (IP addresses, hostnames, etc.)
+- Sentry events and crash reports MUST NOT contain any sensitive information (IP addresses, passwords, etc.)
 - DipDup SHOULD NOT perform network requests to APIs not defined in config as datasources. Current exceptions: GitHub.
 
 ## Docker images
 
-- DipDup dockerfiles use autogenerated `requirements.txt` files. Maintainers MUST run `make update` script on every change in dependencies.
-- Docker images for stable releases MUST be published on Docker Hub. They MAY also be published on GHCR.
+- DipDup dockerfiles use autogenerated `requirements.txt` files. Maintainers MUST keep them up to date (run `make update` shortcut when needed).
+- Docker images for stable releases MUST be published on Docker Hub. They also SHOULD be published on GitHub Container Registry (GHCR).
 - Maintainers MAY publish arbitrary images on GHCR and remove them when not needed.
 
 ## Installer
@@ -84,10 +91,70 @@ Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, 
 - Demos are stored in `demos` root directory. They MUST be generated automatically from project templates using replay files.
 - Maintainers SHOULD run `make demos replays` command regularly to ensure that demo projects are up to date.
 
-```admonish warning title=""
-This page or paragraph is yet to be written. Come back later.
-```
-
 ## Tests
 
+- Tests is a great thing; it's highly RECOMMENDED to write them.
+- We use `pytest` as a test runner. Tests MUST be located in `tests` directory and have discoverable names (see [pytest docs](https://docs.pytest.org/en/stable/goodpractices.html#test-discovery)).
+
 ## Code Review
+
+- Each pull request SHOULD be reviewed by at least one core maintainer.
+
+## Appendix A: branch prefixes
+
+| Prefix | Description     |
+| ------ | --------------- |
+| `ci`   | CI              |
+| `docs` | Documentation   |
+| `exp`  | Experiments     |
+| `feat` | Features        |
+| `fix`  | Bugfixes        |
+| `tmp`  | Temporary stuff |
+| `aux`  | Everything else |
+
+## Appendix B: changelog categories
+
+In order of appearance in release.
+
+| Category    | Description |
+| ----------- | ----------- |
+| Added       |             |
+| Changed     |             |
+| Fixed       |             |
+| Deprecated  |             |
+| Removed     |             |
+| Security    |             |
+| Performance |             |
+| Other       |             |
+
+## Appendix C: component names
+
+FIXME: Outdated datasource names
+
+| Component  | Description                                                   |
+| ---------- | ------------------------------------------------------------- |
+| ci         | Dockerfiles, GitHub Actions, build scripts                    |
+| cli        | Command-line changes                                          |
+| codegen    | JSONSchemas, Pydantic models, datamodel-codegen               |
+| coinbase   | `coinbase` datasource                                         |
+| config     | YAML config spec, parsing and validation                      |
+| context    | Callback context or `ctx`                                     |
+| database   | Low-level database interaction, TortoiseORM tricks            |
+| demos      | Demo project templates for `dipdup new` command               |
+| deps       | Python dependency hell and other significant changes          |
+| dipdup     | Who knows                                                     |
+| docs       | Documentation, README, references                             |
+| exceptions | Errors and help messages                                      |
+| hasura     | Everything about Hasura GraphQL Engine integration            |
+| hooks      | Hooks, event and user-defined                                 |
+| http       | Low-level HTTP stack                                          |
+| index      | Indexing changes                                              |
+| install    | Oneliner install script and update/install/uninstall commands |
+| ipfs       | `ipfs` datasource                                             |
+| jobs       | Job scheduler                                                 |
+| metadata   | `metadata` datasource                                         |
+| models     | Internal models, mostly Tortoise ones                         |
+| projects   | Same as "demos"                                               |
+| prometheus | Prometheus integration                                        |
+| sentry     | Sentry integration                                            |
+| tzkt       | `tzkt` datasource                                             |
