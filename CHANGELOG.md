@@ -6,14 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- evm.node: Added `evm.node` datasource for EVM-based networks.
+
 ### Changed
 
 - tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- database: Use `TEXT` for enum fields.
+- database: Store datasource aliases in `dipdup_head` table.
 
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
-- ci: Docker images no longer contain git, poetry and install_dependencies script.
+- ci: Docker images no longer contain git, poetry and custom scripts.
 
 ### Performance
 

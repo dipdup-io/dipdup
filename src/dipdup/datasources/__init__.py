@@ -53,7 +53,7 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
     @property
     def name(self) -> str:
-        return self._http._url
+        return self._config.name
 
     @abstractmethod
     async def subscribe(self) -> None:

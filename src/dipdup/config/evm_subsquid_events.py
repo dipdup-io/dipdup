@@ -11,7 +11,9 @@ from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.models.evm_node import NodeHeadSubscription
+from dipdup.models.evm_node import EvmNodeLogsSubscription
+from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
+from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_subsquid import ArchiveSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
@@ -52,5 +54,8 @@ class SubsquidEventsIndexConfig(IndexConfig):
     def get_subscriptions(self) -> set[Subscription]:
         subs: set[Subscription] = set()
         subs.add(ArchiveSubscription())
-        subs.add(NodeHeadSubscription())
+        subs.add(EvmNodeNewHeadsSubscription())
+        # FIXME: Be selective
+        subs.add(EvmNodeLogsSubscription())
+        subs.add(EvmNodeSyncingSubscription())
         return subs

@@ -11,14 +11,21 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.models import MessageType
-from dipdup.models.evm_node import NodeSubscription
+from dipdup.models.evm_node import EvmNodeHeadData
+from dipdup.models.evm_node import EvmNodeLogData
+from dipdup.models.evm_node import EvmNodeLogsSubscription
+from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
+from dipdup.models.evm_node import EvmNodeSubscription
+from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
 
 EmptyCallback = Callable[[], Awaitable[None]]
-HeadCallback = Callable[['EvmNodeDatasource', dict[str, Any]], Awaitable[None]]
+HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
+LogsCallback = Callable[['EvmNodeDatasource', EvmNodeLogData], Awaitable[None]]
+SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
 
@@ -29,12 +36,14 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         super().__init__(config, merge_subscriptions)
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
-        self._subscription_ids: dict[str, NodeSubscription] = {}
+        self._subscription_ids: dict[str, EvmNodeSubscription] = {}
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
         self._on_rollback_callbacks: set[RollbackCallback] = set()
         self._on_head_callbacks: set[HeadCallback] = set()
+        self._on_logs_callbacks: set[LogsCallback] = set()
+        self._on_syncing_callbacks: set[SyncingCallback] = set()
 
     async def initialize(self) -> None:
         pass
@@ -53,7 +62,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
         for subscription in missing_subscriptions:
-            if isinstance(subscription, NodeSubscription):
+            if isinstance(subscription, EvmNodeSubscription):
                 await self._subscribe(subscription)
 
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
@@ -70,12 +79,26 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_disconnected_callbacks:
             await fn()
 
-    async def emit_head(self, head: dict[str, Any]) -> None:
+    async def emit_head(self, head: EvmNodeHeadData) -> None:
         for fn in self._on_head_callbacks:
             await fn(self, head)
 
+    async def emit_logs(self, logs: EvmNodeLogData) -> None:
+        for fn in self._on_logs_callbacks:
+            await fn(self, logs)
+
+    async def emit_syncing(self, syncing: EvmNodeSyncingData) -> None:
+        for fn in self._on_syncing_callbacks:
+            await fn(self, syncing)
+
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
+
+    def call_on_logs(self, fn: LogsCallback) -> None:
+        self._on_logs_callbacks.add(fn)
+
+    def call_on_syncing(self, fn: SyncingCallback) -> None:
+        self._on_syncing_callbacks.add(fn)
 
     def call_on_connected(self, fn: EmptyCallback) -> None:
         self._on_connected_callbacks.add(fn)
@@ -83,7 +106,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     def call_on_disconnected(self, fn: EmptyCallback) -> None:
         self._on_disconnected_callbacks.add(fn)
 
-    async def _subscribe(self, subscription: NodeSubscription) -> None:
+    async def _subscribe(self, subscription: EvmNodeSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         response = await self._jsonrpc_request(
             'eth_subscribe',
@@ -139,9 +162,18 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         else:
             raise DatasourceError(f'Unknown message: {data}', self.name)
 
-    async def _handle_subscription(self, subscription: NodeSubscription, data: Any) -> None:
-        print(subscription, data)
-        raise NotImplementedError
+    async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
+        if isinstance(subscription, EvmNodeNewHeadsSubscription):
+            head = EvmNodeHeadData.from_json(data)
+            await self.emit_head(head)
+        elif isinstance(subscription, EvmNodeLogsSubscription):
+            logs = EvmNodeLogData.from_json(data)
+            await self.emit_logs(logs)
+        elif isinstance(subscription, EvmNodeSyncingData):
+            syncing = EvmNodeSyncingData.from_json(data)
+            await self.emit_syncing(syncing)
+        else:
+            raise NotImplementedError
 
     async def _on_error(self, message: CompletionMessage) -> None:
         raise DatasourceError(f'Node error: {message}', self.name)

@@ -29,6 +29,7 @@ async def tzkt_replay(
         url=url,
         http=http_config,
     )
+    config._name = 'tzkt'
     datasource = TzktDatasource(config)
     async with datasource:
         yield datasource

@@ -37,6 +37,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.index import Index
+from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -50,6 +51,9 @@ from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.models.evm_node import EvmNodeHeadData
+from dipdup.models.evm_node import EvmNodeLogData
+from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
@@ -266,6 +270,10 @@ class IndexDispatcher:
                 datasource.call_on_rollback(self._on_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
+                datasource.call_on_logs(self._on_evm_node_logs)
+                datasource.call_on_syncing(self._on_evm_node_syncing)
+                # FIXME: Rollback not implemented
+                # datasource.call_on_rollback(self._on_rollback)
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
@@ -285,8 +293,39 @@ class IndexDispatcher:
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
-    async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: dict[str, Any]) -> None:
-        ...
+    async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
+        # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
+        asyncio.ensure_future(
+            Head.update_or_create(
+                name=datasource.name,
+                defaults={
+                    'level': int(head.number, 16),
+                    'hash': head.hash,
+                    'timestamp': int(head.timestamp, 16),
+                },
+            ),
+        )
+        if Metrics.enabled:
+            Metrics.set_datasource_head_updated(datasource.name)
+        for index in self._indexes.values():
+            if isinstance(index, SubsquidEventsIndex):
+                node_config = index._config.datasource.node
+                if node_config and node_config.name == datasource.name:
+                    index.push_realtime_message(head)
+
+    async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
+        for index in self._indexes.values():
+            if isinstance(index, SubsquidEventsIndex):
+                node_config = index._config.datasource.node
+                if node_config and node_config.name == datasource.name:
+                    index.push_realtime_message(logs)
+
+    async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
+        for index in self._indexes.values():
+            if isinstance(index, SubsquidEventsIndex):
+                node_config = index._config.datasource.node
+                if node_config and node_config.name == datasource.name:
+                    index.push_realtime_message(syncing)
 
     async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
@@ -619,7 +658,8 @@ class DipDup:
         )
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
-        tasks.add(create_task(index_dispatcher._update_summary(60)))
+        if not self._ctx.config.oneshot:
+            tasks.add(create_task(index_dispatcher._update_summary(60)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
