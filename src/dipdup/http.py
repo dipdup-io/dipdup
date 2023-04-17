@@ -23,7 +23,6 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
-from dipdup.config import HttpConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
@@ -39,8 +38,6 @@ safe_exceptions = (
 
 class HTTPGateway(AbstractAsyncContextManager[None]):
     """Base class for datasources which connect to remote HTTP endpoints"""
-
-    _default_http_config: HttpConfig
 
     def __init__(self, url: str, http_config: ResolvedHttpConfig) -> None:
         self._http_config = http_config

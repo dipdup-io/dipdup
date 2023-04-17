@@ -134,6 +134,10 @@ class CodeGenerator(ABC):
             '--class-name',
             class_name,
             '--disable-timestamp',
+            '--input-file-type',
+            'jsonschema',
+            '--target-python-version',
+            '3.10',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)

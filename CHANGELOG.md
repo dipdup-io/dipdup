@@ -19,6 +19,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 
+## [6.5.5] - 2022-04-17
+
+### Fixed
+
+- config: Enable early realtime mode when config contains bigmap indexes with `skip_history`.
+- http: Fixed crash when using custom datasources.
+- index: Allow mixing `source` and `entrypoint` filters in `operation` index pattern.
+
+### Other
+
+- ci: Default git branch switched to `next`.
+
 ## [6.5.4] - 2022-03-31
 
 ### Fixed
@@ -996,7 +1008,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.4...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.5...HEAD
+[6.5.5]: https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5
 [6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
 [6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3
 [6.5.2]: https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2
