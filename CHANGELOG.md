@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - config: Enable early realtime mode when config contains bigmap indexes with `skip_history`.
 - http: Fixed crash when using custom datasources.
+- index: Allow mixing `source` and `entrypoint` filters in `operation` index pattern.
 
 ## [6.5.4] - 2022-03-31
 
