@@ -176,18 +176,23 @@
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="unreleased"><a class="header" href="#unreleased"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.4...HEAD">Unreleased</a></a></h2>
+<h2 id="655---2022-04-17"><a class="header" href="#655---2022-04-17"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5">6.5.5</a> - 2022-04-17</a></h2>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
 <ul>
 <li>config: Enable early realtime mode when config contains bigmap indexes with <code>skip_history</code>.</li>
 <li>http: Fixed crash when using custom datasources.</li>
+<li>index: Allow mixing <code>source</code> and <code>entrypoint</code> filters in <code>operation</code> index pattern.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>ci: Default git branch switched to <code>next</code>.</li>
 </ul>
 <h2 id="654---2022-03-31"><a class="header" href="#654---2022-03-31"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4">6.5.4</a> - 2022-03-31</a></h2>
 <h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
 <ul>
 <li>config: Fixed incorrest parsing of <code>token_transfer</code> index filters. </li>
 </ul>
-<h2 id="other"><a class="header" href="#other">Other</a></h2>
+<h2 id="other-1"><a class="header" href="#other-1">Other</a></h2>
 <ul>
 <li>deps: Updated pytezos to 3.9.0.</li>
 </ul>
@@ -221,7 +226,7 @@
 <li>codegen: Fixed validation of created package after <code>dipdup init</code>.</li>
 <li>config: Allow using empty string as default env (<code>{DEFAULT_EMPTY:-}</code>).</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
 <ul>
 <li>deps: Updated pydantic to 1.10.5</li>
 <li>deps: Updated datamodel-code-generator to 0.17.1</li>
@@ -245,7 +250,7 @@
 <li>tzkt: Fixed <code>OperationData.type</code> field value for migration originations.</li>
 <li>tzkt: Added missing <code>last_level</code> argument to migration origination fetching methods.</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>tzkt: Updated current testnet protocol (<code>limanet</code>).</li>
 <li>deps: Updated asyncpg to 0.27.0</li>
@@ -332,7 +337,7 @@
 <ul>
 <li>hasura: Forbid using Hasura instances running vulnerable versions (<a href="https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg">GHSA-g7mj-g7f4-hgrg</a>)</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>ci: <code>mypy --strict</code> is now enforced on a codebase.</li>
 <li>ci: Finished migration to <code>pytest</code>.</li>
@@ -396,7 +401,7 @@
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
 <li>docs: Updated &quot;Contributing Guide&quot; page.</li>
@@ -412,7 +417,7 @@
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
 <li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -560,7 +565,7 @@
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
+<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
@@ -601,7 +606,7 @@
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
+<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
@@ -752,7 +757,7 @@
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
+<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
@@ -796,7 +801,7 @@
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
+<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -859,7 +864,7 @@
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
+<h3 id="other-11"><a class="header" href="#other-11">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
