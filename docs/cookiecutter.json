@@ -1,5 +1,5 @@
 {
-  "dipdup_version": "6.5.5",
+  "dipdup_version": "6",
   "template": "demo_dao",
   "project_name": "dipdup-indexer",
   "package": "dipdup_indexer",
