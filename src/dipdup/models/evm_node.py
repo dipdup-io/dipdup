@@ -109,6 +109,10 @@ class EvmNodeLogData:
             removed=log_json['removed'],
         )
 
+    @property
+    def level(self) -> int:
+        return int(self.block_number, 16)
+
 
 @dataclass
 class EvmNodeSyncingData:

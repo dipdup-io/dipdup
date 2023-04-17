@@ -1,5 +1,3 @@
-# from abc import ABC
-import logging
 from enum import Enum
 from typing import Any
 from typing import Generic
@@ -9,14 +7,10 @@ from typing import TypeVar
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
+from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.subscriptions import Subscription
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
-
-
-# FIXME
-logging.getLogger('pysignalr').setLevel(logging.DEBUG)
-logging.getLogger('websockets').setLevel(logging.DEBUG)
 
 
 # FIXME: Outdated values
@@ -60,7 +54,7 @@ class SubsquidEventData:
 
 @dataclass
 class SubsquidEvent(Generic[PayloadT]):
-    data: SubsquidEventData
+    data: SubsquidEventData | EvmNodeLogData
     payload: PayloadT
 
 

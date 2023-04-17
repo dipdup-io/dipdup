@@ -8,6 +8,7 @@ from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
+from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
@@ -32,7 +33,7 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
 def prepare_event_handler_args(
     package: DipDupPackage,
     handler_config: SubsquidEventsHandlerConfig,
-    matched_event: SubsquidEventData,
+    matched_event: SubsquidEventData | EvmNodeLogData,
 ) -> SubsquidEvent[Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
@@ -48,7 +49,7 @@ def prepare_event_handler_args(
 
     data = decode_event_data(
         data=matched_event.data,
-        topics=matched_event.topics,
+        topics=tuple(matched_event.topics),
         event_abi=event_abi,
     )
 
@@ -65,7 +66,7 @@ def prepare_event_handler_args(
 
 def match_event(
     handler_config: SubsquidEventsHandlerConfig,
-    event: SubsquidEventData,
+    event: SubsquidEventData | EvmNodeLogData,
     topics: dict[str, str],
 ) -> bool:
     """Match single contract event with pattern"""
@@ -75,7 +76,7 @@ def match_event(
 def match_events(
     package: DipDupPackage,
     handlers: Iterable[SubsquidEventsHandlerConfig],
-    events: Iterable[SubsquidEventData],
+    events: Iterable[SubsquidEventData | EvmNodeLogData],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()

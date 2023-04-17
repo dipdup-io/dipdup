@@ -167,12 +167,14 @@ class IndexDispatcher:
             levels_total = sum(index.get_sync_level() for index in self._indexes.values()) / 1000
             levels_per_interval = levels_indexed - last_levels_indexed
             indexing_speed = levels_per_interval / update_interval
-            if not indexing_speed:
-                continue
-            time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
-            percent = levels_indexed / levels_total * 100
-
-            summary = f'syncing {percent:.2f}% | {indexing_speed:.2f}K/s | {time_left}m left'
+            if self._every_index_is(IndexStatus.realtime):
+                summary = f'realtime | {indexing_speed:.2f}K/s'
+            elif indexing_speed:
+                time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
+                percent = levels_indexed / levels_total * 100
+                summary = f'syncing {percent:.2f}% | {indexing_speed:.2f}K/s | {time_left}m left'
+            else:
+                summary = 'idle | ...'
             print(summary)
 
             last_levels_indexed = levels_indexed
@@ -307,11 +309,11 @@ class IndexDispatcher:
         )
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)
-        for index in self._indexes.values():
-            if isinstance(index, SubsquidEventsIndex):
-                node_config = index._config.datasource.node
-                if node_config and node_config.name == datasource.name:
-                    index.push_realtime_message(head)
+        # for index in self._indexes.values():
+        #     if isinstance(index, SubsquidEventsIndex):
+        #         node_config = index._config.datasource.node
+        #         if node_config and node_config.name == datasource.name:
+        #             index.push_realtime_message(head)
 
     async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
         for index in self._indexes.values():
@@ -321,11 +323,12 @@ class IndexDispatcher:
                     index.push_realtime_message(logs)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
-        for index in self._indexes.values():
-            if isinstance(index, SubsquidEventsIndex):
-                node_config = index._config.datasource.node
-                if node_config and node_config.name == datasource.name:
-                    index.push_realtime_message(syncing)
+        raise NotImplementedError(syncing)
+        # for index in self._indexes.values():
+        #     if isinstance(index, SubsquidEventsIndex):
+        #         node_config = index._config.datasource.node
+        #         if node_config and node_config.name == datasource.name:
+        #             index.push_realtime_message(syncing)
 
     async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
@@ -659,7 +662,7 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._update_summary(60)))
+            tasks.add(create_task(index_dispatcher._update_summary(15)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

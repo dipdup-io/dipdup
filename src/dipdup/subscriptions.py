@@ -38,6 +38,11 @@ class SubscriptionManager:
         if subscription not in self._subscriptions:
             raise FrameworkException(f'Subscription does not exist: {subscription}')
 
+        if subscription is None:
+            for sub in self._subscriptions:
+                self._subscriptions[sub] = level
+            return
+
         if self._subscriptions[subscription]:
             # NOTE: Updating sync level with merge_subscriptions=True will cause resync
             if self._merge_subscriptions:
