@@ -123,7 +123,7 @@ class ChoiceQuestion(Question):
 class JinjaAnswers(dict[str, Any]):
     def __init__(self, *args: str, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self['dipdup_version'] = __version__
+        self['dipdup_version'] = __version__.split('.')[0]
 
     def __getattr__(self, item: str) -> Any:
         return self[item]
@@ -286,8 +286,8 @@ class BaseProject(Project):
             ),
             default=0,
             choices=(
-                'hasura/graphql-engine:v2.22.1',
-                'hasura/graphql-engine:v2.22.1',
+                'hasura/graphql-engine:v2.23.0',
+                'hasura/graphql-engine:v2.23.0',
             ),
             comments=(
                 'stable',
