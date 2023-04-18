@@ -25,6 +25,7 @@ from typing import Any
 from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 
+from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
@@ -105,6 +106,8 @@ class DipDupYAMLConfig(dict[str, Any]):
 
             config.update(yaml.load(path_yaml))
 
+        config.validate_version()
+
         # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
         # FIXME: See https://github.com/pydantic/pydantic/issues/4286
         fix_dataclass_field_aliases(config)
@@ -121,3 +124,9 @@ class DipDupYAMLConfig(dict[str, Any]):
         buffer = StringIO()
         yaml.dump(config_yaml, buffer)
         return buffer.getvalue()
+
+    def validate_version(self) -> None:
+        if self['spec_version'] != __spec_version__:
+            raise ConfigurationError(
+                f"Unknown spec version {self['spec_version']}; see https://docs.dipdup.io/config/spec_version"
+            )
