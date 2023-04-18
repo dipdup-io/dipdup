@@ -23,6 +23,8 @@ from dipdup import spec_version_mapping
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
+import parsimonious.expressions
+
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
