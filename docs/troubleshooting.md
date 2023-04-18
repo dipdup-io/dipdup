@@ -64,7 +64,7 @@ poetry run flake8
 poetry run mypy
 ```
 
-You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-io/dipdup/master/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
+You can find a more complex example in DipDup's [pyproject.toml](https://raw.githubusercontent.com/dipdup-io/dipdup/next/pyproject.toml) or use the cookiecutter template to create a new project with all recommended bells and whistles (see {{ #summary quickstart.md#from-template }}).
 
 ## Explore contract calls in Better Call Dev
 
