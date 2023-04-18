@@ -31,3 +31,24 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>
 Development is supported by [Tezos Foundation](https://tezos.foundation/).
+
+## Thanks
+
+### Sponsors
+
+Decentralized web requires decentralized funding. The following people and organizations help the project to be sustainable.
+
+- [@dansan566](https://github.com/dansan566)
+- [@royscheeren](https://github.com/royscheeren)
+
+Want your project to be listed here? We have nice perks for sponsors! Visit our [GitHub Sponsors page](https://github.com/sponsors/dipdup-io).
+
+### Contributors
+
+We are grateful to all the people who help us with the project.
+
+- [@mystdeim](https://github.com/mystdeim)
+- [@tezosmiami](https://github.com/tezosmiami)
+- ...and many others!
+
+This list has just been started and misses a lot of people. If we forgot to mention you, or you want to update your record, please, open an issue or pull request.
