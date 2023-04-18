@@ -1283,6 +1283,8 @@ class EventIndexConfig(IndexConfig):
         for handler_config in self.handlers:
             handler_config.initialize_callback_fn(package)
 
+            if isinstance(handler_config, EventHandlerConfig):
+                handler_config.initialize_event_type(package)
 
 ResolvedIndexConfigU = (
     OperationIndexConfig
