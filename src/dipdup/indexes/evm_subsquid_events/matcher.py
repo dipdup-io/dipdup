@@ -23,7 +23,7 @@ MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
 def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> Any:
     byte_data = b''.join([decode_hex(topic) for topic in topics[1:]]) + decode_hex(data)
-    return decode_abi(  # type: ignore[no-untyped-call]
+    return decode_abi(
         event_abi.inputs,
         byte_data,
     )
