@@ -67,7 +67,7 @@ templates:
       - callback: pool.mint
         contract: <pool>
         name: Mint
-      - callback: pool..burn
+      - callback: pool.burn
         contract: <pool>
         name: Burn
       - callback: pool.flash
@@ -90,4 +90,4 @@ indexes:
 
 advanced:
   early_realtime: True
-logging: quiet
+logging: verbose
