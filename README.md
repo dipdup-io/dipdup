@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/blob/master/LICENSE)
 <br>
 [![Latest stable release](https://img.shields.io/github/v/release/dipdup-io/dipdup?label=stable%20release&color=2c2c2c)](https://github.com/dipdup-io/dipdup/releases)
-[![Latest pre-release)](https://img.shields.io/github/v/release/dipdup-io/dipdup?include_prereleases&label=latest%20release&color=2c2c2c)](https://github.com/dipdup-io/dipdup/releases)
+[![Latest pre-release](https://img.shields.io/github/v/release/dipdup-io/dipdup?include_prereleases&label=latest%20release&color=2c2c2c)](https://github.com/dipdup-io/dipdup/releases)
 [![GitHub issues](https://img.shields.io/github/issues/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/pulls)
 
