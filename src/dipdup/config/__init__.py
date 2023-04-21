@@ -569,7 +569,7 @@ class AdvancedConfig:
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of config specification, currently always `1.2`
+    :param spec_version: Version of config specification, currently always `2.0`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config

@@ -3,17 +3,17 @@
 The DipDup specification version defines the format of the configuration file and available features.
 
 ```yaml
-spec_version: 1.2
+spec_version: 2.0
 ```
 
 This table shows which specific SDK releases support which DipDup file versions.
 
 | `spec_version` value | Supported DipDup versions |
-| :--- | :--- |
-| 0.1 | >=0.0.1, <= 0.4.3 |
-| 1.0 | >=1.0.0, <=1.1.2 |
-| 1.1 | >=2.0.0, <=2.0.9 |
-| 1.2 | >=3.0.0 |
+|:-------------------- |:------------------------- |
+| 1.0                  | >=1.0, <2.0               |
+| 1.1                  | >=2.0, <3.0               |
+| 1.2                  | >=3.0, <7.0               |
+| 2.0                  | >=7.0                     |
 
 If you're getting `MigrationRequiredError` after updating the framework, run the `dipdup migrate` command to perform project migration.
 

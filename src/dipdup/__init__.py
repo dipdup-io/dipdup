@@ -6,4 +6,4 @@ import importlib.metadata
 
 # NOTE: Load version from package
 __version__ = importlib.metadata.version('dipdup')
-__spec_version__ = '1.2'
+__spec_version__ = '2.0'
