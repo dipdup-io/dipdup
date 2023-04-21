@@ -1,8 +1,28 @@
 from tortoise import fields
+from typing import List, Union, Type, Optional, Any, Set
+import json
 
 from dipdup.models import Model
 
 ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
+
+
+class StrArrayField(fields.Field, list):
+    SQL_TYPE = "text"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_db_value(
+        self, value: List[str], instance: "Union[Type[Model], Model]"
+    ) -> Optional[str]:
+        return json.dumps(value)
+
+    def to_python_value(self, value: Any) -> Optional[Set[str]]:
+        if isinstance(value, str):
+            array = json.loads(value.replace("'", '"'))
+            return {str(x) for x in array}
+        return value
 
 
 class Factory(Model):
@@ -69,6 +89,8 @@ class Token(Model):
     total_value_locked_usd_untracked = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # derived price in ETH
     derived_eth = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    # pools token is in that are whitelisted for USD pricing
+    whitelist_pools = StrArrayField(default=[])
 
 
 class Pool(Model):
@@ -87,10 +109,11 @@ class Pool(Model):
     liquidity = fields.BigIntField(default=0)
     # current price tracker
     sqrt_price = fields.BigIntField(default=0)
+    # TODO: requires rpc calls
     # tracker for global fee growth
-    fee_growth_global_0x128 = fields.BigIntField(default=0)
+    # fee_growth_global_0x128 = fields.BigIntField(default=0)
     # tracker for global fee growth
-    fee_growth_global_1x128 = fields.BigIntField(default=0)
+    # fee_growth_global_1x128 = fields.BigIntField(default=0)
     # token0 per token1
     token0_price = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # token1 per token0
@@ -133,16 +156,14 @@ class Pool(Model):
 
 class Tick(Model):
     id = fields.TextField(pk=True)
-    # pool address
-    pool_address = fields.TextField(null=True)
     # tick index
     tick_idx = fields.BigIntField()
     # pointer to pool
     pool = fields.ForeignKeyField("models.Pool", related_name="ticks")
     # total liquidity pool has as tick lower or upper
-    liquidity_gross = fields.BigIntField()
+    liquidity_gross = fields.BigIntField(default=0)
     # how much liquidity changes when tick crossed
-    liquidity_net = fields.BigIntField()
+    liquidity_net = fields.BigIntField(default=0)
     # calculated price of token0 of tick within this pool - constant
     price0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # calculated price of token1 of tick within this pool - constant
@@ -170,8 +191,9 @@ class Tick(Model):
     # Fields used to help derived relationship
     liquidity_provider_count = fields.BigIntField()  # used to detect new exchanges
     # vars needed for fee computation
-    fee_growth_outside_0x128 = fields.BigIntField()
-    fee_growth_outside_1x128 = fields.BigIntField()
+    # TODO: require rpc calls
+    # fee_growth_outside_0x128 = fields.BigIntField()
+    # fee_growth_outside_1x128 = fields.BigIntField()
 
 
 class Position(Model):
@@ -202,8 +224,6 @@ class Position(Model):
     collected_fees_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # all time collected fees in token1
     collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
-    # tx in which the position was initialized
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="positions")
     # vars needed for fee computation
     fee_growth_inside_0_last_x128 = fields.BigIntField()
     fee_growth_inside_1_last_x128 = fields.BigIntField()
@@ -235,34 +255,15 @@ class PositionSnapshot(Model):
     collected_fees_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # all time collected fees in token1
     collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
-    # tx in which the snapshot was initialized
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="position_snapshots")
     # internal vars needed for fee computation
     fee_growth_inside_0_last_x128 = fields.BigIntField()
     fee_growth_inside_1_last_x128 = fields.BigIntField()
 
 
-class Transaction(Model):
-    id = fields.TextField(pk=True)
-    # block txn was included in
-    block_number = fields.BigIntField()
-    # timestamp txn was confirmed
-    timestamp = fields.BigIntField()
-    # gas used during txn execution
-    gas_used = fields.BigIntField()
-    gas_price = fields.BigIntField()
-    # derived values
-    mints = fields.ReverseRelation["Mint"]
-    burns = fields.ReverseRelation["Burn"]
-    swaps = fields.ReverseRelation["Swap"]
-    flashed = fields.ReverseRelation["Flash"]
-    collects = fields.ReverseRelation["Collect"]
-
-
 class Mint(Model):
     id = fields.TextField(pk=True)
     # which txn the mint was included in
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="mints")
+    transaction_hash = fields.TextField()
     # time of txn
     timestamp = fields.BigIntField()
     # pool position is within
@@ -275,8 +276,8 @@ class Mint(Model):
     owner = fields.CharField(max_length=42)
     # the address that minted the liquidity
     sender = fields.CharField(max_length=42, null=True)
-    # txn origin
-    origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
+    # TODO: txn origin
+    # origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
     # amount of liquidity minted
     amount = fields.BigIntField()
     # amount of token 0 minted
@@ -296,7 +297,7 @@ class Mint(Model):
 class Burn(Model):
     id = fields.TextField(pk=True)
     # txn burn was included in
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="burns")
+    transaction_hash = fields.TextField()
     # pool position is within
     pool = fields.ForeignKeyField("models.Pool", related_name="burns")
     # allow indexing by tokens
@@ -308,7 +309,7 @@ class Burn(Model):
     # owner of position where liquidity was burned
     owner = fields.CharField(max_length=42, null=True)
     # txn origin
-    origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
+    # origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
     # amount of liquidity burned
     amount = fields.BigIntField()
     # amount of token 0 burned
@@ -328,7 +329,7 @@ class Burn(Model):
 class Swap(Model):
     id = fields.TextField(pk=True)
     # pointer to transaction
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="swaps")
+    transaction_hash = fields.TextField()
     # timestamp of transaction
     timestamp = fields.BigIntField()
     # pool swap occured within
@@ -360,7 +361,7 @@ class Swap(Model):
 class Collect(Model):
     id = fields.TextField(pk=True)
     # pointer to txn
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="collects")
+    transaction_hash = fields.TextField()
     # timestamp of event
     timestamp = fields.BigIntField()
     # pool collect occured within
@@ -384,7 +385,7 @@ class Collect(Model):
 class Flash(Model):
     id = fields.TextField(pk=True)
     # pointer to txn
-    transaction = fields.ForeignKeyField("models.Transaction", related_name="flashed")
+    transaction_hash = fields.TextField()
     # timestamp of event
     timestamp = fields.BigIntField()
     # pool collect occured within

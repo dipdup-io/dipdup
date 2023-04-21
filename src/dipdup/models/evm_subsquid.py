@@ -24,16 +24,16 @@ class SubsquidMessageType(Enum):
 @dataclass
 class SubsquidEventData:
     address: str
-    # block_hash: str
+    block_hash: str
     # block_number: int
     data: str
-    # index: int
+    index: int
     # removed: bool
     topics: tuple[str, ...]
-    # TODO: Either hash or id required for merging logs into txs (for operation index)
-    # transaction_hash: str
-    # transaction_index: int
+    transaction_hash: str
+    transaction_index: int
     level: int
+    # TODO: timestamp
 
     @classmethod
     def from_json(
@@ -45,6 +45,10 @@ class SubsquidEventData:
             data=event_json['data'],
             topics=tuple(event_json['topics']),
             level=event_json['blockNumber'],
+            index=event_json['index'],
+            block_hash=event_json['blockHash'],
+            transaction_hash=event_json['transactionHash'],
+            transaction_index=event_json['transactionIndex']
         )
 
     @property
