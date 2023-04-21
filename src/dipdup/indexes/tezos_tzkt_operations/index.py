@@ -251,7 +251,7 @@ class TzktOperationsIndex(
                 )
             )
             if operation_subgroups:
-                self._logger.info('Processing operations of level %s', level)
+                self._logger.debug('Processing operations of level %s', level)
                 with ExitStack() as stack:
                     if Metrics.enabled:
                         stack.enter_context(Metrics.measure_level_sync_duration())

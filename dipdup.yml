@@ -79,7 +79,9 @@ indexes:
     template: uniswap_v3_factory
     values:
       datasource: mainnet_subsquid
-    first_level: 12369621
+    # first_level: 12369621
+    first_level: 17069621
+
   
   # pool_example:
   #   template: uniswap_pool
@@ -90,4 +92,4 @@ indexes:
 
 advanced:
   early_realtime: True
-logging: quiet
+logging: verbose

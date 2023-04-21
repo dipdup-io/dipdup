@@ -1,3 +1,5 @@
+import asyncio
+from collections import defaultdict
 from contextlib import ExitStack
 from typing import Any
 from typing import cast
@@ -30,26 +32,36 @@ class SubsquidEventsIndex(
             self.node_datasource = ctx.get_evm_node_datasource(config.datasource.node.name)
 
     async def _process_queue(self) -> None:
-        while self._queue:
+        logs_by_level = defaultdict(list)
+
+        waited = False
+
+        while self._queue or not waited:
+            if not self._queue:
+                waited = True
+                await asyncio.sleep(1)
+                continue
+
             logs = self._queue.popleft()
             message_level = int(logs.block_number, 16)
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
+            logs_by_level[message_level].append(logs)
+
+        for message_level, level_logs in logs_by_level.items():
             # NOTE: If it's not a next block - resync with Subsquid
             if message_level != self.state.level + 1:
-                self._logger.info('Not enough realtime messages, resyncing with Subsquid')
-                if self.node_datasource is None:
-                    raise FrameworkException('Processing queue but node datasource is not set')
+                self._logger.warning('Not enough realtime messages, resyncing to %s', message_level)
+                self._queue.clear()
                 self.datasource.set_sync_level(None, message_level)
-                self.node_datasource.set_sync_level(None, message_level)
                 return
 
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_events((logs,), message_level)
+                await self._process_level_events(tuple(level_logs), message_level)
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -59,17 +71,13 @@ class SubsquidEventsIndex(
             if self.node_datasource is not None:
                 sync_levels.add(self.node_datasource.get_sync_level(sub))
 
-        if not sync_levels:
-            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
-        # FIXME: idk
-        # if None in sync_levels:
-        #     raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
         if None in sync_levels:
             sync_levels.remove(None)
+        if not sync_levels:
+            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
 
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        self._logger.debug('Current sync levels: %s', sync_levels)
         return max(cast(set[int], sync_levels))
 
     async def _synchronize(self, sync_level: int) -> None:
@@ -78,16 +86,44 @@ class SubsquidEventsIndex(
         if index_level is None:
             return
 
-        first_level = index_level + 1
-        self._logger.info('Fetching contract events from level %s to %s', first_level, sync_level)
-        fetcher = self._create_fetcher(first_level, sync_level)
+        SUBSQUID_THRESHOLD = 32
 
-        async for level, events in fetcher.fetch_by_level():
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                    stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_events(events, sync_level)
+        levels_left = sync_level - index_level
+        first_level = index_level + 1
+
+        if levels_left <= 0:
+            return
+        elif levels_left >= SUBSQUID_THRESHOLD or not self.node_datasource:
+            sync_level = await self.datasource.get_head_level()
+            fetcher = self._create_fetcher(first_level, sync_level)
+
+            async for level, events in fetcher.fetch_by_level():
+                with ExitStack() as stack:
+                    if Metrics.enabled:
+                        Metrics.set_levels_to_sync(self._config.name, sync_level - level)
+                        stack.enter_context(Metrics.measure_level_sync_duration())
+                    await self._process_level_events(events, sync_level)
+
+        else:
+            self._logger.info('Not enough realtime messages; syncing with node RPC')
+            if self.node_datasource is None:
+                raise FrameworkException('Processing queue but node datasource is not set')
+
+            # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
+            self._logger.info('Resyncing with node: %s -> %s', index_level, sync_level)
+            for level in range(first_level, sync_level):
+                block = await self.node_datasource.get_block_by_level(level)
+                if block is None:
+                    raise FrameworkException(f'Block {level} not found')
+                level_logs = await self.node_datasource.get_logs(
+                    {
+                        'fromBlock': hex(level),
+                        'toBlock': hex(level),
+                        # 'address': list(fetcher._addresses),
+                    }
+                )
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
+                await self._process_level_events(parsed_level_logs, sync_level)
 
         await self._exit_sync_state(sync_level)
 

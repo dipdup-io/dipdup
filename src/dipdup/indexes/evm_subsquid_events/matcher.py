@@ -1,4 +1,3 @@
-import logging
 from collections import deque
 from copy import copy
 from typing import Any
@@ -15,9 +14,6 @@ from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
-
-_logger = logging.getLogger('dipdup.matcher')
-
 
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
@@ -36,7 +32,6 @@ def prepare_event_handler_args(
     matched_event: SubsquidEventData | EvmNodeLogData,
 ) -> SubsquidEvent[Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-    _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     typename = handler_config.contract.module_name
     event_abi = package.get_evm_events(typename)[handler_config.name]
@@ -83,7 +78,10 @@ def match_events(
     events = deque(events)
 
     for handler_config in handlers:
+        # FIXME: Terribly inefficient; should be cached
         topics = {k: v.topic0 for k, v in package.get_evm_events(handler_config.contract.module_name).items()}
+        if not topics:
+            continue
 
         # NOTE: Matched events are dropped after processing
         for event in copy(events):

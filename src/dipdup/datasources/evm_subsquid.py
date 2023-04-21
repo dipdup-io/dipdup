@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
 from typing import TypedDict
+from typing import cast
 
 import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
@@ -115,10 +116,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             yield tuple(logs)
 
     async def initialize(self) -> None:
-        response = await self.request('get', 'height')
-        level = response.get('height')
+        level = await self.get_head_level()
 
-        if level is None:
+        if not level:
             raise DatasourceError('Archive is not ready yet', self.name)
 
         self.set_sync_level(None, level)
+
+    async def get_head_level(self) -> int:
+        response = await self.request('get', 'height')
+        return cast(int, response.get('height', 0))

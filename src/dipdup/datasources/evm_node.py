@@ -106,15 +106,28 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     def call_on_disconnected(self, fn: EmptyCallback) -> None:
         self._on_disconnected_callbacks.add(fn)
 
+    async def get_block_by_hash(self, block_hash: str) -> dict[str, Any]:
+        return await self._jsonrpc_request('eth_getBlockByHash', [block_hash, True])  # type: ignore[no-any-return]
+
+    async def get_block_by_level(self, block_number: int) -> dict[str, Any]:
+        return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), True])  # type: ignore[no-any-return]
+
+    async def get_logs(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+        return await self._jsonrpc_request('eth_getLogs', [params])  # type: ignore[no-any-return]
+
+    async def get_head_level(self) -> int:
+        return int((await self._jsonrpc_request('eth_blockNumber', [])), 16)
+
     async def _subscribe(self, subscription: EvmNodeSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         response = await self._jsonrpc_request(
             'eth_subscribe',
             subscription.get_params(),
         )
-        self._subscription_ids[response['result']] = subscription
-        # FIXME
-        self._subscriptions.set_sync_level(subscription, 0)
+        self._subscription_ids[response] = subscription
+        # FIXME: How to do it better?
+        level = await self.get_head_level()
+        self._subscriptions.set_sync_level(subscription, level)
 
     async def _jsonrpc_request(
         self,
@@ -145,18 +158,22 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         data = message.data
 
         if 'id' in data:
+            if 'error' in data:
+                raise DatasourceError(f'JSON-RPC error: {data["error"]}', self.name)
+
             request_id = data['id']
             if request_id not in self._requests:
                 raise DatasourceError(f'Unknown request ID: {data["id"]}', self.name)
 
             event = self._requests[request_id][0]
-            self._requests[request_id] = (event, data)
+            self._requests[request_id] = (event, data['result'])
             event.set()
         elif 'method' in data:
             if data['method'] == 'eth_subscription':
                 subscription_id = data['params']['subscription']
                 subscription = self._subscription_ids[subscription_id]
                 await self._handle_subscription(subscription, data['params']['result'])
+
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)
         else:
