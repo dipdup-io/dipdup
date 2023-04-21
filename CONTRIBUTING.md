@@ -13,12 +13,12 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 ## GitHub
 
 - Branch names MUST follow `prefix/short-description` format. Prefixes currently in use: `feat` for features, `fix` for bugfixes, `docs` for documentation, `exp` for experiments, `aux` for everything else.
-- Commits in pull requests MUST be squashed when merging to `next`.
+- Commits in pull requests MUST be squashed when merging to `master`.
 - Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.
 
 ## Codestyle
 
-- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging code to `next` (CI will fail otherwise).
+- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging code to `master` (CI will fail otherwise).
 - Single quotes MUST be used for string literals.
 - Meaningful comments are highly RECOMMENDED to begin with `# NOTE:`, `# TODO:`, or `# FIXME:`.
 - f-string formatting is RECOMMENDED over other methods. Logging is an exception to this rule.

@@ -13,7 +13,7 @@ This page describes the internal tables used by DipDup. They are created automat
 | `dipdup_contract_metadata` | See {{ #summary advanced/metadata-interface.md}}                                                                                          |
 | `dipdup_token_metadata`    | See {{ #summary advanced/metadata-interface.md}}                                                                                          |
 
-See [`dipdup.models` module](https://github.com/dipdup-io/dipdup/blob/next/src/dipdup/models/__init__.py) for exact table definitions.
+See [`dipdup.models` module](https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/models.py) for exact table definitions.
 
 Here are some SQL snippets to help you get started:
 
