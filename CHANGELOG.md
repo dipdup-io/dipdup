@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Changed
 
 - tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- config: Removed deprecated `similar_to.address` filter
+- cli: --file allias changed from -f to -F, because everywhere else -f means --force
+- cli: init command flag --overwrite-types changed to --force since it will force more actions then just overwriting types
 
 ### Removed
 

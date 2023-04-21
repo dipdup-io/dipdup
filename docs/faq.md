@@ -5,10 +5,6 @@
 Multiple contracts can provide the same interface (like FA1.2 and FA2 standard tokens) but have a different storage structure. If you try to use the same typename for them, indexing will fail. However, you can modify typeclasses manually. Modify `types/<typename>/storage.py` file and comment out unique fields that are not important for your index:
 
 ```python
-# dipdup: ignore
-
-...
-
 class ContractStorage(BaseModel):
     class Config:
         extra = Extra.ignore
@@ -18,8 +14,7 @@ class ContractStorage(BaseModel):
     # unique_field_bar: str
 ```
 
-Note the `# dipdup: ignore` comment on the first line. It tells DipDup not to overwrite this file on `init --overwrite-types` command.
-
+Note that reinitialization with `init --force` will overwrite this file.
 Don't forget `Extra.ignore` Pydantic hint, otherwise, storage deserialization will fail.
 
 ## What is the correct way to process off-chain data?
