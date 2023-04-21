@@ -77,6 +77,7 @@ class ERC20Token:
         return ERC20Token(address, web3)
 
     def get_symbol(self) -> str:
+        # FIXME: https://github.com/ethereum/web3.py/issues/2658
         with suppress(Exception):
             return self.contract.functions.symbol().call()
 

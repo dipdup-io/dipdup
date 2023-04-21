@@ -30,7 +30,7 @@ contracts:
     typename: position_manager
   pool:
     kind: evm
-    address: 0x7668B2Ea8490955F68F5c33E77FE150066c94fb9
+    address: 0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248
     typename: pool
 
 templates:
@@ -81,13 +81,14 @@ indexes:
       datasource: mainnet_subsquid
     first_level: 12369621
   
-  # pool_example:
-  #   template: uniswap_pool
-  #   values:
-  #     datasource: mainnet_subsquid
-  #     pool: pool
-  #   first_level: 12369621
+  pool_example:
+    template: uniswap_pool
+    values:
+      datasource: mainnet_subsquid
+      pool: pool
+    first_level: 12369621
 
 advanced:
   early_realtime: True
+
 logging: verbose
