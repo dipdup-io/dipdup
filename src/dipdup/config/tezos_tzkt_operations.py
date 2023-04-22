@@ -141,8 +141,6 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
 
     def __post_init_post_parse__(self) -> None:
         SubgroupIndexMixin.__post_init_post_parse__(self)
-        if self.entrypoint and not self.destination:
-            raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:

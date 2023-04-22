@@ -49,6 +49,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
+from dipdup.models import SkipHistory
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -789,6 +790,15 @@ class DipDupConfig:
                 raise ConfigurationError(
                     f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
                 )
+
+        # NOTE: Bigmap indexes with `skip_history` require early realtime
+        from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+
+        for name, index_config in self.indexes.items():
+            if isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never:
+                _logger.warning('`%s` index is configured to skip history; enabling early realtime', name)
+                self.advanced.early_realtime = True
+                break
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)

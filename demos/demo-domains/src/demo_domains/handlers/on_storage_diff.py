@@ -15,10 +15,10 @@ async def on_storage_diff(ctx: HandlerContext, storage: NameRegistryStorage) -> 
             )
             return
 
-        if item.level == '1':
+        if item.level == "1":
             await models.TLD.update_or_create(id=record_name, defaults={'owner': item.owner})
         else:
-            if item.level == '2':
+            if item.level == "2":
                 await models.Domain.update_or_create(
                     id=record_name,
                     defaults={
