@@ -594,7 +594,7 @@ class Index(TortoiseModel):
     type = EnumField(IndexType)
     status = EnumField(IndexStatus, default=IndexStatus.new)
 
-    config_hash = fields.TextField()
+    config_hash = fields.TextField(null=True)
     template = fields.TextField(null=True)
     template_values: Dict[str, Any] = fields.JSONField(null=True)
 

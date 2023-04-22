@@ -1,3 +1,4 @@
+import asyncio
 import zipfile
 from io import BytesIO
 from typing import Any
@@ -67,9 +68,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
 
-    # NOTE: Realtime subscriptions are covered by EvmNodeDatasource
     async def run(self) -> None:
-        pass
+        # NOTE: Realtime subscriptions are covered by EvmNodeDatasource
+        if self._config.node:
+            return
+        while True:
+            await asyncio.sleep(1)
+            await self.initialize()
 
     async def subscribe(self) -> None:
         pass
@@ -103,8 +108,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             )
 
             current_level = response['nextBlock']
-            sync_level = response['archiveHeight']
-            self.set_sync_level(None, sync_level)
+            # sync_level = response['archiveHeight']
+            # self.set_sync_level(ArchiveSubscription(), sync_level)
 
             logs: list[SubsquidEventData] = []
             for level in response['data']:

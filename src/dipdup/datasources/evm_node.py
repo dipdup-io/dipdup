@@ -53,9 +53,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         await client.run()
 
     async def subscribe(self) -> None:
-        if self._requests:
-            return
-
         missing_subscriptions = self._subscriptions.missing_subscriptions
         if not missing_subscriptions:
             return

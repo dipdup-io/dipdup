@@ -1,14 +1,12 @@
 from enum import Enum
 from typing import Any
 from typing import Generic
-from typing import Literal
 from typing import TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.subscriptions import Subscription
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 
@@ -60,8 +58,3 @@ class SubsquidEvent(Generic[PayloadT]):
 
 class SubsquidOperation:
     ...
-
-
-@dataclass(frozen=True)
-class ArchiveSubscription(Subscription):
-    type: Literal['archive'] = 'archive'
