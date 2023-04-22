@@ -13,6 +13,7 @@ class ModelsRepo:
         self._factories: OrderedDict[str, models.Factory] = OrderedDict()
         self._pools: OrderedDict[str, models.Pool] = OrderedDict()
         self._tokens: OrderedDict[str, models.Token] = OrderedDict()
+        self._positions: OrderedDict[str, models.Position] = OrderedDict()
         self._eth_usd: Optional[Decimal] = None
 
     async def get_factory(self, factory_address: str) -> models.Factory:
@@ -42,6 +43,19 @@ class ModelsRepo:
         for token in tokens:
             self._tokens[token.id] = token
             await token.save()
+
+    async def get_position(self, token_id: str) -> Optional[models.Position]:
+        if token_id not in self._positions:
+            position = await models.Position.get_or_none(id=token_id)
+            if position is not None:
+                self._positions[token_id] = position
+            else:
+                return None
+        return self._positions[token_id]
+
+    async def update_position(self, position: models.Position) -> None:
+        self._positions[position.id] = position
+        await position.save()
 
     async def get_eth_usd_rate(self) -> Decimal:
         if self._eth_usd is None:

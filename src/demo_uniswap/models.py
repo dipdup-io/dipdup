@@ -18,10 +18,10 @@ class StrArrayField(fields.Field, list):
     ) -> Optional[str]:
         return json.dumps(value)
 
-    def to_python_value(self, value: Any) -> Optional[Set[str]]:
+    def to_python_value(self, value: Any) -> Optional[List[str]]:
         if isinstance(value, str):
             array = json.loads(value.replace("'", '"'))
-            return {str(x) for x in array}
+            return [str(x) for x in array]
         return value
 
 
@@ -199,7 +199,7 @@ class Tick(Model):
 class Position(Model):
     id = fields.TextField(pk=True)
     # owner of the NFT
-    owner = fields.CharField(max_length=42)
+    owner = fields.CharField(max_length=42, default=ADDRESS_ZERO)
     # pool position is within
     pool = fields.ForeignKeyField("models.Pool", related_name="positions")
     # allow indexing by tokens
@@ -207,11 +207,11 @@ class Position(Model):
     # allow indexing by tokens
     token1 = fields.ForeignKeyField("models.Token", related_name="positions_token1")
     # lower tick of the position
-    tick_lower = fields.ForeignKeyField("models.Tick", related_name="positions_tick_lower")
+    tick_lower = fields.ForeignKeyField("models.Tick", related_name="positions_tick_lower", null=True)
     # upper tick of the position
-    tick_upper = fields.ForeignKeyField("models.Tick", related_name="positions_tick_upper")
+    tick_upper = fields.ForeignKeyField("models.Tick", related_name="positions_tick_upper", null=True)
     # total position liquidity
-    liquidity = fields.BigIntField()
+    liquidity = fields.BigIntField(default=0)
     # amount of token 0 ever deposited to position
     deposited_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 ever deposited to position
@@ -225,8 +225,8 @@ class Position(Model):
     # all time collected fees in token1
     collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # vars needed for fee computation
-    fee_growth_inside_0_last_x128 = fields.BigIntField()
-    fee_growth_inside_1_last_x128 = fields.BigIntField()
+    # fee_growth_inside_0_last_x128 = fields.BigIntField(default=0)
+    # fee_growth_inside_1_last_x128 = fields.BigIntField(default=0)
 
 
 class PositionSnapshot(Model):
@@ -242,7 +242,7 @@ class PositionSnapshot(Model):
     # timestamp of block in which the snap was created
     timestamp = fields.BigIntField()
     # total position liquidity
-    liquidity = fields.BigIntField()
+    liquidity = fields.BigIntField(default=0)
     # amount of token 0 ever deposited to position
     deposited_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 ever deposited to position
@@ -256,8 +256,8 @@ class PositionSnapshot(Model):
     # all time collected fees in token1
     collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # internal vars needed for fee computation
-    fee_growth_inside_0_last_x128 = fields.BigIntField()
-    fee_growth_inside_1_last_x128 = fields.BigIntField()
+    # fee_growth_inside_0_last_x128 = fields.BigIntField()
+    # fee_growth_inside_1_last_x128 = fields.BigIntField()
 
 
 class Mint(Model):

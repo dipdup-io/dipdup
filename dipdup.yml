@@ -81,12 +81,12 @@ indexes:
       datasource: mainnet_subsquid
     first_level: 12369621
   
-  pool_example:
-    template: uniswap_pool
-    values:
-      datasource: mainnet_subsquid
-      pool: pool
-    first_level: 12369621
+#  pool_example:
+#    template: uniswap_pool
+#    values:
+#      datasource: mainnet_subsquid
+#      pool: pool
+#    first_level: 12369621
 
 advanced:
   early_realtime: True

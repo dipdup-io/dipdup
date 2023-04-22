@@ -1,12 +1,11 @@
 import json
-from _decimal import Decimal
+from decimal import Decimal
 from contextlib import suppress
 from os.path import dirname, join
 from web3 import Web3
 from web3.utils.address import to_checksum_address, ChecksumAddress
 from web3.exceptions import ContractLogicError
 from typing import Union, List, Optional
-from decimal import Decimal
 
 from demo_uniswap import models as models
 from demo_uniswap.utils.repo import models_repo
