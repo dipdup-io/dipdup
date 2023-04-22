@@ -16,7 +16,7 @@ from dipdup.models import ModelUpdateAction
 
 
 async def test_model_updates() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -128,7 +128,7 @@ async def test_model_updates() -> None:
 
 
 async def test_cleanup_and_filtering() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -159,7 +159,7 @@ async def test_cleanup_and_filtering() -> None:
 
 
 async def test_optionals() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_domains')
+    config = DipDupConfig(spec_version='2.0', package='demo_domains')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -199,7 +199,7 @@ async def test_optionals() -> None:
 
 
 async def test_bulk_create_update() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_domains')
+    config = DipDupConfig(spec_version='2.0', package='demo_domains')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -285,7 +285,7 @@ async def test_bulk_create_update() -> None:
 
 
 async def test_update_prefetch() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_domains')
+    config = DipDupConfig(spec_version='2.0', package='demo_domains')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
@@ -335,7 +335,7 @@ async def test_update_prefetch() -> None:
 
 
 async def test_update_arithmetics() -> None:
-    config = DipDupConfig(spec_version='1.2', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
 
     async with AsyncExitStack() as stack:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)

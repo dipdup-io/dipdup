@@ -15,11 +15,8 @@ from typing import cast
 
 import asyncclick as click
 
-from dipdup import __spec_version__
 from dipdup import __version__
 from dipdup import env
-from dipdup import spec_reindex_mapping
-from dipdup import spec_version_mapping
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
@@ -153,7 +150,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
-    from dipdup.exceptions import MigrationRequiredError
     from dipdup.package import DipDupPackage
     from dipdup.sentry import init_sentry
 
@@ -176,13 +172,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
-
-    # NOTE: Ensure that `spec_version` is valid and supported
-    if _config.spec_version not in spec_version_mapping:
-        raise ConfigurationError(f'Unknown `spec_version`, correct ones: {", ".join(spec_version_mapping)}')
-    if _config.spec_version != __spec_version__:
-        reindex = spec_reindex_mapping[__spec_version__]
-        raise MigrationRequiredError(_config.spec_version, __spec_version__, reindex)
 
     @dataclass
     class CLIContext:

@@ -5,6 +5,7 @@ from typing import Generic
 from typing import TypeVar
 
 from dipdup.config import DatasourceConfig
+from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
@@ -22,6 +23,8 @@ IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasource
 
 
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
+    _default_http_config = HttpConfig()
+
     def __init__(self, config: DatasourceConfigT) -> None:
         self._config = config
         http_config = ResolvedHttpConfig.create(self._default_http_config, config.http)
