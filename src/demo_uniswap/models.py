@@ -53,12 +53,6 @@ class Factory(Model):
     owner = fields.TextField(default=ADDRESS_ZERO)
 
 
-class Bundle(Model):
-    id = fields.TextField(pk=True)
-    # price of ETH in usd
-    eth_price_usd = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
-
-
 class Token(Model):
     id = fields.TextField(pk=True)
     # token symbol
