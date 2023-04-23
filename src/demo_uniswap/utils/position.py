@@ -68,7 +68,6 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
 
 
 async def save_position_snapshot(position: models.Position, level: int):
-    print(f"Saving snapshot {position.id}#{level}")
     snapshot, exists = await models.PositionSnapshot.get_or_create(
         id=f'{position.id}#{level}',
         defaults=dict(

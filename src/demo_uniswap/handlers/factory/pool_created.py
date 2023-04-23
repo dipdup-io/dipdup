@@ -4,7 +4,7 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.config.evm import EvmContractConfig
-from demo_uniswap.utils.token import ERC20Token, WHITELIST_TOKENS, to_checksum_address
+from demo_uniswap.utils.token import ERC20Token, WHITELIST_TOKENS
 from demo_uniswap.utils.repo import models_repo
 from typing import cast, Set
 
@@ -60,4 +60,20 @@ async def pool_created(
         token1_id=event.payload.token1,
     )
     await models_repo.update_pool(pool)
-    print(f'New pool {pool.id} created, tokens {token0.id}, {token1.id}')
+
+    name = f'{token0.symbol.lower()}_{token1.symbol.lower()}#{pool.id[-6:]}'
+    await ctx.add_contract(
+        name=name,
+        address=pool.id,
+        typename='pool',
+        kind='evm',
+    )
+    await ctx.add_index(
+        name=f'pool#{name}',
+        template='uniswap_v3_pool',
+        values=dict(
+            datasource=ctx.datasource.name,
+            pool=name
+        ),
+        first_level=event.data.level - 1,  # FIXME: ?
+    )

@@ -4,6 +4,7 @@ from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
+from dipdup.exceptions import ConfigurationError
 
 EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
@@ -14,12 +15,12 @@ class EvmContractConfig(ContractConfig):
     """Contract config
 
     :param address: Contract address
-    :param code_hash: Contract code hash or address to fetch it from
     :param typename: User-defined alias for the contract script
     """
 
     kind: Literal['evm']
-    address: str
+    address: str | None = None
+    typename: str | None = None
 
     @validator('address', allow_reuse=True)
     def _valid_address(cls, v: str | None) -> str | None:
@@ -27,7 +28,14 @@ class EvmContractConfig(ContractConfig):
         if not v or '$' in v:
             return v
 
+        # TODO: use eth utils to validate address
+
         if not v.startswith(EVM_ADDRESS_PREFIXES) or len(v) != EVM_ADDRESS_LENGTH:
             raise ValueError(f'`{v}` is not a valid Ethereum address')
 
         return v
+
+    def get_address(self) -> str:
+        if self.address is None:
+            raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
+        return self.address

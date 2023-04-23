@@ -26,10 +26,8 @@ async def increase_liquidity(
         ctx.logger.debug('Blacklisted pool %s', position.pool)
         return
 
-    print(f'Increase liquidity for pool {position.pool_id}, tokens {position.token0_id}, {position.token1_id}')
-
-    token0 = await models_repo.get_token(position.token0_id)  # FIXME
-    token1 = await models_repo.get_token(position.token1_id)  # FIXME
+    token0 = await models_repo.get_token(position.token0_id)  # FIXME: typing
+    token1 = await models_repo.get_token(position.token1_id)  # FIXME: typing
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)

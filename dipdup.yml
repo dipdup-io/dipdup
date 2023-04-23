@@ -54,7 +54,7 @@ templates:
         contract: position_manager
         name: Transfer
 
-  uniswap_pool:
+  uniswap_v3_pool:
     kind: evm.subsquid.events
     datasource: <datasource>
     handlers:
@@ -82,7 +82,7 @@ indexes:
     first_level: 12369621
   
 #  pool_example:
-#    template: uniswap_pool
+#    template: uniswap_v3_pool
 #    values:
 #      datasource: mainnet_subsquid
 #      pool: pool
