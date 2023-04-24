@@ -41,8 +41,6 @@ You will get slightly different callback argument types depending on whether pat
 | `originated_contract.code_hash` | Originations of all contracts having the same code.                                                                                    |     ✅     |   ✅   |
 | `source.address`                | Special cases only. This filter is very slow and doesn't support strict typing. Usually, `originated_contract.code_hash` suits better. |     ⚠     |   ❌   |
 | `source.code_hash`              | Currently not supported.                                                                                                               |     ❌     |   ❌   |
-| `similar_to.address`            | Removed in 7.0                                                       |     ❌    |   ❌  |
-| `similar_to.code_hash`          | Removed in 7.0                                                       |     ❌    |   ❌  |
 
 ## Matching transactions
 

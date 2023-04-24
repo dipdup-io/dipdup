@@ -203,7 +203,7 @@ async def run(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option('--force', '-f', is_flag=True, help='Regenerate existing types.')
+@click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @_cli_wrapper
