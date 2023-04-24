@@ -288,7 +288,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 
 
 @config.command(name='env')
-@click.option('--file', '-F', type=str, default=None, help='Output to file instead of stdout.')
+@click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @_cli_wrapper
 async def config_env(ctx: click.Context, file: str | None) -> None:

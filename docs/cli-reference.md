@@ -43,7 +43,7 @@
 <p class="rubric">Options</p>
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-config-env-f">
-<span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-F</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
+<span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-o</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
 <dd><p>Output to file instead of stdout.</p>
 </dd></dl>
 
