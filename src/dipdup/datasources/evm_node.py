@@ -146,7 +146,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         await client.send(message)
 
         await event.wait()
-        return self._requests[request_id][1]
+        data = self._requests[request_id][1]
+        del self._requests[request_id]
+        return data
 
     async def _on_message(self, message: Message) -> None:
         if not isinstance(message, WebsocketMessage):
