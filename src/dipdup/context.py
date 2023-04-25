@@ -26,6 +26,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -246,6 +247,7 @@ class DipDupContext:
         address: str | None = None,
         typename: str | None = None,
         code_hash: str | int | None = None,
+        kind: str | None = 'tezos',  # FIXME: backward compatibility or maybe we do not need it here?
     ) -> None:
         """Adds contract to the inventory.
 
@@ -253,8 +255,9 @@ class DipDupContext:
         :param address: Contract address
         :param typename: Alias for the contract script
         :param code_hash: Contract code hash
+        :param kind: Either 'tezos' or 'evm' allowed
         """
-        self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
+        self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
 
         if name in self.config.contracts:
@@ -270,12 +273,22 @@ class DipDupContext:
                 raise ContractAlreadyExistsError(code_hashes[code_hash])
             code_hashes[code_hash] = name
 
-        contract_config = TezosContractConfig(
-            kind='tezos',
-            address=address,
-            code_hash=code_hash,
-            typename=typename,
-        )
+        if kind == 'tezos':
+            contract_config = TezosContractConfig(
+                kind=kind,
+                address=address,
+                code_hash=code_hash,
+                typename=typename,
+            )
+        elif kind == 'evm':
+            contract_config = EvmContractConfig(
+                kind=kind,
+                address=address,
+                typename=typename,
+            )
+        else:
+            raise NotImplementedError(kind)
+
         contract_config._name = name
         self.config.contracts[name] = contract_config
 
@@ -283,8 +296,9 @@ class DipDupContext:
             await Contract(
                 name=contract_config.name,
                 address=contract_config.address,
-                code_hash=contract_config.code_hash,
                 typename=contract_config.typename,
+                code_hash=contract_config.code_hash if code_hash else None,
+                kind=kind,
             ).save()
 
     async def add_index(

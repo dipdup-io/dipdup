@@ -20,6 +20,7 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.evm import EvmContractConfig
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -51,6 +52,7 @@ from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
+from dipdup.models import ContractKind
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
@@ -202,12 +204,22 @@ class IndexDispatcher:
             if contract.name in self._ctx.config.contracts:
                 continue
 
-            contract_config = TezosContractConfig(
-                kind='tezos',
-                address=contract.address,
-                code_hash=contract.code_hash,
-                typename=contract.typename,
-            )
+            if contract.kind == ContractKind.TEZOS:
+                contract_config = TezosContractConfig(
+                    kind='tezos',
+                    address=contract.address,
+                    code_hash=contract.code_hash,
+                    typename=contract.typename,
+                )
+            elif contract.kind == ContractKind.EVM:
+                contract_config = EvmContractConfig(
+                    kind='evm',
+                    address=contract.address,
+                    typename=contract.typename,
+                )
+            else:
+                raise NotImplementedError(contract.kind)
+
             self._ctx.config.contracts[contract.name] = contract_config
 
         self._ctx.config.initialize()

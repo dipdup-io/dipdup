@@ -30,7 +30,7 @@ contracts:
     typename: position_manager
   pool:
     kind: evm
-    address: 0x7668B2Ea8490955F68F5c33E77FE150066c94fb9
+    address: 0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248
     typename: pool
 
 templates:
@@ -54,7 +54,7 @@ templates:
         contract: position_manager
         name: Transfer
 
-  uniswap_pool:
+  uniswap_v3_pool:
     kind: evm.subsquid.events
     datasource: <datasource>
     handlers:
@@ -67,7 +67,7 @@ templates:
       - callback: pool.mint
         contract: <pool>
         name: Mint
-      - callback: pool..burn
+      - callback: pool.burn
         contract: <pool>
         name: Burn
       - callback: pool.flash
@@ -83,12 +83,12 @@ indexes:
     first_level: 17069621
 
   
-  # pool_example:
-  #   template: uniswap_pool
-  #   values:
-  #     datasource: mainnet_subsquid
-  #     pool: pool
-  #   first_level: 12369621
+#  pool_example:
+#    template: uniswap_v3_pool
+#    values:
+#      datasource: mainnet_subsquid
+#      pool: pool
+#    first_level: 12369621
 
 advanced:
   early_realtime: True

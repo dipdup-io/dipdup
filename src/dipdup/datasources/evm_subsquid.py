@@ -48,6 +48,10 @@ _log_fields: FieldSelection = {
         'blockNumber': True,
         'data': True,
         'topics': True,
+        'blockHash': True,
+        'index': True,
+        'transactionHash': True,
+        'transactionIndex': True,
     },
 }
 

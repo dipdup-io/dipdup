@@ -607,11 +607,19 @@ class Index(TortoiseModel):
         table = 'dipdup_index'
 
 
+class ContractKind(Enum):
+    """Mapping for contract kind in"""
+
+    TEZOS = 'tezos'
+    EVM = 'evm'
+
+
 class Contract(TortoiseModel):
     name = fields.TextField(pk=True)
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
     typename = fields.TextField(null=True)
+    kind = EnumField(ContractKind)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
