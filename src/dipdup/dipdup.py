@@ -19,8 +19,8 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
-from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -46,13 +46,13 @@ from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
 from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 from dipdup.models import Contract
+from dipdup.models import ContractKind
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
-from dipdup.models import ContractKind
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData

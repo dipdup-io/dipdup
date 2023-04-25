@@ -1,6 +1,11 @@
-from tortoise import fields
-from typing import List, Union, Type, Optional, Any, Set
 import json
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Type
+from typing import Union
+
+from tortoise import fields
 
 from dipdup.models import Model
 
@@ -8,14 +13,12 @@ ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 
 
 class StrArrayField(fields.Field, list):
-    SQL_TYPE = "text"
+    SQL_TYPE = 'text'
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def to_db_value(
-        self, value: List[str], instance: "Union[Type[Model], Model]"
-    ) -> Optional[str]:
+    def to_db_value(self, value: List[str], instance: 'Union[Type[Model], Model]') -> Optional[str]:
         return json.dumps(value)
 
     def to_python_value(self, value: Any) -> Optional[List[str]]:
@@ -94,9 +97,9 @@ class Pool(Model):
     # block pool was created at
     created_at_block_number = fields.BigIntField()
     # token0
-    token0 = fields.ForeignKeyField("models.Token", related_name="pools_token0")
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='pools_token0')
     # token1
-    token1 = fields.ForeignKeyField("models.Token", related_name="pools_token1")
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='pools_token1')
     # fee amount
     fee_tier = fields.BigIntField(default=0)
     # in range liquidity
@@ -153,7 +156,7 @@ class Tick(Model):
     # tick index
     tick_idx = fields.BigIntField()
     # pointer to pool
-    pool = fields.ForeignKeyField("models.Pool", related_name="ticks")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='ticks')
     # total liquidity pool has as tick lower or upper
     liquidity_gross = fields.BigIntField(default=0)
     # how much liquidity changes when tick crossed
@@ -195,15 +198,19 @@ class Position(Model):
     # owner of the NFT
     owner = fields.CharField(max_length=42, default=ADDRESS_ZERO)
     # pool position is within
-    pool = fields.ForeignKeyField("models.Pool", related_name="positions")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='positions')
     # allow indexing by tokens
-    token0 = fields.ForeignKeyField("models.Token", related_name="positions_token0")
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='positions_token0')
     # allow indexing by tokens
-    token1 = fields.ForeignKeyField("models.Token", related_name="positions_token1")
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='positions_token1')
     # lower tick of the position
-    tick_lower = fields.ForeignKeyField("models.Tick", related_name="positions_tick_lower", null=True)
+    tick_lower: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
+        'models.Tick', related_name='positions_tick_lower', null=True
+    )
     # upper tick of the position
-    tick_upper = fields.ForeignKeyField("models.Tick", related_name="positions_tick_upper", null=True)
+    tick_upper: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
+        'models.Tick', related_name='positions_tick_upper', null=True
+    )
     # total position liquidity
     liquidity = fields.BigIntField(default=0)
     # amount of token 0 ever deposited to position
@@ -222,15 +229,19 @@ class Position(Model):
     # fee_growth_inside_0_last_x128 = fields.BigIntField(default=0)
     # fee_growth_inside_1_last_x128 = fields.BigIntField(default=0)
 
+    token0_id: int
+    token1_id: int
+    pool_id: int
+
 
 class PositionSnapshot(Model):
     id = fields.TextField(pk=True)
     # owner of the NFT
     owner = fields.CharField(max_length=42)
     # pool the position is within
-    pool = fields.ForeignKeyField("models.Pool", related_name="position_snapshots")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='position_snapshots')
     # position of which the snap was taken of
-    position = fields.ForeignKeyField("models.Position", related_name="snapshots")
+    position: fields.ForeignKeyRelation[Position] = fields.ForeignKeyField('models.Position', related_name='snapshots')
     # block in which the snap was created
     block_number = fields.BigIntField()
     # timestamp of block in which the snap was created
@@ -261,11 +272,11 @@ class Mint(Model):
     # time of txn
     timestamp = fields.BigIntField()
     # pool position is within
-    pool = fields.ForeignKeyField("models.Pool", related_name="mints")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='mints')
     # allow indexing by tokens
-    token0 = fields.ForeignKeyField("models.Token", related_name="mints_token0")
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='mints_token0')
     # allow indexing by tokens
-    token1 = fields.ForeignKeyField("models.Token", related_name="mints_token1")
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='mints_token1')
     # owner of position where liquidity minted to
     owner = fields.CharField(max_length=42)
     # the address that minted the liquidity
@@ -293,11 +304,11 @@ class Burn(Model):
     # txn burn was included in
     transaction_hash = fields.TextField()
     # pool position is within
-    pool = fields.ForeignKeyField("models.Pool", related_name="burns")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='burns')
     # allow indexing by tokens
-    token0 = fields.ForeignKeyField("models.Token", related_name="burns_token0")
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='burns_token0')
     # allow indexing by tokens
-    token1 = fields.ForeignKeyField("models.Token", related_name="burns_token1")
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='burns_token1')
     # need this to pull recent txns for specific token or pool
     timestamp = fields.BigIntField()
     # owner of position where liquidity was burned
@@ -327,11 +338,11 @@ class Swap(Model):
     # timestamp of transaction
     timestamp = fields.BigIntField()
     # pool swap occured within
-    pool = fields.ForeignKeyField("models.Pool", related_name="swaps")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='swaps')
     # allow indexing by tokens
-    token0 = fields.ForeignKeyField("models.Token", related_name="swaps_token0")
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='swaps_token0')
     # allow indexing by tokens
-    token1 = fields.ForeignKeyField("models.Token", related_name="swaps_token1")
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='swaps_token1')
     # sender of the swap
     sender = fields.CharField(max_length=42)
     # recipient of the swap
@@ -359,7 +370,7 @@ class Collect(Model):
     # timestamp of event
     timestamp = fields.BigIntField()
     # pool collect occured within
-    pool = fields.ForeignKeyField("models.Pool", related_name="collects")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='collects')
     # owner of position collect was performed on
     owner = fields.CharField(max_length=42, null=True)
     # amount of token0 collected
@@ -383,7 +394,7 @@ class Flash(Model):
     # timestamp of event
     timestamp = fields.BigIntField()
     # pool collect occured within
-    pool = fields.ForeignKeyField("models.Pool", related_name="flashed")
+    pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='flashed')
     # sender of the flash
     sender = fields.CharField(max_length=42)
     # recipient of the flash
@@ -400,4 +411,3 @@ class Flash(Model):
     amount1_paid = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # index within the txn
     log_index = fields.BigIntField()
-

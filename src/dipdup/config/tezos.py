@@ -19,7 +19,7 @@ TEZOS_ADDRESS_LENGTH = 36
 
 
 @dataclass
-class   TezosContractConfig(ContractConfig):
+class TezosContractConfig(ContractConfig):
     """Contract config
 
     :param address: Contract address

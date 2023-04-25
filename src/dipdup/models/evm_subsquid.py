@@ -46,7 +46,7 @@ class SubsquidEventData:
             index=event_json['index'],
             block_hash=event_json['blockHash'],
             transaction_hash=event_json['transactionHash'],
-            transaction_index=event_json['transactionIndex']
+            transaction_index=event_json['transactionIndex'],
         )
 
     @property

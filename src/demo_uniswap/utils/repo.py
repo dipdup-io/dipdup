@@ -1,9 +1,11 @@
 from collections import OrderedDict
 from decimal import Decimal
-from typing import Optional, cast
+from typing import Optional
+from typing import cast
+
 import demo_uniswap.models as models
-from dipdup.context import HandlerContext
 from dipdup.config.evm import EvmContractConfig
+from dipdup.context import HandlerContext
 
 USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 
@@ -62,7 +64,7 @@ class ModelsRepo:
             try:
                 usdc_pool = await self.get_pool(USDC_WETH_03_POOL)
                 self._eth_usd = usdc_pool.token0_price
-            except:
+            except Exception:
                 return Decimal()
         return self._eth_usd
 

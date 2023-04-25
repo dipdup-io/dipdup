@@ -1,23 +1,27 @@
 import json
-from decimal import Decimal
 from contextlib import suppress
-from os.path import dirname, join
+from decimal import Decimal
+from os.path import dirname
+from os.path import join
+from typing import List
+from typing import Optional
+from typing import Union
+
+from eth_typing import ChecksumAddress
+from eth_utils import to_checksum_address
 from web3 import Web3
-from web3.utils.address import to_checksum_address, ChecksumAddress
-from web3.exceptions import ContractLogicError
-from typing import Union, List, Optional
 
 from demo_uniswap import models as models
 from demo_uniswap.utils.repo import models_repo
 
 MINIMUM_ETH_LOCKED = Decimal('60')
 STABLE_COINS = {
-  '0x6b175474e89094c44da98b954eedeac495271d0f',
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  '0x0000000000085d4780b73119b644ae5ecd22b376',
-  '0x956f47f50a910163d8bf957cf5846d573e7f87ca',
-  '0x4dd28568d05f09b02220b09c2cb307bfd837cb95'
+    '0x6b175474e89094c44da98b954eedeac495271d0f',
+    '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+    '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    '0x0000000000085d4780b73119b644ae5ecd22b376',
+    '0x956f47f50a910163d8bf957cf5846d573e7f87ca',
+    '0x4dd28568d05f09b02220b09c2cb307bfd837cb95',
 }
 WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 WHITELIST_TOKENS = {
@@ -60,7 +64,7 @@ with open(join(package_dir, 'abi/erc20/ERC20SymbolBytes.json')) as f:
 def convert_token_amount(amount: int, decimals: int) -> Decimal:
     if decimals == 0:
         return Decimal(amount)
-    return Decimal(amount) / 10 ** decimals
+    return Decimal(amount) / 10**decimals
 
 
 class ERC20Token:
@@ -136,7 +140,7 @@ class StaticTokenDefinition:
             StaticTokenDefinition('0xeb9951021698b42e4399f9cbb6267aa35f82d59d', 'LIF', 'Lif', 18),
             StaticTokenDefinition('0xbdeb4b83251fb146687fa19d1c660f99411eefe3', 'SVD', 'savedroid', 18),
             StaticTokenDefinition('0xbb9bc244d798123fde783fcc1c72d3bb8c189413', 'TheDAO', 'TheDAO', 16),
-            StaticTokenDefinition('0x38c6a68304cdefb9bec48bbfaaba5c5b47818bb2', 'HPB', 'HPBCoin', 18)
+            StaticTokenDefinition('0x38c6a68304cdefb9bec48bbfaaba5c5b47818bb2', 'HPB', 'HPBCoin', 18),
         ]
         return static_definitions
 
@@ -158,7 +162,7 @@ async def token_derive_eth(token: models.Token) -> Decimal:
     if token.id in STABLE_COINS:
         return Decimal(1) / eth_usd
 
-    largest_liquidity_eth = 0
+    largest_liquidity_eth = Decimal()
     price_so_far = Decimal()
 
     for pool_address in token.whitelist_pools:
@@ -167,14 +171,14 @@ async def token_derive_eth(token: models.Token) -> Decimal:
             continue
 
         if token.id == pool.token0:
-            other_token = await models_repo.get_token(pool.token1)
+            other_token = await models_repo.get_token(pool.token1.id)
             eth_locked = pool.total_value_locked_token1 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked
                 price_so_far = pool.token1_price * other_token.derived_eth
 
         elif token.id == pool.token1:
-            other_token = await models_repo.get_token(pool.token0)
+            other_token = await models_repo.get_token(pool.token0.id)
             eth_locked = pool.total_value_locked_token0 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked

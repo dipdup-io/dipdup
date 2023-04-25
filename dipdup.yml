@@ -2,9 +2,10 @@ spec_version: 2.0
 package: demo_uniswap
 
 database:
-  kind: sqlite
-  path: demo-uniswap.sqlite3
-
+  # kind: sqlite
+  # path: demo-uniswap.sqlite3
+  kind: postgres
+  host: 172.240.0.3
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -79,8 +80,8 @@ indexes:
     template: uniswap_v3_factory
     values:
       datasource: mainnet_subsquid
-    # first_level: 12369621
-    first_level: 17069621
+    first_level: 12369621
+    # first_level: 17069621
 
   
 #  pool_example:

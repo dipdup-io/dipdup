@@ -1,14 +1,17 @@
 import json
-from os.path import dirname, join
-from web3 import Web3
-from web3.utils.address import to_checksum_address
+from os.path import dirname
+from os.path import join
+from typing import cast
+
+from eth_utils import to_checksum_address
 from eth_utils import to_normalized_address
-from dipdup.context import HandlerContext
+from web3 import Web3
+
+import demo_uniswap.models as models
+from demo_uniswap.utils.repo import models_repo
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
-from typing import Optional, cast
-from demo_uniswap.utils.repo import models_repo
-import demo_uniswap.models as models
+from dipdup.context import HandlerContext
 
 package_dir = dirname(dirname(__file__))
 
@@ -19,7 +22,7 @@ with open(join(package_dir, 'abi/factory/abi.json')) as f:
     factory_abi = json.load(f)
 
 
-async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> Optional[models.Position]:
+async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:
     position = await models_repo.get_position(str(token_id))
     if not position:
         ds = cast(EvmNodeDatasourceConfig, ctx.config.get_datasource('mainnet_node'))
@@ -39,8 +42,9 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
             # feeGrowthInside1LastX128 uint256,
             # tokensOwed0 uint128,
             # tokensOwed1 uint128
-            _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = \
-                manager.functions.positions(token_id).call()
+            _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = manager.functions.positions(
+                token_id
+            ).call()
         except Exception as e:
             ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, token_id, str(e))
             return None
@@ -51,7 +55,9 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         try:
             pool_address = factory.functions.getPool(token0, token1, fee).call()
         except Exception as e:
-            ctx.logger.debug('Failed to eth_call %s with param %s: %s', factory_address, str(token0, token1, fee), str(e))
+            ctx.logger.debug(
+                'Failed to eth_call %s with param %s: %s', factory_address, str(token0, token1, fee), str(e)
+            )
             return None
         else:
             pool_address = to_normalized_address(pool_address)
@@ -61,8 +67,8 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
             pool_id=pool_address,
             token0_id=to_normalized_address(token0),
             token1_id=to_normalized_address(token1),
-            #tick_lower_id=f'{pool_address}#{tick_lower}',
-            #tick_upper_id=f'{pool_address}#{tick_upper}'
+            # tick_lower_id=f'{pool_address}#{tick_lower}',
+            # tick_upper_id=f'{pool_address}#{tick_upper}'
         )
     return position
 
@@ -70,13 +76,13 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
 async def save_position_snapshot(position: models.Position, level: int):
     snapshot, exists = await models.PositionSnapshot.get_or_create(
         id=f'{position.id}#{level}',
-        defaults=dict(
-            owner=position.owner,
-            pool_id=position.pool_id,
-            position_id=position.id,
-            block_number=level,
-            timestamp=0,  # TODO:
-        )
+        defaults={
+            'owner': position.owner,
+            'pool_id': position.pool_id,
+            'position_id': position.id,
+            'block_number': level,
+            'timestamp': 0,  # TODO:
+        },
     )  # TODO: less i/o
     snapshot.liquidity = position.liquidity
     snapshot.deposited_token0 = position.deposited_token0

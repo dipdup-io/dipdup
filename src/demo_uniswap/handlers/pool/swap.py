@@ -1,24 +1,22 @@
-from demo_uniswap import models as models
-from demo_uniswap.utils.repo import models_repo, USDC_WETH_03_POOL
-from demo_uniswap.utils.token import convert_token_amount, token_derive_eth, WHITELIST_TOKENS
-from demo_uniswap.types.pool.evm_events.swap import Swap
-from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import SubsquidEvent
 from decimal import Decimal
 
-POOL_BLACKLIST = {
-    '0x9663f2ca0454accad3e094448ea6f77443880454'
-}
-Q192 = Decimal(2 ** 192)
+from demo_uniswap import models as models
+from demo_uniswap.types.pool.evm_events.swap import Swap
+from demo_uniswap.utils.repo import USDC_WETH_03_POOL
+from demo_uniswap.utils.repo import models_repo
+from demo_uniswap.utils.token import WHITELIST_TOKENS
+from demo_uniswap.utils.token import convert_token_amount
+from demo_uniswap.utils.token import token_derive_eth
+from dipdup.context import HandlerContext
+from dipdup.models.evm_subsquid import SubsquidEvent
+
+POOL_BLACKLIST = {'0x9663f2ca0454accad3e094448ea6f77443880454'}
+Q192 = Decimal(2**192)
 
 
 def get_tracked_amount_usd(
-    token0: models.Token,
-    token1: models.Token,
-    amount0: Decimal,
-    amount1: Decimal,
-    eth_usd: Decimal
-):
+    token0: models.Token, token1: models.Token, amount0: Decimal, amount1: Decimal, eth_usd: Decimal
+) -> Decimal:
     price0_usd = token0.derived_eth * eth_usd
     price1_usd = token1.derived_eth * eth_usd
 
@@ -35,10 +33,12 @@ def get_tracked_amount_usd(
         return amount1 * price1_usd * Decimal('2')
 
     # neither token is on white list, tracked amount is 0
-    return 0
+    return Decimal()
 
 
-def sqrt_price_x96_to_token_prices(sqrt_price_x96: int, token0: models.Token, token1: models.Token) -> (Decimal, Decimal):
+def sqrt_price_x96_to_token_prices(
+    sqrt_price_x96: int, token0: models.Token, token1: models.Token
+) -> tuple[Decimal, Decimal]:
     num = Decimal(sqrt_price_x96 * sqrt_price_x96)
     price1 = (num / Q192) * (Decimal(10) ** token0.decimals) / (Decimal(10) ** token1.decimals)
     price0 = Decimal(1) / price1
@@ -51,8 +51,8 @@ async def swap(
 ) -> None:
     factory = await models_repo.get_ctx_factory(ctx)
     pool = await models_repo.get_pool(event.data.address)
-    token0 = await models_repo.get_token(pool.token0)
-    token1 = await models_repo.get_token(pool.token1)
+    token0 = await models_repo.get_token(pool.token0.id)
+    token1 = await models_repo.get_token(pool.token1.id)
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
@@ -62,7 +62,7 @@ async def swap(
     amount0_eth = amount0_abs * token0.derived_eth
     amount1_eth = amount1_abs * token1.derived_eth
 
-    eth_usd = models_repo.get_eth_usd_rate()
+    eth_usd = await models_repo.get_eth_usd_rate()
     amount0_usd = amount0_eth * eth_usd
     amount1_usd = amount1_eth * eth_usd
 
@@ -127,12 +127,13 @@ async def swap(
     if pool.id == USDC_WETH_03_POOL:
         models_repo.update_eth_usd_rate(price0)
 
-    token0.derived_eth = token_derive_eth(token0)
-    token1.derived_eth = token_derive_eth(token1)
+    token0.derived_eth = await token_derive_eth(token0)
+    token1.derived_eth = await token_derive_eth(token1)
 
     # Things affected by new USD rates
-    pool.total_value_locked_eth = pool.total_value_locked_token0 * token0.derived_eth \
-        + pool.total_value_locked_token1 * token1.derived_eth
+    pool.total_value_locked_eth = (
+        pool.total_value_locked_token0 * token0.derived_eth + pool.total_value_locked_token1 * token1.derived_eth
+    )
     pool.total_value_locked_usd = pool.total_value_locked_eth * eth_usd
 
     factory.total_value_locked_eth += pool.total_value_locked_eth
@@ -153,10 +154,10 @@ async def swap(
         amount_usd=amount_total_usd_tracked,
         tick=event.payload.tick,
         sqrt_price_x96=event.payload.sqrtPriceX96,
-        log_index=event.data.index
+        log_index=event.data.index,
     )
     await swap_tx.save()
 
-    models_repo.update_factory(factory)
-    models_repo.update_pool(pool)
-    models_repo.update_tokens(token0, token1)
+    await models_repo.update_factory(factory)
+    await models_repo.update_pool(pool)
+    await models_repo.update_tokens(token0, token1)

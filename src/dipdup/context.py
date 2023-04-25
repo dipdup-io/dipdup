@@ -13,6 +13,7 @@ from pprint import pformat
 from typing import Any
 from typing import Awaitable
 from typing import Iterator
+from typing import Literal
 from typing import TypeVar
 from typing import cast
 
@@ -20,6 +21,7 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
@@ -243,11 +245,11 @@ class DipDupContext:
 
     async def add_contract(
         self,
+        kind: Literal['tezos'] | Literal['evm'],
         name: str,
         address: str | None = None,
         typename: str | None = None,
         code_hash: str | int | None = None,
-        kind: str | None = 'tezos',  # FIXME: backward compatibility or maybe we do not need it here?
     ) -> None:
         """Adds contract to the inventory.
 
@@ -273,6 +275,7 @@ class DipDupContext:
                 raise ContractAlreadyExistsError(code_hashes[code_hash])
             code_hashes[code_hash] = name
 
+        contract_config: ContractConfigU
         if kind == 'tezos':
             contract_config = TezosContractConfig(
                 kind=kind,

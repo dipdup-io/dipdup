@@ -1,12 +1,14 @@
+from typing import cast
+
 from demo_uniswap import models as models
 from demo_uniswap.types.factory.evm_events.pool_created import PoolCreated
+from demo_uniswap.utils.repo import models_repo
+from demo_uniswap.utils.token import WHITELIST_TOKENS
+from demo_uniswap.utils.token import ERC20Token
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
-from dipdup.config.evm import EvmContractConfig
-from demo_uniswap.utils.token import ERC20Token, WHITELIST_TOKENS
-from demo_uniswap.utils.repo import models_repo
-from typing import cast, Set
 
 POOL_BLACKLIST = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
@@ -46,7 +48,9 @@ async def pool_created(
         token0 = await token_get_or_create(ctx, event.payload.token0, event.payload.pool)
         token1 = await token_get_or_create(ctx, event.payload.token1, event.payload.pool)
     except ValueError:
-        ctx.logger.debug('Failed to get tokens (%s, %s) for pool %s', event.payload.token0, event.payload.token1, event.payload.pool)
+        ctx.logger.debug(
+            'Failed to get tokens (%s, %s) for pool %s', event.payload.token0, event.payload.token1, event.payload.pool
+        )
         return  # skip this pool
     else:
         await models_repo.update_tokens(token0, token1)
@@ -71,9 +75,6 @@ async def pool_created(
     await ctx.add_index(
         name=f'pool#{name}',
         template='uniswap_v3_pool',
-        values=dict(
-            datasource=ctx.datasource.name,
-            pool=name
-        ),
+        values={'datasource': ctx.datasource.name, 'pool': name},
         first_level=event.data.level - 1,  # FIXME: ?
     )
