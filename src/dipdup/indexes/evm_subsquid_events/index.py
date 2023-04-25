@@ -20,12 +20,20 @@ from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
+LEVEL_TIMEOUT = 1
+LAST_MILE_LEVELS = 32
+
 
 class SubsquidEventsIndex(
     Index[SubsquidEventsIndexConfig, EvmNodeLogData, SubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
-    def __init__(self, ctx: DipDupContext, config: SubsquidEventsIndexConfig, datasource: SubsquidDatasource) -> None:
+    def __init__(
+        self,
+        ctx: DipDupContext,
+        config: SubsquidEventsIndexConfig,
+        datasource: SubsquidDatasource,
+    ) -> None:
         super().__init__(ctx, config, datasource)
         self.node_datasource: EvmNodeDatasource | None = None
         if config.datasource.node is not None:
@@ -34,21 +42,20 @@ class SubsquidEventsIndex(
     async def _process_queue(self) -> None:
         logs_by_level = defaultdict(list)
 
-        waited = False
+        while True:
+            while self._queue:
+                logs = self._queue.popleft()
+                message_level = int(logs.block_number, 16)
+                if message_level <= self.state.level:
+                    self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                    continue
 
-        while self._queue or not waited:
+                logs_by_level[message_level].append(logs)
+
+            # NOTE: Wait for more messages until grouping them by level
+            await asyncio.sleep(LEVEL_TIMEOUT)
             if not self._queue:
-                waited = True
-                await asyncio.sleep(1)
-                continue
-
-            logs = self._queue.popleft()
-            message_level = int(logs.block_number, 16)
-            if message_level <= self.state.level:
-                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
-                continue
-
-            logs_by_level[message_level].append(logs)
+                break
 
         for message_level, level_logs in logs_by_level.items():
             # NOTE: If it's not a next block - resync with Subsquid
@@ -86,14 +93,12 @@ class SubsquidEventsIndex(
         if index_level is None:
             return
 
-        SUBSQUID_THRESHOLD = 32
-
         levels_left = sync_level - index_level
         first_level = index_level + 1
 
         if levels_left <= 0:
             return
-        elif levels_left >= SUBSQUID_THRESHOLD or not self.node_datasource:
+        elif levels_left >= LAST_MILE_LEVELS or not self.node_datasource:
             sync_level = await self.datasource.get_head_level()
             fetcher = self._create_fetcher(first_level, sync_level)
 
@@ -117,9 +122,9 @@ class SubsquidEventsIndex(
                     raise FrameworkException(f'Block {level} not found')
                 level_logs = await self.node_datasource.get_logs(
                     {
+                        # TODO: Filter by addresses too
                         'fromBlock': hex(level),
                         'toBlock': hex(level),
-                        # 'address': list(fetcher._addresses),
                     }
                 )
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
@@ -128,7 +133,6 @@ class SubsquidEventsIndex(
         await self._exit_sync_state(sync_level)
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventLogFetcher:
-        """Get addresses to fetch events during initial synchronization"""
         addresses = set()
         topics = set()
 

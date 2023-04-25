@@ -10,6 +10,7 @@ from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
+from dipdup.exceptions import FrameworkException
 from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
@@ -30,6 +31,7 @@ RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitabl
 
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
+    # TODO: Make dynamic
     _default_http_config = HttpConfig()
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
@@ -122,7 +124,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             subscription.get_params(),
         )
         self._subscription_ids[response] = subscription
-        # FIXME: How to do it better?
+        # NOTE: This is possibly unnecessary and/or unreliable, but node doesn't return sync level on subscription.
         level = await self.get_head_level()
         self._subscriptions.set_sync_level(subscription, level)
 
@@ -151,8 +153,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         return data
 
     async def _on_message(self, message: Message) -> None:
+        # NOTE: pysignalr will eventually get a raw client
         if not isinstance(message, WebsocketMessage):
-            raise DatasourceError(f'Unknown message type: {type(message)}', self.name)
+            raise FrameworkException(f'Unknown message type: {type(message)}')
 
         data = message.data
 
