@@ -3,8 +3,8 @@ from os.path import dirname
 from os.path import join
 from typing import cast
 
-from eth_utils import to_checksum_address
-from eth_utils import to_normalized_address
+from eth_utils.address import to_checksum_address
+from eth_utils.address import to_normalized_address
 from web3 import Web3
 
 import demo_uniswap.models as models

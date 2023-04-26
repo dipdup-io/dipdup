@@ -8,7 +8,7 @@ from typing import Optional
 from typing import Union
 
 from eth_typing import ChecksumAddress
-from eth_utils import to_checksum_address
+from eth_utils.address import to_checksum_address
 from web3 import Web3
 
 from demo_uniswap import models as models
@@ -82,7 +82,7 @@ class ERC20Token:
     def get_symbol(self) -> str:
         # FIXME: https://github.com/ethereum/web3.py/issues/2658
         with suppress(Exception):
-            return self.contract.functions.symbol().call()
+            return str(self.contract.functions.symbol().call())
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
@@ -110,7 +110,7 @@ class ERC20Token:
 
     def get_decimals(self) -> int:
         with suppress(Exception):
-            return self.contract.functions.decimals().call()
+            return int(self.contract.functions.decimals().call())
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:

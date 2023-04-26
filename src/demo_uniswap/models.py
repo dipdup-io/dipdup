@@ -1,31 +1,9 @@
-import json
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
-
 from tortoise import fields
 
+from dipdup.models import ArrayField
 from dipdup.models import Model
 
 ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
-
-
-class StrArrayField(fields.Field, list):
-    SQL_TYPE = 'text'
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def to_db_value(self, value: List[str], instance: 'Union[Type[Model], Model]') -> Optional[str]:
-        return json.dumps(value)
-
-    def to_python_value(self, value: Any) -> Optional[List[str]]:
-        if isinstance(value, str):
-            array = json.loads(value.replace("'", '"'))
-            return [str(x) for x in array]
-        return value
 
 
 class Factory(Model):
@@ -87,7 +65,7 @@ class Token(Model):
     # derived price in ETH
     derived_eth = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # pools token is in that are whitelisted for USD pricing
-    whitelist_pools = StrArrayField(default=[])
+    whitelist_pools = ArrayField(default=[])
 
 
 class Pool(Model):

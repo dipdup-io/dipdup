@@ -94,6 +94,23 @@ class EnumField(fields.Field[EnumFieldT]):
         raise FrameworkException(f'Invalid enum value: {value}')
 
 
+class ArrayField(fields.Field[list[str]]):
+    SQL_TYPE = 'TEXT'
+
+    def to_db_value(
+        self,
+        value: list[str],
+        instance: type[TortoiseModel] | TortoiseModel,
+    ) -> str | None:
+        return orjson.dumps(value).decode()
+
+    def to_python_value(self, value: str | list[str]) -> list[str] | None:
+        if isinstance(value, str):
+            array = orjson.loads(value)
+            return [str(x) for x in array]
+        return value
+
+
 def json_dumps_decimals(obj: Any) -> str:
     def _default(obj: Any) -> Any:
         if isinstance(obj, Decimal):

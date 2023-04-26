@@ -294,13 +294,16 @@ class DipDupContext:
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
+        code_hash: str | int | None = None
+        if isinstance(contract_config, TezosContractConfig):
+            code_hash = contract_config.code_hash
 
         with suppress(OperationalError):
             await Contract(
                 name=contract_config.name,
                 address=contract_config.address,
                 typename=contract_config.typename,
-                code_hash=contract_config.code_hash if code_hash else None,
+                code_hash=code_hash,
                 kind=kind,
             ).save()
 
