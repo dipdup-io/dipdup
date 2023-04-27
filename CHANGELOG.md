@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Fixed
+
+- config: Fixed crash on `event` index definitions.
+
 ### Other
 
 - ci: Slim Docker image updated to Alpine 3.17.
