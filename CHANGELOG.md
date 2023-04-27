@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
 - database: Use `TEXT` for enum fields.
 - database: Store datasource aliases in `dipdup_head` table.
+- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
 
 ### Removed
 

@@ -10,4 +10,4 @@ DipDup will search for a module named `my_module_name` in [`PYTHONPATH`](https:/
 
 This field helps to decouple DipDup configuration file from the indexer implementation and gives more flexibility in managing the source code.
 
-See {{ #summary getting-started/project-structure.md}} for details.
+See {{ #summary getting-started/project-package.md}} for details.

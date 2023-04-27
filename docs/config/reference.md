@@ -625,8 +625,8 @@
 <li><p><strong>url</strong> (<em>str</em>) – Base API URL, e.g. <a class="reference external" href="https://api.tzkt.io/">https://api.tzkt.io/</a></p></li>
 <li><p><strong>http</strong> (<a class="reference internal" href="#HttpConfig" title="HttpConfig"><em>HttpConfig</em></a><em> | </em><em>None</em>) – HTTP client configuration</p></li>
 <li><p><strong>buffer_size</strong> (<em>int</em>) – Number of levels to keep in FIFO buffer before processing</p></li>
-<li><p><strong>merge_subscriptions</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>rollback_depth</strong> (<em>int</em>) – </p></li>
+<li><p><strong>merge_subscriptions</strong> (<em>bool</em>) – Whether to merge realtime subscriptions</p></li>
+<li><p><strong>rollback_depth</strong> (<em>int</em>) – Number of blocks to keep in the database to handle reorgs</p></li>
 </ul>
 </dd>
 </dl>

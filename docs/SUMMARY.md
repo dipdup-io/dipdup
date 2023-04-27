@@ -10,7 +10,7 @@
   * [Installation](getting-started/installation.md)
   * [Core concepts](getting-started/core-concepts.md)
   * [Creating config](getting-started/creating-config.md)
-  * [Project structure](getting-started/project-structure.md)
+  * [Project package](getting-started/project-package.md)
   * [Defining models](getting-started/defining-models.md)
   * [Implementing handlers](getting-started/implementing-handlers.md)
   * [Templates and variables](getting-started/templates-and-variables.md)
