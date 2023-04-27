@@ -22,13 +22,13 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
     """Decode event data from hex string"""
     # NOTE: Indexed and non-indexed inputs can go in arbitrary order. We need
     # NOTE: to decode them separately and then merge back.
-    indexed_bytes = b''.join([decode_hex(topic) for topic in topics[1:]])
+    indexed_bytes = b''.join((decode_hex(topic) for topic in topics[1:]))
     non_indexed_bytes = decode_hex(data)
 
     # TODO: Quick and dirty; refactor
     inputs: tuple[tuple[str, bool], ...] = tuple(zip(event_abi.inputs, event_abi.indexed))
-    indexed_values = deque(decode_abi([k for k, v in inputs if v], indexed_bytes))
-    non_indexed_values = deque(decode_abi([k for k, v in inputs if not v], non_indexed_bytes))
+    indexed_values = deque(decode_abi((k for k, v in inputs if v), indexed_bytes))
+    non_indexed_values = deque(decode_abi((k for k, v in inputs if not v), non_indexed_bytes))
 
     values: deque[Any] = deque()
     for _, indexed in inputs:
