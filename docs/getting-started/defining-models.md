@@ -1,14 +1,24 @@
 # Defining models
 
-DipDup uses the Tortoise ORM library to cover database operations. During initialization, DipDup generates a `models.py` file on the top level of the package that will contain all database models. The name and location of this file cannot be changed.
+DipDup uses [Tortoise ORM](https://tortoise.github.io/examples.html) library to work with database. It's fast, flexible, and similar to Django ORM.
 
-A typical `models.py` file looks like the following (example from `demo_domains` package):
+Please, don't report DipDup issues to the Tortoise ORM bugtracker! We patch it heavily to better suit our needs.
+
+Project models should be placed in `models.py` file and inherit from `dipdup.models.Model` class. A typical module looks like this (example from the `demo-domains`)
 
 ```python
 {{ #include ../../demos/demo-domains/src/demo_domains/models.py }}
 ```
 
-See the links below to learn how to use this library.
+Now you can use these models in your callbacks.
+
+```python
+tld = await TLD.filter(id='tez').first()
+tld.owner = 'tz1deadbeefdeadbeefdeadbeefdeadbeef'
+await tld.save()
+```
+
+Visit [Tortose ORM docs](https://tortoise.github.io/examples.html) for more examples.
 
 ## Limitations
 
@@ -19,8 +29,6 @@ Some limitations are applied to model names and fields to avoid ambiguity in Gra
 * Model fields must differ from table name
 
 ```admonish info title="See Also"
-* [Tortoise ORM documentation](https://tortoise-orm.readthedocs.io/en/latest/)
-* [Tortoise ORM examples](https://tortoise-orm.readthedocs.io/en/latest/examples.html)
 * {{ #summary deployment/database-engines.md }}
 * {{ #summary deployment/backups.md }}
 ```

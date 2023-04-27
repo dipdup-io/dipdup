@@ -6,7 +6,7 @@ All project ABIs, code, queries, and customizations are stored in a single Pytho
 package: indexer
 ```
 
-To generate all necessary directories and files according to config run the `init` command.
+To generate all necessary directories and files according to config run the `init` command. You should run it every time you significantly change the config file.
 
 The structure of package is the following (shortened for readability):
 
@@ -43,10 +43,17 @@ indexer
         └── storage.py
 ```
 
-## Type classes
+## ABIs and typeclasses
 
-<!-- TODO: Move somewhere -->
+DipDup uses contract type information to generate dataclasses for developers to work with strictly typed data. Theses dataclasses are generated automatically from contract ABIs. In most cases, you don't need to modify them manually. The process is roughly the following:
 
+1. Contract ABIs are placed in the `abi` directory; either manually or during init.
+2. DipDup converts these ABIs to intermediate JSONSchemas.
+3. JSONSchemas converted to Pydantic dataclasses.
+
+This approach allows to work with complex contract types with nested structures and polymorphic variants.
+
+<!--
 DipDup receives all smart contract data (transaction parameters, resulting storage, big_map updates) in normalized form ([read more](https://baking-bad.org/blog/2021/03/03/tzkt-v14-released-with-improved-smart-contract-data-and-websocket-api/) about how TzKT handles Michelson expressions) but still as raw JSON. DipDup uses contract type information to generate data classes, which allow developers to work with strictly typed data.
 
 DipDup generates [Pydantic](https://pydantic-docs.helpmanual.io/datamodel_code_generator/) models out of JSONSchema. You might want to install additional plugins ([PyCharm](https://pydantic-docs.helpmanual.io/pycharm_plugin/), [mypy](https://pydantic-docs.helpmanual.io/mypy_plugin/)) for convenient work with this library.
@@ -58,11 +65,7 @@ The following models are created at `init` for different indexes:
 * `event`: payload types for all used contracts and tags.
 
 Other index kinds do not use code generated types.
-
-<!-- TODO: Flow
-1. ABI
-2. Jsonschema
-3. datamodel-codegen -->
+-->
 
 ## Nested packages
 
