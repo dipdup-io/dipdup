@@ -1,1 +1,1 @@
-# `evm.sybsquid.events` index
+# `evm.subsquid.events` index
