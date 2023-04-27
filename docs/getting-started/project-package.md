@@ -6,7 +6,9 @@ All project ABIs, code, queries, and customizations are stored in a single Pytho
 package: indexer
 ```
 
-The structure of the DipDup project package is the following (shortened for readability):
+To generate all necessary directories and files according to config run the `init` command.
+
+The structure of package is the following (shortened for readability):
 
 ```text
 indexer
@@ -40,8 +42,6 @@ indexer
         │   └── transfer.py
         └── storage.py
 ```
-
-To generate all necessary directories and files according to config run the `init` command.
 
 ## Type classes
 
