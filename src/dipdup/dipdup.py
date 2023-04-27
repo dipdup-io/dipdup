@@ -204,6 +204,7 @@ class IndexDispatcher:
             if contract.name in self._ctx.config.contracts:
                 continue
 
+            contract_config: TezosContractConfig | EvmContractConfig
             if contract.kind == ContractKind.TEZOS:
                 contract_config = TezosContractConfig(
                     kind='tezos',

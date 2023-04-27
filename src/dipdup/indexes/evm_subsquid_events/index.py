@@ -137,7 +137,10 @@ class SubsquidEventsIndex(
         topics = set()
 
         for handler_config in self._config.handlers:
-            addresses.add(handler_config.contract.address)
+            address = handler_config.contract.address
+            if address is None:
+                raise NotImplementedError
+            addresses.add(address)
 
             event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
             topics.add(event_abi.topic0)

@@ -64,7 +64,7 @@ with open(join(package_dir, 'abi/erc20/ERC20SymbolBytes.json')) as f:
 def convert_token_amount(amount: int, decimals: int) -> Decimal:
     if decimals == 0:
         return Decimal(amount)
-    return Decimal(amount) / 10**decimals
+    return Decimal(amount) / Decimal(10) ** decimals
 
 
 class ERC20Token:
@@ -86,7 +86,7 @@ class ERC20Token:
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
-            return contract.functions.symbol().call().decode('utf-8').rstrip('\x00')
+            return contract.functions.symbol().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -96,11 +96,11 @@ class ERC20Token:
 
     def get_name(self) -> str:
         with suppress(Exception):
-            return self.contract.functions.name().call()
+            return self.contract.functions.name().call()  # type: ignore[no-any-return]
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_name_bytes_abi)
-            return contract.functions.name().call().decode('utf-8').rstrip('\x00')
+            return contract.functions.name().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -110,7 +110,7 @@ class ERC20Token:
 
     def get_decimals(self) -> int:
         with suppress(Exception):
-            return int(self.contract.functions.decimals().call())
+            return self.contract.functions.decimals().call()  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:

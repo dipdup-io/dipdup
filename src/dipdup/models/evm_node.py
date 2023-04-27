@@ -113,6 +113,10 @@ class EvmNodeLogData:
     def level(self) -> int:
         return int(self.block_number, 16)
 
+    @property
+    def index(self) -> str:
+        return self.log_index
+
 
 @dataclass
 class EvmNodeSyncingData:

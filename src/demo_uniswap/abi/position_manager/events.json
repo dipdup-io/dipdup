@@ -6,6 +6,11 @@
       "address",
       "address",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      true,
+      true
     ]
   },
   "ApprovalForAll": {
@@ -15,6 +20,11 @@
       "address",
       "address",
       "bool"
+    ],
+    "indexed": [
+      true,
+      true,
+      false
     ]
   },
   "Collect": {
@@ -25,6 +35,12 @@
       "address",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      false,
+      false,
+      false
     ]
   },
   "DecreaseLiquidity": {
@@ -35,6 +51,12 @@
       "uint128",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      false,
+      false,
+      false
     ]
   },
   "IncreaseLiquidity": {
@@ -45,6 +67,12 @@
       "uint128",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      false,
+      false,
+      false
     ]
   },
   "Transfer": {
@@ -54,6 +82,11 @@
       "address",
       "address",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      true,
+      true
     ]
   }
 }

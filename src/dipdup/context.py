@@ -294,7 +294,6 @@ class DipDupContext:
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
-        code_hash: str | int | None = None
         if isinstance(contract_config, TezosContractConfig):
             code_hash = contract_config.code_hash
 

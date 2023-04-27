@@ -9,7 +9,6 @@ from web3 import Web3
 
 import demo_uniswap.models as models
 from demo_uniswap.utils.repo import models_repo
-from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import HandlerContext
 
@@ -49,7 +48,7 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
             ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, token_id, str(e))
             return None
 
-        factory_address = cast(EvmContractConfig, ctx.config.get_contract('factory')).address
+        factory_address = ctx.config.get_contract('factory').address  # type: ignore[attr-defined]
         factory = web3.eth.contract(address=to_checksum_address(factory_address), abi=factory_abi)
 
         try:
@@ -73,7 +72,7 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
     return position
 
 
-async def save_position_snapshot(position: models.Position, level: int):
+async def save_position_snapshot(position: models.Position, level: int) -> None:
     snapshot, exists = await models.PositionSnapshot.get_or_create(
         id=f'{position.id}#{level}',
         defaults={

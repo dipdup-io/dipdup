@@ -207,8 +207,8 @@ class Position(Model):
     # fee_growth_inside_0_last_x128 = fields.BigIntField(default=0)
     # fee_growth_inside_1_last_x128 = fields.BigIntField(default=0)
 
-    token0_id: int
-    token1_id: int
+    token0_id: str
+    token1_id: str
     pool_id: int
 
 

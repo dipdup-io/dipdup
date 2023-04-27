@@ -18,19 +18,25 @@ from dipdup.utils import pascal_to_snake
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
 
-def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> Any:
-    # FIXME:
-    # indexed and non-indexed inputs can go in arbitrary order
-    # we need to decode them separately, as:
-    #   decode_abi(indexed_inputs, b''.join([decode_hex(topic) for topic in topics[1:]]))
-    #   decode_abi(non_indexed_inputs, decode_hex(data))
-    # and then merge back
-    # that also means we need to store 'indexed' flag together with the types in `EventAbiExtra`
-    byte_data = b''.join([decode_hex(topic) for topic in topics[1:]]) + decode_hex(data)
-    return decode_abi(
-        event_abi.inputs,
-        byte_data,
-    )
+def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:
+    """Decode event data from hex string"""
+    # NOTE: Indexed and non-indexed inputs can go in arbitrary order. We need
+    # NOTE: to decode them separately and then merge back.
+    indexed_bytes = b''.join([decode_hex(topic) for topic in topics[1:]])
+    non_indexed_bytes = decode_hex(data)
+
+    # TODO: Quick and dirty; refactor
+    inputs: tuple[tuple[str, bool], ...] = tuple(zip(event_abi.inputs, event_abi.indexed))
+    indexed_values = deque(decode_abi([k for k, v in inputs if v], indexed_bytes))
+    non_indexed_values = deque(decode_abi([k for k, v in inputs if not v], non_indexed_bytes))
+
+    values: deque[Any] = deque()
+    for _, indexed in inputs:
+        if indexed:
+            values.append(indexed_values.popleft())
+        else:
+            values.append(non_indexed_values.popleft())
+    return tuple(values)
 
 
 def prepare_event_handler_args(

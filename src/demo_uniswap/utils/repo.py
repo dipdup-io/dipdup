@@ -73,6 +73,8 @@ class ModelsRepo:
 
     async def get_ctx_factory(self, ctx: HandlerContext) -> models.Factory:
         factory_address = cast(EvmContractConfig, ctx.config.get_contract('factory')).address
+        if factory_address is None:
+            raise Exception('Factory address is not specified')
         return await self.get_factory(factory_address)
 
 

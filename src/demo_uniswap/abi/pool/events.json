@@ -9,6 +9,14 @@
       "uint128",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
     ]
   },
   "Collect": {
@@ -21,6 +29,14 @@
       "int24",
       "uint128",
       "uint128"
+    ],
+    "indexed": [
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
     ]
   },
   "CollectProtocol": {
@@ -31,6 +47,12 @@
       "address",
       "uint128",
       "uint128"
+    ],
+    "indexed": [
+      true,
+      true,
+      false,
+      false
     ]
   },
   "Flash": {
@@ -43,6 +65,14 @@
       "uint256",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
     ]
   },
   "IncreaseObservationCardinalityNext": {
@@ -51,6 +81,10 @@
     "inputs": [
       "uint16",
       "uint16"
+    ],
+    "indexed": [
+      false,
+      false
     ]
   },
   "Initialize": {
@@ -59,6 +93,10 @@
     "inputs": [
       "uint160",
       "int24"
+    ],
+    "indexed": [
+      false,
+      false
     ]
   },
   "Mint": {
@@ -72,6 +110,15 @@
       "uint128",
       "uint256",
       "uint256"
+    ],
+    "indexed": [
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false
     ]
   },
   "SetFeeProtocol": {
@@ -82,6 +129,12 @@
       "uint8",
       "uint8",
       "uint8"
+    ],
+    "indexed": [
+      false,
+      false,
+      false,
+      false
     ]
   },
   "Swap": {
@@ -95,6 +148,15 @@
       "uint160",
       "uint128",
       "int24"
+    ],
+    "indexed": [
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
     ]
   }
 }

@@ -59,7 +59,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.add_contract">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">DipDupContext.</span></span><span class="sig-name descname"><span class="pre">add_contract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext.add_contract" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">DipDupContext.</span></span><span class="sig-name descname"><span class="pre">add_contract</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">typename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code_hash</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext.add_contract" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds contract to the inventory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -68,6 +68,7 @@
 <li><p><strong>address</strong> (<em>str</em><em> | </em><em>None</em>) – Contract address</p></li>
 <li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for the contract script</p></li>
 <li><p><strong>code_hash</strong> (<em>str</em><em> | </em><em>int</em><em> | </em><em>None</em>) – Contract code hash</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos'</em><em>] </em><em>| </em><em>~typing.Literal</em><em>[</em><em>'evm'</em><em>]</em>) – Either ‘tezos’ or ‘evm’ allowed</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
