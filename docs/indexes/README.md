@@ -1,32 +1,25 @@
 # Indexes
+Index is a primary DipDup entity connecting the inventory and data handling rules.
 
-_Index_ — is a primary DipDup entity connecting the inventory and specifying data handling rules.
+Multiple indexes are available for different workloads. Every index is linked to a specific datasource and provides a set of handlers for different kinds of data. Use this table to choose the right index for the task:
 
-Each index has a linked TzKT datasource and a set of handlers. Indexes can join multiple contracts considered as a single application. Also, contracts can be used by multiple indexes of any kind, but make sure that data don't overlap. See {{ #summary getting-started/core-concepts.md#atomicity-and-persistency }}.
+| kind                                                       | blockchain     | datasource | indexed data                |
+| ---------------------------------------------------------- | -------------- | ---------- | --------------------------- |
+| {{ #summary indexes/evm_subsquid_events.md }}              | EVM-compatible | Subsquid   | event logs                  |
+| {{ #summary indexes/tezos_tzkt_big_maps.md }}              | Tezos          | TzKT       | big map diffs               |
+| {{ #summary indexes/tezos_tzkt_events.md }}                | Tezos          | TzKT       | events                      |
+| {{ #summary indexes/tezos_tzkt_head.md }}                  | Tezos          | TzKT       | head blocks (realtime only) |
+| {{ #summary indexes/tezos_tzkt_operations.md }}            | Tezos          | TzKT       | typed operations            |
+| {{ #summary indexes/tezos_tzkt_operations_unfiltered.md }} | Tezos          | TzKT       | untyped operations          |
+| {{ #summary indexes/tezos_tzkt_token_transfers.md }}       | Tezos          | TzKT       | TZIP-12/16 token transfers  |
 
-```yaml
-indexes:
-  contract_operations:
-    kind: tezos.tzkt.operations
-    datasource: tzkt_mainnet
-    handlers:
-      - callback: on_operation
-        pattern: ...
-```
+Indexes can join multiple contracts considered as a single application. Also, contracts can be used by multiple indexes of any kind, but make sure that they are independent of each other and indexed data don't overlap. Make sure to visit {{ #summary getting-started/core-concepts.md#atomicity-and-persistency }}.
 
-Multiple indexes are available for different kinds of blockchain data. Currently, the following options are available:
-
-* `big_map`
-* `event`
-* `head`
-* `operation`
-* `token_transfer`
-
-Every index is linked to specific datasource from {{ #summary config/datasources.md }} config section.
+Handler is a callback function, called when new data has arrived from the datasource. The handler receives the data item as an argument and can perform any actions, e.g., store data in the database, send a notification, or call an external API.
 
 ## Using templates
 
-Index definitions can be templated to reduce the amount of boilerplate code. To create an index from the template during startup, add an item with the `template` and `values` field to the `indexes` section:
+Index definitions can be templated to reduce the amount of boilerplate code. To create an index from template use the following syntax:
 
 ```yaml
 templates:
@@ -42,7 +35,7 @@ indexes:
       datasource: tzkt_mainnet
 ```
 
-You can also create indexes from templates later in runtime. See {{ #summary getting-started/templates-and-variables.md }} page.
+You can also spawn indexes from templates in runtime; see {{ #summary getting-started/templates-and-variables.md }} page.
 
 ## Indexing scope
 
