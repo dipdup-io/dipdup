@@ -436,7 +436,7 @@ class DipDup:
         self._datasources: dict[str, Datasource[Any]] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
-            depth=self._config.advanced.rollback_depth,
+            depth=self._config.advanced.rollback_depth_int,
             immune_tables=self._config.database.immune_tables,
         )
         self._ctx = DipDupContext(
@@ -476,6 +476,7 @@ class DipDup:
                 kind='sqlite',
                 path=':memory:',
             )
+        config.advanced.rollback_depth = 2
         config.initialize()
 
         dipdup = DipDup(config)

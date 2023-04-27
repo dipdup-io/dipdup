@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -39,6 +40,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
+        self._head_hashes: dict[int, str] = {}
+        self._head_events: defaultdict[int, asyncio.Event] = defaultdict(asyncio.Event)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
@@ -182,12 +185,28 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             raise DatasourceError(f'Unknown message: {data}', self.name)
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
+        msg_type = MessageType()
+
         if isinstance(subscription, EvmNodeNewHeadsSubscription):
             head = EvmNodeHeadData.from_json(data)
+            level = int(head.number, 16)
+
+            known_hash = self._head_hashes.get(level, None)
+            current_level = max(self._head_hashes.keys() or (level,))
+            self._head_hashes[level] = head.hash
+            if known_hash != head.hash:
+                await self.emit_rollback(msg_type, from_level=current_level, to_level=level - 1)
+
             await self.emit_head(head)
+            self._head_events[level].set()
+
         elif isinstance(subscription, EvmNodeLogsSubscription):
             logs = EvmNodeLogData.from_json(data)
+            level = int(logs.block_number, 16)
+
+            await self._head_events[level].wait()
             await self.emit_logs(logs)
+
         elif isinstance(subscription, EvmNodeSyncingData):
             syncing = EvmNodeSyncingData.from_json(data)
             await self.emit_syncing(syncing)

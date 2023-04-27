@@ -564,8 +564,14 @@ class AdvancedConfig:
     early_realtime: bool = False
     metadata_interface: bool = False
     skip_version_check: bool = False
-    rollback_depth: int = 2
+    rollback_depth: int | None = None
     crash_reporting: bool = False
+
+    @property
+    def rollback_depth_int(self) -> int:
+        if self.rollback_depth is None:
+            raise FrameworkException('`rollback_depth` was not set on config initialization')
+        return self.rollback_depth
 
 
 @dataclass
@@ -781,14 +787,26 @@ class DipDupConfig:
             if name in event_hooks:
                 raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
 
-        # NOTE: Conflicting rollback techniques
-        for name, datasource_config in self.datasources.items():
-            if not isinstance(datasource_config, TzktDatasourceConfig):
-                continue
-            if datasource_config.buffer_size and self.advanced.rollback_depth:
-                raise ConfigurationError(
-                    f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
-                )
+        # NOTE: Rollback depth and conflicting techniques
+        rollback_depth = self.advanced.rollback_depth
+        if rollback_depth is None:
+            rollback_depth = 0
+            for name, datasource_config in self.datasources.items():
+                if not isinstance(datasource_config, IndexDatasourceConfig):
+                    continue
+                rollback_depth = max(rollback_depth, datasource_config.rollback_depth or 0)
+
+                if not isinstance(datasource_config, TzktDatasourceConfig):
+                    continue
+                if datasource_config.buffer_size and self.advanced.rollback_depth:
+                    raise ConfigurationError(
+                        f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
+                    )
+        elif self.advanced.rollback_depth is not None and rollback_depth > self.advanced.rollback_depth:
+            raise ConfigurationError(
+                '`advanced.rollback_depth` cannot be less than the maximum rollback depth of all index datasources'
+            )
+        self.advanced.rollback_depth = rollback_depth
 
         # NOTE: Bigmap indexes with `skip_history` require early realtime
         from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig

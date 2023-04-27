@@ -26,6 +26,15 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     node: EvmNodeDatasourceConfig | None = None
     http: HttpConfig | None = None
 
+    @property
+    def merge_subscriptions(self) -> bool:
+        return False
+
+    # FIXME: Can Subsquid rollback?
+    @property
+    def rollback_depth(self) -> int:
+        return 0
+
     # FIXME: Update validators
     @validator('url', allow_reuse=True)
     def _valid_url(cls, v: str) -> str:

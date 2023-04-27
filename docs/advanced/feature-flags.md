@@ -6,7 +6,6 @@ Feature flags set in `advanced` config section allow users to modify parameters 
 | --------------------- | -------------------------------------------------------------------- |
 | `crash_reporting`     | Enable sending crash reports to the Baking Bad team                  |
 | `early_realtime`      | Start collecting realtime messages while sync is in progress         |
-| `merge_subscriptions` | Subscribe to all operations/big map diffs during realtime indexing   |
 | `metadata_interface`  | Enable contract and token metadata interfaces                        |
 | `postpone_jobs`       | Do not start the job scheduler until all indexes are synchronized    |
 | `skip_version_check`  | Disable warning about running unstable or out-of-date DipDup version |
@@ -30,10 +29,6 @@ Let's consider two scenarios:
 2. Indexing 10 000 contracts with 10 operations each. Both initial sync and resync will take a while. But the number of operations received during this time won't affect RAM consumption much.
 
 If you do not have strict RAM constraints, it's recommended to enable this flag. You'll get faster indexing times and decreased load on TzKT API.
-
-## Merge subscriptions
-
-Subscribe to all operations/big map diffs during realtime indexing instead of separate channels. This flag helps to avoid the 10.000 subscription limit of TzKT and speed up processing. The downside is an increased RAM consumption during sync, especially if `early_realtime` flag is enabled too.
 
 ## Metadata interface
 

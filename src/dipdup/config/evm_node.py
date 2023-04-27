@@ -15,12 +15,18 @@ class EvmNodeDatasourceConfig(IndexDatasourceConfig):
     :param url: URL of Subsquid archive API
     :param node_url: URL of Ethereum node
     :param http: HTTP client configuration
+    :param rollback_depth: Number of blocks to keep in the database
     """
 
     kind: Literal['evm.node']
     url: str
     ws_url: str
     http: HttpConfig | None = None
+    rollback_depth: int = 32
+
+    @property
+    def merge_subscriptions(self) -> bool:
+        return False
 
     # FIXME: Update validators
     @validator('url', allow_reuse=True)

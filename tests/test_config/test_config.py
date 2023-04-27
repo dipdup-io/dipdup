@@ -23,8 +23,8 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
     path = Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
     config = DipDupConfig.load([path])
     if origs:
-        config.indexes['hen_mainnet'].types += (TzktOperationType.origination,)  # type: ignore[union-attr]
-    config.datasources['tzkt_mainnet'].merge_subscriptions = merge_subs  # type: ignore[union-attr]
+        config.indexes['hen_mainnet'].types += (TzktOperationType.origination,)  # type: ignore
+    config.datasources['tzkt_mainnet'].merge_subscriptions = merge_subs  # type: ignore
     config.initialize()
     return config
 
