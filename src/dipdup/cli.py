@@ -203,11 +203,11 @@ async def run(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option('--overwrite-types', is_flag=True, help='Regenerate existing types.')
+@click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
 @click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, overwrite_types: bool, keep_schemas: bool) -> None:
+async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
     """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -217,7 +217,7 @@ async def init(ctx: click.Context, overwrite_types: bool, keep_schemas: bool) ->
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(overwrite_types, keep_schemas)
+    await dipdup.init(force, keep_schemas)
 
 
 @cli.command()
@@ -288,7 +288,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 
 
 @config.command(name='env')
-@click.option('--file', '-f', type=str, default=None, help='Output to file instead of stdout.')
+@click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @_cli_wrapper
 async def config_env(ctx: click.Context, file: str | None) -> None:

@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - database: Use `TEXT` for enum fields.
 - database: Store datasource aliases in `dipdup_head` table.
 - config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+- config: Removed `# dipdup: ignore`
+- config: Removed deprecated `similar_to.address` filter
+- cli: --file allias changed from -f to -o, because everywhere else -f means --force
+- cli: `init --overwrite-types` flag renamed to `--force` and now affects ABIs
 
 ### Removed
 

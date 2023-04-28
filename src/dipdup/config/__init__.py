@@ -901,10 +901,6 @@ class DipDupConfig:
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationsHandlerOriginationPatternConfig):
-                        # TODO: Remove in 7.0
-                        if pattern_config.similar_to:
-                            raise FrameworkException('originated_contract` alias, should be replaced in __init__')
-
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 

@@ -1,4 +1,5 @@
 # Indexes
+
 Index is a primary DipDup entity connecting the inventory and data handling rules.
 
 Multiple indexes are available for different workloads. Every index is linked to a specific datasource and provides a set of handlers for different kinds of data. Use this table to choose the right index for the task:

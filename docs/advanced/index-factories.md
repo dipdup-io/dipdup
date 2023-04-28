@@ -23,7 +23,7 @@ indexes:
       - callback: on_factory_origination
         pattern:
           - type: origination
-            similar_to: registry
+            originated_contract: registry
 ```
 
 Another solution is to implement custom logic in `on_restart` hook (see {{ #summary advanced/event-hooks.md#on_restart}})

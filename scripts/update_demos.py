@@ -45,7 +45,7 @@ for project_path in _get_projects():
 
     print(f'=> Initializing `{project_name}`')
     subprocess.run(
-        ['dipdup', 'init', '--overwrite-types'],
+        ['dipdup', 'init', '--force'],
         cwd=Path(__file__).parent.parent / 'demos' / project_name,
         check=True,
     )

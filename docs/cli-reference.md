@@ -1,5 +1,5 @@
 <!-- markdownlint-disable first-line-h1 -->
-            
+
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
@@ -42,8 +42,8 @@
 </div>
 <p class="rubric">Options</p>
 <dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-config-env-f">
-<span id="cmdoption-dipdup-config-env-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-f" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object std" id="cmdoption-dipdup-config-env-o">
+<span id="cmdoption-dipdup-config-env-output"></span><span class="sig-name descname"><span class="pre">-o</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;output&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-config-env-o" title="Permalink to this definition">¶</a></dt>
 <dd><p>Output to file instead of stdout.</p>
 </dd></dl>
 
@@ -100,9 +100,9 @@
 </div>
 <p class="rubric">Options</p>
 <dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-init-overwrite-types">
-<span class="sig-name descname"><span class="pre">--overwrite-types</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-overwrite-types" title="Permalink to this definition">¶</a></dt>
-<dd><p>Regenerate existing types.</p>
+<dt class="sig sig-object std" id="cmdoption-dipdup-init-f">
+<span id="cmdoption-dipdup-init-force"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-f" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regenerate existing types and ABIs.</p>
 </dd></dl>
 
 <dl class="std option">
@@ -279,5 +279,3 @@
 
 </section>
 </section>
-
-

@@ -1,5 +1,4 @@
 import logging
-import re
 import subprocess
 from abc import ABC
 from abc import abstractmethod
@@ -105,15 +104,6 @@ class CodeGenerator(ABC):
         if output_path.exists() and not force:
             self._logger.info('Skipping `%s`: type already exists', schema_path)
             return
-
-        # NOTE: Skip if the first line starts with "# dipdup: ignore"
-        # TODO: Replace with `immune_types` in config
-        if output_path.exists():
-            with open(output_path) as type_file:
-                first_line = type_file.readline()
-                if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
-                    self._logger.info('Skipping `%s`: "# dipdup: ignore" marker found', output_path)
-                    return
 
         datamodel_codegen = which('datamodel-codegen')
         if not datamodel_codegen:
