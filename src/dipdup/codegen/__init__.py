@@ -1,5 +1,4 @@
 import logging
-import re
 import subprocess
 from abc import ABC
 from abc import abstractmethod
@@ -106,15 +105,6 @@ class CodeGenerator(ABC):
             self._logger.info('Skipping `%s`: type already exists', schema_path)
             return
 
-        # NOTE: Skip if the first line starts with "# dipdup: ignore"
-        # TODO: Replace with `immune_types` in config
-        if output_path.exists():
-            with open(output_path) as type_file:
-                first_line = type_file.readline()
-                if re.match(r'^#\s+dipdup:\s+ignore\s*', first_line):
-                    self._logger.info('Skipping `%s`: "# dipdup: ignore" marker found', output_path)
-                    return
-
         datamodel_codegen = which('datamodel-codegen')
         if not datamodel_codegen:
             raise FrameworkException('datamodel-codegen is not installed')
@@ -134,6 +124,10 @@ class CodeGenerator(ABC):
             '--class-name',
             class_name,
             '--disable-timestamp',
+            '--input-file-type',
+            'jsonschema',
+            '--target-python-version',
+            '3.10',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)

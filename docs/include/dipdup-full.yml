@@ -1,4 +1,4 @@
-spec_version: 1.2
+spec_version: 2.0
 package: my_indexer
 
 database:
@@ -63,7 +63,7 @@ indexes:
       - callback: on_factory_origination
         pattern:
           - type: origination
-            similar_to: some_dex
+            originated_contract: some_dex
 
 templates:
   operation_template:

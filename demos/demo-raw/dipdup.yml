@@ -1,4 +1,4 @@
-spec_version: 1.2
+spec_version: 2.0
 package: demo_raw
 
 database:

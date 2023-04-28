@@ -49,6 +49,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
+from dipdup.models import SkipHistory
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -568,7 +569,7 @@ class AdvancedConfig:
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of config specification, currently always `1.2`
+    :param spec_version: Version of config specification, currently always `2.0`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -790,6 +791,15 @@ class DipDupConfig:
                     f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
                 )
 
+        # NOTE: Bigmap indexes with `skip_history` require early realtime
+        from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+
+        for name, index_config in self.indexes.items():
+            if isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never:
+                _logger.warning('`%s` index is configured to skip history; enabling early realtime', name)
+                self.advanced.early_realtime = True
+                break
+
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
@@ -953,10 +963,6 @@ class DipDupConfig:
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
                     elif isinstance(pattern_config, OperationsHandlerOriginationPatternConfig):
-                        # TODO: Remove in 7.0
-                        if pattern_config.similar_to:
-                            raise FrameworkException('originated_contract` alias, should be replaced in __init__')
-
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 

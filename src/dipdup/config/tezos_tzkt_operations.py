@@ -15,7 +15,6 @@ from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -141,8 +140,6 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
 
     def __post_init_post_parse__(self) -> None:
         SubgroupIndexMixin.__post_init_post_parse__(self)
-        if self.entrypoint and not self.destination:
-            raise ConfigurationError('Transactions with entrypoint must also have destination')
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -188,7 +185,6 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
 
     :param type: always 'origination'
     :param source: Match operations by source contract alias
-    :param similar_to: Match operations which have the same code/signature (depending on `strict` field)
     :param originated_contract: Match origination of exact contract
     :param optional: Whether can operation be missing in operation group
     :param strict: Match operations by storage only or by the whole code
@@ -197,19 +193,10 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
 
     type: Literal['origination'] = 'origination'
     source: TezosContractConfig | None = None
-    similar_to: TezosContractConfig | None = None
     originated_contract: TezosContractConfig | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
-
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
-        if not self.similar_to:
-            return
-
-        self.originated_contract = self.similar_to
-        self.similar_to = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -238,9 +225,6 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
     def typed_contract(self) -> TezosContractConfig | None:
         if self.originated_contract:
             return self.originated_contract
-        # TODO: Remove in 7.0
-        if self.similar_to:
-            raise FrameworkException
         return None
 
 

@@ -8,10 +8,7 @@ from typing import Dict
 from typing import Optional
 from typing import Type
 
-from tabulate import tabulate
 from tortoise.models import Model
-
-from dipdup import spec_version_mapping
 
 tab = ('_' * 80) + '\n\n'
 
@@ -161,37 +158,6 @@ class DatabaseEngineError(Error):
 
 
 @dataclass(repr=False)
-class MigrationRequiredError(Error):
-    """Project and DipDup spec versions don't match"""
-
-    from_: str
-    to: str
-    reindex: bool = False
-
-    def _help(self) -> str:
-        version_table = tabulate(
-            [
-                ['current', self.from_, spec_version_mapping[self.from_]],
-                ['required', self.to, spec_version_mapping[self.to]],
-            ],
-            headers=['', 'spec_version', 'DipDup version'],
-        )
-        reindex = '\n\n' + tab + ReindexingRequiredError(ReindexingReason.migration).help() if self.reindex else ''
-        return f"""
-            Project migration required!
-
-            {version_table.strip()}
-
-            Perform the following actions:
-
-              1. Run `dipdup migrate`.
-              2. Review and commit changes.
-
-            See https://docs.dipdup.io/release-notes for more information. {reindex}
-        """
-
-
-@dataclass(repr=False)
 class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
@@ -337,7 +303,7 @@ class CallbackTypeError(Error):
               type: {self.type_}
               expected type: {self.expected_type}
 
-            Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
+            Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
             See https://docs.dipdup.io/getting-started/project-structure
             See https://docs.dipdup.io/cli-reference#init

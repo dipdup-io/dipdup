@@ -106,10 +106,6 @@ async def get_origination_filters(
             if not isinstance(pattern_config, OriginationPatternConfig):
                 continue
 
-            # TODO: Remove in 7.0
-            if pattern_config.similar_to:
-                raise FrameworkException('originated_contract` alias, should be replaced in __init__')
-
             if pattern_config.originated_contract:
                 if address := pattern_config.originated_contract.address:
                     addresses.add(address)
