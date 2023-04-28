@@ -63,7 +63,7 @@ indexes:
       - callback: on_factory_origination
         pattern:
           - type: origination
-            similar_to: some_dex
+            originated_contract: some_dex
 
 templates:
   operation_template:

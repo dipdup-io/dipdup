@@ -303,7 +303,7 @@ class CallbackTypeError(Error):
               type: {self.type_}
               expected type: {self.expected_type}
 
-            Make sure to set correct typenames in config and run `dipdup init --overwrite-types` to regenerate typeclasses.
+            Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
             See https://docs.dipdup.io/getting-started/project-structure
             See https://docs.dipdup.io/cli-reference#init

@@ -59,10 +59,6 @@ def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str
                     if address := pattern_config.destination.address:
                         addresses.add(address)
             elif isinstance(pattern_config, OriginationPatternConfig):
-                # TODO: Remove in 7.0
-                if pattern_config.similar_to:
-                    raise FrameworkException('originated_contract` alias, should be replaced in __init__')
-
                 if pattern_config.originated_contract:
                     if address := pattern_config.originated_contract.address:
                         addresses.add(address)
@@ -83,10 +79,6 @@ def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[i
                     if code_hash := pattern_config.destination.code_hash:
                         code_hashes.add(code_hash)
             elif isinstance(pattern_config, OriginationPatternConfig):
-                # TODO: Remove in 7.0
-                if pattern_config.similar_to:
-                    raise FrameworkException('originated_contract` alias, should be replaced in __init__')
-
                 if pattern_config.source:
                     if code_hash := pattern_config.source.code_hash:
                         raise FrameworkException('`source.code_hash` is not supported for origination patterns')

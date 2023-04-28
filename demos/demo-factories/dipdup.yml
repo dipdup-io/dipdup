@@ -46,4 +46,4 @@ indexes:
         - callback: on_factory_origination
           pattern:
             - type: origination
-              similar_to: registry
+              source: registry
