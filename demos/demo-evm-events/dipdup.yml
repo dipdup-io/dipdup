@@ -33,8 +33,3 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
-    first_level: 16906839
-
-advanced:
-  early_realtime: False
-logging: verbose

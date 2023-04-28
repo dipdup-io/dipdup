@@ -28,7 +28,7 @@ class EvmContractConfig(ContractConfig):
         if not v or '$' in v:
             return v
 
-        # TODO: use eth utils to validate address + normalize (convert to non-checksum form)
+        # TODO: Use eth_utils to validate address + normalize (convert to non-checksum form)
         # https://coincodex.com/article/2078/ethereum-address-checksum-explained/
 
         if not v.startswith(EVM_ADDRESS_PREFIXES) or len(v) != EVM_ADDRESS_LENGTH:

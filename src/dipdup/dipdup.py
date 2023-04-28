@@ -287,8 +287,6 @@ class IndexDispatcher:
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
-                # FIXME: Rollback not implemented
-                # datasource.call_on_rollback(self._on_rollback)
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
@@ -322,11 +320,6 @@ class IndexDispatcher:
         )
         if Metrics.enabled:
             Metrics.set_datasource_head_updated(datasource.name)
-        # for index in self._indexes.values():
-        #     if isinstance(index, SubsquidEventsIndex):
-        #         node_config = index._config.datasource.node
-        #         if node_config and node_config.name == datasource.name:
-        #             index.push_realtime_message(head)
 
     async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
         for index in self._indexes.values():
@@ -336,12 +329,7 @@ class IndexDispatcher:
                     index.push_realtime_message(logs)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
-        raise NotImplementedError(syncing)
-        # for index in self._indexes.values():
-        #     if isinstance(index, SubsquidEventsIndex):
-        #         node_config = index._config.datasource.node
-        #         if node_config and node_config.name == datasource.name:
-        #             index.push_realtime_message(syncing)
+        raise NotImplementedError
 
     async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
         operation_subgroups = tuple(
