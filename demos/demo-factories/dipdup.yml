@@ -23,13 +23,27 @@ templates:
     types:
       - transaction
       - origination
+    contracts:
+      - <contract>
     handlers:
       - callback: on_origination
         pattern:
           - type: origination
-            originated_contract: registry
+            originated_contract: <contract>
       - callback: on_propose
         pattern:
           - type: transaction
-            destination: registry
+            destination: <contract>
             entrypoint: propose
+
+indexes:
+  factory:
+    kind: tezos.tzkt.operations
+    datasource: tzkt
+    types:
+      - origination
+    handlers:
+        - callback: on_factory_origination
+          pattern:
+            - type: origination
+              source: registry
