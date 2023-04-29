@@ -13,11 +13,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Removed deprecated `similar_to.address` filter
 - cli: --file allias changed from -f to -o, because everywhere else -f means --force
 - cli: `init --overwrite-types` flag renamed to `--force` and now affects ABIs
+- cli: Commands to manage local dipdup installation moved to the `self` group.
 
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
 - ci: Docker images no longer contain git, poetry and install_dependencies script.
+- cli: Removed `dipdup-install` alias to `dipdup.install`.
 
 ### Performance
 
