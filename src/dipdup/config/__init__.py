@@ -564,6 +564,9 @@ class AdvancedConfig:
     rollback_depth: int = 2
     crash_reporting: bool = False
 
+    class Config:
+        extra = 'allow'
+
 
 @dataclass
 class DipDupConfig:
