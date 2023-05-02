@@ -19,7 +19,6 @@ import importlib
 import json
 import logging.config
 import re
-import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -204,8 +203,8 @@ class HTTPConfig:
 class ResolvedHTTPConfig:
     """HTTP client configuration with defaults"""
 
-    retry_count: int = sys.maxsize
-    retry_sleep: float = 0.0
+    retry_count: int = 10
+    retry_sleep: float = 1.0
     retry_multiplier: float = 1.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
@@ -1285,6 +1284,7 @@ class EventIndexConfig(IndexConfig):
 
             if isinstance(handler_config, EventHandlerConfig):
                 handler_config.initialize_event_type(package)
+
 
 ResolvedIndexConfigU = (
     OperationIndexConfig

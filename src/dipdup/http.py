@@ -95,7 +95,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             base_url=self._url,
             json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit),
-            timeout=aiohttp.ClientTimeout(connect=self._config.connection_timeout),
+            timeout=aiohttp.ClientTimeout(total=self._config.connection_timeout),
         )
 
     async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:

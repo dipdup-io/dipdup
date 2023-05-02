@@ -8,11 +8,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- config: Fixed crash on `event` index definitions.
+- config: Fixed crash due to incorrect parsing of `event` index definitions.
+- http: Fixed waiting for response indefinitely when IPFS hash is not available.
 
 ### Other
 
 - ci: Slim Docker image updated to Alpine 3.17.
+- metadata: Added `nairobinet` to supported networks.
 
 ## [6.5.5] - 2022-04-17
 
