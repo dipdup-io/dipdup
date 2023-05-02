@@ -28,7 +28,7 @@ DipDup provides convenient helpers to process off-chain data like market quotes 
 
 ```admonish info title="See Also"
 * {{ #summary advanced/jobs.md }}
-* {{ #summary advanced/datasources.md#http-generic }}
+* {{ #summary datasources/http.md }}
 * {{ #summary config/database.md#immune-tables }}
 ```
 
