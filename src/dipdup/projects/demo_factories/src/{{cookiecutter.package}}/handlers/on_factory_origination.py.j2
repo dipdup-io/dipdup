@@ -12,6 +12,7 @@ async def on_factory_origination(
     originated_contract = cast(str, registry_origination.data.originated_contract_address)
     name = f'registry_dao_{originated_contract}'
     await ctx.add_contract(
+        kind='tezos',
         name=originated_contract,
         address=originated_contract,
         typename='registry',

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from tortoise import fields
 from tortoise.fields.relational import ForeignKeyFieldInstance
 
@@ -18,7 +16,7 @@ class Domain(Model):
     owner = fields.TextField()
     token_id = fields.BigIntField(null=True)
 
-    tld_id: Optional[str]
+    tld_id: str | None
 
 
 class Record(Model):

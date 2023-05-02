@@ -6,18 +6,30 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- database: Added `dipdup_meta` immune table to store arbitrary JSON values.
+- evm.node: Added `evm.node` datasource to receive events from Ethereum node.
+- evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
+- evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
+- abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
+
 ### Changed
 
-- tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
-- config: Removed `# dipdup: ignore`
-- config: Removed deprecated `similar_to.address` filter
-- cli: --file allias changed from -f to -o, because everywhere else -f means --force
-- cli: `init --overwrite-types` flag renamed to `--force` and now affects ABIs
+- tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.
+- database: Store datasource aliases instead of URLs in `dipdup_head` table.
+- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+- cli: `config env --file` option renamed to `--output`.
+- cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
+- context: Signature of `add_contract` method has changed.
 
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
-- ci: Docker images no longer contain git, poetry and install_dependencies script.
+- ci: Docker images no longer contain git, poetry and custom scripts.
+- config: Removed `similar_to` filter of `operation` index pattern.
+- config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
 
 ### Performance
 

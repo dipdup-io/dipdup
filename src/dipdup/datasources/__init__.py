@@ -6,6 +6,7 @@ from typing import TypeVar
 
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
+from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
@@ -55,7 +56,7 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
     @property
     def name(self) -> str:
-        return self._http._url
+        return self._config.name
 
     @abstractmethod
     async def subscribe(self) -> None:
@@ -64,6 +65,11 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     @abstractmethod
     async def initialize(self) -> None:
         ...
+
+    def add_index(self, index_config: IndexConfig) -> None:
+        """Register index config in internal mappings and matchers. Find and register subscriptions."""
+        for subscription in index_config.get_subscriptions():
+            self._subscriptions.add(subscription)
 
     def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
         self._subscriptions.set_sync_level(subscription, level)
@@ -75,6 +81,7 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
     from dipdup.config.coinbase import CoinbaseDatasourceConfig
+    from dipdup.config.evm_node import EvmNodeDatasourceConfig
     from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -82,6 +89,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
     from dipdup.datasources.abi_etherscan import EtherscanDatasource
     from dipdup.datasources.coinbase import CoinbaseDatasource
+    from dipdup.datasources.evm_node import EvmNodeDatasource
     from dipdup.datasources.evm_subsquid import SubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
@@ -96,6 +104,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
         HttpDatasourceConfig: HttpDatasource,
         IpfsDatasourceConfig: IpfsDatasource,
         SubsquidDatasourceConfig: SubsquidDatasource,
+        EvmNodeDatasourceConfig: EvmNodeDatasource,
     }
 
     try:

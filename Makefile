@@ -40,7 +40,7 @@ black:          ## Format with black
 	poetry run black src tests scripts
 
 ruff:           ## Lint with ruff
-	poetry run ruff check src tests scripts
+	poetry run ruff check --fix src tests scripts
 
 mypy:           ## Lint with mypy
 	poetry run mypy --strict src tests scripts
@@ -72,5 +72,15 @@ demos:          ## Recreate demos from templates
 replays:        ## Recreate replays for tests
 	rm -r tests/replays/*
 	make test
+
+##
+
+DEMO="demo-evm-events"
+
+demo_run:
+	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" run | tee ${DEMO}.log
+
+demo_init:
+	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
 
 ##

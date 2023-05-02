@@ -12,6 +12,8 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.models import SkipHistory
+from dipdup.models.tezos_tzkt import BigMapSubscription
+from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -83,6 +85,16 @@ class TzktBigMapsIndexConfig(TzktIndexConfig):
     @property
     def contracts(self) -> set[ContractConfig]:
         return {handler_config.contract for handler_config in self.handlers}
+
+    def get_subscriptions(self) -> set[Subscription]:
+        subs = super().get_subscriptions()
+        if self.datasource.merge_subscriptions:
+            subs.add(BigMapSubscription())
+        else:
+            for handler_config in self.handlers:
+                address, path = handler_config.contract.address, handler_config.path
+                subs.add(BigMapSubscription(address=address, path=path))
+        return subs
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:

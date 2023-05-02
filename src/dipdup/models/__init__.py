@@ -51,6 +51,66 @@ tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ign
 tortoise.fields.TextField.indexable = True
 
 
+EnumFieldT = TypeVar('EnumFieldT', bound=Enum)
+
+
+class EnumField(fields.Field[EnumFieldT]):
+    """Like CharEnumField but without max_size and additional validation"""
+
+    indexable = True
+    SQL_TYPE = 'TEXT'
+
+    def __init__(
+        self,
+        enum_type: type[EnumFieldT],
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.enum_type = enum_type
+
+    def to_db_value(
+        self,
+        value: Enum | str | None,
+        instance: type[TortoiseModel] | TortoiseModel,
+    ) -> str | None:
+        if isinstance(value, self.enum_type):
+            return value.value  # type: ignore[no-any-return]
+        if isinstance(value, str):
+            return value
+        if value is None:
+            return None
+        raise FrameworkException(f'Invalid enum value: {value}')
+
+    def to_python_value(
+        self,
+        value: Enum | str | None,
+    ) -> Enum | None:
+        if isinstance(value, str):
+            return self.enum_type(value)
+        if isinstance(value, self.enum_type):
+            return value
+        if value is None:
+            return None
+        raise FrameworkException(f'Invalid enum value: {value}')
+
+
+class ArrayField(fields.Field[list[str]]):
+    SQL_TYPE = 'TEXT'
+
+    def to_db_value(
+        self,
+        value: list[str],
+        instance: type[TortoiseModel] | TortoiseModel,
+    ) -> str | None:
+        return orjson.dumps(value).decode()
+
+    def to_python_value(self, value: str | list[str]) -> list[str] | None:
+        if isinstance(value, str):
+            array = orjson.loads(value)
+            return [str(x) for x in array]
+        return value
+
+
 def json_dumps_decimals(obj: Any) -> str:
     def _default(obj: Any) -> Any:
         if isinstance(obj, Decimal):
@@ -71,6 +131,10 @@ class IndexType(Enum):
     tezos_tzkt_events = 'tezos.tzkt.events'
     evm_subsquid_operations = 'evm.subsquid.operations'
     evm_subsquid_events = 'evm.subsquid.events'
+
+
+class MessageType:
+    value: str
 
 
 class IndexStatus(Enum):
@@ -153,7 +217,7 @@ class ModelUpdate(TortoiseModel):
     level = fields.IntField()
     index = fields.TextField()
 
-    action = fields.CharEnumField(ModelUpdateAction)
+    action = EnumField(ModelUpdateAction)
     data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -520,7 +584,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 class Schema(TortoiseModel):
     name = fields.TextField(pk=True)
     hash = fields.TextField(null=True)
-    reindex = fields.CharEnumField(ReindexingReason, max_length=40, null=True)
+    reindex = EnumField(ReindexingReason, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -544,10 +608,10 @@ class Head(TortoiseModel):
 
 class Index(TortoiseModel):
     name = fields.TextField(pk=True)
-    type = fields.CharEnumField(IndexType)
-    status = fields.CharEnumField(IndexStatus, default=IndexStatus.new)
+    type = EnumField(IndexType)
+    status = EnumField(IndexStatus, default=IndexStatus.new)
 
-    config_hash = fields.TextField()
+    config_hash = fields.TextField(null=True)
     template = fields.TextField(null=True)
     template_values: Dict[str, Any] = fields.JSONField(null=True)
 
@@ -560,11 +624,19 @@ class Index(TortoiseModel):
         table = 'dipdup_index'
 
 
+class ContractKind(Enum):
+    """Mapping for contract kind in"""
+
+    TEZOS = 'tezos'
+    EVM = 'evm'
+
+
 class Contract(TortoiseModel):
     name = fields.TextField(pk=True)
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
     typename = fields.TextField(null=True)
+    kind = EnumField(ContractKind)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
