@@ -9,13 +9,17 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
+from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
+from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -250,6 +254,20 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
     first_level: int = 0
     last_level: int = 0
 
+    def get_subscriptions(self) -> set[Subscription]:
+        subs = super().get_subscriptions()
+        if TzktOperationType.transaction in self.types:
+            if self.datasource.merge_subscriptions:
+                subs.add(TransactionSubscription())
+            else:
+                for contract_config in self.contracts:
+                    if not isinstance(contract_config, ContractConfig):
+                        raise ConfigInitializationException
+                    subs.add(TransactionSubscription(address=contract_config.address))
+        if TzktOperationType.origination in self.types:
+            subs.add(OriginationSubscription())
+        return subs
+
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
         super().strip(config_dict)
@@ -332,6 +350,11 @@ class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
+
+    def get_subscriptions(self) -> set[Subscription]:
+        subs = super().get_subscriptions()
+        subs.add(TransactionSubscription())
+        return subs
 
 
 TzktOperationsHandlerConfigU = TzktOperationsHandlerConfig | OperationUnfilteredHandlerConfig

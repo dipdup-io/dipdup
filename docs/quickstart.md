@@ -105,7 +105,7 @@ demo_token
 That's a lot of files and directories! But don't worry, we will need only `models.py` and `handlers` modules in this guide.
 
 ```admonish info title="See Also"
-* {{ #summary getting-started/project-structure.md}}
+* {{ #summary getting-started/project-package.md}}
 * {{ #summary cli-reference.md#init}}
 ```
 

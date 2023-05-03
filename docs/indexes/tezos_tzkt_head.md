@@ -1,4 +1,4 @@
-# `head` index
+# `tezos.tzkt.head` index
 
 This very simple index provides metadata of the latest block when it's baked. Only realtime data is processed; the synchronization stage is skipped for this index.
 

@@ -7,6 +7,8 @@ from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions import Subscription
 
 TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
@@ -28,6 +30,8 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
     :param url: Base API URL, e.g. https://api.tzkt.io/
     :param http: HTTP client configuration
     :param buffer_size: Number of levels to keep in FIFO buffer before processing
+    :param merge_subscriptions: Whether to merge realtime subscriptions
+    :param rollback_depth: Number of blocks to keep in the database to handle reorgs
     """
 
     kind: Literal['tezos.tzkt']
@@ -35,12 +39,12 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
     http: HttpConfig | None = None
     buffer_size: int = 0
     merge_subscriptions: bool = False
+    rollback_depth: int = 2
 
     def __post_init_post_parse__(self) -> None:
         super().__post_init_post_parse__()
         self.url = self.url.rstrip('/')
 
-        # NOTE: Is is possible to increase limits in TzKT? Anyway, I don't think anyone will ever need it.
         limit = MAX_BATCH_SIZE
         if self.http and self.http.batch_size and self.http.batch_size > limit:
             raise ConfigurationError(f'`batch_size` must be less than {limit}')
@@ -55,3 +59,6 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
 @dataclass
 class TzktIndexConfig(IndexConfig):
     datasource: TzktDatasourceConfig
+
+    def get_subscriptions(self) -> set[Subscription]:
+        return {HeadSubscription()}

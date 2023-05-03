@@ -13,6 +13,7 @@ from pprint import pformat
 from typing import Any
 from typing import Awaitable
 from typing import Iterator
+from typing import Literal
 from typing import TypeVar
 from typing import cast
 
@@ -20,12 +21,14 @@ from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -42,6 +45,7 @@ from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -241,6 +245,7 @@ class DipDupContext:
 
     async def add_contract(
         self,
+        kind: Literal['tezos'] | Literal['evm'],
         name: str,
         address: str | None = None,
         typename: str | None = None,
@@ -252,8 +257,9 @@ class DipDupContext:
         :param address: Contract address
         :param typename: Alias for the contract script
         :param code_hash: Contract code hash
+        :param kind: Either 'tezos' or 'evm' allowed
         """
-        self.logger.info('Creating contract `%s` with typename `%s`', name, typename)
+        self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
 
         if name in self.config.contracts:
@@ -269,21 +275,35 @@ class DipDupContext:
                 raise ContractAlreadyExistsError(code_hashes[code_hash])
             code_hashes[code_hash] = name
 
-        contract_config = TezosContractConfig(
-            kind='tezos',
-            address=address,
-            code_hash=code_hash,
-            typename=typename,
-        )
+        contract_config: ContractConfigU
+        if kind == 'tezos':
+            contract_config = TezosContractConfig(
+                kind=kind,
+                address=address,
+                code_hash=code_hash,
+                typename=typename,
+            )
+        elif kind == 'evm':
+            contract_config = EvmContractConfig(
+                kind=kind,
+                address=address,
+                typename=typename,
+            )
+        else:
+            raise NotImplementedError(kind)
+
         contract_config._name = name
         self.config.contracts[name] = contract_config
+        if isinstance(contract_config, TezosContractConfig):
+            code_hash = contract_config.code_hash
 
         with suppress(OperationalError):
             await Contract(
                 name=contract_config.name,
                 address=contract_config.address,
-                code_hash=contract_config.code_hash,
                 typename=contract_config.typename,
+                code_hash=code_hash,
+                kind=kind,
             ).save()
 
     async def add_index(
@@ -319,6 +339,7 @@ class DipDupContext:
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
+        node_datasource: EvmNodeDatasource | None = None
 
         if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
             datasource = self.get_tzkt_datasource(datasource_name)
@@ -337,15 +358,19 @@ class DipDupContext:
             index = TzktEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
+            node_config = index_config.datasource.node
+            if node_config:
+                node_datasource = self.get_evm_node_datasource(node_config.name)
             index = SubsquidEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            datasource = self.get_subsquid_datasource(datasource_name)
-            # index = SubsquidOperationsIndex(self, index_config, datasource)
             raise NotImplementedError
         else:
             raise NotImplementedError
 
-        await datasource.add_index(index_config)
+        datasource.add_index(index_config)
+        if node_datasource:
+            node_datasource.add_index(index_config)
+
         handlers = (
             (index_config.handler_config,)
             if isinstance(index_config, TzktOperationsUnfilteredIndexConfig)
@@ -429,6 +454,10 @@ class DipDupContext:
         """Get `subsquid` datasource by name"""
         return self._get_datasource(name, SubsquidDatasource)
 
+    def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
+        """Get `subsquid` datasource by name"""
+        return self._get_datasource(name, EvmNodeDatasource)
+
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""
         return self._get_datasource(name, CoinbaseDatasource)
@@ -499,7 +528,9 @@ class HookContext(DipDupContext):
         self.logger.info('Rolling back `%s`: %s -> %s', index, from_level, to_level)
         if from_level <= to_level:
             raise FrameworkException(f'Attempt to rollback in future: {from_level} <= {to_level}')
-        if from_level - to_level > self.config.advanced.rollback_depth:
+
+        rollback_depth = self.config.advanced.rollback_depth_int
+        if from_level - to_level > rollback_depth:
             # TODO: Need more context
             await self.reindex(ReindexingReason.rollback)
 
@@ -588,6 +619,7 @@ class HandlerContext(DipDupContext):
         )
 
 
+# TODO: Use DipDupPackage
 class CallbackManager:
     def __init__(self, package: str) -> None:
         self._logger = logging.getLogger('dipdup.callback')
@@ -637,7 +669,7 @@ class CallbackManager:
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            fn = ctx.package.get_callback('handlers', name, name)
+            fn = ctx.package.get_callback('handlers', name, name.split('.')[-1])
             await fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
