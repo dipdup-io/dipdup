@@ -2,6 +2,7 @@
 
 DipDup uses this optional section to configure the Hasura engine to track your tables automatically.
 
+<!-- TODO: link to deployment -->
 ```yaml
 hasura:
   url: http://hasura:8080

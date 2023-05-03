@@ -4,6 +4,7 @@ DipDup generates a separate file with a callback stub for each handler in every 
 
 In the case of the `transaction` handler, the callback method signature is the following:
 
+<!-- TODO: as this doc is a page of 'getting started' i would expect some general explanation of handlers and callbacks or expand this section in core concepts -->
 <!-- FIXME: Includes -->
 
 ```python

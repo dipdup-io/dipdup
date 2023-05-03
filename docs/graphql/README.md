@@ -1,5 +1,6 @@
 # GraphQL API
 
+<!-- TODO: I think here should be an explanation of what does Hasura integration mean with link to deployment section or smth -->
 In this section, we assume you use Hasura GraphQL Engine integration to power your API.
 
 Before starting to do client integration, it's good to know the specifics of Hasura GraphQL protocol implementation and the general state of the GQL ecosystem.

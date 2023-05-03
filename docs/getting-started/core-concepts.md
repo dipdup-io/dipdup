@@ -1,5 +1,6 @@
 # Core concepts
 
+<!-- NOTE: probably move 'how it works' to the page top -->
 ## Big picture
 
 Initially, DipDup was heavily inspired by [The Graph](https://thegraph.com/) Protocol, but there are several differences. The most important one is that DipDup indexers are completely off-chain.

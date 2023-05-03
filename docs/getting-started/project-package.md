@@ -43,6 +43,8 @@ indexer
         └── storage.py
 ```
 
+
+<!-- NOTE: there was a table -->
 ## ABIs and typeclasses
 
 DipDup uses contract type information to generate dataclasses for developers to work with strictly typed data. Theses dataclasses are generated automatically from contract ABIs. In most cases, you don't need to modify them manually. The process is roughly the following:

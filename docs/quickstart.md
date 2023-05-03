@@ -169,6 +169,9 @@ dipdup run
 
 DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!
 
+<!-- TODO: write log examples indicating successful run with comments -->
+<!-- TODO: write how to check out execution result (sqlite list transactions from corresponding table) -->
+
 ```admonish info title="See Also"
 * {{ #summary cli-reference.md}}
 ```

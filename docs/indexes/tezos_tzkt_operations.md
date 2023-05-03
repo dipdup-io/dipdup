@@ -35,6 +35,9 @@ You will get slightly different callback argument types depending on whether pat
 
 ## Matching originations
 
+
+<!-- TODO: how to use originated_contract.address or originated_contract.code_hash is unclear on syntax level -->
+<!-- TODO: what source do is unclear -->
 | name                            | description                                                                                                                            | supported | typed |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |:---------:|:-----:|
 | `originated_contract.address`   | Origination of exact contract.                                                                                                         |     ✅     |   ✅   |
@@ -54,7 +57,9 @@ You will get slightly different callback argument types depending on whether pat
 
 ## Optional items
 
+<!-- NOTE: I cant understand what other originations/transactions will appear when optional is True -->
 Pattern items have `optional` field to continue matching even if this item is not found. It's usually unnecessary to match the entire operation content; you can skip external/internal calls that are not relevant. However, there is a limitation: optional items cannot be followed by operations ignored by the pattern.
+<!-- TODO: I dont get how `optional` used in example below -->
 
 ```yaml
 pattern:
