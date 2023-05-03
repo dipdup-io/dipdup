@@ -18,7 +18,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
@@ -28,7 +28,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.11,<3.12"
 
 # NOTE: Core dependencies are pinned to exact versions to avoid breaking changes
 asyncpg = "0.27.0"
@@ -94,7 +94,7 @@ extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
 flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]

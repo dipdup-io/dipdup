@@ -7,7 +7,7 @@ Some defails about the published images:
 |                         |                                                   |
 | ----------------------- |:-------------------------------------------------:|
 | Latest tag              | `dipdup/dipdup:{{ cookiecutter.dipdup_version }}` |
-| Base image              |             `python:3.10-slim-buster`             |
+| Base image              |             `python:3.11-slim-buster`             |
 | Supported architectures |                  `amd64`, `arm64`                 |
 | Size                    |                     `~ 400 MB`                    |
 | User                    |                      `dipdup`                     |
