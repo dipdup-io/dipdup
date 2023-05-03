@@ -10,7 +10,7 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 
 ```toml
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = ">=3.11,<3.12"
 dipdup = "^{{ cookiecutter.dipdup_version }}"
 ```
 
