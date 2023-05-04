@@ -27,8 +27,8 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
 
     # TODO: Quick and dirty; refactor
     inputs: tuple[tuple[str, bool], ...] = tuple(zip(event_abi.inputs, event_abi.indexed))
-    indexed_values = deque(decode_abi((k for k, v in inputs if v), indexed_bytes))
-    non_indexed_values = deque(decode_abi((k for k, v in inputs if not v), non_indexed_bytes))
+    indexed_values = deque(decode_abi([k for k, v in inputs if v], indexed_bytes))
+    non_indexed_values = deque(decode_abi([k for k, v in inputs if not v], non_indexed_bytes))
 
     values: deque[Any] = deque()
     for _, indexed in inputs:

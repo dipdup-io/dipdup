@@ -8,6 +8,7 @@ async def tick_get_or_create(tick_idx: int, pool: models.Pool, level: int) -> mo
         id=f'{pool.id}#{tick_idx}',
         defaults={
             'pool': pool,
+            'tick_idx': tick_idx,
             'created_at_timestamp': 0,  # TODO
             'created_at_block_number': level,
             'price0': Decimal('1.0001') ** tick_idx,

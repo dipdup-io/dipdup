@@ -20,6 +20,7 @@ class EvmContractConfig(ContractConfig):
 
     kind: Literal['evm']
     address: str | None = None
+    abi: str | None = None
     typename: str | None = None
 
     @validator('address', allow_reuse=True)
