@@ -916,8 +916,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            for handler_config in index_config.handlers:
-                handler_config.parent = index_config
+            index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:

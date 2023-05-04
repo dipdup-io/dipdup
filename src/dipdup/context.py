@@ -373,7 +373,7 @@ class DipDupContext:
 
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig)
+            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig))
             else index_config.handlers
         )
         for handler_config in handlers:
