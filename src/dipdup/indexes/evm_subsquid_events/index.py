@@ -134,22 +134,22 @@ class SubsquidEventsIndex(
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventLogFetcher:
         addresses = set()
-        topics = set()
+        topics = list()
 
         for handler_config in self._config.handlers:
             address = handler_config.contract.address
-            if address is None:
-                raise NotImplementedError
-            addresses.add(address)
+            if address is not None:
+                addresses.add(address)
+            elif handler_config.contract.abi is None:
+                raise NotImplementedError('Either contract address or ABI must be specified')
 
             event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
-            topics.add(event_abi.topic0)
+            topics.append((address, event_abi.topic0))
 
         return EventLogFetcher(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
-            addresses=addresses,
             topics=topics,
         )
 

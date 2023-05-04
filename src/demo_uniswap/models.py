@@ -81,9 +81,9 @@ class Pool(Model):
     # fee amount
     fee_tier = fields.BigIntField(default=0)
     # in range liquidity
-    liquidity = fields.BigIntField(default=0)
+    liquidity = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
     # current price tracker
-    sqrt_price = fields.BigIntField(default=0)
+    sqrt_price = fields.DecimalField(decimal_places=0, max_digits=72, default=0)
     # TODO: requires rpc calls
     # tracker for global fee growth
     # fee_growth_global_0x128 = fields.BigIntField(default=0)
@@ -136,9 +136,9 @@ class Tick(Model):
     # pointer to pool
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='ticks')
     # total liquidity pool has as tick lower or upper
-    liquidity_gross = fields.BigIntField(default=0)
+    liquidity_gross = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
     # how much liquidity changes when tick crossed
-    liquidity_net = fields.BigIntField(default=0)
+    liquidity_net = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
     # calculated price of token0 of tick within this pool - constant
     price0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # calculated price of token1 of tick within this pool - constant
@@ -164,7 +164,7 @@ class Tick(Model):
     # created block
     created_at_block_number = fields.BigIntField()
     # Fields used to help derived relationship
-    liquidity_provider_count = fields.BigIntField()  # used to detect new exchanges
+    liquidity_provider_count = fields.BigIntField(default=0)  # used to detect new exchanges
     # vars needed for fee computation
     # TODO: require rpc calls
     # fee_growth_outside_0x128 = fields.BigIntField()
@@ -190,7 +190,7 @@ class Position(Model):
         'models.Tick', related_name='positions_tick_upper', null=True
     )
     # total position liquidity
-    liquidity = fields.BigIntField(default=0)
+    liquidity = fields.DecimalField(max_digits=36, decimal_places=0, default=0)
     # amount of token 0 ever deposited to position
     deposited_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 ever deposited to position
@@ -225,7 +225,7 @@ class PositionSnapshot(Model):
     # timestamp of block in which the snap was created
     timestamp = fields.BigIntField()
     # total position liquidity
-    liquidity = fields.BigIntField(default=0)
+    liquidity = fields.DecimalField(max_digits=36, decimal_places=0, default=0)
     # amount of token 0 ever deposited to position
     deposited_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 ever deposited to position
@@ -262,7 +262,7 @@ class Mint(Model):
     # TODO: txn origin
     # origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
     # amount of liquidity minted
-    amount = fields.BigIntField()
+    amount = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
     # amount of token 0 minted
     amount0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 minted
@@ -294,7 +294,7 @@ class Burn(Model):
     # txn origin
     # origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
     # amount of liquidity burned
-    amount = fields.BigIntField()
+    amount = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
     # amount of token 0 burned
     amount0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # amount of token 1 burned
@@ -334,7 +334,7 @@ class Swap(Model):
     # derived info
     amount_usd = fields.DecimalField(decimal_places=2, max_digits=10, default=0)
     # The sqrt(price) of the pool after the swap, as a Q64.96
-    sqrt_price_x96 = fields.BigIntField()
+    sqrt_price_x96 = fields.DecimalField(decimal_places=0, max_digits=72, default=0)
     # the tick after the swap
     tick = fields.BigIntField()
     # index within the txn

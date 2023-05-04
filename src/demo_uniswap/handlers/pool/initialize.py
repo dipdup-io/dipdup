@@ -14,8 +14,8 @@ async def initialize(
     pool.tick = event.payload.tick
     await models_repo.update_pool(pool)
 
-    token0 = await models_repo.get_token(pool.token0.id)
-    token1 = await models_repo.get_token(pool.token1.id)
+    token0 = await models_repo.get_token(pool.token0_id)
+    token1 = await models_repo.get_token(pool.token1_id)
     token0.derived_eth = await token_derive_eth(token0)
     token1.derived_eth = await token_derive_eth(token1)
     await models_repo.update_tokens(token0, token1)

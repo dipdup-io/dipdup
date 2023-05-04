@@ -16,8 +16,8 @@ class PoolUpdateSign:
 async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | SubsquidEvent[Mint], sign: int) -> None:
     factory = await models_repo.get_ctx_factory(ctx)
     pool = await models_repo.get_pool(event.data.address)
-    token0 = await models_repo.get_token(pool.token0.id)
-    token1 = await models_repo.get_token(pool.token1.id)
+    token0 = await models_repo.get_token(pool.token0_id)
+    token1 = await models_repo.get_token(pool.token1_id)
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
@@ -59,6 +59,7 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
     tx_defaults = {
         'id': f'{event.data.transaction_hash}#{pool.tx_count}',
         'transaction_hash': event.data.transaction_hash,
+        'timestamp': 0,  # FIXME
         'pool': pool,
         'token0': token0,
         'token1': token1,

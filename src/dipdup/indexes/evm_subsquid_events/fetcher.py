@@ -17,14 +17,12 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         datasource: SubsquidDatasource,
         first_level: int,
         last_level: int,
-        addresses: set[str],
-        topics: set[str],
+        topics: list[tuple[str, str]],
     ) -> None:
         self._logger = logging.getLogger('dipdup.subsquid')
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level
-        self._addresses = addresses
         self._topics = topics
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[SubsquidEventData, ...]], None]:
@@ -33,7 +31,6 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
         """
         event_iter = self._datasource.iter_event_logs(
-            self._addresses,
             self._topics,
             self._first_level,
             self._last_level,
