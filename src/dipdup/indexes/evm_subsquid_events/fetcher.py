@@ -17,7 +17,7 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         datasource: SubsquidDatasource,
         first_level: int,
         last_level: int,
-        topics: list[tuple[str, str]],
+        topics: list[tuple[str | None, str]],
     ) -> None:
         self._logger = logging.getLogger('dipdup.subsquid')
         self._datasource = datasource

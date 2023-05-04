@@ -95,9 +95,9 @@ async def swap(
     pool.tx_count += 1
 
     # Update the pool with the new active liquidity, price, and tick.
-    pool.liquidity = event.payload.liquidity
+    pool.liquidity = Decimal(event.payload.liquidity)
     pool.tick = int(event.payload.tick)
-    pool.sqrt_price = event.payload.sqrtPriceX96
+    pool.sqrt_price = Decimal(event.payload.sqrtPriceX96)
     pool.total_value_locked_token0 += amount0
     pool.total_value_locked_token1 += amount1
 
@@ -118,7 +118,7 @@ async def swap(
     token1.tx_count += 1
 
     # updated pool rates
-    price0, price1 = sqrt_price_x96_to_token_prices(pool.sqrt_price, token0, token1)
+    price0, price1 = sqrt_price_x96_to_token_prices(int(pool.sqrt_price), token0, token1)
     pool.token0_price = price0
     pool.token1_price = price1
     await models_repo.update_pool(pool)

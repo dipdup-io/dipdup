@@ -1,11 +1,11 @@
 import asyncio
 import zipfile
+from collections import defaultdict
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
 from typing import TypedDict
 from typing import cast
-from collections import defaultdict
 
 import pyarrow.ipc  # type: ignore[import]
 from typing_extensions import NotRequired
@@ -88,7 +88,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def iter_event_logs(
         self,
-        topics: list[tuple[str, str]],
+        topics: list[tuple[str | None, str]],
         first_level: int,
         last_level: int,
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
@@ -114,10 +114,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
         while current_level <= last_level:
             query: Query = {
-                'logs': [
-                    make_log_filter(address, topics)
-                    for address, topics in topics_by_address.items()
-                ],
+                'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }

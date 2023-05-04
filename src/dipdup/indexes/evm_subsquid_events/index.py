@@ -134,7 +134,7 @@ class SubsquidEventsIndex(
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventLogFetcher:
         addresses = set()
-        topics = list()
+        topics = []
 
         for handler_config in self._config.handlers:
             address = handler_config.contract.address

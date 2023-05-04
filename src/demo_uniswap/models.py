@@ -128,6 +128,9 @@ class Pool(Model):
     # Fields used to help derived relationship
     liquidity_provider_count = fields.BigIntField(default=0)  # used to detect new exchanges
 
+    token0_id: str
+    token1_id: str
+
 
 class Tick(Model):
     id = fields.TextField(pk=True)
