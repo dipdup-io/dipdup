@@ -4,7 +4,7 @@ This page covers the installation of DipDup in different environments.
 
 ## Host requirements
 
-A *Linux*/*MacOS* environment with *Python 3.10* installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.
+A *Linux*/*MacOS* environment with *Python 3.11* installed is required to use DipDup. Other UNIX-like systems should work but are not supported officially.
 
 Minimum hardware requirements are *256 MB RAM*, *1 CPU core*, and some disk space for the database. RAM requirements increase with the number of indexes.
 
@@ -45,7 +45,7 @@ python -m venv .venv
 pip install dipdup
 
 # or Poetry
-poetry init --python ">=3.10,<3.11"
+poetry init --python ">=3.11,<3.12"
 poetry add dipdup
 poetry shell
 ```
