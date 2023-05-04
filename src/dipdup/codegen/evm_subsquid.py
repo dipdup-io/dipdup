@@ -151,8 +151,13 @@ class SubsquidCodeGenerator(CodeGenerator):
             if abi_path.exists():
                 continue
 
-            address = handler_config.contract.address
-            if address is None:
+            if handler_config.contract.abi:
+                # TODO: handle path / url to abi file if necessary
+                # abi_json = await resolve(handler_config.contract.abi)
+                address = handler_config.contract.abi
+            elif handler_config.contract.address:
+                address = handler_config.contract.address
+            else:
                 raise NotImplementedError
 
             for datasource_config in datasource_configs:

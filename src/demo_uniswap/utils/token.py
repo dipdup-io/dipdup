@@ -160,7 +160,7 @@ async def token_derive_eth(token: models.Token) -> Decimal:
     eth_usd = await models_repo.get_eth_usd_rate()
 
     if token.id in STABLE_COINS:
-        return Decimal(1) / eth_usd
+        return Decimal(1) / eth_usd if eth_usd else Decimal()
 
     largest_liquidity_eth = Decimal()
     price_so_far = Decimal()
@@ -171,14 +171,14 @@ async def token_derive_eth(token: models.Token) -> Decimal:
             continue
 
         if token.id == pool.token0:
-            other_token = await models_repo.get_token(pool.token1.id)
+            other_token = await models_repo.get_token(pool.token1_id)
             eth_locked = pool.total_value_locked_token1 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked
                 price_so_far = pool.token1_price * other_token.derived_eth
 
         elif token.id == pool.token1:
-            other_token = await models_repo.get_token(pool.token0.id)
+            other_token = await models_repo.get_token(pool.token0_id)
             eth_locked = pool.total_value_locked_token0 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked

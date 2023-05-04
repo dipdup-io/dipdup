@@ -20,7 +20,7 @@ class ModelsRepo:
 
     async def get_factory(self, factory_address: str) -> models.Factory:
         if factory_address not in self._factories:
-            self._pools[factory_address] = await models.Pool.get(id=factory_address)
+            self._factories[factory_address] = await models.Factory.get(id=factory_address)
         return self._factories[factory_address]
 
     async def update_factory(self, factory: models.Factory) -> None:

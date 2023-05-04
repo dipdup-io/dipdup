@@ -51,8 +51,8 @@ async def swap(
 ) -> None:
     factory = await models_repo.get_ctx_factory(ctx)
     pool = await models_repo.get_pool(event.data.address)
-    token0 = await models_repo.get_token(pool.token0.id)
-    token1 = await models_repo.get_token(pool.token1.id)
+    token0 = await models_repo.get_token(pool.token0_id)
+    token1 = await models_repo.get_token(pool.token1_id)
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
@@ -68,7 +68,7 @@ async def swap(
 
     # get amount that should be tracked only - div 2 because can't count both input and output as volume
     amount_total_usd_tracked = get_tracked_amount_usd(token0, token1, amount0_abs, amount1_abs, eth_usd) / Decimal('2')
-    amount_total_eth_tracked = amount_total_usd_tracked / eth_usd
+    amount_total_eth_tracked = amount_total_usd_tracked / eth_usd if eth_usd else Decimal()
     amount_total_usd_untracked = (amount0_usd + amount1_usd) / Decimal('2')
 
     fees_eth = amount_total_eth_tracked * pool.fee_tier / Decimal('1000000')
@@ -95,9 +95,9 @@ async def swap(
     pool.tx_count += 1
 
     # Update the pool with the new active liquidity, price, and tick.
-    pool.liquidity = event.payload.liquidity
+    pool.liquidity = Decimal(event.payload.liquidity)
     pool.tick = int(event.payload.tick)
-    pool.sqrt_price = event.payload.sqrtPriceX96
+    pool.sqrt_price = Decimal(event.payload.sqrtPriceX96)
     pool.total_value_locked_token0 += amount0
     pool.total_value_locked_token1 += amount1
 
@@ -118,7 +118,7 @@ async def swap(
     token1.tx_count += 1
 
     # updated pool rates
-    price0, price1 = sqrt_price_x96_to_token_prices(pool.sqrt_price, token0, token1)
+    price0, price1 = sqrt_price_x96_to_token_prices(int(pool.sqrt_price), token0, token1)
     pool.token0_price = price0
     pool.token1_price = price1
     await models_repo.update_pool(pool)
@@ -143,12 +143,15 @@ async def swap(
     token1.total_value_locked_usd = token1.total_value_locked * token1.derived_eth * eth_usd
 
     swap_tx = await models.Swap.create(
-        id=f'{event.data.transaction_hash}#{pool.tx_count}',
+        id=f'{event.data.transaction_hash}#{event.data.index}',
         transaction_hash=event.data.transaction_hash,
         pool=pool,
         token0=token0,
         token1=token1,
         sender=event.payload.sender,
+        recipient=event.payload.recipient,
+        origin=event.payload.sender,  # FIXME: transaction origin
+        timestamp=0,  # TODO
         amount0=amount0,
         amount1=amount1,
         amount_usd=amount_total_usd_tracked,

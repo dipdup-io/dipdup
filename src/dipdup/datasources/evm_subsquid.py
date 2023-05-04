@@ -1,5 +1,6 @@
 import asyncio
 import zipfile
+from collections import defaultdict
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
@@ -87,22 +88,33 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def iter_event_logs(
         self,
-        addresses: set[str],
-        topics: set[str],
+        topics: list[tuple[str | None, str]],
         first_level: int,
         last_level: int,
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
         current_level = first_level
 
+        # TODO: smarter query optimizator
+        topics_by_address = defaultdict(list)
+        for address, topic in topics:
+            topics_by_address[address].append(topic)
+
+        def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
+            if address is None:
+                return {
+                    'topics': [topics],
+                    'fieldSelection': _log_fields,
+                }
+            else:
+                return {
+                    'address': [address],
+                    'topics': [topics],
+                    'fieldSelection': _log_fields,
+                }
+
         while current_level <= last_level:
             query: Query = {
-                'logs': [
-                    {
-                        'address': list(addresses or ()),
-                        'topics': [list(topics or ())],
-                        'fieldSelection': _log_fields,
-                    }
-                ],
+                'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }

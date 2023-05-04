@@ -64,17 +64,17 @@ async def pool_created(
         token1_id=event.payload.token1,
     )
     await models_repo.update_pool(pool)
-
-    name = f'{token0.symbol.lower()}_{token1.symbol.lower()}#{pool.id[-6:]}'
-    await ctx.add_contract(
-        name=name,
-        address=pool.id,
-        typename='pool',
-        kind='evm',
-    )
-    await ctx.add_index(
-        name=f'pool#{name}',
-        template='uniswap_v3_pool',
-        values={'datasource': ctx.datasource.name, 'pool': name},
-        first_level=event.data.level - 1,  # FIXME: ?
-    )
+    #
+    # name = f'{token0.symbol.lower()}_{token1.symbol.lower()}#{pool.id[-6:]}'
+    # await ctx.add_contract(
+    #     name=name,
+    #     address=pool.id,
+    #     typename='pool',
+    #     kind='evm',
+    # )
+    # await ctx.add_index(
+    #     name=f'pool#{name}',
+    #     template='uniswap_v3_pool',
+    #     values={'datasource': ctx.datasource.name, 'pool': name},
+    #     first_level=event.data.level - 1,  # FIXME: ?
+    # )

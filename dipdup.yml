@@ -2,10 +2,10 @@ spec_version: 2.0
 package: demo_uniswap
 
 database:
-  # kind: sqlite
-  # path: demo-uniswap.sqlite3
-  kind: postgres
-  host: 172.240.0.3
+  kind: sqlite
+  path: demo-uniswap.sqlite3
+  # kind: postgres
+  # host: 172.240.0.3
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -31,7 +31,7 @@ contracts:
     typename: position_manager
   pool:
     kind: evm
-    address: 0x7668B2Ea8490955F68F5c33E77FE150066c94fb9
+    abi: 0x7668B2Ea8490955F68F5c33E77FE150066c94fb9
     typename: pool
 
 templates:
@@ -54,25 +54,20 @@ templates:
       - callback: position_manager.transfer
         contract: position_manager
         name: Transfer
-
-  uniswap_v3_pool:
-    kind: evm.subsquid.events
-    datasource: <datasource>
-    handlers:
       - callback: pool.initialize
-        contract: <pool>
+        contract: pool
         name: Initialize
       - callback: pool.swap
-        contract: <pool>
+        contract: pool
         name: Swap
       - callback: pool.mint
-        contract: <pool>
+        contract: pool
         name: Mint
       - callback: pool.burn
-        contract: <pool>
+        contract: pool
         name: Burn
       - callback: pool.flash
-        contract: <pool>
+        contract: pool
         name: Flash
 
 indexes:
@@ -81,15 +76,6 @@ indexes:
     values:
       datasource: mainnet_subsquid
     first_level: 12369621
-    # first_level: 17069621
-
-  # pool_example:
-  #   template: uniswap_v3_pool
-  #   values:
-  #     datasource: mainnet_subsquid
-  #     pool: pool
-  #   first_level: 12369621
-
 
 advanced:
   early_realtime: True
