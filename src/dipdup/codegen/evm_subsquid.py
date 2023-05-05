@@ -72,11 +72,11 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 name = abi_item['name']
                 if name in event_extras:
                     raise NotImplementedError('wow much overload many signatures')
+                inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
                 event_extras[name] = EventAbiExtra(
                     name=name,
                     topic0=topic_from_abi(abi_item),
-                    inputs=tuple(i['type'] for i in abi_item['inputs']),
-                    indexed=tuple(i['indexed'] for i in abi_item['inputs']),
+                    inputs=inputs,
                 )
                 if name not in events:
                     continue

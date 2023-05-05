@@ -25,8 +25,7 @@ MODELS_MODULE = 'models.py'
 class EventAbiExtra:
     name: str
     topic0: str
-    inputs: tuple[str, ...]
-    indexed: tuple[bool, ...]
+    inputs: tuple[tuple[str, bool], ...]
 
 
 class DipDupPackage:
@@ -43,10 +42,11 @@ class DipDupPackage:
         self.graphql = root / 'graphql'
         self.hasura = root / 'hasura'
 
-        self.get_callback = lru_cache(maxsize=10_000)(self.get_callback)  # type: ignore[method-assign]
-        self.get_type = lru_cache(maxsize=10_000)(self.get_type)  # type: ignore[method-assign]
-        self.get_evm_abi = lru_cache(maxsize=10_000)(self.get_evm_abi)  # type: ignore[method-assign]
-        self.get_evm_events = lru_cache(maxsize=10_000)(self.get_evm_events)  # type: ignore[method-assign]
+        self.get_callback = lru_cache(maxsize=2 ^ 13)(self.get_callback)  # type: ignore[method-assign]
+        self.get_type = lru_cache(maxsize=2 ^ 13)(self.get_type)  # type: ignore[method-assign]
+        self.get_evm_abi = lru_cache(maxsize=2 ^ 13)(self.get_evm_abi)  # type: ignore[method-assign]
+        self.get_evm_events = lru_cache(maxsize=2 ^ 13)(self.get_evm_events)  # type: ignore[method-assign]
+        self.get_evm_topics = lru_cache(maxsize=2 ^ 13)(self.get_evm_topics)  # type: ignore[method-assign]
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -107,3 +107,6 @@ class DipDupPackage:
             raise ProjectImportError(f'`{path}` does not exist')
         extra_json = orjson.loads(path.read_text())
         return {k: EventAbiExtra(**v) for k, v in extra_json.items()}
+
+    def get_evm_topics(self, typename: str) -> dict[str, str]:
+        return {k: v.topic0 for k, v in self.get_evm_events(typename).items()}

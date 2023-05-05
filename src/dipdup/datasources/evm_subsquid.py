@@ -1,6 +1,7 @@
 import asyncio
 import zipfile
 from collections import defaultdict
+from collections import deque
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
@@ -68,6 +69,16 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
+def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
+    filter_: LogFilter = {
+        'topics': [topics],
+        'fieldSelection': _log_fields,
+    }
+    if address:
+        filter_['address'] = [address]
+    return filter_
+
+
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     _default_http_config = HttpConfig()
 
@@ -99,19 +110,6 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
-        def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
-            if address is None:
-                return {
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
-            else:
-                return {
-                    'address': [address],
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
-
         while current_level <= last_level:
             query: Query = {
                 'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
@@ -128,14 +126,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             # NOTE: There's also 'archiveHeight' field, but sync level updated in the main loop
             current_level = response['nextBlock']
 
-            logs: list[SubsquidEventData] = []
             for level in response['data']:
+                logs: deque[SubsquidEventData] = deque()
                 for transaction in level:
                     for raw_log in transaction['logs']:
                         logs.append(
                             SubsquidEventData.from_json(raw_log),
                         )
-            yield tuple(logs)
+                yield tuple(logs)
 
     async def initialize(self) -> None:
         level = await self.get_head_level()

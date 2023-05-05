@@ -165,16 +165,16 @@ class IndexDispatcher:
             while not self._indexes:
                 await asyncio.sleep(5)
 
-            levels_indexed = sum(index.state.level for index in self._indexes.values()) / 1000
-            levels_total = sum(index.get_sync_level() for index in self._indexes.values()) / 1000
+            levels_indexed = sum(index.state.level for index in self._indexes.values())
+            levels_total = sum(index.get_sync_level() for index in self._indexes.values())
             levels_per_interval = levels_indexed - last_levels_indexed
             indexing_speed = levels_per_interval / update_interval
             if self._every_index_is(IndexStatus.realtime):
-                summary = f'realtime | {indexing_speed:.2f}K/s'
+                summary = f'realtime | {round(indexing_speed)} blocks/s'
             elif indexing_speed:
                 time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
                 percent = levels_indexed / levels_total * 100
-                summary = f'syncing {percent:.2f}% | {indexing_speed:.2f}K/s | {time_left}m left'
+                summary = f'syncing {percent:.2f}% | {round(indexing_speed)} blocks/s | {time_left}m left'
             else:
                 summary = 'idle | ...'
             print(summary)

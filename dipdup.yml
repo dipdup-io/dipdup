@@ -4,8 +4,7 @@ package: demo_uniswap
 database:
   kind: sqlite
   path: demo-uniswap.sqlite3
-  # kind: postgres
-  # host: 172.240.0.3
+
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -76,7 +75,9 @@ indexes:
     values:
       datasource: mainnet_subsquid
     first_level: 12369621
+    # first_level: 12369621
+    # last_level: 12379621
 
-advanced:
-  early_realtime: True
-logging: verbose
+# advanced:
+#   early_realtime: True
+# logging: verbose

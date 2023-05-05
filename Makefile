@@ -83,4 +83,10 @@ demo_run:
 demo_init:
 	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
 
+profile:
+	python tests/profile_abi_decoding.py
+
+mypyc:
+	mypyc -v src/dipdup
+
 ##
