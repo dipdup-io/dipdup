@@ -5,8 +5,10 @@ import logging
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -23,6 +25,8 @@ from dipdup.sys import set_up_process
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -46,6 +50,12 @@ def _print_help(error: Exception) -> None:
 
 
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+
+
+@dataclass
+class CLIContext:
+    config_paths: list[str]
+    config: 'DipDupConfig'
 
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
@@ -145,8 +155,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dataclasses import dataclass
-
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
@@ -172,11 +180,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
-
-    @dataclass
-    class CLIContext:
-        config_paths: list[str]
-        config: DipDupConfig
 
     ctx.obj = CLIContext(
         config_paths=config,
