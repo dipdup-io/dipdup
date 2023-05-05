@@ -66,6 +66,9 @@ from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
 
+from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
+from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
+
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -478,8 +481,6 @@ class DipDup:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
-        from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
-        from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 
         await self._create_datasources()
 

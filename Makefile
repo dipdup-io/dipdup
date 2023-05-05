@@ -86,7 +86,27 @@ demo_init:
 profile:
 	python tests/profile_abi_decoding.py
 
-mypyc:
-	mypyc -v src/dipdup
+nuitka-dipdup:
+	/usr/bin/python -m venv .venv-nuitka
+	cp -r /usr/lib/python3.11/site-packages/nuitka/ .venv-nuitka/lib/python3.11/site-packages/
+	.venv-nuitka/bin/pip install -U pip wheel setuptools ordered-set pycryptodome
+	.venv-nuitka/bin/pip install .
+
+	.venv-nuitka/bin/python -m nuitka \
+		--clang --full-compat \
+		--standalone \
+		.venv-nuitka/bin/dipdup
+	du -sh dipdup.dist/
+
+nuitka-demo:
+	.venv-nuitka/bin/python -m nuitka \
+		--clang --full-compat \
+		--module src/demo_uniswap --include-package=demo_uniswap
+
+	mv demo_uniswap.cpython-311-x86_64-linux-gnu.so dipdup.dist
+	mv demo_uniswap.pyi dipdup.dist
+
+	ln -sf '../src/demo_uniswap' dipdup.dist/demo_uniswap
+	dipdup.dist/dipdup.bin -c dipdup.yml run
 
 ##

@@ -182,8 +182,8 @@ class SubsquidEventsIndex(
         self._logger.debug('Processing contract events of level %s', batch_level)
         matched_handlers = match_events(self._ctx.package, self._config.handlers, events, topics)
 
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
+        # if Metrics.enabled:
+        #     Metrics.set_index_handlers_matched(len(matched_handlers))
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:

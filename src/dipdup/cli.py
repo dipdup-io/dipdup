@@ -16,6 +16,10 @@ from typing import TypeVar
 from typing import cast
 
 import asyncclick as click
+import click as _
+import anyio
+import web3
+import eth_abi
 
 from dipdup import __version__
 from dipdup import env
@@ -23,10 +27,15 @@ from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
 
+from dotenv import load_dotenv
+
+from dipdup.exceptions import ConfigurationError
+
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
-if TYPE_CHECKING:
-    from dipdup.config import DipDupConfig
+
+# if TYPE_CHECKING:
+#     from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -36,9 +45,9 @@ def echo(message: str) -> None:
         click.echo(message)
 
 
+from dipdup.exceptions import Error
 def _print_help(error: Exception) -> None:
     """Prints a helpful error message after the traceback"""
-    from dipdup.exceptions import Error
 
     def _print() -> None:
         if isinstance(error, Error):
@@ -58,6 +67,8 @@ class CLIContext:
     config: 'DipDupConfig'
 
 
+from dipdup.sentry import save_crashdump
+
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
     async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
@@ -68,7 +79,6 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.sentry import save_crashdump
 
             crashdump_path = save_crashdump(e)
             _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
@@ -77,6 +87,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
     return cast(WrappedCommandT, wrapper)
 
+import aiohttp
 
 async def _check_version() -> None:
     if 'rc' in __version__:
@@ -86,7 +97,6 @@ async def _check_version() -> None:
         _logger.info('Set `skip_version_check` flag in config to hide this message.')
         return
 
-    import aiohttp
 
     async with AsyncExitStack() as stack:
         stack.enter_context(suppress(Exception))
@@ -99,6 +109,11 @@ async def _check_version() -> None:
             _logger.warning('You are running an outdated version of DipDup. Please run `dipdup update`.')
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
+from dipdup.config import DipDupConfig
+# from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import InitializationRequiredError
+from dipdup.package import DipDupPackage
+from dipdup.sentry import init_sentry
 
 @click.group(context_settings={'max_content_width': 120})
 @click.version_option(__version__)
@@ -134,9 +149,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     if '--help' in args or args in (['config'], ['hasura'], ['schema']):
         return
 
-    from dotenv import load_dotenv
-
-    from dipdup.exceptions import ConfigurationError
 
     set_up_logging()
 
@@ -155,11 +167,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dipdup.config import DipDupConfig
-    from dipdup.exceptions import ConfigurationError
-    from dipdup.exceptions import InitializationRequiredError
-    from dipdup.package import DipDupPackage
-    from dipdup.sentry import init_sentry
+
 
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
@@ -195,8 +203,8 @@ async def run(ctx: click.Context) -> None:
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
-    from dipdup.config import DipDupConfig
-    from dipdup.dipdup import DipDup
+    # from dipdup.config import DipDupConfig
+    # from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
     config.initialize()
@@ -204,6 +212,8 @@ async def run(ctx: click.Context) -> None:
     dipdup = DipDup(config)
     await dipdup.run()
 
+# from dipdup.config import DipDupConfig
+from dipdup.dipdup import DipDup
 
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
@@ -215,8 +225,7 @@ async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
-    from dipdup.config import DipDupConfig
-    from dipdup.dipdup import DipDup
+
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
@@ -234,15 +243,18 @@ async def migrate(ctx: click.Context) -> None:
     """
     _logger.info('Project is already at the latest version, no further actions required')
 
+from dipdup.config import DipDupConfig
+from dipdup.database import tortoise_wrapper
+from dipdup.models import Index
+
+from tabulate import tabulate
 
 @cli.command()
 @click.pass_context
 @_cli_wrapper
 async def status(ctx: click.Context) -> None:
     """Show the current status of indexes in the database."""
-    from dipdup.config import DipDupConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.models import Index
+
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -255,7 +267,6 @@ async def status(ctx: click.Context) -> None:
             table.append(row)
 
     # NOTE: Lazy import to speed up startup
-    from tabulate import tabulate
 
     echo(tabulate(table, tablefmt='plain'))
 
@@ -268,6 +279,8 @@ async def config(ctx: click.Context) -> None:
     ...
 
 
+from dipdup.config import DipDupConfig
+
 @config.command(name='export')
 @click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
 @click.option('--full', is_flag=True, help='Resolve index templates.')
@@ -279,7 +292,6 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
-    from dipdup.config import DipDupConfig
 
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
@@ -288,6 +300,8 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
     if full:
         config.initialize()
     echo(config.dump())
+
+from dipdup.config import DipDupConfig
 
 
 @config.command(name='env')
@@ -299,7 +313,6 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 
     If variable is not set, default value will be used.
     """
-    from dipdup.config import DipDupConfig
 
     config = DipDupConfig.load(
         paths=ctx.obj.config.paths,
@@ -320,17 +333,19 @@ async def hasura(ctx: click.Context) -> None:
     ...
 
 
+from dipdup.config import DipDupConfig
+from dipdup.config import PostgresDatabaseConfig
+from dipdup.database import tortoise_wrapper
+from dipdup.exceptions import ConfigurationError
+from dipdup.hasura import HasuraGateway
+
 @hasura.command(name='configure')
 @click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @_cli_wrapper
 async def hasura_configure(ctx: click.Context, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
-    from dipdup.config import DipDupConfig
-    from dipdup.config import PostgresDatabaseConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.exceptions import ConfigurationError
-    from dipdup.hasura import HasuraGateway
+
 
     config: DipDupConfig = ctx.obj.config
     if not config.hasura:
@@ -362,15 +377,17 @@ async def schema(ctx: click.Context) -> None:
     ...
 
 
+from dipdup.config import DipDupConfig
+from dipdup.database import tortoise_wrapper
+from dipdup.models import Index
+from dipdup.models import Schema
+
 @schema.command(name='approve')
 @click.pass_context
 @_cli_wrapper
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
-    from dipdup.config import DipDupConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.models import Index
-    from dipdup.models import Schema
+
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -389,6 +406,13 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Schema approved')
 
+from tortoise import Tortoise
+
+from dipdup.config import DipDupConfig
+from dipdup.config import PostgresDatabaseConfig
+from dipdup.database import get_connection
+from dipdup.database import tortoise_wrapper
+from dipdup.database import wipe_schema
 
 @schema.command(name='wipe')
 @click.option('--immune', is_flag=True, help='Drop immune tables too.')
@@ -401,13 +425,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     WARNING: This action is irreversible! All indexed data will be lost!
     """
-    from tortoise import Tortoise
 
-    from dipdup.config import DipDupConfig
-    from dipdup.config import PostgresDatabaseConfig
-    from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
-    from dipdup.database import wipe_schema
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -442,6 +460,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     _logger.info('Schema wiped')
 
+from dipdup.config import DipDupConfig
+from dipdup.database import generate_schema
+from dipdup.database import get_connection
+from dipdup.dipdup import DipDup
 
 @schema.command(name='init')
 @click.pass_context
@@ -452,10 +474,7 @@ async def schema_init(ctx: click.Context) -> None:
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
-    from dipdup.config import DipDupConfig
-    from dipdup.database import generate_schema
-    from dipdup.database import get_connection
-    from dipdup.dipdup import DipDup
+
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -479,6 +498,14 @@ async def schema_init(ctx: click.Context) -> None:
     _logger.info('Schema initialized')
 
 
+from tortoise.utils import get_schema_sql
+
+from dipdup.config import DipDupConfig
+from dipdup.database import get_connection
+from dipdup.database import tortoise_wrapper
+from dipdup.utils import iter_files
+
+
 @schema.command(name='export')
 @click.pass_context
 @_cli_wrapper
@@ -487,12 +514,6 @@ async def schema_export(ctx: click.Context) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
-    from tortoise.utils import get_schema_sql
-
-    from dipdup.config import DipDupConfig
-    from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
-    from dipdup.utils import iter_files
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
@@ -512,6 +533,8 @@ async def schema_export(ctx: click.Context) -> None:
         echo(output)
 
 
+from dipdup.project import BaseProject
+
 @cli.command()
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
@@ -525,7 +548,6 @@ async def new(
     replay: str | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import BaseProject
 
     project = BaseProject()
     project.run(quiet, replay)

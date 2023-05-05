@@ -33,8 +33,8 @@ ObjectT = TypeVar('ObjectT', bound=BaseModel)
 _logger = logging.getLogger('dipdup')
 
 
-if TYPE_CHECKING:
-    from jinja2 import Template
+# if TYPE_CHECKING:
+from jinja2 import Template
 
 
 def load_template(*path: str) -> 'Template':

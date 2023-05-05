@@ -26,8 +26,8 @@ from dipdup.sys import is_shutting_down
 DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
 
-if TYPE_CHECKING:
-    from dipdup.config import DipDupConfig
+# if TYPE_CHECKING:
+from dipdup.config import DipDupConfig
 
 
 _logger = logging.getLogger('dipdup.sentry')

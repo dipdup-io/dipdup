@@ -188,7 +188,7 @@ class ResolvedHttpConfig:
     ratelimit_sleep: float = 5.0
     connection_limit: int = 100
     connection_timeout: int = 60
-    batch_size: int = 1000
+    batch_size: int = 10000
     replay_path: str | None = None
 
     @classmethod
