@@ -9,7 +9,7 @@ from typing import Union
 
 from eth_typing import ChecksumAddress
 from eth_utils.address import to_checksum_address
-from web3 import Web3
+from web3 import AsyncWeb3
 
 from demo_uniswap import models as models
 from demo_uniswap.utils.repo import models_repo
@@ -68,25 +68,24 @@ def convert_token_amount(amount: int, decimals: int) -> Decimal:
 
 
 class ERC20Token:
-    def __init__(self, address: ChecksumAddress, web3: Web3):
+    def __init__(self, address: ChecksumAddress, web3: AsyncWeb3):
         self.web3 = web3
         self.address = address
         self.contract = self.web3.eth.contract(address=self.address, abi=erc20_abi)
 
     @classmethod
-    def from_address(cls, token_address: Union[str, bytes], rpc_endpoint: str) -> 'ERC20Token':
-        web3 = Web3(Web3.HTTPProvider(rpc_endpoint))
+    def from_address(cls, web3: AsyncWeb3, token_address: Union[str, bytes]) -> 'ERC20Token':
         address = to_checksum_address(token_address)
         return ERC20Token(address, web3)
 
-    def get_symbol(self) -> str:
+    async def get_symbol(self) -> str:
         # FIXME: https://github.com/ethereum/web3.py/issues/2658
         with suppress(Exception):
-            return str(self.contract.functions.symbol().call())
+            return str(await self.contract.functions.symbol().call())
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
-            return contract.functions.symbol().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
+            return (await contract.functions.symbol().call()).decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -94,13 +93,13 @@ class ERC20Token:
 
         return 'unknown'
 
-    def get_name(self) -> str:
+    async def get_name(self) -> str:
         with suppress(Exception):
-            return self.contract.functions.name().call()  # type: ignore[no-any-return]
+            return await self.contract.functions.name().call()  # type: ignore[no-any-return]
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_name_bytes_abi)
-            return contract.functions.name().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
+            return (await contract.functions.name().call()).decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -108,9 +107,9 @@ class ERC20Token:
 
         return 'unknown'
 
-    def get_decimals(self) -> int:
+    async def get_decimals(self) -> int:
         with suppress(Exception):
-            return self.contract.functions.decimals().call()  # type: ignore[no-any-return]
+            return await self.contract.functions.decimals().call()  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -118,9 +117,9 @@ class ERC20Token:
 
         raise ValueError(f'Cannot get decimals for token {self.address}')
 
-    def get_total_supply(self) -> int:
-        with suppress(Exception):
-            self.contract.functions.totalSupply().call()
+    async def get_total_supply(self) -> int:
+        # with suppress(Exception):
+        #     return await self.contract.functions.totalSupply().call()
 
         return 0
 

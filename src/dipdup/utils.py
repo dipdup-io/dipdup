@@ -6,7 +6,6 @@ from collections import defaultdict
 from functools import reduce
 from logging import Logger
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import DefaultDict

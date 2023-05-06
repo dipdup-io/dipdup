@@ -86,7 +86,9 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
     finally:
         await Tortoise.close_connections()
 
+
 from dipdup.models import Model
+
 
 def is_model_class(obj: Any) -> bool:
     """Is subclass of tortoise.Model, but not the base class"""

@@ -6,7 +6,6 @@ from demo_uniswap.utils.repo import models_repo
 from demo_uniswap.utils.token import WHITELIST_TOKENS
 from demo_uniswap.utils.token import ERC20Token
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
@@ -17,17 +16,18 @@ WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 async def token_get_or_create(ctx: HandlerContext, address: str, pool_id: str) -> models.Token:
     token = await models.Token.get_or_none(id=address)
     if token is None:
-        ds = cast(EvmNodeDatasourceConfig, ctx.config.get_datasource('mainnet_node'))
-        erc20_iface = ERC20Token.from_address(address, ds.url)
+        web3 = ctx.get_evm_node_datasource('mainnet_node').web3
+        erc20_iface = ERC20Token.from_address(web3, address)
         token = models.Token(
             id=address,
-            symbol=erc20_iface.get_symbol(),
-            name=erc20_iface.get_name(),
-            decimals=erc20_iface.get_decimals(),
-            total_supply=erc20_iface.get_total_supply(),
+            symbol=await erc20_iface.get_symbol(),
+            name=await erc20_iface.get_name(),
+            decimals=await erc20_iface.get_decimals(),
+            total_supply=await erc20_iface.get_total_supply(),
             derived_eth=1 if address == WETH_ADDRESS else 0,
             whitelist_pools=[pool_id] if address in WHITELIST_TOKENS else [],
         )
+        await token.save()
     return token
 
 

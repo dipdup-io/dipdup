@@ -8,7 +8,6 @@ from contextlib import suppress
 from functools import partial
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
@@ -28,7 +27,6 @@ DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-
 
 # if TYPE_CHECKING:
 from dipdup.config import DipDupConfig
-
 
 _logger = logging.getLogger('dipdup.sentry')
 

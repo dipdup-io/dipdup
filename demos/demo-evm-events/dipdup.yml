@@ -3,7 +3,7 @@ package: demo_evm_events
 
 database:
   kind: sqlite
-  path: demo-evm-events.sqlite3
+  # path: demo-evm-events.sqlite3
 
 datasources:
   ethscan:

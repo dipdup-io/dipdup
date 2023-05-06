@@ -6,6 +6,8 @@ from typing import Callable
 from uuid import uuid4
 
 from pysignalr.messages import CompletionMessage
+from web3 import AsyncHTTPProvider
+from web3 import AsyncWeb3
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -37,6 +39,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
+        self.web3: AsyncWeb3 = AsyncWeb3(AsyncHTTPProvider(config.url))
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}

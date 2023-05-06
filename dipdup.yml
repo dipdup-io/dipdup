@@ -3,7 +3,7 @@ package: demo_uniswap
 
 database:
   kind: sqlite
-  path: demo-uniswap.sqlite3
+  # path: demo-uniswap2.sqlite3
 
 datasources:
   ethscan:

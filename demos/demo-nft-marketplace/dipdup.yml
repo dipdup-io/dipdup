@@ -3,7 +3,7 @@ package: demo_nft_marketplace
 
 database:
   kind: sqlite
-  path: demo-nft-marketplace.sqlite3
+  # path: demo-nft-marketplace.sqlite3
 
 datasources:
   tzkt_mainnet:
@@ -50,3 +50,5 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
+
+logging: quiet

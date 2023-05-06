@@ -14,6 +14,8 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
+from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
+from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -65,9 +67,6 @@ from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
-
-from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
-from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 
 
 class IndexDispatcher:

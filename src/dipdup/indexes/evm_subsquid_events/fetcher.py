@@ -1,4 +1,6 @@
+import asyncio
 import logging
+from collections import deque
 from typing import AsyncGenerator
 
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
@@ -30,10 +32,28 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
         """
+        queue: deque[tuple[int, tuple[SubsquidEventData, ...]]] = deque()
         event_iter = self._datasource.iter_event_logs(
             self._topics,
             self._first_level,
             self._last_level,
         )
-        async for level, batch in yield_by_level(event_iter):
-            yield level, batch
+
+        limit = 10_000
+
+        async def _readahead() -> None:
+            async for level, batch in yield_by_level(event_iter):
+                queue.append((level, batch))
+                while len(queue) > limit:
+                    await asyncio.sleep(1)
+
+        task = asyncio.create_task(_readahead())
+
+        while True:
+            while queue:
+                level, batch = queue.popleft()
+                yield level, batch
+            if task.done():
+                await task
+                break
+            await asyncio.sleep(1)
