@@ -365,12 +365,6 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Schema approved')
 
 
-from tortoise import Tortoise
-
-from dipdup.database import get_connection
-from dipdup.database import wipe_schema
-
-
 @schema.command(name='wipe')
 @click.option('--immune', is_flag=True, help='Drop immune tables too.')
 @click.option('--force', is_flag=True, help='Skip confirmation prompt.')
@@ -401,8 +395,12 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
             quit(0)
 
     _logger.info('Wiping schema `%s`', url)
+    from tortoise import Tortoise
+
     from dipdup.config import PostgresDatabaseConfig
+    from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
+    from dipdup.database import wipe_schema
 
     async with tortoise_wrapper(url, models):
         conn = get_connection()
@@ -419,9 +417,6 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     _logger.info('Schema wiped')
 
 
-from dipdup.database import generate_schema
-
-
 @schema.command(name='init')
 @click.pass_context
 @_cli_wrapper
@@ -431,6 +426,8 @@ async def schema_init(ctx: click.Context) -> None:
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
+    from dipdup.database import generate_schema
+    from dipdup.database import get_connection
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -455,11 +452,6 @@ async def schema_init(ctx: click.Context) -> None:
     _logger.info('Schema initialized')
 
 
-from tortoise.utils import get_schema_sql
-
-from dipdup.utils import iter_files
-
-
 @schema.command(name='export')
 @click.pass_context
 @_cli_wrapper
@@ -468,8 +460,13 @@ async def schema_export(ctx: click.Context) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
+
+    from tortoise.utils import get_schema_sql
+
     from dipdup import env
+    from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
+    from dipdup.utils import iter_files
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
