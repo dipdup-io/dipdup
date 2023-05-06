@@ -30,6 +30,15 @@ WHICH_CMDS = (
     'pyenv',
 )
 
+WELCOME_ASCII = r"""
+        ____   _         ____              
+       / __ \ (_)____   / __ \ __  __ ____ 
+      / / / // // __ \ / / / // / / // __ \
+     / /_/ // // /_/ // /_/ // /_/ // /_/ /
+    /_____//_// .___//_____/ \__,_// .___/ 
+             /_/                  /_/      
+"""
+
 
 class Colors:
     """ANSI color codes"""
@@ -82,6 +91,7 @@ class DipDupEnvironment:
 
     def refresh(self) -> None:
         if not self._quiet and not self._commands:
+            print(WELCOME_ASCII)
             print()
             print(_tab('OS:') + self._os)
             print(_tab('Arch:') + self._arch)
@@ -94,7 +104,7 @@ class DipDupEnvironment:
             if old == new:
                 continue
             self._commands[command] = new
-            self._quiet or print(_tab(command) + (new or ''))
+            self._quiet or print(_tab(f'{command}:') + (new or ''))
 
         print()
 
