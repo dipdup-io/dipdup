@@ -8,6 +8,9 @@ from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import yield_by_level
 from dipdup.models.evm_subsquid import SubsquidEventData
 
+_logger = logging.getLogger(__name__)
+_logger.setLevel(logging.DEBUG)
+
 
 class EventLogFetcher(DataFetcher[SubsquidEventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
@@ -39,21 +42,30 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
             self._last_level,
         )
 
-        limit = 10_000
+        limit = 1_000
+        has_more = asyncio.Event()
+        need_more = asyncio.Event()
 
         async def _readahead() -> None:
             async for level, batch in yield_by_level(event_iter):
                 queue.append((level, batch))
-                while len(queue) > limit:
-                    await asyncio.sleep(1)
+                has_more.set()
+
+                if len(queue) >= limit:
+                    need_more.clear()
+                    _logger.debug('%s items in queue; waiting for need_more', len(queue))
+                    await need_more.wait()
 
         task = asyncio.create_task(_readahead())
 
         while True:
             while queue:
                 level, batch = queue.popleft()
+                need_more.set()
                 yield level, batch
+            has_more.clear()
             if task.done():
                 await task
                 break
-            await asyncio.sleep(1)
+            _logger.debug('%s items in queue; waiting for has_more', len(queue))
+            await has_more.wait()
