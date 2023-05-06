@@ -5,7 +5,7 @@ from typing import AsyncGenerator
 
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
-from dipdup.fetcher import yield_by_level
+from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktEventData
 
 
@@ -40,5 +40,5 @@ class EventFetcher(DataFetcher[TzktEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in yield_by_level(event_iter):
+        async for level, batch in readahead_by_level(event_iter):
             yield level, batch

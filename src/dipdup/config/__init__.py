@@ -188,7 +188,7 @@ class ResolvedHttpConfig:
     ratelimit_sleep: float = 5.0
     connection_limit: int = 100
     connection_timeout: int = 60
-    batch_size: int = 10000
+    batch_size: int = 10_000
     replay_path: str | None = None
 
     @classmethod
@@ -1072,3 +1072,5 @@ _original_to_aliased = {
     'EvmNodeDatasourceConfig | None': 'str | EvmNodeDatasourceConfig | None',
 }
 _patch_annotations(_original_to_aliased)
+
+# port: 46339 or (call INDEX for stats!)

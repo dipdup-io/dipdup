@@ -51,4 +51,4 @@ indexes:
             destination: HEN_minter
             entrypoint: collect
 
-logging: quiet
+logging: verbose

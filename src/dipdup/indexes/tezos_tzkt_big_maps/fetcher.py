@@ -8,7 +8,7 @@ from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
-from dipdup.fetcher import yield_by_level
+from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktBigMapData
 
 
@@ -89,5 +89,5 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in yield_by_level(big_map_iter):
+        async for level, batch in readahead_by_level(big_map_iter):
             yield level, batch

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
@@ -12,6 +14,9 @@ from typing import Protocol
 from typing import TypeVar
 
 from dipdup.datasources import IndexDatasource
+
+_logger = logging.getLogger('dipdup.fetcher')
+_logger.setLevel(logging.DEBUG)
 
 
 class HasLevel(Protocol):
@@ -46,6 +51,39 @@ async def yield_by_level(
 
     if items:
         yield items[0].level, items
+
+
+async def readahead_by_level(
+    fetcher_iter: AsyncIterator[tuple[FetcherBufferT, ...]],
+    limit: int = 1_000,
+) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+    queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
+    has_more = asyncio.Event()
+    need_more = asyncio.Event()
+
+    async def _readahead() -> None:
+        async for level, batch in yield_by_level(fetcher_iter):
+            queue.append((level, batch))
+            has_more.set()
+
+            if len(queue) >= limit:
+                need_more.clear()
+                _logger.debug('%s items in queue; waiting for need_more', len(queue))
+                await need_more.wait()
+
+    task = asyncio.create_task(_readahead())
+
+    while True:
+        while queue:
+            level, batch = queue.popleft()
+            need_more.set()
+            yield level, batch
+        has_more.clear()
+        if task.done():
+            await task
+            break
+        _logger.debug('%s items in queue; waiting for has_more', len(queue))
+        await has_more.wait()
 
 
 class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
