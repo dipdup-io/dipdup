@@ -37,12 +37,14 @@ def create_venv() -> None:
     srun(_venv_pip, 'install', '.')
 
 
-def build_dipdup() -> None:
+def compile_dipdup() -> None:
+    create_venv()
     srun(*_nuitka_standalone, _venv_dipdup)
     srun('du', '-sh', 'dipdup.dist/')
 
 
-def build_project(name: str, site_packages: bool = False) -> None:
+def compile_project(name: str, site_packages: bool = False) -> None:
+    create_venv()
     prefix = _venv_site_packages if site_packages else Path('src/')
     srun('rm', '-rf', f'dipdup.dist/{name}*')
     srun(
@@ -65,24 +67,3 @@ def build_project(name: str, site_packages: bool = False) -> None:
     if not site_packages:
         for dir in ('abi', 'sql', 'graphql', 'hasura'):
             srun('cp', '-r', f'{prefix}/{name}/{dir}', f'dipdup.dist/{name}/')
-
-
-def build_eth_hash() -> None:
-    build_project('eth_hash', site_packages=True)
-
-
-import sys
-
-args = sys.argv[1:]
-if len(args) == 0:
-    print('Usage: python dipdup_build.py create_venv|build_dipdup|build_project|missing_dirs')
-elif args[0] == 'create_venv':
-    create_venv()
-elif args[0] == 'build_dipdup':
-    build_dipdup()
-elif args[0] == 'build_project':
-    build_project(args[1])
-elif args[0] == 'build_eth_hash':
-    build_eth_hash()
-else:
-    print('Usage: python dipdup_build.py create_venv|build_dipdup|build_project|missing_dirs')

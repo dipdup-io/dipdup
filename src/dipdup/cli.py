@@ -591,3 +591,32 @@ async def self_update(
     import dipdup.install
 
     dipdup.install.install(quiet, force, None, None)
+
+
+@self.command(name='compile')
+@click.pass_context
+@_cli_wrapper
+async def self_compile(
+    ctx: click.Context,
+) -> None:
+    """Compile DipDup contracts."""
+    import dipdup.compile
+
+    dipdup.compile.compile_dipdup()
+
+
+@self.command(name='compile-project')
+@click.pass_context
+@click.argument('name', type=str)
+@click.option('--site-packages', is_flag=True, help='Use site-packages instead of venv.')
+@_cli_wrapper
+async def self_compile_project(
+    ctx: click.Context,
+    name: str,
+    site_packages: bool,
+) -> None:
+    """Compile DipDup project"""
+    import dipdup.compile
+
+    dipdup.compile.compile_project(name, site_packages)
+    dipdup.compile.compile_project(name, site_packages)
