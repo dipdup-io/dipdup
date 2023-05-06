@@ -121,7 +121,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     """
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']):
+    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] == 'self':
         return
 
     from dotenv import load_dotenv
@@ -529,14 +529,22 @@ async def new(
     project.render(force)
 
 
-@cli.command()
+@cli.group()
+@click.pass_context
+@_cli_wrapper
+async def self(ctx: click.Context) -> None:
+    """Commands to manage local DipDup installation."""
+    ...
+
+
+@self.command(name='install')
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
 @click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
 @_cli_wrapper
-async def install(
+async def self_install(
     ctx: click.Context,
     quiet: bool,
     force: bool,
@@ -549,11 +557,11 @@ async def install(
     dipdup.install.install(quiet, force, ref, path)
 
 
-@cli.command()
+@self.command(name='uninstall')
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @_cli_wrapper
-async def uninstall(
+async def self_uninstall(
     ctx: click.Context,
     quiet: bool,
 ) -> None:
@@ -563,12 +571,12 @@ async def uninstall(
     dipdup.install.uninstall(quiet)
 
 
-@cli.command()
+@self.command(name='update')
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
 @_cli_wrapper
-async def update(
+async def self_update(
     ctx: click.Context,
     quiet: bool,
     force: bool,
