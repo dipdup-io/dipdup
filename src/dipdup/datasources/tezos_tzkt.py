@@ -21,13 +21,13 @@ from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
 from dipdup.config import HttpConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import Head
+from dipdup.models import MessageType
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
@@ -36,8 +36,8 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
+from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.subscriptions import Subscription
 from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
@@ -114,10 +114,11 @@ OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]],
 TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
 BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
 EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
-RollbackCallback = Callable[['TzktDatasource', TzktMessageType, int, int], Awaitable[None]]
+# TODO: move somewhere
+RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
 
-class TzktTzktMessageType(Enum):
+class TzktMessageAction(Enum):
     STATE = 0
     DATA = 1
     REORG = 2
@@ -257,6 +258,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     def request_limit(self) -> int:
         return self._http_config.batch_size
 
+    # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
         signalr_client = self._get_signalr_client()
@@ -341,7 +343,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         for fn in self._on_events_callbacks:
             await fn(self, events)
 
-    async def emit_rollback(self, type_: TzktMessageType, from_level: int, to_level: int) -> None:
+    async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback_callbacks:
             await fn(self, type_, from_level, to_level)
 
@@ -934,22 +936,19 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ):
             yield batch
 
-    async def add_index(self, index_config: ResolvedIndexConfigU) -> None:
-        """Register index config in internal mappings and matchers. Find and register subscriptions."""
-        for subscription in index_config.subscriptions:
-            self._subscriptions.add(subscription)
-
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
         if not missing_subscriptions:
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
-        tasks = (self._subscribe(subscription) for subscription in missing_subscriptions)
-        await asyncio.gather(*tasks)
+        for subscription in missing_subscriptions:
+            if not isinstance(subscription, TzktSubscription):
+                raise FrameworkException(f'Expected TzktSubscription, got {subscription}')
+            await self._subscribe(subscription)
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
-    async def _subscribe(self, subscription: Subscription) -> None:
+    async def _subscribe(self, subscription: TzktSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         method = subscription.method
         request: list[dict[str, Any]] = subscription.get_request()
@@ -1093,9 +1092,9 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
-            tzkt_type = TzktTzktMessageType(item['type'])
+            action = TzktMessageAction(item['type'])
             # NOTE: Legacy, sync level returned by TzKT during negotiation
-            if tzkt_type == TzktTzktMessageType.STATE:
+            if action == TzktMessageAction.STATE:
                 continue
 
             message_level = item['state']
@@ -1105,17 +1104,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             self._logger.info(
                 'Realtime message received: %s, %s, %s -> %s',
                 type_.value,
-                tzkt_type.name,
+                action.name,
                 channel_level,
                 message_level,
             )
 
             # NOTE: Put data messages to buffer by level
-            if tzkt_type == TzktTzktMessageType.DATA:
+            if action == TzktMessageAction.DATA:
                 self._buffer.add(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
-            elif tzkt_type == TzktTzktMessageType.REORG:
+            elif action == TzktMessageAction.REORG:
                 if self._buffer.rollback(type_, channel_level, message_level):
                     self._logger.info('Rolled back blocks were dropped from realtime message buffer')
                 else:
@@ -1123,7 +1122,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                     await self.emit_rollback(type_, channel_level, message_level)
 
             else:
-                raise NotImplementedError(f'Unknown message type: {tzkt_type}')
+                raise NotImplementedError(f'Unknown message type: {action}')
 
         # NOTE: Process extensive data from buffer
         for buffered_message in self._buffer.yield_from():

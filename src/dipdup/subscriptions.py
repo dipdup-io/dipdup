@@ -1,6 +1,4 @@
 import logging
-from abc import abstractmethod
-from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Set
@@ -11,12 +9,7 @@ _logger = logging.getLogger('dipdup.datasource')
 
 
 class Subscription:
-    type: str
-    method: str
-
-    @abstractmethod
-    def get_request(self) -> Any:
-        ...
+    pass
 
 
 class SubscriptionManager:
@@ -44,6 +37,11 @@ class SubscriptionManager:
     def set_sync_level(self, subscription: Optional[Subscription], level: int) -> None:
         if subscription not in self._subscriptions:
             raise FrameworkException(f'Subscription does not exist: {subscription}')
+
+        if subscription is None:
+            for sub in self._subscriptions:
+                self._subscriptions[sub] = level
+            return
 
         if self._subscriptions[subscription]:
             # NOTE: Updating sync level with merge_subscriptions=True will cause resync

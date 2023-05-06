@@ -1,4 +1,4 @@
-# `token_transfer` index
+# `tezos.tzkt.token_transfers` index
 
 This index allows indexing token transfers of contracts compatible with [FA1.2](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-7/README.md) or [FA2](https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-12/tzip-12.md) standards.
 

@@ -1,6 +1,6 @@
-# `event` index
+# `tezos.tzkt.events` index
 
-Kathmandu Tezos protocol upgrade has introduced [contract events](https://tezos.gitlab.io/alpha/event.html), a new way to interact with smart contracts. This index allows indexing events using strictly typed payloads. From the developer's perspective, it's similar to the `big_map` index with a few differences.
+Kathmandu Tezos protocol upgrade has introduced [contract events](https://tezos.gitlab.io/alpha/event.html), a new way to interact with smart contracts. This index allows indexing events using strictly typed payloads. From the developer's perspective, it's similar to the `tezos.tzkt.big_maps` index with a few differences.
 
 An example below is artificial since no known contracts in mainnet are currently using events.
 

@@ -12,6 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.subscriptions import Subscription
 
 
 @dataclass
@@ -43,3 +44,6 @@ class SubsquidOperationsIndexConfig(IndexConfig):
 
     first_level: int = 0
     last_level: int = 0
+
+    def get_subscriptions(self) -> set[Subscription]:
+        raise NotImplementedError

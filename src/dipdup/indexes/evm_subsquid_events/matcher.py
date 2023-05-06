@@ -1,4 +1,3 @@
-import logging
 from collections import deque
 from copy import copy
 from typing import Any
@@ -8,6 +7,7 @@ from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
+from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
@@ -15,27 +15,36 @@ from dipdup.package import EventAbiExtra
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 
-_logger = logging.getLogger('dipdup.matcher')
-
-
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
 
-def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> Any:
-    byte_data = b''.join([decode_hex(topic) for topic in topics[1:]]) + decode_hex(data)
-    return decode_abi(  # type: ignore[no-untyped-call]
-        event_abi.inputs,
-        byte_data,
-    )
+def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:
+    """Decode event data from hex string"""
+    # NOTE: Indexed and non-indexed inputs can go in arbitrary order. We need
+    # NOTE: to decode them separately and then merge back.
+    indexed_bytes = b''.join((decode_hex(topic) for topic in topics[1:]))
+    non_indexed_bytes = decode_hex(data)
+
+    # TODO: Quick and dirty; refactor
+    inputs: tuple[tuple[str, bool], ...] = tuple(zip(event_abi.inputs, event_abi.indexed))
+    indexed_values = deque(decode_abi([k for k, v in inputs if v], indexed_bytes))
+    non_indexed_values = deque(decode_abi([k for k, v in inputs if not v], non_indexed_bytes))
+
+    values: deque[Any] = deque()
+    for _, indexed in inputs:
+        if indexed:
+            values.append(indexed_values.popleft())
+        else:
+            values.append(non_indexed_values.popleft())
+    return tuple(values)
 
 
 def prepare_event_handler_args(
     package: DipDupPackage,
     handler_config: SubsquidEventsHandlerConfig,
-    matched_event: SubsquidEventData,
+    matched_event: SubsquidEventData | EvmNodeLogData,
 ) -> SubsquidEvent[Any]:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-    _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     typename = handler_config.contract.module_name
     event_abi = package.get_evm_events(typename)[handler_config.name]
@@ -48,7 +57,7 @@ def prepare_event_handler_args(
 
     data = decode_event_data(
         data=matched_event.data,
-        topics=matched_event.topics,
+        topics=tuple(matched_event.topics),
         event_abi=event_abi,
     )
 
@@ -65,7 +74,7 @@ def prepare_event_handler_args(
 
 def match_event(
     handler_config: SubsquidEventsHandlerConfig,
-    event: SubsquidEventData,
+    event: SubsquidEventData | EvmNodeLogData,
     topics: dict[str, str],
 ) -> bool:
     """Match single contract event with pattern"""
@@ -75,14 +84,17 @@ def match_event(
 def match_events(
     package: DipDupPackage,
     handlers: Iterable[SubsquidEventsHandlerConfig],
-    events: Iterable[SubsquidEventData],
+    events: Iterable[SubsquidEventData | EvmNodeLogData],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
     events = deque(events)
 
     for handler_config in handlers:
+        # FIXME: Terribly inefficient; should be cached
         topics = {k: v.topic0 for k, v in package.get_evm_events(handler_config.contract.module_name).items()}
+        if not topics:
+            continue
 
         # NOTE: Matched events are dropped after processing
         for event in copy(events):

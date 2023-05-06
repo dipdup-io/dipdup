@@ -26,6 +26,7 @@ class EventAbiExtra:
     name: str
     topic0: str
     inputs: tuple[str, ...]
+    indexed: tuple[bool, ...]
 
 
 class DipDupPackage:

@@ -1,6 +1,8 @@
 # F.A.Q
 
-## How to index the different contracts that share the same interface?
+This page contains answers to the most popular questions about DipDup guts. If you landed here - congrats, you're writing a pretty advanced indexer!
+
+## How to index similar but not identical contracts as a single entity?
 
 Multiple contracts can provide the same interface (like FA1.2 and FA2 standard tokens) but have a different storage structure. If you try to use the same typename for them, indexing will fail. However, you can modify typeclasses manually. Modify `types/<typename>/storage.py` file and comment out unique fields that are not important for your index:
 
@@ -9,32 +11,32 @@ class ContractStorage(BaseModel):
     class Config:
         extra = Extra.ignore
 
-    common_ledger: Dict[str, str]
+    common_ledger: dict[str, str]
     # unique_field_foo: str
     # unique_field_bar: str
 ```
 
-Note that reinitialization with `init --force` will overwrite this file.
-Don't forget `Extra.ignore` Pydantic hint, otherwise, storage deserialization will fail.
+Don't forget `Extra.ignore` Pydantic hint, otherwise storage deserialization will fail. To restore the original typeclass, remove modified file and run `dipdup init` again. You can also add `--force` flag to overwrite all ABIs and typeclasses.
 
-## What is the correct way to process off-chain data?
+## How to use off-chain datasources?
 
 DipDup provides convenient helpers to process off-chain data like market quotes or IPFS metadata. Follow the tips below to use them most efficiently.
 
-* Do not perform off-chain requests in handers until necessary. Use hooks instead, enriching indexed data on-demand.
-* Use generic `http` datasources for external APIs instead of plain `aiohttp` requests. This way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
-* Database tables that store off-chain data can be marked as immune, preventing them from being removed on reindexing.
+- Do not perform off-chain requests in handers until necessary. Handlers need to be as fast as possible not to block the database transaction. Use hooks instead, enriching indexed data on-demand.
+- Use generic `http` datasource for external APIs instead of plain `aiohttp` requests. It makes available the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
+- Database tables that store off-chain data can be marked as immune, to speed up reindexing.
 
 ```admonish info title="See Also"
+* {{ #summary advanced/jobs.md }}
 * {{ #summary advanced/datasources.md#http-generic }}
 * {{ #summary config/database.md#immune-tables }}
 ```
 
-## One of my indexes depends on another one's indexed data. How to process them in a specific order?
+## How to process indexes in a specific order?
 
-Indexes of all kinds are fully independent. They are processed in parallel, have their message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no "official" way to manage the order of indexing.
+Indexes of all kinds are fully independent. They are processed in parallel, have their own message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no "official" way to manage the order of indexing.
 
-Avoid waiting for sync primitives like `asyncio.Event` or `asyncio.Lock` in handlers. Indexing will be stuck forever, waiting for the database transaction to complete.
+Avoid using sync primitives like `asyncio.Event` or `asyncio.Lock` in handlers. Indexing will be stuck forever, waiting for the database transaction to complete.
 
 Instead, save raw data in handlers and process it later with hooks when all conditions are met. For example, process data batch only when all indexes in the `dipdup_index` table have reached a specific level.
 
@@ -50,7 +52,7 @@ advanced:
 
 You can also use the `schema approve` command for a single schema change.
 
-To determine what manual modifications you need to apply after changing `models.py`, you can compare raw SQL schema before and after the change. Consider the following example:
+To determine what manual modifications you need to apply after changing `models.py`, you can compare raw SQL schema before and after the change.
 
 ```diff
 -    timestamp = fields.DatetimeField()
@@ -58,10 +60,10 @@ To determine what manual modifications you need to apply after changing `models.
 ```
 
 ```shell
-dipdup schema export > old
+dipdup schema export > old-schema.sql
 # ...modify `models.py` here...
-dipdup schema export > new
-diff old new
+dipdup schema export > new-schema.sql
+diff old-schema.sql new-schema.sql
 ```
 
 ```diff
@@ -77,3 +79,32 @@ Now you can prepare and execute an `ALTER TABLE` query manually or using SQL hoo
 * {{ #summary advanced/reindexing.md}}
 * {{ #summary advanced/sql.md}}
 ```
+
+## I get `schema_modified` error, but I didn't change anything
+
+DipDup compares the current schema hash with the one stored in the database. If they don't match, it throws an error. If models were not modified, most likely the reason is incorrect model definitions. e.g. if you define a timestamp field like this…
+
+```python
+timestamp = fields.DatetimeField(default=datetime.utcnow())
+```
+
+…schema will be different every time you run DipDup, because `datetime.utcnow()` is evaluated on a module import.
+
+```diff
+$ dipdup schema export > schema.sql
+$ dipdup schema export > same-schema.sql
+$ diff schema.sql same-schema.sql 
+116c116
+<     "timestamp" TIMESTAMP NOT NULL  DEFAULT '2023-04-19T21:16:31.183036',
+---
+>     "timestamp" TIMESTAMP NOT NULL  DEFAULT '2023-04-19T21:16:36.231221',
+```
+
+You need to make the following change in models.py:
+
+```diff
+<     timestamp = fields.DatetimeField(default=datetime.utcnow())
+>     timestamp = fields.DatetimeField(auto_now=True)
+```
+
+We plan to improve field classes in future releases to accept callables as default values.

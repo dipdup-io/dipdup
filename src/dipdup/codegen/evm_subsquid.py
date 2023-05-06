@@ -75,7 +75,8 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 event_extras[name] = EventAbiExtra(
                     name=name,
                     topic0=topic_from_abi(abi_item),
-                    inputs=inputs_from_abi(abi_item),
+                    inputs=tuple(i['type'] for i in abi_item['inputs']),
+                    indexed=tuple(i['indexed'] for i in abi_item['inputs']),
                 )
                 if name not in events:
                     continue
@@ -92,13 +93,6 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
             event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
             touch(event_extras_path)
             event_extras_path.write_bytes(orjson.dumps(event_extras, option=orjson.OPT_INDENT_2))
-
-
-def inputs_from_abi(event: dict[str, Any]) -> tuple[str, ...]:
-    if event.get('type') != 'event':
-        raise FrameworkException(f'`{event["name"]}` is not an event')
-
-    return tuple(i['type'] for i in event['inputs'])
 
 
 def topic_from_abi(event: dict[str, Any]) -> str:
@@ -157,7 +151,14 @@ class SubsquidCodeGenerator(CodeGenerator):
             if abi_path.exists():
                 continue
 
-            address = handler_config.contract.address
+            if handler_config.contract.abi:
+                # TODO: handle path / url to abi file if necessary
+                # abi_json = await resolve(handler_config.contract.abi)
+                address = handler_config.contract.abi
+            elif handler_config.contract.address:
+                address = handler_config.contract.address
+            else:
+                raise NotImplementedError
 
             for datasource_config in datasource_configs:
                 if not isinstance(datasource_config, AbiDatasourceConfig):

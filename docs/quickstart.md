@@ -4,7 +4,7 @@ This page will guide you through the steps to get your first selective indexer u
 
 Let's create an indexer for the [tzBTC FA1.2 token contract](https://tzkt.io/KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn/operations/). Our goal is to save all token transfers to the database and then calculate some statistics of its holders' activity.
 
-A modern Linux/macOS distribution with Python 3.10 installed is required to run DipDup.
+A modern Linux/macOS distribution with Python 3.11 installed is required to run DipDup.
 
 ## Create a new project
 
@@ -38,7 +38,7 @@ python -m venv .venv
 pip install dipdup
 
 # or Poetry
-poetry init --python ">=3.10,<3.11"
+poetry init --python ">=3.11,<3.12"
 poetry add dipdup
 poetry shell
 ```
@@ -105,7 +105,7 @@ demo_token
 That's a lot of files and directories! But don't worry, we will need only `models.py` and `handlers` modules in this guide.
 
 ```admonish info title="See Also"
-* {{ #summary getting-started/project-structure.md}}
+* {{ #summary getting-started/project-package.md}}
 * {{ #summary cli-reference.md#init}}
 ```
 
