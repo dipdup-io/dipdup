@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pprofile  # type: ignore[import]
@@ -30,4 +31,4 @@ prof = pprofile.Profile()
 with prof():
     decode_event_data(data, topics, abi)
 
-prof.dump_stats(Path(__file__).parent / f'cachegrind.out.{Path(__file__).stem}')
+prof.dump_stats(Path(__file__).parent / f'cachegrind.out.{Path(__file__).stem}.{round(time.time())}')
