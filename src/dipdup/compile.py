@@ -12,6 +12,10 @@ _nuitka_standalone = (
     '-m',
     'nuitka',
     '--clang',
+    '--lto=yes',
+    '--prefer-source-code',
+    '--warn-implicit-exceptions',
+    '--warn-unusual-code',
     '--user-package-configuration-file=web3.nuitka-package.config.yml',
     '--standalone',
 )
@@ -20,6 +24,10 @@ _nuitka_module = (
     '-m',
     'nuitka',
     '--clang',
+    '--lto=yes',
+    '--prefer-source-code',
+    '--warn-implicit-exceptions',
+    '--warn-unusual-code',
     '--user-package-configuration-file=web3.nuitka-package.config.yml',
     '--module',
 )
