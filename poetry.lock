@@ -2009,6 +2009,17 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "pprofile"
+version = "2.1.0"
+description = "Line-granularity, thread-aware deterministic and statistic pure-python profiler"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pprofile-2.1.0.tar.gz", hash = "sha256:b2bb56603dadf40c0bc0f61621f22c20e41638425f729945d9b7f8e4ae8cdd4a"},
+]
+
+[[package]]
 name = "prance"
 version = "0.22.2.22.0"
 description = "Resolving Swagger/OpenAPI 2.0 and 3.0.0 Parser"
@@ -3435,4 +3446,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "b2d57f1b7eb8c4f8c92cb0721649f1059aed0f76be990d9c4595353272973a5a"
+content-hash = "9b3eb619b577b3abafdacd6f72d49070c079c0ec708eae8becc5f3f778dfc851"
