@@ -1,12 +1,12 @@
 from collections import deque
 from copy import copy
-from functools import lru_cache
 from typing import Any
 from typing import Iterable
 
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
+from dipdup.cache import cache
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
@@ -19,10 +19,12 @@ from dipdup.utils import pascal_to_snake
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
 
-@lru_cache(maxsize=2 ^ 16)
 def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ...]) -> tuple[Any, ...]:
     indexed_bytes = b''.join(decode_hex(topic) for topic in topics[1:])
     return tuple(decode_abi(indexed_inputs, indexed_bytes))
+
+
+decode_indexed_topics = cache.lru_cache(decode_indexed_topics, 2**14)
 
 
 def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:

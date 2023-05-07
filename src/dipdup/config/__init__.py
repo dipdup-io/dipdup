@@ -575,6 +575,12 @@ class AdvancedConfig:
 
 
 @dataclass
+class ApiConfig:
+    host = '127.0.0.1'
+    port: int = 46339  # dial INDEX 😎
+
+
+@dataclass
 class DipDupConfig:
     """Main indexer config
 
@@ -612,6 +618,7 @@ class DipDupConfig:
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
+    api: ApiConfig | None = None
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):

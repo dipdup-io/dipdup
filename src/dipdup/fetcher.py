@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
@@ -13,10 +12,8 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
+from dipdup.cache import cache
 from dipdup.datasources import IndexDatasource
-
-_logger = logging.getLogger('dipdup.fetcher')
-_logger.setLevel(logging.DEBUG)
 
 
 class HasLevel(Protocol):
@@ -58,6 +55,7 @@ async def readahead_by_level(
     limit: int = 1_000,
 ) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
     queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
+    cache.add_queue(f'readahead_by_level_{id(fetcher_iter)}', queue)
     has_more = asyncio.Event()
     need_more = asyncio.Event()
 
@@ -68,7 +66,6 @@ async def readahead_by_level(
 
             if len(queue) >= limit:
                 need_more.clear()
-                _logger.debug('%s items in queue; waiting for need_more', len(queue))
                 await need_more.wait()
 
     task = asyncio.create_task(_readahead())
@@ -82,7 +79,6 @@ async def readahead_by_level(
         if task.done():
             await task
             break
-        _logger.debug('%s items in queue; waiting for has_more', len(queue))
         await has_more.wait()
 
 

@@ -78,6 +78,4 @@ indexes:
     # first_level: 12369621
     # last_level: 12379621
 
-# advanced:
-#   early_realtime: True
-# logging: verbose
+api: {}

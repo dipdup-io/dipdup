@@ -7,13 +7,16 @@ from asyncio import create_task
 from asyncio import gather
 from collections import deque
 from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
 from contextlib import suppress
 from copy import copy
 from typing import Any
+from typing import AsyncIterator
 from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
+from dipdup.cache import cache
 from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
 from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import DipDupConfig
@@ -181,6 +184,7 @@ class IndexDispatcher:
                 summary = 'idle | ...'
             print(summary)
 
+            cache.status(summary)
             last_levels_indexed = levels_indexed
             await asyncio.sleep(update_interval)
 
@@ -437,6 +441,7 @@ class DipDup:
             transactions=self._transactions,
         )
         self._schema: Schema | None = None
+        self._api: Any | None = None
 
     @property
     def schema(self) -> Schema:
@@ -507,6 +512,7 @@ class DipDup:
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
             await self._set_up_prometheus()
+            await self._set_up_api(stack)
 
             await self._initialize_schema()
             await self._initialize_datasources()
@@ -617,6 +623,28 @@ class DipDup:
 
             Metrics.enabled = True
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+
+    async def _set_up_api(self, stack: AsyncExitStack) -> None:
+        api_config = self._config.api
+        if not api_config:
+            return
+
+        from aiohttp import web
+
+        from dipdup.api import create_api
+
+        api = await create_api()
+        runner = web.AppRunner(api)
+        await runner.setup()
+        site = web.TCPSite(runner, api_config.host, api_config.port)
+
+        @asynccontextmanager
+        async def _api_wrapper() -> AsyncIterator[None]:
+            await site.start()
+            yield
+            await site.stop()
+
+        await stack.enter_async_context(_api_wrapper())
 
     async def _set_up_hasura(self, stack: AsyncExitStack) -> HasuraGateway | None:
         if not self._config.hasura:

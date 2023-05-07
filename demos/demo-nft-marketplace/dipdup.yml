@@ -50,5 +50,3 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
-
-logging: verbose
