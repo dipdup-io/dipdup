@@ -611,7 +611,7 @@ class DipDupConfig:
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
-    logging: LoggingValues = LoggingValues.default
+    logging: dict[str, LoggingValues] | LoggingValues = LoggingValues.default
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
@@ -731,12 +731,22 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        level = {
+        level_mapping = {
             LoggingValues.default: logging.INFO,
             LoggingValues.quiet: logging.WARNING,
             LoggingValues.verbose: logging.DEBUG,
-        }[self.logging]
-        logging.getLogger('dipdup').setLevel(level)
+
+            LoggingValues.debug: logging.DEBUG,
+            LoggingValues.info: logging.INFO,
+            LoggingValues.warn: logging.WARNING,
+            LoggingValues.error: logging.ERROR,
+            LoggingValues.fatal: logging.FATAL
+        }
+        if type(self.logging) is LoggingValues:
+            logging.getLogger('dipdup').setLevel(level_mapping[self.logging])
+        elif type(self.logging) is dict:
+            for k, v in self.logging.items():
+                logging.getLogger(k).setLevel(level_mapping[v])
 
     def initialize(self) -> None:
         self._set_names()
