@@ -1,6 +1,8 @@
 from aiohttp import web
 
-from dipdup.cache import cache
+from dipdup.performance import caches
+from dipdup.performance import profiler
+from dipdup.performance import queues
 
 
 async def create_api() -> web.Application:
@@ -10,7 +12,12 @@ async def create_api() -> web.Application:
 
     @routes.get('/performance')
     async def performance(request: web.Request) -> web.Response:
-        return web.json_response(cache.stats())
+        stats = {
+            'caches': caches.stats(),
+            'queues': queues.stats(),
+            'profiler': profiler.stats(),
+        }
+        return web.json_response(stats)
 
     app = web.Application()
     app.add_routes(routes)

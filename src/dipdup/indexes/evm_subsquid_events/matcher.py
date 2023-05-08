@@ -6,13 +6,13 @@ from typing import Iterable
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
-from dipdup.cache import cache
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
+from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 
@@ -24,7 +24,7 @@ def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ..
     return tuple(decode_abi(indexed_inputs, indexed_bytes))
 
 
-decode_indexed_topics = cache.lru_cache(decode_indexed_topics, 2**14)
+decode_indexed_topics = caches.lru_cache(decode_indexed_topics, 2**14)
 
 
 def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:

@@ -16,7 +16,6 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
-from dipdup.cache import cache
 from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
 from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import DipDupConfig
@@ -67,6 +66,7 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
+from dipdup.performance import profiler
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -174,17 +174,16 @@ class IndexDispatcher:
             levels_total = sum(index.get_sync_level() for index in self._indexes.values())
             levels_per_interval = levels_indexed - last_levels_indexed
             indexing_speed = levels_per_interval / update_interval
-            if self._every_index_is(IndexStatus.realtime):
-                summary = f'realtime | {round(indexing_speed)} blocks/s'
-            elif indexing_speed:
-                time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
-                percent = levels_indexed / levels_total * 100
-                summary = f'syncing {percent:.2f}% | {round(indexing_speed)} blocks/s | {time_left}m left'
-            else:
-                summary = 'idle | ...'
-            print(summary)
 
-            cache.status(summary)
+            profiler.set('levels_indexed', levels_indexed)
+            profiler.set('levels_total', levels_total)
+            if indexing_speed:
+                profiler.set('indexing_speed', indexing_speed)
+                time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
+                if time_left:
+                    profiler.set('time_left', round((levels_total - levels_indexed) / indexing_speed / 60))
+                    profiler.set('progress', levels_indexed / levels_total * 100)
+
             last_levels_indexed = levels_indexed
             await asyncio.sleep(update_interval)
 

@@ -12,8 +12,8 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
-from dipdup.cache import cache
 from dipdup.datasources import IndexDatasource
+from dipdup.performance import queues
 
 
 class HasLevel(Protocol):
@@ -55,7 +55,7 @@ async def readahead_by_level(
     limit: int = 1_000,
 ) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
     queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
-    cache.add_queue(f'readahead_by_level_{id(fetcher_iter)}', queue)
+    queues.add_queue(queue, f'fetcher_readahead:{id(fetcher_iter)}')
     has_more = asyncio.Event()
     need_more = asyncio.Event()
 

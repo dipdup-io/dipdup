@@ -8,13 +8,13 @@ from typing import TypeVar
 from typing import cast
 
 import dipdup.models as models
-from dipdup.cache import cache
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
 from dipdup.context import StateQueue
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
+from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
@@ -45,7 +45,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._config = config
         self._datasource = datasource
         self._queue: deque[IndexQueueItemT] = deque()
-        cache.add_queue(f'index_{config.name}', self._queue)
+        queues.add_queue(self._queue, f'index_realtime:{config.name}')
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None

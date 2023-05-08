@@ -50,3 +50,7 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
+
+api: {}
+advanced:
+  early_realtime: true

@@ -38,5 +38,5 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter, 100_000):
+        async for level, batch in readahead_by_level(event_iter):
             yield level, batch

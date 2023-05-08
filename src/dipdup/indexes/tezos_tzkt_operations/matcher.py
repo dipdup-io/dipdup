@@ -185,7 +185,7 @@ def match_operation_subgroup(
                 subgroup_index += 1
 
             if pattern_index == len(handler_config.pattern):
-                _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+                _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
                 args = prepare_operation_handler_args(package, handler_config, matched_operations)
                 matched_handlers.append((operation_subgroup, handler_config, args))
@@ -194,7 +194,7 @@ def match_operation_subgroup(
                 pattern_index = 0
 
         if len(matched_operations) >= sum(0 if x.optional else 1 for x in handler_config.pattern):
-            _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+            _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
             args = prepare_operation_handler_args(package, handler_config, matched_operations)
             matched_handlers.append((operation_subgroup, handler_config, args))
