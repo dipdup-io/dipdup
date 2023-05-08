@@ -52,7 +52,7 @@ async def yield_by_level(
 
 async def readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[FetcherBufferT, ...]],
-    limit: int = 1_000,
+    limit: int,
 ) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
     queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
     queues.add_queue(queue, f'fetcher_readahead:{id(fetcher_iter)}')

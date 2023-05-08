@@ -604,4 +604,3 @@ async def self_compile_project(
     }
 
     dipdup.compile.compile_project(name, merged_opts, site_packages)
-    dipdup.compile.compile_project(name, merged_opts, site_packages)

@@ -446,7 +446,7 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
                 raise FrameworkException('Operations left in queue')
 
         event_iter = _merged_iter(channels)
-        async for level, operations in readahead_by_level(event_iter, limit=100_000):
+        async for level, operations in readahead_by_level(event_iter, limit=5_000):
             yield level, operations
 
 

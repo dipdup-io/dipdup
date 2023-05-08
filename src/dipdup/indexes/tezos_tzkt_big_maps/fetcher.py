@@ -89,5 +89,5 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(big_map_iter):
+        async for level, batch in readahead_by_level(big_map_iter, limit=5_000):
             yield level, batch

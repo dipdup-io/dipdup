@@ -40,5 +40,5 @@ class EventFetcher(DataFetcher[TzktEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter):
+        async for level, batch in readahead_by_level(event_iter, limit=5_000):
             yield level, batch
