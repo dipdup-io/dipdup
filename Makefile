@@ -86,4 +86,7 @@ demo_init:
 profile:
 	python tests/profile_abi_decoding.py
 
+unsafe:
+	grep -r "type: ignore" src tests scripts | grep -v "import"
+
 ##

@@ -239,7 +239,7 @@ async def migrate(ctx: click.Context) -> None:
 @_cli_wrapper
 async def config(ctx: click.Context) -> None:
     """Commands to manage DipDup configuration."""
-    ...
+    pass
 
 
 @config.command(name='export')
@@ -291,7 +291,7 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 @click.pass_context
 @_cli_wrapper
 async def hasura(ctx: click.Context) -> None:
-    ...
+    pass
 
 
 @hasura.command(name='configure')
@@ -333,7 +333,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    ...
+    pass
 
 
 @schema.command(name='approve')
@@ -511,7 +511,7 @@ async def new(
 @_cli_wrapper
 async def self(ctx: click.Context) -> None:
     """Commands to manage local DipDup installation."""
-    ...
+    pass
 
 
 @self.command(name='install')
