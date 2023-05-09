@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import time
 from asyncio import CancelledError
 from asyncio import Event
 from asyncio import Task
 from asyncio import create_task
 from asyncio import gather
+from collections import defaultdict
 from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
@@ -164,28 +166,42 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
-    async def _update_summary(self, update_interval: float) -> None:
-        last_levels_indexed = 0.0
-        while True:
-            while not self._indexes:
-                await asyncio.sleep(5)
+    async def _profiler_loop(self, update_interval: float) -> None:
+        started_at = time.time()
+        initial_levels: defaultdict[str, int] = defaultdict(int)
+        previous_levels: defaultdict[str, int] = defaultdict(int)
+        profiler.set('started_at', started_at)
 
-            levels_indexed = sum(index.state.level for index in self._indexes.values())
-            levels_total = sum(index.get_sync_level() for index in self._indexes.values())
-            levels_per_interval = levels_indexed - last_levels_indexed
-            indexing_speed = levels_per_interval / update_interval
+        while True:
+            await asyncio.sleep(update_interval)
+            if not self._indexes:
+                continue
+
+            levels_indexed, levels_total, levels_interval = 0, 0, 0
+            for index in self._indexes.values():
+                initial_level = initial_levels[index.name]
+                if not initial_level:
+                    initial_levels[index.name] |= index.state.level
+                    continue
+
+                levels_interval += index.state.level - previous_levels[index.name]
+                levels_indexed += index.state.level - initial_level
+                levels_total += index.get_sync_level() - initial_level
+
+                previous_levels[index.name] = index.state.level
+
+            current_speed = levels_interval / update_interval
+            average_speed = levels_indexed / (time.time() - started_at)
+            if not average_speed:
+                continue
+            time_left = (levels_total - levels_indexed) / average_speed / 60
 
             profiler.set('levels_indexed', levels_indexed)
             profiler.set('levels_total', levels_total)
-            if indexing_speed:
-                profiler.set('indexing_speed', indexing_speed)
-                time_left = round((levels_total - levels_indexed) / indexing_speed / 60)
-                if time_left:
-                    profiler.set('time_left', round((levels_total - levels_indexed) / indexing_speed / 60))
-                    profiler.set('progress', levels_indexed / levels_total * 100)
-
-            last_levels_indexed = levels_indexed
-            await asyncio.sleep(update_interval)
+            profiler.set('current_speed', current_speed)
+            profiler.set('average_speed', average_speed)
+            profiler.set('time_left', time_left)
+            profiler.set('progress', levels_indexed / levels_total)
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -691,7 +707,7 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._update_summary(15)))
+            tasks.add(create_task(index_dispatcher._profiler_loop(1)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
@@ -719,3 +735,6 @@ class DipDup:
             scheduler.add_job(self._ctx, job_config)
 
         return event
+
+    async def _set_up_profiler(self) -> None:
+        ...

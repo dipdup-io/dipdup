@@ -55,7 +55,11 @@ async def readahead_by_level(
     limit: int,
 ) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
     queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
-    queues.add_queue(queue, f'fetcher_readahead:{id(fetcher_iter)}')
+    queues.add_queue(
+        queue,
+        name=f'fetcher_readahead:{id(fetcher_iter)}',
+        limit=limit,
+    )
     has_more = asyncio.Event()
     need_more = asyncio.Event()
 

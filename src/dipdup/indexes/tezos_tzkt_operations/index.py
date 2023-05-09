@@ -280,7 +280,7 @@ class TzktOperationsIndex(
                 )
 
             if subgroup_handlers:
-                self._logger.info(
+                self._logger.debug(
                     '%s: `%s` handler matched!',
                     operation_subgroup.hash,
                     subgroup_handlers[0][1].callback,
