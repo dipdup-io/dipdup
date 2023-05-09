@@ -16,11 +16,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Changed
 
+
 - tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
 - models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.
 - database: Store datasource aliases instead of URLs in `dipdup_head` table.
 - config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
 - cli: `config env --file` option renamed to `--output`.
+- cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
 - context: Signature of `add_contract` method has changed.
 - config: logging config expanded every logger level could be set in .yml config
@@ -30,6 +32,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
 - ci: Docker images no longer contain git, poetry and custom scripts.
+- cli: Removed `dipdup-install` alias to `dipdup.install`.
 - config: Removed `similar_to` filter of `operation` index pattern.
 - config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
 
