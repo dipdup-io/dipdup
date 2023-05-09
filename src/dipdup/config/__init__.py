@@ -567,6 +567,9 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     crash_reporting: bool = False
 
+    class Config:
+        extra = 'allow'
+
     @property
     def rollback_depth_int(self) -> int:
         if self.rollback_depth is None:
