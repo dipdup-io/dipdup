@@ -54,3 +54,4 @@ indexes:
 api: {}
 advanced:
   early_realtime: true
+  profiler: full

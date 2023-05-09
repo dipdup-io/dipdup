@@ -33,3 +33,7 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
+
+api: {}
+advanced:
+  profiler: full

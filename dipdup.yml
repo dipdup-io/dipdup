@@ -79,3 +79,5 @@ indexes:
     # last_level: 12379621
 
 api: {}
+advanced:
+  profiler: full

@@ -21,6 +21,7 @@ from typing import cast
 
 import orjson
 import tortoise
+import tortoise.queryset
 from pydantic.dataclasses import dataclass
 from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -50,6 +51,9 @@ versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
 tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
 tortoise.fields.TextField.indexable = True
 
+
+# FIXME: Skip expensive copy() calls on each queryset update. I have no idea if it's safe. Tests are green though.
+tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 EnumFieldT = TypeVar('EnumFieldT', bound=Enum)
 
