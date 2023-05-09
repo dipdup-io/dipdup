@@ -96,6 +96,7 @@ def lowercase_logging_level(config: dict[str, Any]) -> None:
         for k in logging_:
             logging_[k] = logging_[k].lower()
 
+
 class DipDupYAMLConfig(dict[str, Any]):
     @classmethod
     def load(

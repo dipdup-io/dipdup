@@ -735,12 +735,11 @@ class DipDupConfig:
             LoggingValues.default: logging.INFO,
             LoggingValues.quiet: logging.WARNING,
             LoggingValues.verbose: logging.DEBUG,
-
             LoggingValues.debug: logging.DEBUG,
             LoggingValues.info: logging.INFO,
             LoggingValues.warn: logging.WARNING,
             LoggingValues.error: logging.ERROR,
-            LoggingValues.fatal: logging.FATAL
+            LoggingValues.fatal: logging.FATAL,
         }
         if type(self.logging) is LoggingValues:
             logging.getLogger('dipdup').setLevel(level_mapping[self.logging])

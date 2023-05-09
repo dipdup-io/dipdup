@@ -182,7 +182,7 @@ class LoggingValues(Enum):
     fatal = 'fatal'
 
     default = 'default'  # info
-    quiet =   'quiet'  #   warn
+    quiet = 'quiet'  #     warn
     verbose = 'verbose'  # debug
 
 
