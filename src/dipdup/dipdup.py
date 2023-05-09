@@ -68,6 +68,7 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
+from dipdup.performance import ProfilerLevel
 from dipdup.performance import profiler
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
@@ -518,7 +519,7 @@ class DipDup:
 
     async def run(self) -> None:
         """Run indexing process"""
-        advanced_config = self._config.advanced
+        advanced = self._config.advanced
         tasks: set[Task[None]] = set()
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
@@ -526,6 +527,7 @@ class DipDup:
             await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
+            await self._set_up_profiler(stack)
             await self._set_up_prometheus()
             await self._set_up_api(stack)
 
@@ -536,7 +538,7 @@ class DipDup:
             if hasura_gateway:
                 await hasura_gateway.configure()
 
-            if advanced_config.metadata_interface:
+            if advanced.metadata_interface:
                 await MetadataCursor.initialize()
 
             if self._config.oneshot:
@@ -549,14 +551,17 @@ class DipDup:
                 start_scheduler_event = await self._set_up_scheduler(tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
 
-                if not advanced_config.postpone_jobs:
+                if not advanced.postpone_jobs:
                     start_scheduler_event.set()
 
-            spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
-            await gather(*spawn_index_tasks)
+            for name in self._config.indexes:
+                await self._ctx._spawn_index(name)
 
             await self._set_up_index_dispatcher(
-                tasks, spawn_datasources_event, start_scheduler_event, advanced_config.early_realtime
+                tasks=tasks,
+                spawn_datasources_event=spawn_datasources_event,
+                start_scheduler_event=start_scheduler_event,
+                early_realtime=advanced.early_realtime,
             )
 
             await gather(*tasks)
@@ -704,6 +709,7 @@ class DipDup:
                 )
             )
         )
+        # FIXME: Initialize with profiler
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
@@ -736,5 +742,8 @@ class DipDup:
 
         return event
 
-    async def _set_up_profiler(self) -> None:
-        ...
+    async def _set_up_profiler(self, stack: AsyncExitStack) -> None:
+        level = self._config.advanced.profiler
+        profiler.set_level(level)
+        if level == ProfilerLevel.full:
+            stack.enter_context(profiler.enter_context(self._config.package))

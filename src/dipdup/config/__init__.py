@@ -50,6 +50,7 @@ from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
+from dipdup.performance import ProfilerLevel
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -566,6 +567,7 @@ class AdvancedConfig:
     skip_version_check: bool = False
     rollback_depth: int | None = None
     crash_reporting: bool = False
+    profiler: ProfilerLevel = ProfilerLevel.basic
 
     @property
     def rollback_depth_int(self) -> int:
