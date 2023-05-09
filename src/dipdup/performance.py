@@ -12,14 +12,14 @@ import logging
 import time
 from collections import defaultdict
 from collections import deque
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from enum import Enum
 from functools import _CacheInfo
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from typing import AsyncIterator
 from typing import Callable
-from typing import Iterator
 from typing import cast
 
 _logger = logging.getLogger(__name__)
@@ -29,7 +29,12 @@ class CacheManager:
     def __init__(self) -> None:
         self._lru_caches: dict[str, Callable[..., Any]] = {}
 
-    def lru_cache(self, fn: Callable[..., Any], maxsize: int, name: str | None = None) -> Callable[..., Any]:
+    def lru_cache(
+        self,
+        fn: Callable[..., Any],
+        maxsize: int,
+        name: str | None = None,
+    ) -> Callable[..., Any]:
         if name is None:
             name = f'{fn.__module__}.{fn.__name__}:{id(fn)}'
         if name in self._lru_caches:
@@ -103,8 +108,9 @@ class ProfilerLevel(Enum):
 class Profiler:
     """Usage:
 
-    profiler and profiler.increase('time_handlers', 0.1)
-    profiler.full and stack.enter_context(profiler.enter_context('filename'))
+    profiler and profiler.increase('metric', 0.1)
+    profiler.full and profiler.set('verbose_metric', 0.2)
+    stack.enter_context(profiler.enter_context('package'))
     """
 
     def __init__(self) -> None:
@@ -113,6 +119,14 @@ class Profiler:
 
     def __bool__(self) -> bool:
         return self._level != ProfilerLevel.off
+
+    @property
+    def basic(self) -> bool:
+        return self._level != ProfilerLevel.off
+
+    @property
+    def full(self) -> bool:
+        return self._level == ProfilerLevel.full
 
     @property
     def level(self) -> ProfilerLevel:
@@ -127,10 +141,15 @@ class Profiler:
     def inc(self, name: str, value: float) -> None:
         self._stats[name] += value
 
-    @contextmanager
-    def enter_context(self, name: str) -> Iterator[None]:
+    def stats(self) -> dict[str, float]:
+        return self._stats
+
+    @asynccontextmanager
+    async def with_pprofile(self, name: str) -> AsyncIterator[None]:
         try:
             import pprofile  # type: ignore[import]
+
+            _logger.warning('Full profiling is enabled, this will affect performance')
         except ImportError:
             _logger.error('pprofile not installed, falling back to basic profiling')
             self._level = ProfilerLevel.basic
@@ -140,10 +159,9 @@ class Profiler:
         with profiler():
             yield
 
-        profiler.dump_stats(Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}')
-
-    def stats(self) -> dict[str, float]:
-        return self._stats
+        dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
+        _logger.info('Dumping profiling data to %s', dump_path)
+        profiler.dump_stats(dump_path)
 
 
 caches = CacheManager()

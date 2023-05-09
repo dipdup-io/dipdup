@@ -193,16 +193,20 @@ class IndexDispatcher:
 
             current_speed = levels_interval / update_interval
             average_speed = levels_indexed / (time.time() - started_at)
-            if not average_speed:
-                continue
-            time_left = (levels_total - levels_indexed) / average_speed / 60
+            time_passed = (time.time() - started_at) / 60
+            time_left, progress = 0.0, 0.0
+            if average_speed:
+                time_left = (levels_total - levels_indexed) / average_speed / 60
+            if levels_total:
+                progress = levels_indexed / levels_total
 
             profiler.set('levels_indexed', levels_indexed)
             profiler.set('levels_total', levels_total)
             profiler.set('current_speed', current_speed)
             profiler.set('average_speed', average_speed)
+            profiler.set('time_passed', time_passed)
             profiler.set('time_left', time_left)
-            profiler.set('progress', levels_indexed / levels_total)
+            profiler.set('progress', progress)
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -519,15 +523,18 @@ class DipDup:
 
     async def run(self) -> None:
         """Run indexing process"""
+        # NOTE: DipDup is initialized layer by layer adding tasks to the loop and entering contexts.
+        # NOTE: Order matters. But usually you can skip some layers if you don't need them.
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
         async with AsyncExitStack() as stack:
+            await self._set_up_profiler(stack)
+
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
             await self._set_up_hooks(tasks, run=not self._config.oneshot)
-            await self._set_up_profiler(stack)
             await self._set_up_prometheus()
             await self._set_up_api(stack)
 
@@ -619,6 +626,10 @@ class DipDup:
         await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
+        database_config = self._config.database
+        if isinstance(database_config, SqliteDatabaseConfig) and database_config.path == ':memory:':
+            self._logger.warning('Using in-memory SQLite database; data will be lost on restart')
+
         await stack.enter_async_context(
             tortoise_wrapper(
                 url=self._config.database.connection_string,
@@ -746,4 +757,4 @@ class DipDup:
         level = self._config.advanced.profiler
         profiler.set_level(level)
         if level == ProfilerLevel.full:
-            stack.enter_context(profiler.enter_context(self._config.package))
+            await stack.enter_async_context(profiler.with_pprofile(self._config.package))

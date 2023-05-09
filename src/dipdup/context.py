@@ -74,6 +74,7 @@ from dipdup.utils import FormattedLogger
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
+# FIXME: queues not registered
 class StateQueue:
     pending_indexes: deque[Any] = deque()
     pending_hooks: deque[Awaitable[None]] = deque()
