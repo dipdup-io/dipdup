@@ -1,3 +1,5 @@
+# Glossary
+
 ### DipDup Terms
 
 | Term | Definition |
