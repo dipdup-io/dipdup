@@ -1,6 +1,6 @@
 # Glossary
 
-### DipDup Terms
+## DipDup Terms
 
 | Term | Definition |
 | --- | --- |
@@ -15,7 +15,7 @@
 | tortoise | A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management within the DipDup framework |
 | TzKT API | A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos |
 
-### Tezos Terms
+## Tezos Terms
 
 | Term | Definition |
 | --- | --- |
@@ -24,7 +24,7 @@
 | Entry points | Functions defined within a smart contract that can be called by external contract invocations or other contracts |
 | Origination | The process of deploying a new smart contract on the Tezos network, creating a new originated contract address |
 
-### Infrastructure Terms
+## Infrastructure Terms
 
 | Term | Definition |
 | --- | --- |
