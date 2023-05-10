@@ -7,12 +7,12 @@
 | Indexer | A program that reads data from a blockchain and stores it in a database for quick and easy querying |
 | Handler | |
 | Hook | |
-| callback | |
-| Model | |
-| SDK | |
+| Callback | |
+| Model | A Python class representing a database table, defined using the Tortoise ORM library |
+| SDK | A toolkit for developing smart contract indexing applications |
 | TzKT API | A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos |
-| RPC API | RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relativly to TzKT |
-| tortoise | Tortoise automates data conversion between the application and the database, allowing users to manage and efficiently access data |
+| RPC API | RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relativly to TzKT and other APIs |
+| tortoise | A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management within the DipDup framework |
 
 ### Tezos Terms
 
@@ -27,10 +27,10 @@
 
 | Term | Definition |
 | --- | --- |
-| Hasura | |
-| GraphQL | |
-| Docker | |
-| Docker Compose | |
-| PostgreSQL | |
-| Sentry | |
-| Prometheus | |
+| Hasura | An open-source engine that connects to databases and microservices, providing real-time GraphQL APIs for faster and efficient data access |
+| GraphQL | A query language and runtime for APIs that enables clients to request only the data they need, offering more flexibility and efficiency compared to traditional REST APIs |
+| Docker | An open-source platform for creating, deploying, and managing containerized applications, improving consistency and reducing infrastructure overhead |
+| Docker Compose | A tool for defining and managing multi-container Docker applications, using a YAML file to configure services, networks, and volumes, simplifying application deployment and scaling |
+| PostgreSQL | A powerful, open-source object-relational database system known for its reliability, robustness, and performance, widely used for managing structured data |
+| Sentry | A real-time error tracking and monitoring platform that helps developers identify, diagnose, and fix issues in applications, improving overall software quality and performance |
+| Prometheus | An open-source monitoring and alerting toolkit designed for reliability and scalability, used to collect and process metrics from various systems, providing valuable insights into application and infrastructure performance |
