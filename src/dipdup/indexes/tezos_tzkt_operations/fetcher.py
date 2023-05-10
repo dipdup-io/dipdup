@@ -196,8 +196,12 @@ class MigrationOriginationFetcherChannel(FetcherChannel[TzktOperationData, None]
         for op in originations:
             if op.originated_contract_address:
                 code_hash, type_hash = await self._datasource.get_contract_hashes(op.originated_contract_address)
-                op.originated_contract_code_hash = code_hash
-                op.originated_contract_type_hash = type_hash
+                op_dict = op.__dict__
+                op_dict.update(
+                    originated_contract_code_hash=code_hash,
+                    originated_contract_type_hash=type_hash,
+                )
+                op = TzktOperationData(**op_dict)
 
             self._buffer[op.level].append(op)
 

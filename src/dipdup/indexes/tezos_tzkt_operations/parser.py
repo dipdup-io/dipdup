@@ -177,17 +177,23 @@ def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iter
     return storage
 
 
-def deserialize_storage(operation_data: TzktOperationData, storage_type: Type[StorageType]) -> StorageType:
+def deserialize_storage(
+    operation_data: TzktOperationData,
+    storage_type: type[StorageType],
+) -> tuple[TzktOperationData, StorageType]:
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 
     try:
-        operation_data.storage = _process_storage(
-            storage=operation_data.storage,
+        # NOTE: op data is frozen, repack in-place 🥶
+        operation_data_dict = operation_data.__dict__
+        operation_data_dict['storage'] = _process_storage(
+            storage=operation_data_dict['storage'],
             storage_type=storage_type,
             bigmap_diffs=bigmap_diffs,
         )
-        return parse_object(storage_type, operation_data.storage)
+        operation_data = TzktOperationData(**operation_data_dict)
+        return operation_data, parse_object(storage_type, operation_data.storage)
     except IntrospectionError as e:
         raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e
 

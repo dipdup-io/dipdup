@@ -61,7 +61,7 @@ def prepare_operation_handler_args(
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
 
             storage_type = get_storage_type(package, typename)
-            storage = deserialize_storage(operation_data, storage_type)
+            operation_data, storage = deserialize_storage(operation_data, storage_type)
 
             typed_transaction: TzktTransaction[Any, Any] = TzktTransaction(
                 data=operation_data,
@@ -77,7 +77,7 @@ def prepare_operation_handler_args(
 
             typename = pattern_config.typed_contract.module_name
             storage_type = get_storage_type(package, typename)
-            storage = deserialize_storage(operation_data, storage_type)
+            operation_data, storage = deserialize_storage(operation_data, storage_type)
 
             typed_origination = TzktOrigination(
                 data=operation_data,
