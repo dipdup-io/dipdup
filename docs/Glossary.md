@@ -4,15 +4,28 @@
 
 | Term | Definition |
 | --- | --- |
+| ABI | |
 | Callback | |
+| config | |
+| context | ctx |
+| datasource | |
 | DipDup | An open source framework for building smart contract indexes for the Tezos network |
+| Environment Variables | |
 | Handler | |
-| Hook | |
+| head | |
+| Hook | could be two types |
 | Indexer | A program that reads data from a blockchain and stores it in a database for quick and easy querying |
+| job | |
+| JSONSchema | |
 | Model | A Python class representing a database table, defined using the Tortoise ORM library |
+| package | |
 | RPC API | RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relativly to TzKT and other APIs |
 | SDK | A toolkit for developing smart contract indexing applications |
+| schema | |
+| Sync level | |
 | tortoise | A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management within the DipDup framework |
+| transaction | |
+| typeclass | |
 | TzKT API | A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos |
 
 ## Tezos Terms
