@@ -1,50 +1,74 @@
 # Glossary
 
-## DipDup Terms
+## General Terms
 
-| Term | Definition |
-| --- | --- |
-| ABI | |
-| Callback | |
-| config | |
-| context | ctx |
-| datasource | |
-| DipDup | An open source framework for building smart contract indexes for the Tezos network |
-| Environment Variables | |
-| Handler | |
-| head | |
-| Hook | could be two types |
-| Indexer | A program that reads data from a blockchain and stores it in a database for quick and easy querying |
-| job | |
-| JSONSchema | |
-| Model | A Python class representing a database table, defined using the Tortoise ORM library |
-| package | |
-| RPC API | RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relativly to TzKT and other APIs |
-| SDK | A toolkit for developing smart contract indexing applications |
-| schema | |
-| Sync level | |
-| tortoise | A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management within the DipDup framework |
-| transaction | |
-| typeclass | |
-| TzKT API | A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos |
+### A
+- **ABI**: 
+- **Asyncio**: 
 
-## Tezos Terms
+### C
+- **Callback**: 
+- **config**: 
+- **context (ctx)**: 
 
-| Term | Definition |
-| --- | --- |
-| big_map | big_map object covered in [big map index page](indexes/tezos_tzkt_big_maps.md) |
-| Contract storage | Persistent data storage within a smart contract, holding the contract's state and any associated data |
-| Entry points | Functions defined within a smart contract that can be called by external contract invocations or other contracts |
-| Origination | The process of deploying a new smart contract on the Tezos network, creating a new originated contract address |
+### D
+- **datasource**: 
+- **DipDup**: An open source framework for building smart contract indexes for the Tezos network.
+- **Docker**: An open-source platform for creating, deploying, and managing containerized applications, improving consistency and reducing infrastructure overhead.
+- **Docker Compose**: A tool for defining and managing multi-container Docker applications, using a YAML file to configure services, networks, and volumes, simplifying application deployment and scaling.
 
-## Infrastructure Terms
+### E
+- **Environment Variables**: 
 
-| Term | Definition |
-| --- | --- |
-| Docker | An open-source platform for creating, deploying, and managing containerized applications, improving consistency and reducing infrastructure overhead |
-| Docker Compose | A tool for defining and managing multi-container Docker applications, using a YAML file to configure services, networks, and volumes, simplifying application deployment and scaling |
-| GraphQL | A query language and runtime for APIs that enables clients to request only the data they need, offering more flexibility and efficiency compared to traditional REST APIs |
-| Hasura | An open-source engine that connects to databases and microservices, providing real-time GraphQL APIs for faster and efficient data access |
-| PostgreSQL | A powerful, open-source object-relational database system known for its reliability, robustness, and performance, widely used for managing structured data |
-| Prometheus | An open-source monitoring and alerting toolkit designed for reliability and scalability, used to collect and process metrics from various systems, providing valuable insights into application and infrastructure performance |
-| Sentry | A real-time error tracking and monitoring platform that helps developers identify, diagnose, and fix issues in applications, improving overall software quality and performance |
+### G
+- **GraphQL**: A query language and runtime for APIs that enables clients to request only the data they need, offering more flexibility and efficiency compared to traditional REST APIs.
+
+### H
+- **Handler**: 
+- **Hasura**: An open-source engine that connects to databases and microservices, providing real-time GraphQL APIs for faster and efficient data access.
+- **head**: 
+- **Hook**: Could be two types.
+
+### I
+- **Indexer**: A program that reads data from a blockchain and stores it in a database for quick and easy querying.
+
+### J
+- **job**: 
+- **JSONSchema**: 
+
+### M
+- **Model**: A Python class representing a database table, defined using the Tortoise ORM library.
+
+### P
+- **package**: 
+- **PostgreSQL**: A powerful, open-source object-relational database system known for its reliability, robustness, and performance, widely used for managing structured data.
+- **Prometheus**: An open-source monitoring and alerting toolkit designed for reliability and scalability, used to collect and process metrics from various systems, providing valuable insights into application and infrastructure performance.
+
+### R
+- **RPC API**: RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relatively to TzKT and other APIs.
+
+### S
+- **schema**: 
+- **SDK**: A toolkit for developing smart contract indexing applications.
+- **Sentry**: A real-time error tracking and monitoring platform that helps developers identify, diagnose, and fix issues in applications, improving overall software quality and performance.
+- **Sync level**: 
+
+### T
+- **tortoise**: A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management.
+- **transaction**: 
+- **typeclass**: 
+- **TzKT API**: A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos.
+
+## Blockchain or Tezos Terms
+
+### B
+- **big_map**: big_map object covered in [big map index page](indexes/tezos_tzkt_big_maps.md).
+
+### C
+- **Contract storage**: Persistent data storage within a smart contract, holding the contract's state and any associated data.
+
+### E
+- **Entry points**: Functions defined within a smart contract that can be called by external contract invocations or other contracts.
+
+### O
+- **Origination**: The process of deploying a new smart contract on the Tezos network, creating a new originated contract address.
