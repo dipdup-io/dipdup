@@ -4,6 +4,7 @@ from types import NoneType
 from typing import Any
 
 import asyncclick as cl
+import orjson
 from pydantic import BaseModel
 from pydantic import Field
 from tabulate import tabulate
@@ -11,7 +12,6 @@ from tabulate import tabulate
 from dipdup import __version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import json_dumps
-from dipdup.utils import json_loads_frozen
 from dipdup.utils import load_template
 from dipdup.utils import write
 
@@ -150,7 +150,7 @@ class Project(BaseModel):
 
         if replay:
             with open(replay, 'rb') as f:
-                self.answers = JinjaAnswers(json_loads_frozen(f.read()))
+                self.answers = JinjaAnswers(orjson.loads(f.read()))
 
         for question in self.questions:
             if question.name in self.answers:
@@ -167,11 +167,7 @@ class Project(BaseModel):
 
     def write_cookiecutter_json(self, path: Path) -> None:
         values = {k: v for k, v in self.answers.items() if not k.startswith('_')}
-        path.write_bytes(
-            json_dumps(
-                values
-            )
-        )
+        path.write_bytes(json_dumps(values))
 
     def _render(self, template_path: Path, output_path: Path, force: bool) -> None:
         if output_path.exists() and not force:

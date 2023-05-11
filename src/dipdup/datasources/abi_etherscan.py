@@ -1,10 +1,11 @@
 from typing import Any
 from typing import cast
 
+import orjson
+
 from dipdup.config import HttpConfig
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.datasources import AbiDatasource
-from dipdup.utils import json_loads_frozen
 
 
 class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
@@ -31,4 +32,4 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
             url='',
             params=params,
         )
-        return cast(dict[str, Any], json_loads_frozen(response['result']))
+        return cast(dict[str, Any], orjson.loads(response['result']))

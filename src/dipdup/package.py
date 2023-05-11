@@ -4,13 +4,13 @@ from typing import Awaitable
 from typing import Callable
 from typing import cast
 
+import orjson
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import ProjectImportError
 from dipdup.utils import import_from
 from dipdup.utils import import_submodules
-from dipdup.utils import json_loads_frozen
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
@@ -105,7 +105,7 @@ class DipDupPackage:
             path = self.abi / typename / 'abi.json'
             if not path.exists():
                 raise ProjectImportError(f'`{path}` does not exist')
-            abi = cast(dict[str, Any], json_loads_frozen(path.read_text()))
+            abi = cast(dict[str, Any], orjson.loads(path.read_text()))
             self._evm_abis[typename] = abi
         return abi
 
@@ -114,7 +114,7 @@ class DipDupPackage:
             path = self.abi / typename / 'events.json'
             if not path.exists():
                 raise ProjectImportError(f'`{path}` does not exist')
-            extra_json = json_loads_frozen(path.read_text())
+            extra_json = orjson.loads(path.read_text())
             events = {k: EventAbiExtra(**v) for k, v in extra_json.items()}
             self._evm_events[typename] = events
         return events

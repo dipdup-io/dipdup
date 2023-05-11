@@ -4,6 +4,7 @@ from typing import Any
 from typing import cast
 
 import eth_utils
+import orjson
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
@@ -16,7 +17,6 @@ from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
 from dipdup.utils import json_dumps
-from dipdup.utils import json_loads_frozen
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -59,7 +59,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 
 def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
-        abi = json_loads_frozen(abi_path.read_bytes())
+        abi = orjson.loads(abi_path.read_bytes())
         event_extras: defaultdict[str, EventAbiExtra] = defaultdict(EventAbiExtra)  # type: ignore[arg-type]
 
         for abi_item in abi:

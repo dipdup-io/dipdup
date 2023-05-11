@@ -21,7 +21,6 @@ from typing import TypeVar
 from typing import Union
 
 import orjson
-from frozendict import frozendict
 from humps import main as humps
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -232,11 +231,3 @@ def json_dumps(obj: Any | str) -> bytes:
         default=_default_for_decimals,
         option=orjson.OPT_INDENT_2,
     )
-
-
-def json_loads_frozen(data: bytes | bytearray | memoryview | str, /) -> Any:
-    """Faster json.loads"""
-    data = orjson.loads(data)
-    if isinstance(data, dict):
-        return frozendict(data)
-    return data

@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import orjson
+
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
@@ -35,7 +37,6 @@ from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
-from dipdup.utils import json_loads_frozen
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
@@ -281,7 +282,7 @@ class TzktCodeGenerator(CodeGenerator):
         written = write(entrypoint_schema_path, json_dumps(entrypoint_schema))
         if not written and contract_config.typename is not None:
             with open(entrypoint_schema_path, 'r') as file:
-                existing_schema = json_loads_frozen(file.read())
+                existing_schema = orjson.loads(file.read())
             if entrypoint_schema != existing_schema:
                 self._logger.warning(
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename

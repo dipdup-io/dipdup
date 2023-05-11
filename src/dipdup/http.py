@@ -19,6 +19,7 @@ from urllib.parse import urlunsplit
 
 import aiohttp
 import aiohttp.test_utils
+import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
@@ -27,7 +28,6 @@ from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
 from dipdup.utils import json_dumps
-from dipdup.utils import json_loads_frozen
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -241,7 +241,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.json(loads=json_loads_frozen)
+                return await response.json(loads=orjson.loads)
             return await response.read()
 
     async def _replay_request(
@@ -268,7 +268,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
             content = replay_path.read_bytes()
             with suppress(JSONDecodeError):
-                return json_loads_frozen(content)
+                return orjson.loads(content)
             return content
 
         response = await self._retry_request(method, url, weight, **kwargs)
