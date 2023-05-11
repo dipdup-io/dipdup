@@ -12,8 +12,6 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
-import orjson
-
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
@@ -36,6 +34,8 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.utils import json_dumps
+from dipdup.utils import json_loads_frozen
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
@@ -260,7 +260,7 @@ class TzktCodeGenerator(CodeGenerator):
         storage_schema_path = contract_schemas_path / 'tezos_storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
-        write(storage_schema_path, orjson.dumps(storage_schema, option=orjson.OPT_INDENT_2))
+        write(storage_schema_path, json_dumps(storage_schema))
 
         if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
@@ -278,10 +278,10 @@ class TzktCodeGenerator(CodeGenerator):
 
         entrypoint = entrypoint.replace('.', '_').lstrip('_')
         entrypoint_schema_path = parameter_schemas_path / f'{entrypoint}.json'
-        written = write(entrypoint_schema_path, orjson.dumps(entrypoint_schema, option=orjson.OPT_INDENT_2))
+        written = write(entrypoint_schema_path, json_dumps(entrypoint_schema))
         if not written and contract_config.typename is not None:
             with open(entrypoint_schema_path, 'r') as file:
-                existing_schema = orjson.loads(file.read())
+                existing_schema = json_loads_frozen(file.read())
             if entrypoint_schema != existing_schema:
                 self._logger.warning(
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
@@ -315,15 +315,14 @@ class TzktCodeGenerator(CodeGenerator):
             big_map_key_schema_path = big_map_schemas_path / f'{big_map_path}_key.json'
             write(
                 big_map_key_schema_path,
-                orjson.dumps(
+                json_dumps(
                     big_map_key_schema,
-                    option=orjson.OPT_INDENT_2,
                 ),
             )
 
             big_map_value_schema = big_map_schema['valueSchema']
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
-            write(big_map_value_schema_path, orjson.dumps(big_map_value_schema, option=orjson.OPT_INDENT_2))
+            write(big_map_value_schema_path, json_dumps(big_map_value_schema))
 
     async def _fetch_event_index_schema(self, index_config: TzktEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
@@ -348,7 +347,7 @@ class TzktCodeGenerator(CodeGenerator):
             event_tag = handler_config.tag.replace('.', '_')
             event_schema = event_schema['eventSchema']
             event_schema_path = event_schemas_path / f'{event_tag}.json'
-            write(event_schema_path, orjson.dumps(event_schema, option=orjson.OPT_INDENT_2))
+            write(event_schema_path, json_dumps(event_schema))
 
     async def get_schemas(
         self,

@@ -10,7 +10,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
-import orjson
 import sentry_sdk
 import sentry_sdk.serializer
 import sentry_sdk.utils
@@ -21,6 +20,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from dipdup import __version__
 from dipdup import env
 from dipdup.sys import is_shutting_down
+from dipdup.utils import json_dumps
 
 DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
@@ -59,9 +59,8 @@ def save_crashdump(error: Exception) -> str:
     )
     with crashdump_file as f:
         f.write(
-            orjson.dumps(
+            json_dumps(
                 event,
-                option=orjson.OPT_INDENT_2,
             ),
         )
     return crashdump_file.name

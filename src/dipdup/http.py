@@ -19,7 +19,6 @@ from urllib.parse import urlunsplit
 
 import aiohttp
 import aiohttp.test_utils
-import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
@@ -27,6 +26,8 @@ from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
+from dipdup.utils import json_dumps
+from dipdup.utils import json_loads_frozen
 
 safe_exceptions = (
     aiohttp.ClientConnectionError,
@@ -95,7 +96,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
             base_url=self._url,
-            json_serialize=lambda *a, **kw: orjson.dumps(*a, **kw).decode(),
+            json_serialize=lambda *a, **kw: json_dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit),
             timeout=aiohttp.ClientTimeout(total=self._config.connection_timeout),
         )
@@ -240,7 +241,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.json(loads=orjson.loads)
+                return await response.json(loads=json_loads_frozen)
             return await response.read()
 
     async def _replay_request(
@@ -267,7 +268,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
             content = replay_path.read_bytes()
             with suppress(JSONDecodeError):
-                return orjson.loads(content)
+                return json_loads_frozen(content)
             return content
 
         response = await self._retry_request(method, url, weight, **kwargs)
@@ -275,7 +276,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         if isinstance(response, bytes):
             replay_path.write_bytes(response)
         else:
-            replay_path.write_bytes(orjson.dumps(response))
+            replay_path.write_bytes(json_dumps(response))
 
         return response
 

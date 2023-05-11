@@ -272,12 +272,14 @@ class HasuraGateway(HTTPGateway):
 
     async def _fetch_metadata(self) -> dict[str, Any]:
         self._logger.info('Fetching existing metadata')
-        return await self._hasura_request(
-            endpoint='metadata',
-            json={
-                'type': 'export_metadata',
-                'args': {},
-            },
+        return dict(
+            await self._hasura_request(
+                endpoint='metadata',
+                json={
+                    'type': 'export_metadata',
+                    'args': {},
+                },
+            )
         )
 
     def _hash_metadata(self, metadata: dict[str, Any]) -> str:

@@ -4,7 +4,6 @@ from typing import Any
 from typing import cast
 
 import eth_utils
-import orjson
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
@@ -16,6 +15,8 @@ from dipdup.exceptions import FrameworkException
 from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
+from dipdup.utils import json_dumps
+from dipdup.utils import json_loads_frozen
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -58,7 +59,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 
 def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
-        abi = orjson.loads(abi_path.read_bytes())
+        abi = json_loads_frozen(abi_path.read_bytes())
         event_extras: defaultdict[str, EventAbiExtra] = defaultdict(EventAbiExtra)  # type: ignore[arg-type]
 
         for abi_item in abi:
@@ -87,12 +88,12 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 continue
 
             touch(schema_path)
-            schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
+            schema_path.write_bytes(json_dumps(schema))
 
         if event_extras:
             event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
             touch(event_extras_path)
-            event_extras_path.write_bytes(orjson.dumps(event_extras, option=orjson.OPT_INDENT_2))
+            event_extras_path.write_bytes(json_dumps(event_extras))
 
 
 def topic_from_abi(event: dict[str, Any]) -> str:
@@ -172,7 +173,7 @@ class SubsquidCodeGenerator(CodeGenerator):
                 raise ConfigurationError(f'ABI for contract `{address}` not found')
 
             touch(abi_path)
-            abi_path.write_bytes(orjson.dumps(abi_json, option=orjson.OPT_INDENT_2))
+            abi_path.write_bytes(json_dumps(abi_json))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem

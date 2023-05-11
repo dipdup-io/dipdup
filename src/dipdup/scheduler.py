@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from contextlib import suppress
 from functools import partial
@@ -22,6 +21,7 @@ from dipdup.context import HookContext
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import FormattedLogger
+from dipdup.utils import json_dumps
 
 DEFAULT_CONFIG = {
     'apscheduler.jobstores.default.class': 'apscheduler.jobstores.memory:MemoryJobStore',
@@ -32,7 +32,7 @@ DEFAULT_CONFIG = {
 
 def _verify_config(config: Dict[str, Any]) -> None:
     """Ensure that dict is a valid `apscheduler` config"""
-    json_config = json.dumps(config)
+    json_config = json_dumps(config).decode()
     if 'apscheduler.executors.pool' in json_config:
         raise ConfigurationError(
             '`apscheduler.executors.pool` is not supported. If needed, create a pool inside a regular hook.'

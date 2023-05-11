@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from collections import defaultdict
 from collections import deque
 from copy import copy
 from datetime import date
@@ -7,15 +8,8 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
-from functools import cache
 from typing import Any
-from typing import DefaultDict
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Type
 from typing import TypeVar
 from typing import cast
 
@@ -36,11 +30,9 @@ from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup.exceptions import FrameworkException
+from dipdup.utils import json_dumps_plain
 
 _logger = logging.getLogger(__name__)
-
-
-versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
 
 
 # NOTE: Below is one of several patches to Tortoise ORM to make it work with DipDup.
@@ -52,7 +44,7 @@ tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ign
 tortoise.fields.TextField.indexable = True
 
 
-# FIXME: Skip expensive copy() calls on each queryset update. I have no idea if it's safe. Tests are green though.
+# NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
 tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 EnumFieldT = TypeVar('EnumFieldT', bound=Enum)
@@ -113,15 +105,6 @@ class ArrayField(fields.Field[list[str]]):
             array = orjson.loads(value)
             return [str(x) for x in array]
         return value
-
-
-def json_dumps_decimals(obj: Any) -> str:
-    def _default(obj: Any) -> Any:
-        if isinstance(obj, Decimal):
-            return str(obj)
-        raise TypeError
-
-    return orjson.dumps(obj, default=_default).decode()
 
 
 class IndexType(Enum):
@@ -190,17 +173,17 @@ class VersionedTransaction:
 
     level: int
     index: str
-    immune_tables: Set[str]
+    immune_tables: set[str]
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_transaction() -> Optional[VersionedTransaction]:
+def get_transaction() -> VersionedTransaction | None:
     """Get metadata of currently opened versioned transaction if any"""
     raise FrameworkException('TransactionManager is not registered')
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_pending_updates() -> deque['ModelUpdate']:
+def get_pending_updates() -> deque[ModelUpdate]:
     """Get pending model updates queue"""
     raise FrameworkException('TransactionManager is not registered')
 
@@ -222,7 +205,7 @@ class ModelUpdate(TortoiseModel):
     index = fields.TextField()
 
     action = EnumField(ModelUpdateAction)
-    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
+    data: dict[str, Any] = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -231,7 +214,7 @@ class ModelUpdate(TortoiseModel):
         table = 'dipdup_model_update'
 
     @classmethod
-    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> Optional['ModelUpdate']:
+    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> 'ModelUpdate' | None:
         """Create model update from model instance if necessary"""
         if not (transaction := get_transaction()):
             return None
@@ -266,7 +249,7 @@ class ModelUpdate(TortoiseModel):
         )
         return self
 
-    async def revert(self, model: Type[TortoiseModel]) -> None:
+    async def revert(self, model: type[TortoiseModel]) -> None:
         """Revert a single model update"""
         data = copy(self.data)
         # NOTE: Deserialize non-JSON types
@@ -313,14 +296,14 @@ class ModelUpdate(TortoiseModel):
 class UpdateQuery(TortoiseUpdateQuery):
     def __init__(
         self,
-        model: Type[TortoiseModel],
-        update_kwargs: Dict[str, Any],
+        model: type[TortoiseModel],
+        update_kwargs: dict[str, Any],
         db: BaseDBAsyncClient,
-        q_objects: List[Q],
-        annotations: Dict[str, Any],
-        custom_filters: Dict[str, Dict[str, Any]],
-        limit: Optional[int],
-        orderings: List[tuple[str, str]],
+        q_objects: list[Q],
+        annotations: dict[str, Any],
+        custom_filters: dict[str, dict[str, Any]],
+        limit: int | None,
+        orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(
@@ -353,13 +336,13 @@ class UpdateQuery(TortoiseUpdateQuery):
 class DeleteQuery(TortoiseDeleteQuery):
     def __init__(
         self,
-        model: Type[TortoiseModel],
+        model: type[TortoiseModel],
         db: BaseDBAsyncClient,
-        q_objects: List[Q],
-        annotations: Dict[str, Any],
-        custom_filters: Dict[str, Dict[str, Any]],
-        limit: Optional[int],
-        orderings: List[tuple[str, str]],
+        q_objects: list[Q],
+        annotations: dict[str, Any],
+        custom_filters: dict[str, dict[str, Any]],
+        limit: int | None,
+        orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
@@ -390,7 +373,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):
 
 
 class BulkCreateQuery(TortoiseBulkCreateQuery):
-    async def _execute(self) -> List[MODEL]:
+    async def _execute(self) -> list[MODEL]:
         for model in self.objects:
             if update := ModelUpdate.from_model(
                 cast(Model, model),
@@ -428,9 +411,15 @@ class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
         )
 
 
-@cache
-def get_versioned_fields(model: Type['Model']) -> Set[str]:
-    field_names: Set[str] = set()
+# NOTE: Don't register cache; plain dict is faster
+_versioned_fields: dict[type['Model'], frozenset[str]] = {}
+
+
+def get_versioned_fields(model: type['Model']) -> frozenset[str]:
+    if model in _versioned_fields:
+        return _versioned_fields[model]
+
+    field_names: set[str] = set()
     field_keys = model._meta.db_fields.union(model._meta.fk_fields)
 
     for key, field_ in model._meta.fields_map.items():
@@ -443,7 +432,8 @@ def get_versioned_fields(model: Type['Model']) -> Set[str]:
         else:
             field_names.add(key)
 
-    return field_names
+    _versioned_fields[model] = frozenset(field_names)
+    return frozenset(field_names)
 
 
 class Model(TortoiseModel):
@@ -460,17 +450,17 @@ class Model(TortoiseModel):
         return model
 
     @property
-    def original_versioned_data(self) -> Dict[str, Any]:
+    def original_versioned_data(self) -> dict[str, Any]:
         """Get versioned data of the model at the time of creation"""
         return self._original_versioned_data
 
     @property
-    def versioned_data(self) -> Dict[str, Any]:
+    def versioned_data(self) -> dict[str, Any]:
         """Get versioned data of the model at the current time"""
         return {name: getattr(self, name) for name in get_versioned_fields(self.__class__)}
 
     @property
-    def versioned_data_diff(self) -> Dict[str, Any]:
+    def versioned_data_diff(self) -> dict[str, Any]:
         """Get versioned data of the model changed since creation"""
         data = {}
         for key, value in self.original_versioned_data.items():
@@ -481,7 +471,7 @@ class Model(TortoiseModel):
     # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
     async def delete(
         self,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> None:
         await super().delete(using_db=using_db)
 
@@ -490,8 +480,8 @@ class Model(TortoiseModel):
 
     async def save(
         self,
-        using_db: Optional[BaseDBAsyncClient] = None,
-        update_fields: Optional[Iterable[str]] = None,
+        using_db: BaseDBAsyncClient | None = None,
+        update_fields: Iterable[str] | None = None,
         force_create: bool = False,
         force_update: bool = False,
     ) -> None:
@@ -512,8 +502,8 @@ class Model(TortoiseModel):
 
     @classmethod
     async def create(
-        cls: Type['ModelT'],
-        using_db: Optional[BaseDBAsyncClient] = None,
+        cls: type['ModelT'],
+        using_db: BaseDBAsyncClient | None = None,
         **kwargs: Any,
     ) -> 'ModelT':
         instance = cls(**kwargs)
@@ -524,13 +514,13 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_create(
-        cls: Type['Model'],
+        cls: type['Model'],
         objects: Iterable['Model'],
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         ignore_conflicts: bool = False,
-        update_fields: Optional[Iterable[str]] = None,
-        on_conflict: Optional[Iterable[str]] = None,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        update_fields: Iterable[str] | None = None,
+        on_conflict: Iterable[str] | None = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> BulkCreateQuery:
         if ignore_conflicts and update_fields:
             raise ValueError(
@@ -552,11 +542,11 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_update(
-        cls: Type['Model'],
+        cls: type['Model'],
         objects: Iterable['Model'],
         fields: Iterable[str],
-        batch_size: Optional[int] = None,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        batch_size: int | None = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> BulkUpdateQuery:
         if any(obj.pk is None for obj in objects):
             raise ValueError('All bulk_update() objects must have a primary key set.')
@@ -617,7 +607,7 @@ class Index(TortoiseModel):
 
     config_hash = fields.TextField(null=True)
     template = fields.TextField(null=True)
-    template_values: Dict[str, Any] = fields.JSONField(null=True)
+    template_values: dict[str, Any] = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     level = fields.IntField(default=0)
 
@@ -651,7 +641,7 @@ class Contract(TortoiseModel):
 
 class Meta(TortoiseModel):
     key = fields.TextField(pk=True)
-    value = fields.JSONField(null=True)
+    value = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -666,7 +656,7 @@ class Meta(TortoiseModel):
 class ContractMetadata(Model):
     network = fields.TextField()
     contract = fields.TextField()
-    metadata = fields.JSONField(null=True)
+    metadata = fields.JSONField(encoder=json_dumps_plain, null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -681,7 +671,7 @@ class TokenMetadata(Model):
     network = fields.TextField()
     contract = fields.TextField()
     token_id = fields.TextField()
-    metadata = fields.JSONField(null=True)
+    metadata = fields.JSONField(encoder=json_dumps_plain, null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)

@@ -13,7 +13,6 @@ Tasks performed at the first stage:
 
 from __future__ import annotations
 
-import json
 import logging.config
 import re
 from copy import copy
@@ -22,11 +21,11 @@ from os import environ as env
 from pathlib import Path
 from typing import Any
 
-from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 
 from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import json_dumps
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -119,7 +118,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         yaml.default_flow_style = False
         yaml.indent = 2
 
-        config_json = json.dumps(self, default=pydantic_encoder)
+        config_json = json_dumps(self)
         config_yaml = exclude_none(yaml.load(config_json))
         buffer = StringIO()
         yaml.dump(config_yaml, buffer)

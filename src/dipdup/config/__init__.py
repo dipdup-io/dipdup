@@ -17,7 +17,6 @@ from __future__ import annotations
 import hashlib
 import importlib
 import inspect
-import json
 import logging.config
 import re
 import sys
@@ -37,6 +36,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+import orjson
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -368,13 +368,13 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_dict = json.loads(config_json)
+        config_json = orjson.dumps(self, default=pydantic_encoder)
+        config_dict = orjson.loads(config_json)
 
         self.strip(config_dict)
 
-        config_json = json.dumps(config_dict)
-        return hashlib.sha256(config_json.encode()).hexdigest()
+        config_json = orjson.dumps(config_dict)
+        return hashlib.sha256(config_json).hexdigest()
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -830,7 +830,7 @@ class DipDupConfig:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
-        raw_template = json.dumps(template, default=pydantic_encoder)
+        raw_template = orjson.dumps(template, default=pydantic_encoder).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
@@ -840,7 +840,7 @@ class DipDupConfig:
                 f'`{template_config.name}` index config is missing required template value `{missing_value}`'
             )
 
-        json_template = json.loads(raw_template)
+        json_template = orjson.loads(raw_template)
         new_index_config = template.__class__(**json_template)
         new_index_config.template_values = template_config.values
         new_index_config.parent = template

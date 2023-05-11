@@ -5,56 +5,27 @@ from collections import deque
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
-from typing import TypedDict
 from typing import cast
 
 import pyarrow.ipc  # type: ignore[import]
-from typing_extensions import NotRequired
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
+from dipdup.models.evm_subsquid import FieldSelection
+from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
-FieldMap = dict[str, bool]
-
-
-class FieldSelection(TypedDict):
-    block: NotRequired[FieldMap]
-    transaction: NotRequired[FieldMap]
-    log: NotRequired[FieldMap]
-
-
-class LogFilter(TypedDict):
-    address: NotRequired[list[str]]
-    topics: NotRequired[list[list[str]]]
-    fieldSelection: NotRequired[FieldSelection]
-
-
-class TxFilter(TypedDict):
-    to: NotRequired[list[str]]
-    sighash: NotRequired[list[str]]
-
-
-class Query(TypedDict):
-    logs: NotRequired[list[LogFilter]]
-    transactions: NotRequired[list[TxFilter]]
-    fromBlock: NotRequired[int]
-    toBlock: NotRequired[int]
-
-
-_log_fields: FieldSelection = {
-    'log': {
-        'address': True,
-        'blockNumber': True,
-        'data': True,
-        'topics': True,
-        'blockHash': True,
-        'index': True,
-        'transactionHash': True,
-        'transactionIndex': True,
-    },
+LOG_FIELDS: FieldSelection = {  # type: ignore
+    'address': True,
+    'blockNumber': True,
+    'data': True,
+    'topics': True,
+    'blockHash': True,
+    'index': True,
+    'transactionHash': True,
+    'transactionIndex': True,
 }
 
 
@@ -67,16 +38,6 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
                 table: pyarrow.Table = reader.read_all()
                 data[item.filename] = table.to_pylist()
     return data
-
-
-def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
-    filter_: LogFilter = {
-        'topics': [topics],
-        'fieldSelection': _log_fields,
-    }
-    if address:
-        filter_['address'] = [address]
-    return filter_
 
 
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
@@ -111,8 +72,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             topics_by_address[address].append(topic)
 
         while current_level <= last_level:
-            query: Query = {
-                'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
+            query: Query = {  # type: ignore
+                # 'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
