@@ -1,18 +1,17 @@
 # Glossary
 
-## General Terms
+## DipDup and General Tech Terms
 
 ### A
 - **ABI**: 
-- **Asyncio**: 
 
 ### C
 - **Callback**: 
-- **config**: 
-- **context (ctx)**: 
+- **Config**: 
+- **Context**: in handlers
 
 ### D
-- **datasource**: 
+- **Datasource**: 
 - **DipDup**: An open source framework for building smart contract indexes for the Tezos network.
 - **Docker**: An open-source platform for creating, deploying, and managing containerized applications, improving consistency and reducing infrastructure overhead.
 - **Docker Compose**: A tool for defining and managing multi-container Docker applications, using a YAML file to configure services, networks, and volumes, simplifying application deployment and scaling.
@@ -26,21 +25,21 @@
 ### H
 - **Handler**: 
 - **Hasura**: An open-source engine that connects to databases and microservices, providing real-time GraphQL APIs for faster and efficient data access.
-- **head**: 
+- **Head**: 
 - **Hook**: Could be two types.
 
 ### I
 - **Indexer**: A program that reads data from a blockchain and stores it in a database for quick and easy querying.
 
 ### J
-- **job**: 
+- **Job**: 
 - **JSONSchema**: 
 
 ### M
 - **Model**: A Python class representing a database table, defined using the Tortoise ORM library.
 
 ### P
-- **package**: 
+- **Package**: 
 - **PostgreSQL**: A powerful, open-source object-relational database system known for its reliability, robustness, and performance, widely used for managing structured data.
 - **Prometheus**: An open-source monitoring and alerting toolkit designed for reliability and scalability, used to collect and process metrics from various systems, providing valuable insights into application and infrastructure performance.
 
@@ -48,18 +47,18 @@
 - **RPC API**: RPC stands for Remote Procedure Call. A protocol used to communicate with Tezos nodes and interact with the blockchain. DipDup receives minimal amount of data from RPC API due to slow performance relatively to TzKT and other APIs.
 
 ### S
-- **schema**: 
+- **Schema**: 
 - **SDK**: A toolkit for developing smart contract indexing applications.
 - **Sentry**: A real-time error tracking and monitoring platform that helps developers identify, diagnose, and fix issues in applications, improving overall software quality and performance.
 - **Sync level**: 
 
 ### T
-- **tortoise**: A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management.
-- **transaction**: 
-- **typeclass**: 
+- **Tortoise**: A Python asyncio library for defining models and relationships between tables, simplifying asynchronous database interactions and data management.
+- **Transaction**: 
+- **Typeclass**: 
 - **TzKT API**: A popular Tezos indexer API that provides a more user-friendly way to access Tezos blockchain data compared to the RPC API, often used for building applications on top of Tezos.
 
-## Blockchain or Tezos Terms
+## Blockchain and Tezos-Specific Terms
 
 ### B
 - **big_map**: big_map object covered in [big map index page](indexes/tezos_tzkt_big_maps.md).
