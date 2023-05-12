@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
 ## [6.5.6] - 2022-05-02
 
 ### Fixed
