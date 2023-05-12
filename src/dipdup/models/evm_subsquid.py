@@ -8,6 +8,7 @@ from typing import TypeVar
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
+from dipdup.fetcher import HasLevel
 from dipdup.models.evm_node import EvmNodeLogData
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
@@ -153,8 +154,8 @@ class StateDiffRequest(TypedDict, total=False):
 
 
 class Query(TypedDict):
-    # fromBlock: int
-    # toBlock: NotRequired[int]
+    fromBlock: int
+    toBlock: NotRequired[int]
     includeAllBlocks: NotRequired[bool]
     fields: NotRequired[FieldSelection]
     logs: NotRequired[list[LogRequest]]
@@ -172,33 +173,35 @@ class SubsquidMessageType(Enum):
 
 
 @dataclass(frozen=True)
-class SubsquidEventData:
+class SubsquidEventData(HasLevel):
     address: str
-    block_hash: str
-    # block_number: int
     data: str
-    index: int
+    log_index: int
     # removed: bool
     topics: tuple[str, ...]
     transaction_hash: str
     transaction_index: int
     level: int
     # TODO: timestamp
+    # block_hash: str
+    # block_number: int
 
     @classmethod
     def from_json(
         cls,
         event_json: dict[str, Any],
+        level: int,
     ) -> 'SubsquidEventData':
         return SubsquidEventData(
             address=event_json['address'],
             data=event_json['data'],
             topics=tuple(event_json['topics']),
-            level=event_json['blockNumber'],
-            index=event_json['index'],
-            block_hash=event_json['blockHash'],
+            log_index=event_json['logIndex'],
             transaction_hash=event_json['transactionHash'],
             transaction_index=event_json['transactionIndex'],
+            # block_hash=event_json['blockHash'],
+            # level=event_json['blockNumber'],
+            level=level,
         )
 
     @property

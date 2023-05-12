@@ -5,7 +5,6 @@ from collections import deque
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
-from typing import cast
 
 import pyarrow.ipc  # type: ignore[import]
 
@@ -13,19 +12,20 @@ from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import FieldSelection
+from dipdup.models.evm_subsquid import LogFieldSelection
+from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
-LOG_FIELDS: FieldSelection = {  # type: ignore
+LOG_FIELDS: LogFieldSelection = {
+    'logIndex': True,
+    'transactionIndex': True,
+    'transactionHash': True,
     'address': True,
-    'blockNumber': True,
     'data': True,
     'topics': True,
-    'blockHash': True,
-    'index': True,
-    'transactionHash': True,
-    'transactionIndex': True,
+    # 'blockNumber': True,
+    # 'blockHash': True,
 }
 
 
@@ -71,29 +71,35 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
+        log_request = [LogRequest(address=[a] if a else [], topic0=t) for a, t in topics_by_address.items()]
+
         while current_level <= last_level:
-            query: Query = {  # type: ignore
-                # 'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
+            worker_url = (await self._http.request('get', f'{self._config.url}/{current_level}/worker')).decode()
+
+            query: Query = {
+                'logs': log_request,
+                'fields': {
+                    'block': {},
+                    'log': LOG_FIELDS,
+                },
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
 
-            response: dict[str, Any] = await self.request(
+            response: list[dict[str, Any]] = await self.request(
                 'post',
-                url='query',
+                url=worker_url,
                 json=query,
             )
 
-            # NOTE: There's also 'archiveHeight' field, but sync level updated in the main loop
-            current_level = response['nextBlock']
-
-            for level in response['data']:
+            for level_logs in response:
+                level = level_logs['header']['number']
+                current_level = level + 1
                 logs: deque[SubsquidEventData] = deque()
-                for transaction in level:
-                    for raw_log in transaction['logs']:
-                        logs.append(
-                            SubsquidEventData.from_json(raw_log),
-                        )
+                for raw_log in level_logs['logs']:
+                    logs.append(
+                        SubsquidEventData.from_json(raw_log, level),
+                    )
                 yield tuple(logs)
 
     async def initialize(self) -> None:
@@ -106,4 +112,4 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')
-        return cast(int, response.get('height', 0))
+        return int(response)

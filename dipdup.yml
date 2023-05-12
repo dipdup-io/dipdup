@@ -16,7 +16,7 @@ datasources:
 
   mainnet_subsquid:
     kind: evm.subsquid
-    url: ${ARCHIVE_URL:-https://eth.archive.subsquid.io}
+    url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
     node: mainnet_node
 
 contracts:

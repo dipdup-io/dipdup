@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 _logger.setLevel(logging.DEBUG)
 
 
-class EventLogFetcher(DataFetcher[SubsquidEventData]):  # type: ignore
+class EventLogFetcher(DataFetcher[SubsquidEventData]):
     """Fetches contract events from REST API, merges them and yields by level."""
 
     _datasource: SubsquidDatasource
@@ -38,5 +38,5 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):  # type: ignore
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter, limit=5_000):  # type: ignore
+        async for level, batch in readahead_by_level(event_iter, limit=5_000):
             yield level, batch

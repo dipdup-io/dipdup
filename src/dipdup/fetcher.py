@@ -80,7 +80,7 @@ async def readahead_by_level(
             need_more.set()
             yield level, batch
         has_more.clear()
-        if task.done():
+        if task.done() or task.cancelled() or task._exception:
             await task
             break
         await has_more.wait()

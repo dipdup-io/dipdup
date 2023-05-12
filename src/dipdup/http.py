@@ -210,10 +210,12 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        if url:
-            url = f"{self._path.rstrip('/')}/{url}"
-        else:
+        if not url:
             url = self._path
+        elif url.startswith('http'):
+            url = url.replace(self._url, '').rstrip('/')
+        else:
+            url = f"{self._path.rstrip('/')}/{url}"
 
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
@@ -221,6 +223,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         params = kwargs.get('params', {})
         params_string = '&'.join(f'{k}={v}' for k, v in params.items())
         request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
+        print(kwargs)
         self._logger.debug('Calling `%s`', request_string)
 
         if self._ratelimiter:
@@ -233,16 +236,16 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             raise_for_status=True,
             **kwargs,
         ) as response:
+            await response.read()
             if raw:
-                await response.read()
                 return response
 
             # NOTE: Use raw=True if fail on 204 is not a desired behavior
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
-            with suppress(JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.json(loads=orjson.loads)
-            return await response.read()
+            with suppress(JSONDecodeError):
+                return orjson.loads(response._body)
+            return response._body
 
     async def _replay_request(
         self,
