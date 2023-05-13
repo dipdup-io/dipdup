@@ -55,6 +55,18 @@ def read_config_yaml(path: Path) -> str:
         raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
 
 
+def dump(value: Any) -> str:
+    yaml = YAML(typ='unsafe', pure=True)
+    yaml.default_flow_style = False
+    yaml.indent = 2
+
+    config_json = json_dumps(value)
+    config_yaml = exclude_none(yaml.load(config_json))
+    buffer = StringIO()
+    yaml.dump(config_yaml, buffer)
+    return buffer.getvalue()
+
+
 def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
     _logger.debug('Substituting environment variables')
     environment: dict[str, str] = {}
@@ -114,15 +126,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         return config, config_environment
 
     def dump(self) -> str:
-        yaml = YAML(typ='unsafe', pure=True)
-        yaml.default_flow_style = False
-        yaml.indent = 2
-
-        config_json = json_dumps(self)
-        config_yaml = exclude_none(yaml.load(config_json))
-        buffer = StringIO()
-        yaml.dump(config_yaml, buffer)
-        return buffer.getvalue()
+        return dump(self)
 
     def validate_version(self) -> None:
         config_spec_version = self['spec_version']

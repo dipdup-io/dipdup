@@ -3,11 +3,10 @@ import asyncio
 import hashlib
 import logging
 import platform
-import tempfile
 from contextlib import suppress
 from functools import partial
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from time import time
 from typing import Any
 
 import sentry_sdk
@@ -19,14 +18,14 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
 from dipdup import env
+from dipdup.config import DipDupConfig
+from dipdup.performance import get_stats
+from dipdup.performance import profiler
 from dipdup.sys import is_shutting_down
-from dipdup.utils import json_dumps
+from dipdup.yaml import dump
 
 DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
-
-# if TYPE_CHECKING:
-from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger('dipdup.sentry')
 
@@ -47,23 +46,19 @@ def save_crashdump(error: Exception) -> str:
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
+    event.pop('_meta', None)
 
-    tmp_dir = Path(tempfile.gettempdir()) / 'dipdup' / 'crashdumps'
-    tmp_dir.mkdir(parents=True, exist_ok=True)
+    profiler and event.update(profiler=get_stats())
 
-    crashdump_file = NamedTemporaryFile(
-        mode='ab',
-        suffix='.json',
-        dir=tmp_dir,
-        delete=False,
-    )
-    with crashdump_file as f:
-        f.write(
-            json_dumps(
-                event,
-            ),
-        )
-    return crashdump_file.name
+    crashdump_dir = Path(Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps')
+    crashdump_dir.mkdir(parents=True, exist_ok=True)
+
+    package_name = env.PACKAGE_PATH.name if env.PACKAGE_PATH else 'unknown'
+    path = crashdump_dir / f'{package_name}-{round(time())}.yml'
+
+    event_yaml = dump(event)
+    path.write_text(event_yaml)
+    return path.as_posix()
 
 
 def before_send(

@@ -22,7 +22,7 @@ async def _shutdown() -> None:  # pragma: no cover
     _is_shutting_down = True
 
     # NOTE: Prevents BrokenPipeError when piping output to another process
-    sys.stderr.close()
+    # sys.stderr.close()
 
     tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
     list(map(asyncio.Task.cancel, tasks))
