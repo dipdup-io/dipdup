@@ -22,15 +22,15 @@ datasources:
 contracts:
   factory:
     kind: evm
-    address: 0x1F98431c8aD98523631AE4a59f267346ea31F984
+    address: 0x1f98431c8ad98523631ae4a59f267346ea31f984
     typename: factory
   position_manager:
     kind: evm
-    address: 0xC36442b4a4522E871399CD717aBDD847Ab11FE88
+    address: 0xc36442b4a4522e871399cd717abdd847ab11fe88
     typename: position_manager
   pool:
     kind: evm
-    abi: 0x7668B2Ea8490955F68F5c33E77FE150066c94fb9
+    abi: 0x7668b2ea8490955f68f5c33e77fe150066c94fb9
     typename: pool
 
 templates:
@@ -74,10 +74,10 @@ indexes:
     template: uniswap_v3_factory
     values:
       datasource: mainnet_subsquid
-    first_level: 12369621
-    # first_level: 12369621
+    first_level: 12369521
     # last_level: 12379621
+    # first_level: 17149842
 
 api: {}
-advanced:
-  profiler: full
+# advanced:
+#   profiler: full

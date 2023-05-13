@@ -223,7 +223,6 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         params = kwargs.get('params', {})
         params_string = '&'.join(f'{k}={v}' for k, v in params.items())
         request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
-        print(kwargs)
         self._logger.debug('Calling `%s`', request_string)
 
         if self._ratelimiter:

@@ -1,5 +1,4 @@
 from collections import deque
-from copy import copy
 from typing import Any
 from typing import Iterable
 
@@ -86,18 +85,21 @@ def match_events(
     topics: dict[str, dict[str, str]],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
+    # FIXME: Don't do it every time
+    topics_cache = {f'{h.contract.module_name}:{h.name}': topics[h.contract.module_name][h.name] for h in handlers}
     matched_handlers: deque[MatchedEventsT] = deque()
     events = deque(events)
 
-    for handler_config in handlers:
-        # NOTE: Matched events are dropped after processing
-        for event in copy(events):
-            if topics[handler_config.contract.module_name][handler_config.name] != event.topics[0]:
+    for event in events.copy():
+        for handler_config in handlers:
+            topic = topics_cache[f'{handler_config.contract.module_name}:{handler_config.name}']
+            if topic != event.topics[0]:
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
             matched_handlers.append((handler_config, arg))
 
             events.remove(event)
+            break
 
     return matched_handlers
