@@ -81,7 +81,7 @@ class Pool(Model):
     # fee amount
     fee_tier = fields.BigIntField(default=0)
     # in range liquidity
-    liquidity = fields.DecimalField(decimal_places=0, max_digits=36, default=0)
+    liquidity = fields.DecimalField(decimal_places=0, max_digits=72, default=0)
     # current price tracker
     sqrt_price = fields.DecimalField(decimal_places=0, max_digits=72, default=0)
     # TODO: requires rpc calls
@@ -90,17 +90,17 @@ class Pool(Model):
     # tracker for global fee growth
     # fee_growth_global_1x128 = fields.BigIntField(default=0)
     # token0 per token1
-    token0_price = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    token0_price = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # token1 per token0
-    token1_price = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    token1_price = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # current tick
     tick = fields.BigIntField(null=True)
     # current observation index
     observation_index = fields.BigIntField(default=0)
     # all time token0 swapped
-    volume_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    volume_token0 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # all time token1 swapped
-    volume_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    volume_token1 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # all time USD swapped
     volume_usd = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # all time USD swapped, unfiltered for unreliable USD pools
@@ -110,15 +110,15 @@ class Pool(Model):
     # all time number of transactions
     tx_count = fields.BigIntField(default=0)
     # all time fees collected token0
-    collected_fees_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    collected_fees_token0 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # all time fees collected token1
-    collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    collected_fees_token1 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # all time fees collected derived USD
     collected_fees_usd = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # total token 0 across all ticks
-    total_value_locked_token0 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    total_value_locked_token0 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # total token 1 across all ticks
-    total_value_locked_token1 = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
+    total_value_locked_token1 = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # tvl derived ETH
     total_value_locked_eth = fields.DecimalField(decimal_places=18, max_digits=36, default=0)
     # tvl USD

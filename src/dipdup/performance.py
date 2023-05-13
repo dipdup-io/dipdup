@@ -135,11 +135,13 @@ class Profiler:
     def set_level(self, level: ProfilerLevel) -> None:
         self._level = level
 
-    def set(self, name: str, value: float) -> None:
+    def set(self, name: str, value: float) -> bool:
         self._stats[name] = value
+        return True
 
-    def inc(self, name: str, value: float) -> None:
+    def inc(self, name: str, value: float) -> bool:
         self._stats[name] += value
+        return True
 
     def stats(self) -> dict[str, float]:
         return self._stats

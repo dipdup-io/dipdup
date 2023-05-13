@@ -1,4 +1,5 @@
 import asyncio
+import time
 from collections import defaultdict
 from contextlib import ExitStack
 from typing import Any
@@ -18,6 +19,7 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
+from dipdup.performance import profiler
 from dipdup.prometheus import Metrics
 
 LEVEL_TIMEOUT = 1
@@ -175,12 +177,16 @@ class SubsquidEventsIndex(
             return
 
         batch_level = events[0].level
+        profiler.basic and profiler.inc('evm_subsquid_events:events_total', len(events))
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing contract events of level %s', batch_level)
+        started_at = time.time()
         matched_handlers = match_events(self._ctx.package, self._config.handlers, events, topics)
+        profiler.basic and profiler.inc('evm_subsquid_events:events_matched', len(matched_handlers))
+        profiler.basic and profiler.inc('evm_subsquid_events:time_in_matcher', (time.time() - started_at) / 60)
 
         # if Metrics.enabled:
         #     Metrics.set_index_handlers_matched(len(matched_handlers))
@@ -190,10 +196,12 @@ class SubsquidEventsIndex(
             await self._update_state(level=batch_level)
             return
 
+        started_at = time.time()
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, event in matched_handlers:
                 await self._call_matched_handler(handler_config, event)
             await self._update_state(level=batch_level)
+        profiler.basic and profiler.inc('evm_subsquid_events:time_in_callbacks', (time.time() - started_at) / 60)
 
     async def _call_matched_handler(
         self,

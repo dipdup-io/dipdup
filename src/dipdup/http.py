@@ -3,6 +3,7 @@ import hashlib
 import logging
 import platform
 import sys
+import time
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
@@ -26,6 +27,7 @@ from dipdup import __version__
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
+from dipdup.performance import profiler
 from dipdup.prometheus import Metrics
 from dipdup.utils import json_dumps
 
@@ -210,6 +212,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
+        profiler.basic and profiler.inc('http:requests_total', 1.0)
         if not url:
             url = self._path
         elif url.startswith('http'):
@@ -220,13 +223,16 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 
-        params = kwargs.get('params', {})
-        params_string = '&'.join(f'{k}={v}' for k, v in params.items())
-        request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
-        self._logger.debug('Calling `%s`', request_string)
+        if profiler.full:
+            params = kwargs.get('params', {})
+            params_string = '&'.join(f'{k}={v}' for k, v in params.items())
+            request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
+            self._logger.debug('Calling `%s`', request_string)
 
         if self._ratelimiter:
             await self._ratelimiter.acquire(weight)
+
+        started_at = time.time()
 
         async with self._session.request(
             method=method,
@@ -236,6 +242,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             await response.read()
+            profiler.basic and profiler.inc('http:time_in_requests', (time.time() - started_at) / 60)
             if raw:
                 return response
 
