@@ -1,13 +1,9 @@
-import logging
 from typing import AsyncIterator
 
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.evm_subsquid import SubsquidEventData
-
-_logger = logging.getLogger(__name__)
-_logger.setLevel(logging.DEBUG)
 
 
 class EventLogFetcher(DataFetcher[SubsquidEventData]):
@@ -22,10 +18,7 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         last_level: int,
         topics: list[tuple[str | None, str]],
     ) -> None:
-        self._logger = logging.getLogger('dipdup.subsquid')
-        self._datasource = datasource
-        self._first_level = first_level
-        self._last_level = last_level
+        super().__init__(datasource, first_level, last_level)
         self._topics = topics
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[SubsquidEventData, ...]]]:
@@ -38,5 +31,5 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter, limit=5_000):
+        async for level, batch in readahead_by_level(event_iter, limit=50):
             yield level, batch

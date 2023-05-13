@@ -64,6 +64,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         first_level: int,
         last_level: int,
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+        # FIXME: Earlier data has not indexed yet by Subsquid
+        first_level = max(first_level, 9_000_000)
         current_level = first_level
 
         # TODO: smarter query optimizator

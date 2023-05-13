@@ -5,6 +5,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
+from contextlib import suppress
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -80,10 +81,11 @@ async def readahead_by_level(
             need_more.set()
             yield level, batch
         has_more.clear()
-        if task.done() or task.cancelled() or task._exception:
+        if task.done():
             await task
             break
-        await has_more.wait()
+        with suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(has_more.wait(), timeout=10)
 
 
 class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):

@@ -143,7 +143,7 @@ async def swap(
     token1.total_value_locked_usd = token1.total_value_locked * token1.derived_eth * eth_usd
 
     swap_tx = await models.Swap.create(
-        id=f'{event.data.transaction_hash}#{event.data.index}',
+        id=f'{event.data.transaction_hash}#{event.data.log_index}',
         transaction_hash=event.data.transaction_hash,
         pool=pool,
         token0=token0,
@@ -157,7 +157,7 @@ async def swap(
         amount_usd=amount_total_usd_tracked,
         tick=event.payload.tick,
         sqrt_price_x96=event.payload.sqrtPriceX96,
-        log_index=event.data.index,
+        log_index=event.data.log_index,
     )
     await swap_tx.save()
 

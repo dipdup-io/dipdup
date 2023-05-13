@@ -70,7 +70,7 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
         'amount_usd': amount_usd,
         'tick_lower': event.payload.tickLower,
         'tick_upper': event.payload.tickUpper,
-        'log_index': event.data.index,
+        'log_index': event.data.log_index,
     }
 
     tx: models.Burn | models.Mint
