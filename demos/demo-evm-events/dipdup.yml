@@ -1,6 +1,10 @@
 spec_version: 2.0
 package: demo_evm_events
 
+database:
+  kind: sqlite
+  path: /tmp/evm_events.sqlite
+
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -30,7 +34,8 @@ indexes:
         contract: eth_usdt
         name: Transfer
 
-api: {}
-advanced:
-  profiler: full
-logging: verbose
+api:
+  port: 8088
+# advanced:
+#   profiler: full
+# logging: verbose

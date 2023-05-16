@@ -450,7 +450,7 @@ class DipDup:
         self._datasources: dict[str, Datasource[Any]] = {}
         self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
-            depth=self._config.advanced.rollback_depth_int,
+            depth=self._config.advanced.rollback_depth,
             immune_tables=self._config.database.immune_tables,
         )
         self._ctx = DipDupContext(
@@ -635,6 +635,7 @@ class DipDup:
                 url=self._config.database.connection_string,
                 models=self._config.package,
                 timeout=self._config.database.connection_timeout,
+                decimal_precision=self._config.advanced.decimal_precision,
             )
         )
 

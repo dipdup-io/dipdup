@@ -2,7 +2,6 @@ from collections import deque
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from typing import Optional
-from typing import Set
 
 from tortoise.transactions import in_transaction
 
@@ -16,8 +15,8 @@ class TransactionManager:
 
     def __init__(
         self,
-        depth: int = 2,
-        immune_tables: Optional[Set[str]] = None,
+        depth: int | None = None,
+        immune_tables: set[str] | None = None,
     ) -> None:
         self._depth = depth
         self._immune_tables = immune_tables or set()
@@ -75,6 +74,8 @@ class TransactionManager:
 
     async def cleanup(self) -> None:
         """Cleanup outdated model updates"""
+        if not self._depth:
+            return
         most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
         if not most_recent_index:
             return

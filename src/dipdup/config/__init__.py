@@ -557,6 +557,8 @@ class AdvancedConfig:
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param crash_reporting: Enable crash reporting
+    :param profiler:
+    :param decimal_precision:
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -568,12 +570,7 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     crash_reporting: bool = False
     profiler: ProfilerLevel = ProfilerLevel.basic
-
-    @property
-    def rollback_depth_int(self) -> int:
-        if self.rollback_depth is None:
-            raise FrameworkException('`rollback_depth` was not set on config initialization')
-        return self.rollback_depth
+    decimal_precision: int | None = None
 
 
 @dataclass

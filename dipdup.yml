@@ -79,5 +79,6 @@ indexes:
     # first_level: 17149842
 
 api: {}
-# advanced:
-#   profiler: full
+advanced:
+  decimal_precision: 128  # 🙄
+  profiler: full

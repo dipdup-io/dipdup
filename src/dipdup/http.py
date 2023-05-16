@@ -223,11 +223,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 
-        if profiler.full:
-            params = kwargs.get('params', {})
-            params_string = '&'.join(f'{k}={v}' for k, v in params.items())
-            request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
-            self._logger.debug('Calling `%s`', request_string)
+        params = kwargs.get('params', {})
+        params_string = '&'.join(f'{k}={v}' for k, v in params.items())
+        request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
+        self._logger.debug('Calling `%s`', request_string)
 
         if self._ratelimiter:
             await self._ratelimiter.acquire(weight)

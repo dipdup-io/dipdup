@@ -26,7 +26,6 @@ from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
 from tortoise.fields import DecimalField
-from tortoise.fields.relational import ForeignKeyFieldInstance
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
@@ -51,7 +50,12 @@ def set_connection(conn: BaseDBAsyncClient) -> None:
 
 
 @asynccontextmanager
-async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator[None]:
+async def tortoise_wrapper(
+    url: str,
+    models: Optional[str] = None,
+    timeout: int = 60,
+    decimal_precision: int | None = None,
+) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
         'int_models': ['dipdup.models'],
@@ -62,6 +66,8 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
         model_modules['models'] = [models]
 
     # NOTE: Must be called before entering Tortoise context
+    decimal_precision = decimal_precision or guess_decimal_precision(models)
+    set_decimal_precision(decimal_precision)
     prepare_models(models)
 
     try:
@@ -266,18 +272,17 @@ def prepare_models(package: Optional[str]) -> None:
     Generate missing table names, validate models, increase decimal precision if needed.
     """
     # NOTE: Circular imports
+    import dipdup.fields
     import dipdup.models
 
     # NOTE: Required for pytest-xdist. Models with the same name in different packages cause conflicts otherwise.
     EXECUTOR_CACHE.clear()
 
     db_tables: Set[str] = set()
-    decimal_context = decimal.getcontext()
-    prec = decimal_context.prec
 
     for app, model in iter_models(package):
         # NOTE: Enforce our class for user models
-        if app == 'models' and not issubclass(model, dipdup.models.Model):
+        if app != 'int_models' and not issubclass(model, dipdup.models.Model):
             raise InvalidModelsError(
                 'Project models must be subclassed from `dipdup.models.Model`.'
                 '\n\n'
@@ -306,6 +311,14 @@ def prepare_models(package: Optional[str]) -> None:
             )
 
         for field in model._meta.fields_map.values():
+            # NOTE: Ensure that field is imported from dipdup.fields
+            if app != 'int_models' and not field.__module__.startswith('dipdup.fields'):
+                raise InvalidModelsError(
+                    'Model fields must be imported from `dipdup.fields`.',
+                    model,
+                    field.model_field_name,
+                )
+
             # NOTE: Enforce fields in snake_case
             field_name = field.model_field_name
             if field_name != pascal_to_snake(field_name):
@@ -324,22 +337,32 @@ def prepare_models(package: Optional[str]) -> None:
                 )
 
             # NOTE: The same for backward relations
-            if isinstance(field, ForeignKeyFieldInstance) and field.related_name == table_name:
+            if isinstance(field, dipdup.fields.ForeignKeyFieldInstance) and field.related_name == table_name:
                 raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,
                     f'related_name={field.related_name}',
                 )
 
-            # NOTE: Increase decimal precision if needed
-            if isinstance(field, DecimalField):
-                prec = max(prec, field.max_digits)
 
-    # NOTE: Set new decimal precision
-    if decimal_context.prec < prec:
-        _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)
-        decimal_context.prec = prec
+def guess_decimal_precision(package: str | None) -> int:
+    prec = 0
+    for _, model in iter_models(package):
+        for field in model._meta.fields_map.values():
+            if not isinstance(field, DecimalField):
+                continue
+            prec = max(prec, field.max_digits)
+    return prec
 
-        # NOTE: DefaultContext is used for new threads
-        decimal.DefaultContext.prec = prec
-        decimal.setcontext(decimal_context)
+
+def set_decimal_precision(prec: int) -> None:
+    """Set decimal precision for the current and all future threads"""
+    decimal_context = decimal.getcontext()
+    if prec in (decimal_context.prec, 0):
+        return
+
+    _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)
+    decimal_context.prec = prec
+    # NOTE: DefaultContext is used for new threads
+    decimal.DefaultContext.prec = prec
+    decimal.setcontext(decimal_context)

@@ -12,9 +12,9 @@ import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
-from tortoise import fields
 
 from dipdup import env
+from dipdup import fields
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig

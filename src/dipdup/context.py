@@ -530,7 +530,9 @@ class HookContext(DipDupContext):
         if from_level <= to_level:
             raise FrameworkException(f'Attempt to rollback in future: {from_level} <= {to_level}')
 
-        rollback_depth = self.config.advanced.rollback_depth_int
+        rollback_depth = self.config.advanced.rollback_depth
+        if rollback_depth is None:
+            raise FrameworkException('`rollback_depth` is not set')
         if from_level - to_level > rollback_depth:
             # TODO: Need more context
             await self.reindex(ReindexingReason.rollback)

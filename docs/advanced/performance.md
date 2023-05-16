@@ -12,7 +12,7 @@ Tortoise ORM uses BTree indexes by default. To set index on a field, add `index=
 
 ```python
 from dipdup.models import Model
-from tortoise import fields
+from dipdup import fields
 
 
 class Trade(Model):

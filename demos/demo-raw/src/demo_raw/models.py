@@ -1,5 +1,4 @@
-from tortoise import fields
-
+from dipdup import fields
 from dipdup.models import Model
 from dipdup.models.tezos_tzkt import TzktOperationType
 
@@ -7,4 +6,4 @@ from dipdup.models.tezos_tzkt import TzktOperationType
 class Operation(Model):
     hash = fields.TextField()
     level = fields.IntField()
-    type = fields.CharEnumField(TzktOperationType)
+    type = fields.EnumField(TzktOperationType)

@@ -18,6 +18,7 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup.performance import profiler
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_process
 
@@ -72,7 +73,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             crashdump_path = save_crashdump(e)
             _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
             _print_help(e)
-            raise e
+
+            if profiler:
+                raise e
+            sys.exit(1)
 
     return cast(WrappedCommandT, wrapper)
 
@@ -130,7 +134,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     """
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] == 'self':
+    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
         return
 
     from dotenv import load_dotenv
@@ -353,7 +357,12 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Approving schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash=None,
@@ -402,7 +411,12 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     from dipdup.database import tortoise_wrapper
     from dipdup.database import wipe_schema
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
@@ -473,7 +487,12 @@ async def schema_export(ctx: click.Context) -> None:
     models = f'{config.package}.models'
     package_path = env.get_package_path(config.package)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
@@ -604,3 +623,49 @@ async def self_compile_project(
     }
 
     dipdup.compile.compile_project(name, merged_opts, site_packages)
+
+
+@cli.group(invoke_without_command=True)
+@click.pass_context
+@_cli_wrapper
+async def report(ctx: click.Context) -> None:
+    if ctx.invoked_subcommand:
+        return
+
+    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps'
+    for file in path.iterdir():
+        echo(file.stem)
+
+
+@report.command(name='show')
+@click.pass_context
+@click.argument('name', type=str)
+@_cli_wrapper
+async def report_show(ctx: click.Context, name: str) -> None:
+    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps' / f'{name}.yml'
+    if not path.exists():
+        echo('No such report')
+        return
+    print(path.read_text())
+
+
+@report.command(name='rm')
+@click.pass_context
+@click.argument('name', type=str, required=False)
+@click.option('--all', '-a', is_flag=True, help='Remove all reports.')
+@_cli_wrapper
+async def report_rm(ctx: click.Context, name: str | None, all: bool) -> None:
+    if all and name:
+        echo('Please specify either name or --all')
+        return
+    if all:
+        path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps'
+        for file in path.iterdir():
+            file.unlink()
+        return
+
+    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps' / f'{name}.yml'
+    if not path.exists():
+        echo('No such report')
+        return
+    path.unlink()

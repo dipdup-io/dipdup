@@ -199,7 +199,12 @@ class SubsquidEventsIndex(
         started_at = time.time()
         async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, event in matched_handlers:
+                handler_started_at = time.time()
                 await self._call_matched_handler(handler_config, event)
+                profiler.basic and profiler.inc(
+                    f'evm_subsquid_events:time_in_callbacks:{handler_config.name}',
+                    (time.time() - handler_started_at) / 60,
+                )
             await self._update_state(level=batch_level)
         profiler.basic and profiler.inc('evm_subsquid_events:time_in_callbacks', (time.time() - started_at) / 60)
 

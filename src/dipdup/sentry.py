@@ -48,6 +48,10 @@ def save_crashdump(error: Exception) -> str:
     event = sentry_sdk.serializer.serialize(event)
     event.pop('_meta', None)
 
+    for exception in event['exception']['values']:
+        for frame in exception['stacktrace']['frames']:
+            frame['code'] = frame.pop('pre_context') + [frame.pop('context_line')] + frame.pop('post_context')
+
     profiler and event.update(profiler=get_stats())
 
     crashdump_dir = Path(Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps')

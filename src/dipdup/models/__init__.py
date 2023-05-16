@@ -13,11 +13,9 @@ from typing import Iterable
 from typing import TypeVar
 from typing import cast
 
-import orjson
 import tortoise
 import tortoise.queryset
 from pydantic.dataclasses import dataclass
-from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.expressions import Q
 from tortoise.fields import relational
@@ -29,82 +27,15 @@ from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
+from dipdup import fields
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps_plain
 
 _logger = logging.getLogger(__name__)
 
 
-# NOTE: Below is one of several patches to Tortoise ORM to make it work with DipDup.
-# By default, Tortoise forbids index=True on TextField, and shows warning when it's pk=True.
-# However, we only support SQLite and PostgreSQL and have no plans for others.
-# For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference between TEXT and VARCHAR
-# except for length constraint. So we can safely use TEXT for both to avoid unnecessary schema changes.
-tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
-tortoise.fields.TextField.indexable = True
-
-
 # NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
 tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
-
-EnumFieldT = TypeVar('EnumFieldT', bound=Enum)
-
-
-class EnumField(fields.Field[EnumFieldT]):
-    """Like CharEnumField but without max_size and additional validation"""
-
-    indexable = True
-    SQL_TYPE = 'TEXT'
-
-    def __init__(
-        self,
-        enum_type: type[EnumFieldT],
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(**kwargs)
-        self.enum_type = enum_type
-
-    def to_db_value(
-        self,
-        value: Enum | str | None,
-        instance: type[TortoiseModel] | TortoiseModel,
-    ) -> str | None:
-        if isinstance(value, self.enum_type):
-            return value.value  # type: ignore[no-any-return]
-        if isinstance(value, str):
-            return value
-        if value is None:
-            return None
-        raise FrameworkException(f'Invalid enum value: {value}')
-
-    def to_python_value(
-        self,
-        value: Enum | str | None,
-    ) -> Enum | None:
-        if isinstance(value, str):
-            return self.enum_type(value)
-        if isinstance(value, self.enum_type):
-            return value
-        if value is None:
-            return None
-        raise FrameworkException(f'Invalid enum value: {value}')
-
-
-class ArrayField(fields.Field[list[str]]):
-    SQL_TYPE = 'TEXT'
-
-    def to_db_value(
-        self,
-        value: list[str],
-        instance: type[TortoiseModel] | TortoiseModel,
-    ) -> str | None:
-        return orjson.dumps(value).decode()
-
-    def to_python_value(self, value: str | list[str]) -> list[str] | None:
-        if isinstance(value, str):
-            array = orjson.loads(value)
-            return [str(x) for x in array]
-        return value
 
 
 class IndexType(Enum):
@@ -204,7 +135,7 @@ class ModelUpdate(TortoiseModel):
     level = fields.IntField()
     index = fields.TextField()
 
-    action = EnumField(ModelUpdateAction)
+    action = fields.EnumField(ModelUpdateAction)
     data: dict[str, Any] = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -578,7 +509,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 class Schema(TortoiseModel):
     name = fields.TextField(pk=True)
     hash = fields.TextField(null=True)
-    reindex = EnumField(ReindexingReason, null=True)
+    reindex = fields.EnumField(ReindexingReason, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -602,8 +533,8 @@ class Head(TortoiseModel):
 
 class Index(TortoiseModel):
     name = fields.TextField(pk=True)
-    type = EnumField(IndexType)
-    status = EnumField(IndexStatus, default=IndexStatus.new)
+    type = fields.EnumField(IndexType)
+    status = fields.EnumField(IndexStatus, default=IndexStatus.new)
 
     config_hash = fields.TextField(null=True)
     template = fields.TextField(null=True)
@@ -630,7 +561,7 @@ class Contract(TortoiseModel):
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
     typename = fields.TextField(null=True)
-    kind = EnumField(ContractKind)
+    kind = fields.EnumField(ContractKind)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
