@@ -5,8 +5,6 @@ import logging
 import platform
 from contextlib import suppress
 from functools import partial
-from pathlib import Path
-from time import time
 from typing import Any
 
 import sentry_sdk
@@ -19,10 +17,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from dipdup import __version__
 from dipdup import env
 from dipdup.config import DipDupConfig
-from dipdup.performance import get_stats
-from dipdup.performance import profiler
 from dipdup.sys import is_shutting_down
-from dipdup.yaml import dump
 
 DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
 
@@ -41,28 +36,13 @@ async def _heartbeat() -> None:
             sentry_sdk.Hub.current.start_session()
 
 
-def save_crashdump(error: Exception) -> str:
-    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
+def extract_event(error: Exception) -> dict[str, Any]:
+    """Extracts Sentry event from an exception"""
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
     event = sentry_sdk.serializer.serialize(event)
     event.pop('_meta', None)
-
-    for exception in event['exception']['values']:
-        for frame in exception['stacktrace']['frames']:
-            frame['code'] = frame.pop('pre_context') + [frame.pop('context_line')] + frame.pop('post_context')
-
-    profiler and event.update(profiler=get_stats())
-
-    crashdump_dir = Path(Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps')
-    crashdump_dir.mkdir(parents=True, exist_ok=True)
-
-    package_name = env.PACKAGE_PATH.name if env.PACKAGE_PATH else 'unknown'
-    path = crashdump_dir / f'{package_name}-{round(time())}.yml'
-
-    event_yaml = dump(event)
-    path.write_text(event_yaml)
-    return path.as_posix()
+    return event
 
 
 def before_send(

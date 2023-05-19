@@ -6,6 +6,7 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
+from functools import partial
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -19,6 +20,9 @@ import asyncclick as click
 
 from dipdup import __version__
 from dipdup.performance import profiler
+from dipdup.report import REPORTS_PATH
+from dipdup.report import ReportHeader
+from dipdup.report import save_report
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_process
 
@@ -49,6 +53,10 @@ def _print_help(error: Exception) -> None:
     atexit.register(_print)
 
 
+def _print_report(name: str) -> None:
+    atexit.register(partial(click.echo, f'Report saved; run `dipdup report show {name}` to view it'))
+
+
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
 
 
@@ -68,15 +76,16 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.sentry import save_crashdump
-
-            crashdump_path = save_crashdump(e)
-            _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            report_id = save_report(e)
+            _print_report(report_id)
             _print_help(e)
 
             if profiler:
                 raise e
             sys.exit(1)
+
+        if fn.__name__ == 'run':
+            save_report(None)
 
     return cast(WrappedCommandT, wrapper)
 
@@ -632,17 +641,31 @@ async def report(ctx: click.Context) -> None:
     if ctx.invoked_subcommand:
         return
 
-    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps'
-    for file in path.iterdir():
-        echo(file.stem)
+    header = tuple(ReportHeader.__annotations__.keys())
+    rows = []
+    for path in REPORTS_PATH.iterdir():
+        if path.suffix not in ('.yml', '.yaml'):
+            continue
+
+        from ruamel.yaml import YAML
+
+        event = YAML(typ='base').load(path)
+        row = [event.get(key, 'none') for key in header]
+        rows.append(row)
+
+    rows.sort(key=lambda row: str(row[3]))
+
+    from tabulate import tabulate
+
+    echo(tabulate(rows, headers=header))
 
 
 @report.command(name='show')
 @click.pass_context
-@click.argument('name', type=str)
+@click.argument('id', type=str)
 @_cli_wrapper
-async def report_show(ctx: click.Context, name: str) -> None:
-    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps' / f'{name}.yml'
+async def report_show(ctx: click.Context, id: str) -> None:
+    path = REPORTS_PATH / f'{id}.yaml'
     if not path.exists():
         echo('No such report')
         return
@@ -651,20 +674,20 @@ async def report_show(ctx: click.Context, name: str) -> None:
 
 @report.command(name='rm')
 @click.pass_context
-@click.argument('name', type=str, required=False)
+@click.argument('id', type=str, required=False)
 @click.option('--all', '-a', is_flag=True, help='Remove all reports.')
 @_cli_wrapper
-async def report_rm(ctx: click.Context, name: str | None, all: bool) -> None:
-    if all and name:
+async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
+    if all and id:
         echo('Please specify either name or --all')
         return
     if all:
-        path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps'
+        path = REPORTS_PATH
         for file in path.iterdir():
             file.unlink()
         return
 
-    path = Path.home() / '.local' / 'share' / 'dipdup' / 'crashdumps' / f'{name}.yml'
+    path = REPORTS_PATH / f'{id}.yaml'
     if not path.exists():
         echo('No such report')
         return

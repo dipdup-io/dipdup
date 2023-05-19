@@ -19,7 +19,7 @@
 <li><p><strong>sentry</strong> (<a class="reference internal" href="#SentryConfig" title="SentryConfig"><em>SentryConfig</em></a>) – Sentry integration config</p></li>
 <li><p><strong>prometheus</strong> (<a class="reference internal" href="#PrometheusConfig" title="PrometheusConfig"><em>PrometheusConfig</em></a><em> | </em><em>None</em>) – Prometheus integration config</p></li>
 <li><p><strong>advanced</strong> (<a class="reference internal" href="#AdvancedConfig" title="AdvancedConfig"><em>AdvancedConfig</em></a>) – Advanced config</p></li>
-<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
+<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
 <li><p><strong>logging</strong> (<a class="reference internal" href="#dipdup.models.LoggingValues" title="dipdup.models.LoggingValues"><em>LoggingValues</em></a>) – Modify logging verbosity</p></li>
 <li><p><strong>api</strong> (<em>ApiConfig</em><em> | </em><em>None</em>) – </p></li>
 </ul>
@@ -29,13 +29,13 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profiler=ProfilerLevel.basic</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profiler=ProfilerLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#dipdup.models.ReindexingReason" title="dipdup.models.ReindexingReason"><em>dipdup.models.ReindexingReason</em></a><em>, </em><a class="reference internal" href="#dipdup.models.ReindexingAction" title="dipdup.models.ReindexingAction"><em>dipdup.models.ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
-<li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
+<li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
 <li><p><strong>metadata_interface</strong> (<em>bool</em>) – Expose metadata interface for TzKT</p></li>
@@ -43,6 +43,7 @@
 <li><p><strong>rollback_depth</strong> (<em>int</em><em> | </em><em>None</em>) – A number of levels to keep for rollback</p></li>
 <li><p><strong>crash_reporting</strong> (<em>bool</em>) – Enable crash reporting</p></li>
 <li><p><strong>profiler</strong> (<em>ProfilerLevel</em>) – </p></li>
+<li><p><strong>decimal_precision</strong> (<em>int</em><em> | </em><em>None</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -288,7 +289,7 @@
 <li><p><strong>crontab</strong> (<em>str</em><em> | </em><em>None</em>) – Schedule with crontab syntax (<cite>* * * * *</cite>)</p></li>
 <li><p><strong>interval</strong> (<em>int</em><em> | </em><em>None</em>) – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> (<em>bool</em>) – Run hook as a daemon (never stops)</p></li>
-<li><p><strong>args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Arguments to pass to the hook</p></li>
+<li><p><strong>args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>]</em>) – Arguments to pass to the hook</p></li>
 </ul>
 </dd>
 </dl>

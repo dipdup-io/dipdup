@@ -173,7 +173,7 @@ class Tick(Model):
 
 
 class Position(Model):
-    id = fields.TextField(pk=True)
+    id = fields.BigIntField(pk=True)
     # owner of the NFT
     owner = fields.CharField(max_length=42, default=ADDRESS_ZERO)
     # pool position is within
@@ -390,3 +390,10 @@ class Flash(Model):
     amount1_paid = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # index within the txn
     log_index = fields.BigIntField()
+
+
+from dipdup.performance import caches
+
+caches.model_cache(Factory)
+caches.model_cache(Pool)
+caches.model_cache(Token)

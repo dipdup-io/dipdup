@@ -20,14 +20,21 @@ from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
 from typing import Callable
+from typing import TypeVar
 from typing import cast
 
+from tortoise.models import Model
+
 _logger = logging.getLogger(__name__)
+
+_T = TypeVar('_T', bound=Model)
+ModelCache = dict[int | str, Model]
 
 
 class CacheManager:
     def __init__(self) -> None:
         self._lru_caches: dict[str, Callable[..., Any]] = {}
+        self._model_caches: dict[str, ModelCache] = {}
 
     def lru_cache(
         self,
@@ -42,9 +49,19 @@ class CacheManager:
         self._lru_caches[name] = lru_cache(maxsize)(fn)
         return self._lru_caches[name]
 
+    def model_cache(
+        self,
+        cls: type,
+    ) -> None:
+        if cls.__name__ in self._model_caches:
+            raise Exception(f'Model cache for `{cls}` already exists')
+
+        self._model_caches[cls.__name__] = {}
+
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
         for name, cached_fn in self._lru_caches.items():
+            name = f'lru:{name}'
             c = cast(_CacheInfo, cached_fn.cache_info())  # type: ignore[attr-defined]
             if not c.hits and not c.misses:
                 continue
@@ -55,6 +72,11 @@ class CacheManager:
                 'limit': c.maxsize,
                 'full': (c.currsize / c.maxsize) if c.maxsize else 0,
                 'hit_rate': c.hits / (c.hits + c.misses),
+            }
+        for name, cache in self._model_caches.items():
+            name = f'model:{name}'
+            stats[name] = {
+                'size': len(cache),
             }
 
         return stats

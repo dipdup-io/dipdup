@@ -29,6 +29,7 @@ from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
+from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
 
 _logger = logging.getLogger(__name__)
@@ -495,6 +496,39 @@ class Model(TortoiseModel):
             fields=fields,
             batch_size=batch_size,
         )
+
+    # FIXME: Temporary for uniswap; replace with generic solution
+    @classmethod
+    async def cached_get(
+        cls: type['ModelT'],
+        pk: int | str,
+    ) -> 'ModelT':
+        cls_cache = caches._model_caches[cls.__name__]
+
+        if pk not in cls_cache:
+            cls_cache[pk] = await cls.get(pk=pk)
+        return cls_cache[pk]  # type: ignore[return-value]
+
+    # FIXME: Temporary for uniswap; replace with generic solution
+    @classmethod
+    async def cached_get_or_none(
+        cls: type['ModelT'],
+        pk: int | str,
+    ) -> 'ModelT' | None:
+        cls_cache = caches._model_caches[cls.__name__]
+
+        if pk not in cls_cache:
+            cls_cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
+        return cls_cache[pk]  # type: ignore[return-value]
+
+    # FIXME: Temporary for uniswap; replace with generic solution
+    def cache(self) -> None:
+        cls_cache = caches._model_caches[self.__class__.__name__]
+        if self.pk is None:
+            raise FrameworkException('Cannot cache model without PK')
+        if self.pk in cls_cache:
+            raise FrameworkException(f'Model {self} is already cached')
+        cls_cache[self.pk] = self
 
     class Meta:
         abstract = True

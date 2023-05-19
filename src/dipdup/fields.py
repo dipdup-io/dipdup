@@ -91,6 +91,7 @@ class EnumField(fields.Field[_EnumFieldT]):
         raise FrameworkException(f'Invalid enum value: {value}')
 
 
+# TODO: Postgres has native ARRAY type
 class ArrayField(fields.Field[list[str]]):
     SQL_TYPE = 'TEXT'
 
@@ -108,7 +109,6 @@ class ArrayField(fields.Field[list[str]]):
         return value
 
 
-# FIXME: Plain copypaste, but with 'TEXT' instead of 'VARCHAR(40)'. Why this number? 🤔
 class DecimalField(Field[Decimal], Decimal):
     """
     Accurate decimal field.
@@ -146,7 +146,7 @@ class DecimalField(Field[Decimal], Decimal):
         return f'DECIMAL({self.max_digits},{self.decimal_places})'
 
     # class _db_sqlite:
-    #     SQL_TYPE = 'TEXT'  # <= there
+    #     SQL_TYPE = 'VARCHAR(40)'
 
     #     def function_cast(self, term: Term) -> Term:
     #         return functions.Cast(term, SqlTypes.NUMERIC)
@@ -164,14 +164,14 @@ class TextField(Field[str], str):  # type: ignore
     SQL_TYPE = 'TEXT'
 
 
-# NOTE: Now patch Tortoise module itself; jff and to fix internal and forgotten imports
-import tortoise.fields
 
 # NOTE: Finally, attach processed fields back to `tortoise.fields` to verify them later
 # in `validate_models`. Also it magically fixes incorrect imports if any.
+import tortoise.fields
+
 for name, item in copy(locals()).items():
     setattr(tortoise.fields, name, item)
     with suppress(Exception):
         item.__module__ = __name__
 
-# NOTE: See you in the next episode!
+# NOTE: Don't try any of the above at home, kids. See you in the next episode!

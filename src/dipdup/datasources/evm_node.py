@@ -21,6 +21,7 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.performance import profiler
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
@@ -39,7 +40,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
-        self.web3: AsyncWeb3 = AsyncWeb3(AsyncHTTPProvider(config.url))
+        self._web3_client: AsyncWeb3 = AsyncWeb3(AsyncHTTPProvider(config.url))
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
@@ -52,6 +53,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_logs_callbacks: set[LogsCallback] = set()
         self._on_syncing_callbacks: set[SyncingCallback] = set()
+
+    @property
+    def web3(self) -> AsyncWeb3:
+        # FIXME: temporary, remove after implementing pysignalr transport
+        profiler and profiler.inc('web3_touched_total', 1.0)
+        return self._web3_client
 
     async def initialize(self) -> None:
         pass

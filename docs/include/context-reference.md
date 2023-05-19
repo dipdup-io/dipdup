@@ -8,7 +8,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – DipDup configuration</p></li>
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – DipDup package</p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – Mapping of available datasources</p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – Mapping of available datasources</p></li>
 <li><p><strong>logger</strong> – Context-aware logger instance</p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
@@ -28,7 +28,7 @@
 <li><p><strong>datasource</strong> (<em>IndexDatasource</em><em>[</em><em>Any</em><em>]</em>) – Index datasource instance</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – </p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
 <li><p><strong>logger</strong> (<em>FormattedLogger</em>) – </p></li>
@@ -47,7 +47,7 @@
 <li><p><strong>hook_config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.HookConfig" title="dipdup.config.HookConfig"><em>HookConfig</em></a>) – Configuration of the current hook</p></li>
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – </p></li>
-<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>Any</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – </p></li>
 <li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
 <li><p><strong>logger</strong> (<em>FormattedLogger</em>) – </p></li>
@@ -85,7 +85,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – Index name</p></li>
 <li><p><strong>template</strong> (<em>str</em>) – Index template to use</p></li>
-<li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Mapping of values to fill template with</p></li>
+<li><p><strong>values</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>]</em>) – Mapping of values to fill template with</p></li>
 <li><p><strong>first_level</strong> (<em>int</em>) – </p></li>
 <li><p><strong>last_level</strong> (<em>int</em>) – </p></li>
 <li><p><strong>state</strong> (<em>Index</em><em> | </em><em>None</em>) – </p></li>
@@ -261,7 +261,7 @@ to provide a generic metadata interface (see docs).</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>network</strong> (<em>str</em>) – Network name (e.g. <cite>mainnet</cite>)</p></li>
 <li><p><strong>address</strong> (<em>str</em>) – Contract address</p></li>
-<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Contract metadata to insert/update</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>] </em><em>| </em><em>None</em>) – Contract metadata to insert/update</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -281,7 +281,7 @@ to provide a generic metadata interface (see docs).</p>
 <li><p><strong>network</strong> (<em>str</em>) – Network name (e.g. <cite>mainnet</cite>)</p></li>
 <li><p><strong>address</strong> (<em>str</em>) – Contract address</p></li>
 <li><p><strong>token_id</strong> (<em>str</em>) – Token ID</p></li>
-<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – Token metadata to insert/update</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>] </em><em>| </em><em>None</em>) – Token metadata to insert/update</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

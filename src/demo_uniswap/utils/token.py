@@ -165,19 +165,19 @@ async def token_derive_eth(token: models.Token) -> Decimal:
     price_so_far = Decimal()
 
     for pool_address in token.whitelist_pools:
-        pool = await models_repo.get_pool(pool_address)
+        pool = await models.Pool.cached_get(pool_address)
         if pool.liquidity == 0:
             continue
 
         if token.id == pool.token0:
-            other_token = await models_repo.get_token(pool.token1_id)
+            other_token = await models.Token.cached_get(pool.token1_id)
             eth_locked = pool.total_value_locked_token1 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked
                 price_so_far = pool.token1_price * other_token.derived_eth
 
         elif token.id == pool.token1:
-            other_token = await models_repo.get_token(pool.token0_id)
+            other_token = await models.Token.cached_get(pool.token0_id)
             eth_locked = pool.total_value_locked_token0 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked

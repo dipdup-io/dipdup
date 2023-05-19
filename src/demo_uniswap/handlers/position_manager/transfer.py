@@ -1,7 +1,6 @@
 from demo_uniswap.types.position_manager.evm_events.transfer import Transfer
 from demo_uniswap.utils.position import position_get_or_create
 from demo_uniswap.utils.position import save_position_snapshot
-from demo_uniswap.utils.repo import models_repo
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
@@ -17,5 +16,5 @@ async def transfer(
 
     position.owner = event.payload.to
 
-    await models_repo.update_position(position)
+    await position.save()
     await save_position_snapshot(position, event.data.level)
