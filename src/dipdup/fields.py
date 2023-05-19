@@ -164,7 +164,6 @@ class TextField(Field[str], str):  # type: ignore
     SQL_TYPE = 'TEXT'
 
 
-
 # NOTE: Finally, attach processed fields back to `tortoise.fields` to verify them later
 # in `validate_models`. Also it magically fixes incorrect imports if any.
 import tortoise.fields
