@@ -20,6 +20,10 @@ _positions: dict[int, models.Position | None] = {}
 
 
 async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:
+    pool = await models.Pool.cached_get_or_none(contract_address)
+    if not pool:
+        return None
+
     if token_id in _positions:
         return _positions[token_id]
 

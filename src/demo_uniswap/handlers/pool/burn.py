@@ -1,3 +1,4 @@
+from demo_uniswap import models
 from demo_uniswap.types.pool.evm_events.burn import Burn
 from demo_uniswap.utils.pool import PoolUpdateSign
 from demo_uniswap.utils.pool import pool_update
@@ -9,4 +10,7 @@ async def burn(
     ctx: HandlerContext,
     event: SubsquidEvent[Burn],
 ) -> None:
-    await pool_update(ctx, event, PoolUpdateSign.BURN)
+    pool = await models.Pool.cached_get_or_none(event.data.address)
+    if not pool:
+        return
+    await pool_update(ctx, pool, event, PoolUpdateSign.BURN)

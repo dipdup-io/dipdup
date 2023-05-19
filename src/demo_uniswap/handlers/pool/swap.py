@@ -51,7 +51,9 @@ async def swap(
     event: SubsquidEvent[Swap],
 ) -> None:
     factory = await get_ctx_factory(ctx)
-    pool = await models.Pool.cached_get(event.data.address)
+    pool = await models.Pool.cached_get_or_none(event.data.address)
+    if not pool:
+        return
     token0 = await models.Token.cached_get(pool.token0_id)
     token1 = await models.Token.cached_get(pool.token1_id)
 

@@ -11,7 +11,9 @@ async def initialize(
     ctx: HandlerContext,
     event: SubsquidEvent[Initialize],
 ) -> None:
-    pool = await models.Pool.cached_get(event.data.address)
+    pool = await models.Pool.cached_get_or_none(event.data.address)
+    if not pool:
+        return
     pool.sqrt_price = Decimal(event.payload.sqrtPriceX96)
     pool.tick = event.payload.tick
     await pool.save()

@@ -14,9 +14,13 @@ class PoolUpdateSign:
     BURN = -1
 
 
-async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | SubsquidEvent[Mint], sign: int) -> None:
+async def pool_update(
+    ctx: HandlerContext,
+    pool: models.Pool,
+    event: SubsquidEvent[Burn] | SubsquidEvent[Mint],
+    sign: int,
+) -> None:
     factory = await get_ctx_factory(ctx)
-    pool = await models.Pool.cached_get(event.data.address)
     token0 = await models.Token.cached_get(pool.token0_id)
     token1 = await models.Token.cached_get(pool.token1_id)
 
@@ -59,7 +63,7 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
     await factory.save()
 
     tx_defaults = {
-        'id': f'{event.data.transaction_hash}#{pool.tx_count}',
+        'id': f'{event.data.transaction_hash}#{event.data.log_index}',
         'transaction_hash': event.data.transaction_hash,
         'timestamp': 0,  # FIXME
         'pool': pool,
