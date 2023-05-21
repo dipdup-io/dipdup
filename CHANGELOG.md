@@ -14,8 +14,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
 - abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
 
-### Changed
+### Fixed
 
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
+
+### Changed
 
 - tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
 - models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.

@@ -313,7 +313,11 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):
             ):
                 get_pending_updates().append(update)
 
-        return await super()._execute()
+        # NOTE: A bug; raises "You should first call .save()..." otherwise
+        models: list[MODEL] = await super()._execute()
+        for model in models:
+            model._saved_in_db = True
+        return models
 
 
 class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
