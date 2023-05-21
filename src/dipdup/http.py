@@ -32,6 +32,7 @@ from dipdup.prometheus import Metrics
 from dipdup.utils import json_dumps
 
 safe_exceptions = (
+    asyncio.TimeoutError,
     aiohttp.ClientConnectionError,
     aiohttp.ClientConnectorError,
     aiohttp.ClientResponseError,
