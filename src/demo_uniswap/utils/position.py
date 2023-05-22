@@ -48,9 +48,8 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         # feeGrowthInside1LastX128 uint256,
         # tokensOwed0 uint128,
         # tokensOwed1 uint128
-        _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = await manager.functions.positions(
-            token_id
-        ).call()
+        response = await manager.functions.positions(token_id).call()
+        _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = response
     except Exception as e:
         ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, token_id, str(e))
         _positions[token_id] = None
