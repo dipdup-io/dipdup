@@ -1,8 +1,7 @@
 import json
 from contextlib import suppress
 from decimal import Decimal
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 from typing import List
 from typing import Optional
 from typing import Union
@@ -49,16 +48,10 @@ WHITELIST_TOKENS = {
 }
 
 
-package_dir = dirname(dirname(__file__))
-
-with open(join(package_dir, 'abi/erc20/ERC20.json')) as f:
-    erc20_abi = json.load(f)
-
-with open(join(package_dir, 'abi/erc20/ERC20NameBytes.json')) as f:
-    erc20_symbol_bytes_abi = json.load(f)
-
-with open(join(package_dir, 'abi/erc20/ERC20SymbolBytes.json')) as f:
-    erc20_name_bytes_abi = json.load(f)
+package_dir = Path(__file__).parent.parent
+erc20_abi = json.load((package_dir / 'abi/erc20/abi.json').open())
+erc20_symbol_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20SymbolBytes.json').open())
+erc20_name_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20NameBytes.json').open())
 
 
 def convert_token_amount(amount: int, decimals: int) -> Decimal:

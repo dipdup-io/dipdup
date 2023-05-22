@@ -182,7 +182,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
             continue
         if not path.stat().st_size:
             continue
-        with open(path) as file:
+        with path.open() as file:
             yield file
 
 

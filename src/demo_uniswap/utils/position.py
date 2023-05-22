@@ -1,6 +1,5 @@
 import json
-from os.path import dirname
-from os.path import join
+from pathlib import Path
 
 from eth_utils.address import to_checksum_address
 from eth_utils.address import to_normalized_address
@@ -8,13 +7,11 @@ from eth_utils.address import to_normalized_address
 import demo_uniswap.models as models
 from dipdup.context import HandlerContext
 
-package_dir = dirname(dirname(__file__))
+package_dir = Path(__file__).parent.parent
 
-with open(join(package_dir, 'abi/position_manager/abi.json')) as f:
-    position_manager_abi = json.load(f)
+position_manager_abi = json.load((package_dir / 'abi/position_manager/abi.json').open())
+factory_abi = json.load((package_dir / 'abi/factory/abi.json').open())
 
-with open(join(package_dir, 'abi/factory/abi.json')) as f:
-    factory_abi = json.load(f)
 
 _positions: dict[int, models.Position | None] = {}
 

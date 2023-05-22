@@ -149,8 +149,7 @@ class Project(BaseModel):
             raise ConfigurationError('No questions defined')
 
         if replay:
-            with open(replay, 'rb') as f:
-                self.answers = JinjaAnswers(orjson.loads(f.read()))
+            self.answers = JinjaAnswers(orjson.loads(Path(replay).read_bytes()))
 
         for question in self.questions:
             if question.name in self.answers:

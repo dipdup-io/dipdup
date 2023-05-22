@@ -33,7 +33,7 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
         os.symlink(config_path, tmp_config_path)
 
         tmp_bin_path = Path(tmp_root_path) / 'bin'
-        os.mkdir(tmp_bin_path)
+        tmp_bin_path.mkdir()
         for executable in ('dipdup', 'datamodel-codegen'):
             if (executable_path := which(executable)) is None:
                 raise FrameworkException(f'Executable `{executable}` not found')

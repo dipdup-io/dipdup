@@ -49,7 +49,7 @@ def filter_comments(line: str) -> bool:
 def read_config_yaml(path: Path) -> str:
     _logger.debug('Loading config from %s', path)
     try:
-        with open(path) as file:
+        with path.open() as file:
             return ''.join(filter(filter_comments, file.readlines()))
     except OSError as e:
         raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e

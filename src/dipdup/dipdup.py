@@ -18,6 +18,7 @@ from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
+from dipdup import env
 from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
 from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import DipDupConfig
@@ -657,7 +658,7 @@ class DipDup:
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.advanced.api
-        if not api_config:
+        if not api_config or env.TEST or env.CI:
             return
 
         from aiohttp import web

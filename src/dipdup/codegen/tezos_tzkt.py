@@ -281,8 +281,7 @@ class TzktCodeGenerator(CodeGenerator):
         entrypoint_schema_path = parameter_schemas_path / f'{entrypoint}.json'
         written = write(entrypoint_schema_path, json_dumps(entrypoint_schema))
         if not written and contract_config.typename is not None:
-            with open(entrypoint_schema_path, 'r') as file:
-                existing_schema = orjson.loads(file.read())
+            existing_schema = orjson.loads(entrypoint_schema_path.read_text())
             if entrypoint_schema != existing_schema:
                 self._logger.warning(
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename

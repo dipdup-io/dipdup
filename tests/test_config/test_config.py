@@ -82,8 +82,7 @@ async def test_dump() -> None:
     config = create_config()
 
     tmp = tempfile.mkstemp()[1]
-    with open(tmp, 'w') as f:
-        f.write(config.dump())
+    Path(tmp).write_text(config.dump())
 
     config = DipDupConfig.load([Path(tmp)], environment=False)
     config.initialize()

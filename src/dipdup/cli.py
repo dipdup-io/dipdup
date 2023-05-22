@@ -294,8 +294,7 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
     )
     content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
     if file:
-        with open(file, 'w') as f:
-            f.write(content)
+        Path(file).write_text(content)
     else:
         echo(content)
 
