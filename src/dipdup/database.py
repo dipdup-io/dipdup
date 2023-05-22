@@ -29,7 +29,6 @@ from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
-from dipdup.exceptions import DatabaseEngineError
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
@@ -156,19 +155,8 @@ async def execute_sql(
     *args: Any,
     **kwargs: Any,
 ) -> None:
-    # NOTE: Fail later, directory can be empty
-    supported = True if isinstance(conn, AsyncpgDBClient) else False
-
     for file in iter_files(path, ext='.sql'):
         _logger.info('Executing script `%s`', file.name)
-
-        if not supported:
-            raise DatabaseEngineError(
-                msg=f"Can't execute SQL script `{path}`: not supported",
-                kind='sqlite',
-                required='postgres',
-            )
-
         sql = file.read()
         # NOTE: Generally it's a very bad idea to format SQL scripts with arbitrary arguments.
         # NOTE: We trust package developers here.
@@ -184,21 +172,9 @@ async def execute_sql_query(
     path: Path,
     *values: Any,
 ) -> Any:
-    # NOTE: Fail later, directory can be empty
-    supported = True if isinstance(conn, AsyncpgDBClient) else False
-
-    for file in iter_files(path, ext='.sql'):
-        _logger.info('Executing query `%s`', file.name)
-
-        if not supported:
-            raise DatabaseEngineError(
-                msg=f"Can't execute SQL query `{path}`: not supported",
-                kind='sqlite',
-                required='postgres',
-            )
-
-        sql = file.read()
-        return await conn.execute_query(sql, list(values))
+    _logger.info('Executing query `%s`', path.name)
+    sql = path.read_text()
+    return await conn.execute_query(sql, list(values))
 
 
 async def generate_schema(

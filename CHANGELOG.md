@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
+- database: Allow running project scripts and queries on SQLite. 
 
 ### Changed
 
