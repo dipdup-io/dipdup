@@ -95,6 +95,12 @@ class QueueManager:
         self._queues[name] = queue
         self._limits[name] = limit
 
+    def remove_queue(self, name: str) -> None:
+        if name not in self._queues:
+            raise Exception(f'Queue `{name}` does not exist')
+        del self._queues[name]
+        del self._limits[name]
+
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
         for name, queue in self._queues.items():

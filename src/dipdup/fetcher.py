@@ -55,10 +55,11 @@ async def readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[FetcherBufferT, ...]],
     limit: int,
 ) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+    queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
     queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
     queues.add_queue(
         queue,
-        name=f'fetcher_readahead:{id(queue)}',
+        name=queue_name,
         limit=limit,
     )
     has_more = asyncio.Event()
@@ -86,6 +87,8 @@ async def readahead_by_level(
             break
         with suppress(asyncio.TimeoutError):
             await asyncio.wait_for(has_more.wait(), timeout=10)
+
+    queues.remove_queue(queue_name)
 
 
 class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
