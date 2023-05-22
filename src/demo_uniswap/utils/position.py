@@ -20,7 +20,7 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
     if token_id in _positions:
         return _positions[token_id]
 
-    position = await models.Position.get_or_none(id=str(token_id))
+    position = await models.Position.get_or_none(id=token_id)
     if position:
         _positions[token_id] = position
         return position
@@ -57,11 +57,10 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         ctx.logger.debug('Failed to eth_call %s with param %s: %s', factory_address, str(token0, token1, fee), str(e))
         _positions[token_id] = None
         return None
-    else:
-        pool_address = to_normalized_address(pool_address)
 
+    pool_address = to_normalized_address(pool_address)
     position = models.Position(
-        id=str(token_id),
+        id=token_id,
         pool_id=pool_address,
         token0_id=to_normalized_address(token0),
         token1_id=to_normalized_address(token1),
