@@ -49,7 +49,7 @@ WHITELIST_TOKENS = {
 
 
 package_dir = Path(__file__).parent.parent
-erc20_abi = json.load((package_dir / 'abi/erc20/abi.json').open())
+erc20_abi = json.load((package_dir / 'abi/erc20/ERC20.json').open())
 erc20_symbol_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20SymbolBytes.json').open())
 erc20_name_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20NameBytes.json').open())
 

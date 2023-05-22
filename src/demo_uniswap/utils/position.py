@@ -17,10 +17,6 @@ _positions: dict[int, models.Position | None] = {}
 
 
 async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:
-    pool = await models.Pool.cached_get_or_none(contract_address)
-    if not pool:
-        return None
-
     if token_id in _positions:
         return _positions[token_id]
 
@@ -72,7 +68,6 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         # tick_lower_id=f'{pool_address}#{tick_lower}',
         # tick_upper_id=f'{pool_address}#{tick_upper}'
     )
-    # position.cache()
     await position.save()
     _positions[token_id] = position
     return position

@@ -744,8 +744,7 @@ class DipDupConfig:
             LoggingValues.verbose: logging.DEBUG,
         }[self.logging]
         logging.getLogger('dipdup').setLevel(level)
-        if level == logging.DEBUG:
-            logging.getLogger().setLevel(level)
+        logging.getLogger(self.package).setLevel(level)
 
     def initialize(self) -> None:
         self._set_names()
