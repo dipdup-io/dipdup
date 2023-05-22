@@ -59,6 +59,11 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         return None
 
     pool_address = to_normalized_address(pool_address)
+
+    if not await models.Pool.cached_get_or_none(pool_address):
+        _positions[token_id] = None
+        return None
+
     position = models.Position(
         id=token_id,
         pool_id=pool_address,
