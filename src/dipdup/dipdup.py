@@ -656,7 +656,7 @@ class DipDup:
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
-        api_config = self._config.api
+        api_config = self._config.advanced.api
         if not api_config:
             return
 

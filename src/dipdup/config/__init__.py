@@ -546,6 +546,12 @@ event_hooks = {
 
 
 @dataclass
+class ApiConfig:
+    host = '127.0.0.1'
+    port: int = 46339  # dial INDEX 😎
+
+
+@dataclass
 class AdvancedConfig:
     """Feature flags and other advanced config.
 
@@ -559,6 +565,7 @@ class AdvancedConfig:
     :param crash_reporting: Enable crash reporting
     :param profiler:
     :param decimal_precision:
+    :param api:
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -571,12 +578,7 @@ class AdvancedConfig:
     crash_reporting: bool = False
     profiler: ProfilerLevel = ProfilerLevel.basic
     decimal_precision: int | None = None
-
-
-@dataclass
-class ApiConfig:
-    host = '127.0.0.1'
-    port: int = 46339  # dial INDEX 😎
+    api: ApiConfig = field(default_factory=ApiConfig)
 
 
 @dataclass
@@ -617,7 +619,6 @@ class DipDupConfig:
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: LoggingValues = LoggingValues.default
-    api: ApiConfig | None = None
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
