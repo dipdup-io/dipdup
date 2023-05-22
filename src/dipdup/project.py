@@ -230,13 +230,8 @@ class BaseProject(Project):
         ),
         InputQuestion(
             name='project_name',
-            description='Enter project name',
+            description='Enter project name (the name will be used for folder name and package name)',
             default='dipdup-indexer',
-        ),
-        InputQuestion(
-            name='package',
-            description='Enter Python package name',
-            default='dipdup_indexer',
         ),
         InputQuestion(
             name='version',
@@ -271,11 +266,13 @@ class BaseProject(Project):
                 'postgres:15',
                 'timescale/timescaledb:latest-pg15',
                 'timescale/timescaledb-ha:pg15-latest',
+                'sqlite',
             ),
             comments=(
                 'PostgreSQL',
                 'TimescaleDB',
                 'TimescaleDB HA (more extensions)',
+                'Sqlite (simplified in-memory configuration)',
             ),
         ),
         ChoiceQuestion(
@@ -344,3 +341,7 @@ class BaseProject(Project):
             questions=(),
             answers=self.answers,
         ).render(force)
+
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        super().run(*args, **kwargs)
+        self.answers['package'] = self.answers['project_name']
