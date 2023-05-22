@@ -2,6 +2,7 @@ import asyncio
 import decimal
 import hashlib
 import importlib
+from itertools import chain
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
@@ -16,6 +17,7 @@ from typing import Optional
 from typing import Set
 from typing import Type
 from typing import Union
+from typing import cast
 
 import sqlparse  # type: ignore[import]
 from asyncpg import CannotConnectNowError  # type: ignore[import]
@@ -26,6 +28,7 @@ from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
 from tortoise.fields import DecimalField
+from tortoise.exceptions import OperationalError
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
@@ -34,17 +37,20 @@ from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
 _logger = logging.getLogger('dipdup.database')
-_truncate_schema_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
 
 DEFAULT_CONNECTION_NAME = 'default'
 HEAD_STATUS_TIMEOUT = 3 * 60
 
 
-def get_connection() -> BaseDBAsyncClient:
-    return connections.get(DEFAULT_CONNECTION_NAME)
+AsyncpgClient = AsyncpgDBClient
+SupportedClient = SqliteClient | AsyncpgClient
 
 
-def set_connection(conn: BaseDBAsyncClient) -> None:
+def get_connection() -> SupportedClient:
+    return cast(SupportedClient, connections.get(DEFAULT_CONNECTION_NAME))
+
+
+def set_connection(conn: SupportedClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
@@ -132,7 +138,7 @@ def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseMode
                 yield app, attr_value
 
 
-def get_schema_hash(conn: BaseDBAsyncClient) -> str:
+def get_schema_hash(conn: SupportedClient) -> str:
     """Get hash of the current schema"""
     schema_sql = get_schema_sql(conn, False)
     # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
@@ -140,13 +146,8 @@ def get_schema_hash(conn: BaseDBAsyncClient) -> str:
     return hashlib.sha256(processed_schema_sql).hexdigest()
 
 
-async def create_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
+async def create_schema(conn: AsyncpgClient, name: str) -> None:
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
-    # NOTE: Recreate `truncate_schema` function on fresh schema
-    await conn.execute_script(_truncate_schema_path.read_text())
 
 
 async def execute_sql(
@@ -168,7 +169,7 @@ async def execute_sql(
 
 
 async def execute_sql_query(
-    conn: BaseDBAsyncClient,
+    conn: SupportedClient,
     path: Path,
     *values: Any,
 ) -> Any:
@@ -178,41 +179,30 @@ async def execute_sql_query(
 
 
 async def generate_schema(
-    conn: BaseDBAsyncClient,
+    conn: SupportedClient,
     name: str,
 ) -> None:
-    if isinstance(conn, SqliteClient):
-        await Tortoise.generate_schemas()
-    elif isinstance(conn, AsyncpgDBClient):
+    if isinstance(conn, AsyncpgClient):
         await create_schema(conn, name)
-        await Tortoise.generate_schemas()
 
+    await Tortoise.generate_schemas()
+
+    if isinstance(conn, AsyncpgClient):
         # NOTE: Create a view for monitoring head status
         sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
         # TODO: Configurable interval
         await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
-    else:
-        raise NotImplementedError(f'`{conn.__class__.__name__}` is not supported')
 
 
-async def truncate_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
-    await conn.execute_script(_truncate_schema_path.read_text())
-    await conn.execute_script(f"SELECT truncate_schema('{name}')")
-
-
-async def wipe_schema(
-    conn: BaseDBAsyncClient,
+async def _wipe_schema_postgres(
+    conn: AsyncpgClient,
     schema_name: str,
     immune_tables: Set[str],
 ) -> None:
-    """Truncate schema preserving immune tables. Executes in a transaction"""
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
     immune_schema_name = f'{schema_name}_immune'
+
+    sql_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
+    await execute_sql(conn, sql_path, schema_name, immune_schema_name)
 
     async with conn._in_transaction() as conn:
         if immune_tables:
@@ -220,7 +210,7 @@ async def wipe_schema(
             for table in immune_tables:
                 await move_table(conn, table, schema_name, immune_schema_name)
 
-        await truncate_schema(conn, schema_name)
+        await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
 
         if immune_tables:
             for table in immune_tables:
@@ -228,18 +218,52 @@ async def wipe_schema(
             await drop_schema(conn, immune_schema_name)
 
 
-async def drop_schema(conn: BaseDBAsyncClient, name: str) -> None:
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
+async def _wipe_schema_sqlite(
+    conn: SqliteClient,
+    immune_tables: Set[str],
+) -> None:
+    script = []
 
+    master_query = 'SELECT name, type FROM sqlite_master'
+    result = await conn.execute_query(master_query)
+    for name, type_ in result[1]:
+        if type_ == 'table':
+            if name in immune_tables:
+                continue
+            script.append(f'DROP TABLE IF EXISTS {name}')
+        elif type_ == 'index':
+            script.append(f'DROP INDEX IF EXISTS  {name}')
+        elif type_ == 'view':
+            script.append(f'DROP VIEW IF EXISTS  {name}')
+        elif type_ == 'trigger':
+            script.append(f'DROP TRIGGER IF EXISTS  {name}')
+        elif type_ == 'sequence':
+            script.append(f'DROP SEQUENCE IF EXISTS  {name}')
+        else:
+            raise NotImplementedError(f'Unknown type {type_} for {name}')
+
+    for expr in chain(script, script):
+        with suppress(OperationalError):
+            await conn.execute_script(expr)
+
+async def wipe_schema(
+    conn: SupportedClient,
+    schema_name: str,
+    immune_tables: Set[str],
+) -> None:
+    """Truncate schema preserving immune tables. Executes in a transaction"""
+    if isinstance(conn, SqliteClient):
+        await _wipe_schema_sqlite(conn, immune_tables)
+    else:
+        await _wipe_schema_postgres(conn, schema_name, immune_tables)
+
+
+async def drop_schema(conn: AsyncpgClient, name: str) -> None:
     await conn.execute_script(f'DROP SCHEMA IF EXISTS {name}')
 
 
-async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema: str) -> None:
+async def move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: str) -> None:
     """Move table from one schema to another"""
-    if isinstance(conn, SqliteClient):
-        raise NotImplementedError
-
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 

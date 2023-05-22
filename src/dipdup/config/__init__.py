@@ -76,6 +76,7 @@ class SqliteDatabaseConfig:
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
+    immune_tables: set[str] = field(default_factory=set)
 
     @property
     def schema_name(self) -> str:
@@ -84,10 +85,6 @@ class SqliteDatabaseConfig:
     @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
-
-    @property
-    def immune_tables(self) -> set[str]:
-        return set()
 
     @property
     def connection_timeout(self) -> int:

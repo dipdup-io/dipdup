@@ -17,7 +17,6 @@ from typing import Literal
 from typing import TypeVar
 from typing import cast
 
-from tortoise import Tortoise
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
@@ -26,7 +25,6 @@ from dipdup.config import DipDupConfig
 from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
-from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
@@ -230,15 +228,12 @@ class DipDupContext:
 
         elif action == ReindexingAction.wipe:
             conn = get_connection()
-            if isinstance(self.config.database, PostgresDatabaseConfig):
-                immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
-                await wipe_schema(
-                    conn=conn,
-                    schema_name=self.config.database.schema_name,
-                    immune_tables=immune_tables,
-                )
-            else:
-                await Tortoise._drop_databases()
+            immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
+            await wipe_schema(
+                conn=conn,
+                schema_name=self.config.database.schema_name,
+                immune_tables=immune_tables,
+            )
             await self.restart()
 
         else:

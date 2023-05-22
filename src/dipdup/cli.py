@@ -412,9 +412,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
             quit(0)
 
     _logger.info('Wiping schema `%s`', url)
-    from tortoise import Tortoise
 
-    from dipdup.config import PostgresDatabaseConfig
     from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
     from dipdup.database import wipe_schema
@@ -426,15 +424,12 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         decimal_precision=config.advanced.decimal_precision,
     ):
         conn = get_connection()
-        if isinstance(config.database, PostgresDatabaseConfig):
-            await wipe_schema(
-                conn=conn,
-                schema_name=config.database.schema_name,
-                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
-            )
-        else:
-            await Tortoise._drop_databases()
+        await wipe_schema(
+            conn=conn,
+            schema_name=config.database.schema_name,
+            # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+            immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
+        )
 
     _logger.info('Schema wiped')
 
