@@ -1,17 +1,12 @@
-import json
-from pathlib import Path
-
 from eth_utils.address import to_checksum_address
 from eth_utils.address import to_normalized_address
 
 import demo_uniswap.models as models
+from demo_uniswap.utils.abi import get_abi
 from dipdup.context import HandlerContext
 
-package_dir = Path(__file__).parent.parent
-
-position_manager_abi = json.load((package_dir / 'abi/position_manager/abi.json').open())
-factory_abi = json.load((package_dir / 'abi/factory/abi.json').open())
-
+position_manager_abi = get_abi('position_manager_abi.abi')
+factory_abi = get_abi('factory_abi.abi')
 
 _positions: dict[int, models.Position | None] = {}
 

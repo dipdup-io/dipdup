@@ -1,16 +1,12 @@
-import json
 from contextlib import suppress
 from decimal import Decimal
-from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Union
 
 from eth_typing import ChecksumAddress
 from eth_utils.address import to_checksum_address
 from web3 import AsyncWeb3
 
 from demo_uniswap import models as models
+from demo_uniswap.utils.abi import get_abi
 from demo_uniswap.utils.repo import models_repo
 
 MINIMUM_ETH_LOCKED = Decimal('60')
@@ -48,10 +44,9 @@ WHITELIST_TOKENS = {
 }
 
 
-package_dir = Path(__file__).parent.parent
-erc20_abi = json.load((package_dir / 'abi/erc20/ERC20.json').open())
-erc20_symbol_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20SymbolBytes.json').open())
-erc20_name_bytes_abi = json.load((package_dir / 'abi/erc20/ERC20NameBytes.json').open())
+erc20_abi = get_abi('erc20.ERC20')
+erc20_symbol_bytes_abi = get_abi('erc20.ERC20SymbolBytes')
+erc20_name_bytes_abi = get_abi('erc20.ERC20NameBytes')
 
 
 def convert_token_amount(amount: int, decimals: int) -> Decimal:
@@ -67,7 +62,7 @@ class ERC20Token:
         self.contract = self.web3.eth.contract(address=self.address, abi=erc20_abi)
 
     @classmethod
-    def from_address(cls, web3: AsyncWeb3, token_address: Union[str, bytes]) -> 'ERC20Token':
+    def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':
         address = to_checksum_address(token_address)
         return ERC20Token(address, web3)
 
@@ -125,7 +120,7 @@ class StaticTokenDefinition:
         self.decimals = decimals
 
     @staticmethod
-    def get_static_definitions() -> List['StaticTokenDefinition']:
+    def get_static_definitions() -> list['StaticTokenDefinition']:
         static_definitions = [
             StaticTokenDefinition('0xe0b7927c4af23765cb51314a0e0521a9645f0e2a', 'DGD', 'DGD', 9),
             StaticTokenDefinition('0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9', 'AAVE', 'Aave Token', 18),
@@ -137,7 +132,7 @@ class StaticTokenDefinition:
         return static_definitions
 
     @staticmethod
-    def from_address(token_address: ChecksumAddress) -> Optional['StaticTokenDefinition']:
+    def from_address(token_address: ChecksumAddress) -> 'StaticTokenDefinition' | None:
         static_definitions = StaticTokenDefinition.get_static_definitions()
         for static_definition in static_definitions:
             if to_checksum_address(static_definition.address) == token_address:

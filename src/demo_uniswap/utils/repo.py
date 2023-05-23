@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Optional
 from typing import cast
 
 import demo_uniswap.models as models
@@ -11,7 +10,7 @@ USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 
 class ModelsRepo:
     def __init__(self) -> None:
-        self._eth_usd: Optional[Decimal] = None
+        self._eth_usd: Decimal | None = None
 
     async def get_eth_usd_rate(self) -> Decimal:
         if self._eth_usd is None:
