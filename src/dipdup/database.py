@@ -2,10 +2,10 @@ import asyncio
 import decimal
 import hashlib
 import importlib
-from itertools import chain
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
+from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -27,8 +27,8 @@ from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
-from tortoise.fields import DecimalField
 from tortoise.exceptions import OperationalError
+from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
@@ -243,8 +243,11 @@ async def _wipe_schema_sqlite(
             raise NotImplementedError(f'Unknown type {type_} for {name}')
 
     for expr in chain(script, script):
-        with suppress(OperationalError):
+        try:
             await conn.execute_script(expr)
+        except OperationalError as e:
+            _logger.error('Failed to execute `%s`: %s', expr, e)
+
 
 async def wipe_schema(
     conn: SupportedClient,

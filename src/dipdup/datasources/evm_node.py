@@ -240,7 +240,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         if self._ws_client:
             return self._ws_client
 
-        self._logger.info('Creating Websocket client')
+        self._logger.debug('Creating Websocket client')
 
         url = self._config.ws_url
         self._ws_client = WebsocketTransport(
