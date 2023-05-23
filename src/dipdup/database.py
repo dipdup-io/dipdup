@@ -10,13 +10,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 from typing import AsyncIterator
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
-from typing import Optional
-from typing import Set
-from typing import Type
-from typing import Union
 from typing import cast
 
 import sqlparse  # type: ignore[import]
@@ -57,13 +52,13 @@ def set_connection(conn: SupportedClient) -> None:
 @asynccontextmanager
 async def tortoise_wrapper(
     url: str,
-    models: Optional[str] = None,
+    models: str | None = None,
     timeout: int = 60,
     decimal_precision: int | None = None,
     unsafe_sqlite: bool = False,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
+    model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
     }
     if models:
@@ -122,7 +117,7 @@ def is_model_class(obj: Any) -> bool:
     return True
 
 
-def iter_models(package: Optional[str]) -> Iterator[tuple[str, Type[TortoiseModel]]]:
+def iter_models(package: str | None) -> Iterator[tuple[str, type[TortoiseModel]]]:
     """Iterate over built-in and project's models"""
     modules = [
         ('int_models', importlib.import_module('dipdup.models')),
@@ -204,7 +199,7 @@ async def generate_schema(
 async def _wipe_schema_postgres(
     conn: AsyncpgClient,
     schema_name: str,
-    immune_tables: Set[str],
+    immune_tables: set[str],
 ) -> None:
     immune_schema_name = f'{schema_name}_immune'
 
@@ -227,7 +222,7 @@ async def _wipe_schema_postgres(
 async def _wipe_schema_sqlite(
     conn: SqliteClient,
     path: str,
-    immune_tables: Set[str],
+    immune_tables: set[str],
 ) -> None:
     if path == ':memory:':
         raise FrameworkException('Attempted to wipe in-memory database; that makes no sense')
@@ -235,7 +230,7 @@ async def _wipe_schema_sqlite(
     # NOTE: Deleting huge tables in SQLite is very slow, so it's quicker to drop the whole database and recreate it.
     # NOTE: First, create a new database and attach it.
     immune_path, namespace = f'{path}.immune', 'immune'
-    script = [f'ATTACH DATABASE "{immune_path}" AS {namespace}']
+    await conn.execute_script(f'ATTACH DATABASE "{immune_path}" AS {namespace}')
 
     # NOTE: Copy immune tables to the new database.
     master_query = 'SELECT name, type FROM sqlite_master'
@@ -244,9 +239,7 @@ async def _wipe_schema_sqlite(
         if type_ != 'table' or name not in immune_tables:
             continue
 
-        script.append(f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}')
-
-    for expr in script:
+        expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'
         _logger.info('Executing `%s`', expr)
         await conn.execute_script(expr)
 
@@ -261,7 +254,7 @@ async def _wipe_schema_sqlite(
 async def wipe_schema(
     conn: SupportedClient,
     schema_name: str,
-    immune_tables: Set[str],
+    immune_tables: set[str],
 ) -> None:
     """Truncate schema preserving immune tables. Executes in a transaction"""
     async with conn._in_transaction() as conn:
@@ -280,7 +273,7 @@ async def move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: st
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
-def prepare_models(package: Optional[str]) -> None:
+def prepare_models(package: str | None) -> None:
     """Prepare TortoiseORM models to use with DipDup.
     Generate missing table names, validate models, increase decimal precision if needed.
     """
@@ -291,7 +284,7 @@ def prepare_models(package: Optional[str]) -> None:
     # NOTE: Required for pytest-xdist. Models with the same name in different packages cause conflicts otherwise.
     EXECUTOR_CACHE.clear()
 
-    db_tables: Set[str] = set()
+    db_tables: set[str] = set()
 
     for app, model in iter_models(package):
         # NOTE: Enforce our class for user models
