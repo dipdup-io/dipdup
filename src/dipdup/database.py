@@ -1,11 +1,11 @@
 import asyncio
+import atexit
 import decimal
 import hashlib
 import importlib
 import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
-from itertools import chain
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -27,11 +27,11 @@ from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
-from tortoise.exceptions import OperationalError
 from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
+from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
@@ -60,6 +60,7 @@ async def tortoise_wrapper(
     models: Optional[str] = None,
     timeout: int = 60,
     decimal_precision: int | None = None,
+    unsafe_sqlite: bool = False,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
@@ -85,6 +86,12 @@ async def tortoise_wrapper(
 
                 conn = get_connection()
                 await conn.execute_query('SELECT 1')
+
+                if unsafe_sqlite:
+                    await conn.execute_script('PRAGMA foreign_keys = OFF')
+                    await conn.execute_script('PRAGMA synchronous = OFF')
+                    await conn.execute_script('PRAGMA journal_mode = OFF')
+
             # FIXME: Poor logging
             except (OSError, CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
@@ -204,49 +211,51 @@ async def _wipe_schema_postgres(
     sql_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
     await execute_sql(conn, sql_path, schema_name, immune_schema_name)
 
-    async with conn._in_transaction() as conn:
-        if immune_tables:
-            await create_schema(conn, immune_schema_name)
-            for table in immune_tables:
-                await move_table(conn, table, schema_name, immune_schema_name)
+    if immune_tables:
+        await create_schema(conn, immune_schema_name)
+        for table in immune_tables:
+            await move_table(conn, table, schema_name, immune_schema_name)
 
-        await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
+    await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
 
-        if immune_tables:
-            for table in immune_tables:
-                await move_table(conn, table, immune_schema_name, schema_name)
-            await drop_schema(conn, immune_schema_name)
+    if immune_tables:
+        for table in immune_tables:
+            await move_table(conn, table, immune_schema_name, schema_name)
+        await drop_schema(conn, immune_schema_name)
 
 
 async def _wipe_schema_sqlite(
     conn: SqliteClient,
+    path: str,
     immune_tables: Set[str],
 ) -> None:
-    script = []
+    if path == ':memory:':
+        raise FrameworkException('Attempted to wipe in-memory database; that makes no sense')
 
+    # NOTE: Deleting huge tables in SQLite is very slow, so it's quicker to drop the whole database and recreate it.
+    # NOTE: First, create a new database and attach it.
+    immune_path, namespace = f'{path}.immune', 'immune'
+    script = [f'ATTACH DATABASE "{immune_path}" AS {namespace}']
+
+    # NOTE: Copy immune tables to the new database.
     master_query = 'SELECT name, type FROM sqlite_master'
     result = await conn.execute_query(master_query)
     for name, type_ in result[1]:
-        if type_ == 'table':
-            if name in immune_tables:
-                continue
-            script.append(f'DROP TABLE IF EXISTS {name}')
-        elif type_ == 'index':
-            script.append(f'DROP INDEX IF EXISTS  {name}')
-        elif type_ == 'view':
-            script.append(f'DROP VIEW IF EXISTS  {name}')
-        elif type_ == 'trigger':
-            script.append(f'DROP TRIGGER IF EXISTS  {name}')
-        elif type_ == 'sequence':
-            script.append(f'DROP SEQUENCE IF EXISTS  {name}')
-        else:
-            raise NotImplementedError(f'Unknown type {type_} for {name}')
+        if type_ != 'table' or name not in immune_tables:
+            continue
 
-    for expr in chain(script, script):
-        try:
-            await conn.execute_script(expr)
-        except OperationalError as e:
-            _logger.error('Failed to execute `%s`: %s', expr, e)
+        script.append(f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}')
+
+    for expr in script:
+        _logger.info('Executing `%s`', expr)
+        await conn.execute_script(expr)
+
+    # NOTE: Now the weirdest part - swap the databases when the program exits and all connections are closed.
+    def _finish_wipe() -> None:
+        _logger.info('Restoring immune tables')
+        Path(immune_path).replace(path)
+
+    atexit.register(_finish_wipe)
 
 
 async def wipe_schema(
@@ -255,10 +264,11 @@ async def wipe_schema(
     immune_tables: Set[str],
 ) -> None:
     """Truncate schema preserving immune tables. Executes in a transaction"""
-    if isinstance(conn, SqliteClient):
-        await _wipe_schema_sqlite(conn, immune_tables)
-    else:
-        await _wipe_schema_postgres(conn, schema_name, immune_tables)
+    async with conn._in_transaction() as conn:
+        if isinstance(conn, SqliteClient):
+            await _wipe_schema_sqlite(conn, schema_name, immune_tables)
+        else:
+            await _wipe_schema_postgres(conn, schema_name, immune_tables)
 
 
 async def drop_schema(conn: AsyncpgClient, name: str) -> None:

@@ -80,7 +80,7 @@ class SqliteDatabaseConfig:
 
     @property
     def schema_name(self) -> str:
-        return 'public'
+        return self.path
 
     @property
     def connection_string(self) -> str:
@@ -563,6 +563,7 @@ class AdvancedConfig:
     :param profiler:
     :param decimal_precision:
     :param api:
+    :param unsafe_sqlite:
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -576,6 +577,7 @@ class AdvancedConfig:
     profiler: ProfilerLevel = ProfilerLevel.basic
     decimal_precision: int | None = None
     api: ApiConfig = field(default_factory=ApiConfig)
+    unsafe_sqlite: bool = False
 
 
 @dataclass

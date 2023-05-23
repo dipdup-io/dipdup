@@ -1,6 +1,8 @@
 from contextlib import suppress
 from typing import cast
 
+from tortoise.exceptions import OperationalError
+
 from demo_uniswap import models as models
 from demo_uniswap.types.factory.evm_events.pool_created import PoolCreated
 from demo_uniswap.utils.token import WHITELIST_TOKENS
@@ -64,8 +66,11 @@ async def pool_created(
         token0_id=event.payload.token0,
         token1_id=event.payload.token1,
     )
-    await pool.save()
-    pool.cache()
+    # NOTE: Could present after wipe with immune_tables
+    with suppress(OperationalError):
+        await pool.save()
+        pool.cache()
+
     #
     # name = f'{token0.symbol.lower()}_{token1.symbol.lower()}#{pool.id[-6:]}'
     # await ctx.add_contract(

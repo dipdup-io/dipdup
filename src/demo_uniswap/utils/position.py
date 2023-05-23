@@ -5,10 +5,16 @@ import demo_uniswap.models as models
 from demo_uniswap.utils.abi import get_abi
 from dipdup.context import HandlerContext
 
-position_manager_abi = get_abi('position_manager_abi.abi')
-factory_abi = get_abi('factory_abi.abi')
+position_manager_abi = get_abi('position_manager.abi')
+factory_abi = get_abi('factory.abi')
 
 _positions: dict[int, models.Position | None] = {}
+
+
+async def restore_cache() -> None:
+    global _positions
+    async for position in models.Position.all():
+        _positions[position.id] = position
 
 
 async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:

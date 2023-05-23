@@ -132,7 +132,7 @@ class StaticTokenDefinition:
         return static_definitions
 
     @staticmethod
-    def from_address(token_address: ChecksumAddress) -> 'StaticTokenDefinition' | None:
+    def from_address(token_address: ChecksumAddress) -> 'StaticTokenDefinition | None':
         static_definitions = StaticTokenDefinition.get_static_definitions()
         for static_definition in static_definitions:
             if to_checksum_address(static_definition.address) == token_address:

@@ -116,9 +116,9 @@ class SubsquidEventsIndex(
         subsquid_sync_level = await self.datasource.get_head_level()
         if self.node_datasource:
             node_sync_level = await self.node_datasource.get_head_level()
-            last_mile = node_sync_level - subsquid_sync_level
-            if last_mile >= LAST_MILE_TRIGGER:
-                use_node = True
+            last_mile = abs(node_sync_level - subsquid_sync_level)
+
+        use_node = bool(last_mile) and last_mile <= LAST_MILE_TRIGGER
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
         if use_node:

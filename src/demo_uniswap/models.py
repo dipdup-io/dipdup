@@ -212,6 +212,18 @@ class Position(Model):
     token1_id: str
     pool_id: int
 
+    @classmethod
+    async def reset(cls) -> None:
+        await cls.filter().update(
+            liquidity=0,
+            deposited_token0=0,
+            deposited_token1=0,
+            withdrawn_token0=0,
+            withdrawn_token1=0,
+            collected_fees_token0=0,
+            collected_fees_token1=0,
+        )
+
 
 class PositionSnapshot(Model):
     id = fields.TextField(pk=True)

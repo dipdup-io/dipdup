@@ -6,6 +6,7 @@ database:
   path: /tmp/uniswap.sqlite
   immune_tables:
     - token
+    - position
 
 datasources:
   ethscan:
@@ -82,5 +83,8 @@ advanced:
   api: {}
   decimal_precision: 128  # 🙄
   profiler: basic
-  # early_realtime: true
+  # FIXME: Can't get node level
+  early_realtime: true
+  # FIXME: Wipe with immune_tables leads to foreign key issues
+  unsafe_sqlite: true
 # logging: verbose
