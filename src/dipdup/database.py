@@ -31,7 +31,7 @@ from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
-_logger = logging.getLogger('dipdup.database')
+_logger = logging.getLogger(__name__)
 
 DEFAULT_CONNECTION_NAME = 'default'
 HEAD_STATUS_TIMEOUT = 3 * 60
@@ -143,13 +143,9 @@ def iter_models(package: str | None) -> Iterator[tuple[str, type[TortoiseModel]]
 def get_schema_hash(conn: SupportedClient) -> str:
     """Get hash of the current schema"""
     schema_sql = get_schema_sql(conn, False)
-    # NOTE: Column order could differ in two generated schemas for the same models, drop commas and sort strings to eliminate this
+    # NOTE: Column order in generated CREATE TABLE expressions could differ, so drop commas and sort strings first.
     processed_schema_sql = '\n'.join(sorted(schema_sql.replace(',', '').split('\n'))).encode()
     return hashlib.sha256(processed_schema_sql).hexdigest()
-
-
-async def create_schema(conn: AsyncpgClient, name: str) -> None:
-    await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
 
 
 async def execute_sql(
@@ -158,12 +154,11 @@ async def execute_sql(
     *args: Any,
     **kwargs: Any,
 ) -> None:
+    """Execute SQL script(s) with formatting"""
     for file in iter_files(path, ext='.sql'):
         _logger.info('Executing script `%s`', file.name)
-        sql = file.read()
-        # NOTE: Generally it's a very bad idea to format SQL scripts with arbitrary arguments.
-        # NOTE: We trust package developers here.
-        sql = sql.format(*args, **kwargs)
+        # NOTE: Usually string-formating SQL scripts is a very bad idea. But for indexers it's totally fine.
+        sql = file.read().format(*args, **kwargs)
         for statement in sqlparse.split(sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
@@ -175,6 +170,7 @@ async def execute_sql_query(
     path: Path,
     *values: Any,
 ) -> Any:
+    """Execute SQL query with arguments"""
     _logger.info('Executing query `%s`', path.name)
     sql = path.read_text()
     return await conn.execute_query(sql, list(values))
@@ -185,7 +181,7 @@ async def generate_schema(
     name: str,
 ) -> None:
     if isinstance(conn, AsyncpgClient):
-        await create_schema(conn, name)
+        await pg_create_schema(conn, name)
 
     await Tortoise.generate_schemas()
 
@@ -203,20 +199,22 @@ async def _wipe_schema_postgres(
 ) -> None:
     immune_schema_name = f'{schema_name}_immune'
 
+    # NOTE: Create a truncate_schema function to trigger cascade deletion
     sql_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
     await execute_sql(conn, sql_path, schema_name, immune_schema_name)
 
+    # NOTE: Move immune tables to a separate schema - it's free!
     if immune_tables:
-        await create_schema(conn, immune_schema_name)
+        await pg_create_schema(conn, immune_schema_name)
         for table in immune_tables:
-            await move_table(conn, table, schema_name, immune_schema_name)
+            await pg_move_table(conn, table, schema_name, immune_schema_name)
 
     await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
 
     if immune_tables:
         for table in immune_tables:
-            await move_table(conn, table, immune_schema_name, schema_name)
-        await drop_schema(conn, immune_schema_name)
+            await pg_move_table(conn, table, immune_schema_name, schema_name)
+        await pg_drop_schema(conn, immune_schema_name)
 
 
 async def _wipe_schema_sqlite(
@@ -264,11 +262,16 @@ async def wipe_schema(
             await _wipe_schema_postgres(conn, schema_name, immune_tables)
 
 
-async def drop_schema(conn: AsyncpgClient, name: str) -> None:
+async def pg_create_schema(conn: AsyncpgClient, name: str) -> None:
+    """Create PostgreSQL schema if not exists"""
+    await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
+
+
+async def pg_drop_schema(conn: AsyncpgClient, name: str) -> None:
     await conn.execute_script(f'DROP SCHEMA IF EXISTS {name}')
 
 
-async def move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: str) -> None:
+async def pg_move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: str) -> None:
     """Move table from one schema to another"""
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
@@ -352,6 +355,10 @@ def prepare_models(package: str | None) -> None:
 
 
 def guess_decimal_precision(package: str | None) -> int:
+    """Guess decimal precision from project models.
+    
+    Doesn't work for realy big numbers.
+    """
     prec = 0
     for _, model in iter_models(package):
         for field in model._meta.fields_map.values():
