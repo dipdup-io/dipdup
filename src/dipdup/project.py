@@ -126,18 +126,36 @@ class ConditionalChoiceQuestion(Question):
     condition_description: str
     condition_default: int
     default: int
-    condition_choices: tuple[str, ...]
-    choices: dict[int, tuple]
+    condition_choices: tuple[tuple[str, str], ...]
+    choices: tuple[tuple[tuple[str, str], ...], ...]  # condition -> tuple[choise, comment]
 
-    # @property
-    # def default_choice(self) -> str:
-    #     return self.choices[self.default]
+    @property
+    def default_choice(self) -> str:
+        return self.choices[self.condition_default][self.default][0]
 
     @property
     def text(self) -> str:
         return f'{self.name} [{self.default_choice}]'
 
-    # reuse self.name, self.default
+    def prompt(self) -> str:
+        condition_question = ChoiceQuestion(
+            name='template',
+            description=condition_description,
+            default=2,
+            choices=condition_choices,
+            comments=condition_comments,
+        )
+        condition = condition_question.prompt()
+
+        table = tabulate(
+            zip(map(lambda x: f'{x})', range(len(self.choices[condition]))), self.choices[condition]([0]), self.comments([0])),
+            colalign=('right', 'left', 'left'),
+        )
+        cl.secho(f'=> {self.description}', fg='blue')
+        cl.echo(table)
+        return str(self.choices[condition][super().prompt()][0])
+
+        
 
 class JinjaAnswers(dict[str, Any]):
     def __init__(self, *args: str, **kwargs: Any) -> None:
@@ -176,7 +194,7 @@ class Project(BaseModel):
                 continue
 
             if quiet:
-                value = question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
+                value = question.default_choice if isinstance(question, ChoiceQuestion) or isinstance(question, ConditionalChoiceQuestion) else question.default
                 cl.echo(f'{question.name}: using default value `{value}`')
             else:
                 value = question.prompt()
@@ -244,9 +262,14 @@ class BaseProject(Project):
             name='template',
             condition_description=('Choose a template: blockchain-specific or blank?'),
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
-            default=7,
-            condition_choices=('Tezos', 'EVM', 'Blank'),
-            choices={0: DEMO_PROJECTS_TEZOS, 1: DEMO_PROJECTS_EVM, 2: DEMO_PROJECTS_BLANK},
+            condition_default=2,
+            default=0,
+            condition_choices=(
+                ('Tezos', 'Tezos templates'),
+                ('EVM', 'EVM templates'),
+                ('Blank', 'Brief template to create project from scratch')
+            ),
+            choices=(DEMO_PROJECTS_TEZOS, DEMO_PROJECTS_EVM, DEMO_PROJECTS_BLANK, ),
         ),
         InputQuestion(
             name='project_name',
