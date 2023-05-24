@@ -60,7 +60,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         class MagicWeb3Provider(AsyncJSONBaseProvider):
             async def make_request(_, method: str, params: list[Any]) -> Any:
-                return await self._jsonrpc_request(method, params)
+                return {
+                    'jsonrpc': '2.0',
+                    'result': await self._jsonrpc_request(method, params),
+                }
 
         self._web3_client = AsyncWeb3(
             provider=MagicWeb3Provider(),
