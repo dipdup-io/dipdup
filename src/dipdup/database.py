@@ -356,7 +356,7 @@ def prepare_models(package: str | None) -> None:
 
 def guess_decimal_precision(package: str | None) -> int:
     """Guess decimal precision from project models.
-    
+
     Doesn't work for realy big numbers.
     """
     prec = 0

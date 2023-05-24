@@ -6,8 +6,8 @@ from typing import Callable
 from uuid import uuid4
 
 from pysignalr.messages import CompletionMessage
-from web3 import AsyncHTTPProvider
 from web3 import AsyncWeb3
+from web3.providers.async_base import AsyncJSONBaseProvider
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -21,7 +21,6 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
-from dipdup.performance import profiler
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
@@ -40,7 +39,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
-        self._web3_client: AsyncWeb3 = AsyncWeb3(AsyncHTTPProvider(config.url))
+        self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
@@ -56,8 +55,16 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     @property
     def web3(self) -> AsyncWeb3:
-        # FIXME: temporary, remove after implementing pysignalr transport
-        profiler and profiler.inc('web3_touched_total', 1.0)
+        if self._web3_client:
+            return self._web3_client
+
+        class MagicWeb3Provider(AsyncJSONBaseProvider):
+            async def make_request(_, method: str, params: list[Any]) -> Any:
+                return await self._jsonrpc_request(method, params)
+
+        self._web3_client = AsyncWeb3(
+            provider=MagicWeb3Provider(),
+        )
         return self._web3_client
 
     async def initialize(self) -> None:
