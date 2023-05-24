@@ -17,7 +17,7 @@ from dipdup.utils import write
 _logger = logging.getLogger('dipdup.project')
 
 
-DEMO_PROJECTS = (
+DEMO_PROJECTS_TEZOS = (
     ('demo_domains', 'Tezos Domains name service'),
     ('demo_big_maps', 'Indexing specific big maps'),
     ('demo_events', 'Processing contract events'),
@@ -30,11 +30,12 @@ DEMO_PROJECTS = (
     ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
     ('demo_auction', 'TzColors NFT marketplace'),
     ('demo_raw', 'Process raw operations without filtering and strict typing (experimental)'),
-    ('blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
     # TODO: demo_sql
 )
+DEMO_PROJECTS_EVM = ()
+DEMO_PROJECTS_BLANK = (('blank', 'Empty config for a fresh start'), )
 
 
 class Question(BaseModel):
@@ -119,6 +120,24 @@ class ChoiceQuestion(Question):
         cl.echo(table)
         return str(self.choices[super().prompt()])
 
+
+class ConditionalChoiceQuestion(Question):
+    type = int
+    condition_description: str
+    condition_default: int
+    default: int
+    condition_choices: tuple[str, ...]
+    choices: dict[int, tuple]
+
+    # @property
+    # def default_choice(self) -> str:
+    #     return self.choices[self.default]
+
+    @property
+    def text(self) -> str:
+        return f'{self.name} [{self.default_choice}]'
+
+    # reuse self.name, self.default
 
 class JinjaAnswers(dict[str, Any]):
     def __init__(self, *args: str, **kwargs: Any) -> None:
@@ -221,12 +240,13 @@ class BaseProject(Project):
                 "Let's start with some basic questions."
             ),
         ),
-        ChoiceQuestion(
+        ConditionalChoiceQuestion(
             name='template',
+            condition_description=('Choose a template: blockchain-specific or blank?'),
             description=('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n'),
             default=7,
-            choices=tuple(p[0] for p in DEMO_PROJECTS),
-            comments=tuple(p[1] for p in DEMO_PROJECTS),
+            condition_choices=('Tezos', 'EVM', 'Blank'),
+            choices={0: DEMO_PROJECTS_TEZOS, 1: DEMO_PROJECTS_EVM, 2: DEMO_PROJECTS_BLANK},
         ),
         InputQuestion(
             name='project_name',
