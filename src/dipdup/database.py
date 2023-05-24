@@ -227,8 +227,8 @@ async def _wipe_schema_sqlite(
     if path == ':memory:':
         raise FrameworkException('Attempted to wipe in-memory database; that makes no sense')
 
-    # NOTE: Deleting huge tables in SQLite is very slow, so it's quicker to drop the whole database and recreate it.
-    # NOTE: First, create a new database and attach it.
+    # NOTE: Dropping huge tables and deleting from them is slow and I/O heavy in SQLite. It's better to save the tables of interest
+    # elsewhere and drop the whole database. First, create a new database and attach it to the current connection:
     immune_path, namespace = f'{path}.immune', 'immune'
     await conn.execute_script(f'ATTACH DATABASE "{immune_path}" AS {namespace}')
 
