@@ -21,7 +21,8 @@ from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import profiler
 
 LEVEL_BATCH_TIMEOUT = 1
-LAST_MILE_TRIGGER = 64
+LAST_MILE_TRIGGER = 256
+LEVELS_LEFT_TRIGGER = 256
 
 
 class SubsquidEventsIndex(
@@ -114,12 +115,12 @@ class SubsquidEventsIndex(
             node_sync_level = await self.node_datasource.get_head_level()
             last_mile = abs(node_sync_level - subsquid_sync_level)
 
-        use_node = bool(last_mile) and last_mile <= LAST_MILE_TRIGGER
         self._logger.info(
-            'Archives are %s blocks behind the node; using %s',
+            'Archives are %s levels behind the node; %s levels left to sync',
             last_mile,
-            'node' if use_node else 'archives',
+            levels_left,
         )
+        use_node = last_mile < LAST_MILE_TRIGGER and levels_left < LEVELS_LEFT_TRIGGER
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
         if use_node:
