@@ -121,7 +121,7 @@ async def test_http_config() -> None:
         retry_multiplier=1.0,
         ratelimit_rate=0,
         ratelimit_period=0,
-        ratelimit_sleep=5.0,
+        ratelimit_sleep=0,
         connection_limit=100,
         connection_timeout=60,
         batch_size=10_000,

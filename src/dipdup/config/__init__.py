@@ -182,10 +182,10 @@ class ResolvedHttpConfig:
 
     retry_count: int = sys.maxsize
     retry_sleep: float = 1.0
-    retry_multiplier: float = 1.0
+    retry_multiplier: float = 2.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
-    ratelimit_sleep: float = 5.0
+    ratelimit_sleep: float = 0.0
     connection_limit: int = 100
     connection_timeout: int = 60
     batch_size: int = 10_000
