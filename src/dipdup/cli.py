@@ -393,10 +393,24 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     WARNING: This action is irreversible! All indexed data will be lost!
     """
+    from dipdup.config import SqliteDatabaseConfig
+    from dipdup.exceptions import ConfigurationError
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
+    # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+    immune_tables = set() if immune else config.database.immune_tables | {'dipdup_meta'}
+
+    if isinstance(config.database, SqliteDatabaseConfig) and immune_tables:
+        message = (
+            'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
+        )
+        if config.advanced.unsafe_sqlite:
+            _logger.warning(message)
+        else:
+            raise ConfigurationError(message)
 
     if not force:
         try:
@@ -427,8 +441,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         await wipe_schema(
             conn=conn,
             schema_name=config.database.schema_name,
-            # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-            immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
+            immune_tables=immune_tables,
         )
 
     _logger.info('Schema wiped')

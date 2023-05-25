@@ -83,6 +83,7 @@ async def tortoise_wrapper(
                 await conn.execute_query('SELECT 1')
 
                 if unsafe_sqlite:
+                    _logger.warning('Unsafe SQLite mode enabled; database integrity is not guaranteed!')
                     await conn.execute_script('PRAGMA foreign_keys = OFF')
                     await conn.execute_script('PRAGMA synchronous = OFF')
                     await conn.execute_script('PRAGMA journal_mode = OFF')
