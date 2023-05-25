@@ -4,7 +4,9 @@ services:
   dipdup:
     build: .
     depends_on:
+      {% if cookiecutter.postgresql_image != 'sqlite' %}
       - db
+      {% endif %}
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: always
     environment:
@@ -12,7 +14,12 @@ services:
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
     ports:
       - 127.0.0.1:9000:9000
+    {% if cookiecutter.postgresql_image == 'sqlite' %}
+    volumes:
+      - sqlite:./{{ cookiecutter.project_name }}.sqlite3
+    {% endif %}
 
+  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: {{ cookiecutter.postgresql_image }}
     ports:
@@ -45,6 +52,11 @@ services:
       - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+  {% endif %}
 
 volumes:
+  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
+  {% else %}
+  sqlite:
+  {% endif %}

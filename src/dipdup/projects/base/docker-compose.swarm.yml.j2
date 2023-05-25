@@ -3,9 +3,11 @@ version: "3.8"
 services:
   dipdup:
     image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-io/dipdup:${TAG:-master}
+    {% if cookiecutter.postgresql_image != 'sqlite' %}
     depends_on:
       - db
       - hasura
+    {% endif %}
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     environment:
       - "POSTGRES_USER=dipdup"
@@ -15,6 +17,10 @@ services:
     networks:
       - dipdup-private
       - prometheus-private
+    {% if cookiecutter.postgresql_image == 'sqlite' %}
+    volumes:
+      - sqlite:./{{ cookiecutter.project_name }}.sqlite3
+    {% endif %}
     deploy:
       mode: replicated
       replicas: ${INDEXER_ENABLED:-1}
@@ -31,6 +37,7 @@ services:
         max-file: "10"
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
+  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: {{ cookiecutter.postgresql_image }}
     volumes:
@@ -83,10 +90,15 @@ services:
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
       placement: *placement
     logging: *logging
+  {% endif %}
 
 
 volumes:
+  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
+  {% else %}
+  sqlite:
+  {% endif %}
 
 networks:
   dipdup-private:
