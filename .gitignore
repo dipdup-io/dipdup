@@ -149,9 +149,3 @@ cython_debug/
 *.env
 
 *.out*
-
-# nuitka
-*.build
-*.bin
-*.dist
-.venv-nuitka
