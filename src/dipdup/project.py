@@ -35,7 +35,7 @@ DEMO_PROJECTS_TEZOS = (
     # TODO: demo_sql
 )
 DEMO_PROJECTS_EVM = ()
-DEMO_PROJECTS_BLANK = (('blank', 'Empty config for a fresh start'), )
+DEMO_PROJECTS_BLANK = (('blank', 'Empty config for a fresh start'),)
 
 
 class Question(BaseModel):
@@ -48,11 +48,11 @@ class Question(BaseModel):
     def text(self) -> str:
         return f'{self.name} [{self.default}]'
 
-    def prompt(self) -> Any:
+    def prompt(self, text: str | None = None, default: str | None = None) -> Any:
         try:
             value = cl.prompt(
-                text=self.text,
-                default=self.default,
+                text=text or self.text,
+                default=default or self.default,
                 type=self.type,
                 show_default=False,
             )
@@ -69,7 +69,7 @@ class Question(BaseModel):
 class NotifyQuestion(Question):
     type = NoneType
 
-    def prompt(self) -> Any:
+    def prompt(self, text: str | None = None, default: str | None = None) -> Any:
         cl.secho('\n' + self.description + '\n', fg='yellow')
         return self.default
 
@@ -78,7 +78,7 @@ class InputQuestion(Question):
     type = str
     default: str
 
-    def prompt(self) -> str:
+    def prompt(self, text: str | None = None, default: str | None = None) -> str:
         cl.secho(f'=> {self.description}', fg='blue')
         return str(super().prompt())
 
@@ -91,7 +91,7 @@ class BooleanQuestion(Question):
     def text(self) -> str:
         return f'{self.name} [{self.default and "Y/n" or "y/N"}]'
 
-    def prompt(self) -> bool:
+    def prompt(self, text: str | None = None, default: str | None = None) -> bool:
         cl.secho(f'=> {self.description}', fg='blue')
         return bool(super().prompt())
 
@@ -110,7 +110,7 @@ class ChoiceQuestion(Question):
     def text(self) -> str:
         return f'{self.name} [{self.default_choice}]'
 
-    def prompt(self) -> str:
+    def prompt(self, text: str | None = None, default: str | None = None) -> str:
         rows = [f'{i})' for i in range(len(self.choices))]
         table = tabulate(
             zip(rows, self.choices, self.comments),
@@ -123,39 +123,48 @@ class ChoiceQuestion(Question):
 
 class ConditionalChoiceQuestion(Question):
     type = int
-    condition_description: str
-    condition_default: int
     default: int
+    choices: dict[str, tuple[tuple[str, str], ...]]  # condition -> tuple[choise, comment]
+
+    condition_default: int
+    condition_description: str
     condition_choices: tuple[tuple[str, str], ...]
-    choices: tuple[tuple[tuple[str, str], ...], ...]  # condition -> tuple[choise, comment]
 
     @property
     def default_choice(self) -> str:
-        return self.choices[self.condition_default][self.default][0]
+        return self.choices[self.condition_choices[self.condition_default][0]][self.default][0]
 
-    @property
-    def text(self) -> str:
-        return f'{self.name} [{self.default_choice}]'
-
-    def prompt(self) -> str:
+    def prompt(self, text: str | None = None, default: str | None = None) -> str:
         condition_question = ChoiceQuestion(
             name='template',
-            description=condition_description,
-            default=2,
-            choices=condition_choices,
-            comments=condition_comments,
+            description=self.condition_description,
+            default=self.condition_default,
+            choices=tuple(c[0] for c in self.condition_choices),
+            comments=tuple(c[1] for c in self.condition_choices),
         )
-        condition = condition_question.prompt()
+        condition = condition_question.prompt()  # string choise of condition
 
+        # if condition question is enough
+        if not self.choices[condition]:
+            return condition
+        if len(self.choices[condition]) == 1:
+            return self.choices[condition][0][0]
+
+        # choise inside condition
         table = tabulate(
-            zip(map(lambda x: f'{x})', range(len(self.choices[condition]))), self.choices[condition]([0]), self.comments([0])),
+            zip(
+                (f'{x})' for x in range(len(self.choices[condition]))),
+                (x[0] for x in self.choices[condition]),
+                (x[1] for x in self.choices[condition]),
+            ),
             colalign=('right', 'left', 'left'),
         )
         cl.secho(f'=> {self.description}', fg='blue')
         cl.echo(table)
-        return str(self.choices[condition][super().prompt()][0])
+        default = self.choices[condition][self.default][0]
+        answer = super().prompt(text=f'{self.name} [{default}]', default=default)
+        return str(self.choices[condition][answer][0])
 
-        
 
 class JinjaAnswers(dict[str, Any]):
     def __init__(self, *args: str, **kwargs: Any) -> None:
@@ -194,7 +203,11 @@ class Project(BaseModel):
                 continue
 
             if quiet:
-                value = question.default_choice if isinstance(question, ChoiceQuestion) or isinstance(question, ConditionalChoiceQuestion) else question.default
+                value = (
+                    question.default_choice
+                    if isinstance(question, ChoiceQuestion) or isinstance(question, ConditionalChoiceQuestion)
+                    else question.default
+                )
                 cl.echo(f'{question.name}: using default value `{value}`')
             else:
                 value = question.prompt()
@@ -267,14 +280,18 @@ class BaseProject(Project):
             condition_choices=(
                 ('Tezos', 'Tezos templates'),
                 ('EVM', 'EVM templates'),
-                ('Blank', 'Brief template to create project from scratch')
+                ('Blank', 'Brief template to create project from scratch'),
             ),
-            choices=(DEMO_PROJECTS_TEZOS, DEMO_PROJECTS_EVM, DEMO_PROJECTS_BLANK, ),
+            choices={
+                'Tezos': DEMO_PROJECTS_TEZOS,
+                'EVM': DEMO_PROJECTS_EVM,
+                'Blank': DEMO_PROJECTS_BLANK,
+            },
         ),
         InputQuestion(
             name='project_name',
             description='Enter project name (the name will be used for folder name and package name)',
-            default='dipdup-indexer',
+            default='dipdup_indexer',
         ),
         InputQuestion(
             name='version',
