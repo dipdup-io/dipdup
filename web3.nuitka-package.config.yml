@@ -1,0 +1,5 @@
+- module-name: 'eth_hash.utils'
+  anti-bloat:
+  - description: 'always choose pycryptodome as crypto backend, failes to autodetect in runtime'
+    replacements_plain:
+      'module = importlib.import_module(import_path)': 'import eth_hash.backends.pycryptodome as module'

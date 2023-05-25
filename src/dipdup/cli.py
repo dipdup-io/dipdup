@@ -585,3 +585,45 @@ async def self_update(
     import dipdup.install
 
     dipdup.install.install(quiet, force, None, None)
+
+
+@self.command(name='compile')
+@click.pass_context
+@click.argument('opts', nargs=-1, type=click.UNPROCESSED)
+@_cli_wrapper
+async def self_compile(
+    ctx: click.Context,
+    opts: list[str],
+) -> None:
+    """Compile DipDup contracts."""
+    import dipdup.compile
+
+    merged_opts: dipdup.compile.CompileOptions = {
+        **dipdup.compile.DEFAULT_COMPILE_OPTIONS,  # type: ignore[misc]
+        **dict(option.split('=') for option in opts),
+    }
+
+    dipdup.compile.compile_dipdup(merged_opts)
+
+
+@self.command(name='compile-project')
+@click.pass_context
+@click.argument('name', type=str)
+@click.argument('opts', nargs=-1, type=click.UNPROCESSED)
+@click.option('--site-packages', is_flag=True, help='Use site-packages instead of venv.')
+@_cli_wrapper
+async def self_compile_project(
+    ctx: click.Context,
+    name: str,
+    opts: list[str],
+    site_packages: bool,
+) -> None:
+    """Compile DipDup project"""
+    import dipdup.compile
+
+    merged_opts: dipdup.compile.CompileOptions = {
+        **dipdup.compile.DEFAULT_COMPILE_OPTIONS,  # type: ignore[misc]
+        **dict(option.split('=') for option in opts),
+    }
+
+    dipdup.compile.compile_project(name, merged_opts, site_packages)
