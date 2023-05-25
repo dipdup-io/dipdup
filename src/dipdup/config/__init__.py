@@ -563,10 +563,10 @@ class AdvancedConfig:
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param crash_reporting: Enable crash reporting
-    :param profiler:
-    :param decimal_precision:
-    :param api:
-    :param unsafe_sqlite:
+    :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
+    :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
+    :param api: Monitoring API config
+    :param profiler: off/basic/advanced based on how much performance metrics you want to collect
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -577,10 +577,10 @@ class AdvancedConfig:
     skip_version_check: bool = False
     rollback_depth: int | None = None
     crash_reporting: bool = False
-    profiler: ProfilerLevel = ProfilerLevel.basic
     decimal_precision: int | None = None
-    api: ApiConfig = field(default_factory=ApiConfig)
     unsafe_sqlite: bool = False
+    api: ApiConfig = field(default_factory=ApiConfig)
+    profiler: ProfilerLevel = ProfilerLevel.basic
 
 
 @dataclass

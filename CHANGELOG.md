@@ -8,7 +8,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- api: Added the first `/performance` endpoint to request indexing stats.
 - database: Added `dipdup_meta` immune table to store arbitrary JSON values.
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
+- config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
+- config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
+- config: Added `advanced.profiler` field to configure amount of gathered metrics.
+- database: Added experimental support for immune tables in SQLite.
+- config: Added `http.alias` field to overwrite alias of datasource HTTP gateway.
 - evm.node: Added `evm.node` datasource to receive events from Ethereum node.
 - evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
 - evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
@@ -22,6 +29,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Changed
 
 - tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- tezos.tzkt.head: Replaced `handlers` section with a single `callback` field in config.
 - models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.
 - database: Store datasource aliases instead of URLs in `dipdup_head` table.
 - config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.

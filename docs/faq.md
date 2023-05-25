@@ -108,3 +108,27 @@ You need to make the following change in models.py:
 ```
 
 We plan to improve field classes in future releases to accept callables as default values.
+
+## Why am I getting `decimal.InvalidOperation` error?
+
+If your models contain `DecimalField`s, you may encounter this error when performing arithmetic operations. It's because the value is too big to fit into the current decimal context.
+
+```python
+class Token(Model):
+    id = fields.TextField(pk=True)
+    volume = fields.DecimalField(decimal_places=18, max_digits=72)
+    ...
+```
+
+Default decimal precision in Python is 28 digits. DipDup tries to increase it automatically guessing the value from the schema. It works in most cases, but not for really big numbers. You can increase the precision manually in config.
+
+```yaml
+advanced:
+  decimal_precision: 128
+```
+
+Don't forget to reindex after this change. When decimal context precision is adjusted you'll get a warning in the logs.
+
+```text
+WARNING  dipdup.database      Decimal context precision has been updated: 28 -> 128
+```
