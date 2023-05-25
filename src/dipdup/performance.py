@@ -203,5 +203,5 @@ def get_stats() -> dict[str, Any]:
     return {
         'caches': caches.stats(),
         'queues': queues.stats(),
-        'profiler': profiler.stats(),
+        'metrics': profiler.stats(),
     }

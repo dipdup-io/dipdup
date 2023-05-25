@@ -224,10 +224,10 @@ def json_dumps_plain(obj: Any | str) -> str:
     ).decode()
 
 
-def json_dumps(obj: Any | str) -> bytes:
+def json_dumps(obj: Any | str, option: int | None = orjson.OPT_INDENT_2) -> bytes:
     """Smarter json.dumps"""
     return orjson.dumps(
         obj,
         default=_default_for_decimals,
-        option=orjson.OPT_INDENT_2,
+        option=option,
     )

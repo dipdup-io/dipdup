@@ -84,6 +84,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self._logger = logging.getLogger('dipdup.http')
         parsed_url = urlsplit(url)
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
+        self._host = parsed_url.netloc
         self._path = parsed_url.path
         self._config = config
         self._user_agent_args: tuple[str, ...] = ()
@@ -213,7 +214,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        profiler.basic and profiler.inc('http:requests_total', 1.0)
+        profiler.basic and profiler.inc(f'{self._host}:requests_total', 1.0)
         if not url:
             url = self._path
         elif url.startswith('http'):
@@ -242,7 +243,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             await response.read()
-            profiler.basic and profiler.inc('http:time_in_requests', (time.time() - started_at) / 60)
+            profiler.basic and profiler.inc(f'{self._host}:time_in_requests', (time.time() - started_at) / 60)
             if raw:
                 return response
 
