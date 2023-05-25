@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import time
 from collections import defaultdict
 from typing import Any
@@ -30,9 +29,6 @@ from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
-
-logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger('aiosqlite').setLevel(logging.INFO)
 
 EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
@@ -170,7 +166,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             ws=True,
         )
         self._subscription_ids[response] = subscription
-        # NOTE: This is possibly unnecessary and/or unreliable, but node doesn't return sync level on subscription.
+        # NOTE: Is's likely unnecessary and/or unreliable, but node doesn't return sync level.
         level = await self.get_head_level()
         self._subscriptions.set_sync_level(subscription, level)
 

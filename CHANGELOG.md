@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Added `advanced.profiler` field to configure amount of gathered metrics.
 - database: Added experimental support for immune tables in SQLite.
 - config: Added `http.alias` field to overwrite alias of datasource HTTP gateway.
-- evm.node: Added `evm.node` datasource to receive events from Ethereum node.
+- evm.node: Added `evm.node` datasource to receive events from Ethereum node and use web3 API.
 - evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
 - evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
 - abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.

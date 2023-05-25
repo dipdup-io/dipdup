@@ -159,8 +159,8 @@ class HttpConfig:
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request
-    :param replay_path: Use cached HTTP responses instead of making real requests (dev-only)
-    :param alias: Alias for this HTTP client (dev-only)
+    :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
+    :param alias: Alias for this HTTP client (dev only)
     """
 
     retry_count: int | None = None

@@ -73,10 +73,21 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
-        log_request = [LogRequest(address=[a] if a else [], topic0=t) for a, t in topics_by_address.items()]
+        log_request = [
+            LogRequest(
+                address=[a] if a else [],
+                topic0=t,
+            )
+            for a, t in topics_by_address.items()
+        ]
 
         while current_level <= last_level:
-            worker_url = (await self._http.request('get', f'{self._config.url}/{current_level}/worker')).decode()
+            worker_url = (
+                await self._http.request(
+                    'get',
+                    f'{self._config.url}/{current_level}/worker',
+                )
+            ).decode()
 
             query: Query = {
                 'logs': log_request,
