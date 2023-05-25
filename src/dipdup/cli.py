@@ -404,9 +404,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     immune_tables = set() if immune else config.database.immune_tables | {'dipdup_meta'}
 
     if isinstance(config.database, SqliteDatabaseConfig) and immune_tables:
-        message = (
-            'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
-        )
+        message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
             _logger.warning(message)
         else:

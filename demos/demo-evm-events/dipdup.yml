@@ -3,7 +3,7 @@ package: demo_evm_events
 
 database:
   kind: sqlite
-  path: /tmp/evm_events.sqlite
+  path: demo-evm-events.sqlite3
 
 datasources:
   ethscan:
@@ -33,9 +33,3 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
-
-api:
-  port: 8088
-# advanced:
-#   profiler: full
-# logging: verbose
