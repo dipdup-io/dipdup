@@ -85,4 +85,5 @@ advanced:
   profiler: basic
   # FIXME: Wipe with immune_tables leads to foreign key issues
   unsafe_sqlite: true
+  skip_version_check: true
 # logging: verbose

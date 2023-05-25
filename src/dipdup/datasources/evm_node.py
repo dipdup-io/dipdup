@@ -189,10 +189,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             'params': params,
         }
 
-        started_at = time.time()
-        namespace = self._config.name
         if ws:
-            namespace += '.ws'
+            started_at = time.time()
+            namespace = f'{self._config.name}.ws'
             event = asyncio.Event()
             self._requests[request_id] = (event, None)
 
@@ -203,16 +202,15 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             await event.wait()
             data = self._requests[request_id][1]
             del self._requests[request_id]
+
+            profiler.basic and profiler.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
+            profiler.basic and profiler.inc(f'{namespace}:requests_total', 1.0)
         else:
-            namespace += '.http'
             data = await self.request(
                 method='post',
                 url='',
                 json=request,
             )
-
-        profiler.basic and profiler.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
-        profiler.basic and profiler.inc(f'{namespace}:requests_total', 1.0)
 
         if raw:
             return data

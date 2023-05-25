@@ -158,8 +158,9 @@ class HttpConfig:
     :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
-    :param batch_size: Number of items fetched in a single paginated request (for some APIs)
-    :param replay_path: Development-only option to use cached HTTP responses instead of making real requests
+    :param batch_size: Number of items fetched in a single paginated request
+    :param replay_path: Use cached HTTP responses instead of making real requests (dev-only)
+    :param alias: Alias for this HTTP client (dev-only)
     """
 
     retry_count: int | None = None
@@ -172,6 +173,7 @@ class HttpConfig:
     connection_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
+    alias: str | None = None
 
 
 @dataclass
@@ -188,6 +190,7 @@ class ResolvedHttpConfig:
     connection_timeout: int = 60
     batch_size: int = 10_000
     replay_path: str | None = None
+    alias: str | None = None
 
     @classmethod
     def create(

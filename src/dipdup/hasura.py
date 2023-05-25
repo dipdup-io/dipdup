@@ -112,6 +112,7 @@ class HasuraGateway(HTTPGateway):
         retry_sleep=1,
         retry_multiplier=1.1,
         retry_count=3,
+        alias='hasura',
     )
 
     def __init__(
