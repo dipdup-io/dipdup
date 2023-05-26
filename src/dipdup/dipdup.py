@@ -109,7 +109,7 @@ class IndexDispatcher:
 
                 tasks.append(index.process())
 
-            indexes_processed = await gather(*tasks)
+            await gather(*tasks)
 
             indexes_spawned = False
             while pending_indexes:
@@ -134,9 +134,6 @@ class IndexDispatcher:
             else:
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
-
-            if not any(indexes_processed):
-                await self._ctx._transactions.cleanup()
 
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
@@ -453,6 +450,8 @@ class DipDup:
 
                 if not advanced_config.postpone_jobs:
                     start_scheduler_event.set()
+
+                tasks.add(create_task(self._transactions.cleanup_loop()))
 
             spawn_index_tasks = (create_task(self._ctx._spawn_index(name)) for name in self._config.indexes)
             await gather(*spawn_index_tasks)

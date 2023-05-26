@@ -12,7 +12,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- database: Allow running SQL scripts and queries from context on SQLite.
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
 - http: Mark `asyncio.TimeoutError` exception as safe to retry.
 
 ### Other

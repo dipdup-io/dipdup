@@ -216,10 +216,6 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.TLD.bulk_create(tlds)
 
-        # FIXME: Stupid tortoise
-        for tld in tlds:
-            tld._saved_in_db = True
-
         domains: List[domains_models.Domain] = []
         for tld in tlds:
             domain = domains_models.Domain(
