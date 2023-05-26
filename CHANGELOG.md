@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - http: Mark `asyncio.TimeoutError` exception as safe to retry.
 
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
+
 ## [6.5.6] - 2022-05-02
 
 ### Fixed
