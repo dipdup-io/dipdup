@@ -118,7 +118,7 @@ async def test_http_config() -> None:
     assert config == ResolvedHttpConfig(
         retry_count=20,
         retry_sleep=10,
-        retry_multiplier=1.0,
+        retry_multiplier=2.0,
         ratelimit_rate=0,
         ratelimit_period=0,
         ratelimit_sleep=0,

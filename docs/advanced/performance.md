@@ -153,7 +153,6 @@ Then use `python -m <project>.cli` instead of `dipdup` as an entrypoint. Now you
 
 Indexing produces a lot of disk I/O. During development you can store the database in RAM. By default DipDup uses in-memory SQLite database dropped on exit. Using tmpfs instead allows you to persist the database between process restarts until the system is rebooted. By default, tmpfs is mounted on `/tmp` with a size of 50% of RAM. The following spells are for Linux, but on macOS the process should be similar.
 
-
 ```shell
 # Make sure tmpfs is mounted
 $ df -h /tmp

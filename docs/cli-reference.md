@@ -249,47 +249,6 @@
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>self<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
 </pre></div>
 </div>
-<section id="dipdup-self-compile">
-<h3>compile<a class="headerlink" href="#dipdup-self-compile" title="Permalink to this heading">¶</a></h3>
-<p>Compile DipDup contracts.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>self<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>OPTS<span class="o">]</span>...
-</pre></div>
-</div>
-<p class="rubric">Arguments</p>
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-self-compile-arg-OPTS">
-<span class="sig-name descname"><span class="pre">OPTS</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-self-compile-arg-OPTS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional argument(s)</p>
-</dd></dl>
-
-</section>
-<section id="dipdup-self-compile-project">
-<h3>compile-project<a class="headerlink" href="#dipdup-self-compile-project" title="Permalink to this heading">¶</a></h3>
-<p>Compile DipDup project</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>self<span class="w"> </span>compile-project<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>NAME<span class="w"> </span><span class="o">[</span>OPTS<span class="o">]</span>...
-</pre></div>
-</div>
-<p class="rubric">Options</p>
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-self-compile-project-site-packages">
-<span class="sig-name descname"><span class="pre">--site-packages</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-self-compile-project-site-packages" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use site-packages instead of venv.</p>
-</dd></dl>
-
-<p class="rubric">Arguments</p>
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-self-compile-project-arg-NAME">
-<span class="sig-name descname"><span class="pre">NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-self-compile-project-arg-NAME" title="Permalink to this definition">¶</a></dt>
-<dd><p>Required argument</p>
-</dd></dl>
-
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-self-compile-project-arg-OPTS">
-<span class="sig-name descname"><span class="pre">OPTS</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-self-compile-project-arg-OPTS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Optional argument(s)</p>
-</dd></dl>
-
-</section>
 <section id="dipdup-self-install">
 <h3>install<a class="headerlink" href="#dipdup-self-install" title="Permalink to this heading">¶</a></h3>
 <p>Install DipDup for the current user.</p>
