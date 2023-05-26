@@ -34,7 +34,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - config: Fixed incorrest parsing of `token_transfer` index filters. 
 
-## Other
+### Other
 
 - deps: Updated pytezos to 3.9.0.
 
