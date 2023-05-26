@@ -527,6 +527,7 @@ class DipDup:
                 url=self._config.database.connection_string,
                 models=self._config.package,
                 timeout=self._config.database.connection_timeout,
+                decimal_precision=self._config.advanced.decimal_precision,
             )
         )
 

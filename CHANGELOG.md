@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
 ### Fixed
 
 - http: Mark `asyncio.TimeoutError` exception as safe to retry.

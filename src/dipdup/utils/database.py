@@ -9,13 +9,11 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 from typing import AsyncIterator
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
 from typing import Set
 from typing import Type
-from typing import Union
 
 import sqlparse  # type: ignore[import]
 from asyncpg import CannotConnectNowError  # type: ignore[import]
@@ -51,9 +49,14 @@ def set_connection(conn: BaseDBAsyncClient) -> None:
 
 
 @asynccontextmanager
-async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int = 60) -> AsyncIterator[None]:
+async def tortoise_wrapper(
+    url: str,
+    models: str | None = None,
+    timeout: int = 60,
+    decimal_precision: int | None = None,
+) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
-    model_modules: Dict[str, Iterable[Union[str, ModuleType]]] = {
+    model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
     }
     if models:
@@ -62,6 +65,8 @@ async def tortoise_wrapper(url: str, models: Optional[str] = None, timeout: int 
         model_modules['models'] = [models]
 
     # NOTE: Must be called before entering Tortoise context
+    decimal_precision = decimal_precision or guess_decimal_precision(models)
+    set_decimal_precision(decimal_precision)
     prepare_models(models)
 
     try:
@@ -259,7 +264,7 @@ async def move_table(conn: BaseDBAsyncClient, name: str, schema: str, new_schema
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
 
-def prepare_models(package: Optional[str]) -> None:
+def prepare_models(package: str | None) -> None:
     """Prepare TortoiseORM models to use with DipDup.
     Generate missing table names, validate models, increase decimal precision if needed.
     """
@@ -269,13 +274,11 @@ def prepare_models(package: Optional[str]) -> None:
     # NOTE: Required for pytest-xdist. Models with the same name in different packages cause conflicts otherwise.
     EXECUTOR_CACHE.clear()
 
-    db_tables: Set[str] = set()
-    decimal_context = decimal.getcontext()
-    prec = decimal_context.prec
+    db_tables: set[str] = set()
 
     for app, model in iter_models(package):
         # NOTE: Enforce our class for user models
-        if app == 'models' and not issubclass(model, dipdup.models.Model):
+        if app != 'int_models' and not issubclass(model, dipdup.models.Model):
             raise InvalidModelsError(
                 'Project models must be subclassed from `dipdup.models.Model`.'
                 '\n\n'
@@ -329,15 +332,29 @@ def prepare_models(package: Optional[str]) -> None:
                     f'related_name={field.related_name}',
                 )
 
-            # NOTE: Increase decimal precision if needed
-            if isinstance(field, DecimalField):
-                prec = max(prec, field.max_digits)
 
-    # NOTE: Set new decimal precision
-    if decimal_context.prec < prec:
-        _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)
-        decimal_context.prec = prec
+def guess_decimal_precision(package: str | None) -> int:
+    """Guess decimal precision from project models.
 
-        # NOTE: DefaultContext is used for new threads
-        decimal.DefaultContext.prec = prec
-        decimal.setcontext(decimal_context)
+    Doesn't work for realy big numbers.
+    """
+    prec = 0
+    for _, model in iter_models(package):
+        for field in model._meta.fields_map.values():
+            if not isinstance(field, DecimalField):
+                continue
+            prec = max(prec, field.max_digits)
+    return prec
+
+
+def set_decimal_precision(prec: int) -> None:
+    """Set decimal precision for the current and all future threads"""
+    decimal_context = decimal.getcontext()
+    if prec <= decimal_context.prec:
+        return
+
+    _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)
+    decimal_context.prec = prec
+    # NOTE: DefaultContext is used for new threads
+    decimal.DefaultContext.prec = prec
+    decimal.setcontext(decimal_context)

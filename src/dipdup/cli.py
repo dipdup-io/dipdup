@@ -249,7 +249,12 @@ async def status(ctx: click.Context) -> None:
     models = f'{config.package}.models'
 
     table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         async for index in Index.filter().order_by('name'):
             row = (index.name, index.status.value, index.level)
             table.append(row)
@@ -347,6 +352,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
                 url=config.database.connection_string,
                 models=config.package,
                 timeout=config.database.connection_timeout,
+                decimal_precision=config.advanced.decimal_precision,
             )
         )
         await stack.enter_async_context(hasura_gateway)
@@ -378,7 +384,12 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Approving schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         # TODO: Non-nullable fields, remove in 7.0
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
@@ -429,7 +440,12 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     _logger.info('Wiping schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         if isinstance(config.database, PostgresDatabaseConfig):
             await wipe_schema(
@@ -500,7 +516,12 @@ async def schema_export(ctx: click.Context) -> None:
     models = f'{config.package}.models'
     package_path = env.get_package_path(config.package)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
