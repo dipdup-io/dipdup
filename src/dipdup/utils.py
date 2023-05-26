@@ -7,6 +7,7 @@ from decimal import Decimal
 from functools import reduce
 from logging import Logger
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import DefaultDict
@@ -34,8 +35,8 @@ ObjectT = TypeVar('ObjectT', bound=BaseModel)
 _logger = logging.getLogger('dipdup')
 
 
-# if TYPE_CHECKING:
-from jinja2 import Template
+if TYPE_CHECKING:
+    from jinja2 import Template
 
 
 def load_template(*path: str) -> 'Template':

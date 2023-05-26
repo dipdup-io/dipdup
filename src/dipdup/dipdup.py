@@ -19,8 +19,6 @@ from typing import Awaitable
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
-from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
-from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -165,7 +163,7 @@ class IndexDispatcher:
 
             Metrics.set_indexes_count(active, synced, realtime)
 
-    async def _profiler_loop(self, update_interval: float) -> None:
+    async def _metrics_loop(self, update_interval: float) -> None:
         started_at = time.time()
         initial_levels: defaultdict[str, int] = defaultdict(int)
         previous_levels: defaultdict[str, int] = defaultdict(int)
@@ -503,6 +501,8 @@ class DipDup:
 
     async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
         """Create new or update existing dipdup project"""
+        from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
+        from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
 
         await self._create_datasources()
 
@@ -726,7 +726,7 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._profiler_loop(1)))
+            tasks.add(create_task(index_dispatcher._metrics_loop(1)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

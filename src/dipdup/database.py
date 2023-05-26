@@ -372,7 +372,7 @@ def guess_decimal_precision(package: str | None) -> int:
 def set_decimal_precision(prec: int) -> None:
     """Set decimal precision for the current and all future threads"""
     decimal_context = decimal.getcontext()
-    if prec in (decimal_context.prec, 0):
+    if prec <= decimal_context.prec:
         return
 
     _logger.warning('Decimal context precision has been updated: %s -> %s', decimal_context.prec, prec)

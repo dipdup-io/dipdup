@@ -129,7 +129,14 @@ class LogRequest(TypedDict, total=False):
 
 TxRequest = TypedDict(
     'TxRequest',
-    {'from': list[str], 'to': list[str], 'sighash': list[str], 'logs': bool, 'traces': bool, 'stateDiffs': bool},
+    {
+        'from': list[str],
+        'to': list[str],
+        'sighash': list[str],
+        'logs': bool,
+        'traces': bool,
+        'stateDiffs': bool,
+    },
     total=False,
 )
 
