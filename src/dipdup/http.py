@@ -26,11 +26,13 @@ from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.prometheus import Metrics
 
-safe_exceptions = (
+exceptions_to_retry = (
     aiohttp.ClientConnectionError,
     aiohttp.ClientConnectorError,
     aiohttp.ClientResponseError,
     aiohttp.ClientPayloadError,
+    # NOTE: aiohttp doesn't reraise it
+    asyncio.TimeoutError,
 )
 
 
@@ -149,7 +151,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     weight=weight,
                     **kwargs,
                 )
-            except safe_exceptions as e:
+            except exceptions_to_retry as e:
                 if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
 

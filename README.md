@@ -60,6 +60,7 @@ We are grateful to all the people who help us with the project.
 - [@sbihel](https://github.com/sbihel)
 - [@tezosmiami](https://github.com/tezosmiami)
 - [@tomsib2001](https://github.com/tomsib2001)
+- [@TristanAllaire](https://github.com/TristanAllaire)
 - [@veqtor](https://github.com/veqtor)
 - [@xflpt](https://github.com/xflpt)
 
