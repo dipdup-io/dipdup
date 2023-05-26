@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- database: Allow running SQL scripts and queries from context on SQLite.
 - http: Mark `asyncio.TimeoutError` exception as safe to retry.
 
 ### Other
