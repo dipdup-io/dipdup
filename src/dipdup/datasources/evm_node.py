@@ -10,7 +10,9 @@ import pysignalr
 import pysignalr.exceptions
 from pysignalr.messages import CompletionMessage
 from web3 import AsyncWeb3
+from web3.middleware.async_cache import async_construct_simple_cache_middleware
 from web3.providers.async_base import AsyncJSONBaseProvider
+from web3.utils.caching import SimpleCache
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -24,11 +26,15 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.performance import caches
 from dipdup.performance import profiler
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
+
+WEB3_CACHE_SIZE = 256
+
 
 EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
@@ -59,8 +65,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     @property
     def web3(self) -> AsyncWeb3:
-        if self._web3_client:
-            return self._web3_client
+        if not self._web3_client:
+            raise FrameworkException('web3 client is not initialized; is datasource running?')
+        return self._web3_client
+
+    async def initialize(self) -> None:
+        web3_cache = SimpleCache(WEB3_CACHE_SIZE)
+        caches.plain_cache(web3_cache._data, f'{self.name}:web3_cache')
 
         class MagicWeb3Provider(AsyncJSONBaseProvider):
             async def make_request(_, method: str, params: list[Any]) -> Any:
@@ -73,10 +84,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._web3_client = AsyncWeb3(
             provider=MagicWeb3Provider(),
         )
-        return self._web3_client
-
-    async def initialize(self) -> None:
-        pass
+        self._web3_client.middleware_onion.add(
+            await async_construct_simple_cache_middleware(web3_cache),
+            'cache',
+        )
 
     # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:

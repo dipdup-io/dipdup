@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
 from typing import Callable
+from typing import Sized
 from typing import TypeVar
 from typing import cast
 
@@ -33,8 +34,16 @@ ModelCache = dict[int | str, Model]
 
 class CacheManager:
     def __init__(self) -> None:
+        self._plain_caches: dict[str, Sized] = {}
         self._lru_caches: dict[str, Callable[..., Any]] = {}
         self._model_caches: dict[str, ModelCache] = {}
+
+    def plain_cache(
+        self,
+        obj: Sized,
+        name: str,
+    ) -> None:
+        self._plain_caches[name] = obj
 
     def lru_cache(
         self,
@@ -60,6 +69,9 @@ class CacheManager:
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
+        for name, cache in self._plain_caches.items():
+            name = f'plain:{name}'
+            stats[name] = {'size': len(cache)}
         for name, cached_fn in self._lru_caches.items():
             name = f'lru:{name}'
             c = cast(_CacheInfo, cached_fn.cache_info())  # type: ignore[attr-defined]
