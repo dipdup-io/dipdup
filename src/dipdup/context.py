@@ -322,6 +322,7 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
+        from dipdup.config.evm_node import EvmNodeDatasourceConfig
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
         from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
@@ -335,7 +336,7 @@ class DipDupContext:
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
-        node_datasource: EvmNodeDatasource | None = None
+        node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
         if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
             datasource = self.get_tzkt_datasource(datasource_name)
@@ -354,9 +355,9 @@ class DipDupContext:
             index = TzktEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidEventsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
-            node_config = index_config.datasource.node
-            if node_config:
-                node_datasource = self.get_evm_node_datasource(node_config.name)
+            node_field = index_config.datasource.node
+            if node_field:
+                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, SubsquidOperationsIndexConfig):
             raise NotImplementedError
@@ -364,7 +365,8 @@ class DipDupContext:
             raise NotImplementedError
 
         datasource.add_index(index_config)
-        if node_datasource:
+        for node_config in node_configs:
+            node_datasource = self.get_evm_node_datasource(node_config.name)
             node_datasource.add_index(index_config)
 
         handlers = (
@@ -443,16 +445,24 @@ class DipDupContext:
         return datasource
 
     def get_tzkt_datasource(self, name: str) -> TzktDatasource:
-        """Get `tzkt` datasource by name"""
+        """Get `tezos.tzkt` datasource by name"""
         return self._get_datasource(name, TzktDatasource)
 
     def get_subsquid_datasource(self, name: str) -> SubsquidDatasource:
-        """Get `subsquid` datasource by name"""
+        """Get `evm.subsquid` datasource by name"""
         return self._get_datasource(name, SubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
-        """Get `subsquid` datasource by name"""
-        return self._get_datasource(name, EvmNodeDatasource)
+        """Get `evm.node` datasource by name"""
+        with suppress(ConfigurationError):
+            return self._get_datasource(name, EvmNodeDatasource)
+        with suppress(ConfigurationError):
+            subsquid = self._get_datasource(name, SubsquidDatasource)
+            random_node = subsquid._config.random_node
+            if random_node is None:
+                raise ConfigurationError('')
+            return self._get_datasource(random_node.name, EvmNodeDatasource)
+        raise ConfigurationError(f'`{name}` is neither evm.node nor evm.subsquid')
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""

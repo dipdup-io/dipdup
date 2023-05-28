@@ -225,7 +225,7 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param typename: User-defined alias for the contract script
+    :param typename: Alias for the contract script
     """
 
     kind: str
@@ -739,6 +739,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
         return datasource
 
+    def get_evm_node_datasource(self, name: str) -> EvmNodeDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, EvmNodeDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
         level = {
             LoggingValues.default: logging.INFO,
@@ -860,8 +866,14 @@ class DipDupConfig:
         for datasource_config in self.datasources.values():
             if not isinstance(datasource_config, SubsquidDatasourceConfig):
                 continue
-            if isinstance(datasource_config.node, str):
-                datasource_config.node = self.datasources[datasource_config.node]
+            node_field = datasource_config.node
+            if isinstance(node_field, str):
+                datasource_config.node = self.datasources[node_field]
+            elif isinstance(node_field, tuple):
+                nodes = []
+                for node in node_field:
+                    nodes.append(self.get_evm_node_datasource(node) if isinstance(node, str) else node)
+                datasource_config.node = tuple(nodes)
 
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
@@ -1049,6 +1061,9 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
     submodules += ((__name__, self),)
 
     for name, submodule in submodules:
+        if not submodule.__name__.startswith('dipdup.config'):
+            continue
+
         for attr in dir(submodule):
             value = getattr(submodule, attr)
             if hasattr(value, '__annotations__'):
@@ -1056,7 +1071,9 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
                 reload = False
                 for name, annotation in value.__annotations__.items():
                     annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
+                    print(annotation)
                     if new_annotation := replace_table.get(annotation):
+                        print('-> ', new_annotation)
                         value.__annotations__[name] = new_annotation
                         reload = True
 
@@ -1079,6 +1096,6 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | None': 'str | EvmNodeDatasourceConfig | None',
+    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': 'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None',
 }
 _patch_annotations(_original_to_aliased)

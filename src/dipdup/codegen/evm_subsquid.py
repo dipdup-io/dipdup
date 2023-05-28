@@ -145,7 +145,12 @@ class SubsquidCodeGenerator(CodeGenerator):
         pass
 
     async def _fetch_abi(self, index_config: SubsquidEventsIndexConfig) -> None:
-        datasource_configs = index_config.abi or self._config.abi_datasources
+        if isinstance(index_config.abi, tuple):
+            datasource_configs = index_config.abi
+        elif index_config.abi:
+            datasource_configs = (index_config.abi,)
+        else:
+            datasource_configs = self._config.abi_datasources
 
         for handler_config in index_config.handlers:
             abi_path = self._package.abi / handler_config.contract.module_name / 'abi.json'
@@ -153,15 +158,16 @@ class SubsquidCodeGenerator(CodeGenerator):
                 continue
 
             if handler_config.contract.abi:
-                # TODO: handle path / url to abi file if necessary
+                # TODO: Ability to specify path/url to ABI .json if necessary
                 # abi_json = await resolve(handler_config.contract.abi)
                 address = handler_config.contract.abi
-            elif handler_config.contract.address:
+            if handler_config.contract.address:
                 address = handler_config.contract.address
             else:
                 raise NotImplementedError
 
             for datasource_config in datasource_configs:
+                # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
                 if not isinstance(datasource_config, AbiDatasourceConfig):
                     raise ConfigurationError('`abi` must be a list of ABI datasources')
 
@@ -177,7 +183,7 @@ class SubsquidCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        # FIXME: Prefixes, postfixes?
+        # FIXME: Do we need prefixes or postfixes there?
         # if schema_path.parent.name == 'evm_events':
         #     class_name = f'{module_name}_event'
         # elif schema_path.parent.name == 'evm_functions':

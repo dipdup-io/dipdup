@@ -345,10 +345,11 @@ class IndexDispatcher:
 
     async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
         for index in self._indexes.values():
-            if isinstance(index, SubsquidEventsIndex):
-                node_config = index._config.datasource.node
-                if node_config and node_config.name == datasource.name:
-                    index.push_realtime_message(logs)
+            if not isinstance(index, SubsquidEventsIndex):
+                continue
+            if datasource not in index.node_datasources:
+                continue
+            index.push_realtime_message(logs)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
         raise NotImplementedError

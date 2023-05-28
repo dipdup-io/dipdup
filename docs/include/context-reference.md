@@ -212,7 +212,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.get_tzkt_datasource">
 <span class="sig-prename descclassname"><span class="pre">DipDupContext.</span></span><span class="sig-name descname"><span class="pre">get_tzkt_datasource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext.get_tzkt_datasource" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get <cite>tzkt</cite> datasource by name</p>
+<dd><p>Get <cite>tezos.tzkt</cite> datasource by name</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – </p>

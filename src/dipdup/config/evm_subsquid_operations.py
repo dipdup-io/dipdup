@@ -39,8 +39,8 @@ class SubsquidOperationsIndexConfig(IndexConfig):
     kind: Literal['evm.subsquid.operations']
     datasource: SubsquidDatasourceConfig
     handlers: tuple[SubsquidOperationsHandlerConfig, ...] = field(default_factory=tuple)
-    contracts: list[EvmContractConfig] = field(default_factory=list)
-    abi: tuple[AbiDatasourceConfig, ...] = field(default_factory=tuple)
+    contracts: tuple[EvmContractConfig, ...] = field(default_factory=tuple)
+    abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
 
     first_level: int = 0
     last_level: int = 0

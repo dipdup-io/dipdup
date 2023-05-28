@@ -107,7 +107,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – User-defined alias for the contract script</p></li>
+<li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for the contract script</p></li>
 <li><p><strong>kind</strong> (<em>str</em>) – </p></li>
 </ul>
 </dd>

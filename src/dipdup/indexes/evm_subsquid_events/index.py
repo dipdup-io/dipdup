@@ -1,9 +1,11 @@
 import asyncio
+import random
 import time
 from collections import defaultdict
 from typing import Any
 from typing import cast
 
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
@@ -36,10 +38,29 @@ class SubsquidEventsIndex(
         datasource: SubsquidDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self.node_datasource: EvmNodeDatasource | None = None
-        if config.datasource.node is not None:
-            self.node_datasource = ctx.get_evm_node_datasource(config.datasource.node.name)
+        self._node_datasources: tuple[EvmNodeDatasource, ...] | None = None
         self._topics: dict[str, dict[str, str]] | None = None
+
+    @property
+    def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
+        if self._node_datasources is not None:
+            return self._node_datasources
+
+        node_field = self._config.datasource.node
+        if node_field is None:
+            node_field = ()
+        elif isinstance(node_field, EvmNodeDatasourceConfig):
+            node_field = (node_field,)
+        self._node_datasources = tuple(
+            self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
+        )
+        return self._node_datasources
+
+    @property
+    def node_datasource(self) -> EvmNodeDatasource:
+        if not self.node_datasources:
+            raise FrameworkException('A node datasource requested, but none attached to this index')
+        return random.choice(self.node_datasources)
 
     @property
     def topics(self) -> dict[str, dict[str, str]]:
@@ -85,8 +106,8 @@ class SubsquidEventsIndex(
         sync_levels = set()
         for sub in self._config.get_subscriptions():
             sync_levels.add(self.datasource.get_sync_level(sub))
-            if self.node_datasource is not None:
-                sync_levels.add(self.node_datasource.get_sync_level(sub))
+            for datasource in self.node_datasources or ():
+                sync_levels.add(datasource.get_sync_level(sub))
 
         if None in sync_levels:
             sync_levels.remove(None)
@@ -109,29 +130,28 @@ class SubsquidEventsIndex(
         if levels_left <= 0:
             return
 
-        use_node, last_mile = False, 0
         subsquid_sync_level = await self.datasource.get_head_level()
-        if self.node_datasource:
+
+        if self.node_datasources:
             node_sync_level = await self.node_datasource.get_head_level()
             last_mile = abs(node_sync_level - subsquid_sync_level)
+            self._logger.info('Subsquid is %s levels behind the node; %s levels left to sync', last_mile, levels_left)
+        else:
+            self._logger.info('Subsquid head is %s; %s levels to sync', subsquid_sync_level, levels_left)
+            last_mile, node_datasource = 0, None
 
-        self._logger.info(
-            'Archives are %s levels behind the node; %s levels left to sync',
-            last_mile,
-            levels_left,
-        )
         use_node = last_mile < LAST_MILE_TRIGGER and levels_left < LEVELS_LEFT_TRIGGER
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
-        if use_node:
-            if not self.node_datasource:
-                raise FrameworkException('Where did the node datasource go?')
+        if use_node and self.node_datasources:
             sync_level = node_sync_level
             for level in range(first_level, sync_level):
-                block = await self.node_datasource.get_block_by_level(level)
+                # NOTE: Get random one every time
+                node_datasource = self.node_datasource
+                block = await node_datasource.get_block_by_level(level)
                 if block is None:
                     raise FrameworkException(f'Block {level} not found')
-                level_logs = await self.node_datasource.get_logs(
+                level_logs = await node_datasource.get_logs(
                     {
                         # TODO: Filter by addresses too
                         'fromBlock': hex(level),

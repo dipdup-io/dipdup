@@ -48,12 +48,12 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
         limit = MAX_BATCH_SIZE
         if self.http and self.http.batch_size and self.http.batch_size > limit:
             raise ConfigurationError(f'`batch_size` must be less than {limit}')
-        parsed_url = urlparse(self.url)
-        # NOTE: Environment substitution disabled
+        # NOTE: It's a `config export` call with environment variable substitution disabled
         if '$' in self.url:
             return
+        parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{self.url}` is not a valid datasource URL')
+            raise ConfigurationError(f'`{self.url}` is not a valid TzKT API URL')
 
 
 @dataclass

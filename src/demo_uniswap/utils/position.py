@@ -26,7 +26,7 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         _positions[token_id] = position
         return position
 
-    web3 = ctx.get_evm_node_datasource('mainnet_node').web3
+    web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     manager = web3.eth.contract(address=to_checksum_address(contract_address), abi=position_manager_abi)
 
     try:
