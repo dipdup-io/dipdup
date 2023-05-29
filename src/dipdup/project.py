@@ -64,6 +64,11 @@ def choose_one(question: str, options: tuple[str, ...], comments: tuple[str, ...
     answer = prompt('Please choose an option', default, type_=int)
     return options[answer]
 
+# blue prompt in dipdup style for str answers
+def fancy_str_prompt(question: str, default: str):
+    cl.secho(f'=> {question} [{default}]: ', fg='blue')
+    return prompt('', default, str, print_default=False)
+
 # script running on dipdup new command and will create a new project from console survey
 def create_new_project_from_console():
     # dict with all new project config
@@ -97,14 +102,63 @@ def create_new_project_from_console():
         comments = tuple(x[1] for x in template_types_dict[template_type])
         answers['template'] = choose_one('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n', options, comments, default=0)
 
-    name_description = 'Enter project name (the name will be used for folder name and package name)'
-    name_default = 'dipdup_indexer'
-    cl.secho(f'=> {name_description} [{name_default}]', fg='blue')
-    answers['project_name'] = prompt('', name_default, str, print_default=False)  # FIXME validate python package name
+    # define project(folder) and package name for new indexer
+    answers['project_name'] = fancy_str_prompt('Enter project name (the name will be used for folder name and package name)', 'dipdup_indexer')
+    answers['package'] = answers['project_name']  # FIXME validate python package name in question
 
-    version_default = '0.0.1'
-    cl.secho(f'=> Enter project version [{version_default}]', fg='blue')
-    answers['project_name'] = prompt('', name_default, str, print_default=False)
+    # define version for new indexer package
+    answers['version'] = fancy_str_prompt('Enter project version', '0.0.1')
+
+    # define description for new indexer readme
+    answers['description'] = fancy_str_prompt('Enter project description', 'My shiny new indexer based on DipDup')
+
+    # define author and license for new indexer
+    answers['license'] = fancy_str_prompt('Enter project license\n' 'DipDup itself is MIT-licensed.', 'MIT')
+    answers['author'] = fancy_str_prompt(('Enter project author\n' 'You can add more later in pyproject.toml.'), 'John Smith <john_smith@localhost.lan>')
+
+    cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
+
+    answers['postgresql_image'] = choose_one(
+            question=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
+            options=(
+                'postgres:15',
+                'timescale/timescaledb:latest-pg15',
+                'timescale/timescaledb-ha:pg15-latest',
+                'sqlite',
+            ),
+            comments=(
+                'PostgreSQL',
+                'TimescaleDB',
+                'TimescaleDB HA (more extensions)',
+                'Sqlite (simplified in-memory configuration)',
+            ), default=0)
+    
+    answers['hasura_image'] = choose_one(
+            question=(
+                'Choose Hasura version\n'
+                'Test new releases before using in production; new versions may break compatibility.'
+            ),
+            options=(
+                'hasura/graphql-engine:v2.23.0',
+                'hasura/graphql-engine:v2.23.0',
+            ),
+            comments=(
+                'stable',
+                'beta',
+            ), default=0)
+    
+    cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
+
+    cl.secho('=> Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏 ["y/N"]: ', fg='blue')
+    answers['crash_reporting'] = prompt('', False, bool, print_default=False)
+    
+    answers['linters'] = choose_one(
+        'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
+        ('default', 'none'), 
+        ('Classic set: black, isort, ruff, mypy, pytest', 'None'),
+        default=0)
+    
+    answers['line_length'] = fancy_str_prompt(('Enter maximum line length\n' 'Used by linters.'), default='120')
 
 
 def write_cookiecutter_json(answers: dict[str, Any], path: Path) -> None:
