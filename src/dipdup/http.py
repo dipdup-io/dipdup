@@ -207,7 +207,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
             with suppress(JSONDecodeError, aiohttp.ContentTypeError):
-                return await response.json()
+                return await response.json(loads=orjson.loads)
             return await response.read()
 
     async def _replay_request(

@@ -6,9 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
 ### Fixed
 
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
 - http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
 
 ## [6.5.6] - 2022-05-02
 

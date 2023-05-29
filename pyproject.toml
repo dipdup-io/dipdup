@@ -32,7 +32,7 @@ python = ">=3.10,<3.11"
 
 asyncpg = "0.27.0"
 datamodel-code-generator = "0.19.0"
-pydantic = "1.10.7"
+pydantic = "1.10.8"
 tortoise-orm = "0.19.3"
 
 aiohttp = "^3.8.1"
