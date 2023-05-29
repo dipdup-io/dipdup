@@ -35,7 +35,86 @@ DEMO_PROJECTS_TEZOS = (
     # TODO: demo_sql
 )
 DEMO_PROJECTS_EVM = ()
-DEMO_PROJECTS_BLANK = (('blank', 'Empty config for a fresh start'),)
+
+
+# ask user smth with typecast to type, print_default=True print to user what default choise would be used
+def prompt(text: str, default: Any, type_: type, print_default: bool = True) -> Any:
+    try:
+        value = cl.prompt(
+            text=f'{text} [{default}]: ' if print_default else text,
+            default=default,
+            type=type_,
+            show_default=False,
+        )
+        print('\n')
+        return value
+    except cl.Abort:
+        cl.echo('\nAborted')
+        quit(0)
+
+# ask user to choose one option with question, list of options and there description(comments)
+def choose_one(question: str, options: tuple[str, ...], comments: tuple[str, ...], default: int):  # default is position of default option in options
+    table = tabulate(
+        zip(range(len(options)), options, comments),
+        colalign=('right', 'left', 'left'),
+    )
+    cl.secho(f'=> {question}', fg='blue')
+    cl.echo(table)
+
+    answer = prompt('Please choose an option', default, type_=int)
+    return options[answer]
+
+# script running on dipdup new command and will create a new project from console survey
+def create_new_project_from_console():
+    # dict with all new project config
+    answers = {'dipdup_version': __version__.split('.')[0]}
+
+    welcome_text = (
+        'Welcome to DipDup! This command will help you to create a new project.\n'
+        'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
+        "Let's start with some basic questions."
+    )
+    cl.secho('\n' + welcome_text + '\n', fg='yellow')
+
+
+    # Choose new project template
+    template_types = ('Tezos', 'EVM', 'Blank')
+    template_types_desc = ('Tezos templates', 'EVM templates', 'Brief template to create project from scratch')
+    template_type = choose_one('Choose a template: blockchain-specific or blank?', template_types, template_types_desc, default=3)
+    
+    # list of options can contain folder name of template or folder name of template with description
+    # all project templates are in src/dipdup/projects
+    template_types_dict = {
+        'Tezos': DEMO_PROJECTS_TEZOS,
+        'EVM': DEMO_PROJECTS_EVM,
+        'Blank': 'blank',
+    }
+    DEMO_PROJECTS_BLANK = 'Blank'
+    if template_type == DEMO_PROJECTS_BLANK:
+        answers['template'] = template_types_dict[DEMO_PROJECTS_BLANK]
+    else:
+        options = tuple(x[0] for x in template_types_dict[template_type])  # FIXME zero EVM templates
+        comments = tuple(x[1] for x in template_types_dict[template_type])
+        answers['template'] = choose_one('Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n', options, comments, default=0)
+
+    name_description = 'Enter project name (the name will be used for folder name and package name)'
+    name_default = 'dipdup_indexer'
+    cl.secho(f'=> {name_description} [{name_default}]', fg='blue')
+    answers['project_name'] = prompt('', name_default, str, print_default=False)  # FIXME validate python package name
+
+    version_default = '0.0.1'
+    cl.secho(f'=> Enter project version [{version_default}]', fg='blue')
+    answers['project_name'] = prompt('', name_default, str, print_default=False)
+
+
+def write_cookiecutter_json(answers: dict[str, Any], path: Path) -> None:
+    values = {k: v for k, v in answers.items() if not k.startswith('_')}
+    path.write_bytes(
+        json.dumps(
+            values,
+            option=json.OPT_INDENT_2,
+        )
+    )
 
 
 class Question(BaseModel):
@@ -285,7 +364,7 @@ class BaseProject(Project):
             choices={
                 'Tezos': DEMO_PROJECTS_TEZOS,
                 'EVM': DEMO_PROJECTS_EVM,
-                'Blank': DEMO_PROJECTS_BLANK,
+                'Blank': (('blank', ''), ),
             },
         ),
         InputQuestion(
