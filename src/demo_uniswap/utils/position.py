@@ -31,11 +31,9 @@ async def position_mint(
 ) -> None:
     position = await models.Position.filter(
         owner=owner,
-        pool__id=pool_address,
-        token0__id=token0_address,
-        token1__id=token1_address,
-        tick_lower__id=tick_lower_id,
-        tick_upper__id=tick_upper_id
+        pool_id=pool_address,
+        tick_lower_id=tick_lower_id,
+        tick_upper_id=tick_upper_id
     ).get_or_none()
 
     if position:
