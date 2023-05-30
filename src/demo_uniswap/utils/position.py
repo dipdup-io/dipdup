@@ -31,8 +31,8 @@ async def position_validate(
         response = await manager.functions.positions(position_id).call()
         _, owner, token0, token1, _, tick_lower, tick_upper, _, _, _, _, _ = response
     except Exception as e:
-        ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
-        raise e
+        ctx.logger.warning('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
+        return
 
     token_0_id = to_normalized_address(token0)
     token_1_id = to_normalized_address(token1)
