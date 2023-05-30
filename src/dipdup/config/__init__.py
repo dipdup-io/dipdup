@@ -1071,9 +1071,7 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
                 reload = False
                 for name, annotation in value.__annotations__.items():
                     annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
-                    print(annotation)
                     if new_annotation := replace_table.get(annotation):
-                        print('-> ', new_annotation)
                         value.__annotations__[name] = new_annotation
                         reload = True
 

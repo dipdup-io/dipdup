@@ -198,7 +198,7 @@ def deserialize_storage(
         raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e
 
 
-is_array_type = caches.lru_cache(is_array_type, 2**10, 'is_array_type')
-get_list_elt_type = caches.lru_cache(get_list_elt_type, 2**10, 'get_list_elt_type')
-get_dict_value_type = caches.lru_cache(get_dict_value_type, 2**10, 'get_dict_value_type')
-unwrap_union_type = caches.lru_cache(unwrap_union_type, 2**10, 'unwrap_union_type')
+is_array_type = caches.add_lru(is_array_type, 2**10, 'is_array_type')
+get_list_elt_type = caches.add_lru(get_list_elt_type, 2**10, 'get_list_elt_type')
+get_dict_value_type = caches.add_lru(get_dict_value_type, 2**10, 'get_dict_value_type')
+unwrap_union_type = caches.add_lru(unwrap_union_type, 2**10, 'unwrap_union_type')

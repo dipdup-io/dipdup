@@ -23,7 +23,7 @@ def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ..
     return tuple(decode_abi(indexed_inputs, indexed_bytes))
 
 
-decode_indexed_topics = caches.lru_cache(decode_indexed_topics, 2**14)
+decode_indexed_topics = caches.add_lru(decode_indexed_topics, 2**14)
 
 
 def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:
