@@ -1,10 +1,11 @@
 from dipdup import fields
+from dipdup.models import CachedModel
 from dipdup.models import Model
 
 ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 
 
-class Factory(Model):
+class Factory(CachedModel):
     id = fields.TextField(pk=True)
     # amount of pools created
     pool_count = fields.BigIntField(default=0)
@@ -32,7 +33,7 @@ class Factory(Model):
     owner = fields.TextField(default=ADDRESS_ZERO)
 
 
-class Token(Model):
+class Token(CachedModel):
     id = fields.TextField(pk=True)
     # token symbol
     symbol = fields.TextField()
@@ -66,7 +67,7 @@ class Token(Model):
     whitelist_pools = fields.ArrayField(default=[])
 
 
-class Pool(Model):
+class Pool(CachedModel):
     id = fields.TextField(pk=True)
     # creation
     created_at_timestamp = fields.BigIntField()
@@ -172,6 +173,7 @@ class Tick(Model):
     # fee_growth_outside_1x128 = fields.BigIntField()
 
 
+# NOTE: Cached, but with custom logic; see `demo_uniswap.utils.position`
 class Position(Model):
     id = fields.BigIntField(pk=True)
     # owner of the NFT
@@ -409,10 +411,3 @@ class Flash(Model):
     amount1_paid = fields.DecimalField(decimal_places=18, max_digits=72, default=0)
     # index within the txn
     log_index = fields.BigIntField()
-
-
-from dipdup.performance import caches
-
-caches.model_cache(Factory)
-caches.model_cache(Pool)
-caches.model_cache(Token)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import deque
+from contextlib import suppress
 from copy import copy
 from datetime import date
 from datetime import datetime
@@ -17,6 +18,7 @@ import tortoise
 import tortoise.queryset
 from pydantic.dataclasses import dataclass
 from tortoise.backends.base.client import BaseDBAsyncClient
+from tortoise.exceptions import OperationalError
 from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
@@ -501,33 +503,42 @@ class Model(TortoiseModel):
             batch_size=batch_size,
         )
 
-    # FIXME: Temporary for uniswap; replace with generic solution
+    class Meta:
+        abstract = True
+
+
+class CachedModel(Model):
+    @classmethod
+    async def preload(cls) -> None:
+        # NOTE: Table can be missing
+        with suppress(OperationalError):
+            async for model in cls.all():
+                model.cache()
+
     @classmethod
     async def cached_get(
         cls: type['ModelT'],
         pk: int | str,
     ) -> 'ModelT':
-        cls_cache = caches._model_caches[cls.__name__]
+        cls_cache = caches._model[cls.__name__]
 
         if pk not in cls_cache:
             cls_cache[pk] = await cls.get(pk=pk)
         return cls_cache[pk]  # type: ignore[return-value]
 
-    # FIXME: Temporary for uniswap; replace with generic solution
     @classmethod
     async def cached_get_or_none(
         cls: type['ModelT'],
         pk: int | str,
     ) -> 'ModelT' | None:
-        cls_cache = caches._model_caches[cls.__name__]
+        cls_cache = caches._model[cls.__name__]
 
         if pk not in cls_cache:
             cls_cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
         return cls_cache[pk]  # type: ignore[return-value]
 
-    # FIXME: Temporary for uniswap; replace with generic solution
     def cache(self) -> None:
-        cls_cache = caches._model_caches[self.__class__.__name__]
+        cls_cache = caches._model[self.__class__.__name__]
         if self.pk is None:
             raise FrameworkException('Cannot cache model without PK')
         if self.pk in cls_cache:

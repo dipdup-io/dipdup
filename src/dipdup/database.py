@@ -101,6 +101,7 @@ async def tortoise_wrapper(
         await Tortoise.close_connections()
 
 
+from dipdup.models import CachedModel
 from dipdup.models import Model
 
 
@@ -353,6 +354,15 @@ def prepare_models(package: str | None) -> None:
                     model,
                     f'related_name={field.related_name}',
                 )
+
+
+async def preload_cached_models(package: str | None) -> None:
+    from dipdup.performance import caches
+
+    for _, model in iter_models(package):
+        if issubclass(model, CachedModel):
+            caches.add_model(model)
+            await model.preload()
 
 
 def guess_decimal_precision(package: str | None) -> int:

@@ -567,6 +567,7 @@ class AdvancedConfig:
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param api: Monitoring API config
     :param profiler: off/basic/advanced based on how much performance metrics you want to collect
+    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -581,6 +582,7 @@ class AdvancedConfig:
     unsafe_sqlite: bool = False
     api: ApiConfig = field(default_factory=ApiConfig)
     profiler: ProfilerLevel = ProfilerLevel.basic
+    alt_operation_matcher: bool = False
 
 
 @dataclass
@@ -1071,9 +1073,7 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
                 reload = False
                 for name, annotation in value.__annotations__.items():
                     annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
-                    print(annotation)
                     if new_annotation := replace_table.get(annotation):
-                        print('-> ', new_annotation)
                         value.__annotations__[name] = new_annotation
                         reload = True
 

@@ -71,7 +71,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def initialize(self) -> None:
         web3_cache = SimpleCache(WEB3_CACHE_SIZE)
-        caches.plain_cache(web3_cache._data, f'{self.name}:web3_cache')
+        caches.add_plain(web3_cache._data, f'{self.name}:web3_cache')
 
         class MagicWeb3Provider(AsyncJSONBaseProvider):
             async def make_request(_, method: str, params: list[Any]) -> Any:

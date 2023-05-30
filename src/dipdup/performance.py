@@ -16,15 +16,20 @@ from contextlib import asynccontextmanager
 from enum import Enum
 from functools import _CacheInfo
 from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 from typing import Any
 from typing import AsyncIterator
 from typing import Callable
+from typing import Coroutine
 from typing import Sized
 from typing import TypeVar
 from typing import cast
 
+from async_lru import alru_cache
 from tortoise.models import Model
+
+from dipdup.exceptions import FrameworkException
 
 _logger = logging.getLogger(__name__)
 
@@ -34,18 +39,19 @@ ModelCache = dict[int | str, Model]
 
 class CacheManager:
     def __init__(self) -> None:
-        self._plain_caches: dict[str, Sized] = {}
-        self._lru_caches: dict[str, Callable[..., Any]] = {}
-        self._model_caches: dict[str, ModelCache] = {}
+        self._plain: dict[str, Sized] = {}
+        self._lru: dict[str, Callable[..., Any]] = {}
+        self._alru: dict[str, Callable[..., Coroutine[Any, Any, None]]] = {}
+        self._model: dict[str, ModelCache] = {}
 
-    def plain_cache(
+    def add_plain(
         self,
         obj: Sized,
         name: str,
     ) -> None:
-        self._plain_caches[name] = obj
+        self._plain[name] = obj
 
-    def lru_cache(
+    def add_lru(
         self,
         fn: Callable[..., Any],
         maxsize: int,
@@ -53,26 +59,41 @@ class CacheManager:
     ) -> Callable[..., Any]:
         if name is None:
             name = f'{fn.__module__}.{fn.__name__}:{id(fn)}'
-        if name in self._lru_caches:
-            raise Exception(f'LRU cache `{name}` already exists')
-        self._lru_caches[name] = lru_cache(maxsize)(fn)
-        return self._lru_caches[name]
+        if name in self._lru or name in self._alru:
+            raise FrameworkException(f'LRU cache `{name}` already exists')
 
-    def model_cache(
+        self._lru[name] = lru_cache(maxsize)(fn)
+        return self._lru[name]
+
+    def add_alru(
+        self,
+        fn: Callable[..., Coroutine[Any, Any, None]],
+        maxsize: int,
+        name: str | None = None,
+    ) -> Callable[..., Coroutine[Any, Any, None]]:
+        if name is None:
+            name = f'{fn.__module__}.{fn.__name__}:{id(fn)}'
+        if name in self._lru or name in self._alru:
+            raise FrameworkException(f'LRU cache `{name}` already exists')
+
+        self._alru[name] = alru_cache(maxsize)(fn)
+        return self._alru[name]
+
+    def add_model(
         self,
         cls: type,
     ) -> None:
-        if cls.__name__ in self._model_caches:
+        if cls.__name__ in self._model:
             raise Exception(f'Model cache for `{cls}` already exists')
 
-        self._model_caches[cls.__name__] = {}
+        self._model[cls.__name__] = {}
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
-        for name, cache in self._plain_caches.items():
+        for name, cache in self._plain.items():
             name = f'plain:{name}'
             stats[name] = {'size': len(cache)}
-        for name, cached_fn in self._lru_caches.items():
+        for name, cached_fn in chain(self._lru.items(), self._alru.items()):
             name = f'lru:{name}'
             c = cast(_CacheInfo, cached_fn.cache_info())  # type: ignore[attr-defined]
             if not c.hits and not c.misses:
@@ -85,7 +106,7 @@ class CacheManager:
                 'full': (c.currsize / c.maxsize) if c.maxsize else 0,
                 'hit_rate': c.hits / (c.hits + c.misses),
             }
-        for name, cache in self._model_caches.items():
+        for name, cache in self._model.items():
             name = f'model:{name}'
             stats[name] = {
                 'size': len(cache),

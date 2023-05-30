@@ -33,6 +33,7 @@ from dipdup.context import StateQueue
 from dipdup.database import generate_schema
 from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
+from dipdup.database import preload_cached_models
 from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
@@ -627,6 +628,7 @@ class DipDup:
         await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
+        self._logger.info('Setting up database')
         database_config = self._config.database
         if isinstance(database_config, SqliteDatabaseConfig) and database_config.path == ':memory:':
             self._logger.warning('Using in-memory SQLite database; data will be lost on restart')
@@ -640,6 +642,7 @@ class DipDup:
                 unsafe_sqlite=self._config.advanced.unsafe_sqlite,
             )
         )
+        await preload_cached_models(self._config.package)
 
     async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
         for event_hook_config in event_hooks.values():
