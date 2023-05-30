@@ -204,8 +204,10 @@ def match_operation_subgroup(
         transaction = handler[2][-1]
         if isinstance(transaction, OperationData):
             id_list.append(transaction.id)
-        if isinstance(transaction, Transaction):
+        elif isinstance(transaction, Transaction):
             id_list.append(transaction.data.id)
+        else:
+            raise FrameworkException('Type of the first handler argument is unknown')
 
     sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
     if index_list == sorted_index_list:
