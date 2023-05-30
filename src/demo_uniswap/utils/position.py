@@ -1,8 +1,10 @@
 from eth_utils.address import to_checksum_address
 from eth_utils.address import to_normalized_address
+from pprint import pformat
 
 import demo_uniswap.models as models
 from demo_uniswap.utils.abi import get_abi
+from demo_uniswap.utils.repo import models_repo
 from dipdup.context import HandlerContext
 
 position_manager_abi = get_abi('position_manager.abi')
@@ -17,15 +19,61 @@ async def restore_cache() -> None:
         _positions[position.id] = position
 
 
-async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:
-    if token_id in _positions:
-        return _positions[token_id]
+async def position_mint(
+        ctx: HandlerContext,
+        owner: str,
+        pool_address: str,
+        token0_address: str,
+        token1_address: str,
+        tick_lower_id: str,
+        tick_upper_id: str
+) -> None:
+    position = await models.Position.filter(
+        owner=owner,
+        pool_id=pool_address,
+        token0_id=token0_address,
+        token1_id=token1_address,
+        tick_lower_id=tick_lower_id,
+        tick_upper_id=tick_upper_id
+    ).get_or_none()
 
-    position = await models.Position.get_or_none(id=token_id)
     if position:
-        _positions[token_id] = position
-        return position
+        print("Pool.mint: existing position")
+        print(f"\tid:\t{position.id}")
+        print(f"\towner:\t{position.owner}")
+        print(f"\tpool:\t{position.pool_id}")
+        print(f"\ttoken_0:\t{position.token0_id}")
+        print(f"\ttoken_1:\t{position.token1_id}")
+        print(f"\ttick_lower:\t{position.tick_lower_id}")
+        print(f"\ttick_upper:\t{position.tick_upper_id}")
+    else:
+        position_id = await models_repo.get_next_position_id()
+        position = models.Position(
+            id=position_id,
+            owner=owner,
+            pool_id=pool_address,
+            token0_id=token0_address,
+            token1_id=token1_address,
+            tick_lower_id=tick_lower_id,
+            tick_upper_id=tick_upper_id
+        )
+        print("Pool.mint: new position")
+        print(f"\tid:\t{position.id}")
+        print(f"\towner:\t{position.owner}")
+        print(f"\tpool:\t{position.pool_id}")
+        print(f"\ttoken_0:\t{position.token0_id}")
+        print(f"\ttoken_1:\t{position.token1_id}")
+        print(f"\ttick_lower:\t{position.tick_lower_id}")
+        print(f"\ttick_upper:\t{position.tick_upper_id}")
+        await position.save()
 
+
+async def position_skip(ctx: HandlerContext) -> None:
+    position_id = await models_repo.get_next_position_id()
+    print("Skipping position %s", position_id)
+
+
+async def position_validate(ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position) -> None:
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     manager = web3.eth.contract(address=to_checksum_address(contract_address), abi=position_manager_abi)
 
@@ -42,40 +90,18 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         # feeGrowthInside1LastX128 uint256,
         # tokensOwed0 uint128,
         # tokensOwed1 uint128
-        response = await manager.functions.positions(token_id).call()
-        _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = response
+        response = await manager.functions.positions(position_id).call()
+        _, _, token0, token1, _, _, _, _, _, _, _, _ = response
     except Exception as e:
-        ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, token_id, str(e))
-        _positions[token_id] = None
-        return None
+        ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
+        raise e
 
-    factory_address = ctx.config.get_contract('factory').address  # type: ignore[attr-defined]
-    factory = web3.eth.contract(address=to_checksum_address(factory_address), abi=factory_abi)
-
-    try:
-        pool_address = await factory.functions.getPool(token0, token1, fee).call()
-    except Exception as e:
-        ctx.logger.debug('Failed to eth_call %s with param %s: %s', factory_address, str(token0, token1, fee), str(e))
-        _positions[token_id] = None
-        return None
-
-    pool_address = to_normalized_address(pool_address)
-
-    if not await models.Pool.cached_get_or_none(pool_address):
-        _positions[token_id] = None
-        return None
-
-    position = models.Position(
-        id=token_id,
-        pool_id=pool_address,
-        token0_id=to_normalized_address(token0),
-        token1_id=to_normalized_address(token1),
-        # tick_lower_id=f'{pool_address}#{tick_lower}',
-        # tick_upper_id=f'{pool_address}#{tick_upper}'
-    )
-    await position.save()
-    _positions[token_id] = position
-    return position
+    token_0_id = to_normalized_address(token0)
+    token_1_id = to_normalized_address(token1)
+    assert position.token0_id == token_0_id and position.token1_id == token_1_id, \
+        f'position #{position_id}:' \
+        f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}' \
+        f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}'
 
 
 async def save_position_snapshot(position: models.Position, level: int) -> None:
@@ -88,7 +114,7 @@ async def save_position_snapshot(position: models.Position, level: int) -> None:
             'block_number': level,
             'timestamp': 0,  # TODO:
         },
-    )  # TODO: less i/o
+    )  # TODO: less i/o, update only what's necessary
     snapshot.liquidity = position.liquidity
     snapshot.deposited_token0 = position.deposited_token0
     snapshot.deposited_token1 = position.deposited_token1

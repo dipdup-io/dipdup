@@ -3,10 +3,9 @@ package: demo_uniswap
 
 database:
   kind: sqlite
-  path: /tmp/uniswap.sqlite
+  path: /tmp/uniswap1.sqlite
   immune_tables:
     - token
-    - position
 
 datasources:
   ethscan:
@@ -47,6 +46,7 @@ templates:
   uniswap_v3_factory:
     kind: evm.subsquid.events
     datasource: <datasource>
+    first_level: 12369521
     handlers:
       - callback: factory.pool_created
         contract: factory
@@ -84,13 +84,13 @@ indexes:
     template: uniswap_v3_factory
     values:
       datasource: mainnet_subsquid
-    first_level: 12369521
+      first_level: 12369521
 
 advanced:
   api: {}
   decimal_precision: 128  # 🙄
-  profiler: basic
+  # profiler: basic
   # FIXME: Wipe with immune_tables leads to foreign key issues
   unsafe_sqlite: true
   skip_version_check: true
-# logging: verbose
+  logging: verbose

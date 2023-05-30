@@ -210,6 +210,8 @@ class Position(Model):
 
     token0_id: str
     token1_id: str
+    tick_lower_id: str
+    tick_upper_id: str
     pool_id: int
 
     @classmethod
@@ -409,3 +411,4 @@ from dipdup.performance import caches
 caches.model_cache(Factory)
 caches.model_cache(Pool)
 caches.model_cache(Token)
+

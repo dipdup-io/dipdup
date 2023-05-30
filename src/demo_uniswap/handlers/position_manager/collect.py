@@ -1,6 +1,5 @@
 from demo_uniswap import models
 from demo_uniswap.types.position_manager.evm_events.collect import Collect
-from demo_uniswap.utils.position import position_get_or_create
 from demo_uniswap.utils.position import save_position_snapshot
 from demo_uniswap.utils.token import convert_token_amount
 from dipdup.context import HandlerContext
@@ -13,11 +12,7 @@ async def collect(
     ctx: HandlerContext,
     event: SubsquidEvent[Collect],
 ) -> None:
-    position = await position_get_or_create(ctx, event.data.address, event.payload.tokenId)
-    if not position:
-        ctx.logger.debug('Position is none (tokenId %d)', event.payload.tokenId)
-        return
-
+    position = await models.Position.get(id=event.payload.tokenId)
     if position.pool in BLACKLISTED_POOLS:
         ctx.logger.debug('Blacklisted pool %s', position.pool)
         return
