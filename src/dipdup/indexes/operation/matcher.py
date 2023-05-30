@@ -143,6 +143,7 @@ def match_operation_unfiltered_subgroup(
 def match_operation_subgroup(
     handlers: Iterable[OperationHandlerConfig],
     operation_subgroup: OperationSubgroup,
+    alt: bool = False,
 ) -> deque[MatchedOperationsT]:
     """Try to match operation subgroup with all index handlers."""
     matched_handlers: deque[MatchedOperationsT] = deque()
@@ -193,4 +194,24 @@ def match_operation_subgroup(
             args = prepare_operation_handler_args(handler_config, matched_operations)
             matched_handlers.append((operation_subgroup, handler_config, args))
 
-    return matched_handlers
+    if not (alt and len(matched_handlers) in (0, 1)):
+        return matched_handlers
+
+    # NOTE: Below is a secret algorithm for very special cases
+    index_list = list(range(len(matched_handlers)))
+    id_list = []
+    for handler in matched_handlers:
+        transaction = handler[2][-1]
+        if isinstance(transaction, OperationData):
+            id_list.append(transaction.id)
+        if isinstance(transaction, Transaction):
+            id_list.append(transaction.data.id)
+
+    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
+    if index_list == sorted_index_list:
+        return matched_handlers
+
+    sorted_matched_handlers: deque[MatchedOperationsT] = deque()
+    for index in sorted_index_list:
+        sorted_matched_handlers.append(matched_handlers[index])
+    return sorted_matched_handlers

@@ -1474,6 +1474,7 @@ class AdvancedConfig:
     :param rollback_depth: A number of levels to keep for rollback
     :param crash_reporting: Enable crash reporting
     :param decimal_precision: Adjust decimal context precision.
+    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -1486,6 +1487,7 @@ class AdvancedConfig:
     rollback_depth: int = 2
     crash_reporting: bool = False
     decimal_precision: int | None = None
+    alt_operation_matcher: bool = False
 
 
 @dataclass
