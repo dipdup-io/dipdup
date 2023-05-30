@@ -1,6 +1,9 @@
+from eth_utils.address import to_normalized_address
+
+import demo_uniswap.models as models
 from demo_uniswap.types.position_manager.evm_events.transfer import Transfer
-from demo_uniswap.utils.position import position_get_or_create
 from demo_uniswap.utils.position import save_position_snapshot
+from demo_uniswap.utils.repo import models_repo
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
@@ -9,12 +12,15 @@ async def transfer(
     ctx: HandlerContext,
     event: SubsquidEvent[Transfer],
 ) -> None:
-    position = await position_get_or_create(ctx, event.data.address, event.payload.tokenId)
-    if not position:
-        ctx.logger.debug('Position is none (tokenId %d)', event.payload.tokenId)
-        return
+    if event.payload.from_ == '0x0000000000000000000000000000000000000000':
+        idx = f'{event.data.level}.{event.data.transaction_index}.{event.data.log_index}'
+        pending_position = models_repo.get_pending_position(idx)
+        if pending_position is None:
+            raise ValueError(f'Failed to get pending position, tx {event.data.transaction_hash}')
+        position = models.Position(id=event.payload.tokenId, **pending_position)
+    else:
+        position = await models.Position.get(id=event.payload.tokenId)
 
-    position.owner = event.payload.to
-
+    position.owner = to_normalized_address(event.payload.to)
     await position.save()
     await save_position_snapshot(position, event.data.level)

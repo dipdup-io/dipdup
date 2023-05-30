@@ -8,24 +8,10 @@ from dipdup.context import HandlerContext
 position_manager_abi = get_abi('position_manager.abi')
 factory_abi = get_abi('factory.abi')
 
-_positions: dict[int, models.Position | None] = {}
 
-
-async def restore_cache() -> None:
-    global _positions
-    async for position in models.Position.all():
-        _positions[position.id] = position
-
-
-async def position_get_or_create(ctx: HandlerContext, contract_address: str, token_id: int) -> models.Position | None:
-    if token_id in _positions:
-        return _positions[token_id]
-
-    position = await models.Position.get_or_none(id=token_id)
-    if position:
-        _positions[token_id] = position
-        return position
-
+async def position_validate(
+    ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position
+) -> None:
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     manager = web3.eth.contract(address=to_checksum_address(contract_address), abi=position_manager_abi)
 
@@ -42,40 +28,26 @@ async def position_get_or_create(ctx: HandlerContext, contract_address: str, tok
         # feeGrowthInside1LastX128 uint256,
         # tokensOwed0 uint128,
         # tokensOwed1 uint128
-        response = await manager.functions.positions(token_id).call()
-        _, _, token0, token1, fee, tick_lower, tick_upper, _, _, _, _, _ = response
+        response = await manager.functions.positions(position_id).call()
+        _, owner, token0, token1, _, tick_lower, tick_upper, _, _, _, _, _ = response
     except Exception as e:
-        ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, token_id, str(e))
-        _positions[token_id] = None
-        return None
+        ctx.logger.warning('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
+        return
 
-    factory_address = ctx.config.get_contract('factory').address  # type: ignore[attr-defined]
-    factory = web3.eth.contract(address=to_checksum_address(factory_address), abi=factory_abi)
-
-    try:
-        pool_address = await factory.functions.getPool(token0, token1, fee).call()
-    except Exception as e:
-        ctx.logger.debug('Failed to eth_call %s with param %s: %s', factory_address, str(token0, token1, fee), str(e))
-        _positions[token_id] = None
-        return None
-
-    pool_address = to_normalized_address(pool_address)
-
-    if not await models.Pool.cached_get_or_none(pool_address):
-        _positions[token_id] = None
-        return None
-
-    position = models.Position(
-        id=token_id,
-        pool_id=pool_address,
-        token0_id=to_normalized_address(token0),
-        token1_id=to_normalized_address(token1),
-        # tick_lower_id=f'{pool_address}#{tick_lower}',
-        # tick_upper_id=f'{pool_address}#{tick_upper}'
+    token_0_id = to_normalized_address(token0)
+    token_1_id = to_normalized_address(token1)
+    assert (
+        position.token0_id == token_0_id
+        and position.token1_id == token_1_id
+        and position.tick_lower_id == f'{position.pool_id}#{tick_lower}'
+        and position.tick_upper_id == f'{position.pool_id}#{tick_upper}'
+    ), (
+        f'position #{position_id}:'
+        f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}'
+        f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}'
+        f'\n\ttoken0: expected {tick_lower}, got {position.tick_lower_id}'
+        f'\n\ttoken1: expected {tick_upper}, got {position.tick_upper_id}'
     )
-    await position.save()
-    _positions[token_id] = position
-    return position
 
 
 async def save_position_snapshot(position: models.Position, level: int) -> None:
@@ -88,7 +60,7 @@ async def save_position_snapshot(position: models.Position, level: int) -> None:
             'block_number': level,
             'timestamp': 0,  # TODO:
         },
-    )  # TODO: less i/o
+    )  # TODO: less i/o, update only what's necessary
     snapshot.liquidity = position.liquidity
     snapshot.deposited_token0 = position.deposited_token0
     snapshot.deposited_token1 = position.deposited_token1

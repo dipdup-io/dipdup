@@ -1,5 +1,9 @@
 from decimal import Decimal
+from typing import Any
+from typing import Dict
 from typing import cast
+
+from lru import LRU
 
 import demo_uniswap.models as models
 from dipdup.config.evm import EvmContractConfig
@@ -11,6 +15,7 @@ USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 class ModelsRepo:
     def __init__(self) -> None:
         self._eth_usd: Decimal | None = None
+        self._pending_positions = LRU(4096)
 
     async def get_eth_usd_rate(self) -> Decimal:
         if self._eth_usd is None:
@@ -23,6 +28,13 @@ class ModelsRepo:
 
     def update_eth_usd_rate(self, rate: Decimal) -> None:
         self._eth_usd = rate
+
+    def save_pending_position(self, idx: str, position: Dict[str, Any]) -> None:
+        self._pending_positions[idx] = position
+
+    def get_pending_position(self, idx: str) -> Dict[str, Any] | None:
+        res = self._pending_positions.get(idx, None)
+        return cast(Dict[str, Any], res)
 
 
 async def get_ctx_factory(ctx: HandlerContext) -> models.Factory:
