@@ -269,14 +269,15 @@ class TzktOperationsIndex(
         for operation_subgroup in operation_subgroups:
             if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
-                    self._config,
-                    operation_subgroup,
+                    index=self._config,
+                    operation_subgroup=operation_subgroup,
                 )
             else:
                 subgroup_handlers = match_operation_subgroup(
                     self._ctx.package,
-                    self._config.handlers,
-                    operation_subgroup,
+                    handlers=self._config.handlers,
+                    operation_subgroup=operation_subgroup,
+                    alt=self._ctx.config.advanced.alt_operation_matcher,
                 )
 
             if subgroup_handlers:
