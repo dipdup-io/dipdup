@@ -26,15 +26,16 @@ async def position_mint(
         token0_address: str,
         token1_address: str,
         tick_lower_id: str,
-        tick_upper_id: str
+        tick_upper_id: str,
+        save: bool
 ) -> None:
     position = await models.Position.filter(
         owner=owner,
-        pool_id=pool_address,
-        token0_id=token0_address,
-        token1_id=token1_address,
-        tick_lower_id=tick_lower_id,
-        tick_upper_id=tick_upper_id
+        pool__id=pool_address,
+        token0__id=token0_address,
+        token1__id=token1_address,
+        tick_lower__id=tick_lower_id,
+        tick_upper__id=tick_upper_id
     ).get_or_none()
 
     if position:
@@ -42,8 +43,8 @@ async def position_mint(
         print(f"\tid:\t{position.id}")
         print(f"\towner:\t{position.owner}")
         print(f"\tpool:\t{position.pool_id}")
-        print(f"\ttoken_0:\t{position.token0_id}")
-        print(f"\ttoken_1:\t{position.token1_id}")
+        print(f"\ttoken0:\t{position.token0_id}")
+        print(f"\ttoken1:\t{position.token1_id}")
         print(f"\ttick_lower:\t{position.tick_lower_id}")
         print(f"\ttick_upper:\t{position.tick_upper_id}")
     else:
@@ -61,11 +62,12 @@ async def position_mint(
         print(f"\tid:\t{position.id}")
         print(f"\towner:\t{position.owner}")
         print(f"\tpool:\t{position.pool_id}")
-        print(f"\ttoken_0:\t{position.token0_id}")
-        print(f"\ttoken_1:\t{position.token1_id}")
+        print(f"\ttoken0:\t{position.token0_id}")
+        print(f"\ttoken1:\t{position.token1_id}")
         print(f"\ttick_lower:\t{position.tick_lower_id}")
         print(f"\ttick_upper:\t{position.tick_upper_id}")
-        await position.save()
+        if save:
+            await position.save()
 
 
 async def position_skip(ctx: HandlerContext) -> None:

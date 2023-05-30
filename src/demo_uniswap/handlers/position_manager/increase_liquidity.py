@@ -17,8 +17,9 @@ async def increase_liquidity(
         ctx.logger.debug('Blacklisted level %d', event.data.level)
         return
 
-    print("PositionManaged.increase_liquidity called, position %s queried (tx %s)",
-          event.payload.tokenId, event.data.transaction_hash)
+    print("PositionManaged.increase_liquidity")
+    print(f"\tposition:\t{event.payload.tokenId}")
+    print(f"\ttransaction:\t{event.data.transaction_hash}")
 
     position = await models.Position.get(id=event.payload.tokenId)
     if position.pool in BLACKLISTED_POOLS:

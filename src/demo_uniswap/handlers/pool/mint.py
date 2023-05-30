@@ -14,10 +14,11 @@ async def mint(
 ) -> None:
     pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool:
-        print('OnPoolMint: skipping pool %s as it is not in the cache', event.data.address)
-        await position_skip(ctx)
-        return
-    await pool_update(ctx, pool, event, PoolUpdateSign.MINT)
+        print('Pool.mint: skipping pool %s as it is not in the cache', event.data.address)
+        skip = True
+    else:
+        await pool_update(ctx, pool, event, PoolUpdateSign.MINT)
+        skip = False
     await position_mint(
         ctx,
         to_normalized_address(event.payload.owner),
@@ -25,5 +26,6 @@ async def mint(
         pool.token0_id,
         pool.token1_id,
         f'{pool.id}#{event.payload.tickLower}',
-        f'{pool.id}#{event.payload.tickUpper}'
+        f'{pool.id}#{event.payload.tickUpper}',
+        save=not skip
     )
