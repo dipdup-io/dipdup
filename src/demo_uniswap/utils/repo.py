@@ -1,10 +1,11 @@
 from decimal import Decimal
-from typing import cast
+from typing import cast, Dict, Any
+
+from lru import LRU
 
 import demo_uniswap.models as models
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
-from lru import LRU
 
 USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 
@@ -26,14 +27,14 @@ class ModelsRepo:
     def update_eth_usd_rate(self, rate: Decimal) -> None:
         self._eth_usd = rate
 
-    def save_pending_position(self, idx: str, position: dict) -> None:
+    def save_pending_position(self, idx: str, position: Dict[str, Any]) -> None:
         self._pending_positions[idx] = position
 
-    def get_pending_position(self, idx: str) -> dict:
+    def get_pending_position(self, idx: str) -> Dict[str, Any]:
         res = self._pending_positions.get(idx, None)
         if res is None:
             raise ValueError(f'Failed to find pending position {idx}')
-        return res
+        return cast(Dict[str, Any], res)
 
 
 async def get_ctx_factory(ctx: HandlerContext) -> models.Factory:

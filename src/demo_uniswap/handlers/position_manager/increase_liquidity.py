@@ -1,6 +1,7 @@
 from demo_uniswap import models
 from demo_uniswap.types.position_manager.evm_events.increase_liquidity import IncreaseLiquidity
-from demo_uniswap.utils.position import save_position_snapshot, position_validate
+from demo_uniswap.utils.position import position_validate
+from demo_uniswap.utils.position import save_position_snapshot
 from demo_uniswap.utils.token import convert_token_amount
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent

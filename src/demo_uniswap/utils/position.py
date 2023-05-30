@@ -9,7 +9,9 @@ position_manager_abi = get_abi('position_manager.abi')
 factory_abi = get_abi('factory.abi')
 
 
-async def position_validate(ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position) -> None:
+async def position_validate(
+    ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position
+) -> None:
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     manager = web3.eth.contract(address=to_checksum_address(contract_address), abi=position_manager_abi)
 
@@ -34,15 +36,18 @@ async def position_validate(ctx: HandlerContext, contract_address: str, position
 
     token_0_id = to_normalized_address(token0)
     token_1_id = to_normalized_address(token1)
-    assert position.token0_id == token_0_id \
-           and position.token1_id == token_1_id \
-           and position.tick_lower_id == f'{position.pool_id}#{tick_lower}' \
-           and position.tick_upper_id == f'{position.pool_id}#{tick_upper}', \
-           f'position #{position_id}:' \
-           f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}' \
-           f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}' \
-           f'\n\ttoken0: expected {tick_lower}, got {position.tick_lower_id}' \
-           f'\n\ttoken1: expected {tick_upper}, got {position.tick_upper_id}'
+    assert (
+        position.token0_id == token_0_id
+        and position.token1_id == token_1_id
+        and position.tick_lower_id == f'{position.pool_id}#{tick_lower}'
+        and position.tick_upper_id == f'{position.pool_id}#{tick_upper}'
+    ), (
+        f'position #{position_id}:'
+        f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}'
+        f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}'
+        f'\n\ttoken0: expected {tick_lower}, got {position.tick_lower_id}'
+        f'\n\ttoken1: expected {tick_upper}, got {position.tick_upper_id}'
+    )
 
 
 async def save_position_snapshot(position: models.Position, level: int) -> None:

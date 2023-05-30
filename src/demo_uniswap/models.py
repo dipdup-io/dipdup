@@ -184,11 +184,13 @@ class Position(Model):
     token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='positions_token1')
     # lower tick of the position
     tick_lower: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
-        'models.Tick', related_name='positions_tick_lower',
+        'models.Tick',
+        related_name='positions_tick_lower',
     )
     # upper tick of the position
     tick_upper: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
-        'models.Tick', related_name='positions_tick_upper',
+        'models.Tick',
+        related_name='positions_tick_upper',
     )
     # total position liquidity
     liquidity = fields.DecimalField(max_digits=72, decimal_places=0, default=0)
@@ -411,4 +413,3 @@ from dipdup.performance import caches
 caches.model_cache(Factory)
 caches.model_cache(Pool)
 caches.model_cache(Token)
-
