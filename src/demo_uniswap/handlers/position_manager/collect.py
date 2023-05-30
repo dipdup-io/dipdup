@@ -5,16 +5,20 @@ from demo_uniswap.utils.token import convert_token_amount
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
-BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
+BLACKLISTED_BLOCKS = {14317993}
 
 
 async def collect(
     ctx: HandlerContext,
     event: SubsquidEvent[Collect],
 ) -> None:
+    if event.data.level in BLACKLISTED_BLOCKS:
+        ctx.logger.warning('Blacklisted level %d', event.data.level)
+        return
+
     position = await models.Position.get(id=event.payload.tokenId)
-    if position.pool in BLACKLISTED_POOLS:
-        ctx.logger.debug('Blacklisted pool %s', position.pool)
+    if position.blacklisted:
+        ctx.logger.warning('Blacklisted pool %s', position.pool_id)
         return
 
     token0 = await models.Token.cached_get(position.token0_id)

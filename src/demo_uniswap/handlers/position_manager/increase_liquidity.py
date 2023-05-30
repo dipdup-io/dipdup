@@ -1,13 +1,11 @@
 from demo_uniswap import models
 from demo_uniswap.types.position_manager.evm_events.increase_liquidity import IncreaseLiquidity
-from demo_uniswap.utils.position import position_validate
 from demo_uniswap.utils.position import save_position_snapshot
 from demo_uniswap.utils.token import convert_token_amount
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
 BLACKLISTED_BLOCKS = {14317993}
-BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 
 
 async def increase_liquidity(
@@ -15,16 +13,16 @@ async def increase_liquidity(
     event: SubsquidEvent[IncreaseLiquidity],
 ) -> None:
     if event.data.level in BLACKLISTED_BLOCKS:
-        ctx.logger.debug('Blacklisted level %d', event.data.level)
+        ctx.logger.warning('Blacklisted level %d', event.data.level)
         return
 
     position = await models.Position.get(id=event.payload.tokenId)
-    if position.pool in BLACKLISTED_POOLS:
-        ctx.logger.debug('Blacklisted pool %s', position.pool)
+    if position.blacklisted:
+        ctx.logger.warning('Blacklisted pool %s', position.pool_id)
         return
 
     # TODO: remove me
-    await position_validate(ctx, event.data.address, event.payload.tokenId, position)
+    # await position_validate(ctx, event.data.address, event.payload.tokenId, position)
 
     token0 = await models.Token.cached_get(position.token0_id)
     token1 = await models.Token.cached_get(position.token1_id)

@@ -1,5 +1,7 @@
 from decimal import Decimal
-from typing import cast, Dict, Any
+from typing import Any
+from typing import Dict
+from typing import cast
 
 from lru import LRU
 
@@ -30,10 +32,8 @@ class ModelsRepo:
     def save_pending_position(self, idx: str, position: Dict[str, Any]) -> None:
         self._pending_positions[idx] = position
 
-    def get_pending_position(self, idx: str) -> Dict[str, Any]:
+    def get_pending_position(self, idx: str) -> Dict[str, Any] | None:
         res = self._pending_positions.get(idx, None)
-        if res is None:
-            raise ValueError(f'Failed to find pending position {idx}')
         return cast(Dict[str, Any], res)
 
 

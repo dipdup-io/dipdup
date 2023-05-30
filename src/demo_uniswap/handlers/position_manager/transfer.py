@@ -15,6 +15,8 @@ async def transfer(
     if event.payload.from_ == '0x0000000000000000000000000000000000000000':
         idx = f'{event.data.level}.{event.data.transaction_index}.{event.data.log_index}'
         pending_position = models_repo.get_pending_position(idx)
+        if pending_position is None:
+            raise ValueError(f'Failed to get pending position, tx {event.data.transaction_hash}')
         position = models.Position(id=event.payload.tokenId, **pending_position)
     else:
         position = await models.Position.get(id=event.payload.tokenId)

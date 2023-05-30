@@ -179,18 +179,20 @@ class Position(Model):
     # pool position is within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='positions')
     # allow indexing by tokens
-    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='positions_token0')
+    token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField(
+        'models.Token', related_name='positions_token0', null=True
+    )
     # allow indexing by tokens
-    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='positions_token1')
+    token1: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField(
+        'models.Token', related_name='positions_token1', null=True
+    )
     # lower tick of the position
     tick_lower: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
-        'models.Tick',
-        related_name='positions_tick_lower',
+        'models.Tick', related_name='positions_tick_lower', null=True
     )
     # upper tick of the position
     tick_upper: fields.ForeignKeyRelation[Tick] = fields.ForeignKeyField(
-        'models.Tick',
-        related_name='positions_tick_upper',
+        'models.Tick', related_name='positions_tick_upper', null=True
     )
     # total position liquidity
     liquidity = fields.DecimalField(max_digits=72, decimal_places=0, default=0)
@@ -209,6 +211,7 @@ class Position(Model):
     # vars needed for fee computation
     # fee_growth_inside_0_last_x128 = fields.BigIntField(default=0)
     # fee_growth_inside_1_last_x128 = fields.BigIntField(default=0)
+    blacklisted = fields.BooleanField(default=False)
 
     token0_id: str
     token1_id: str
