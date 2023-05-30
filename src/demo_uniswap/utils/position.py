@@ -1,76 +1,12 @@
 from eth_utils.address import to_checksum_address
 from eth_utils.address import to_normalized_address
-from pprint import pformat
 
 import demo_uniswap.models as models
 from demo_uniswap.utils.abi import get_abi
-from demo_uniswap.utils.repo import models_repo
 from dipdup.context import HandlerContext
 
 position_manager_abi = get_abi('position_manager.abi')
 factory_abi = get_abi('factory.abi')
-
-_positions: dict[int, models.Position | None] = {}
-
-
-async def restore_cache() -> None:
-    global _positions
-    async for position in models.Position.all():
-        _positions[position.id] = position
-
-
-async def position_mint(
-        ctx: HandlerContext,
-        owner: str,
-        pool_address: str,
-        token0_address: str,
-        token1_address: str,
-        tick_lower_id: str,
-        tick_upper_id: str,
-        save: bool
-) -> None:
-    position = await models.Position.filter(
-        owner=owner,
-        pool_id=pool_address,
-        tick_lower_id=tick_lower_id,
-        tick_upper_id=tick_upper_id
-    ).get_or_none()
-
-    if position:
-        print("Pool.mint: existing position")
-        print(f"\tid:\t{position.id}")
-        print(f"\towner:\t{position.owner}")
-        print(f"\tpool:\t{position.pool_id}")
-        print(f"\ttoken0:\t{position.token0_id}")
-        print(f"\ttoken1:\t{position.token1_id}")
-        print(f"\ttick_lower:\t{position.tick_lower_id}")
-        print(f"\ttick_upper:\t{position.tick_upper_id}")
-    else:
-        position_id = await models_repo.get_next_position_id()
-        position = models.Position(
-            id=position_id,
-            owner=owner,
-            pool_id=pool_address,
-            token0_id=token0_address,
-            token1_id=token1_address,
-            tick_lower_id=tick_lower_id,
-            tick_upper_id=tick_upper_id
-        )
-        print("Pool.mint: new position")
-        print(f"\tid:\t{position.id}")
-        print(f"\towner:\t{position.owner}")
-        print(f"\tpool:\t{position.pool_id}")
-        print(f"\ttoken0:\t{position.token0_id}")
-        print(f"\ttoken1:\t{position.token1_id}")
-        print(f"\ttick_lower:\t{position.tick_lower_id}")
-        print(f"\ttick_upper:\t{position.tick_upper_id}")
-        if save:
-            await position.save()
-
-
-async def position_skip(ctx: HandlerContext) -> None:
-    position_id = await models_repo.get_next_position_id()
-    print("Skipping position %s", position_id)
 
 
 async def position_validate(ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position) -> None:
@@ -91,17 +27,22 @@ async def position_validate(ctx: HandlerContext, contract_address: str, position
         # tokensOwed0 uint128,
         # tokensOwed1 uint128
         response = await manager.functions.positions(position_id).call()
-        _, _, token0, token1, _, _, _, _, _, _, _, _ = response
+        _, owner, token0, token1, _, tick_lower, tick_upper, _, _, _, _, _ = response
     except Exception as e:
         ctx.logger.debug('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
         raise e
 
     token_0_id = to_normalized_address(token0)
     token_1_id = to_normalized_address(token1)
-    assert position.token0_id == token_0_id and position.token1_id == token_1_id, \
-        f'position #{position_id}:' \
-        f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}' \
-        f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}'
+    assert position.token0_id == token_0_id \
+           and position.token1_id == token_1_id \
+           and position.tick_lower_id == f'{position.pool_id}#{tick_lower}' \
+           and position.tick_upper_id == f'{position.pool_id}#{tick_upper}', \
+           f'position #{position_id}:' \
+           f'\n\ttoken0: expected {token_0_id}, got {position.token0_id}' \
+           f'\n\ttoken1: expected {token_1_id}, got {position.token1_id}' \
+           f'\n\ttoken0: expected {tick_lower}, got {position.tick_lower_id}' \
+           f'\n\ttoken1: expected {tick_upper}, got {position.tick_upper_id}'
 
 
 async def save_position_snapshot(position: models.Position, level: int) -> None:
