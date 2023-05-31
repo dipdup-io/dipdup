@@ -522,11 +522,15 @@ async def new(
     replay: str | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import BaseProject
+    from dipdup.project import create_new_project_from_console
+    from dipdup.project import load_project_settings_replay
+    from dipdup.project import render_project_from_template
 
-    project = BaseProject()
-    project.run(quiet, replay)
-    project.render(force)
+    if replay:
+        load_project_settings_replay(replay)
+    else:
+        create_new_project_from_console()
+    render_project_from_template(force)
 
 
 @cli.group()

@@ -21,9 +21,7 @@ from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.project import BaseProject
-
-project_defaults = BaseProject().get_defaults()
+from dipdup.project import ANSWERS as project_defaults
 
 
 def get_docker_client() -> DockerClient:
