@@ -1,18 +1,14 @@
 import logging
 from pathlib import Path
-from types import NoneType
 from typing import Any
 from typing import Type
 from typing import TypeVar
 
 import asyncclick as cl
 import orjson as json
-from pydantic import BaseModel
-from pydantic import Field
 from tabulate import tabulate
 
 from dipdup import __version__
-from dipdup.exceptions import ConfigurationError
 from dipdup.utils import load_template
 from dipdup.utils import write
 
