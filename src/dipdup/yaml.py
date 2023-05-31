@@ -79,7 +79,7 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
             raise ConfigurationError(f'Environment variable `{variable}` is not set')
         environment[variable] = value
         placeholder = match.group(0)
-        config_yaml = config_yaml.replace(placeholder, value or default_value)
+        config_yaml = config_yaml.replace(placeholder, value or default_value or '')
 
     return config_yaml, environment
 

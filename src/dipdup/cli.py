@@ -281,7 +281,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, file: str | None) -> None:
+async def config_env(ctx: click.Context, output: str | None) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
@@ -293,8 +293,8 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
         environment=True,
     )
     content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
-    if file:
-        Path(file).write_text(content)
+    if output:
+        Path(output).write_text(content)
     else:
         echo(content)
 
