@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
 - config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
 - config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
-- config: Added `advanced.profiler` field to configure amount of gathered metrics.
+- config: Added `advanced.metrics` field to configure amount of gathered metrics.
 - config: Added `http.alias` field to overwrite alias of datasource HTTP gateway.
 - database: Added `dipdup_meta` immune table to store arbitrary JSON values.
 - database: Added experimental support for immune tables in SQLite.

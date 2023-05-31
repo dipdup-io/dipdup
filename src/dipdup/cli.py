@@ -19,7 +19,7 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
-from dipdup.performance import profiler
+from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
@@ -80,7 +80,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             _print_report(report_id)
             _print_help(e)
 
-            if profiler:
+            if metrics:
                 raise e
             sys.exit(1)
 

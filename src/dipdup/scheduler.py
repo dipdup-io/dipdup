@@ -93,8 +93,7 @@ class SchedulerManager:
                 config=ctx.config,
                 package=ctx.package,
                 datasources=ctx.datasources,
-                callbacks=ctx._callbacks,
-                transactions=ctx._transactions,
+                transactions=ctx.transactions,
                 logger=logger,
                 hook_config=hook_config,
             )

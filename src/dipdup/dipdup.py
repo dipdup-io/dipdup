@@ -26,10 +26,8 @@ from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import event_hooks
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.context import CallbackManager
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
-from dipdup.context import StateQueue
 from dipdup.database import generate_schema
 from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
@@ -68,8 +66,8 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
-from dipdup.performance import ProfilerLevel
-from dipdup.performance import profiler
+from dipdup.performance import MetricsLevel
+from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -124,8 +122,8 @@ class IndexDispatcher:
             await gather(*tasks)
 
             indexes_spawned = False
-            while StateQueue.pending_indexes:
-                index = StateQueue.pending_indexes.popleft()
+            while self._ctx._pending_indexes:
+                index = self._ctx._pending_indexes.popleft()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
@@ -140,6 +138,7 @@ class IndexDispatcher:
                 if not on_synchronized_fired:
                     on_synchronized_fired = True
                     await self._ctx.fire_hook('on_synchronized')
+                    metrics and metrics.set('synchronized_at', time.time())
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
@@ -150,12 +149,13 @@ class IndexDispatcher:
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
-    async def _update_metrics(self, update_interval: float) -> None:
+    # TODO: Use ctx.metrics
+    async def _prometheus_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
 
             active, synced, realtime = 0, 0, 0
-            for index in tuple(self._indexes.values()) + tuple(StateQueue.pending_indexes):
+            for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
                 active += 1
                 if index.synchronized:
                     synced += 1
@@ -168,7 +168,7 @@ class IndexDispatcher:
         started_at = time.time()
         initial_levels: defaultdict[str, int] = defaultdict(int)
         previous_levels: defaultdict[str, int] = defaultdict(int)
-        profiler.set('started_at', started_at)
+        metrics.set('started_at', started_at)
 
         while True:
             await asyncio.sleep(update_interval)
@@ -197,13 +197,13 @@ class IndexDispatcher:
             if levels_total:
                 progress = levels_indexed / levels_total
 
-            profiler.set('levels_indexed', levels_indexed)
-            profiler.set('levels_total', levels_total)
-            profiler.set('current_speed', current_speed)
-            profiler.set('average_speed', average_speed)
-            profiler.set('time_passed', time_passed)
-            profiler.set('time_left', time_left)
-            profiler.set('progress', progress)
+            metrics.set('levels_indexed', levels_indexed)
+            metrics.set('levels_total', levels_total)
+            metrics.set('current_speed', current_speed)
+            metrics.set('average_speed', average_speed)
+            metrics.set('time_passed', time_passed)
+            metrics.set('time_left', time_left)
+            metrics.set('progress', progress)
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -446,7 +446,6 @@ class DipDup:
         self._logger = logging.getLogger('dipdup')
         self._config = config
         self._datasources: dict[str, Datasource[Any]] = {}
-        self._callbacks: CallbackManager = CallbackManager(self._config.package)
         self._transactions: TransactionManager = TransactionManager(
             depth=self._config.advanced.rollback_depth,
             immune_tables=self._config.database.immune_tables,
@@ -455,7 +454,6 @@ class DipDup:
             config=self._config,
             package=DipDupPackage(config.package_path),
             datasources=self._datasources,
-            callbacks=self._callbacks,
             transactions=self._transactions,
         )
         self._schema: Schema | None = None
@@ -528,7 +526,7 @@ class DipDup:
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
         async with AsyncExitStack() as stack:
-            await self._set_up_profiler(stack)
+            await self._set_up_metrics(stack)
 
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
@@ -646,13 +644,13 @@ class DipDup:
 
     async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
         for event_hook_config in event_hooks.values():
-            self._callbacks.register_hook(event_hook_config)
+            self._ctx.register_hook(event_hook_config)
 
         for hook_config in self._config.hooks.values():
-            self._callbacks.register_hook(hook_config)
+            self._ctx.register_hook(hook_config)
 
         if run:
-            tasks.add(create_task(self._callbacks.run()))
+            tasks.add(create_task(self._ctx._hooks_loop()))
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
@@ -726,9 +724,9 @@ class DipDup:
                 )
             )
         )
-        # FIXME: Initialize with profiler
+        # FIXME: Initialize with metrics
         if prometheus_config := self._ctx.config.prometheus:
-            tasks.add(create_task(index_dispatcher._update_metrics(prometheus_config.update_interval)))
+            tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
             tasks.add(create_task(index_dispatcher._metrics_loop(1)))
 
@@ -759,8 +757,8 @@ class DipDup:
 
         return event
 
-    async def _set_up_profiler(self, stack: AsyncExitStack) -> None:
-        level = self._config.advanced.profiler
-        profiler.set_level(level)
-        if level == ProfilerLevel.full:
-            await stack.enter_async_context(profiler.with_pprofile(self._config.package))
+    async def _set_up_metrics(self, stack: AsyncExitStack) -> None:
+        level = self._config.advanced.metrics
+        metrics.set_level(level)
+        if level == MetricsLevel.full:
+            await stack.enter_async_context(metrics.with_pprofile(self._config.package))

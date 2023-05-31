@@ -1,6 +1,5 @@
 import asyncio
 import importlib
-import logging
 import os
 import sys
 from collections import deque
@@ -10,6 +9,7 @@ from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
+from types import ModuleType
 from typing import Any
 from typing import Awaitable
 from typing import Iterator
@@ -22,7 +22,6 @@ from tortoise.exceptions import OperationalError
 from dipdup import env
 from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
-from dipdup.config import EventHookConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
@@ -50,7 +49,6 @@ from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 from dipdup.exceptions import CallbackError
-from dipdup.exceptions import CallbackTypeError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import FrameworkException
@@ -65,21 +63,17 @@ from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.package import DipDupPackage
+from dipdup.performance import _CacheManager
+from dipdup.performance import _MetricManager
+from dipdup.performance import _QueueManager
+from dipdup.performance import caches
+from dipdup.performance import metrics
+from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
-
-
-# FIXME: These queues should be registered in dipdup.performance
-class StateQueue:
-    pending_indexes: deque[Any] = deque()
-    pending_hooks: deque[Awaitable[None]] = deque()
-    rolled_back_indexes: set[str] = set()
-
-    def __init__(self) -> None:
-        raise FrameworkException('StateQueue is a singleton class')
 
 
 class MetadataCursor:
@@ -124,68 +118,39 @@ class DipDupContext:
         config: DipDupConfig,
         package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
-        callbacks: 'CallbackManager',
         transactions: TransactionManager,
     ) -> None:
         self.config = config
         self.package = package
         self.datasources = datasources
-        self._callbacks = callbacks
-        self._transactions = transactions
+        self.transactions = transactions
+
         self.logger = FormattedLogger('dipdup.context')
+        self._pending_indexes: deque[Any] = deque()
+        self._pending_hooks: deque[Awaitable[None]] = deque()
+        self._rolled_back_indexes: set[str] = set()
+        self._handlers: dict[tuple[str, str], HandlerConfig] = {}
+        self._hooks: dict[str, HookConfig] = {}
 
     def __str__(self) -> str:
         return pformat(self.__dict__)
 
-    async def fire_hook(
-        self,
-        name: str,
-        fmt: str | None = None,
-        wait: bool = True,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """Fire hook with given name and arguments.
+    # TODO: The next four properties are process-global. Document later.
+    @property
+    def env(self) -> ModuleType:
+        return env
 
-        :param name: Hook name
-        :param fmt: Format string for `ctx.logger` messages
-        :param wait: Wait for hook to finish or fire and forget
-        """
-        await self._callbacks.fire_hook(self, name, fmt, wait, *args, **kwargs)
+    @property
+    def caches(self) -> _CacheManager:
+        return caches
 
-    async def _fire_handler(
-        self,
-        name: str,
-        index: str,
-        datasource: IndexDatasource[Any],
-        fmt: str | None = None,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        """Fire handler with given name and arguments.
+    @property
+    def metrics(self) -> _MetricManager:
+        return metrics
 
-        :param name: Handler name
-        :param index: Index name
-        :param datasource: An instance of datasource that triggered the handler
-        :param fmt: Format string for `ctx.logger` messages
-        """
-        await self._callbacks._fire_handler(self, name, index, datasource, fmt, *args, **kwargs)
-
-    async def execute_sql(self, name: str, *args: Any, **kwargs: Any) -> None:
-        """Executes SQL script(s) with given name.
-
-        If the `name` path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
-
-        :param name: File or directory within project's `sql` directory
-        """
-        await self._callbacks.execute_sql(self, name, *args, **kwargs)
-
-    async def execute_sql_query(self, name: str, *args: Any) -> Any:
-        """Executes SQL query with given name
-
-        :param name: SQL query name within `<project>/sql` directory
-        """
-        return await self._callbacks.execute_sql_query(self, name, *args)
+    @property
+    def queues(self) -> _QueueManager:
+        return queues
 
     async def restart(self) -> None:
         """Restart process and continue indexing."""
@@ -212,7 +177,7 @@ class DipDupContext:
         self.logger.warning('Reindexing requested: reason `%s`, action `%s`', reason.value, action.value)
 
         if action == ReindexingAction.ignore:
-            # NOTE: Recalculate hashes on the next run
+            # NOTE: Recalculate hashes on the next _hooks_loop
             if reason == ReindexingReason.schema_modified:
                 await Schema.filter(name=self.config.schema_name).update(hash='')
             elif reason == ReindexingReason.config_modified:
@@ -375,11 +340,11 @@ class DipDupContext:
             else index_config.handlers
         )
         for handler_config in handlers:
-            self._callbacks.register_handler(handler_config)
+            self.register_handler(handler_config)
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
-        StateQueue.pending_indexes.append(index)
+        self._pending_indexes.append(index)
 
     # TODO: disable_index(name: str)
 
@@ -480,50 +445,6 @@ class DipDupContext:
         """Get `http` datasource by name"""
         return self._get_datasource(name, HttpDatasource)
 
-
-class HookContext(DipDupContext):
-    """Execution context of hook callbacks.
-
-    :param hook_config: Configuration of the current hook
-    """
-
-    def __init__(
-        self,
-        config: DipDupConfig,
-        package: DipDupPackage,
-        datasources: dict[str, Datasource[Any]],
-        callbacks: 'CallbackManager',
-        transactions: TransactionManager,
-        logger: FormattedLogger,
-        hook_config: HookConfig,
-    ) -> None:
-        super().__init__(
-            config=config,
-            package=package,
-            datasources=datasources,
-            callbacks=callbacks,
-            transactions=transactions,
-        )
-        self.logger = logger
-        self.hook_config = hook_config
-
-    @classmethod
-    def _wrap(
-        cls,
-        ctx: DipDupContext,
-        logger: FormattedLogger,
-        hook_config: HookConfig,
-    ) -> 'HookContext':
-        return cls(
-            config=ctx.config,
-            package=ctx.package,
-            datasources=ctx.datasources,
-            callbacks=ctx._callbacks,
-            transactions=ctx._transactions,
-            logger=logger,
-            hook_config=hook_config,
-        )
-
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
         """Rollback index to a given level reverting all changes made since that level.
 
@@ -543,7 +464,7 @@ class HookContext(DipDupContext):
             await self.reindex(ReindexingReason.rollback)
 
         models = importlib.import_module(f'{self.config.package}.models')
-        async with self._transactions.in_transaction():
+        async with self.transactions.in_transaction():
             updates = await ModelUpdate.filter(
                 level__lte=from_level,
                 level__gt=to_level,
@@ -557,89 +478,14 @@ class HookContext(DipDupContext):
                 await update.revert(model)
 
         await Index.filter(name=index).update(level=to_level)
-        StateQueue.rolled_back_indexes.add(index)
+        self._rolled_back_indexes.add(index)
 
-
-class TemplateValuesdict(dict[str, Any]):
-    """dictionary with template values."""
-
-    def __init__(self, ctx: Any, **kwargs: Any) -> None:
-        self.ctx = ctx
-        super().__init__(**kwargs)
-
-    def __getitem__(self, key: str) -> Any:
-        try:
-            return dict.__getitem__(self, key)
-        except KeyError as e:
-            raise ConfigurationError(
-                f'Index `{self.ctx.index_config.name}` requires `{key}` template value to be set'
-            ) from e
-
-
-class HandlerContext(DipDupContext):
-    """Execution context of handler callbacks.
-
-    :param handler_config: Configuration of the current handler
-    :param datasource: Index datasource instance
-    """
-
-    def __init__(
-        self,
-        config: DipDupConfig,
-        package: DipDupPackage,
-        datasources: dict[str, Datasource[Any]],
-        callbacks: 'CallbackManager',
-        transactions: TransactionManager,
-        logger: FormattedLogger,
-        handler_config: HandlerConfig,
-        datasource: IndexDatasource[Any],
-    ) -> None:
-        super().__init__(
-            config=config,
-            package=package,
-            datasources=datasources,
-            callbacks=callbacks,
-            transactions=transactions,
-        )
-        self.logger = logger
-        self.handler_config = handler_config
-        self.datasource = datasource
-        template_values = handler_config.parent.template_values if handler_config.parent else {}
-        self.template_values = TemplateValuesdict(self, **template_values)
-
-    @classmethod
-    def _wrap(
-        cls,
-        ctx: DipDupContext,
-        logger: FormattedLogger,
-        handler_config: HandlerConfig,
-        datasource: IndexDatasource[Any],
-    ) -> 'HandlerContext':
-        return cls(
-            config=ctx.config,
-            package=ctx.package,
-            datasources=ctx.datasources,
-            callbacks=ctx._callbacks,
-            transactions=ctx._transactions,
-            logger=logger,
-            handler_config=handler_config,
-            datasource=datasource,
-        )
-
-
-# TODO: Use DipDupPackage
-class CallbackManager:
-    def __init__(self, package: str) -> None:
-        self._logger = logging.getLogger('dipdup.callback')
-        self._package = package
-        self._handlers: dict[tuple[str, str], HandlerConfig] = {}
-        self._hooks: dict[str, HookConfig] = {}
-
-    async def run(self) -> None:
-        self._logger.debug('Starting CallbackManager loop')
+    # TODO: Use DipDupPackage for some parts below
+    async def _hooks_loop(self) -> None:
+        self.logger.debug('Starting CallbackManager loop')
         while True:
-            while StateQueue.pending_hooks:
-                await StateQueue.pending_hooks.popleft()
+            while self._pending_hooks:
+                await self._pending_hooks.popleft()
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
 
@@ -657,9 +503,8 @@ class CallbackManager:
         if key not in self._hooks:
             self._hooks[key] = hook_config
 
-    async def _fire_handler(
+    async def fire_handler(
         self,
-        ctx: 'DipDupContext',
         name: str,
         index: str,
         datasource: IndexDatasource[Any],
@@ -667,82 +512,97 @@ class CallbackManager:
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        module = f'{self._package}.handlers.{name}'
+        """Fire handler with given name and arguments.
+
+        :param name: Handler name
+        :param index: Index name
+        :param datasource: An instance of datasource that triggered the handler
+        :param fmt: Format string for `ctx.logger` messages
+        """
+        module = f'{self.package.name}.handlers.{name}'
         handler_config = self._get_handler(name, index)
         new_ctx = HandlerContext._wrap(
-            ctx,
+            self,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
             datasource=datasource,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
-            fn = ctx.package.get_callback('handlers', name, name.split('.')[-1])
+            fn = self.package.get_callback('handlers', name, name.split('.')[-1])
             await fn(new_ctx, *args, **kwargs)
 
     async def fire_hook(
         self,
-        ctx: 'DipDupContext',
         name: str,
         fmt: str | None = None,
         wait: bool = True,
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        module = f'{self._package}.hooks.{name}'
+        """Fire hook with given name and arguments.
+
+        :param name: Hook name
+        :param fmt: Format string for `ctx.logger` messages
+        :param wait: Wait for hook to finish or fire and forget
+        :param args: Positional arguments to pass to the hook
+        :param kwargs: Keyword arguments to pass to the hook
+        """
+        module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
-        if isinstance(hook_config, EventHookConfig):
-            if isinstance(ctx, (HandlerContext, HookContext)):
-                raise FrameworkException('Event hooks cannot be fired manually')
-
         new_ctx = HookContext._wrap(
-            ctx,
+            self,
             logger=FormattedLogger(module, fmt),
             hook_config=hook_config,
         )
-
-        self._verify_arguments(new_ctx, *args, **kwargs)
 
         async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
                 stack.enter_context(self._callback_wrapper(module))
                 if hook_config.atomic:
                     # NOTE: Do not use versioned transactions here
-                    await stack.enter_async_context(new_ctx._transactions.in_transaction())
+                    await stack.enter_async_context(new_ctx.transactions.in_transaction())
 
-                fn = ctx.package.get_callback('hooks', name, name)
+                fn = self.package.get_callback('hooks', name, name)
                 await fn(new_ctx, *args, **kwargs)
 
-        if wait:
-            await _wrapper()
-        else:
-            StateQueue.pending_hooks.append(_wrapper())
+        coro = _wrapper()
+        await coro if wait else self._pending_hooks.append(coro)
 
     async def execute_sql(
         self,
-        ctx: 'DipDupContext',
         name: str,
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """Execute SQL script included with the project"""
+        """Executes SQL script(s) with given name.
+
+        If the `name` path is a directory, all `.sql` scripts within it will be executed in alphabetical order.
+
+        :param name: File or directory within project's `sql` directory
+        :param args: Positional arguments to pass to the script
+        :param kwargs: Keyword arguments to pass to the script
+        """
         # NOTE: Modified `package_path` breaks SQL discovery.
         if env.TEST:
             return
 
-        sql_path = self._get_sql_path(ctx, name)
+        sql_path = self._get_sql_path(name)
         conn = get_connection()
         await execute_sql(conn, sql_path, *args, **kwargs)
 
     async def execute_sql_query(
         self,
-        ctx: 'DipDupContext',
         name: str,
         *values: Any,
     ) -> Any:
-        """Execute SQL query included with the project"""
-        sql_path = self._get_sql_path(ctx, name)
+        """Executes SQL query with given name included with the project
+
+        :param name: SQL query name within `<project>/sql` directory
+        """
+
+        sql_path = self._get_sql_path(name)
         conn = get_connection()
         return await execute_sql_query(conn, sql_path, *values)
 
@@ -759,24 +619,6 @@ class CallbackManager:
             except Exception as e:
                 raise CallbackError(module, e) from e
 
-    # FIXME: kwargs are ignored, no false alarms though
-    @classmethod
-    def _verify_arguments(cls, ctx: HookContext, *args: Any, **kwargs: Any) -> None:
-        kwargs_annotations = ctx.hook_config.locate_arguments()
-        args_names = tuple(kwargs_annotations.keys())
-        args_annotations = tuple(kwargs_annotations.values())
-
-        for i, arg in enumerate(args):
-            expected_type = args_annotations[i]
-            if expected_type and not isinstance(arg, expected_type):
-                raise CallbackTypeError(
-                    name=ctx.hook_config.callback,
-                    kind='hook',
-                    arg=args_names[i],
-                    type_=type(arg),
-                    expected_type=expected_type,
-                )
-
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:
             return self._handlers[(name, index)]
@@ -789,10 +631,113 @@ class CallbackManager:
         except KeyError as e:
             raise ConfigurationError(f'Attempt to fire unregistered hook `{name}`') from e
 
-    def _get_sql_path(self, ctx: 'DipDupContext', name: str) -> Path:
+    def _get_sql_path(self, name: str) -> Path:
         subpackages = name.split('.')
-        sql_path = Path(env.get_package_path(ctx.config.package), 'sql', *subpackages)
+        sql_path = Path(env.get_package_path(self.config.package), 'sql', *subpackages)
         if not sql_path.exists():
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 
         return sql_path
+
+
+class HookContext(DipDupContext):
+    """Execution context of hook callbacks.
+
+    :param hook_config: Configuration of the current hook
+    """
+
+    def __init__(
+        self,
+        config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
+        transactions: TransactionManager,
+        logger: FormattedLogger,
+        hook_config: HookConfig,
+    ) -> None:
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            transactions=transactions,
+        )
+        self.logger = logger
+        self.hook_config = hook_config
+
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: FormattedLogger,
+        hook_config: HookConfig,
+    ) -> 'HookContext':
+        return cls(
+            config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
+            transactions=ctx.transactions,
+            logger=logger,
+            hook_config=hook_config,
+        )
+
+
+class _TemplateValues(dict[str, Any]):
+    def __init__(self, index: str, values: Any) -> None:
+        self._index = index
+        super().__init__(values)
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return dict.__getitem__(self, key)
+        except KeyError as e:
+            raise ConfigurationError(f'Index `{self._index}` requires `{key}` template value to be set') from e
+
+
+class HandlerContext(DipDupContext):
+    """Execution context of handler callbacks.
+
+    :param handler_config: Configuration of the current handler
+    :param datasource: Index datasource instance
+    """
+
+    def __init__(
+        self,
+        config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
+        transactions: TransactionManager,
+        logger: FormattedLogger,
+        handler_config: HandlerConfig,
+        datasource: IndexDatasource[Any],
+    ) -> None:
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            transactions=transactions,
+        )
+        self.logger = logger
+        self.handler_config = handler_config
+        self.datasource = datasource
+        self.template_values = _TemplateValues(
+            handler_config.parent.name if handler_config.parent else 'unknown',
+            handler_config.parent.template_values if handler_config.parent else {},
+        )
+
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: FormattedLogger,
+        handler_config: HandlerConfig,
+        datasource: IndexDatasource[Any],
+    ) -> 'HandlerContext':
+        return cls(
+            config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
+            transactions=ctx.transactions,
+            logger=logger,
+            handler_config=handler_config,
+            datasource=datasource,
+        )

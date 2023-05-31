@@ -27,7 +27,7 @@ from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.performance import caches
-from dipdup.performance import profiler
+from dipdup.performance import metrics
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
@@ -210,8 +210,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             data = self._requests[request_id][1]
             del self._requests[request_id]
 
-            profiler.basic and profiler.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
-            profiler.basic and profiler.inc(f'{namespace}:requests_total', 1.0)
+            metrics and metrics.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
+            metrics and metrics.inc(f'{namespace}:requests_total', 1.0)
         else:
             data = await self.request(
                 method='post',

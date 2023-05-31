@@ -1,7 +1,7 @@
 <!-- markdownlint-disable first-line-h1 -->
   <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">DipDupContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">DipDupContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext" title="Permalink to this definition">¶</a></dt>
 <dd><p>Common execution context for handler and hook callbacks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -10,7 +10,6 @@
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – DipDup package</p></li>
 <li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – Mapping of available datasources</p></li>
 <li><p><strong>logger</strong> – Context-aware logger instance</p></li>
-<li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
 </ul>
 </dd>
@@ -19,7 +18,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.HandlerContext">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HandlerContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HandlerContext" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HandlerContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handler_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HandlerContext" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execution context of handler callbacks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -29,7 +28,6 @@
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – </p></li>
 <li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
 <li><p><strong>logger</strong> (<em>FormattedLogger</em>) – </p></li>
 </ul>
@@ -39,7 +37,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.HookContext">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HookContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HookContext" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">HookContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hook_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.HookContext" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execution context of hook callbacks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -48,7 +46,6 @@
 <li><p><strong>config</strong> (<a class="reference internal" href="config-reference.html#dipdup.config.DipDupConfig" title="dipdup.config.DipDupConfig"><em>DipDupConfig</em></a>) – </p></li>
 <li><p><strong>package</strong> (<em>DipDupPackage</em>) – </p></li>
 <li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.datasources.Datasource</em><em>[</em><em>dipdup.fields.Any</em><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>callbacks</strong> (<em>CallbackManager</em>) – </p></li>
 <li><p><strong>transactions</strong> (<em>TransactionManager</em>) – </p></li>
 <li><p><strong>logger</strong> (<em>FormattedLogger</em>) – </p></li>
 </ul>
@@ -106,8 +103,8 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – File or directory within project’s <cite>sql</cite> directory</p></li>
-<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>args</strong> (<em>Any</em>) – Positional arguments to pass to the script</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Keyword arguments to pass to the script</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -118,13 +115,13 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext.execute_sql_query">
-<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">DipDupContext.</span></span><span class="sig-name descname"><span class="pre">execute_sql_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext.execute_sql_query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Executes SQL query with given name</p>
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">DipDupContext.</span></span><span class="sig-name descname"><span class="pre">execute_sql_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext.execute_sql_query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes SQL query with given name included with the project</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – SQL query name within <cite>&lt;project&gt;/sql</cite> directory</p></li>
-<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>values</strong> (<em>Any</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -143,8 +140,8 @@
 <li><p><strong>name</strong> (<em>str</em>) – Hook name</p></li>
 <li><p><strong>fmt</strong> (<em>str</em><em> | </em><em>None</em>) – Format string for <cite>ctx.logger</cite> messages</p></li>
 <li><p><strong>wait</strong> (<em>bool</em>) – Wait for hook to finish or fire and forget</p></li>
-<li><p><strong>args</strong> (<em>Any</em>) – </p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – </p></li>
+<li><p><strong>args</strong> (<em>Any</em>) – Positional arguments to pass to the hook</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – Keyword arguments to pass to the hook</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

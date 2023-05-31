@@ -27,7 +27,7 @@ from dipdup import __version__
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
-from dipdup.performance import profiler
+from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.utils import json_dumps
 
@@ -214,7 +214,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        profiler.basic and profiler.inc(f'{self._alias}:requests_total', 1.0)
+        metrics and metrics.inc(f'{self._alias}:requests_total', 1.0)
         if not url:
             url = self._path
         elif url.startswith('http'):
@@ -243,7 +243,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             await response.read()
-            profiler.basic and profiler.inc(f'{self._alias}:time_in_requests', (time.time() - started_at) / 60)
+            metrics and metrics.inc(f'{self._alias}:time_in_requests', (time.time() - started_at) / 60)
             if raw:
                 return response
 

@@ -5,7 +5,7 @@ from typing import TypedDict
 
 from dipdup import env
 from dipdup.performance import get_stats
-from dipdup.performance import profiler
+from dipdup.performance import metrics
 from dipdup.yaml import dump
 
 # FIXME: Hardcoded path
@@ -36,8 +36,8 @@ def save_report(error: Exception | None) -> str:
                 frame['code'] = frame.pop('pre_context') + [frame.pop('context_line')] + frame.pop('post_context')
 
     # NOTE: Performance stats if any
-    if profiler:
-        event.update(profiler=get_stats())
+    if metrics:
+        event.update(metrics=get_stats())
         content.append('stats')
 
     # NOTE: Add some metadata

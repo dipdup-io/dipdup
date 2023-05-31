@@ -20,7 +20,7 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
-from dipdup.performance import profiler
+from dipdup.performance import metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 LAST_MILE_TRIGGER = 256
@@ -201,7 +201,7 @@ class SubsquidEventsIndex(
             return
 
         batch_level = events[0].level
-        profiler.basic and profiler.inc(f'{self.name}:events_total', len(events))
+        metrics and metrics.inc(f'{self.name}:events_total', len(events))
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
@@ -209,24 +209,24 @@ class SubsquidEventsIndex(
         self._logger.debug('Processing contract events of level %s', batch_level)
         started_at = time.time()
         matched_handlers = match_events(self._ctx.package, self._config.handlers, events, self.topics)
-        profiler.basic and profiler.inc(f'{self.name}:events_matched', len(matched_handlers))
-        profiler.basic and profiler.inc(f'{self.name}:time_in_matcher', (time.time() - started_at) / 60)
+        metrics and metrics.inc(f'{self.name}:events_matched', len(matched_handlers))
+        metrics and metrics.inc(f'{self.name}:time_in_matcher', (time.time() - started_at) / 60)
 
         if not matched_handlers:
             await self._update_state(level=batch_level)
             return
 
         started_at = time.time()
-        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, event in matched_handlers:
                 handler_started_at = time.time()
                 await self._call_matched_handler(handler_config, event)
-                profiler.basic and profiler.inc(
+                metrics and metrics.inc(
                     f'{self.name}:time_in_callbacks:{handler_config.name}',
                     (time.time() - handler_started_at) / 60,
                 )
             await self._update_state(level=batch_level)
-        profiler.basic and profiler.inc(f'{self.name}:time_in_callbacks', (time.time() - started_at) / 60)
+        metrics and metrics.inc(f'{self.name}:time_in_callbacks', (time.time() - started_at) / 60)
 
     async def _call_matched_handler(
         self,
@@ -239,7 +239,7 @@ class SubsquidEventsIndex(
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

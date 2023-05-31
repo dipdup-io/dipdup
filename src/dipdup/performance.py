@@ -1,10 +1,10 @@
-"""This module contains code to manage queues, caches and tune profiler.
+"""This module contains code to manage queues, caches and tune metrics.
 
 There are three module-level singletons, one for each type of resource:
 
-- `QueueManager` for simple deque queues
-- `CacheManager` for LRU caches
-- `ProfilerManager` for performance metrics and pprofile integration
+- `_QueueManager` for simple deque queues
+- `_CacheManager` for LRU caches
+- `_MetricManager` for performance metrics and pprofile integration
 
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
@@ -23,7 +23,6 @@ from typing import AsyncIterator
 from typing import Callable
 from typing import Coroutine
 from typing import Sized
-from typing import TypeVar
 from typing import cast
 
 from async_lru import alru_cache
@@ -33,16 +32,19 @@ from dipdup.exceptions import FrameworkException
 
 _logger = logging.getLogger(__name__)
 
-_T = TypeVar('_T', bound=Model)
-ModelCache = dict[int | str, Model]
+
+class MetricsLevel(Enum):
+    off = 'off'
+    basic = 'basic'
+    full = 'full'
 
 
-class CacheManager:
+class _CacheManager:
     def __init__(self) -> None:
         self._plain: dict[str, Sized] = {}
         self._lru: dict[str, Callable[..., Any]] = {}
         self._alru: dict[str, Callable[..., Coroutine[Any, Any, None]]] = {}
-        self._model: dict[str, ModelCache] = {}
+        self._model: dict[str, dict[int | str, Model]] = {}
 
     def add_plain(
         self,
@@ -115,7 +117,7 @@ class CacheManager:
         return stats
 
 
-class QueueManager:
+class _QueueManager:
     def __init__(self) -> None:
         self._queues: dict[str, deque[Any]] = {}
         self._limits: dict[str, int] = {}
@@ -160,40 +162,34 @@ class QueueManager:
         return stats
 
 
-class ProfilerLevel(Enum):
-    off = 'off'
-    basic = 'basic'
-    full = 'full'
-
-
-class Profiler:
+class _MetricManager:
     """Usage:
 
-    profiler and profiler.increase('metric', 0.1)
-    profiler.full and profiler.set('verbose_metric', 0.2)
-    stack.enter_context(profiler.enter_context('package'))
+    metrics and metrics.increase('metric', 0.1)
+    metrics.full and metrics.set('verbose_metric', 0.2)
+    stack.enter_context(metrics.enter_context('package'))
     """
 
     def __init__(self) -> None:
-        self._level = ProfilerLevel.off
+        self._level = MetricsLevel.off
         self._stats: defaultdict[str, float] = defaultdict(float)
 
     def __bool__(self) -> bool:
-        return self._level != ProfilerLevel.off
+        return self._level != MetricsLevel.off
 
     @property
     def basic(self) -> bool:
-        return self._level != ProfilerLevel.off
+        return self._level != MetricsLevel.off
 
     @property
     def full(self) -> bool:
-        return self._level == ProfilerLevel.full
+        return self._level == MetricsLevel.full
 
     @property
-    def level(self) -> ProfilerLevel:
+    def level(self) -> MetricsLevel:
         return self._level
 
-    def set_level(self, level: ProfilerLevel) -> None:
+    def set_level(self, level: MetricsLevel) -> None:
         self._level = level
 
     def set(self, name: str, value: float) -> bool:
@@ -215,7 +211,7 @@ class Profiler:
             _logger.warning('Full profiling is enabled, this will affect performance')
         except ImportError:
             _logger.error('pprofile not installed, falling back to basic profiling')
-            self._level = ProfilerLevel.basic
+            self._level = MetricsLevel.basic
             return
 
         profiler = pprofile.Profile()
@@ -227,14 +223,14 @@ class Profiler:
         profiler.dump_stats(dump_path)
 
 
-caches = CacheManager()
-queues = QueueManager()
-profiler = Profiler()
+caches = _CacheManager()
+queues = _QueueManager()
+metrics = _MetricManager()
 
 
 def get_stats() -> dict[str, Any]:
     return {
         'caches': caches.stats(),
         'queues': queues.stats(),
-        'metrics': profiler.stats(),
+        'metrics': metrics.stats(),
     }

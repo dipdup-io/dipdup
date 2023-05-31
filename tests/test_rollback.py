@@ -184,7 +184,7 @@ async def test_optionals() -> None:
 
         # NOTE: Rollback DELETE
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1001,
             to_level=1000,
@@ -249,7 +249,7 @@ async def test_bulk_create_update() -> None:
 
         # NOTE: Rollback bulk_update
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1001,
             to_level=1000,
@@ -265,7 +265,7 @@ async def test_bulk_create_update() -> None:
 
         # NOTE: Rollback bulk_insert
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1000,
             to_level=999,
@@ -317,7 +317,7 @@ async def test_update_prefetch() -> None:
 
         # NOTE: Rollback UPDATE with prefetch
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1001,
             to_level=1000,
@@ -368,7 +368,7 @@ async def test_update_arithmetics() -> None:
 
         # NOTE: Rollback UPDATE with arithmetics
         await HookContext.rollback(
-            self=dipdup._ctx,  # type: ignore[arg-type]
+            self=dipdup._ctx,
             index='test',
             from_level=1001,
             to_level=1000,

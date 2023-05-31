@@ -50,7 +50,7 @@ from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
-from dipdup.performance import ProfilerLevel
+from dipdup.performance import MetricsLevel
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -566,7 +566,7 @@ class AdvancedConfig:
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param api: Monitoring API config
-    :param profiler: off/basic/advanced based on how much performance metrics you want to collect
+    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
     :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
     """
 
@@ -581,7 +581,7 @@ class AdvancedConfig:
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
     api: ApiConfig = field(default_factory=ApiConfig)
-    profiler: ProfilerLevel = ProfilerLevel.basic
+    metrics: MetricsLevel = MetricsLevel.basic
     alt_operation_matcher: bool = False
 
 

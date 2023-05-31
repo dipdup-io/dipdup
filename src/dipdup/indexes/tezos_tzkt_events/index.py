@@ -96,7 +96,7 @@ class TzktEventsIndex(
             await self._update_state(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, event in matched_handlers:
                 await self._call_matched_handler(handler_config, event)
             await self._update_state(level=batch_level)
@@ -110,7 +110,7 @@ class TzktEventsIndex(
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

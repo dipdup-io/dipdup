@@ -89,8 +89,8 @@ indexes:
 advanced:
   api: {}
   decimal_precision: 128  # 🙄
-  profiler: basic
+  metrics: basic
   # FIXME: Wipe with immune_tables leads to foreign key issues
-  unsafe_sqlite: true
+  # unsafe_sqlite: true
   skip_version_check: true
   logging: verbose
