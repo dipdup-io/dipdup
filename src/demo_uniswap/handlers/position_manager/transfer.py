@@ -16,7 +16,9 @@ async def transfer(
         idx = f'{event.data.level}.{event.data.transaction_index}.{event.data.log_index}'
         pending_position = models_repo.get_pending_position(idx)
         if pending_position is None:
-            raise ValueError(f'Failed to get pending position, tx {event.data.transaction_hash}')
+            ctx.logger.warning('Skipping position %s (must be blacklisted pool)', event.payload.tokenId)
+            return
+
         position = models.Position(id=event.payload.tokenId, **pending_position)
     else:
         position = await models.Position.get(id=event.payload.tokenId)

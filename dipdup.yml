@@ -3,7 +3,7 @@ package: demo_uniswap
 
 database:
   kind: sqlite
-  path: /tmp/uniswap.sqlite
+  path: /tmp/uniswap2.sqlite
   immune_tables:
     - token
 
@@ -91,6 +91,6 @@ advanced:
   decimal_precision: 128  # 🙄
   profiler: basic
   # FIXME: Wipe with immune_tables leads to foreign key issues
-  unsafe_sqlite: true
+  unsafe_sqlite: false
   skip_version_check: true
   logging: verbose

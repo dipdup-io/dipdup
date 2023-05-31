@@ -16,9 +16,9 @@ async def collect(
         ctx.logger.warning('Blacklisted level %d', event.data.level)
         return
 
-    position = await models.Position.get(id=event.payload.tokenId)
-    if position.blacklisted:
-        ctx.logger.warning('Blacklisted pool %s', position.pool_id)
+    position = await models.Position.get_or_none(id=event.payload.tokenId)
+    if position is None:
+        ctx.logger.warning('Skipping position %s (must be blacklisted pool)', event.payload.tokenId)
         return
 
     token0 = await models.Token.cached_get(position.token0_id)
