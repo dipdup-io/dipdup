@@ -15,7 +15,6 @@
 .. autoclass:: dipdup.config.IndexTemplateConfig
 .. autoclass:: dipdup.config.ipfs.IpfsDatasourceConfig
 .. autoclass:: dipdup.config.JobConfig
-.. autoclass:: dipdup.models.LoggingValues
    :members:
    :undoc-members:
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig

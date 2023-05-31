@@ -79,4 +79,4 @@ indexes:
 
 advanced:
   early_realtime: True
-logging: verbose
+logging: DEBUG

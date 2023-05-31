@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
 - context: Signature of `add_contract` method has changed.
+- config: logging config expanded every logger level could be set in .yml config
+- docs: deployment/logging rewrited according to logging configuration changes
 
 ### Removed
 

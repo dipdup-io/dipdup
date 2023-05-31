@@ -46,7 +46,6 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
@@ -567,6 +566,9 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     crash_reporting: bool = False
 
+    class Config:
+        extra = 'allow'
+
     @property
     def rollback_depth_int(self) -> int:
         if self.rollback_depth is None:
@@ -611,7 +613,7 @@ class DipDupConfig:
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
-    logging: LoggingValues = LoggingValues.default
+    logging: dict[str, str | int] | str | int = 'INFO'
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
@@ -731,12 +733,23 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        level = {
-            LoggingValues.default: logging.INFO,
-            LoggingValues.quiet: logging.WARNING,
-            LoggingValues.verbose: logging.DEBUG,
-        }[self.logging]
-        logging.getLogger('dipdup').setLevel(level)
+        loglevels = self.logging
+        if not isinstance(loglevels, dict):
+            loglevels = {
+                'dipdup': loglevels,
+                self.package: loglevels,
+            }
+
+        for name, level in loglevels.items():
+            try:
+                if isinstance(level, str):
+                    level = getattr(logging, level.upper())
+                if not isinstance(level, int):
+                    raise ValueError
+            except (AttributeError, ValueError):
+                raise ConfigurationError(f'Invalid logging level `{level}` for logger `{name}`') from None
+
+            logging.getLogger(name).setLevel(level)
 
     def initialize(self) -> None:
         self._set_names()

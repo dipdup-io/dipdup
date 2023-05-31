@@ -106,11 +106,7 @@ class DipDupYAMLConfig(dict[str, Any]):
 
             config.update(yaml.load(path_yaml))
 
-        config.validate_version()
-
-        # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
-        # FIXME: See https://github.com/pydantic/pydantic/issues/4286
-        fix_dataclass_field_aliases(config)
+        config._post_load_hooks()
 
         return config, config_environment
 
@@ -131,3 +127,9 @@ class DipDupYAMLConfig(dict[str, Any]):
             raise ConfigurationError(
                 f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See https://docs.dipdup.io/config/spec_version'
             )
+
+    def _post_load_hooks(self) -> None:
+        self.validate_version()
+        # FIXME: Can't use `from_` field alias in dataclass
+        # FIXME: See https://github.com/pydantic/pydantic/issues/4286 (fixed in upcoming v2)
+        fix_dataclass_field_aliases(self)
