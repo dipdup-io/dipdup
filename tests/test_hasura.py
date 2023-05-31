@@ -21,7 +21,7 @@ from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.project import ANSWERS as project_defaults
+from dipdup.project import DEFAULT_ANSWERS
 
 
 def get_docker_client() -> DockerClient:
@@ -40,7 +40,7 @@ def get_docker_client() -> DockerClient:
 async def run_postgres_container() -> PostgresDatabaseConfig:
     docker = get_docker_client()
     postgres_container = docker.containers.run(
-        image=project_defaults['postgresql_image'],
+        image=DEFAULT_ANSWERS['postgresql_image'],
         environment={
             'POSTGRES_USER': 'test',
             'POSTGRES_PASSWORD': 'test',
@@ -69,7 +69,7 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
 async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
     docker = get_docker_client()
     hasura_container = docker.containers.run(
-        image=project_defaults['hasura_image'],
+        image=DEFAULT_ANSWERS['hasura_image'],
         environment={
             'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
         },

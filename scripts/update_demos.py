@@ -3,7 +3,6 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import ANSWERS
 from dipdup.project import load_project_settings_replay
 from dipdup.project import render_project_from_template
 
@@ -30,11 +29,11 @@ for project_path in _get_projects():
         continue
 
     print(f'=> Rendering {project_path.name}')
-    load_project_settings_replay(str(project_path))
-    render_project_from_template(force=True)
+    answers = load_project_settings_replay(project_path)
+    render_project_from_template(answers, force=True)
 
-    project_name = ANSWERS['project_name']
-    package = ANSWERS['package']
+    project_name = answers['project_name']
+    package = answers['package']
     subprocess.run(['mv', project_name, 'demos'], check=True)
 
     print(f'=> Linking `{project_name}`')

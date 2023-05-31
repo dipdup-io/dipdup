@@ -5,6 +5,7 @@ import logging
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from copy import copy
 from functools import wraps
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,7 @@ import asyncclick as click
 
 from dipdup import __version__
 from dipdup import env
+from dipdup.project import DEFAULT_ANSWERS
 from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
@@ -513,24 +515,32 @@ async def schema_export(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
-@click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
+@click.option(
+    '--replay',
+    '-r',
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help='Replay a previously saved state.',
+)
 @_cli_wrapper
 async def new(
     ctx: click.Context,
     quiet: bool,
     force: bool,
-    replay: str | None,
+    replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
     from dipdup.project import create_new_project_from_console
     from dipdup.project import load_project_settings_replay
     from dipdup.project import render_project_from_template
 
-    if replay:
-        load_project_settings_replay(replay)
+    if quiet:
+        answers = copy(DEFAULT_ANSWERS)
+    elif replay:
+        answers = load_project_settings_replay(replay)
     else:
-        create_new_project_from_console()
-    render_project_from_template(force)
+        answers = create_new_project_from_console()
+    render_project_from_template(answers, force)
 
 
 @cli.group()
