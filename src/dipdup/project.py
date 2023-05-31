@@ -55,8 +55,8 @@ ANSWERS: dict[str, str] = {
 T = TypeVar('T')
 
 
-# ask user smth with typecast to type, print_default=True print to user what default choise would be used
 def prompt(text: str, default: Any, type_: Type[T], print_default: bool = True) -> T:
+    """ Ask user smth with typecast to type, print_default=True print to user what default choise would be used """
     try:
         value: T = cl.prompt(
             text=f'{text} [{default}]: ' if print_default else text,
@@ -71,10 +71,10 @@ def prompt(text: str, default: Any, type_: Type[T], print_default: bool = True) 
         quit(0)
 
 
-# ask user to choose one option with question, list of options and there description(comments)
 def choose_one(
     question: str, options: tuple[str, ...], comments: tuple[str, ...], default: int
 ) -> str:  # default is position of default option in options
+    """ Ask user to choose one option with question, list of options and there description(comments) """
     table = tabulate(
         zip(range(len(options)), options, comments),
         colalign=('right', 'left', 'left'),
@@ -86,15 +86,14 @@ def choose_one(
     return options[answer]
 
 
-# blue prompt in dipdup style for str answers
 def fancy_str_prompt(question: str, default: str) -> str:
+    """ Blue prompt in dipdup style for str answers """
     cl.secho(f'=> {question} [{default}]: ', fg='blue')
     return prompt('', default, str, print_default=False)
 
 
-# script running on dipdup new command and will create a new project from console survey
 def create_new_project_from_console() -> None:
-    # dict with all new project config
+    """ Script running on dipdup new command and will create a new project from console survey """
 
     welcome_text = (
         'Welcome to DipDup! This command will help you to create a new project.\n'
