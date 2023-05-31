@@ -28,4 +28,4 @@ indexes:
     first_level: 2315000
     last_level: 2315100
 
-logging: quiet
+logging: WARN

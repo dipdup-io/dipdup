@@ -85,18 +85,6 @@ def fix_dataclass_field_aliases(config: dict[str, Any]) -> None:
                     fix_dataclass_field_aliases(item)
 
 
-def lowercase_logging_level(config: dict[str, Any]) -> None:
-    logging_ = config.get('logging')
-
-    if not logging_:
-        return
-    elif isinstance(logging_, str):
-        config['logging'] = logging_.lower()
-    elif isinstance(logging_, dict):
-        for k in logging_:
-            logging_[k] = logging_[k].lower()
-
-
 class DipDupYAMLConfig(dict[str, Any]):
     @classmethod
     def load(
@@ -142,7 +130,6 @@ class DipDupYAMLConfig(dict[str, Any]):
 
     def _post_load_hooks(self) -> None:
         self.validate_version()
-        # FIXME: Can't use `from_` field alias in dataclass; fixed in dipdup.yaml instead
-        # FIXME: See https://github.com/pydantic/pydantic/issues/4286
+        # FIXME: Can't use `from_` field alias in dataclass
+        # FIXME: See https://github.com/pydantic/pydantic/issues/4286 (fixed in upcoming v2)
         fix_dataclass_field_aliases(self)
-        lowercase_logging_level(self)  # case insensitive logging

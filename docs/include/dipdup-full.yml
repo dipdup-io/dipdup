@@ -143,4 +143,4 @@ advanced:
   rollback_depth: 2
   crash_reporting: False
 
-logging: verbose
+logging: DEBUG

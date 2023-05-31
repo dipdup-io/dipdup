@@ -178,4 +178,4 @@ indexes:
       symbol: hDAO
       decimals: 6
 
-logging: quiet
+logging: WARN

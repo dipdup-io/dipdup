@@ -44,7 +44,7 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 More logs can give you a clue about the reason for an issue. Enable them in config:
 
 ```yaml
-logging: verbose
+logging: DEBUG
 ```
 
 When an exception occurs DipDup saves crash dumps to `/tmp/dipdup/crashdumps/XXXXXXX.json`. You can send those dumps to Baking Bad automatically:

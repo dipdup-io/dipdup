@@ -1,46 +1,41 @@
 # Logging
 
-To control the number of logs DipDup produces, set the `logging` field in config:
+To control the number of logs DipDup produces, set the `logging` field in config. It can be either a string or a mapping from logger names to logging levels.
 
 ```yaml
-# setting logging root value will default logging level for all framework loggers
-logging: fatal|error|warn|info|debug|default|verbose|quiet
+# Confugure dipdup and package loggers
+logging: INFO
 
-# you can change logging level of specific loggers using
+# Increase verbosity of some loggers
 logging:
-  dipdup: warn  # dipdup is a root(or default) logger for framework
-  dipdup.cli: debug
+  dipdup.database: DEBUG
+  aiosqlite: DEBUG
+
+# Enable ALL logs
+logging:
+  '': DEBUG
 ```
-default, verbose and quiet are info, debug and warn levels accordingly.
 
-| Logger Name | Description |
-| --- | --- |
-| dipdup | Root logger |
-| dipdup.cli | Messages related to DipDup's command-line interface (CLI) |
-| dipdup.callback |  |
-| dipdup.database |  |
-| dipdup.http |  |
-| dipdup.hasura |  |
-| dipdup.project |  |
-| dipdup.jobs |  |
-| dipdup.datasource |  |
-| dipdup.yaml |  |
-| dipdup.codegen |  |
-| dipdup.config |  |
-| dipdup.tzkt |  |
-| dipdup.subsquid |  |
-| dipdup.matcher |  |
-| dipdup.fetcher |  |
-| dipdup.model |  |
+By default only `dipdup` and `<package>` namespace loggers are affected. Here's a list of loggers we use internally you may consider enabling:
 
+<!-- TODO: Gather logger names automatically to ensure they are up-to-date.  -->
 
-If you need more fined tuning, perform it in the `on_restart` hook:
-
-```python
-import logging
-
-async def on_restart(
-    ctx: HookContext,
-) -> None:
-    logging.getLogger('some_logger').setLevel('DEBUG')
-```
+| Logger Name       | Description                                               |
+| ----------------- | --------------------------------------------------------- |
+| dipdup            | Root logger                                               |
+| dipdup.cli        | Messages related to DipDup's command-line interface (CLI) |
+| dipdup.callback   |                                                           |
+| dipdup.database   |                                                           |
+| dipdup.http       |                                                           |
+| dipdup.hasura     |                                                           |
+| dipdup.project    |                                                           |
+| dipdup.jobs       |                                                           |
+| dipdup.datasource |                                                           |
+| dipdup.yaml       |                                                           |
+| dipdup.codegen    |                                                           |
+| dipdup.config     |                                                           |
+| dipdup.tzkt       |                                                           |
+| dipdup.subsquid   |                                                           |
+| dipdup.matcher    |                                                           |
+| dipdup.fetcher    |                                                           |
+| dipdup.model      |                                                           |
