@@ -36,7 +36,7 @@ from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup.exceptions import FrameworkException
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.models')
 
 
 versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
@@ -170,14 +170,6 @@ class SkipHistory(Enum):
     never = 'never'
     once = 'once'
     always = 'always'
-
-
-class LoggingValues(Enum):
-    """Enum for `logging` field values."""
-
-    default = 'default'
-    quiet = 'quiet'
-    verbose = 'verbose'
 
 
 @dataclass

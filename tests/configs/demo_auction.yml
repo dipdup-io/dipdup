@@ -56,4 +56,4 @@ indexes:
       minter: tzcolors_minter
       auction: tzcolors_auction
 
-logging: quiet
+logging: WARN
