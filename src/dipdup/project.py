@@ -76,7 +76,7 @@ T = TypeVar('T')
 
 
 def prompt(text: str, default: Any, type_: Type[T], print_default: bool = True) -> T:
-    """ Ask user smth with typecast to type, print_default=True print to user what default choise would be used """
+    """Ask user smth with typecast to type, print_default=True print to user what default choise would be used"""
     try:
         value: T = cl.prompt(
             text=f'{text} [{default}]: ' if print_default else text,
@@ -94,7 +94,7 @@ def prompt(text: str, default: Any, type_: Type[T], print_default: bool = True) 
 def choose_one(
     question: str, options: tuple[str, ...], comments: tuple[str, ...], default: int
 ) -> str:  # default is position of default option in options
-    """ Ask user to choose one option with question, list of options and there description(comments) """
+    """Ask user to choose one option with question, list of options and there description(comments)"""
     table = tabulate(
         zip(range(len(options)), options, comments),
         colalign=('right', 'left', 'left'),
@@ -107,13 +107,13 @@ def choose_one(
 
 
 def fancy_str_prompt(question: str, default: str) -> str:
-    """ Blue prompt in dipdup style for str answers """
+    """Blue prompt in dipdup style for str answers"""
     cl.secho(f'=> {question} [{default}]: ', fg='blue')
     return prompt('', default, str, print_default=False)
 
 
 def create_new_project_from_console() -> Answers:
-    """ Script running on dipdup new command and will create a new project from console survey """
+    """Script running on dipdup new command and will create a new project from console survey"""
     answers = copy(DEFAULT_ANSWERS)
     # dict with all new project config
 
