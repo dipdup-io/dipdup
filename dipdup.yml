@@ -3,7 +3,7 @@ package: demo_uniswap
 
 database:
   kind: sqlite
-  path: /tmp/uniswap.sqlite
+  path: /tmp/uniswap2.sqlite
   immune_tables:
     - token
 
