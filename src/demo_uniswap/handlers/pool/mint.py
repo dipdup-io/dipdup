@@ -19,9 +19,9 @@ async def mint(
     if not pool or pool.id in BLACKLISTED_POOLS:
         ctx.logger.debug('Pool.mint: skipping pool %s as it is blacklisted', event.data.address)
         return
-    
+
     await pool_update(ctx, pool, event, PoolUpdateSign.MINT)
-    
+
     pending_position = {
         'owner': to_normalized_address(event.payload.owner),
         'pool_id': pool.id,
