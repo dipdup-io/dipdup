@@ -5,6 +5,7 @@ import logging
 import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from copy import copy
 from dataclasses import dataclass
 from functools import partial
 from functools import wraps
@@ -20,6 +21,7 @@ import asyncclick as click
 
 from dipdup import __version__
 from dipdup.performance import metrics
+from dipdup.project import DEFAULT_ANSWERS
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
@@ -523,20 +525,32 @@ async def schema_export(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
-@click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
+@click.option(
+    '--replay',
+    '-r',
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help='Replay a previously saved state.',
+)
 @_cli_wrapper
 async def new(
     ctx: click.Context,
     quiet: bool,
     force: bool,
-    replay: str | None,
+    replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import BaseProject
+    from dipdup.project import create_new_project_from_console
+    from dipdup.project import load_project_settings_replay
+    from dipdup.project import render_project_from_template
 
-    project = BaseProject()
-    project.run(quiet, replay)
-    project.render(force)
+    if quiet:
+        answers = copy(DEFAULT_ANSWERS)
+    elif replay:
+        answers = load_project_settings_replay(replay)
+    else:
+        answers = create_new_project_from_console()
+    render_project_from_template(answers, force)
 
 
 @cli.group()

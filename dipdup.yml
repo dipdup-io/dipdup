@@ -86,6 +86,7 @@ indexes:
       datasource: mainnet_subsquid
       first_level: 12369521
 
+logging: DEBUG
 advanced:
   api: {}
   decimal_precision: 128  # 🙄
@@ -93,4 +94,3 @@ advanced:
   # FIXME: Wipe with immune_tables leads to foreign key issues
   # unsafe_sqlite: true
   skip_version_check: true
-  logging: verbose

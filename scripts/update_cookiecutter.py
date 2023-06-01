@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-from dipdup.project import BaseProject
+from dipdup.project import DEFAULT_ANSWERS
+from dipdup.project import write_cookiecutter_json
 
 path = Path(__file__).parent.parent / 'docs' / 'cookiecutter.json'
-project = BaseProject()
-project.run(quiet=True, replay=None)
-project.write_cookiecutter_json(path)
+write_cookiecutter_json(DEFAULT_ANSWERS, path)

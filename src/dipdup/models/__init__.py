@@ -34,7 +34,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('dipdup.models')
 
 
 # NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
@@ -91,14 +91,6 @@ class SkipHistory(Enum):
     never = 'never'
     once = 'once'
     always = 'always'
-
-
-class LoggingValues(Enum):
-    """Enum for `logging` field values."""
-
-    default = 'default'
-    quiet = 'quiet'
-    verbose = 'verbose'
 
 
 @dataclass

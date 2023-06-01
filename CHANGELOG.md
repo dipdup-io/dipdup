@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
 - config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+- config: `logging` field now can contain either loglevel or name-loglevel mapping.
 - context: Signature of `add_contract` method has changed.
 - database: `EnumField` now uses `TEXT` type instead of `VARCHAR(n)`.
 - database: Querysets are no longer copied between chained method calls (`.filter().order_by().limit()`)

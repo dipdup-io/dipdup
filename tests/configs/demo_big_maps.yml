@@ -39,4 +39,4 @@ indexes:
       datasource: tzkt
       name_registry: name_registry
 
-logging: quiet
+logging: WARN
