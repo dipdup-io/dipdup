@@ -136,6 +136,15 @@ def prompt_str(
     return prompt(f'[{default}]', default, str, print_default=False)
 
 
+def prompt_bool(
+    question: str,
+    default: bool,
+) -> bool:
+    """Blue prompt in dipdup style for bool answers"""
+    cl.secho(f'=> {question}', fg='blue')
+    default_str = ' [Y/n]' if default else ' [y/N]'
+    return prompt(default_str, default, bool, print_default=False)
+
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
     answers = copy(DEFAULT_ANSWERS)
@@ -227,8 +236,10 @@ def answers_from_terminal() -> Answers:
 
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
-    cl.secho('=> Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏 ["y/N"]: ', fg='blue')
-    answers['crash_reporting'] = prompt('', False, bool, print_default=bool(answers['crash_reporting']))
+    answers['crash_reporting'] = prompt_bool(
+        'Enable crash reporting?\n' 'It helps us a lot to improve DipDup',
+        answers['crash_reporting'],
+    )
 
     _, answers['linters'] = prompt_anyof(
         'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
