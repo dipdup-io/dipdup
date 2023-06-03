@@ -3,8 +3,8 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import load_project_settings_replay
-from dipdup.project import render_project_from_template
+from dipdup.project import answers_from_replay
+from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
 demos_path = Path(__file__).parent.parent / 'demos'
@@ -29,8 +29,8 @@ for project_path in _get_projects():
         continue
 
     print(f'=> Rendering {project_path.name}')
-    answers = load_project_settings_replay(project_path)
-    render_project_from_template(answers, force=True)
+    answers = answers_from_replay(project_path)
+    render_project(answers, force=True)
 
     project_name = answers['project_name']
     package = answers['package']

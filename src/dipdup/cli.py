@@ -540,17 +540,17 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import create_new_project_from_console
-    from dipdup.project import load_project_settings_replay
-    from dipdup.project import render_project_from_template
+    from dipdup.project import answers_from_replay
+    from dipdup.project import answers_from_terminal
+    from dipdup.project import render_project
 
     if quiet:
         answers = copy(DEFAULT_ANSWERS)
     elif replay:
-        answers = load_project_settings_replay(replay)
+        answers = answers_from_replay(replay)
     else:
-        answers = create_new_project_from_console()
-    render_project_from_template(answers, force)
+        answers = answers_from_terminal()
+    render_project(answers, force)
 
 
 @cli.group()

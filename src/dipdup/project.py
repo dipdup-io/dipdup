@@ -1,9 +1,12 @@
+"""Scaffolding tools and scenarios for `dipdup new` command.
+
+Ask user some question with Click; render Jinja2 templates with answers.
+"""
 import logging
 import re
 from copy import copy
 from pathlib import Path
 from typing import Any
-from typing import Type
 from typing import TypedDict
 from typing import TypeVar
 from typing import cast
@@ -43,13 +46,14 @@ OTHER_DEMOS = (
     # TODO: demo_backup
     # TODO: demo_sql
 )
-OTHER = 'other'
 
 
 _T = TypeVar('_T')
 
 
 class Answers(TypedDict):
+    """Survey answers"""
+
     dipdup_version: str
     template: str
     project_name: str
@@ -65,7 +69,6 @@ class Answers(TypedDict):
     line_length: str
 
 
-# NOTE: Initialized with default values, changed with survey
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
     template='demo_dao',
@@ -86,7 +89,7 @@ DEFAULT_ANSWERS = Answers(
 def prompt(
     text: str,
     default: Any,
-    type_: Type[_T],
+    type_: type[_T],
     print_default: bool = True,
 ) -> _T:
     """Ask user something with casting to type; print_default=True prints default choise be used"""
@@ -104,13 +107,13 @@ def prompt(
         quit(0)
 
 
-def choose_one(
+def prompt_anyof(
     question: str,
     options: tuple[str, ...],
     comments: tuple[str, ...],
     default: int,
-) -> tuple[int, str]:  #
-    """Ask user to choose one option with question, list of options and there description(comments)"""
+) -> tuple[int, str]:
+    """Ask user to choose one of options; returns index and value"""
     table = tabulate(
         zip(range(len(options)), options, comments),
         colalign=('right', 'left', 'left'),
@@ -123,7 +126,7 @@ def choose_one(
     return index, options[index]
 
 
-def str_prompt(
+def prompt_str(
     question: str,
     default: str,
 ) -> str:
@@ -132,23 +135,23 @@ def str_prompt(
     return prompt(f'[{default}]', default, str, print_default=False)
 
 
-def create_new_project_from_console() -> Answers:
-    """Script running on dipdup new command and will create a new project from console survey"""
+def answers_from_terminal() -> Answers:
+    """Script running on dipdup new command and will create a new project base from interactive survey"""
     answers = copy(DEFAULT_ANSWERS)
 
     welcome_text = (
+        '\n'
         'Welcome to DipDup! This command will help you to create a new project.\n'
         'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
-        "Let's start with some basic questions."
     )
-    cl.secho('\n' + welcome_text + '\n', fg='yellow')
+    cl.secho(welcome_text, fg='yellow')
 
-    group_index, _ = choose_one(
-        question='Choose a template: blockchain-specific or blank?',
+    group_index, _ = prompt_anyof(
+        question='Choose a template group: blockchain-specific or blank?',
         options=(
             'EVM-compatible',
             'Tezos',
-            OTHER,
+            'other',
         ),
         comments=(
             'EVM templates',
@@ -161,14 +164,14 @@ def create_new_project_from_console() -> Answers:
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
     templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
-    _, answers['template'] = choose_one(
+    _, answers['template'] = prompt_anyof(
         'Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n',
         options=tuple(i[0] for i in templates),
         comments=tuple(i[1] for i in templates),
         default=0,
     )
 
-    project_name = str_prompt(
+    project_name = prompt_str(
         'Enter project name (the name will be used for folder name and package name)',
         answers['project_name'],
     )
@@ -181,30 +184,30 @@ def create_new_project_from_console() -> Answers:
     answers['project_name'] = project_name
     answers['package'] = project_name
 
-    answers['version'] = str_prompt(
+    answers['version'] = prompt_str(
         'Enter project version',
         answers['version'],
     )
 
     # NOTE: Used in pyproject.toml, README.md and some other places
-    answers['description'] = str_prompt(
+    answers['description'] = prompt_str(
         'Enter project description',
         answers['description'],
     )
 
     # define author and license for new indexer
-    answers['license'] = str_prompt(
+    answers['license'] = prompt_str(
         'Enter project license\n' 'DipDup itself is MIT-licensed.',
         answers['license'],
     )
-    answers['author'] = str_prompt(
+    answers['author'] = prompt_str(
         ('Enter project author\n' 'You can add more later in pyproject.toml.'),
         answers['author'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
-    _, answers['postgresql_image'] = choose_one(
+    _, answers['postgresql_image'] = prompt_anyof(
         question=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
         options=(
             'postgres:15',
@@ -226,14 +229,14 @@ def create_new_project_from_console() -> Answers:
     cl.secho('=> Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏 ["y/N"]: ', fg='blue')
     answers['crash_reporting'] = str(prompt('', False, bool, print_default=bool(answers['crash_reporting'])))
 
-    _, answers['linters'] = choose_one(
+    _, answers['linters'] = prompt_anyof(
         'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
         ('default', 'none'),
         ('Classic set: black, isort, ruff, mypy, pytest', 'None'),
         default=0,
     )
 
-    answers['line_length'] = str_prompt(
+    answers['line_length'] = prompt_str(
         ('Enter maximum line length\n' 'Used by linters.'),
         default=answers['line_length'],
     )
@@ -250,14 +253,17 @@ def write_cookiecutter_json(answers: Answers, path: Path) -> None:
     )
 
 
-def load_project_settings_replay(path: Path) -> Answers:
+def answers_from_replay(path: Path) -> Answers:
     if not path.is_file() and path.suffix != '.json':
         raise Exception
 
     return cast(Answers, orjson.loads(path.read_bytes()))
 
 
-def render_project_from_template(answers: Answers, force: bool = False) -> None:
+def render_project(
+    answers: Answers,
+    force: bool = False,
+) -> None:
     _render_templates(answers, Path('base'), force)
 
     # NOTE: Config and handlers
