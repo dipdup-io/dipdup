@@ -20,11 +20,11 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 We use `isort` and `black` for autoformatting, `ruff` for linting, and `mypy` for typechecking. All checks MUST pass before merging the code to default branch. Everything not enforced by these tools is up to the developer. But here are some recommendations:
 
-- Use `NOTE`, `TODO`, and `FIXME` prefixes for meaningful comments. It greatly helps to navigate the codebase.
-- f-strings are preferred over other string formatting syntax.
+- Consistency is the key. If you see a pattern in the codebase, follow it.
+- Use `NOTE:` and other, `TODO`, and `FIXME` prefixes for meaningful comments. It greatly helps to navigate the codebase.
 - Lazy imports are important to keep startup time low for tiny commands. We also do it for project imports, so not a big deal.
 - Some methods and attributes made private to avoid polluting the public API. Feel free to access them from the outside if you know what you are doing.
-- Be careful with walrus operator. We have no consensus about the match-case yet.
+- Finally, about exact language features. F-string formatting is preferred over other syntax. Be careful with walrus operator. Don't forget else in conditional expressions. Listen to you mom. We have no consensus about the match-case yet.
 
 ## Packaging
 
