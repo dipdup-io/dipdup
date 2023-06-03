@@ -1,6 +1,6 @@
 # demo-dao
 
-My shiny new indexer based on DipDup
+Blockchain indexer built with DipDup
 
 ## First steps
 

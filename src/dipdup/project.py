@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 from typing import TypedDict
 from typing import TypeVar
-from typing import cast
 
 import asyncclick as cl
 import orjson
@@ -45,6 +44,7 @@ OTHER_DEMOS = (
     # TODO: demo_jobs
     # TODO: demo_backup
     # TODO: demo_sql
+    # TODO: demo_timescale
 )
 
 
@@ -64,7 +64,7 @@ class Answers(TypedDict):
     author: str
     postgresql_image: str
     hasura_image: str
-    crash_reporting: str
+    crash_reporting: bool
     linters: str
     line_length: str
 
@@ -75,12 +75,13 @@ DEFAULT_ANSWERS = Answers(
     project_name='dipdup_indexer',
     package='dipdup_indexer',
     version='0.0.1',
-    description='My shiny new indexer based on DipDup',
+    description='Blockchain indexer built with DipDup',
     license='MIT',
     author='John Smith <john_smith@localhost.lan>',
     postgresql_image='postgres:15',
-    hasura_image='hasura/graphql-engine:v2.23.0',
-    crash_reporting='false',
+    # TODO: fetch latest from GH
+    hasura_image='hasura/graphql-engine:v2.26.0',
+    crash_reporting=False,
     linters='default',
     line_length='120',
 )
@@ -147,25 +148,25 @@ def answers_from_terminal() -> Answers:
     cl.secho(welcome_text, fg='yellow')
 
     group_index, _ = prompt_anyof(
-        question='Choose a template group: blockchain-specific or blank?',
+        question='What blockchain are you going to index?',
         options=(
-            'EVM-compatible',
+            'EVM',
             'Tezos',
-            'other',
+            '[none]',
         ),
         comments=(
-            'EVM templates',
-            'Tezos templates',
-            'Blank or other templates',
+            'EVM-compatible blockchains',
+            'Tezos',
+            'Create project from scratch or learn advanced DipDup features',
         ),
         default=0,
     )
+    templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
 
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
-    templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
     _, answers['template'] = prompt_anyof(
-        'Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n',
+        'Choose a project template',
         options=tuple(i[0] for i in templates),
         comments=tuple(i[1] for i in templates),
         default=0,
@@ -227,12 +228,12 @@ def answers_from_terminal() -> Answers:
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
     cl.secho('=> Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏 ["y/N"]: ', fg='blue')
-    answers['crash_reporting'] = str(prompt('', False, bool, print_default=bool(answers['crash_reporting'])))
+    answers['crash_reporting'] = prompt('', False, bool, print_default=bool(answers['crash_reporting']))
 
     _, answers['linters'] = prompt_anyof(
         'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
         ('default', 'none'),
-        ('Classic set: black, isort, ruff, mypy, pytest', 'None'),
+        ('Swiss knife of modern Python: black, ruff, mypy', 'None'),
         default=0,
     )
 
@@ -257,13 +258,16 @@ def answers_from_replay(path: Path) -> Answers:
     if not path.is_file() and path.suffix != '.json':
         raise Exception
 
-    return cast(Answers, orjson.loads(path.read_bytes()))
+    replay_answers: Answers = orjson.loads(path.read_bytes())
+    return copy(DEFAULT_ANSWERS) | replay_answers
 
 
 def render_project(
     answers: Answers,
     force: bool = False,
 ) -> None:
+    """Render project from template"""
+    # NOTE: Common base
     _render_templates(answers, Path('base'), force)
 
     # NOTE: Config and handlers
