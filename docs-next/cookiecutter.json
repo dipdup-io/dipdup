@@ -1,15 +1,15 @@
 {
   "dipdup_version": "6",
   "template": "demo_dao",
-  "project_name": "dipdup-indexer",
+  "project_name": "dipdup_indexer",
   "package": "dipdup_indexer",
   "version": "0.0.1",
   "description": "My shiny new indexer based on DipDup",
   "license": "MIT",
   "author": "John Smith <john_smith@localhost.lan>",
-  "postgresql_image": "postgres:14",
-  "hasura_image": "hasura/graphql-engine:v2.25.1",
-  "crash_reporting": false,
+  "postgresql_image": "postgres:15",
+  "hasura_image": "hasura/graphql-engine:v2.23.0",
+  "crash_reporting": "false",
   "linters": "default",
   "line_length": "120"
 }
