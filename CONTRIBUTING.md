@@ -13,7 +13,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 ## GitHub
 
 - Branch names MUST follow `prefix/short-description` format. Prefixes currently in use: `feat` for features, `fix` for bugfixes, `docs` for documentation, `exp` for experiments, `aux` for everything else.
-- Commits in pull requests MUST be squashed when merging to `master`.
+- Commits in pull requests MUST be squashed when merging to `next`.
 - Issues and pull requests MUST have a descriptive title; they SHOULD be linked to each other, appropriately labeled, and assigned to maintainers while in progress.
 
 ## Codestyle

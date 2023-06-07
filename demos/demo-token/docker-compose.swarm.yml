@@ -2,8 +2,7 @@ version: "3.8"
 
 services:
   dipdup:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-io/dipdup:${TAG:-master}
-    
+    image: dipdup/dipdup:{{ cookiecutter.dipdup_version }}
     depends_on:
       - db
       - hasura

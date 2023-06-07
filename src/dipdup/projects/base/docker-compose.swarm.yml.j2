@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   dipdup:
-    image: ${DOCKER_REGISTRY:-ghcr.io}/dipdup-io/dipdup:${TAG:-master}
+    image: dipdup/dipdup:{{ cookiecutter.dipdup_version }}
     {% if cookiecutter.postgresql_image != 'sqlite' %}
     depends_on:
       - db
