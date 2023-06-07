@@ -13,13 +13,13 @@ datasources:
 
   mainnet_infura_node:
     kind: evm.node
-    url: https://mainnet.infura.io/v3/${INFURA_KEY}
-    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
+    url: https://mainnet.infura.io/v3/${INFURA_KEY:-''}
+    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY:-''}
 
   mainnet_alchemy_node:
     kind: evm.node
-    url: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}
-    ws_url: wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}
+    url: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
+    ws_url: wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
 
   mainnet_subsquid:
     kind: evm.subsquid

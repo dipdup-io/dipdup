@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   dipdup:
-    image: dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+    image: dipdup/dipdup:6
+    
     depends_on:
       - db
       - hasura

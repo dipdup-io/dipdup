@@ -145,6 +145,7 @@ def prompt_bool(
     default_str = ' [Y/n]' if default else ' [y/N]'
     return prompt(default_str, default, bool, print_default=False)
 
+
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
     answers = copy(DEFAULT_ANSWERS)

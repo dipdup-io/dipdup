@@ -138,13 +138,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-.vscode
 .idea
-
-*sqlite3*
-
 .noseids
-
-secrets.env
-
+.vscode
+*.env
 *.out*
+*.sqlite3*
