@@ -57,7 +57,7 @@ jobs:
       run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
 
     - name: Deploy to GH Pages (docs-next)
-      if: startsWith(github.ref, 'refs/heads/master')
+      if: startsWith(github.ref, 'refs/heads/next')
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}

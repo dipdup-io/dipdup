@@ -2,7 +2,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup)
 [![PyPI monthly downloads](https://img.shields.io/pypi/dm/dipdup?color=2c2c2c)](https://pypi.org/project/dipdup/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dipdup?color=2c2c2c)](https://www.python.org)
-[![License: MIT](https://img.shields.io/github/license/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/blob/master/LICENSE)
+[![License: MIT](https://img.shields.io/github/license/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/blob/next/LICENSE)
 <br>
 [![Latest stable release](https://img.shields.io/github/v/release/dipdup-io/dipdup?label=stable%20release&color=2c2c2c)](https://github.com/dipdup-io/dipdup/releases)
 [![Latest pre-release](https://img.shields.io/github/v/release/dipdup-io/dipdup?include_prereleases&label=latest%20release&color=2c2c2c)](https://github.com/dipdup-io/dipdup/releases)
