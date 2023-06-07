@@ -18,10 +18,13 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## Codestyle
 
-- We use the following combo of linters and formatters: `isort`, `black`, `ruff`, `mypy`. All linter checks MUST pass before merging code to `next` (CI will fail otherwise).
-- Single quotes MUST be used for string literals.
-- Meaningful comments are highly RECOMMENDED to begin with `# NOTE:`, `# TODO:`, or `# FIXME:`.
-- f-string formatting is RECOMMENDED over other methods. Logging is an exception to this rule.
+We use `isort` and `black` for autoformatting, `ruff` for linting, and `mypy` for typechecking. All checks MUST pass before merging the code to default branch. Everything not enforced by these tools is up to the developer. But here are some recommendations:
+
+- Consistency is the key. If you see a pattern in the codebase, follow it.
+- Use `NOTE:` and other, `TODO`, and `FIXME` prefixes for meaningful comments. It greatly helps to navigate the codebase.
+- Lazy imports are important to keep startup time low for tiny commands. We also do it for project imports, so not a big deal.
+- Some methods and attributes made private to avoid polluting the public API. Feel free to access them from the outside if you know what you are doing.
+- Finally, about exact language features. F-string formatting is preferred over other syntax. Be careful with walrus operator. Don't forget else in conditional expressions. Listen to you mom. We have no consensus about the match-case yet.
 
 ## Packaging
 
