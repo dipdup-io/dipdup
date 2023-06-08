@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   dipdup:
-    image: dipdup/dipdup:6
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
     
     depends_on:
       - db

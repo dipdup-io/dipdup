@@ -260,8 +260,10 @@ async def wipe_schema(
     async with conn._in_transaction() as conn:
         if isinstance(conn, SqliteClient):
             await _wipe_schema_sqlite(conn, schema_name, immune_tables)
-        else:
+        elif isinstance(conn, AsyncpgClient):
             await _wipe_schema_postgres(conn, schema_name, immune_tables)
+        else:
+            raise NotImplementedError
 
 
 async def pg_create_schema(conn: AsyncpgClient, name: str) -> None:

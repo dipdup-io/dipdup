@@ -203,7 +203,7 @@ def match_operation_subgroup(
     if not (alt and len(matched_handlers) in (0, 1)):
         return matched_handlers
 
-    # NOTE: Below is a secret algorithm for very special cases
+    # NOTE: Alternative algorithm. Sort matched handlers by the internal incremental TzKT id of the last operation in matched pattern.
     index_list = list(range(len(matched_handlers)))
     id_list = []
     for handler in matched_handlers:
