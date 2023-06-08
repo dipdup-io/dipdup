@@ -4,7 +4,6 @@ import hashlib
 import logging
 import platform
 from contextlib import suppress
-from functools import partial
 from typing import Any
 
 import sentry_sdk
@@ -18,7 +17,6 @@ from dipdup import __version__
 from dipdup import env
 from dipdup.config import DipDupConfig
 from dipdup.sys import is_shutting_down
-
 
 _logger = logging.getLogger('dipdup.sentry')
 
