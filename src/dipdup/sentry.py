@@ -19,8 +19,6 @@ from dipdup import env
 from dipdup.config import DipDupConfig
 from dipdup.sys import is_shutting_down
 
-DEFAULT_SENTRY_DSN = 'https://ef33481a853b44e39187bdf2d9eef773@newsentry.baking-bad.org/6'
-
 
 _logger = logging.getLogger('dipdup.sentry')
 
@@ -48,20 +46,10 @@ def extract_event(error: Exception) -> dict[str, Any]:
 def before_send(
     event: dict[str, Any],
     hint: dict[str, Any],
-    crash_reporting: bool,
 ) -> dict[str, Any] | None:
     # NOTE: Terminated connections, cancelled tasks, etc.
     if is_shutting_down():
         return None
-
-    # NOTE: Skip some reports if Sentry DSN is not set implicitly
-    if crash_reporting:
-        if env.TEST or env.CI:
-            return None
-
-        # NOTE: User-generated events (e.g. from `ctx.logger`)
-        if not event.get('logger', 'dipdup').startswith('dipdup'):
-            return None
 
     # NOTE: Dark magic ahead. Merge `CallbackError` and its cause when possible.
     with suppress(KeyError, IndexError):
@@ -77,17 +65,11 @@ def before_send(
 
 
 def init_sentry(config: 'DipDupConfig') -> None:
-    crash_reporting = config.advanced.crash_reporting
     dsn = config.sentry.dsn
-
-    if dsn:
+    if not dsn:
         pass
-    elif crash_reporting:
-        dsn = DEFAULT_SENTRY_DSN
-    else:
-        return
 
-    _logger.info('Crash reporting is enabled: %s', dsn)
+    _logger.info('Sentry is enabled: %s', dsn)
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
@@ -106,10 +88,6 @@ def init_sentry(config: 'DipDupConfig') -> None:
     release = config.sentry.release or __version__
     environment = config.sentry.environment
     server_name = config.sentry.server_name
-    before_send_fn = partial(
-        before_send,
-        crash_reporting=crash_reporting,
-    )
 
     if not environment:
         if env.DOCKER:
@@ -122,17 +100,13 @@ def init_sentry(config: 'DipDupConfig') -> None:
             environment = 'local'
 
     if not server_name:
-        if crash_reporting:
-            # NOTE: Prevent Sentry from leaking hostnames
-            server_name = 'unknown'
-        else:
-            server_name = platform.node()
+        server_name = platform.node()
 
     sentry_sdk.init(
         dsn=dsn,
         integrations=integrations,
         attach_stacktrace=attach_stacktrace,
-        before_send=before_send_fn,
+        before_send=before_send,
         release=release,
         environment=environment,
         server_name=server_name,
@@ -149,7 +123,6 @@ def init_sentry(config: 'DipDupConfig') -> None:
         'release': release,
         'environment': environment,
         'server_name': server_name,
-        'crash_reporting': crash_reporting,
     }
     _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
     for tag, value in tags.items():

@@ -51,6 +51,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Removed `status` command.
 - config: Removed `similar_to` filter of `operation` index pattern.
 - config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
+- sentry: Removed `crash_reporting` flag and built-in DSN.
 
 ### Other
 

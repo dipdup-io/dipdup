@@ -9,7 +9,6 @@
   "author": "John Smith <john_smith@localhost.lan>",
   "postgresql_image": "postgres:15",
   "hasura_image": "hasura/graphql-engine:v2.27.0",
-  "crash_reporting": false,
   "linters": "default",
   "line_length": "120"
 }

@@ -64,7 +64,6 @@ class Answers(TypedDict):
     author: str
     postgresql_image: str
     hasura_image: str
-    crash_reporting: bool
     linters: str
     line_length: str
 
@@ -81,7 +80,6 @@ DEFAULT_ANSWERS = Answers(
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
     hasura_image='hasura/graphql-engine:v2.27.0',
-    crash_reporting=False,
     linters='default',
     line_length='120',
 )
@@ -236,11 +234,6 @@ def answers_from_terminal() -> Answers:
     )
 
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
-
-    answers['crash_reporting'] = prompt_bool(
-        'Enable crash reporting?\n' 'It helps us a lot to improve DipDup',
-        answers['crash_reporting'],
-    )
 
     _, answers['linters'] = prompt_anyof(
         'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
