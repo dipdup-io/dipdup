@@ -47,11 +47,8 @@ jobs:
       - name: dipdup init
         run: cd dipdup_indexer; dipdup init
 
-      - name: make install
-        run: cd dipdup_indexer; make install
-
-      - name: reinstall dipdup from HEAD
-        run: cd dipdup_indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
+      - name: Install dipdup from HEAD
+        run: cd dipdup_indexer; poetry run pip install --editable --no-cache-dir ..
 
       - name: make lint
         run: cd dipdup_indexer; make lint
