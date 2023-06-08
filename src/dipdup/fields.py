@@ -91,8 +91,8 @@ class EnumField(fields.Field[_EnumFieldT]):
         raise FrameworkException(f'Invalid enum value: {value}')
 
 
-# TODO: Postgres has native ARRAY type
-class ArrayField(fields.Field[list[str]]):
+# TODO: Use PostgreSQL native ARRAY type
+class ArrayField(Field[list[str]]):
     SQL_TYPE = 'TEXT'
 
     def to_db_value(
@@ -139,10 +139,10 @@ class DecimalField(Field[Decimal], Decimal):
         else:
             value = Decimal(value).quantize(self.quant).normalize()
         self.validate(value)
-        return value  # type: ignore
+        return value  # type: ignore[no-any-return]
 
     @property
-    def SQL_TYPE(self) -> str:  # type: ignore
+    def SQL_TYPE(self) -> str:  # type: ignore[override]
         return f'DECIMAL({self.max_digits},{self.decimal_places})'
 
     # class _db_sqlite:
@@ -155,7 +155,7 @@ class DecimalField(Field[Decimal], Decimal):
 # NOTE: Tortoise forbids index=True on TextField, and shows warning when it's pk=True. We only support SQLite and
 # PostgreSQL and have no plans for others. For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference
 # between TEXT and VARCHAR except for length constraint. So we can safely use TEXT for both to avoid schema changes.
-class TextField(Field[str], str):  # type: ignore
+class TextField(Field[str], str):  # type: ignore[misc]
     """
     Large Text field.
     """
