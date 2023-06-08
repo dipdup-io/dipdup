@@ -4,7 +4,9 @@ services:
   dipdup:
     build: .
     depends_on:
+      
       - db
+      
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: always
     environment:
@@ -12,7 +14,9 @@ services:
       - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
     ports:
       - 127.0.0.1:9000:9000
+    
 
+  
   db:
     image: postgres:15
     ports:
@@ -31,7 +35,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.22.0
+    image: hasura/graphql-engine:v2.27.0
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -45,6 +49,9 @@ services:
       - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
+  
 
 volumes:
+  
   db:
+  

@@ -1,6 +1,4 @@
-from tortoise import fields
-from tortoise.fields.relational import ForeignKeyFieldInstance
-
+from dipdup import fields
 from dipdup.models import Model
 
 
@@ -15,7 +13,7 @@ class User(Model):
 
 class Proposal(Model):
     id = fields.IntField(pk=True)
-    dao: ForeignKeyFieldInstance[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
+    dao: fields.ForeignKeyFieldInstance[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
     # upvotes = fields.IntField(default=0)
     # downvotes = fields.IntField(default=0)
     # start_date = fields.DatetimeField()
@@ -25,5 +23,5 @@ class Proposal(Model):
 
 class Vote(Model):
     id = fields.IntField(pk=True)
-    proposal: ForeignKeyFieldInstance[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
+    proposal: fields.ForeignKeyFieldInstance[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
     amount = fields.IntField()

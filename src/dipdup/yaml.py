@@ -13,7 +13,6 @@ Tasks performed at the first stage:
 
 from __future__ import annotations
 
-import json
 import logging.config
 import re
 from copy import copy
@@ -22,11 +21,11 @@ from os import environ as env
 from pathlib import Path
 from typing import Any
 
-from pydantic.json import pydantic_encoder
 from ruamel.yaml import YAML
 
 from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
+from dipdup.utils import json_dumps
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -50,10 +49,22 @@ def filter_comments(line: str) -> bool:
 def read_config_yaml(path: Path) -> str:
     _logger.debug('Loading config from %s', path)
     try:
-        with open(path) as file:
+        with path.open() as file:
             return ''.join(filter(filter_comments, file.readlines()))
     except OSError as e:
         raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
+
+
+def dump(value: Any) -> str:
+    yaml = YAML(typ='unsafe', pure=True)
+    yaml.default_flow_style = False
+    yaml.indent = 2
+
+    config_json = json_dumps(value)
+    config_yaml = exclude_none(yaml.load(config_json))
+    buffer = StringIO()
+    yaml.dump(config_yaml, buffer)
+    return buffer.getvalue()
 
 
 def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
@@ -68,7 +79,7 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
             raise ConfigurationError(f'Environment variable `{variable}` is not set')
         environment[variable] = value
         placeholder = match.group(0)
-        config_yaml = config_yaml.replace(placeholder, value or default_value)
+        config_yaml = config_yaml.replace(placeholder, value or default_value or '')
 
     return config_yaml, environment
 
@@ -111,15 +122,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         return config, config_environment
 
     def dump(self) -> str:
-        yaml = YAML(typ='unsafe', pure=True)
-        yaml.default_flow_style = False
-        yaml.indent = 2
-
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_yaml = exclude_none(yaml.load(config_json))
-        buffer = StringIO()
-        yaml.dump(config_yaml, buffer)
-        return buffer.getvalue()
+        return dump(self)
 
     def validate_version(self) -> None:
         config_spec_version = self['spec_version']

@@ -24,7 +24,7 @@ class TezosContractConfig(ContractConfig):
 
     :param address: Contract address
     :param code_hash: Contract code hash or address to fetch it from
-    :param typename: User-defined alias for the contract script
+    :param typename: Alias for the contract script
     """
 
     kind: Literal['tezos']
@@ -34,7 +34,7 @@ class TezosContractConfig(ContractConfig):
 
     @validator('address', allow_reuse=True)
     def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: Environment substitution was disabled during export, skip validation
+        # NOTE: It's a `config export` call with environment variable substitution disabled
         if not v or '$' in v:
             return v
 

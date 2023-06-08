@@ -28,7 +28,11 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
     def __init__(self, config: DatasourceConfigT) -> None:
         self._config = config
         http_config = ResolvedHttpConfig.create(self._default_http_config, config.http)
-        super().__init__(config.url, http_config)
+        http_config.alias = http_config.alias or config.name
+        super().__init__(
+            url=config.url,
+            http_config=http_config,
+        )
         self._logger = _logger
 
     @abstractmethod

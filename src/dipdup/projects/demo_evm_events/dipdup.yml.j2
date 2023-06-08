@@ -11,12 +11,12 @@ datasources:
 
   mainnet_node:
     kind: evm.node
-    url: https://mainnet.infura.io/v3/${INFURA_KEY}
-    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY}
+    url: https://mainnet.infura.io/v3/${INFURA_KEY:-''}
+    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY:-''}
 
   mainnet_subsquid:
     kind: evm.subsquid
-    url: ${ARCHIVE_URL:-https://eth.archive.subsquid.io}
+    url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
     node: mainnet_node
 
 contracts:

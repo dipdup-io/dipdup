@@ -3,6 +3,7 @@ import logging
 import pkgutil
 import types
 from collections import defaultdict
+from decimal import Decimal
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -20,6 +21,7 @@ from typing import TextIO
 from typing import TypeVar
 from typing import Union
 
+import orjson
 from humps import main as humps
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -181,7 +183,7 @@ def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
             continue
         if not path.stat().st_size:
             continue
-        with open(path) as file:
+        with path.open() as file:
             yield file
 
 
@@ -206,5 +208,27 @@ def parse_object(
         return type_(**dict(zip(model_keys, data)))
 
     except ValidationError as e:
-        msg = f'Failed to parse: {e.errors()}'
-        raise InvalidDataError(msg, type_, data) from e
+        raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e
+
+
+def _default_for_decimals(obj: Any) -> Any:
+    if isinstance(obj, Decimal):
+        return str(obj)
+    raise TypeError
+
+
+def json_dumps_plain(obj: Any | str) -> str:
+    """Smarter json.dumps"""
+    return orjson.dumps(
+        obj,
+        default=_default_for_decimals,
+    ).decode()
+
+
+def json_dumps(obj: Any | str, option: int | None = orjson.OPT_INDENT_2) -> bytes:
+    """Smarter json.dumps"""
+    return orjson.dumps(
+        obj,
+        default=_default_for_decimals,
+        option=option,
+    )

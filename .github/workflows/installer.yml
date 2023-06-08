@@ -45,16 +45,16 @@ jobs:
         run: dipdup new --quiet
 
       - name: dipdup init
-        run: cd dipdup-indexer; dipdup init
+        run: cd dipdup_indexer; dipdup init
 
       - name: make install
-        run: cd dipdup-indexer; make install
+        run: cd dipdup_indexer; make install
 
       - name: reinstall dipdup from HEAD
-        run: cd dipdup-indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
+        run: cd dipdup_indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
 
       - name: make lint
-        run: cd dipdup-indexer; make lint
+        run: cd dipdup_indexer; make lint
 
       - name: Deploy scripts to GH Pages
         if: contains(github.ref, 'next')

@@ -1,6 +1,7 @@
 from demo_uniswap import models
 from demo_uniswap.types.pool.evm_events.burn import Burn
 from demo_uniswap.types.pool.evm_events.mint import Mint
+from demo_uniswap.utils.repo import get_ctx_factory
 from demo_uniswap.utils.repo import models_repo
 from demo_uniswap.utils.tick import tick_get_or_create
 from demo_uniswap.utils.token import convert_token_amount
@@ -13,11 +14,15 @@ class PoolUpdateSign:
     BURN = -1
 
 
-async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | SubsquidEvent[Mint], sign: int) -> None:
-    factory = await models_repo.get_ctx_factory(ctx)
-    pool = await models_repo.get_pool(event.data.address)
-    token0 = await models_repo.get_token(pool.token0_id)
-    token1 = await models_repo.get_token(pool.token1_id)
+async def pool_update(
+    ctx: HandlerContext,
+    pool: models.Pool,
+    event: SubsquidEvent[Burn] | SubsquidEvent[Mint],
+    sign: int,
+) -> None:
+    factory = await get_ctx_factory(ctx)
+    token0 = await models.Token.cached_get(pool.token0_id)
+    token1 = await models.Token.cached_get(pool.token1_id)
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
@@ -37,7 +42,8 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
     token1.tx_count += 1
     token1.total_value_locked = token1.total_value_locked + sign * amount1
     token1.total_value_locked_usd = token1.total_value_locked * token1.derived_eth * eth_usd
-    await models_repo.update_tokens(token0, token1)
+    await token0.save()
+    await token1.save()
 
     pool.tx_count += 1
 
@@ -50,14 +56,14 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
         pool.total_value_locked_token0 * token0.derived_eth + pool.total_value_locked_token1 * token1.derived_eth
     )
     pool.total_value_locked_usd = pool.total_value_locked_eth * eth_usd
-    await models_repo.update_pool(pool)
+    await pool.save()
 
     factory.total_value_locked_eth = factory.total_value_locked_eth + sign * pool.total_value_locked_eth
     factory.total_value_locked_usd = factory.total_value_locked_eth * eth_usd
-    await models_repo.update_factory(factory)
+    await factory.save()
 
     tx_defaults = {
-        'id': f'{event.data.transaction_hash}#{pool.tx_count}',
+        'id': f'{event.data.transaction_hash}#{event.data.log_index}',
         'transaction_hash': event.data.transaction_hash,
         'timestamp': 0,  # FIXME
         'pool': pool,
@@ -70,7 +76,7 @@ async def pool_update(ctx: HandlerContext, event: SubsquidEvent[Burn] | Subsquid
         'amount_usd': amount_usd,
         'tick_lower': event.payload.tickLower,
         'tick_upper': event.payload.tickUpper,
-        'log_index': event.data.index,
+        'log_index': event.data.log_index,
     }
 
     tx: models.Burn | models.Mint

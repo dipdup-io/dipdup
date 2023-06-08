@@ -5,7 +5,7 @@ from typing import AsyncIterator
 
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
-from dipdup.fetcher import yield_by_level
+from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 
 
@@ -38,5 +38,5 @@ class TokenTransferFetcher(DataFetcher[TzktTokenTransferData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in yield_by_level(token_transfer_iter):
+        async for level, batch in readahead_by_level(token_transfer_iter, limit=5_000):
             yield level, batch

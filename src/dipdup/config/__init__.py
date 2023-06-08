@@ -17,7 +17,6 @@ from __future__ import annotations
 import hashlib
 import importlib
 import inspect
-import json
 import logging.config
 import re
 import sys
@@ -37,6 +36,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+import orjson
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -49,6 +49,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
+from dipdup.performance import MetricsLevel
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -74,18 +75,15 @@ class SqliteDatabaseConfig:
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
+    immune_tables: set[str] = field(default_factory=set)
 
     @property
     def schema_name(self) -> str:
-        return 'public'
+        return self.path
 
     @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
-
-    @property
-    def immune_tables(self) -> set[str]:
-        return set()
 
     @property
     def connection_timeout(self) -> int:
@@ -159,8 +157,9 @@ class HttpConfig:
     :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
-    :param batch_size: Number of items fetched in a single paginated request (for some APIs)
-    :param replay_path: Development-only option to use cached HTTP responses instead of making real requests
+    :param batch_size: Number of items fetched in a single paginated request
+    :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
+    :param alias: Alias for this HTTP client (dev only)
     """
 
     retry_count: int | None = None
@@ -173,6 +172,7 @@ class HttpConfig:
     connection_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
+    alias: str | None = None
 
 
 @dataclass
@@ -181,14 +181,15 @@ class ResolvedHttpConfig:
 
     retry_count: int = sys.maxsize
     retry_sleep: float = 1.0
-    retry_multiplier: float = 1.0
+    retry_multiplier: float = 2.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
-    ratelimit_sleep: float = 5.0
+    ratelimit_sleep: float = 0.0
     connection_limit: int = 100
     connection_timeout: int = 60
-    batch_size: int = 1000
+    batch_size: int = 10_000
     replay_path: str | None = None
+    alias: str | None = None
 
     @classmethod
     def create(
@@ -223,7 +224,7 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param typename: User-defined alias for the contract script
+    :param typename: Alias for the contract script
     """
 
     kind: str
@@ -366,13 +367,13 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_dict = json.loads(config_json)
+        config_json = orjson.dumps(self, default=pydantic_encoder)
+        config_dict = orjson.loads(config_json)
 
         self.strip(config_dict)
 
-        config_json = json.dumps(config_dict)
-        return hashlib.sha256(config_json.encode()).hexdigest()
+        config_json = orjson.dumps(config_dict)
+        return hashlib.sha256(config_json).hexdigest()
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -544,6 +545,12 @@ event_hooks = {
 
 
 @dataclass
+class ApiConfig:
+    host = '127.0.0.1'
+    port: int = 46339  # dial INDEX 😎
+
+
+@dataclass
 class AdvancedConfig:
     """Feature flags and other advanced config.
 
@@ -555,6 +562,11 @@ class AdvancedConfig:
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param crash_reporting: Enable crash reporting
+    :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
+    :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
+    :param api: Monitoring API config
+    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
+    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -565,15 +577,14 @@ class AdvancedConfig:
     skip_version_check: bool = False
     rollback_depth: int | None = None
     crash_reporting: bool = False
+    decimal_precision: int | None = None
+    unsafe_sqlite: bool = False
+    api: ApiConfig = field(default_factory=ApiConfig)
+    metrics: MetricsLevel = MetricsLevel.basic
+    alt_operation_matcher: bool = False
 
     class Config:
         extra = 'allow'
-
-    @property
-    def rollback_depth_int(self) -> int:
-        if self.rollback_depth is None:
-            raise FrameworkException('`rollback_depth` was not set on config initialization')
-        return self.rollback_depth
 
 
 @dataclass
@@ -732,6 +743,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
         return datasource
 
+    def get_evm_node_datasource(self, name: str) -> EvmNodeDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, EvmNodeDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
         loglevels = self.logging
         if not isinstance(loglevels, dict):
@@ -834,7 +851,7 @@ class DipDupConfig:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
-        raw_template = json.dumps(template, default=pydantic_encoder)
+        raw_template = orjson.dumps(template, default=pydantic_encoder).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
@@ -844,7 +861,7 @@ class DipDupConfig:
                 f'`{template_config.name}` index config is missing required template value `{missing_value}`'
             )
 
-        json_template = json.loads(raw_template)
+        json_template = orjson.loads(raw_template)
         new_index_config = template.__class__(**json_template)
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
@@ -863,8 +880,14 @@ class DipDupConfig:
         for datasource_config in self.datasources.values():
             if not isinstance(datasource_config, SubsquidDatasourceConfig):
                 continue
-            if isinstance(datasource_config.node, str):
-                datasource_config.node = self.datasources[datasource_config.node]
+            node_field = datasource_config.node
+            if isinstance(node_field, str):
+                datasource_config.node = self.datasources[node_field]
+            elif isinstance(node_field, tuple):
+                nodes = []
+                for node in node_field:
+                    nodes.append(self.get_evm_node_datasource(node) if isinstance(node, str) else node)
+                datasource_config.node = tuple(nodes)
 
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
@@ -929,8 +952,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            for handler_config in index_config.handlers:
-                handler_config.parent = index_config
+            index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:
@@ -992,26 +1014,26 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 """
 
 # NOTE: Reimport to avoid circular imports
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig  # noqa: E402
-from dipdup.config.coinbase import CoinbaseDatasourceConfig  # noqa: E402
-from dipdup.config.evm import EvmContractConfig  # noqa: E402
-from dipdup.config.evm_node import EvmNodeDatasourceConfig  # noqa: E402
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig  # noqa: E402
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig  # noqa: E402
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig  # noqa: E402
-from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
-from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
-from dipdup.config.tezos import TezosContractConfig  # noqa: E402
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
-from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
+from dipdup.config.http import HttpDatasourceConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
 ContractConfigU = EvmContractConfig | TezosContractConfig
@@ -1053,6 +1075,9 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
     submodules += ((__name__, self),)
 
     for name, submodule in submodules:
+        if not submodule.__name__.startswith('dipdup.config'):
+            continue
+
         for attr in dir(submodule):
             value = getattr(submodule, attr)
             if hasattr(value, '__annotations__'):
@@ -1083,6 +1108,6 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | None': 'str | EvmNodeDatasourceConfig | None',
+    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': 'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None',
 }
 _patch_annotations(_original_to_aliased)

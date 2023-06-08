@@ -10,10 +10,10 @@ from typing import cast
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.context import DipDupContext
-from dipdup.context import StateQueue
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
+from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
@@ -44,6 +44,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._config = config
         self._datasource = datasource
         self._queue: deque[IndexQueueItemT] = deque()
+        queues.add_queue(self._queue, f'index_realtime:{config.name}')
 
         self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
@@ -127,9 +128,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         if self.state.status == IndexStatus.disabled:
             raise FrameworkException('Index is in oneshot state and cannot be processed')
 
-        if self.name in StateQueue.rolled_back_indexes:
+        if self.name in self._ctx._rolled_back_indexes:
             await self.state.refresh_from_db(('level',))
-            StateQueue.rolled_back_indexes.remove(self.name)
+            self._ctx._rolled_back_indexes.remove(self.name)
 
         last_level = self._config.last_level
         if last_level:

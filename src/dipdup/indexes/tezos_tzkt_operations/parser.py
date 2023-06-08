@@ -1,5 +1,4 @@
 from contextlib import suppress
-from functools import lru_cache
 from itertools import groupby
 from typing import Any
 from typing import Hashable
@@ -17,6 +16,7 @@ from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.performance import caches
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -37,8 +37,6 @@ def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
     return root_field.outer_type_  # type: ignore[no-any-return]
 
 
-# FIXME: Unsafe cache size here and below
-@lru_cache(None)
 def is_array_type(storage_type: type[Any]) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     # NOTE: list[...]
@@ -54,7 +52,6 @@ def is_array_type(storage_type: type[Any]) -> bool:
     return False
 
 
-@lru_cache(None)
 def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
     """Extract list item type from list type"""
     # NOTE: regular list
@@ -66,7 +63,6 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
     return get_list_elt_type(root_type)
 
 
-@lru_cache(None)
 def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[Any]:
     """Extract dict value types from field type"""
     # NOTE: Regular dict
@@ -95,7 +91,6 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
     raise KeyError(f'Field `{key}` not found in {dict_type}')
 
 
-@lru_cache(None)
 def unwrap_union_type(union_type: type[Any]) -> tuple[bool, tuple[type[Any], ...]]:
     """Check if the type is either optional or union and return arg types if so"""
     if get_origin(union_type) == Union:
@@ -143,6 +138,7 @@ def _apply_bigmap_diffs(
 
 def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iterable[dict[str, Any]]]) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
+    storage_type = cast(Type[BaseModel], storage_type)  # type: ignore[redundant-cast]
     # NOTE: First, check if the type is a Union. Remember, Optional is a Union too.
     is_union, arg_types = unwrap_union_type(storage_type)
     if is_union:
@@ -181,16 +177,28 @@ def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iter
     return storage
 
 
-def deserialize_storage(operation_data: TzktOperationData, storage_type: Type[StorageType]) -> StorageType:
+def deserialize_storage(
+    operation_data: TzktOperationData,
+    storage_type: type[StorageType],
+) -> tuple[TzktOperationData, StorageType]:
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 
     try:
-        operation_data.storage = _process_storage(
-            storage=operation_data.storage,
+        # NOTE: op data is frozen, repack in-place 🥶
+        operation_data_dict = operation_data.__dict__
+        operation_data_dict['storage'] = _process_storage(
+            storage=operation_data_dict['storage'],
             storage_type=storage_type,
             bigmap_diffs=bigmap_diffs,
         )
-        return parse_object(storage_type, operation_data.storage)
+        operation_data = TzktOperationData(**operation_data_dict)
+        return operation_data, parse_object(storage_type, operation_data.storage)
     except IntrospectionError as e:
         raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e
+
+
+is_array_type = caches.add_lru(is_array_type, 2**10, 'is_array_type')
+get_list_elt_type = caches.add_lru(get_list_elt_type, 2**10, 'get_list_elt_type')
+get_dict_value_type = caches.add_lru(get_dict_value_type, 2**10, 'get_dict_value_type')
+unwrap_union_type = caches.add_lru(unwrap_union_type, 2**10, 'unwrap_union_type')

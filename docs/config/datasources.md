@@ -51,5 +51,5 @@ datasources:
 ```
 
 ```admonish info title="See Also"
-* {{ #summary advanced/datasources.md}}
+* {{ #summary datasources/README.md}}
 ```

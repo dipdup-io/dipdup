@@ -14,6 +14,7 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
+from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
 
@@ -195,8 +196,12 @@ class MigrationOriginationFetcherChannel(FetcherChannel[TzktOperationData, None]
         for op in originations:
             if op.originated_contract_address:
                 code_hash, type_hash = await self._datasource.get_contract_hashes(op.originated_contract_address)
-                op.originated_contract_code_hash = code_hash
-                op.originated_contract_type_hash = type_hash
+                op_dict = op.__dict__
+                op_dict.update(
+                    originated_contract_code_hash=code_hash,
+                    originated_contract_type_hash=type_hash,
+                )
+                op = TzktOperationData(**op_dict)
 
             self._buffer[op.level].append(op)
 
@@ -421,25 +426,32 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
             ),
         )
 
-        while True:
-            min_channel = sorted(channels, key=lambda x: x.head)[0]
-            await min_channel.fetch()
+        async def _merged_iter(
+            channels: tuple[FetcherChannel[TzktOperationData, Any], ...]
+        ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
+            while True:
+                min_channel = sorted(channels, key=lambda x: x.head)[0]
+                await min_channel.fetch()
 
-            # NOTE: It's a different channel now, but with greater head level
-            min_channel = sorted(channels, key=lambda x: x.head)[0]
-            min_head = min_channel.head
+                # NOTE: It's a different channel now, but with greater head level
+                min_channel = sorted(channels, key=lambda x: x.head)[0]
+                min_head = min_channel.head
 
-            while self._head <= min_head:
-                if self._head in self._buffer:
-                    operations = self._buffer.pop(self._head)
-                    yield self._head, dedup_operations(tuple(operations))
-                self._head += 1
+                while self._head <= min_head:
+                    if self._head in self._buffer:
+                        operations = self._buffer.pop(self._head)
+                        yield dedup_operations(tuple(operations))
+                    self._head += 1
 
-            if all(c.fetched for c in channels):
-                break
+                if all(c.fetched for c in channels):
+                    break
 
-        if self._buffer:
-            raise FrameworkException('Operations left in queue')
+            if self._buffer:
+                raise FrameworkException('Operations left in queue')
+
+        event_iter = _merged_iter(channels)
+        async for level, operations in readahead_by_level(event_iter, limit=5_000):
+            yield level, operations
 
 
 class OperationUnfilteredFetcher(DataFetcher[TzktOperationData]):

@@ -21,7 +21,7 @@ indexer
 │   ├── on_mint.py
 │   └── on_transfer.py
 ├── hasura                    # Arbitrary Hasura metadata
-│   ├── medatata.json
+│   ├── metadata.json
 ├── hooks                     # User-defined callbacks to run manually or on specific events
 │   ├── hook.py
 │   ├── on_reindex.py

@@ -1,9 +1,11 @@
 import asyncio
+import random
+import time
 from collections import defaultdict
-from contextlib import ExitStack
 from typing import Any
 from typing import cast
 
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
@@ -18,10 +20,11 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
-from dipdup.prometheus import Metrics
+from dipdup.performance import metrics
 
-LEVEL_TIMEOUT = 1
-LAST_MILE_LEVELS = 32
+LEVEL_BATCH_TIMEOUT = 1
+LAST_MILE_TRIGGER = 256
+LEVELS_LEFT_TRIGGER = 256
 
 
 class SubsquidEventsIndex(
@@ -35,13 +38,44 @@ class SubsquidEventsIndex(
         datasource: SubsquidDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self.node_datasource: EvmNodeDatasource | None = None
-        if config.datasource.node is not None:
-            self.node_datasource = ctx.get_evm_node_datasource(config.datasource.node.name)
+        self._node_datasources: tuple[EvmNodeDatasource, ...] | None = None
+        self._topics: dict[str, dict[str, str]] | None = None
+
+    @property
+    def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
+        if self._node_datasources is not None:
+            return self._node_datasources
+
+        node_field = self._config.datasource.node
+        if node_field is None:
+            node_field = ()
+        elif isinstance(node_field, EvmNodeDatasourceConfig):
+            node_field = (node_field,)
+        self._node_datasources = tuple(
+            self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
+        )
+        return self._node_datasources
+
+    @property
+    def node_datasource(self) -> EvmNodeDatasource:
+        if not self.node_datasources:
+            raise FrameworkException('A node datasource requested, but none attached to this index')
+        return random.choice(self.node_datasources)
+
+    @property
+    def topics(self) -> dict[str, dict[str, str]]:
+        if self._topics is None:
+            self._topics = {}
+            for handler_config in self._config.handlers:
+                typename = handler_config.contract.module_name
+                self._topics[typename] = self._ctx.package.get_evm_topics(typename)
+
+        return self._topics
 
     async def _process_queue(self) -> None:
         logs_by_level = defaultdict(list)
 
+        # NOTE: Drain queue and group messages by level.
         while True:
             while self._queue:
                 logs = self._queue.popleft()
@@ -52,31 +86,28 @@ class SubsquidEventsIndex(
 
                 logs_by_level[message_level].append(logs)
 
-            # NOTE: Wait for more messages until grouping them by level
-            await asyncio.sleep(LEVEL_TIMEOUT)
+            # NOTE: Wait for more messages a bit more - node doesn't notify us about the level boundaries.
+            await asyncio.sleep(LEVEL_BATCH_TIMEOUT)
             if not self._queue:
                 break
 
         for message_level, level_logs in logs_by_level.items():
             # NOTE: If it's not a next block - resync with Subsquid
             if message_level != self.state.level + 1:
-                self._logger.warning('Not enough realtime messages, resyncing to %s', message_level)
+                self._logger.info('Not enough messages in queue; resyncing to %s', message_level)
                 self._queue.clear()
                 self.datasource.set_sync_level(None, message_level)
                 return
 
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_events(tuple(level_logs), message_level)
+            await self._process_level_events(tuple(level_logs), self.topics, message_level)
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = set()
         for sub in self._config.get_subscriptions():
             sync_levels.add(self.datasource.get_sync_level(sub))
-            if self.node_datasource is not None:
-                sync_levels.add(self.node_datasource.get_sync_level(sub))
+            for datasource in self.node_datasources or ():
+                sync_levels.add(datasource.get_sync_level(sub))
 
         if None in sync_levels:
             sync_levels.remove(None)
@@ -98,29 +129,29 @@ class SubsquidEventsIndex(
 
         if levels_left <= 0:
             return
-        elif levels_left >= LAST_MILE_LEVELS or not self.node_datasource:
-            sync_level = await self.datasource.get_head_level()
-            fetcher = self._create_fetcher(first_level, sync_level)
 
-            async for level, events in fetcher.fetch_by_level():
-                with ExitStack() as stack:
-                    if Metrics.enabled:
-                        Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                        stack.enter_context(Metrics.measure_level_sync_duration())
-                    await self._process_level_events(events, sync_level)
+        subsquid_sync_level = await self.datasource.get_head_level()
 
+        if self.node_datasources:
+            node_sync_level = await self.node_datasource.get_head_level()
+            last_mile = abs(node_sync_level - subsquid_sync_level)
+            self._logger.info('Subsquid is %s levels behind the node; %s levels left to sync', last_mile, levels_left)
         else:
-            self._logger.info('Not enough realtime messages; syncing with node RPC')
-            if self.node_datasource is None:
-                raise FrameworkException('Processing queue but node datasource is not set')
+            self._logger.info('Subsquid head is %s; %s levels to sync', subsquid_sync_level, levels_left)
+            last_mile, node_datasource = 0, None
 
-            # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
-            self._logger.info('Resyncing with node: %s -> %s', index_level, sync_level)
+        use_node = last_mile < LAST_MILE_TRIGGER and levels_left < LEVELS_LEFT_TRIGGER
+
+        # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
+        if use_node and self.node_datasources:
+            sync_level = node_sync_level
             for level in range(first_level, sync_level):
-                block = await self.node_datasource.get_block_by_level(level)
+                # NOTE: Get random one every time
+                node_datasource = self.node_datasource
+                block = await node_datasource.get_block_by_level(level)
                 if block is None:
                     raise FrameworkException(f'Block {level} not found')
-                level_logs = await self.node_datasource.get_logs(
+                level_logs = await node_datasource.get_logs(
                     {
                         # TODO: Filter by addresses too
                         'fromBlock': hex(level),
@@ -128,7 +159,14 @@ class SubsquidEventsIndex(
                     }
                 )
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
-                await self._process_level_events(parsed_level_logs, sync_level)
+                await self._process_level_events(parsed_level_logs, self.topics, sync_level)
+
+        else:
+            sync_level = subsquid_sync_level
+            fetcher = self._create_fetcher(first_level, sync_level)
+
+            async for _level, events in fetcher.fetch_by_level():
+                await self._process_level_events(events, self.topics, sync_level)
 
         await self._exit_sync_state(sync_level)
 
@@ -156,31 +194,39 @@ class SubsquidEventsIndex(
     async def _process_level_events(
         self,
         events: tuple[SubsquidEventData | EvmNodeLogData, ...],
+        topics: dict[str, dict[str, str]],
         sync_level: int,
     ) -> None:
         if not events:
             return
 
         batch_level = events[0].level
+        metrics and metrics.inc(f'{self.name}:events_total', len(events))
         index_level = self.state.level
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing contract events of level %s', batch_level)
-        matched_handlers = match_events(self._ctx.package, self._config.handlers, events)
+        started_at = time.time()
+        matched_handlers = match_events(self._ctx.package, self._config.handlers, events, self.topics)
+        metrics and metrics.inc(f'{self.name}:events_matched', len(matched_handlers))
+        metrics and metrics.inc(f'{self.name}:time_in_matcher', (time.time() - started_at) / 60)
 
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
             await self._update_state(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+        started_at = time.time()
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, event in matched_handlers:
+                handler_started_at = time.time()
                 await self._call_matched_handler(handler_config, event)
+                metrics and metrics.inc(
+                    f'{self.name}:time_in_callbacks:{handler_config.name}',
+                    (time.time() - handler_started_at) / 60,
+                )
             await self._update_state(level=batch_level)
+        metrics and metrics.inc(f'{self.name}:time_in_callbacks', (time.time() - started_at) / 60)
 
     async def _call_matched_handler(
         self,
@@ -193,7 +239,7 @@ class SubsquidEventsIndex(
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "demo-token"
 version = "0.0.1"
-description = "My shiny new indexer based on DipDup"
+description = "Blockchain indexer built with DipDup"
 license = "MIT"
 authors = [
     "John Smith <john_smith@localhost.lan>"

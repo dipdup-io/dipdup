@@ -2,10 +2,12 @@ version: "3.8"
 
 services:
   dipdup:
-    image: dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
+    
     depends_on:
       - db
       - hasura
+    
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     environment:
       - "POSTGRES_USER=dipdup"
@@ -15,6 +17,7 @@ services:
     networks:
       - dipdup-private
       - prometheus-private
+    
     deploy:
       mode: replicated
       replicas: ${INDEXER_ENABLED:-1}
@@ -31,6 +34,7 @@ services:
         max-file: "10"
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
+  
   db:
     image: postgres:15
     volumes:
@@ -53,7 +57,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.23.0
+    image: hasura/graphql-engine:v2.27.0
     depends_on:
       - db
     environment:
@@ -83,10 +87,13 @@ services:
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
       placement: *placement
     logging: *logging
+  
 
 
 volumes:
+  
   db:
+  
 
 networks:
   dipdup-private:

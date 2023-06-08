@@ -1,17 +1,12 @@
-import json
 from contextlib import suppress
 from decimal import Decimal
-from os.path import dirname
-from os.path import join
-from typing import List
-from typing import Optional
-from typing import Union
 
 from eth_typing import ChecksumAddress
 from eth_utils.address import to_checksum_address
-from web3 import Web3
+from web3 import AsyncWeb3
 
 from demo_uniswap import models as models
+from demo_uniswap.utils.abi import get_abi
 from demo_uniswap.utils.repo import models_repo
 
 MINIMUM_ETH_LOCKED = Decimal('60')
@@ -49,16 +44,9 @@ WHITELIST_TOKENS = {
 }
 
 
-package_dir = dirname(dirname(__file__))
-
-with open(join(package_dir, 'abi/erc20/ERC20.json')) as f:
-    erc20_abi = json.load(f)
-
-with open(join(package_dir, 'abi/erc20/ERC20NameBytes.json')) as f:
-    erc20_symbol_bytes_abi = json.load(f)
-
-with open(join(package_dir, 'abi/erc20/ERC20SymbolBytes.json')) as f:
-    erc20_name_bytes_abi = json.load(f)
+erc20_abi = get_abi('erc20.ERC20')
+erc20_symbol_bytes_abi = get_abi('erc20.ERC20SymbolBytes')
+erc20_name_bytes_abi = get_abi('erc20.ERC20NameBytes')
 
 
 def convert_token_amount(amount: int, decimals: int) -> Decimal:
@@ -68,25 +56,24 @@ def convert_token_amount(amount: int, decimals: int) -> Decimal:
 
 
 class ERC20Token:
-    def __init__(self, address: ChecksumAddress, web3: Web3):
+    def __init__(self, address: ChecksumAddress, web3: AsyncWeb3):
         self.web3 = web3
         self.address = address
         self.contract = self.web3.eth.contract(address=self.address, abi=erc20_abi)
 
     @classmethod
-    def from_address(cls, token_address: Union[str, bytes], rpc_endpoint: str) -> 'ERC20Token':
-        web3 = Web3(Web3.HTTPProvider(rpc_endpoint))
+    def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':
         address = to_checksum_address(token_address)
         return ERC20Token(address, web3)
 
-    def get_symbol(self) -> str:
+    async def get_symbol(self) -> str:
         # FIXME: https://github.com/ethereum/web3.py/issues/2658
         with suppress(Exception):
-            return str(self.contract.functions.symbol().call())
+            return str(await self.contract.functions.symbol().call())
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
-            return contract.functions.symbol().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
+            return (await contract.functions.symbol().call()).decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -94,13 +81,13 @@ class ERC20Token:
 
         return 'unknown'
 
-    def get_name(self) -> str:
+    async def get_name(self) -> str:
         with suppress(Exception):
-            return self.contract.functions.name().call()  # type: ignore[no-any-return]
+            return await self.contract.functions.name().call()  # type: ignore[no-any-return]
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_name_bytes_abi)
-            return contract.functions.name().call().decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
+            return (await contract.functions.name().call()).decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -108,9 +95,9 @@ class ERC20Token:
 
         return 'unknown'
 
-    def get_decimals(self) -> int:
+    async def get_decimals(self) -> int:
         with suppress(Exception):
-            return self.contract.functions.decimals().call()  # type: ignore[no-any-return]
+            return await self.contract.functions.decimals().call()  # type: ignore[no-any-return]
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -118,9 +105,9 @@ class ERC20Token:
 
         raise ValueError(f'Cannot get decimals for token {self.address}')
 
-    def get_total_supply(self) -> int:
-        with suppress(Exception):
-            self.contract.functions.totalSupply().call()
+    async def get_total_supply(self) -> int:
+        # with suppress(Exception):
+        #     return await self.contract.functions.totalSupply().call()
 
         return 0
 
@@ -133,7 +120,7 @@ class StaticTokenDefinition:
         self.decimals = decimals
 
     @staticmethod
-    def get_static_definitions() -> List['StaticTokenDefinition']:
+    def get_static_definitions() -> list['StaticTokenDefinition']:
         static_definitions = [
             StaticTokenDefinition('0xe0b7927c4af23765cb51314a0e0521a9645f0e2a', 'DGD', 'DGD', 9),
             StaticTokenDefinition('0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9', 'AAVE', 'Aave Token', 18),
@@ -145,7 +132,7 @@ class StaticTokenDefinition:
         return static_definitions
 
     @staticmethod
-    def from_address(token_address: ChecksumAddress) -> Optional['StaticTokenDefinition']:
+    def from_address(token_address: ChecksumAddress) -> 'StaticTokenDefinition | None':
         static_definitions = StaticTokenDefinition.get_static_definitions()
         for static_definition in static_definitions:
             if to_checksum_address(static_definition.address) == token_address:
@@ -166,19 +153,19 @@ async def token_derive_eth(token: models.Token) -> Decimal:
     price_so_far = Decimal()
 
     for pool_address in token.whitelist_pools:
-        pool = await models_repo.get_pool(pool_address)
+        pool = await models.Pool.cached_get(pool_address)
         if pool.liquidity == 0:
             continue
 
         if token.id == pool.token0:
-            other_token = await models_repo.get_token(pool.token1_id)
+            other_token = await models.Token.cached_get(pool.token1_id)
             eth_locked = pool.total_value_locked_token1 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked
                 price_so_far = pool.token1_price * other_token.derived_eth
 
         elif token.id == pool.token1:
-            other_token = await models_repo.get_token(pool.token0_id)
+            other_token = await models.Token.cached_get(pool.token0_id)
             eth_locked = pool.total_value_locked_token0 * other_token.derived_eth
             if eth_locked > largest_liquidity_eth and eth_locked > MINIMUM_ETH_LOCKED:
                 largest_liquidity_eth = eth_locked

@@ -40,12 +40,9 @@ def match_token_transfers(
     for token_transfer in token_transfers:
         for handler_config in handlers:
             token_transfer_matched = match_token_transfer(handler_config, token_transfer)
-            if token_transfer_matched:
-                _logger.info(
-                    '%s: `%s` handler matched!',
-                    token_transfer.level,
-                    handler_config.callback,
-                )
-                matched_handlers.append((handler_config, token_transfer))
+            if not token_transfer_matched:
+                continue
+            _logger.debug('%s: `%s` handler matched!', token_transfer.level, handler_config.callback)
+            matched_handlers.append((handler_config, token_transfer))
 
     return matched_handlers

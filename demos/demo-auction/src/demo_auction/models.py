@@ -1,8 +1,6 @@
 from enum import IntEnum
 
-from tortoise import fields
-from tortoise.fields.relational import ForeignKeyFieldInstance
-
+from dipdup import fields
 from dipdup.models import Model
 
 
@@ -21,17 +19,17 @@ class Token(Model):
     amount = fields.BigIntField()
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()
-    holder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'tokens')
+    holder: fields.ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'tokens')
 
     token_id: int
 
 
 class Auction(Model):
     id = fields.BigIntField(pk=True)
-    token: ForeignKeyFieldInstance[Token] = fields.ForeignKeyField('models.Token', 'auctions')
+    token: fields.ForeignKeyFieldInstance[Token] = fields.ForeignKeyField('models.Token', 'auctions')
     bid_amount = fields.BigIntField()
-    bidder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'winning_auctions')
-    seller: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'created_auctions')
+    bidder: fields.ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'winning_auctions')
+    seller: fields.ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'created_auctions')
     end_timestamp = fields.DatetimeField()
     status = fields.IntEnumField(AuctionStatus)
     level = fields.BigIntField()
@@ -42,8 +40,8 @@ class Auction(Model):
 
 class Bid(Model):
     id = fields.BigIntField(pk=True)
-    auction: ForeignKeyFieldInstance[Auction] = fields.ForeignKeyField('models.Auction', 'bids')
+    auction: fields.ForeignKeyFieldInstance[Auction] = fields.ForeignKeyField('models.Auction', 'bids')
     bid_amount = fields.BigIntField()
-    bidder: ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'bids')
+    bidder: fields.ForeignKeyFieldInstance[User] = fields.ForeignKeyField('models.User', 'bids')
     level = fields.BigIntField()
     timestamp = fields.DatetimeField()

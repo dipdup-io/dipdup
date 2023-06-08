@@ -1,5 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
-  <section id="dipdup">
+<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
 <p>Documentation: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
@@ -145,6 +144,45 @@
 </dd></dl>
 
 </section>
+<section id="dipdup-report">
+<h2>report<a class="headerlink" href="#dipdup-report" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>report<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-report-rm">
+<h3>rm<a class="headerlink" href="#dipdup-report-rm" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>report<span class="w"> </span>rm<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>ID<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-report-rm-a">
+<span id="cmdoption-dipdup-report-rm-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-report-rm-a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all reports.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-report-rm-arg-ID">
+<span class="sig-name descname"><span class="pre">ID</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-report-rm-arg-ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Optional argument</p>
+</dd></dl>
+
+</section>
+<section id="dipdup-report-show">
+<h3>show<a class="headerlink" href="#dipdup-report-show" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>report<span class="w"> </span>show<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>ID
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dipdup-report-show-arg-ID">
+<span class="sig-name descname"><span class="pre">ID</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-report-show-arg-ID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+</section>
 <section id="dipdup-run">
 <h2>run<a class="headerlink" href="#dipdup-run" title="Permalink to this heading">¶</a></h2>
 <p>Run indexer.</p>
@@ -276,12 +314,5 @@
 </dd></dl>
 
 </section>
-</section>
-<section id="dipdup-status">
-<h2>status<a class="headerlink" href="#dipdup-status" title="Permalink to this heading">¶</a></h2>
-<p>Show the current status of indexes in the database.</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
-</pre></div>
-</div>
 </section>
 </section>

@@ -1,59 +1,31 @@
 import asyncio
 import zipfile
 from collections import defaultdict
+from collections import deque
 from io import BytesIO
 from typing import Any
 from typing import AsyncIterator
-from typing import TypedDict
-from typing import cast
 
 import pyarrow.ipc  # type: ignore[import]
-from typing_extensions import NotRequired
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
+from dipdup.models.evm_subsquid import LogFieldSelection
+from dipdup.models.evm_subsquid import LogRequest
+from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
-FieldMap = dict[str, bool]
-
-
-class FieldSelection(TypedDict):
-    block: NotRequired[FieldMap]
-    transaction: NotRequired[FieldMap]
-    log: NotRequired[FieldMap]
-
-
-class LogFilter(TypedDict):
-    address: NotRequired[list[str]]
-    topics: NotRequired[list[list[str]]]
-    fieldSelection: NotRequired[FieldSelection]
-
-
-class TxFilter(TypedDict):
-    to: NotRequired[list[str]]
-    sighash: NotRequired[list[str]]
-
-
-class Query(TypedDict):
-    logs: NotRequired[list[LogFilter]]
-    transactions: NotRequired[list[TxFilter]]
-    fromBlock: NotRequired[int]
-    toBlock: NotRequired[int]
-
-
-_log_fields: FieldSelection = {
-    'log': {
-        'address': True,
-        'blockNumber': True,
-        'data': True,
-        'topics': True,
-        'blockHash': True,
-        'index': True,
-        'transactionHash': True,
-        'transactionIndex': True,
-    },
+LOG_FIELDS: LogFieldSelection = {
+    'logIndex': True,
+    'transactionIndex': True,
+    'transactionHash': True,
+    'address': True,
+    'data': True,
+    'topics': True,
+    # 'blockNumber': True,
+    # 'blockHash': True,
 }
 
 
@@ -99,43 +71,47 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
-        def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
-            if address is None:
-                return {
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
-            else:
-                return {
-                    'address': [address],
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
+        log_request = [
+            LogRequest(
+                address=[a] if a else [],
+                topic0=t,
+            )
+            for a, t in topics_by_address.items()
+        ]
 
         while current_level <= last_level:
+            worker_url = (
+                await self._http.request(
+                    'get',
+                    f'{self._config.url}/{current_level}/worker',
+                )
+            ).decode()
+
             query: Query = {
-                'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
+                'logs': log_request,
+                'fields': {
+                    'block': {},
+                    'log': LOG_FIELDS,
+                },
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
 
-            response: dict[str, Any] = await self.request(
+            response: list[dict[str, Any]] = await self.request(
                 'post',
-                url='query',
+                url=worker_url,
                 json=query,
             )
 
-            # NOTE: There's also 'archiveHeight' field, but sync level updated in the main loop
-            current_level = response['nextBlock']
-
-            logs: list[SubsquidEventData] = []
-            for level in response['data']:
-                for transaction in level:
-                    for raw_log in transaction['logs']:
-                        logs.append(
-                            SubsquidEventData.from_json(raw_log),
-                        )
-            yield tuple(logs)
+            for level_logs in response:
+                level = level_logs['header']['number']
+                current_level = level + 1
+                logs: deque[SubsquidEventData] = deque()
+                for raw_log in level_logs['logs']:
+                    logs.append(
+                        SubsquidEventData.from_json(raw_log, level),
+                    )
+                yield tuple(logs)
 
     async def initialize(self) -> None:
         level = await self.get_head_level()
@@ -147,4 +123,4 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')
-        return cast(int, response.get('height', 0))
+        return int(response)

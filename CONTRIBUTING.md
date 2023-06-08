@@ -21,7 +21,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 We use `isort` and `black` for autoformatting, `ruff` for linting, and `mypy` for typechecking. All checks MUST pass before merging the code to default branch. Everything not enforced by these tools is up to the developer. But here are some recommendations:
 
 - Consistency is the key. If you see a pattern in the codebase, follow it.
-- Use `NOTE:` and other, `TODO`, and `FIXME` prefixes for meaningful comments. It greatly helps to navigate the codebase.
+- Use `NOTE`, `TODO`, and `FIXME` prefixes for meaningful comments. It greatly helps to navigate the codebase.
 - Lazy imports are important to keep startup time low for tiny commands. We also do it for project imports, so not a big deal.
 - Some methods and attributes made private to avoid polluting the public API. Feel free to access them from the outside if you know what you are doing.
 - Finally, about exact language features. F-string formatting is preferred over other syntax. Be careful with walrus operator. Don't forget else in conditional expressions. Listen to you mom. We have no consensus about the match-case yet.
@@ -32,29 +32,20 @@ We use `isort` and `black` for autoformatting, `ruff` for linting, and `mypy` fo
 - Non-development dependencies MUST be pinned to non-breaking versions (e.g. `^1.2.3`).
 - Core dependencies that we patch MUST be pinned to specific versions (e.g. `1.2.3`).
 
-## Releases
-
-- Release versions MUST conform to [Semantic Versioning](https://semver.org/). Releases that introduce breaking changes MUST be major ones.
-- Only the latest major version is supported in general. Critical fixes MAY be backported to the previous major release. To do so, create an `aux/X.Y.Z` branch from the latest stable tag, bump the DipDup version manually, and add a new tag.
-
 ## Changelog
 
 - All changes that affect user (developer) experience MUST be documented in the CHANGELOG.md file.
 - Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.
-- The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise).
-- Lines describing changes MUST be sorted and begin with DipDup module name (`index: Added ...`).
-
-Use the following categories (in this order):
-
-Groups: Added, Fixed, Changed, Deprecated, Removed, Performance, Security, Other.
-
-Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, dipdup (?), docs, exceptions, hasura, hooks, http, index, install, ipfs, jobs, metadata, models, projects, prometheus, sentry, tzkt.
+- The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise). Group order we use: Added, Fixed, Changed, Deprecated, Removed, Performance, Security, Other.
+- Lines describing changes MUST be sorted and begin with DipDup component name (`index: Added ...`). One of the following: ci, cli, codegen, coinbase, config, context, database, demos, deps, docs, exceptions, hasura, hooks, http, index, install, ipfs, jobs, metadata, models, projects, prometheus, sentry, tzkt.
 
 ## Documentation
 
 - A page in Release Notes SHOULD accompany all major releases.
 - All internal links MUST be created with `{{ #summary ...` shortcodes.
 - All values used in project templates MUST be replaced with `{{ #cookiecutter ...` shortcodes.
+
+# DipDup maintainer guide
 
 ## Security
 
@@ -90,6 +81,11 @@ Components: ci, cli, codegen, coinbase, config, context, database, demos, deps, 
 ```admonish warning title=""
 This page or paragraph is yet to be written. Come back later.
 ```
+
+## Releases
+
+- Release versions MUST conform to [Semantic Versioning](https://semver.org/). Releases that introduce breaking changes MUST be major ones.
+- Only the latest major version is supported in general. Critical fixes MAY be backported to the previous major release. To do so, create an `aux/X.Y.Z` branch from the latest stable tag, bump the DipDup version manually, and add a new tag.
 
 ## Tests
 

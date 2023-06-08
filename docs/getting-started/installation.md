@@ -37,7 +37,7 @@ Currently, we mainly use [Poetry](https://python-poetry.org) for dependency mana
 
 ```shell
 # Create a new project directory
-mkdir dipdup-indexer; cd dipdup-indexer
+mkdir dipdup_indexer; cd dipdup_indexer
 
 # Plain pip
 python -m venv .venv

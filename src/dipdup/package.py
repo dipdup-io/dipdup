@@ -1,4 +1,3 @@
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 from typing import Awaitable
@@ -25,8 +24,7 @@ MODELS_MODULE = 'models.py'
 class EventAbiExtra:
     name: str
     topic0: str
-    inputs: tuple[str, ...]
-    indexed: tuple[bool, ...]
+    inputs: tuple[tuple[str, bool], ...]
 
 
 class DipDupPackage:
@@ -43,10 +41,11 @@ class DipDupPackage:
         self.graphql = root / 'graphql'
         self.hasura = root / 'hasura'
 
-        self.get_callback = lru_cache(maxsize=10_000)(self.get_callback)  # type: ignore[method-assign]
-        self.get_type = lru_cache(maxsize=10_000)(self.get_type)  # type: ignore[method-assign]
-        self.get_evm_abi = lru_cache(maxsize=10_000)(self.get_evm_abi)  # type: ignore[method-assign]
-        self.get_evm_events = lru_cache(maxsize=10_000)(self.get_evm_events)  # type: ignore[method-assign]
+        self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
+        self._types: dict[str, type[BaseModel]] = {}
+        self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
+        self._evm_events: dict[str, dict[str, EventAbiExtra]] = {}
+        self._evm_topics: dict[str, dict[str, str]] = {}
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
@@ -82,28 +81,46 @@ class DipDupPackage:
         import_submodules(self.name)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
-        path = f'{self.name}.types.{typename}.{module}'
-        type_ = import_from(path, name)
-        if not isinstance(type_, type):
-            raise ProjectImportError(f'`{path}.{name}` is not a valid type')
+        key = f'{typename}{module}{name}'
+        if (type_ := self._types.get(key)) is None:
+            path = f'{self.name}.types.{typename}.{module}'
+            type_ = import_from(path, name)
+            if not isinstance(type_, type):
+                raise ProjectImportError(f'`{path}.{name}` is not a valid type')
+            self._types[key] = type_
         return type_
 
     def get_callback(self, kind: str, module: str, name: str) -> Callable[..., Awaitable[None]]:
-        path = f'{self.name}.{kind}.{module}'
-        callback = import_from(path, name)
-        if not callable(callback):
-            raise ProjectImportError(f'`{path}.{name}` is not a valid callback')
+        key = f'{kind}{module}{name}'
+        if (callback := self._callbacks.get(key)) is None:
+            path = f'{self.name}.{kind}.{module}'
+            callback = import_from(path, name)
+            if not callable(callback):
+                raise ProjectImportError(f'`{path}.{name}` is not a valid callback')
+            self._callbacks[key] = callback
         return cast(Callable[..., Awaitable[None]], callback)
 
     def get_evm_abi(self, typename: str) -> dict[str, Any]:
-        path = self.abi / typename / 'abi.json'
-        if not path.exists():
-            raise ProjectImportError(f'`{path}` does not exist')
-        return cast(dict[str, Any], orjson.loads(path.read_text()))
+        if (abi := self._evm_abis.get(typename)) is None:
+            path = self.abi / typename / 'abi.json'
+            if not path.exists():
+                raise ProjectImportError(f'`{path}` does not exist')
+            abi = cast(dict[str, Any], orjson.loads(path.read_text()))
+            self._evm_abis[typename] = abi
+        return abi
 
     def get_evm_events(self, typename: str) -> dict[str, EventAbiExtra]:
-        path = self.abi / typename / 'events.json'
-        if not path.exists():
-            raise ProjectImportError(f'`{path}` does not exist')
-        extra_json = orjson.loads(path.read_text())
-        return {k: EventAbiExtra(**v) for k, v in extra_json.items()}
+        if (events := self._evm_events.get(typename)) is None:
+            path = self.abi / typename / 'events.json'
+            if not path.exists():
+                raise ProjectImportError(f'`{path}` does not exist')
+            extra_json = orjson.loads(path.read_text())
+            events = {k: EventAbiExtra(**v) for k, v in extra_json.items()}
+            self._evm_events[typename] = events
+        return events
+
+    def get_evm_topics(self, typename: str) -> dict[str, str]:
+        if (topics := self._evm_topics.get(typename)) is None:
+            topics = {k: v.topic0 for k, v in self.get_evm_events(typename).items()}
+            self._evm_topics[typename] = topics
+        return topics

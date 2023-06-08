@@ -12,9 +12,9 @@ import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
-from tortoise import fields
 
 from dipdup import env
+from dipdup import fields
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
@@ -112,6 +112,7 @@ class HasuraGateway(HTTPGateway):
         retry_sleep=1,
         retry_multiplier=1.1,
         retry_count=3,
+        alias='hasura',
     )
 
     def __init__(
@@ -272,12 +273,14 @@ class HasuraGateway(HTTPGateway):
 
     async def _fetch_metadata(self) -> dict[str, Any]:
         self._logger.info('Fetching existing metadata')
-        return await self._hasura_request(
-            endpoint='metadata',
-            json={
-                'type': 'export_metadata',
-                'args': {},
-            },
+        return dict(
+            await self._hasura_request(
+                endpoint='metadata',
+                json={
+                    'type': 'export_metadata',
+                    'args': {},
+                },
+            )
         )
 
     def _hash_metadata(self, metadata: dict[str, Any]) -> str:

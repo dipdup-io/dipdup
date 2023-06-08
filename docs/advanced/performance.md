@@ -12,7 +12,7 @@ Tortoise ORM uses BTree indexes by default. To set index on a field, add `index=
 
 ```python
 from dipdup.models import Model
-from tortoise import fields
+from dipdup import fields
 
 
 class Trade(Model):
@@ -148,3 +148,32 @@ if __name__ == '__main__':
 ```
 
 Then use `python -m <project>.cli` instead of `dipdup` as an entrypoint. Now you can call `do-something-heavy` like any other `dipdup` command. `dipdup.cli:cli` group handles arguments and config parsing, graceful shutdown, and other boilerplate. The rest is on you; use `dipdup.dipdup:DipDup.run` as a reference. And keep in mind that Tortoise ORM is not thread-safe. I aim to implement `ctx.pool_apply` and `ctx.pool_map` methods to execute code in pools with _magic_ within existing DipDup hooks, but no ETA yet.
+
+## Reducing disk I/O
+
+Indexing produces a lot of disk I/O. During development you can store the database in RAM. By default DipDup uses in-memory SQLite database dropped on exit. Using tmpfs instead allows you to persist the database between process restarts until the system is rebooted. By default, tmpfs is mounted on `/tmp` with a size of 50% of RAM. The following spells are for Linux, but on macOS the process should be similar.
+
+```shell
+# Make sure tmpfs is mounted
+$ df -h /tmp
+Filesystem      Size  Used Avail Use% Mounted on
+tmpfs            16G  1.0G   16G   7% /tmp
+
+# You can change the size of tmpfs without unmounting it
+$ sudo mount -o remount,size=64G,noatime /tmp
+
+# But make sure that you have enough swap for this
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:            30Gi        16Gi       3,1Gi       1,3Gi        11Gi        12Gi
+Swap:           31Gi       6,0Mi        31Gi
+
+# Update database config to use tmpfs
+$ grep database -A2 dipdup.yml
+database:
+  kind: sqlite
+  path: /tmp/uniswap.sqlite
+
+# After you've done indexing, save the database to disk
+$ cp /tmp/uniswap.sqlite ~/uniswap.sqlite
+```

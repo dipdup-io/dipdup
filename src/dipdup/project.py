@@ -1,11 +1,14 @@
+"""Scaffolding tools and scenarios for `dipdup new` command.
+
+Ask user some question with Click; render Jinja2 templates with answers.
+"""
 import logging
+import re
 from copy import copy
 from pathlib import Path
 from typing import Any
-from typing import Type
 from typing import TypedDict
 from typing import TypeVar
-from typing import cast
 
 import asyncclick as cl
 import orjson
@@ -18,7 +21,7 @@ from dipdup.utils import write
 _logger = logging.getLogger('dipdup.project')
 
 
-DEMO_PROJECTS_TEZOS = (
+TEZOS_DEMOS = (
     ('demo_domains', 'Tezos Domains name service'),
     ('demo_big_maps', 'Indexing specific big maps'),
     ('demo_events', 'Processing contract events'),
@@ -31,14 +34,26 @@ DEMO_PROJECTS_TEZOS = (
     ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
     ('demo_auction', 'TzColors NFT marketplace'),
     ('demo_raw', 'Process raw operations without filtering and strict typing (experimental)'),
+)
+EVM_DEMOS = (
+    ('demo_evm_events', 'Very basic indexer for USDt transfers'),
+    ('demo_uniswap', 'Uniswap V3 pools, positions, swaps, ticks, etc.'),
+)
+OTHER_DEMOS = (
+    ('blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
     # TODO: demo_sql
+    # TODO: demo_timescale
 )
-DEMO_PROJECTS_EVM = (('', ''),)
+
+
+_T = TypeVar('_T')
 
 
 class Answers(TypedDict):
+    """Survey answers"""
+
     dipdup_version: str
     template: str
     project_name: str
@@ -49,131 +64,161 @@ class Answers(TypedDict):
     author: str
     postgresql_image: str
     hasura_image: str
-    crash_reporting: str
+    crash_reporting: bool
     linters: str
     line_length: str
 
 
-# initialized with default values, changed with survey
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
     template='demo_dao',
     project_name='dipdup_indexer',
     package='dipdup_indexer',
     version='0.0.1',
-    description='My shiny new indexer based on DipDup',
+    description='Blockchain indexer built with DipDup',
     license='MIT',
     author='John Smith <john_smith@localhost.lan>',
     postgresql_image='postgres:15',
-    hasura_image='hasura/graphql-engine:v2.23.0',
-    crash_reporting='false',
+    # TODO: fetch latest from GH
+    hasura_image='hasura/graphql-engine:v2.27.0',
+    crash_reporting=False,
     linters='default',
     line_length='120',
 )
 
 
-T = TypeVar('T')
-
-
-def prompt(text: str, default: Any, type_: Type[T], print_default: bool = True) -> T:
-    """Ask user smth with typecast to type, print_default=True print to user what default choise would be used"""
+def prompt(
+    text: str,
+    default: Any,
+    type_: type[_T],
+    print_default: bool = True,
+) -> _T:
+    """Ask user something with casting to type; print_default=True prints default choise be used"""
     try:
-        value: T = cl.prompt(
-            text=f'{text} [{default}]: ' if print_default else text,
+        value: _T = cl.prompt(
+            text=f'{text} [{default}]' if print_default else text,
             default=default,
             type=type_,
             show_default=False,
         )
-        print('\n')
+        cl.echo('\n')
         return value
     except cl.Abort:
         cl.echo('\nAborted')
         quit(0)
 
 
-def choose_one(
-    question: str, options: tuple[str, ...], comments: tuple[str, ...], default: int
-) -> str:  # default is position of default option in options
-    """Ask user to choose one option with question, list of options and there description(comments)"""
+def prompt_anyof(
+    question: str,
+    options: tuple[str, ...],
+    comments: tuple[str, ...],
+    default: int,
+) -> tuple[int, str]:
+    """Ask user to choose one of options; returns index and value"""
     table = tabulate(
         zip(range(len(options)), options, comments),
         colalign=('right', 'left', 'left'),
+        tablefmt='simple_outline',
     )
     cl.secho(f'=> {question}', fg='blue')
     cl.echo(table)
 
-    answer = prompt('Please choose an option', default, type_=int)
-    return options[answer]
+    index = prompt('Please choose an option', default, type_=int)
+    return index, options[index]
 
 
-def fancy_str_prompt(question: str, default: str) -> str:
+def prompt_str(
+    question: str,
+    default: str,
+) -> str:
     """Blue prompt in dipdup style for str answers"""
-    cl.secho(f'=> {question} [{default}]: ', fg='blue')
-    return prompt('', default, str, print_default=False)
+    cl.secho(f'=> {question}', fg='blue')
+    return prompt(f'[{default}]', default, str, print_default=False)
 
 
-def create_new_project_from_console() -> Answers:
-    """Script running on dipdup new command and will create a new project from console survey"""
+def prompt_bool(
+    question: str,
+    default: bool,
+) -> bool:
+    """Blue prompt in dipdup style for bool answers"""
+    cl.secho(f'=> {question}', fg='blue')
+    default_str = ' [Y/n]' if default else ' [y/N]'
+    return prompt(default_str, default, bool, print_default=False)
+
+
+def answers_from_terminal() -> Answers:
+    """Script running on dipdup new command and will create a new project base from interactive survey"""
     answers = copy(DEFAULT_ANSWERS)
-    # dict with all new project config
 
     welcome_text = (
+        '\n'
         'Welcome to DipDup! This command will help you to create a new project.\n'
         'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
-        "Let's start with some basic questions."
     )
-    cl.secho('\n' + welcome_text + '\n', fg='yellow')
+    cl.secho(welcome_text, fg='yellow')
 
-    # Choose new project template
-    template_types = ('Tezos', 'EVM', 'Blank')
-    template_types_desc = ('Tezos templates', 'EVM templates', 'Brief template to create project from scratch')
-    template_type = choose_one(
-        'Choose a template: blockchain-specific or blank?', template_types, template_types_desc, default=2
+    group_index, _ = prompt_anyof(
+        question='What blockchain are you going to index?',
+        options=(
+            'EVM',
+            'Tezos',
+            '[none]',
+        ),
+        comments=(
+            'EVM-compatible blockchains',
+            'Tezos',
+            'Create project from scratch or learn advanced DipDup features',
+        ),
+        default=0,
     )
+    templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
 
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
-    template_types_dict: dict[str, tuple[tuple[str, str], ...]] = {
-        'Tezos': DEMO_PROJECTS_TEZOS,
-        'EVM': DEMO_PROJECTS_EVM,
-        'Blank': (('blank', ''),),  # for same typing
-    }
-    DEMO_PROJECTS_BLANK = 'Blank'
-    if template_type == DEMO_PROJECTS_BLANK:
-        answers['template'] = template_types_dict[DEMO_PROJECTS_BLANK][0][0]
-    else:
-        options = tuple(x[0] for x in template_types_dict[template_type])  # FIXME zero EVM templates
-        comments = tuple(x[1] for x in template_types_dict[template_type])
-        answers['template'] = choose_one(
-            'Choose config template depending on the type of your project (DEX, NFT marketplace etc.)\n',
-            options,
-            comments,
-            default=0,
-        )
-
-    # define project(folder) and package name for new indexer
-    answers['project_name'] = fancy_str_prompt(
-        'Enter project name (the name will be used for folder name and package name)', answers['project_name']
+    _, answers['template'] = prompt_anyof(
+        'Choose a project template',
+        options=tuple(i[0] for i in templates),
+        comments=tuple(i[1] for i in templates),
+        default=0,
     )
-    answers['package'] = answers['project_name']  # FIXME validate python package name in question
 
-    # define version for new indexer package
-    answers['version'] = fancy_str_prompt('Enter project version', answers['version'])
+    project_name = prompt_str(
+        'Enter project name (the name will be used for folder name and package name)',
+        answers['project_name'],
+    )
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', project_name):
+        cl.secho(
+            f'"{project_name}" is not valid Python package name. Please use only letters, numbers and underscores.',
+            fg='red',
+        )
+        quit(1)
+    answers['project_name'] = project_name
+    answers['package'] = project_name
 
-    # define description for new indexer readme
-    answers['description'] = fancy_str_prompt('Enter project description', answers['description'])
+    answers['version'] = prompt_str(
+        'Enter project version',
+        answers['version'],
+    )
+
+    # NOTE: Used in pyproject.toml, README.md and some other places
+    answers['description'] = prompt_str(
+        'Enter project description',
+        answers['description'],
+    )
 
     # define author and license for new indexer
-    answers['license'] = fancy_str_prompt(
-        'Enter project license\n' 'DipDup itself is MIT-licensed.', answers['license']
+    answers['license'] = prompt_str(
+        'Enter project license\n' 'DipDup itself is MIT-licensed.',
+        answers['license'],
     )
-    answers['author'] = fancy_str_prompt(
-        ('Enter project author\n' 'You can add more later in pyproject.toml.'), answers['author']
+    answers['author'] = prompt_str(
+        ('Enter project author\n' 'You can add more later in pyproject.toml.'),
+        answers['author'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
-    answers['postgresql_image'] = choose_one(
+    _, answers['postgresql_image'] = prompt_anyof(
         question=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
         options=(
             'postgres:15',
@@ -190,36 +235,23 @@ def create_new_project_from_console() -> Answers:
         default=0,
     )
 
-    answers['hasura_image'] = choose_one(
-        question=(
-            'Choose Hasura version\n'
-            'Test new releases before using in production; new versions may break compatibility.'
-        ),
-        options=(
-            'hasura/graphql-engine:v2.23.0',
-            'hasura/graphql-engine:v2.23.0',
-        ),
-        comments=(
-            'stable',
-            'beta',
-        ),
-        default=0,
-    )
-
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
-    cl.secho('=> Enable crash reporting?\n' 'It helps us a lot to improve DipDup 🙏 ["y/N"]: ', fg='blue')
-    answers['crash_reporting'] = str(prompt('', False, bool, print_default=bool(answers['crash_reporting'])))
+    answers['crash_reporting'] = prompt_bool(
+        'Enable crash reporting?\n' 'It helps us a lot to improve DipDup',
+        answers['crash_reporting'],
+    )
 
-    answers['linters'] = choose_one(
+    _, answers['linters'] = prompt_anyof(
         'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
         ('default', 'none'),
-        ('Classic set: black, isort, ruff, mypy, pytest', 'None'),
+        ('Swiss knife of modern Python: black, ruff, mypy', 'None'),
         default=0,
     )
 
-    answers['line_length'] = fancy_str_prompt(
-        ('Enter maximum line length\n' 'Used by linters.'), default=answers['line_length']
+    answers['line_length'] = prompt_str(
+        ('Enter maximum line length\n' 'Used by linters.'),
+        default=answers['line_length'],
     )
     return answers
 
@@ -234,14 +266,20 @@ def write_cookiecutter_json(answers: Answers, path: Path) -> None:
     )
 
 
-def load_project_settings_replay(path: Path) -> Answers:
+def answers_from_replay(path: Path) -> Answers:
     if not path.is_file() and path.suffix != '.json':
         raise Exception
 
-    return cast(Answers, orjson.loads(path.read_bytes()))
+    replay_answers: Answers = orjson.loads(path.read_bytes())
+    return copy(DEFAULT_ANSWERS) | replay_answers
 
 
-def render_project_from_template(answers: Answers, force: bool = False) -> None:
+def render_project(
+    answers: Answers,
+    force: bool = False,
+) -> None:
+    """Render project from template"""
+    # NOTE: Common base
     _render_templates(answers, Path('base'), force)
 
     # NOTE: Config and handlers

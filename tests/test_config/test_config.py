@@ -82,8 +82,7 @@ async def test_dump() -> None:
     config = create_config()
 
     tmp = tempfile.mkstemp()[1]
-    with open(tmp, 'w') as f:
-        f.write(config.dump())
+    Path(tmp).write_text(config.dump())
 
     config = DipDupConfig.load([Path(tmp)], environment=False)
     config.initialize()
@@ -119,13 +118,13 @@ async def test_http_config() -> None:
     assert config == ResolvedHttpConfig(
         retry_count=20,
         retry_sleep=10,
-        retry_multiplier=1.0,
+        retry_multiplier=2.0,
         ratelimit_rate=0,
         ratelimit_period=0,
-        ratelimit_sleep=5.0,
+        ratelimit_sleep=0,
         connection_limit=100,
         connection_timeout=60,
-        batch_size=1000,
+        batch_size=10_000,
         replay_path='replays',
     )
 

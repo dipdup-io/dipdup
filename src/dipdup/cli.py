@@ -6,8 +6,11 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from copy import copy
+from dataclasses import dataclass
+from functools import partial
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -17,14 +20,19 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
-from dipdup import env
+from dipdup.performance import metrics
 from dipdup.project import DEFAULT_ANSWERS
+from dipdup.report import REPORTS_PATH
+from dipdup.report import ReportHeader
+from dipdup.report import save_report
 from dipdup.sys import IGNORE_CONFIG_CMDS
-from dipdup.sys import set_up_logging
 from dipdup.sys import set_up_process
 
 DEFAULT_CONFIG_NAME = 'dipdup.yml'
 
+
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger('dipdup.cli')
 
@@ -47,7 +55,17 @@ def _print_help(error: Exception) -> None:
     atexit.register(_print)
 
 
+def _print_report(name: str) -> None:
+    atexit.register(partial(click.echo, f'Report saved; run `dipdup report show {name}` to view it'))
+
+
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+
+
+@dataclass
+class CLIContext:
+    config_paths: list[str]
+    config: 'DipDupConfig'
 
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
@@ -60,18 +78,22 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.sentry import save_crashdump
-
-            crashdump_path = save_crashdump(e)
-            _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
+            report_id = save_report(e)
+            _print_report(report_id)
             _print_help(e)
-            raise e
+
+            if metrics:
+                raise e
+            sys.exit(1)
+
+        if fn.__name__ == 'run':
+            save_report(None)
 
     return cast(WrappedCommandT, wrapper)
 
 
 async def _check_version() -> None:
-    if 'rc' in __version__:
+    if 'rc' in __version__ or 'b' in __version__:
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
@@ -123,12 +145,13 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     """
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] == 'self':
+    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
         return
 
     from dotenv import load_dotenv
 
     from dipdup.exceptions import ConfigurationError
+    from dipdup.sys import set_up_logging
 
     set_up_logging()
 
@@ -147,10 +170,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dataclasses import dataclass
-
+    from dipdup import env
     from dipdup.config import DipDupConfig
-    from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
     from dipdup.sentry import init_sentry
@@ -174,11 +195,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
-
-    @dataclass
-    class CLIContext:
-        config_paths: list[str]
-        config: DipDupConfig
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -214,7 +230,6 @@ async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -234,37 +249,12 @@ async def migrate(ctx: click.Context) -> None:
     _logger.info('Project is already at the latest version, no further actions required')
 
 
-@cli.command()
-@click.pass_context
-@_cli_wrapper
-async def status(ctx: click.Context) -> None:
-    """Show the current status of indexes in the database."""
-    from dipdup.config import DipDupConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.models import Index
-
-    config: DipDupConfig = ctx.obj.config
-    url = config.database.connection_string
-    models = f'{config.package}.models'
-
-    table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
-    async with tortoise_wrapper(url, models):
-        async for index in Index.filter().order_by('name'):
-            row = (index.name, index.status.value, index.level)
-            table.append(row)
-
-    # NOTE: Lazy import to speed up startup
-    from tabulate import tabulate
-
-    echo(tabulate(table, tablefmt='plain'))
-
-
 @cli.group()
 @click.pass_context
 @_cli_wrapper
 async def config(ctx: click.Context) -> None:
     """Commands to manage DipDup configuration."""
-    ...
+    pass
 
 
 @config.command(name='export')
@@ -293,7 +283,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, file: str | None) -> None:
+async def config_env(ctx: click.Context, output: str | None) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
@@ -305,9 +295,8 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
         environment=True,
     )
     content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
-    if file:
-        with open(file, 'w') as f:
-            f.write(content)
+    if output:
+        Path(output).write_text(content)
     else:
         echo(content)
 
@@ -316,7 +305,7 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 @click.pass_context
 @_cli_wrapper
 async def hasura(ctx: click.Context) -> None:
-    ...
+    pass
 
 
 @hasura.command(name='configure')
@@ -358,7 +347,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    ...
+    pass
 
 
 @schema.command(name='approve')
@@ -366,6 +355,7 @@ async def schema(ctx: click.Context) -> None:
 @_cli_wrapper
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
+
     from dipdup.config import DipDupConfig
     from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
@@ -377,7 +367,12 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Approving schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash=None,
@@ -400,17 +395,22 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     WARNING: This action is irreversible! All indexed data will be lost!
     """
-    from tortoise import Tortoise
-
-    from dipdup.config import DipDupConfig
-    from dipdup.config import PostgresDatabaseConfig
-    from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
-    from dipdup.database import wipe_schema
+    from dipdup.config import SqliteDatabaseConfig
+    from dipdup.exceptions import ConfigurationError
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
+
+    # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+    immune_tables = set() if immune else config.database.immune_tables | {'dipdup_meta'}
+
+    if isinstance(config.database, SqliteDatabaseConfig) and immune_tables:
+        message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
+        if config.advanced.unsafe_sqlite:
+            _logger.warning(message)
+        else:
+            raise ConfigurationError(message)
 
     if not force:
         try:
@@ -427,17 +427,22 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     _logger.info('Wiping schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    from dipdup.database import get_connection
+    from dipdup.database import tortoise_wrapper
+    from dipdup.database import wipe_schema
+
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
-        if isinstance(config.database, PostgresDatabaseConfig):
-            await wipe_schema(
-                conn=conn,
-                schema_name=config.database.schema_name,
-                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
-            )
-        else:
-            await Tortoise._drop_databases()
+        await wipe_schema(
+            conn=conn,
+            schema_name=config.database.schema_name,
+            immune_tables=immune_tables,
+        )
 
     _logger.info('Schema wiped')
 
@@ -451,7 +456,6 @@ async def schema_init(ctx: click.Context) -> None:
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.database import generate_schema
     from dipdup.database import get_connection
     from dipdup.dipdup import DipDup
@@ -486,9 +490,10 @@ async def schema_export(ctx: click.Context) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
+
     from tortoise.utils import get_schema_sql
 
-    from dipdup.config import DipDupConfig
+    from dipdup import env
     from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
     from dipdup.utils import iter_files
@@ -498,7 +503,12 @@ async def schema_export(ctx: click.Context) -> None:
     models = f'{config.package}.models'
     package_path = env.get_package_path(config.package)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
@@ -530,17 +540,17 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import create_new_project_from_console
-    from dipdup.project import load_project_settings_replay
-    from dipdup.project import render_project_from_template
+    from dipdup.project import answers_from_replay
+    from dipdup.project import answers_from_terminal
+    from dipdup.project import render_project
 
     if quiet:
         answers = copy(DEFAULT_ANSWERS)
     elif replay:
-        answers = load_project_settings_replay(replay)
+        answers = answers_from_replay(replay)
     else:
-        answers = create_new_project_from_console()
-    render_project_from_template(answers, force)
+        answers = answers_from_terminal()
+    render_project(answers, force)
 
 
 @cli.group()
@@ -548,7 +558,7 @@ async def new(
 @_cli_wrapper
 async def self(ctx: click.Context) -> None:
     """Commands to manage local DipDup installation."""
-    ...
+    pass
 
 
 @self.command(name='install')
@@ -599,3 +609,63 @@ async def self_update(
     import dipdup.install
 
     dipdup.install.install(quiet, force, None, None)
+
+
+@cli.group(invoke_without_command=True)
+@click.pass_context
+@_cli_wrapper
+async def report(ctx: click.Context) -> None:
+    if ctx.invoked_subcommand:
+        return
+
+    header = tuple(ReportHeader.__annotations__.keys())
+    rows = []
+    for path in REPORTS_PATH.iterdir():
+        if path.suffix not in ('.yml', '.yaml'):
+            continue
+
+        from ruamel.yaml import YAML
+
+        event = YAML(typ='base').load(path)
+        row = [event.get(key, 'none') for key in header]
+        rows.append(row)
+
+    rows.sort(key=lambda row: str(row[3]))
+
+    from tabulate import tabulate
+
+    echo(tabulate(rows, headers=header))
+
+
+@report.command(name='show')
+@click.pass_context
+@click.argument('id', type=str)
+@_cli_wrapper
+async def report_show(ctx: click.Context, id: str) -> None:
+    path = REPORTS_PATH / f'{id}.yaml'
+    if not path.exists():
+        echo('No such report')
+        return
+    print(path.read_text())
+
+
+@report.command(name='rm')
+@click.pass_context
+@click.argument('id', type=str, required=False)
+@click.option('--all', '-a', is_flag=True, help='Remove all reports.')
+@_cli_wrapper
+async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
+    if all and id:
+        echo('Please specify either name or --all')
+        return
+    if all:
+        path = REPORTS_PATH
+        for file in path.iterdir():
+            file.unlink()
+        return
+
+    path = REPORTS_PATH / f'{id}.yaml'
+    if not path.exists():
+        echo('No such report')
+        return
+    path.unlink()

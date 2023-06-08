@@ -3,12 +3,16 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Type
 
-from tortoise.models import Model
+if TYPE_CHECKING:
+    from tortoise.models import Model
+
+    from dipdup.models import ReindexingReason  # noqa: E402
 
 tab = ('_' * 80) + '\n\n'
 
@@ -119,7 +123,7 @@ class InvalidModelsError(Error):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
-    model: Type[Model]
+    model: Type['Model']
     field: Optional[str] = None
 
     def _help(self) -> str:
@@ -362,6 +366,3 @@ class UnsupportedAPIError(Error):
 
             {self.reason}
         """
-
-
-from dipdup.models import ReindexingReason  # noqa: E402

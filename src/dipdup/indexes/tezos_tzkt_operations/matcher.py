@@ -61,7 +61,7 @@ def prepare_operation_handler_args(
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
 
             storage_type = get_storage_type(package, typename)
-            storage = deserialize_storage(operation_data, storage_type)
+            operation_data, storage = deserialize_storage(operation_data, storage_type)
 
             typed_transaction: TzktTransaction[Any, Any] = TzktTransaction(
                 data=operation_data,
@@ -77,7 +77,7 @@ def prepare_operation_handler_args(
 
             typename = pattern_config.typed_contract.module_name
             storage_type = get_storage_type(package, typename)
-            storage = deserialize_storage(operation_data, storage_type)
+            operation_data, storage = deserialize_storage(operation_data, storage_type)
 
             typed_origination = TzktOrigination(
                 data=operation_data,
@@ -149,6 +149,7 @@ def match_operation_subgroup(
     package: DipDupPackage,
     handlers: Iterable[TzktOperationsHandlerConfig],
     operation_subgroup: OperationSubgroup,
+    alt: bool = False,
 ) -> deque[MatchedOperationsT]:
     """Try to match operation subgroup with all index handlers."""
     matched_handlers: deque[MatchedOperationsT] = deque()
@@ -185,7 +186,7 @@ def match_operation_subgroup(
                 subgroup_index += 1
 
             if pattern_index == len(handler_config.pattern):
-                _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+                _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
                 args = prepare_operation_handler_args(package, handler_config, matched_operations)
                 matched_handlers.append((operation_subgroup, handler_config, args))
@@ -194,9 +195,31 @@ def match_operation_subgroup(
                 pattern_index = 0
 
         if len(matched_operations) >= sum(0 if x.optional else 1 for x in handler_config.pattern):
-            _logger.info('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+            _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
             args = prepare_operation_handler_args(package, handler_config, matched_operations)
             matched_handlers.append((operation_subgroup, handler_config, args))
 
-    return matched_handlers
+    if not (alt and len(matched_handlers) in (0, 1)):
+        return matched_handlers
+
+    # NOTE: Alternative algorithm. Sort matched handlers by the internal incremental TzKT id of the last operation in matched pattern.
+    index_list = list(range(len(matched_handlers)))
+    id_list = []
+    for handler in matched_handlers:
+        transaction = handler[2][-1]
+        if isinstance(transaction, TzktOperationData):
+            id_list.append(transaction.id)
+        elif isinstance(transaction, TzktTransaction):
+            id_list.append(transaction.data.id)
+        else:
+            raise FrameworkException('Type of the first handler argument is unknown')
+
+    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
+    if index_list == sorted_index_list:
+        return matched_handlers
+
+    sorted_matched_handlers: deque[MatchedOperationsT] = deque()
+    for index in sorted_index_list:
+        sorted_matched_handlers.append(matched_handlers[index])
+    return sorted_matched_handlers

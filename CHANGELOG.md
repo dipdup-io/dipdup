@@ -8,35 +8,51 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
+- api: Added `/performance` endpoint to request indexing stats.
+- cli: Added `report` command group to manage performance and crash reports created by DipDup.
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
+- config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
+- config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
+- config: Added `advanced.metrics` field to configure amount of gathered metrics.
+- config: Added `http.alias` field to overwrite alias of datasource HTTP gateway.
 - database: Added `dipdup_meta` immune table to store arbitrary JSON values.
-- evm.node: Added `evm.node` datasource to receive events from Ethereum node.
+- database: Added experimental support for immune tables in SQLite.
+- evm.node: Added `evm.node` datasource to receive events from Ethereum node and use web3 API.
 - evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
 - evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
-- abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
 
 ### Changed
 
-
-- tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
-- models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.
-- database: Store datasource aliases instead of URLs in `dipdup_head` table.
-- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
 - cli: `config env --file` option renamed to `--output`.
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
+- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+- config: `logging` field now can contain either loglevel or name-loglevel mapping.
 - context: Signature of `add_contract` method has changed.
-- config: logging config expanded every logger level could be set in .yml config
-- docs: deployment/logging rewrited according to logging configuration changes
+- database: `EnumField` now uses `TEXT` type instead of `VARCHAR(n)`.
+- database: Querysets are no longer copied between chained method calls (`.filter().order_by().limit()`)
+- database: Store datasource aliases instead of URLs in `dipdup_head` table.
+- models: User models must use field classes from `dipdup.fields` module instead of `tortoise.fields`.
+- tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- tezos.tzkt.head: Replaced `handlers` section with a single `callback` field in config.
 
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
 - ci: Docker images no longer contain git, poetry and custom scripts.
 - cli: Removed `dipdup-install` alias to `dipdup.install`.
+- cli: Removed `status` command.
 - config: Removed `similar_to` filter of `operation` index pattern.
 - config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
 
-### Performance
+### Other
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 

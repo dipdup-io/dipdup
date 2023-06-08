@@ -269,18 +269,19 @@ class TzktOperationsIndex(
         for operation_subgroup in operation_subgroups:
             if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
-                    self._config,
-                    operation_subgroup,
+                    index=self._config,
+                    operation_subgroup=operation_subgroup,
                 )
             else:
                 subgroup_handlers = match_operation_subgroup(
                     self._ctx.package,
-                    self._config.handlers,
-                    operation_subgroup,
+                    handlers=self._config.handlers,
+                    operation_subgroup=operation_subgroup,
+                    alt=self._ctx.config.advanced.alt_operation_matcher,
                 )
 
             if subgroup_handlers:
-                self._logger.info(
+                self._logger.debug(
                     '%s: `%s` handler matched!',
                     operation_subgroup.hash,
                     subgroup_handlers[0][1].callback,
@@ -295,7 +296,7 @@ class TzktOperationsIndex(
             await self._update_state(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, operation_subgroup, args)
             await self._update_state(level=batch_level)
@@ -309,7 +310,7 @@ class TzktOperationsIndex(
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

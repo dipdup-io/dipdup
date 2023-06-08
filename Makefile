@@ -83,4 +83,12 @@ demo_run:
 demo_init:
 	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
 
+profile:
+	python tests/profile_abi_decoding.py
+
+unsafe:
+	grep -r "type: ignore" src tests scripts | grep -v "import"
+
+todo:
+	grep -r -e "TODO:" -e "FIXME:" src tests scripts
 ##

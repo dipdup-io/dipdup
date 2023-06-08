@@ -1,5 +1,4 @@
 <!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
-  <dl class="py class">
 <dt class="sig sig-object py" id="DipDupConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging='INFO'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DipDupConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Main indexer config</p>
@@ -19,7 +18,7 @@
 <li><p><strong>sentry</strong> (<a class="reference internal" href="#SentryConfig" title="SentryConfig"><em>SentryConfig</em></a>) – Sentry integration config</p></li>
 <li><p><strong>prometheus</strong> (<a class="reference internal" href="#PrometheusConfig" title="PrometheusConfig"><em>PrometheusConfig</em></a><em> | </em><em>None</em>) – Prometheus integration config</p></li>
 <li><p><strong>advanced</strong> (<a class="reference internal" href="#AdvancedConfig" title="AdvancedConfig"><em>AdvancedConfig</em></a>) – Advanced config</p></li>
-<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
+<li><p><strong>custom</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>]</em>) – User-defined configuration to use in callbacks</p></li>
 <li><p><strong>logging</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em> | </em><em>int</em><em>] </em><em>| </em><em>str</em><em> | </em><em>int</em>) – Modify logging verbosity</p></li>
 </ul>
 </dd>
@@ -28,19 +27,24 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unsafe_sqlite=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics=MetricsLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>reindex</strong> (<em>dict</em><em>[</em><a class="reference internal" href="#dipdup.models.ReindexingReason" title="dipdup.models.ReindexingReason"><em>dipdup.models.ReindexingReason</em></a><em>, </em><a class="reference internal" href="#dipdup.models.ReindexingAction" title="dipdup.models.ReindexingAction"><em>dipdup.models.ReindexingAction</em></a><em>]</em>) – Mapping of reindexing reasons and actions DipDup performs</p></li>
-<li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
+<li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
 <li><p><strong>metadata_interface</strong> (<em>bool</em>) – Expose metadata interface for TzKT</p></li>
 <li><p><strong>skip_version_check</strong> (<em>bool</em>) – Do not check for new DipDup versions on startup</p></li>
 <li><p><strong>rollback_depth</strong> (<em>int</em><em> | </em><em>None</em>) – A number of levels to keep for rollback</p></li>
 <li><p><strong>crash_reporting</strong> (<em>bool</em>) – Enable crash reporting</p></li>
+<li><p><strong>decimal_precision</strong> (<em>int</em><em> | </em><em>None</em>) – Overwrite precision if it’s not guessed correctly based on project models.</p></li>
+<li><p><strong>unsafe_sqlite</strong> (<em>bool</em>) – Disable journaling and data integrity checks. Use only for testing.</p></li>
+<li><p><strong>api</strong> (<em>ApiConfig</em>) – Monitoring API config</p></li>
+<li><p><strong>metrics</strong> (<em>MetricsLevel</em>) – off/basic/advanced based on how much performance metrics you want to collect</p></li>
+<li><p><strong>alt_operation_matcher</strong> (<em>bool</em>) – Use different algorithm to match operations (undocumented)</p></li>
 </ul>
 </dd>
 </dl>
@@ -103,7 +107,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – User-defined alias for the contract script</p></li>
+<li><p><strong>typename</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for the contract script</p></li>
 <li><p><strong>kind</strong> (<em>str</em>) – </p></li>
 </ul>
 </dd>
@@ -177,14 +181,15 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="tezos_tzkt_head.TzktHeadIndexConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_head.</span></span><span class="sig-name descname"><span class="pre">TzktHeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tezos_tzkt_head.</span></span><span class="sig-name descname"><span class="pre">TzktHeadIndexConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasource</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#tezos_tzkt_head.TzktHeadIndexConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Head block index config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'tezos.tzkt.head'</em><em>]</em>) – always <cite>tezos.tzkt.head</cite></p></li>
 <li><p><strong>datasource</strong> (<em>str</em><em> | </em><a class="reference internal" href="#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>TzktDatasourceConfig</em></a>) – Index datasource to receive head blocks</p></li>
-<li><p><strong>handlers</strong> (<em>tuple</em><em>[</em><a class="reference internal" href="#tezos_tzkt_head.HeadHandlerConfig" title="tezos_tzkt_head.HeadHandlerConfig"><em>tezos_tzkt_head.HeadHandlerConfig</em></a><em>, </em><em>...</em><em>]</em>) – Mapping of head block handlers</p></li>
+<li><p><strong>handlers</strong> – Mapping of head block handlers</p></li>
+<li><p><strong>callback</strong> (<em>str</em>) – </p></li>
 </ul>
 </dd>
 </dl>
@@ -207,7 +212,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="HttpConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HttpConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retry_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#HttpConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">HttpConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">retry_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratelimit_sleep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replay_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#HttpConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advanced configuration of HTTP client</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -220,8 +225,9 @@
 <li><p><strong>ratelimit_sleep</strong> (<em>float</em><em> | </em><em>None</em>) – Sleep time between requests when rate limit is reached</p></li>
 <li><p><strong>connection_limit</strong> (<em>int</em><em> | </em><em>None</em>) – Number of simultaneous connections</p></li>
 <li><p><strong>connection_timeout</strong> (<em>int</em><em> | </em><em>None</em>) – Connection timeout in seconds</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Number of items fetched in a single paginated request (for some APIs)</p></li>
-<li><p><strong>replay_path</strong> (<em>str</em><em> | </em><em>None</em>) – Development-only option to use cached HTTP responses instead of making real requests</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em> | </em><em>None</em>) – Number of items fetched in a single paginated request</p></li>
+<li><p><strong>replay_path</strong> (<em>str</em><em> | </em><em>None</em>) – Use cached HTTP responses instead of making real requests (dev only)</p></li>
+<li><p><strong>alias</strong> (<em>str</em><em> | </em><em>None</em>) – Alias for this HTTP client (dev only)</p></li>
 </ul>
 </dd>
 </dl>
@@ -285,13 +291,13 @@
 <li><p><strong>crontab</strong> (<em>str</em><em> | </em><em>None</em>) – Schedule with crontab syntax (<cite>* * * * *</cite>)</p></li>
 <li><p><strong>interval</strong> (<em>int</em><em> | </em><em>None</em>) – Schedule with interval in seconds</p></li>
 <li><p><strong>daemon</strong> (<em>bool</em>) – Run hook as a daemon (never stops)</p></li>
-<li><p><strong>args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Arguments to pass to the hook</p></li>
+<li><p><strong>args</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>]</em>) – Arguments to pass to the hook</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="JobConfig.args">
-<span class="sig-name descname"><span class="pre">args</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#JobConfig.args" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">args</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dipdup.fields.Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#JobConfig.args" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -569,13 +575,14 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="SqliteDatabaseConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SqliteDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">':memory:'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#SqliteDatabaseConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">SqliteDatabaseConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">immune_tables=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#SqliteDatabaseConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>SQLite connection config</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'sqlite'</em><em>]</em>) – always ‘sqlite’</p></li>
 <li><p><strong>path</strong> (<em>str</em>) – Path to .sqlite3 file, leave default for in-memory database (<cite>:memory:</cite>)</p></li>
+<li><p><strong>immune_tables</strong> (<em>set</em><em>[</em><em>str</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 </dl>

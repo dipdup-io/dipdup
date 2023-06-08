@@ -1,9 +1,8 @@
-import logging
-from typing import AsyncGenerator
+from typing import AsyncIterator
 
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.fetcher import DataFetcher
-from dipdup.fetcher import yield_by_level
+from dipdup.fetcher import readahead_by_level
 from dipdup.models.evm_subsquid import SubsquidEventData
 
 
@@ -19,13 +18,10 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         last_level: int,
         topics: list[tuple[str | None, str]],
     ) -> None:
-        self._logger = logging.getLogger('dipdup.subsquid')
-        self._datasource = datasource
-        self._first_level = first_level
-        self._last_level = last_level
+        super().__init__(datasource, first_level, last_level)
         self._topics = topics
 
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[SubsquidEventData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[SubsquidEventData, ...]]]:
         """Iterate over events fetched fetched from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
@@ -35,5 +31,5 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in yield_by_level(event_iter):
+        async for level, batch in readahead_by_level(event_iter, limit=5_000):
             yield level, batch
