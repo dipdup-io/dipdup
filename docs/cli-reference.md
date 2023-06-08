@@ -1,5 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
-  <section id="dipdup">
+<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Permalink to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>
 <p>Documentation: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
