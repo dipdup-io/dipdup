@@ -24,7 +24,7 @@ Index is a set of contracts and rules for processing them as a single entity. Yo
 
 ## Handling chain reorgs
 
-Reorg messages signal chain reorganizations, which means some blocks, including all operations, are rolled back in favor of another with higher fitness. It's crucial to handle these messages correctly to avoid accumulating duplicate or invalid data. DipDup processes chain reorgs by restoring a previous database state, but you can implement your rollback logic by editing the `on_index_rollback` event hook.
+Reorg messages signal chain reorganizations, which means some blocks, including all operations, are rolled back in favor of another with higher fitness. It's crucial to handle these messages correctly to avoid accumulating duplicate or invalid data. DipDup processes chain reorgs by restoring a previous database state, but you can implement your rollback logic by editing the `on_index_rollback` system hook.
 
 <!--
 

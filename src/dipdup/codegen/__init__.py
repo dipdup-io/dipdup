@@ -50,7 +50,7 @@ class CodeGenerator(ABC):
         await self.generate_types(force)
 
         await self.generate_hooks()
-        await self.generate_event_hooks()
+        await self.generate_system_hooks()
         await self.generate_handlers()
 
         self._package.post_init()
@@ -74,7 +74,7 @@ class CodeGenerator(ABC):
         ...
 
     @abstractmethod
-    async def generate_event_hooks(self) -> None:
+    async def generate_system_hooks(self) -> None:
         ...
 
     @abstractmethod

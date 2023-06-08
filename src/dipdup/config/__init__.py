@@ -511,19 +511,19 @@ class HookConfig(CallbackMixin):
 
 
 @dataclass
-class EventHookConfig(HookConfig):
+class SystemHookConfig(HookConfig):
     pass
 
 
-event_hooks = {
+system_hooks = {
     # NOTE: Fires on every run after datasources and schema are initialized.
     # NOTE: Default: nothing.
-    'on_restart': EventHookConfig(
+    'on_restart': SystemHookConfig(
         callback='on_restart',
     ),
     # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
     # NOTE: Default: database rollback.
-    'on_index_rollback': EventHookConfig(
+    'on_index_rollback': SystemHookConfig(
         callback='on_index_rollback',
         args={
             'index': 'dipdup.index.Index',
@@ -533,12 +533,12 @@ event_hooks = {
     ),
     # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
     # NOTE: Default: nothing.
-    'on_reindex': EventHookConfig(
+    'on_reindex': SystemHookConfig(
         callback='on_reindex',
     ),
     # NOTE: Fires when all indexes reach REALTIME state.
     # NOTE: Default: nothing.
-    'on_synchronized': EventHookConfig(
+    'on_synchronized': SystemHookConfig(
         callback='on_synchronized',
     ),
 }
@@ -814,8 +814,8 @@ class DipDupConfig:
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
-            if name in event_hooks:
-                raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
+            if name in system_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved by system hook')
 
         # NOTE: Rollback depth and conflicting techniques
         rollback_depth = self.advanced.rollback_depth

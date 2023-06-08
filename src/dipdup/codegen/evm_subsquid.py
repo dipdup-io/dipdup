@@ -138,7 +138,7 @@ class SubsquidCodeGenerator(CodeGenerator):
     async def generate_hooks(self) -> None:
         pass
 
-    async def generate_event_hooks(self) -> None:
+    async def generate_system_hooks(self) -> None:
         pass
 
     async def generate_handlers(self) -> None:
