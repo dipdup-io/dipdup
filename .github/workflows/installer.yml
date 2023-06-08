@@ -47,13 +47,16 @@ jobs:
       - name: dipdup init
         run: cd dipdup_indexer; dipdup init
 
-      - name: Install dipdup from HEAD
-        run: cd dipdup_indexer; poetry run pip install --editable --no-cache-dir ..
+      - name: Install dipdup from current HEAD instead of PyPI
+        run: cd dipdup_indexer; poetry run pip install --no-cache-dir git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
+
+      - name: Install project without deps
+        run: cd dipdup_indexer; poetry run pip install --no-cache-dir --no-deps .
 
       - name: make lint
         run: cd dipdup_indexer; make lint
 
-      - name: Deploy scripts to GH Pages
+      - name: Deploy scripts to GitHub Pages
         if: contains(github.ref, 'next')
         uses: peaceiris/actions-gh-pages@v3
         with:
