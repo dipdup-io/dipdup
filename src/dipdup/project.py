@@ -80,7 +80,7 @@ DEFAULT_ANSWERS = Answers(
     author='John Smith <john_smith@localhost.lan>',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.26.0',
+    hasura_image='hasura/graphql-engine:v2.27.0',
     crash_reporting=False,
     linters='default',
     line_length='120',
