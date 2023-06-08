@@ -418,16 +418,17 @@ class DipDupContext:
         return self._get_datasource(name, SubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
-        """Get `evm.node` datasource by name"""
+        """Get `evm.node` datasource by name or by linked `evm.subsquid` datasource name"""
         with suppress(ConfigurationError):
             return self._get_datasource(name, EvmNodeDatasource)
         with suppress(ConfigurationError):
             subsquid = self._get_datasource(name, SubsquidDatasource)
+            # NOTE: Multiple nodes can be linked to a single subsquid. Network is the same, so grab any.
             random_node = subsquid._config.random_node
             if random_node is None:
-                raise ConfigurationError('')
+                raise ConfigurationError(f'No `evm.node` datasources linked to `{name}`')
             return self._get_datasource(random_node.name, EvmNodeDatasource)
-        raise ConfigurationError(f'`{name}` is neither evm.node nor evm.subsquid')
+        raise ConfigurationError(f'`{name}` datasource is neither `evm.node` nor `evm.subsquid`')
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name"""
