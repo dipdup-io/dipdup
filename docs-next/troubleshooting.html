@@ -208,10 +208,7 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 <p>More logs can give you a clue about the reason for an issue. Enable them in config:</p>
 <pre><code class="language-yaml">logging: DEBUG
 </code></pre>
-<p>When an exception occurs DipDup saves crash dumps to <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code>. You can send those dumps to Baking Bad automatically:</p>
-<pre><code class="language-yaml">advanced:
-  crash_reporting: True
-</code></pre>
+<p>When an exception occurs DipDup saves crash dumps to  <code>~/local/share/dipdup/crashdumps</code>. You can inspect them using <code>dipdup report</code> and <code>dipdup report show</code> commands.</p>
 <h2 id="use-linters-to-find-errors-in-your-python-code"><a class="header" href="#use-linters-to-find-errors-in-your-python-code">Use linters to find errors in your Python code</a></h2>
 <p>Exceptions that occurred during callback execution are reraised as <code>CallbackError</code>s. If you experience this issue, most likely your code is incorrect. Luckily, the Python ecosystem has lots of tools called linters to help you find mistakes. In DipDup we mostly use a combo of <code>flake8</code> and <code>mypy</code>. You can start using both with zero configuration:</p>
 <pre><code class="language-shell">poetry add --with dev flake8 mypy

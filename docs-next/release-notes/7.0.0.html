@@ -189,6 +189,10 @@
 <p>...</p>
 <h3 id="refined-docker-images"><a class="header" href="#refined-docker-images">Refined Docker images</a></h3>
 <p>...</p>
+<h4 id="the-crash-reporting-flag-has-been-removed"><a class="header" href="#the-crash-reporting-flag-has-been-removed">The crash reporting flag has been removed</a></h4>
+<p>First of all, Sentry integration is not affected by this change!</p>
+<p>Opt-in <code>advanced.crash_reporting</code> flag was introduced in v6.0 to allow sending Sentry events to our public instance. We expected that the gathered reports will help us to improve DipDup stability. It turned out, the cons of this approach outweigh the pros. Very few users have enabled this feature, and most of the reports sent were not helpful. Don't get me wrong, Sentry is a great piece of software. It's just not the best fit for crash reporting when a majority of executed code is either written user or generated. Also, these circumstances increase the risk of leaking sensitive data. So, we decided to shift the focus to plaintext human-friendly crash dumps. See the next section to learn how to use them. Again, if you use Sentry, you can still use it with DipDup. We'll continue to support and improve Sentry integration; we use it in our in-house projects too.</p>
+<p><em>Migration from 6.5</em>: Remove <code>advanced.crash_reporting</code> from your config if presented.</p>
 <h3 id="miscellaneous"><a class="header" href="#miscellaneous">Miscellaneous</a></h3>
 <p>Event hooks are now called system hooks. All the blockchains we support have entities called events (of smart contracts), and that creates ambiguity. Nothing has changed except the name; you don't need to update your code of config.</p>
 <p><code>advanced.metadata_interface</code> config option has been removed. This flag allowed using <code>update_token_metadata</code> and <code>update_contract_metadata</code> methods, which are now available by default. You can remove it from the config.</p>

@@ -765,8 +765,6 @@ advanced:
     rollback: ignore
     config_modified: exception
     schema_modified: exception
-  rollback_depth: 2
-  crash_reporting: False
 
 logging: DEBUG
 </code></pre>
@@ -1950,24 +1948,10 @@ async def calculate_stats(
 <div style="break-before: page; page-break-before: always;"></div><h1 id="feature-flags"><a class="header" href="#feature-flags">Feature flags</a></h1>
 <p>Feature flags set in <code>advanced</code> config section allow users to modify parameters that affect the behavior of the whole framework. Choosing the right combination of flags for an indexer project can improve performance, reduce RAM consumption, or enable useful features.</p>
 <div class="table-wrapper"><table><thead><tr><th>flag</th><th>description</th></tr></thead><tbody>
-<tr><td><code>crash_reporting</code></td><td>Enable sending crash reports to the Baking Bad team</td></tr>
 <tr><td><code>early_realtime</code></td><td>Start collecting realtime messages while sync is in progress</td></tr>
 <tr><td><code>postpone_jobs</code></td><td>Do not start the job scheduler until all indexes are synchronized</td></tr>
 <tr><td><code>skip_version_check</code></td><td>Disable warning about running unstable or out-of-date DipDup version</td></tr>
 </tbody></table>
-</div>
-<h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
-<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
-<div id="admonition-see-also" class="admonition info">
-<div class="admonition-title">
-<p>See Also</p>
-<p><a class="admonition-anchor-link" href="advanced/feature-flags.html#admonition-see-also"></a></p>
-</div>
-<div>
-<ul>
-<li><a href="https://docs-next.dipdup.io/troubleshooting.html">9. Troubleshooting</a></li>
-</ul>
-</div>
 </div>
 <h2 id="early-realtime"><a class="header" href="#early-realtime">Early realtime</a></h2>
 <p>By default, DipDup enters a sync state twice: before and after establishing a realtime connection. This flag allows collecting realtime messages while the sync is in progress, right after indexes load.</p>
@@ -2505,9 +2489,6 @@ sentry:
 
 prometheus:
   host: 0.0.0.0
-
-advanced:
-  crash_reporting: False
 </code></pre>
 <p>Then modify command in <code>docker-compose.yml</code>:</p>
 <pre><code class="language-yaml">services:
@@ -3065,10 +3046,7 @@ dipdup -c dipdup.yml -c dipdup.prod.yml config env
 <p>More logs can give you a clue about the reason for an issue. Enable them in config:</p>
 <pre><code class="language-yaml">logging: DEBUG
 </code></pre>
-<p>When an exception occurs DipDup saves crash dumps to <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code>. You can send those dumps to Baking Bad automatically:</p>
-<pre><code class="language-yaml">advanced:
-  crash_reporting: True
-</code></pre>
+<p>When an exception occurs DipDup saves crash dumps to  <code>~/local/share/dipdup/crashdumps</code>. You can inspect them using <code>dipdup report</code> and <code>dipdup report show</code> commands.</p>
 <h2 id="use-linters-to-find-errors-in-your-python-code"><a class="header" href="#use-linters-to-find-errors-in-your-python-code">Use linters to find errors in your Python code</a></h2>
 <p>Exceptions that occurred during callback execution are reraised as <code>CallbackError</code>s. If you experience this issue, most likely your code is incorrect. Luckily, the Python ecosystem has lots of tools called linters to help you find mistakes. In DipDup we mostly use a combo of <code>flake8</code> and <code>mypy</code>. You can start using both with zero configuration:</p>
 <pre><code class="language-shell">poetry add --with dev flake8 mypy
@@ -3653,7 +3631,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unsafe_sqlite=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics=MetricsLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unsafe_sqlite=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics=MetricsLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3664,7 +3642,6 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
 <li><p><strong>skip_version_check</strong> (<em>bool</em>) – Do not check for new DipDup versions on startup</p></li>
 <li><p><strong>rollback_depth</strong> (<em>int</em><em> | </em><em>None</em>) – A number of levels to keep for rollback</p></li>
-<li><p><strong>crash_reporting</strong> (<em>bool</em>) – Enable crash reporting</p></li>
 <li><p><strong>decimal_precision</strong> (<em>int</em><em> | </em><em>None</em>) – Overwrite precision if it’s not guessed correctly based on project models.</p></li>
 <li><p><strong>unsafe_sqlite</strong> (<em>bool</em>) – Disable journaling and data integrity checks. Use only for testing.</p></li>
 <li><p><strong>api</strong> (<em>ApiConfig</em>) – Monitoring API config</p></li>
@@ -4582,6 +4559,7 @@ templates:
 <li>config: Removed <code>similar_to</code> filter of <code>operation</code> index pattern.</li>
 <li>config: Removed <code># dipdup: ignore</code> hint used to ignore typeclass during init.</li>
 <li>config: Removed <code>advanced.metadata_interface</code> flag (always enabled).</li>
+<li>sentry: Removed <code>crash_reporting</code> flag and built-in DSN.</li>
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
@@ -5519,6 +5497,10 @@ templates:
 <p>...</p>
 <h3 id="refined-docker-images"><a class="header" href="#refined-docker-images">Refined Docker images</a></h3>
 <p>...</p>
+<h4 id="the-crash-reporting-flag-has-been-removed"><a class="header" href="#the-crash-reporting-flag-has-been-removed">The crash reporting flag has been removed</a></h4>
+<p>First of all, Sentry integration is not affected by this change!</p>
+<p>Opt-in <code>advanced.crash_reporting</code> flag was introduced in v6.0 to allow sending Sentry events to our public instance. We expected that the gathered reports will help us to improve DipDup stability. It turned out, the cons of this approach outweigh the pros. Very few users have enabled this feature, and most of the reports sent were not helpful. Don't get me wrong, Sentry is a great piece of software. It's just not the best fit for crash reporting when a majority of executed code is either written user or generated. Also, these circumstances increase the risk of leaking sensitive data. So, we decided to shift the focus to plaintext human-friendly crash dumps. See the next section to learn how to use them. Again, if you use Sentry, you can still use it with DipDup. We'll continue to support and improve Sentry integration; we use it in our in-house projects too.</p>
+<p><em>Migration from 6.5</em>: Remove <code>advanced.crash_reporting</code> from your config if presented.</p>
 <h3 id="miscellaneous"><a class="header" href="#miscellaneous">Miscellaneous</a></h3>
 <p>Event hooks are now called system hooks. All the blockchains we support have entities called events (of smart contracts), and that creates ambiguity. Nothing has changed except the name; you don't need to update your code of config.</p>
 <p><code>advanced.metadata_interface</code> config option has been removed. This flag allowed using <code>update_token_metadata</code> and <code>update_contract_metadata</code> methods, which are now available by default. You can remove it from the config.</p>

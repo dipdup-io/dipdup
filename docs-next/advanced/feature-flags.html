@@ -175,24 +175,10 @@
                         <h1 id="feature-flags"><a class="header" href="#feature-flags">Feature flags</a></h1>
 <p>Feature flags set in <code>advanced</code> config section allow users to modify parameters that affect the behavior of the whole framework. Choosing the right combination of flags for an indexer project can improve performance, reduce RAM consumption, or enable useful features.</p>
 <div class="table-wrapper"><table><thead><tr><th>flag</th><th>description</th></tr></thead><tbody>
-<tr><td><code>crash_reporting</code></td><td>Enable sending crash reports to the Baking Bad team</td></tr>
 <tr><td><code>early_realtime</code></td><td>Start collecting realtime messages while sync is in progress</td></tr>
 <tr><td><code>postpone_jobs</code></td><td>Do not start the job scheduler until all indexes are synchronized</td></tr>
 <tr><td><code>skip_version_check</code></td><td>Disable warning about running unstable or out-of-date DipDup version</td></tr>
 </tbody></table>
-</div>
-<h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
-<p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
-<div id="admonition-see-also" class="admonition info">
-<div class="admonition-title">
-<p>See Also</p>
-<p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>
-</div>
-<div>
-<ul>
-<li><a href="https://docs-next.dipdup.io/troubleshooting.html">9. Troubleshooting</a></li>
-</ul>
-</div>
 </div>
 <h2 id="early-realtime"><a class="header" href="#early-realtime">Early realtime</a></h2>
 <p>By default, DipDup enters a sync state twice: before and after establishing a realtime connection. This flag allows collecting realtime messages while the sync is in progress, right after indexes load.</p>
