@@ -755,7 +755,6 @@ hasura:
 advanced:
   merge_subscriptions: False
   postpone_jobs: False
-  metadata_interface: False
   skip_version_check: False
   scheduler:
     apscheduler.job_defaults.coalesce: True
@@ -1953,7 +1952,6 @@ async def calculate_stats(
 <div class="table-wrapper"><table><thead><tr><th>flag</th><th>description</th></tr></thead><tbody>
 <tr><td><code>crash_reporting</code></td><td>Enable sending crash reports to the Baking Bad team</td></tr>
 <tr><td><code>early_realtime</code></td><td>Start collecting realtime messages while sync is in progress</td></tr>
-<tr><td><code>metadata_interface</code></td><td>Enable contract and token metadata interfaces</td></tr>
 <tr><td><code>postpone_jobs</code></td><td>Do not start the job scheduler until all indexes are synchronized</td></tr>
 <tr><td><code>skip_version_check</code></td><td>Disable warning about running unstable or out-of-date DipDup version</td></tr>
 </tbody></table>
@@ -3655,7 +3653,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="AdvancedConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unsafe_sqlite=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics=MetricsLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">AdvancedConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reindex=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unsafe_sqlite=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics=MetricsLevel.basic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#AdvancedConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Feature flags and other advanced config.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -3664,7 +3662,6 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <li><p><strong>scheduler</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><em>dipdup.fields.Any</em><em>] </em><em>| </em><em>None</em>) – <cite>apscheduler</cite> scheduler config</p></li>
 <li><p><strong>postpone_jobs</strong> (<em>bool</em>) – Do not start job scheduler until all indexes are in realtime state</p></li>
 <li><p><strong>early_realtime</strong> (<em>bool</em>) – Establish realtime connection immediately after startup</p></li>
-<li><p><strong>metadata_interface</strong> (<em>bool</em>) – Expose metadata interface for TzKT</p></li>
 <li><p><strong>skip_version_check</strong> (<em>bool</em>) – Do not check for new DipDup versions on startup</p></li>
 <li><p><strong>rollback_depth</strong> (<em>int</em><em> | </em><em>None</em>) – A number of levels to keep for rollback</p></li>
 <li><p><strong>crash_reporting</strong> (<em>bool</em>) – Enable crash reporting</p></li>
@@ -3781,7 +3778,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <li><p><strong>select_limit</strong> (<em>int</em>) – Row limit for unauthenticated queries.</p></li>
 <li><p><strong>allow_aggregations</strong> (<em>bool</em>) – Whether to allow aggregations in unauthenticated queries.</p></li>
 <li><p><strong>allow_inconsistent_metadata</strong> (<em>bool</em>) – Whether to ignore errors when applying Hasura metadata.</p></li>
-<li><p><strong>camel_case</strong> (<em>bool</em>) – Whether to use camelCase instead of default pascal_case for the field names (incompatible with <cite>metadata_interface</cite> flag)</p></li>
+<li><p><strong>camel_case</strong> (<em>bool</em>) – Whether to use camelCase instead of default pascal_case for the field names.</p></li>
 <li><p><strong>rest</strong> (<em>bool</em>) – Enable REST API both for autogenerated and custom queries.</p></li>
 <li><p><strong>http</strong> (<a class="reference internal" href="config/reference.html#HttpConfig" title="HttpConfig"><em>HttpConfig</em></a><em> | </em><em>None</em>) – HTTP connection tunables</p></li>
 </ul>
@@ -4249,7 +4246,6 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <tr><td><code>postpone_jobs</code></td><td>Do not start job scheduler until all indexes are in realtime state</td></tr>
 <tr><td><code>early_realtime</code></td><td>Establish realtime connection immediately after startup</td></tr>
 <tr><td><code>merge_subscriptions</code></td><td>Subscribe to all operations instead of exact channels</td></tr>
-<tr><td><code>metadata_interface</code></td><td>Expose metadata interface for TzKT</td></tr>
 </tbody></table>
 </div>
 <p>CLI flags have priority over self-titled <code>AdvancedConfig</code> fields.</p>
@@ -4585,6 +4581,7 @@ templates:
 <li>cli: Removed <code>status</code> command.</li>
 <li>config: Removed <code>similar_to</code> filter of <code>operation</code> index pattern.</li>
 <li>config: Removed <code># dipdup: ignore</code> hint used to ignore typeclass during init.</li>
+<li>config: Removed <code>advanced.metadata_interface</code> flag (always enabled).</li>
 </ul>
 <h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
@@ -5523,9 +5520,7 @@ templates:
 <h3 id="refined-docker-images"><a class="header" href="#refined-docker-images">Refined Docker images</a></h3>
 <p>...</p>
 <h3 id="miscellaneous"><a class="header" href="#miscellaneous">Miscellaneous</a></h3>
-<p>...</p>
-<h4 id="nullable-metadata"><a class="header" href="#nullable-metadata">Nullable metadata</a></h4>
-<p>...</p>
+<p><code>advanced.metadata_interface</code> config option has been removed. This flag allowed using <code>update_token_metadata</code> and <code>update_contract_metadata</code> methods, which are now available by default. You can remove it from the config.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="620"><a class="header" href="#620">6.2.0</a></h1>
 <h2 id="whats-new-1"><a class="header" href="#whats-new-1">What's New</a></h2>
 <h3 id="new-interactive-installer"><a class="header" href="#new-interactive-installer">New interactive installer</a></h3>
