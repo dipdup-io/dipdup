@@ -1,6 +1,6 @@
-# Event hooks
+# System hooks
 
-Every DipDup project has multiple event hooks (previously "default hooks"); they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.
+Every DipDup project has multiple system hooks; they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.
 
 ## `on_restart`
 
@@ -16,9 +16,9 @@ This hook fires when every active index reaches a realtime state. Here you can c
 
 ## `on_index_rollback`
 
-Fires when TzKT datasource has received a chain reorg message which can't be processed by dropping buffered messages (`buffer_size` option).
+Fires when one of index datasources has received a chain reorg message.
 
-Since version 6.0 this hook performs a database-level rollback by default. If it doesn't work for you for some reason remove `ctx.rollback` call and implement your own rollback logic.
+Since version 6.0 this hook performs a database-level rollback by default. If you want to process rollbacks manually, remove `ctx.rollback` call and implement custom logic in this callback.
 
 ```admonish info title="See Also"
 * {{ #summary advanced/reindexing.md}}

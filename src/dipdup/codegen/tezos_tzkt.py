@@ -18,7 +18,7 @@ from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import event_hooks
+from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
@@ -173,11 +173,11 @@ class TzktCodeGenerator(CodeGenerator):
                 await self._generate_callback(handler_config, 'handlers')
 
     async def generate_hooks(self) -> None:
-        for hook_configs in self._config.hooks.values(), event_hooks.values():
+        for hook_configs in self._config.hooks.values(), system_hooks.values():
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, 'hooks', sql=True)
 
-    async def generate_event_hooks(self) -> None:
+    async def generate_system_hooks(self) -> None:
         pass
 
     def get_typeclass_name(self, schema_path: Path) -> str:
