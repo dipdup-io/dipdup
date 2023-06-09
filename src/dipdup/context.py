@@ -362,8 +362,6 @@ class DipDupContext:
         :param address: Contract address
         :param metadata: Contract metadata to insert/update
         """
-        if not self.config.advanced.metadata_interface:
-            return
         update_id = MetadataCursor.contract()
         await ContractMetadata.update_or_create(
             network=network,
@@ -388,8 +386,6 @@ class DipDupContext:
         :param metadata: Token metadata to insert/update
         """
 
-        if not self.config.advanced.metadata_interface:
-            return
         if not all(str.isdigit(c) for c in token_id):
             raise ValueError('`token_id` must be a number')
 

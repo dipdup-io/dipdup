@@ -47,16 +47,13 @@ jobs:
       - name: dipdup init
         run: cd dipdup_indexer; dipdup init
 
-      - name: make install
-        run: cd dipdup_indexer; make install
+      - name: Replace DipDup in project with current HEAD
+        run: cd dipdup_indexer; poetry remove dipdup; poetry add git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
 
-      - name: reinstall dipdup from HEAD
-        run: cd dipdup_indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
+      - name: make install lint
+        run: cd dipdup_indexer; make install lint
 
-      - name: make lint
-        run: cd dipdup_indexer; make lint
-
-      - name: Deploy scripts to GH Pages
+      - name: Deploy scripts to GitHub Pages
         if: contains(github.ref, 'next')
         uses: peaceiris/actions-gh-pages@v3
         with:
