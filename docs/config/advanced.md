@@ -22,7 +22,6 @@ This config section allows users to tune some system-wide options, either experi
 | `postpone_jobs` | Do not start job scheduler until all indexes are in realtime state |
 | `early_realtime` | Establish realtime connection immediately after startup |
 | `merge_subscriptions` | Subscribe to all operations instead of exact channels |
-| `metadata_interface` | Expose metadata interface for TzKT |
 
 CLI flags have priority over self-titled `AdvancedConfig` fields.
 

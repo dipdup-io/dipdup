@@ -543,8 +543,7 @@ class DipDup:
             if hasura_gateway:
                 await hasura_gateway.configure()
 
-            if advanced.metadata_interface:
-                await MetadataCursor.initialize()
+            await MetadataCursor.initialize()
 
             if self._config.oneshot:
                 start_scheduler_event = Event()
