@@ -3,7 +3,8 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import BaseProject
+from dipdup.project import answers_from_replay
+from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
 demos_path = Path(__file__).parent.parent / 'demos'
@@ -27,31 +28,24 @@ for project_path in _get_projects():
     if not project_path.name.endswith('.json'):
         continue
 
-    print(f'=> Updating {project_path.name}')
-    project = BaseProject()
-    project.run(quiet=True, replay=str(project_path))
-    project.render(force=True)
+    print(f'=> Rendering {project_path.name}')
+    answers = answers_from_replay(project_path)
+    render_project(answers, force=True)
 
-    project_name = project.answers['project_name']
-    package = project.answers['package']
+    project_name = answers['project_name']
+    package = answers['package']
     subprocess.run(['mv', project_name, 'demos'], check=True)
 
-for demo in _get_demos():
-    if not demo.is_dir():
-        continue
-
-    print(f'=> Initializing `{demo.name}`')
+    print(f'=> Linking `{project_name}`')
     subprocess.run(
-        ['dipdup', 'init', '--overwrite-types'],
-        cwd=demo,
+        ['ln', '-sf', f'../demos/{project_name}/src/{package}', package],
+        cwd=Path(__file__).parent.parent / 'src',
         check=True,
     )
 
-    demo_pkg = demo.name.replace('-', '_')
-    args = ['ln', '-sf', f'../demos/{demo.name}/src/{demo_pkg}', demo_pkg]
-    print(f'=> Linking `{demo.name}`: {" ".join(args)}')
+    print(f'=> Initializing `{project_name}`')
     subprocess.run(
-        args,
-        cwd=Path(__file__).parent.parent / 'src',
+        ['dipdup', 'init', '--force'],
+        cwd=Path(__file__).parent.parent / 'demos' / project_name,
         check=True,
     )

@@ -1,7 +1,7 @@
 """This script (un)installs DipDup and its dependencies with pipx.
 
 WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic will break.
-And no pre-3.10 code too. Just to print nice colored "not supported" message instead of crashing.
+And no 3.11-only code too. Just to print nice colored "not supported" message instead of crashing.
 
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
@@ -29,6 +29,15 @@ WHICH_CMDS = (
     'pyvenv',
     'pyenv',
 )
+
+WELCOME_ASCII = r"""
+        ____   _         ____              
+       / __ \ (_)____   / __ \ __  __ ____ 
+      / / / // // __ \ / / / // / / // __ \
+     / /_/ // // /_/ // /_/ // /_/ // /_/ /
+    /_____//_// .___//_____/ \__,_// .___/ 
+             /_/                  /_/      
+"""
 
 
 class Colors:
@@ -82,6 +91,7 @@ class DipDupEnvironment:
 
     def refresh(self) -> None:
         if not self._quiet and not self._commands:
+            print(WELCOME_ASCII)
             print()
             print(_tab('OS:') + self._os)
             print(_tab('Arch:') + self._arch)
@@ -94,7 +104,7 @@ class DipDupEnvironment:
             if old == new:
                 continue
             self._commands[command] = new
-            self._quiet or print(_tab(command) + (new or ''))
+            self._quiet or print(_tab(f'{command}:') + (new or ''))
 
         print()
 
@@ -106,8 +116,8 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        if not sys.version.startswith('3.10'):
-            fail('DipDup requires Python 3.10')
+        if not sys.version.startswith('3.11'):
+            fail('DipDup requires Python 3.11')
 
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:
