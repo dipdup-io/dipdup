@@ -23,7 +23,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
-from dipdup.config import event_hooks
+from dipdup.config import system_hooks
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import DipDupContext
@@ -477,7 +477,7 @@ class DipDup:
         Only basic initialization is performed:
 
           - Create datasources without spawning them
-          - Register event hooks
+          - Register system hooks
           - Initialize Tortoise ORM and create schema
 
         You need to enter `AsyncExitStack` context manager prior to calling this method.
@@ -543,8 +543,7 @@ class DipDup:
             if hasura_gateway:
                 await hasura_gateway.configure()
 
-            if advanced.metadata_interface:
-                await MetadataCursor.initialize()
+            await MetadataCursor.initialize()
 
             if self._config.oneshot:
                 start_scheduler_event = Event()
@@ -643,8 +642,8 @@ class DipDup:
         await preload_cached_models(self._config.package)
 
     async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
-        for event_hook_config in event_hooks.values():
-            self._ctx.register_hook(event_hook_config)
+        for system_hook_config in system_hooks.values():
+            self._ctx.register_hook(system_hook_config)
 
         for hook_config in self._config.hooks.values():
             self._ctx.register_hook(hook_config)

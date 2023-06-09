@@ -38,7 +38,7 @@
 * [Advanced usage](advanced/README.md)
   * [Callback context (ctx)](advanced/context.md)
   * [Hooks](advanced/hooks.md)
-  * [Event hooks](advanced/event-hooks.md)
+  * [System hooks](advanced/system-hooks.md)
   * [Job scheduler](advanced/jobs.md)
   * [Reindexing](advanced/reindexing.md)
   * [Feature flags](advanced/feature-flags.md)

@@ -26,7 +26,7 @@ indexes:
             originated_contract: registry
 ```
 
-Another solution is to implement custom logic in `on_restart` hook (see {{ #summary advanced/event-hooks.md#on_restart}})
+Another solution is to implement custom logic in `on_restart` hook (see {{ #summary advanced/system-hooks.md#on_restart}})
 
 ```admonish info title="See Also"
 * {{ #summary advanced/context.md}}

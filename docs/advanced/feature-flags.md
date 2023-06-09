@@ -5,7 +5,6 @@ Feature flags set in `advanced` config section allow users to modify parameters 
 | flag                  | description                                                          |
 | --------------------- | -------------------------------------------------------------------- |
 | `early_realtime`      | Start collecting realtime messages while sync is in progress         |
-| `metadata_interface`  | Enable contract and token metadata interfaces                        |
 | `postpone_jobs`       | Do not start the job scheduler until all indexes are synchronized    |
 | `skip_version_check`  | Disable warning about running unstable or out-of-date DipDup version |
 
