@@ -1,6 +1,5 @@
 {
   "author": "John Smith \u003cjohn_smith@localhost.lan\u003e",
-  "crash_reporting": false,
   "description": "Blockchain indexer built with DipDup",
   "dipdup_version": "6",
   "hasura_image": "hasura/graphql-engine:v2.27.0",

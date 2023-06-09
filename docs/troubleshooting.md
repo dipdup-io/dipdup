@@ -47,12 +47,7 @@ More logs can give you a clue about the reason for an issue. Enable them in conf
 logging: DEBUG
 ```
 
-When an exception occurs DipDup saves crash dumps to `/tmp/dipdup/crashdumps/XXXXXXX.json`. You can send those dumps to Baking Bad automatically:
-
-```yaml
-advanced:
-  crash_reporting: True
-```
+When an exception occurs DipDup saves crash dumps to  `~/local/share/dipdup/crashdumps`. You can inspect them using `dipdup report` and `dipdup report show` commands.
 
 ## Use linters to find errors in your Python code
 

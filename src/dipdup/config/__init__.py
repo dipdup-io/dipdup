@@ -560,7 +560,6 @@ class AdvancedConfig:
     :param early_realtime: Establish realtime connection immediately after startup
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
-    :param crash_reporting: Enable crash reporting
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param api: Monitoring API config
@@ -574,7 +573,6 @@ class AdvancedConfig:
     early_realtime: bool = False
     skip_version_check: bool = False
     rollback_depth: int | None = None
-    crash_reporting: bool = False
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
     api: ApiConfig = field(default_factory=ApiConfig)

@@ -4,18 +4,9 @@ Feature flags set in `advanced` config section allow users to modify parameters 
 
 | flag                  | description                                                          |
 | --------------------- | -------------------------------------------------------------------- |
-| `crash_reporting`     | Enable sending crash reports to the Baking Bad team                  |
 | `early_realtime`      | Start collecting realtime messages while sync is in progress         |
 | `postpone_jobs`       | Do not start the job scheduler until all indexes are synchronized    |
 | `skip_version_check`  | Disable warning about running unstable or out-of-date DipDup version |
-
-## Crash reporting
-
-Enables sending crash reports to the Baking Bad team. This is **disabled by default**. You can inspect crash dumps saved as `/tmp/dipdup/crashdumps/XXXXXXX.json` before enabling this option.
-
-```admonish info title="See Also"
-* {{ #summary troubleshooting.md}}
-```
 
 ## Early realtime
 

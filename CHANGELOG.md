@@ -52,6 +52,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Removed `similar_to` filter of `operation` index pattern.
 - config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
 - config: Removed `advanced.metadata_interface` flag (always enabled).
+- sentry: Removed `crash_reporting` flag and built-in DSN.
 
 ### Other
 
