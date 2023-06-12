@@ -13,6 +13,7 @@ hasura:
   admin_secret: ${HASURA_SECRET:-changeme}
   allow_aggregations: false
   camel_case: true
+  create_source: True
 
 sentry:
   dsn: ${SENTRY_DSN:-""}
