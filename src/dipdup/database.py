@@ -187,11 +187,12 @@ async def generate_schema(
 
     await Tortoise.generate_schemas()
 
-    if isinstance(conn, AsyncpgClient):
-        # NOTE: Create a view for monitoring head status
-        sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
-        # TODO: Configurable interval
-        await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
+    # FIXME: Infinite schema_modified?
+    # if isinstance(conn, AsyncpgClient):
+    #     # NOTE: Create a view for monitoring head status
+    #     sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
+    #     # TODO: Configurable interval
+    #     await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
 
 
 async def _wipe_schema_postgres(
