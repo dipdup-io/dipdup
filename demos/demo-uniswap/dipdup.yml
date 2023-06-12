@@ -81,5 +81,4 @@ indexes:
       first_level: 12369521
 
 advanced:
-  api: {}
   decimal_precision: 128

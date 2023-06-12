@@ -29,3 +29,7 @@ CMD ["run"]
 
 COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
+
+# TEMP: Uniswap package and configs
+COPY --chown=dipdup src/demo_uniswap /home/dipdup/
+COPY --chown=dipdup demos/demo-uniswap/*.yml /home/dipdup/
