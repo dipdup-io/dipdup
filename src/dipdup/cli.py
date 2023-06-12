@@ -82,7 +82,6 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             _print_report(report_id)
             _print_help(e)
 
-            await asyncio.sleep(9000)
             if metrics:
                 raise e
             sys.exit(1)
