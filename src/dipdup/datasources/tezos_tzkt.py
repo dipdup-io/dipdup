@@ -200,9 +200,6 @@ class ContractHashes:
 
 class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     _default_http_config = HttpConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
-        retry_count=10,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -263,8 +260,9 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._logger.info('Establishing realtime connection')
         signalr_client = self._get_signalr_client()
         retry_sleep = self._http_config.retry_sleep
+        retry_count = 9000 if self._http_config.retry_count is None else self._http_config.retry_count
 
-        for _ in range(1, self._http_config.retry_count + 1):
+        for _ in range(1, retry_count + 1):
             try:
                 await signalr_client.run()
             except pysignalr.exceptions.ConnectionError as e:

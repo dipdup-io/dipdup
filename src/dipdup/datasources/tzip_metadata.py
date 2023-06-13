@@ -8,9 +8,6 @@ from dipdup.datasources import Datasource
 
 class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
     _default_http_config = HttpConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
-        retry_count=10,
         ratelimit_rate=10,
         ratelimit_period=1,
     )

@@ -45,7 +45,9 @@ RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitabl
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     # TODO: Make dynamic
-    _default_http_config = HttpConfig(ratelimit_sleep=30)
+    _default_http_config = HttpConfig(
+        ratelimit_sleep=30,
+    )
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
@@ -94,8 +96,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
+        retry_count = 9000 if self._http_config.retry_count is None else self._http_config.retry_count
 
-        for _ in range(1, self._http_config.retry_count + 1):
+        for _ in range(1, retry_count + 1):
             try:
                 await client.run()
             except pysignalr.exceptions.ConnectionError as e:

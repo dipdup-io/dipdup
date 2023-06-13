@@ -110,7 +110,6 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
         retry_sleep=1,
-        retry_multiplier=1.1,
         retry_count=3,
         alias='hasura',
     )

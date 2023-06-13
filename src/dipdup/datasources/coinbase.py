@@ -16,8 +16,6 @@ API_URL = 'https://api.pro.coinbase.com'
 
 class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
     _default_http_config = HttpConfig(
-        retry_sleep=1,
-        retry_multiplier=1.1,
         ratelimit_rate=10,
         ratelimit_period=1,
     )

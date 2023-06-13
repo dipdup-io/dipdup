@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import logging
 import platform
-import sys
 import time
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
@@ -145,10 +144,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         attempt = 1
         retry_sleep = self._config.retry_sleep
         retry_count = self._config.retry_count
-        retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
 
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
+            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count or 'inf')
             try:
                 return await self._request(
                     method=method,
@@ -157,7 +155,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     **kwargs,
                 )
             except safe_exceptions as e:
-                if self._config.retry_count and attempt - 1 == self._config.retry_count:
+                if retry_count is not None and attempt - 1 == retry_count:
                     raise e
 
                 ratelimit_sleep: float | None = None
@@ -175,9 +173,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     if Metrics.enabled:
                         Metrics.set_http_error(self._url, 0)
 
-                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
-                self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
-                await asyncio.sleep(ratelimit_sleep or retry_sleep)
+                sleep_seconds = ratelimit_sleep or retry_sleep
+                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count, e)
+                self._logger.info('Waiting %s seconds before retry', sleep_seconds)
+                await asyncio.sleep(sleep_seconds)
                 attempt += 1
                 if not ratelimit_sleep:
                     retry_sleep *= self._config.retry_multiplier
