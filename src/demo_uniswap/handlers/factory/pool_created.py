@@ -16,9 +16,10 @@ WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 
 
 async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
-    with suppress(Exception):
+    try:
         await models.Token.cached_get(address)
-        return None
+    except Exception:
+        return
 
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     erc20_iface = ERC20Token.from_address(web3, address)
@@ -33,7 +34,6 @@ async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
     )
     token.cache()
     await token.save()
-    return None
 
 
 async def pool_created(
@@ -50,13 +50,17 @@ async def pool_created(
     await factory.save()
 
     pool_id = event.payload.pool
-    token0 = event.payload.token0
-    token1 = event.payload.token1
     try:
+        token0 = event.payload.token0
         await create_token(ctx, token0, pool_id)
+    except Exception as e:
+        ctx.logger.warning('Failed to get token %s for pool %s: %s', token0, pool_id, e)
+        return  # skip this pool
+    try:
+        token1 = event.payload.token1
         await create_token(ctx, token1, pool_id)
     except Exception as e:
-        ctx.logger.warning('Failed to get tokens (%s, %s) for pool %s: %s', token0, token1, pool_id, e)
+        ctx.logger.warning('Failed to get token %s for pool %s: %s', token1, pool_id, e)
         return  # skip this pool
 
     pool = models.Pool(
