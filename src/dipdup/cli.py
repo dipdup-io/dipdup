@@ -3,6 +3,7 @@ import asyncio
 import atexit
 import logging
 import sys
+import time
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from copy import copy
@@ -81,12 +82,14 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             report_id = save_report(e)
             _print_report(report_id)
             _print_help(e)
+            # FIXME: Temporary
+            atexit.register(partial(time.sleep, 60 * 60))
 
             if metrics:
                 raise e
             sys.exit(1)
 
-        if fn.__name__ == 'run':
+        if metrics and fn.__name__ == 'run':
             save_report(None)
 
     return cast(WrappedCommandT, wrapper)
