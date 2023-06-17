@@ -32,20 +32,20 @@ for project_path in _get_projects():
     answers = answers_from_replay(project_path)
     render_project(answers, force=True)
 
-    project_name = answers['project_name']
     package = answers['package']
-    subprocess.run(['mv', project_name, 'demos'], check=True)
+    package = answers['package']
+    subprocess.run(['mv', package, 'demos'], check=True)
 
-    print(f'=> Linking `{project_name}`')
+    print(f'=> Linking `{package}`')
     subprocess.run(
-        ['ln', '-sf', f'../demos/{project_name}/src/{package}', package],
-        cwd=Path(__file__).parent.parent / 'src',
+        ['ln', '-sf', f'demos/{package}', f'src/{package}'],
+        cwd=Path(__file__).parent.parent,
         check=True,
     )
 
-    print(f'=> Initializing `{project_name}`')
+    print(f'=> Initializing `{package}`')
     subprocess.run(
         ['dipdup', 'init', '--force'],
-        cwd=Path(__file__).parent.parent / 'demos' / project_name,
+        cwd=Path(__file__).parent.parent / 'demos' / package,
         check=True,
     )

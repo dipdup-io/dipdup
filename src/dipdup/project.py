@@ -56,7 +56,6 @@ class Answers(TypedDict):
 
     dipdup_version: str
     template: str
-    project_name: str
     package: str
     version: str
     description: str
@@ -71,7 +70,6 @@ class Answers(TypedDict):
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
     template='demo_dao',
-    project_name='dipdup_indexer',
     package='dipdup_indexer',
     version='0.0.1',
     description='Blockchain indexer built with DipDup',
@@ -180,18 +178,18 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    project_name = prompt_str(
+    package = prompt_str(
         'Enter project name (the name will be used for folder name and package name)',
-        answers['project_name'],
+        answers['package'],
     )
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', project_name):
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
         cl.secho(
-            f'"{project_name}" is not valid Python package name. Please use only letters, numbers and underscores.',
+            f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
         quit(1)
-    answers['project_name'] = project_name
-    answers['package'] = project_name
+    answers['package'] = package
+    answers['package'] = package
 
     answers['version'] = prompt_str(
         'Enter project version',
@@ -291,7 +289,7 @@ def _render_templates(answers: Answers, path: Path, force: bool = False) -> None
     for path in project_paths:
         template_path = path.relative_to(Path(__file__).parent)
         output_path = Path(
-            answers['project_name'],
+            answers['package'],
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])

@@ -1,7 +1,6 @@
 {
   "dipdup_version": "6",
   "template": "demo_dao",
-  "project_name": "dipdup_indexer",
   "package": "dipdup_indexer",
   "version": "0.0.1",
   "description": "Blockchain indexer built with DipDup",

@@ -2992,6 +2992,20 @@ doc = ["sphinx"]
 test = ["pytest", "pytest-cov"]
 
 [[package]]
+name = "survey"
+version = "4.4.0"
+description = "A simple library for creating beautiful interactive prompts."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "survey-4.4.0-py3-none-any.whl", hash = "sha256:0a1b74424a4eeab74279ba907c848653a4495e6a74995a6b2f82395394db57db"},
+    {file = "survey-4.4.0.tar.gz", hash = "sha256:e697ac7d5214034fa9a3c6bd320828c19bbe515b59bfd85b647c31312b998518"},
+]
+
+[package.extras]
+docs = ["sphinx", "sphinx-autodoc-typehints", "sphinx-paramlinks", "sphinx-rtd-theme"]
+
+[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -3395,4 +3409,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "1d9097fdff118fa25c30e3c7f214ee2e8f2094cf25127b85c65f21829a93d44f"
+content-hash = "833581322d689863cea21681e70e4c997019c2573a10a6e9297f4d2d5c3fde97"

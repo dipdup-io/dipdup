@@ -5,6 +5,8 @@ from os import environ as env
 from pathlib import Path
 from typing import cast
 
+from dipdup.package import MODELS_MODULE
+
 
 def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
@@ -21,12 +23,14 @@ def get_package_path(package: str) -> Path:
     with suppress(ImportError):
         module = importlib.import_module(package)
         if module.__file__ is None:
-            raise RuntimeError(f'`{module.__name__}` package has no `__file__` attribute')
+            raise ImportError(f'`{module.__name__}` package has no `__file__` attribute')
         set_package_path(Path(module.__file__).parent)
         return cast(Path, PACKAGE_PATH)
 
     # NOTE: Create a new package; try src/<package> layout first.
-    if Path('src').is_dir():
+    if Path(MODELS_MODULE).is_file():
+        set_package_path(Path(MODELS_MODULE).parent)
+    elif Path('src').is_dir():
         set_package_path(Path('src', package))
     else:
         set_package_path(Path(package))

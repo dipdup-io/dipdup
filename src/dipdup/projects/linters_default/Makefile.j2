@@ -44,7 +44,7 @@ build:          ## Build Python wheel package
 	poetry build
 
 image:          ## Build Docker image
-	docker buildx build . -t {{ cookiecutter.project_name }}:${TAG}
+	docker buildx build . -t {{ cookiecutter.package }}:${TAG}
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
