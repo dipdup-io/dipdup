@@ -3,6 +3,7 @@
 ```yaml
 prometheus:
   host: 0.0.0.0
+
 ```
 
 Prometheus integration options

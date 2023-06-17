@@ -15,7 +15,6 @@ from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
 from dipdup.package import KEEP_MARKER
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
@@ -89,9 +88,7 @@ class CodeGenerator(ABC):
         rel_path = schema_path.relative_to(self._package.schemas)
         type_pkg_path = self._package.types / rel_path
 
-        # TODO: Stop generating Python markers
         if schema_path.is_dir():
-            touch(type_pkg_path / PYTHON_MARKER)
             return
 
         if not schema_path.name.endswith('.json'):
@@ -113,8 +110,6 @@ class CodeGenerator(ABC):
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: Stop generating Python markers
-        (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
             '--input',

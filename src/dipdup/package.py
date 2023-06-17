@@ -15,7 +15,6 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
 KEEP_MARKER = '.keep'
-PYTHON_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 MODELS_MODULE = 'models.py'
 
@@ -51,16 +50,11 @@ class DipDupPackage:
         """Create Python package skeleton if not exists"""
         self.pre_init()
 
-        touch(self.root / PYTHON_MARKER)
         touch(self.root / PEP_561_MARKER)
         touch(self.root / MODELS_MODULE)
 
         touch(self.abi / KEEP_MARKER)
         touch(self.schemas / KEEP_MARKER)
-
-        touch(self.types / PYTHON_MARKER)
-        touch(self.handlers / PYTHON_MARKER)
-        touch(self.hooks / PYTHON_MARKER)
 
         touch(self.sql / KEEP_MARKER)
         touch(self.graphql / KEEP_MARKER)
