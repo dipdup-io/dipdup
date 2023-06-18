@@ -11,11 +11,11 @@ An example below is artificial since no known contracts in mainnet are currently
 Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.
 
 ```python
-{{ #include ../../src/demo_events/src/demo_events/handlers/on_move_event.py:7: }}
+{{ #include ../../src/demo_events/handlers/on_move_event.py:7: }}
 ```
 
 Each contract can have a fallback handler called for all unknown events so you can process untyped data.
 
 ```python
-{{ #include ../../src/demo_events/src/demo_events/handlers/on_other_event.py:6: }}
+{{ #include ../../src/demo_events/handlers/on_other_event.py:6: }}
 ```

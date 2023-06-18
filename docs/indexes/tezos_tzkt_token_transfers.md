@@ -9,5 +9,5 @@ This index allows indexing token transfers of contracts compatible with [FA1.2](
 Callback receives `TzktTokenTransferData` model that optionally contains the transfer sender, receiver, amount, and token metadata.
 
 ```python
-{{ #include ../../src/demo_token_transfers/src/demo_token_transfers/handlers/on_token_transfer.py }}
+{{ #include ../../src/demo_token_transfers/handlers/on_token_transfer.py }}
 ```

@@ -74,7 +74,7 @@ FROM ghcr.io/dipdup-io/dipdup:next
 Here's an example `docker-compose.yml` file:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/docker-compose.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/docker-compose.yml.j2 }}
 ```
 
 Environment variables are expanded in the DipDup config file; PostgreSQL password and Hasura secret are forwarded from host environment in this example.
@@ -82,7 +82,7 @@ Environment variables are expanded in the DipDup config file; PostgreSQL passwor
 You can create a separate `dipdup.<environment>.yml` file for this stack to apply environment-specific config overrides:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/dipdup.prod.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/config/compose.yml.j2 }}
 ```
 
 Then modify command in `docker-compose.yml`:
