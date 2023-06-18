@@ -61,6 +61,7 @@ def set_up_process(cmd: str | None) -> None:
     # NOTE: Better discoverability of DipDup packages and configs
     sys.path.append(str(Path.cwd()))
     sys.path.append(str(Path.cwd() / 'src'))
+    sys.path.append(str(Path.cwd() / '..'))
 
     # NOTE: Format warnings as normal log messages
     logging.captureWarnings(True)
