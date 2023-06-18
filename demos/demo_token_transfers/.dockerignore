@@ -5,17 +5,19 @@
 !Makefile
 !pyproject.toml
 !poetry.lock
-!requirements**
+!requirements.*
 !README.md
 
 # Add code
 !src
 
 # Add configs
-!*.yml
+!**/*.graphql
+!**/*.json
+!**/*.sql
+!**/*.yaml
+!**/*.yml
 
 # Ignore caches
-**/.mypy_cache
-**/.pytest_cache
-**/.ruff_cache
+**/.*_cache
 **/__pycache__
