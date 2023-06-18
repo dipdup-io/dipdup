@@ -1,17 +1,11 @@
 # Ignore all
 *
-!*/
 
 # Add metadata and build files
-!.gitignore
-!.dockerignore
-!**/Dockerfile
-!**/Makefile
-!**/pyproject.toml
-!**/poetry.lock
-!**/requirements.*
-!**/README.md
-!**/.keep
+!pyproject.toml
+!poetry.lock
+!requirements.*
+!README.md
 
 # Add Python code
 !**/*.py
@@ -27,6 +21,3 @@
 !**/*.yaml
 !**/*.yml
 !**/*.j2
-
-# But example env files are okay
-!**/*.default.env
