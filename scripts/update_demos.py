@@ -49,3 +49,10 @@ for project_path in _get_projects():
         cwd=Path(__file__).parent.parent / 'demos' / package,
         check=True,
     )
+
+    for env in ('dev', 'prod'):
+        subprocess.run(
+            ['dipdup', '-c', 'dipdup.yml', '-c', f'config/{env}.yml', 'config', 'env', '-o', f'config/{env}.env'],
+            cwd=Path(__file__).parent.parent / 'demos' / package,
+            check=True,
+        )

@@ -146,6 +146,4 @@ cython_debug/
 
 .noseids
 
-*.env
-
 *.out*
