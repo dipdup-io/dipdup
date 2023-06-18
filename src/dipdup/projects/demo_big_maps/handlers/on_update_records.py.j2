@@ -18,24 +18,26 @@ async def on_update_records(
     record_path = record_name.split('.')
     ctx.logger.info('Processing `%s`', record_name)
 
-    if len(record_path) != int(store_records.value.level):
-        ctx.logger.error('Invalid record `%s`: expected %s chunks, got %s', record_name, store_records.value.level, len(record_path))
+    level = store_records.value.level
+    if len(record_path) != int(level):
+        ctx.logger.error('`%s`: expected %s chunks, got %s', record_name, level, len(record_path))
         return
 
-    if store_records.value.level == '1':
+    if level == '1':
         await models.TLD.update_or_create(id=record_name, defaults={'owner': store_records.value.owner})
     else:
-        if store_records.value.level == '2':
+        if level == '2':
+            token_id = int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None
             await models.Domain.update_or_create(
                 id=record_name,
                 defaults={
                     'tld_id': record_path[-1],
                     'owner': store_records.value.owner,
-                    'token_id': int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None,
+                    'token_id': token_id,
                 },
             )
 
         await models.Record.update_or_create(
             id=record_name,
-            defaults={'domain_id': '.'.join(record_path[-2:]), 'address': store_records.value.address},
+            defaults={'domain_id': '.'.join(record_path[-2:]), 'address': store_records.value.address,},
         )

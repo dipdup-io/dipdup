@@ -1,16 +1,1 @@
-# Ignore all
-*
-
-# Add build files
-!Makefile
-!pyproject.toml
-!poetry.lock
-!README.md
-!requirements**
-
-# Add code
-!src/dipdup/
-
-# Ignore caches
-**/.mypy_cache
-**/__pycache__
+.gitignore

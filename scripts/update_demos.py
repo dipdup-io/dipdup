@@ -7,7 +7,7 @@ from dipdup.project import answers_from_replay
 from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
-demos_path = Path(__file__).parent.parent / 'demos'
+demos_path = Path(__file__).parent.parent / 'src'
 
 
 def _get_demos() -> list[Path]:
@@ -19,6 +19,8 @@ def _get_projects() -> list[Path]:
 
 
 for demo_path in _get_demos():
+    if not demo_path.name.startswith('demo_') or 'uniswap' in demo_path.name:
+        continue
     if demo_path.is_dir():
         print(f'=> Removing `{demo_path.name}`')
         rmtree(demo_path, ignore_errors=True)
@@ -33,26 +35,28 @@ for project_path in _get_projects():
     render_project(answers, force=True)
 
     package = answers['package']
-    package = answers['package']
-    subprocess.run(['mv', package, 'demos'], check=True)
-
-    print(f'=> Linking `{package}`')
-    subprocess.run(
-        ['ln', '-sf', f'../demos/{package}', package],
-        cwd=Path(__file__).parent.parent / 'src',
-        check=True,
-    )
+    subprocess.run(['mv', package, 'src'], check=True)
 
     print(f'=> Initializing `{package}`')
     subprocess.run(
         ['dipdup', 'init', '--force'],
-        cwd=Path(__file__).parent.parent / 'demos' / package,
+        cwd=Path(__file__).parent.parent / 'src' / package,
         check=True,
     )
 
     for env in ('dev', 'compose', 'swarm'):
         subprocess.run(
-            ['dipdup', '-c', 'dipdup.yml', '-c', f'config/{env}.yml', 'config', 'env', '-o', f'config/{env}.env'],
-            cwd=Path(__file__).parent.parent / 'demos' / package,
+            [
+                'dipdup',
+                '-c',
+                'dipdup.yml',
+                '-c',
+                f'config/{env}.yml',
+                'config',
+                'env',
+                '-o',
+                f'config/{env}.default.env',
+            ],
+            cwd=Path(__file__).parent.parent / 'src' / package,
             check=True,
         )

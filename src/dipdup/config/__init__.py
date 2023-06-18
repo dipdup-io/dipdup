@@ -1107,6 +1107,8 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': 'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None',
+    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
+        'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
+    ),
 }
 _patch_annotations(_original_to_aliased)

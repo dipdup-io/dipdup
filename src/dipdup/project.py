@@ -204,18 +204,18 @@ def answers_from_terminal() -> Answers:
 
     # define author and license for new indexer
     answers['license'] = prompt_str(
-        'Enter project license\n' 'DipDup itself is MIT-licensed.',
+        'Enter project license\nDipDup itself is MIT-licensed.',
         answers['license'],
     )
     answers['author'] = prompt_str(
-        ('Enter project author\n' 'You can add more later in pyproject.toml.'),
+        'Enter project author\nYou can add more later in pyproject.toml.',
         answers['author'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
     _, answers['postgresql_image'] = prompt_anyof(
-        question=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
+        question='Choose PostgreSQL version\nTry TimescaleDB when working with time series.',
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
@@ -234,14 +234,14 @@ def answers_from_terminal() -> Answers:
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
     _, answers['linters'] = prompt_anyof(
-        'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
+        'Choose tools to lint and test your code\nYou can always add more later in pyproject.toml.',
         ('default', 'none'),
         ('Swiss knife of modern Python: black, ruff, mypy', 'None'),
         default=0,
     )
 
     answers['line_length'] = prompt_str(
-        ('Enter maximum line length\n' 'Used by linters.'),
+        'Enter maximum line length\nUsed by linters.',
         default=answers['line_length'],
     )
     return answers

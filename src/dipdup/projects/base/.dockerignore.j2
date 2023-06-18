@@ -1,23 +1,32 @@
 # Ignore all
 *
+!*/
 
-# Add build files
-!Makefile
-!pyproject.toml
-!poetry.lock
-!requirements.*
-!README.md
+# Add metadata and build files
+!.gitignore
+!.dockerignore
+!**/Dockerfile
+!**/Makefile
+!**/pyproject.toml
+!**/poetry.lock
+!**/requirements.*
+!**/README.md
+!**/.keep
 
-# Add code
-!src
+# Add Python code
+!**/*.py
 
-# Add configs
+# Ignore caches and virtualenvs
+**/.*_cache
+**/__pycache__
+
+# Add configs and scripts (but not env!)
 !**/*.graphql
 !**/*.json
 !**/*.sql
 !**/*.yaml
 !**/*.yml
+!**/*.j2
 
-# Ignore caches
-**/.*_cache
-**/__pycache__
+# But example env files are okay
+!**/*.default.env

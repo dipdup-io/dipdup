@@ -297,9 +297,11 @@ def prepare_models(package: str | None) -> None:
         # NOTE: Enforce our class for user models
         if app != 'int_models' and not issubclass(model, dipdup.models.Model):
             raise InvalidModelsError(
-                'Project models must be subclassed from `dipdup.models.Model`.'
-                '\n\n'
-                'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
+                (
+                    'Project models must be subclassed from `dipdup.models.Model`.'
+                    '\n\n'
+                    'Replace `from tortoise import Model` import with `from dipdup.models import Model`.'
+                ),
                 model,
             )
 
