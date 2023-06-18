@@ -50,7 +50,7 @@ for project_path in _get_projects():
         check=True,
     )
 
-    for env in ('dev', 'prod'):
+    for env in ('dev', 'compose', 'swarm'):
         subprocess.run(
             ['dipdup', '-c', 'dipdup.yml', '-c', f'config/{env}.yml', 'config', 'env', '-o', f'config/{env}.env'],
             cwd=Path(__file__).parent.parent / 'demos' / package,

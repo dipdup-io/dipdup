@@ -141,6 +141,5 @@ cython_debug/
 .idea
 .noseids
 .vscode
-*.env
 *.out*
 *.sqlite3*
