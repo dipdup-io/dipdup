@@ -113,5 +113,5 @@ This page or paragraph is yet to be written. Come back later.
 Example stack:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/docker-compose.swarm.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/docker-swarm.yml.j2 }}
 ```

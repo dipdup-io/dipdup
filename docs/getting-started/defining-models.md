@@ -7,7 +7,7 @@ Please, don't report DipDup issues to the Tortoise ORM bugtracker! We patch it h
 Project models should be placed in `models.py` file and inherit from `dipdup.models.Model` class. A typical module looks like this (example from the `demo-domains`)
 
 ```python
-{{ #include ../../demos/demo-domains/src/demo_domains/models.py }}
+{{ #include ../../src/demo_domains/src/demo_domains/models.py }}
 ```
 
 Now you can use these models in your callbacks.

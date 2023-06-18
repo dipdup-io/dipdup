@@ -3,7 +3,7 @@
 This very simple index provides metadata of the latest block when it's baked. Only realtime data is processed; the synchronization stage is skipped for this index.
 
 ```yaml
-{{ #include ../../demos/demo-head/dipdup.yml }}
+{{ #include ../../src/demo_head/dipdup.yml }}
 ```
 
 Head index callback receives `TzktHeadBlockData` model that contains only basic info; no operations are included. Being useless by itself, this index is helpful for monitoring and cron-like tasks. You can define multiple indexes for each datasource used.
