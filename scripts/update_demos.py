@@ -38,8 +38,8 @@ for project_path in _get_projects():
 
     print(f'=> Linking `{package}`')
     subprocess.run(
-        ['ln', '-sf', f'demos/{package}', f'src/{package}'],
-        cwd=Path(__file__).parent.parent,
+        ['ln', '-sf', f'../demos/{package}', package],
+        cwd=Path(__file__).parent.parent / 'src',
         check=True,
     )
 
