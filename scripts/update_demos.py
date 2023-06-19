@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import subprocess
+from copy import copy
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import answers_from_replay
+from dipdup.project import DEFAULT_ANSWERS
 from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
@@ -18,45 +19,54 @@ def _get_projects() -> list[Path]:
     return list(projects_path.iterdir())
 
 
-for demo_path in _get_demos():
-    if not demo_path.name.startswith('demo_') or 'uniswap' in demo_path.name:
+for path in _get_demos():
+    if not path.name.startswith('demo_') or 'uniswap' in path.name:
         continue
-    if demo_path.is_dir():
-        print(f'=> Removing `{demo_path.name}`')
-        rmtree(demo_path, ignore_errors=True)
-        rmtree(demo_path.parent / 'src' / demo_path.name, ignore_errors=True)
+    if path.is_dir():
+        print(f'=> Removing `{path.name}`')
+        rmtree(path, ignore_errors=True)
+        rmtree(path.parent / 'src' / path.name, ignore_errors=True)
 
-for project_path in _get_projects():
-    if not project_path.name.endswith('.json'):
+for path in _get_projects():
+    package = path.name
+    if not package.startswith('demo_'):
         continue
 
-    print(f'=> Rendering {project_path.name}')
-    answers = answers_from_replay(project_path)
+    print(f'=> Rendering {path}')
+    answers = copy(DEFAULT_ANSWERS)
+    answers['package'] = package
+    answers['template'] = package
+
     render_project(answers, force=True)
 
-    package = answers['package']
     subprocess.run(['mv', package, 'src'], check=True)
 
     print(f'=> Initializing `{package}`')
+    package_path = Path(__file__).parent.parent / 'src' / package
     subprocess.run(
-        ['dipdup', 'init', '--force'],
-        cwd=Path(__file__).parent.parent / 'src' / package,
+        [
+            'dipdup',
+            'init',
+            '--force',
+        ],
+        cwd=package_path,
         check=True,
     )
 
-    for env in ('dev', 'compose', 'swarm'):
+    configs_path = package_path / 'config'
+    for config_path in configs_path.iterdir():
         subprocess.run(
             [
                 'dipdup',
                 '-c',
                 'dipdup.yml',
                 '-c',
-                f'config/{env}.yml',
+                f'config/{config_path.stem}.yml',
                 'config',
                 'env',
                 '-o',
-                f'config/{env}.default.env',
+                f'config/{config_path.stem}.default.env',
             ],
-            cwd=Path(__file__).parent.parent / 'src' / package,
+            cwd=package_path,
             check=True,
         )
