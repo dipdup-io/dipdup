@@ -352,7 +352,7 @@ def prepare_models(package: str | None) -> None:
                 )
 
             # NOTE: The same for backward relations
-            if isinstance(field, dipdup.fields.ForeignKeyFieldInstance) and field.related_name == table_name:
+            if isinstance(field, dipdup.fields.ForeignKeyField) and field.related_name == table_name:
                 raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,

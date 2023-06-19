@@ -9,7 +9,7 @@ class TLD(Model):
 
 class Domain(Model):
     id = fields.TextField(pk=True)
-    tld: fields.ForeignKeyFieldInstance[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
+    tld: fields.ForeignKeyField[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
     expiry = fields.DatetimeField(null=True)
     owner = fields.TextField()
     token_id = fields.BigIntField(null=True)
@@ -19,5 +19,5 @@ class Domain(Model):
 
 class Record(Model):
     id = fields.TextField(pk=True)
-    domain: fields.ForeignKeyFieldInstance[Domain] = fields.ForeignKeyField('models.Domain', 'records')
+    domain: fields.ForeignKeyField[Domain] = fields.ForeignKeyField('models.Domain', 'records')
     address = fields.TextField(null=True)

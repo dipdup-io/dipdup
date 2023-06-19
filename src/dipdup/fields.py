@@ -23,7 +23,6 @@ from tortoise.fields.data import CharField as CharField
 from tortoise.fields.data import DateField as DateField
 from tortoise.fields.data import DatetimeField as DatetimeField
 from tortoise.fields.data import FloatField as FloatField
-from tortoise.fields.data import IntEnumField as IntEnumField
 from tortoise.fields.data import IntEnumFieldInstance as IntEnumFieldInstance
 from tortoise.fields.data import IntField as IntField
 from tortoise.fields.data import JSONField as JSONField
@@ -33,11 +32,10 @@ from tortoise.fields.data import TimeField as TimeField
 from tortoise.fields.data import UUIDField as UUIDField
 from tortoise.fields.relational import BackwardFKRelation as BackwardFKRelation
 from tortoise.fields.relational import BackwardOneToOneRelation as BackwardOneToOneRelation
-from tortoise.fields.relational import ForeignKeyField as ForeignKeyField
 from tortoise.fields.relational import ForeignKeyFieldInstance as ForeignKeyFieldInstance
 from tortoise.fields.relational import ForeignKeyNullableRelation as ForeignKeyNullableRelation
 from tortoise.fields.relational import ForeignKeyRelation as ForeignKeyRelation
-from tortoise.fields.relational import ManyToManyField as ManyToManyField
+from tortoise.fields.relational import ManyToManyFieldInstance as ManyToManyFieldInstance
 from tortoise.fields.relational import ManyToManyRelation as ManyToManyRelation
 from tortoise.fields.relational import OneToOneField as OneToOneField
 from tortoise.fields.relational import OneToOneNullableRelation as OneToOneNullableRelation
@@ -47,6 +45,10 @@ from tortoise.models import Model as _TortoiseModel
 
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
+
+IntEnumField = IntEnumFieldInstance
+ForeignKeyField = ForeignKeyFieldInstance
+ManyToManyField = ManyToManyFieldInstance
 
 _EnumFieldT = TypeVar('_EnumFieldT', bound=Enum)
 

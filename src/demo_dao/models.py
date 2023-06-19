@@ -13,7 +13,7 @@ class User(Model):
 
 class Proposal(Model):
     id = fields.IntField(pk=True)
-    dao: fields.ForeignKeyFieldInstance[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
+    dao: fields.ForeignKeyField[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
     # upvotes = fields.IntField(default=0)
     # downvotes = fields.IntField(default=0)
     # start_date = fields.DatetimeField()
@@ -23,5 +23,5 @@ class Proposal(Model):
 
 class Vote(Model):
     id = fields.IntField(pk=True)
-    proposal: fields.ForeignKeyFieldInstance[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
+    proposal: fields.ForeignKeyField[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
     amount = fields.IntField()
