@@ -2,33 +2,27 @@ services:
   dipdup:
     build: .
     depends_on:
-      {% if cookiecutter.postgresql_image != 'sqlite' %}
-      - db
-      {% endif %}
-    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    env_file: .env
     ports:
-      - 127.0.0.1:9000:9000
-    {% if cookiecutter.postgresql_image == 'sqlite' %}
-    volumes:
-      - sqlite:./{{ cookiecutter.package }}.sqlite3
-    {% endif %}
+      - 46339
+      - 9000
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    depends_on:
+      - db
+      - hasura
 
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: {{ cookiecutter.postgresql_image }}
     ports:
-      - 127.0.0.1:5432:5432
+      - 5432
     volumes:
       - db:/var/lib/postgresql/data
     restart: always
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dipdup"]
       interval: 10s
@@ -38,23 +32,19 @@ services:
   hasura:
     image: {{ cookiecutter.hasura_image }}
     ports:
-      - 127.0.0.1:8080:8080
+      - 8080
     depends_on:
       - db
     restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
+      - HASURA_GRAPHQL_LOG_LEVEL=info
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
-  {% endif %}
 
 volumes:
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
-  {% else %}
-  sqlite:
-  {% endif %}

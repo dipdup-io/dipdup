@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import subprocess
 from pathlib import Path
 
@@ -23,4 +24,10 @@ for path in _get_projects():
         ],
         cwd=package_path,
         check=True,
+        env={
+            **dict(os.environ),
+            'STACK': '',
+            'POSTGRES_PASSWORD': '',
+            'HASURA_SECRET': '',
+        },
     )

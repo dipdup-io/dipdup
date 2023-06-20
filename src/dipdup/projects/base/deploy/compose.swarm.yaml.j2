@@ -1,21 +1,15 @@
 services:
   dipdup:
-    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
-    
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-{{ cookiecutter.dipdup_version }}}
     depends_on:
       - db
       - hasura
-    
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
-    environment:
-      - "POSTGRES_USER=dipdup"
-      - "POSTGRES_PASSWORD=changeme"
-      - "POSTGRES_DB=dipdup"
-      - "HASURA_SECRET=changeme"
+    env_file:
+      - .env
     networks:
       - dipdup-private
       - prometheus-private
-    
     deploy:
       mode: replicated
       replicas: ${INDEXER_ENABLED:-1}
@@ -32,15 +26,14 @@ services:
         max-file: "10"
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
-  
   db:
-    image: postgres:15
+    image: {{ cookiecutter.postgresql_image }}
     volumes:
       - db:/var/lib/postgresql/data
     environment: 
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -55,17 +48,16 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.27.0
+    image: {{ cookiecutter.hasura_image }}
     depends_on:
       - db
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
       - HASURA_GRAPHQL_LOG_LEVEL=warn
       - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
     networks:
@@ -85,13 +77,9 @@ services:
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
       placement: *placement
     logging: *logging
-  
-
 
 volumes:
-  
   db:
-  
 
 networks:
   dipdup-private:

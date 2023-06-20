@@ -1,14 +1,14 @@
 database:
   kind: postgres
-  host: ${POSTGRES_HOST:-demo_domains_db}
+  host: ${STACK}_db
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
-  password: ${POSTGRES_PASSWORD:-changeme}
+  password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://${HASURA_HOST:-demo_domains_hasura}:8080
-  admin_secret: ${HASURA_SECRET:-changeme}
+  url: http://${STACK}_hasura:8080
+  admin_secret: ${HASURA_SECRET}
   allow_aggregations: false
   camel_case: true
 

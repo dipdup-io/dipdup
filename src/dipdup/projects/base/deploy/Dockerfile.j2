@@ -1,2 +1,5 @@
-FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+FROM ghcr.io/dipdup-io/dipdup:{{ cookiecutter.dipdup_version }}
+# FROM ghcr.io/dipdup-io/dipdup:next
+# FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+
 COPY . .

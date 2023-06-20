@@ -192,18 +192,16 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
         if config_path.suffix not in ('.yml', '.yaml'):
             continue
 
-        subprocess.run(
-            [
-                'dipdup',
-                '-c',
-                'dipdup.yml',
-                '-c',
-                f'configs/{config_path.stem}.yml',
-                'config',
-                'env',
-                '-o',
-                f'deploy/{config_path.stem}.{DEFAULT_ENV}',
-            ],
-            cwd=package.root,
-            check=True,
+        config_chain = [
+            Path('dipdup.yml'),
+            config_path,
+        ]
+        config = DipDupConfig.load(
+            paths=config_chain,
+            environment=True,
         )
+        content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
+
+        env_path = package.deploy / f'{config_path.stem}.{DEFAULT_ENV}'
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text(content)
