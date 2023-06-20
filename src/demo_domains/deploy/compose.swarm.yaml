@@ -5,8 +5,7 @@ services:
       - db
       - hasura
     command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
-    env_file:
-      - .env
+    env_file: .env
     networks:
       - dipdup-private
       - prometheus-private
@@ -30,6 +29,7 @@ services:
     image: postgres:15
     volumes:
       - db:/var/lib/postgresql/data
+    env_file: .env
     environment: 
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
@@ -52,6 +52,7 @@ services:
     depends_on:
       - db
     environment:
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD}@${STACK}_db:5432/dipdup
       - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
