@@ -16,7 +16,7 @@ from dipdup.utils import touch
 
 KEEP_MARKER = '.keep'
 PEP_561_MARKER = 'py.typed'
-MODELS_MODULE = 'models.py'
+DEFAULT_ENV = 'default.env'
 
 
 @dataclass(frozen=True)
@@ -31,14 +31,18 @@ class DipDupPackage:
         self.root = root
         self.debug = debug
         self.name = root.name
+
         self.abi = root / 'abi'
+        self.configs = root / 'configs'
+        self.deploy = root / 'deploy'
+        self.graphql = root / 'graphql'
+        self.handlers = root / 'handlers'
+        self.hasura = root / 'hasura'
+        self.hooks = root / 'hooks'
+        self.models = root / 'models'
+        self.sql = root / 'sql'
         self.schemas = root / 'schemas'
         self.types = root / 'types'
-        self.handlers = root / 'handlers'
-        self.hooks = root / 'hooks'
-        self.sql = root / 'sql'
-        self.graphql = root / 'graphql'
-        self.hasura = root / 'hasura'
 
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
@@ -51,14 +55,22 @@ class DipDupPackage:
         self.pre_init()
 
         touch(self.root / PEP_561_MARKER)
-        touch(self.root / MODELS_MODULE)
+        touch(self.root / '__init__.py')
 
-        touch(self.abi / KEEP_MARKER)
-        touch(self.schemas / KEEP_MARKER)
-
-        touch(self.sql / KEEP_MARKER)
-        touch(self.graphql / KEEP_MARKER)
-        touch(self.hasura / KEEP_MARKER)
+        for path in (
+            self.abi,
+            self.configs,
+            self.deploy,
+            self.graphql,
+            self.handlers,
+            self.hasura,
+            self.hooks,
+            self.models,
+            self.sql,
+            self.schemas,
+            self.types,
+        ):
+            touch(path / KEEP_MARKER)
 
     def pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):

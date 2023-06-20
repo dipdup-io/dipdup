@@ -14,6 +14,7 @@ from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
+from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import load_template
@@ -122,7 +123,7 @@ class CodeGenerator(ABC):
             '--input-file-type',
             'jsonschema',
             '--target-python-version',
-            '3.10',
+            '3.11',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)
@@ -184,3 +185,25 @@ class CodeGenerator(ABC):
             KEEP_MARKER,
         )
         touch(sql_path)
+
+
+async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+    for config_path in package.configs.iterdir():
+        if config_path.suffix not in ('.yml', '.yaml'):
+            continue
+
+        subprocess.run(
+            [
+                'dipdup',
+                '-c',
+                'dipdup.yml',
+                '-c',
+                f'configs/{config_path.stem}.yml',
+                'config',
+                'env',
+                '-o',
+                f'deploy/{config_path.stem}.{DEFAULT_ENV}',
+            ],
+            cwd=package.root,
+            check=True,
+        )

@@ -5,19 +5,17 @@ from os import environ as env
 from pathlib import Path
 from typing import cast
 
-from dipdup.package import MODELS_MODULE
-
 
 def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
     global PACKAGE_PATH
 
-    # NOTE: Integration tests run in isolated environment
-    if TEST:
-        set_package_path(Path.cwd() / package)
-
     if PACKAGE_PATH:
         return PACKAGE_PATH
+
+    if Path('dipdup.yml').exists() and Path.cwd().name == package:
+        set_package_path(Path.cwd())
+        return cast(Path, PACKAGE_PATH)
 
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):
@@ -27,13 +25,8 @@ def get_package_path(package: str) -> Path:
         set_package_path(Path(module.__file__).parent)
         return cast(Path, PACKAGE_PATH)
 
-    # NOTE: Create a new package; try src/<package> layout first.
-    if Path(MODELS_MODULE).is_file():
-        set_package_path(Path(MODELS_MODULE).parent)
-    elif Path('src').is_dir():
-        set_package_path(Path('src', package))
-    else:
-        set_package_path(Path(package))
+    # NOTE: Create a new package
+    set_package_path(Path.cwd() / package)
 
     return cast(Path, PACKAGE_PATH)
 

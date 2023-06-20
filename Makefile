@@ -67,6 +67,7 @@ update:         ## Update dependencies, export requirements.txt
 demos:          ## Recreate demos from templates
 	python scripts/update_cookiecutter.py
 	python scripts/update_demos.py
+	python scripts/init_demos.py
 	make lint
 
 replays:        ## Recreate replays for tests

@@ -40,33 +40,3 @@ for path in _get_projects():
     render_project(answers, force=True)
 
     subprocess.run(['mv', package, 'src'], check=True)
-
-    print(f'=> Initializing `{package}`')
-    package_path = Path(__file__).parent.parent / 'src' / package
-    subprocess.run(
-        [
-            'dipdup',
-            'init',
-            '--force',
-        ],
-        cwd=package_path,
-        check=True,
-    )
-
-    configs_path = package_path / 'config'
-    for config_path in configs_path.iterdir():
-        subprocess.run(
-            [
-                'dipdup',
-                '-c',
-                'dipdup.yml',
-                '-c',
-                f'config/{config_path.stem}.yml',
-                'config',
-                'env',
-                '-o',
-                f'config/{config_path.stem}.default.env',
-            ],
-            cwd=package_path,
-            check=True,
-        )
