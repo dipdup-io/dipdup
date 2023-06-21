@@ -303,5 +303,3 @@ to provide a generic metadata interface (see docs).</p>
 </dd>
 </dl>
 </dd></dl>
-
-

@@ -1,7 +1,7 @@
 from decimal import Decimal
 
-from {{ cookiecutter.package }} import models as models
-from {{ cookiecutter.package }}.types.eth_usdt.evm_events.transfer import Transfer
+from {{ project.package }} import models as models
+from {{ project.package }}.types.eth_usdt.evm_events.transfer import Transfer
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 

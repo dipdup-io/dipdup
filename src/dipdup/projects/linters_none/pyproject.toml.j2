@@ -1,19 +1,19 @@
 [tool.poetry]
-name = "{{ cookiecutter.package }}"
-version = "{{ cookiecutter.version }}"
-description = "{{ cookiecutter.description }}"
-license = "{{ cookiecutter.license }}"
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = "{{ project.license }}"
 authors = [
-    "{{ cookiecutter.author }}"
+    "{{ project.author }}"
 ]
 readme = "README.md"
 packages = [
-    { include = "{{ cookiecutter.package }}", from = "src" },
+    { include = "{{ project.package }}", from = "src" },
 ]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-dipdup = "^{{ cookiecutter.dipdup_version }}"
+dipdup = "^{{ project.dipdup_version }}"
 
 [tool.poetry.group.dev.dependencies]
 

@@ -1,10 +1,10 @@
 from decimal import Decimal
 
-import {{cookiecutter.package}}.models as models
-from {{cookiecutter.package}}.types.fa2_token.tezos_parameters.transfer import TransferParameter
-from {{cookiecutter.package}}.types.fa2_token.tezos_storage import Fa2TokenStorage
-from {{cookiecutter.package}}.types.quipu_fa2.tezos_parameters.token_to_tez_payment import TokenToTezPaymentParameter
-from {{cookiecutter.package}}.types.quipu_fa2.tezos_storage import QuipuFa2Storage
+import {{project.package}}.models as models
+from {{project.package}}.types.fa2_token.tezos_parameters.transfer import TransferParameter
+from {{project.package}}.types.fa2_token.tezos_storage import Fa2TokenStorage
+from {{project.package}}.types.quipu_fa2.tezos_parameters.token_to_tez_payment import TokenToTezPaymentParameter
+from {{project.package}}.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktTransaction

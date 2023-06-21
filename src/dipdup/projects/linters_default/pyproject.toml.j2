@@ -1,19 +1,19 @@
 [tool.poetry]
-name = "{{ cookiecutter.package }}"
-version = "{{ cookiecutter.version }}"
-description = "{{ cookiecutter.description }}"
-license = "{{ cookiecutter.license }}"
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = "{{ project.license }}"
 authors = [
-    "{{ cookiecutter.author }}"
+    "{{ project.author }}"
 ]
 readme = "README.md"
 packages = [
-    { include = "{{ cookiecutter.package }}", from = "src" },
+    { include = "{{ project.package }}", from = "src" },
 ]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-dipdup = "^{{ cookiecutter.dipdup_version }}"
+dipdup = "^{{ project.dipdup_version }}"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
@@ -24,16 +24,16 @@ pytest = "*"
 pytest-asyncio = "*"
 
 [tool.isort]
-line_length = {{ cookiecutter.line_length }}
+line_length = {{ project.line_length }}
 force_single_line = true
 
 [tool.black]
-line-length = {{ cookiecutter.line_length }}
+line-length = {{ project.line_length }}
 target-version = ['py311']
 skip-string-normalization = true
 
 [tool.ruff]
-line-length = {{ cookiecutter.line_length }}
+line-length = {{ project.line_length }}
 target-version = 'py311'
 
 [tool.mypy]

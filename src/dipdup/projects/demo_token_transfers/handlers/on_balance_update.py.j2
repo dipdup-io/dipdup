@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from decimal import InvalidOperation
 
-import {{cookiecutter.package}}.models as models
+import {{project.package}}.models as models
 
 
 async def on_balance_update(address: str, balance_update: Decimal, timestamp: datetime) -> None:

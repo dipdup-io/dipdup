@@ -1,4 +1,4 @@
-name: {{ cookiecutter.package }}
+name: {{ project.package }}
 
 services:
   dipdup:
@@ -12,7 +12,7 @@ services:
       - 46339
       - 9000
     volumes:
-      - sqlite:${SQLITE_PATH:-/tmp/{{ cookiecutter.package }}.sqlite}
+      - sqlite:${SQLITE_PATH:-/tmp/{{ project.package }}.sqlite}
 
 volumes:
   sqlite:

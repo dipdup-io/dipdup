@@ -247,7 +247,7 @@ def answers_from_terminal() -> Answers:
     return answers
 
 
-def write_cookiecutter_json(answers: Answers, path: Path) -> None:
+def write_project_json(answers: Answers, path: Path) -> None:
     values = {k: v for k, v in answers.items() if not k.startswith('_')}
     path.write_bytes(
         orjson.dumps(
@@ -293,7 +293,7 @@ def _render_templates(answers: Answers, path: Path, force: bool = False) -> None
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
-        output_path = Path(Template(str(output_path)).render(cookiecutter=answers))
+        output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
 
 
@@ -303,5 +303,5 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
-    content = template.render(cookiecutter=answers)
+    content = template.render(project=answers)
     write(output_path, content, overwrite=force)

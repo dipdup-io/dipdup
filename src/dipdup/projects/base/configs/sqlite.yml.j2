@@ -1,6 +1,6 @@
 database:
   kind: sqlite
-  path: ${SQLITE_PATH:-/tmp/{{ cookiecutter.package }}.sqlite}
+  path: ${SQLITE_PATH:-/tmp/{{ project.package }}.sqlite}
 
 sentry:
   dsn: ${SENTRY_DSN:-""}

@@ -6,7 +6,7 @@ Some defails about the published images:
 
 |                         |                                                   |
 | ----------------------- |:-------------------------------------------------:|
-| Latest tag              | `dipdup/dipdup:{{ cookiecutter.dipdup_version }}` |
+| Latest tag              | `dipdup/dipdup:{{ project.dipdup_version }}` |
 | Base image              |             `python:3.11-slim-buster`             |
 | Supported architectures |                  `amd64`, `arm64`                 |
 | Size                    |                     `~ 400 MB`                    |
@@ -27,7 +27,7 @@ Given your project source code is in `src` directory and config file is `dipdup.
 docker run \
   -v ./dipdup.yml:/home/dipdup/dipdup.yml \
   -v ./src:/home/dipdup/src \
-  dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+  dipdup/dipdup:{{ project.dipdup_version }}
 ```
 
 If you're using SQLite database, you can also mount it as a volume:
@@ -37,7 +37,7 @@ docker run \
   -v ./dipdup.yml:/home/dipdup/dipdup.yml \
   -v ./src:/home/dipdup/src \
   -v ./indexer.sqlite3:/home/dipdup/indexer.sqlite3 \
-  dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+  dipdup/dipdup:{{ project.dipdup_version }}
 ```
 
 ## Building custom image
