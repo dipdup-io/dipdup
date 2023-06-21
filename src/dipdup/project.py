@@ -63,7 +63,6 @@ class Answers(TypedDict):
     author: str
     postgresql_image: str
     hasura_image: str
-    linters: str
     line_length: str
 
 
@@ -77,8 +76,7 @@ DEFAULT_ANSWERS = Answers(
     author='John Smith <john_smith@localhost.lan>',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.27.0',
-    linters='default',
+    hasura_image='hasura/graphql-engine:v2.28.0',
     line_length='120',
 )
 
@@ -233,13 +231,6 @@ def answers_from_terminal() -> Answers:
 
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
-    _, answers['linters'] = prompt_anyof(
-        'Choose tools to lint and test your code\nYou can always add more later in pyproject.toml.',
-        ('default', 'none'),
-        ('Swiss knife of modern Python: black, ruff, mypy', 'None'),
-        default=0,
-    )
-
     answers['line_length'] = prompt_str(
         'Enter maximum line length\nUsed by linters.',
         default=answers['line_length'],
@@ -275,9 +266,6 @@ def render_project(
 
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
-
-    # NOTE: Linters and stuff
-    _render_templates(answers, Path('linters_' + answers['linters']), force)
 
 
 def _render_templates(answers: Answers, path: Path, force: bool = False) -> None:

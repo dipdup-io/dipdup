@@ -200,12 +200,12 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             paths=config_chain,
             environment=True,
         )
-        lines = [
+        lines: tuple[str, ...] = (
             '# This env file was generated automatically by DipDup. Do not edit it!',
             '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
             '#',
-        ]
-        lines += [f'{k}={v}' for k, v in config.environment.items()]
+            *config.dump_environment(),
+        )
         content = '\n'.join(lines)
 
         env_path = package.deploy / (config_path.stem + DEFAULT_ENV)

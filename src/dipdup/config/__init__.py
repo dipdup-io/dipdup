@@ -773,6 +773,9 @@ class DipDupConfig:
     def dump(self) -> str:
         return DipDupYAMLConfig.dump(self.json)
 
+    def dump_environment(self) -> tuple[str, ...]:
+        return tuple(sorted(f'{k}={v}' for k, v in self.environment.items()))
+
     def add_index(
         self,
         name: str,

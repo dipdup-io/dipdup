@@ -13,26 +13,35 @@ TAG=latest
 help:           ## Show this help (default)
 	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: formatters, linters and tests
-	make install lint test
+all:            ## Run all checks
+	make install lint
 
 install:        ## Install project dependencies
 	poetry install \
 	`if [ "${DEV}" = "0" ]; then echo "--no-dev"; fi`
 
 lint:           ## Lint with all tools
-	echo
-
-test:           ## Run test suite
-	echo
+	make isort black ruff mypy
 
 ##
+
+isort:          ## Format with isort
+	poetry run isort .
+
+black:          ## Format with black
+	poetry run black .
+
+ruff:           ## Lint with ruff
+	poetry run ruff check .
+
+mypy:           ## Lint with mypy
+	poetry run mypy .
 
 build:          ## Build Python wheel package
 	poetry build
 
 image:          ## Build Docker image
-	docker buildx build . -t {{ project.package }}:${TAG}
+	docker build . -f deploy/Dockerfile -t {{ project.package }}:${TAG}
 
 clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
