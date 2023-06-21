@@ -16,7 +16,7 @@ from dipdup.utils import touch
 
 KEEP_MARKER = '.keep'
 PEP_561_MARKER = 'py.typed'
-DEFAULT_ENV = 'default.env'
+DEFAULT_ENV = '.default.env'
 
 
 @dataclass(frozen=True)

@@ -20,6 +20,7 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup.package import DEFAULT_ENV
 from dipdup.performance import metrics
 from dipdup.project import DEFAULT_ANSWERS
 from dipdup.report import REPORTS_PATH
@@ -162,6 +163,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     for env_path in env_file_paths:
         if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
+        if env_path.name.endswith(DEFAULT_ENV):
+            raise ConfigurationError("Don't use .default.env files directly; create a copy and use it instead")
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
 
