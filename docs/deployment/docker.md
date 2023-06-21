@@ -51,7 +51,7 @@ Start with creating `.dockerignore` for your project if it's missing.
 Then copy your code and config file to the image:
 
 ```Dockerfile
-{{ #include ../../src/dipdup/projects/base/Dockerfile.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/Dockerfile.j2 }}
 ```
 
 If you need to install additional Python dependencies, just call pip directly during the build stage:
@@ -74,7 +74,7 @@ FROM ghcr.io/dipdup-io/dipdup:next
 Here's an example `docker-compose.yml` file:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/deploy/docker-compose.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/compose.yaml.j2 }}
 ```
 
 Environment variables are expanded in the DipDup config file; PostgreSQL password and Hasura secret are forwarded from host environment in this example.
@@ -82,7 +82,7 @@ Environment variables are expanded in the DipDup config file; PostgreSQL passwor
 You can create a separate `dipdup.<environment>.yml` file for this stack to apply environment-specific config overrides:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/config/compose.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/configs/compose.yml.j2 }}
 ```
 
 Then modify command in `docker-compose.yml`:
@@ -113,5 +113,5 @@ This page or paragraph is yet to be written. Come back later.
 Example stack:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/deploy/docker-swarm.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/swarm.compose.yaml.j2 }}
 ```

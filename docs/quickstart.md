@@ -122,7 +122,7 @@ Our schema will consist of a single model `Holder` having several fields:
 Put the following content in the `models.py` file:
 
 ```python
-{{ #include ../src/demo_token/models.py }}
+{{ #include ../src/demo_token/models/__init__.py }}
 ```
 
 ```admonish info title="See Also"
