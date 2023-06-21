@@ -9,12 +9,9 @@ database:
 hasura:
   url: http://${HASURA_HOST:-hasura}:8080
   admin_secret: ${HASURA_SECRET}
-  allow_aggregations: false
+  allow_aggregations: true
   camel_case: true
 
 sentry:
   dsn: ${SENTRY_DSN:-""}
   environment: ${SENTRY_ENVIRONMENT:-compose}
-
-prometheus:
-  host: 0.0.0.0

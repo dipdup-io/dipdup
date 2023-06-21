@@ -1,12 +1,16 @@
+name: demo_big_maps
+
 services:
   dipdup:
-    build: .
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     restart: always
     env_file: .env
     ports:
       - 46339
       - 9000
-    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    command: ["-c", "dipdup.yml", "-c", "configs/compose.yml", "run"]
     depends_on:
       - db
       - hasura

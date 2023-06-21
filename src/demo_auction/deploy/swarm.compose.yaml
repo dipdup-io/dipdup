@@ -1,10 +1,12 @@
+name: demo_auction
+
 services:
   dipdup:
     image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
     depends_on:
       - db
       - hasura
-    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    command: ["-c", "dipdup.yml", "-c", "configs/swarm.yml", "run"]
     env_file: .env
     networks:
       - dipdup-private

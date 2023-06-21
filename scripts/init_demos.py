@@ -20,7 +20,7 @@ for path in _get_projects():
         [
             'dipdup',
             'init',
-            '--force',
+            # '--force',
         ],
         cwd=package_path,
         check=True,
