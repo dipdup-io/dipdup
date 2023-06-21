@@ -218,13 +218,11 @@ def answers_from_terminal() -> Answers:
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
             'timescale/timescaledb-ha:pg15-latest',
-            'sqlite',
         ),
         comments=(
             'PostgreSQL',
             'TimescaleDB',
-            'TimescaleDB HA (more extensions)',
-            'Sqlite (simplified in-memory configuration)',
+            'TimescaleDB HA',
         ),
         default=0,
     )
