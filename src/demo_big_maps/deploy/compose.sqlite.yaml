@@ -5,7 +5,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    command: ["-c", "dipdup.yml", "-c", "configs/sqlite.yml", "run"]
+    command: ["-c", "dipdup.yaml", "-c", "configs/dipdup.sqlite.yaml", "run"]
     restart: always
     env_file: .env
     ports:

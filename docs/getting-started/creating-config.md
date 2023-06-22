@@ -4,7 +4,7 @@ Developing a DipDup indexer begins with creating a YAML config file. You can fin
 
 ## General structure
 
-DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for `dipdup.yml` file in the current working directory, but you can provide any path with a `-c` CLI option.
+DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for `dipdup.yaml` file in the current working directory, but you can provide any path with a `-c` CLI option.
 
 DipDup config file consists of several logical blocks:
 
@@ -27,7 +27,7 @@ DipDup config file consists of several logical blocks:
 DipDup allows you to customize the configuration for a specific environment or workflow. It works similarly to docker-compose anchors but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the `-c` command-line option multiple times:
 
 ```shell
-dipdup -c dipdup.yml -c dipdup.prod.yml run
+dipdup -c dipdup.yaml -c dipdup.prod.yaml run
 ```
 
 Run `config export` command if unsure about the final config used by DipDup.
@@ -41,5 +41,5 @@ This page or paragraph is yet to be written. Come back later.
 Let's put it all together. The config below is an artificial example but contains almost all available options.
 
 ```yaml
-{{ #include ../include/dipdup-full.yml }}
+{{ #include ../include/dipdup-full.yaml }}
 ```

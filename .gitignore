@@ -30,3 +30,7 @@
 
 # But example env files are okay
 !**/*.default.env
+
+# Docs
+!docs/**
+docs/_build

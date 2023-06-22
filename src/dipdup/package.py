@@ -20,13 +20,24 @@ PEP_561_MARKER = 'py.typed'
 DEFAULT_ENV = '.default.env'
 
 
-def draw_tree(root: Path, tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
-    lines: deque[str] = deque()
+_branch = '│   '
+_tee = '├── '
+_last = '└── '
 
-    for section, paths in tree.items():
-        lines.append(f'{section}:')
-        for path in sorted(paths):
-            lines.append(f'  - {path.relative_to(root / section)}')
+
+def _get_pointers(content_length: int) -> tuple[str, ...]:
+    return (_tee,) * (content_length - 1) + (_last,)
+
+
+def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
+    lines: deque[str] = deque()
+    lines.append(root.name)
+    pointers = _get_pointers(len(project_tree) - 1)
+    for pointer, (section, paths) in zip(pointers, project_tree.items()):
+        lines.append(pointer + section)
+        for inner_pointer, path in zip(_get_pointers(len(paths)), sorted(paths)):
+            relative_path = path.relative_to(root / section)
+            lines.append(_branch + inner_pointer + relative_path.as_posix())
 
     return tuple(lines)
 
@@ -81,9 +92,7 @@ class DipDupPackage:
     def discover(self) -> dict[str, tuple[Path, ...]]:
         tree = {}
         for path, exp in self.skel.items():
-            if not exp:
-                continue
-            tree[path.name] = tuple(path.glob(exp))
+            tree[path.name] = tuple(path.glob(exp)) if exp else ()
         return tree
 
     def create(self) -> None:

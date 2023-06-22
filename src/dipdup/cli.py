@@ -22,7 +22,6 @@ import asyncclick as click
 from dipdup import __version__
 from dipdup.package import DEFAULT_ENV
 from dipdup.performance import metrics
-from dipdup.project import DEFAULT_ANSWERS
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
@@ -558,6 +557,7 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
+    from dipdup.project import DEFAULT_ANSWERS
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import render_project
@@ -702,11 +702,11 @@ async def package(ctx: click.Context) -> None:
 @_cli_wrapper
 async def package_tree(ctx: click.Context) -> None:
     from dipdup.package import DipDupPackage
-    from dipdup.package import draw_tree
+    from dipdup.package import draw_package_tree
 
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
     package.create()
     tree = package.discover()
-    for line in draw_tree(package.root, tree):
+    for line in draw_package_tree(package.root, tree):
         echo(line)

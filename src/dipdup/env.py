@@ -13,7 +13,7 @@ def get_package_path(package: str) -> Path:
     if PACKAGE_PATH:
         return PACKAGE_PATH
 
-    if Path('dipdup.yml').exists() and Path.cwd().name == package:
+    if Path.cwd().name == package:
         set_package_path(Path.cwd())
         return cast(Path, PACKAGE_PATH)
 

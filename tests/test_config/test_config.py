@@ -20,7 +20,7 @@ from dipdup.models.tezos_tzkt import TzktOperationType
 
 
 def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:
-    path = Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
+    path = Path(__file__).parent.parent / 'configs' / 'dipdup.yaml'
     config = DipDupConfig.load([path])
     if origs:
         config.indexes['hen_mainnet'].types += (TzktOperationType.origination,)  # type: ignore

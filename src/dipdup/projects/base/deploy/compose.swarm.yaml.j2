@@ -6,7 +6,7 @@ services:
     depends_on:
       - db
       - hasura
-    command: ["-c", "dipdup.yml", "-c", "configs/swarm.yml", "run"]
+    command: ["-c", "dipdup.yaml", "-c", "configs/dipdup.swarm.yaml", "run"]
     env_file: .env
     networks:
       - dipdup-private

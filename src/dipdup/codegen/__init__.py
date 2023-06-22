@@ -199,7 +199,7 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             continue
 
         config_chain = [
-            Path('dipdup.yml'),
+            Path('dipdup.yaml'),
             config_path,
         ]
         _, environment = DipDupYAMLConfig.load(

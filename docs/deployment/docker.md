@@ -21,11 +21,11 @@ Some defails about the published images:
 
 To run DipDup in container, you need to copy or mount your project directory and config file to the container.
 
-Given your project source code is in `src` directory and config file is `dipdup.yml`, you can run DipDup container using bind mounts with the following command:
+Given your project source code is in `src` directory and config file is `dipdup.yaml`, you can run DipDup container using bind mounts with the following command:
 
 ```shell
 docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   dipdup/dipdup:{{ project.dipdup_version }}
 ```
@@ -34,7 +34,7 @@ If you're using SQLite database, you can also mount it as a volume:
 
 ```shell
 docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   -v ./indexer.sqlite3:/home/dipdup/indexer.sqlite3 \
   dipdup/dipdup:{{ project.dipdup_version }}
@@ -71,7 +71,7 @@ FROM ghcr.io/dipdup-io/dipdup:next
 
 ## Deploying with `docker-compose`
 
-Here's an example `docker-compose.yml` file:
+Here's an example `compose.yaml` file:
 
 ```yaml
 {{ #include ../../src/dipdup/projects/base/deploy/compose.yaml.j2 }}
@@ -79,18 +79,18 @@ Here's an example `docker-compose.yml` file:
 
 Environment variables are expanded in the DipDup config file; PostgreSQL password and Hasura secret are forwarded from host environment in this example.
 
-You can create a separate `dipdup.<environment>.yml` file for this stack to apply environment-specific config overrides:
+You can create a separate `dipdup.<environment>.yaml` file for this stack to apply environment-specific config overrides:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/configs/compose.yml.j2 }}
+{{ #include ../../src/dipdup/projects/base/configs/dipdup.compose.yaml.j2 }}
 ```
 
-Then modify command in `docker-compose.yml`:
+Then modify command in `compose.yaml`:
 
 ```yaml
 services:
   dipdup:
-    command: ["dipdup", "-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
+    command: ["dipdup", "-c", "dipdup.yaml", "-c", "dipdup.prod.yaml", "run"]
     ...
 ```
 
@@ -113,5 +113,5 @@ This page or paragraph is yet to be written. Come back later.
 Example stack:
 
 ```yaml
-{{ #include ../../src/dipdup/projects/base/deploy/swarm.compose.yaml.j2 }}
+{{ #include ../../src/dipdup/projects/base/deploy/compose.swarm.yaml.j2 }}
 ```

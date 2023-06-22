@@ -5,7 +5,7 @@ Kathmandu Tezos protocol upgrade has introduced [contract events](https://tezos.
 An example below is artificial since no known contracts in mainnet are currently using events.
 
 ```yaml
-{{ #include ../../src/demo_events/dipdup.yml:23:32 }}
+{{ #include ../../src/demo_events/dipdup.yaml:23:32 }}
 ```
 
 Unlike big maps, contracts may introduce new event tags and payloads at any time, so the index must be updated accordingly.

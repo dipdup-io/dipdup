@@ -79,10 +79,10 @@ replays:        ## Recreate replays for tests
 DEMO="demo-evm-events"
 
 demo_run:
-	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" run | tee ${DEMO}.log
+	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" run | tee ${DEMO}.log
 
 demo_init:
-	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
+	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" init | tee ${DEMO}.log
 
 profile:
 	python tests/profile_abi_decoding.py

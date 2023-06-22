@@ -50,10 +50,10 @@ poetry shell
 
 ## Write a configuration file
 
-DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yml` in your current working directory with the following content:
+DipDup configuration is stored in YAML files of a specific format. Create a new file named `dipdup.yaml` in your current working directory with the following content:
 
 ```yaml
-{{ #include ../src/demo_token/dipdup.yml }}
+{{ #include ../src/demo_token/dipdup.yaml }}
 ```
 
 ```admonish info title="See Also"
