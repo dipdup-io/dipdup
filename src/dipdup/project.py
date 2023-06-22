@@ -12,11 +12,13 @@ from typing import TypeVar
 
 import asyncclick as cl
 import orjson
+from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
 from dipdup import __version__
 from dipdup.utils import load_template
 from dipdup.utils import write
+from dipdup.yaml import DipDupYAMLConfig
 
 _logger = logging.getLogger('dipdup.project')
 
@@ -64,6 +66,12 @@ class Answers(TypedDict):
     postgresql_image: str
     hasura_image: str
     line_length: str
+
+
+@dataclass
+class Replay:
+    spec_version: str | float
+    replay: Answers
 
 
 DEFAULT_ANSWERS = Answers(
@@ -247,11 +255,9 @@ def write_project_json(answers: Answers, path: Path) -> None:
 
 
 def answers_from_replay(path: Path) -> Answers:
-    if not path.is_file() and path.suffix != '.json':
-        raise Exception
-
-    replay_answers: Answers = orjson.loads(path.read_bytes())
-    return copy(DEFAULT_ANSWERS) | replay_answers
+    replay_config, _ = DipDupYAMLConfig.load([path])
+    answers = Replay(**replay_config).replay
+    return copy(DEFAULT_ANSWERS) | answers
 
 
 def render_project(

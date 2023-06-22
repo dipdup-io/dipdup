@@ -195,7 +195,7 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
         default_env_path.unlink()
 
     for config_path in package.configs.iterdir():
-        if config_path.suffix not in ('.yml', '.yaml'):
+        if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
             continue
 
         config_chain = [
