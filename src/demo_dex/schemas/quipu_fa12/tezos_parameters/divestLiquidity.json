@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "min_tez": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "min_tokens": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "shares": {
+      "type": "string",
+      "$comment": "nat"
+    }
+  },
+  "required": [
+    "min_tez",
+    "min_tokens",
+    "shares"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

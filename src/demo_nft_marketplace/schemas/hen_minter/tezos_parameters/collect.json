@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "objkt_amount": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "swap_id": {
+      "type": "string",
+      "$comment": "nat"
+    }
+  },
+  "required": [
+    "objkt_amount",
+    "swap_id"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

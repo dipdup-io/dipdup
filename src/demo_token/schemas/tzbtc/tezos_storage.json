@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "big_map": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "bytes"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "lambda": {
+      "type": "string",
+      "$comment": "lambda"
+    },
+    "nat": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "bool": {
+      "type": "boolean",
+      "$comment": "bool"
+    }
+  },
+  "required": [
+    "big_map",
+    "lambda",
+    "nat",
+    "bool"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

@@ -1,0 +1,390 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "admin": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "delegates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "type": "string",
+                "$comment": "address"
+              },
+              "delegate": {
+                "type": "string",
+                "$comment": "address"
+              }
+            },
+            "required": [
+              "owner",
+              "delegate"
+            ],
+            "additionalProperties": false,
+            "$comment": "pair"
+          },
+          "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "$comment": "unit"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "extra": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "freeze_history": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "current_stage_num": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "current_unstaked": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "past_unstaked": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "staked": {
+            "type": "string",
+            "$comment": "nat"
+          }
+        },
+        "required": [
+          "current_stage_num",
+          "current_unstaked",
+          "past_unstaked",
+          "staked"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "frozen_token_id": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "frozen_total_supply": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "governance_token": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "$comment": "address"
+        },
+        "token_id": {
+          "type": "string",
+          "$comment": "nat"
+        }
+      },
+      "required": [
+        "address",
+        "token_id"
+      ],
+      "additionalProperties": false,
+      "$comment": "pair"
+    },
+    "guardian": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "pending_owner": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "permits_counter": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "proposal_key_list_sort_by_level": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nat": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "bytes": {
+            "type": "string",
+            "$comment": "bytes"
+          }
+        },
+        "required": [
+          "nat",
+          "bytes"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      },
+      "$comment": "set"
+    },
+    "proposals": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "bytes"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "downvotes": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "metadata": {
+            "type": "string",
+            "$comment": "bytes"
+          },
+          "proposer": {
+            "type": "string",
+            "$comment": "address"
+          },
+          "proposer_frozen_token": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "quorum_threshold": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "start_level": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "upvotes": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "voters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "object",
+                  "properties": {
+                    "address": {
+                      "type": "string",
+                      "$comment": "address"
+                    },
+                    "bool": {
+                      "type": "boolean",
+                      "$comment": "bool"
+                    }
+                  },
+                  "required": [
+                    "address",
+                    "bool"
+                  ],
+                  "additionalProperties": false,
+                  "$comment": "pair"
+                },
+                "value": {
+                  "type": "string",
+                  "$comment": "nat"
+                }
+              },
+              "required": [
+                "key",
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            "$comment": "map"
+          },
+          "voting_stage_num": {
+            "type": "string",
+            "$comment": "nat"
+          }
+        },
+        "required": [
+          "downvotes",
+          "metadata",
+          "proposer",
+          "proposer_frozen_token",
+          "quorum_threshold",
+          "start_level",
+          "upvotes",
+          "voters",
+          "voting_stage_num"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "quorum_threshold_at_cycle": {
+      "type": "object",
+      "properties": {
+        "last_updated_cycle": {
+          "type": "string",
+          "$comment": "nat"
+        },
+        "quorum_threshold": {
+          "type": "string",
+          "$comment": "nat"
+        },
+        "staked": {
+          "type": "string",
+          "$comment": "nat"
+        }
+      },
+      "required": [
+        "last_updated_cycle",
+        "quorum_threshold",
+        "staked"
+      ],
+      "additionalProperties": false,
+      "$comment": "pair"
+    },
+    "start_level": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "custom_entrypoints": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "decision_lambda": {
+      "type": "string",
+      "$comment": "lambda"
+    },
+    "fixed_proposal_fee_in_token": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "governance_total_supply": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "max_proposals": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "max_quorum_change": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "max_quorum_threshold": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "max_voters": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "min_quorum_threshold": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "period": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "proposal_check": {
+      "type": "string",
+      "$comment": "lambda"
+    },
+    "proposal_expired_level": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "proposal_flush_level": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "quorum_change": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "rejected_proposal_slash_value": {
+      "type": "string",
+      "$comment": "lambda"
+    }
+  },
+  "required": [
+    "admin",
+    "delegates",
+    "extra",
+    "freeze_history",
+    "frozen_token_id",
+    "frozen_total_supply",
+    "governance_token",
+    "guardian",
+    "metadata",
+    "pending_owner",
+    "permits_counter",
+    "proposal_key_list_sort_by_level",
+    "proposals",
+    "quorum_threshold_at_cycle",
+    "start_level",
+    "custom_entrypoints",
+    "decision_lambda",
+    "fixed_proposal_fee_in_token",
+    "governance_total_supply",
+    "max_proposals",
+    "max_quorum_change",
+    "max_quorum_threshold",
+    "max_voters",
+    "min_quorum_threshold",
+    "period",
+    "proposal_check",
+    "proposal_expired_level",
+    "proposal_flush_level",
+    "quorum_change",
+    "rejected_proposal_slash_value"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

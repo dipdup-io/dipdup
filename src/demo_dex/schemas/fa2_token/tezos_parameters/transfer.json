@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "from_": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "txs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "to_": {
+              "type": "string",
+              "$comment": "address"
+            },
+            "token_id": {
+              "type": "string",
+              "$comment": "nat"
+            },
+            "amount": {
+              "type": "string",
+              "$comment": "nat"
+            }
+          },
+          "required": [
+            "to_",
+            "token_id",
+            "amount"
+          ],
+          "additionalProperties": false,
+          "$comment": "pair"
+        },
+        "$comment": "list"
+      }
+    },
+    "required": [
+      "from_",
+      "txs"
+    ],
+    "additionalProperties": false,
+    "$comment": "pair"
+  },
+  "$comment": "list"
+}

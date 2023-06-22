@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "to": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "value": {
+      "type": "string",
+      "$comment": "nat"
+    }
+  },
+  "required": [
+    "to",
+    "value"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "curate": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "genesis": {
+      "type": "string",
+      "$comment": "timestamp"
+    },
+    "hdao": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "locked": {
+      "type": "boolean",
+      "$comment": "bool"
+    },
+    "manager": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "objkt": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "objkt_id": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "royalties": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "nat"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "$comment": "address"
+          },
+          "royalties": {
+            "type": "string",
+            "$comment": "nat"
+          }
+        },
+        "required": [
+          "issuer",
+          "royalties"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "size": {
+      "type": "string",
+      "$comment": "int"
+    },
+    "swap_id": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "swaps": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "nat"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "$comment": "address"
+          },
+          "objkt_amount": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "objkt_id": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "xtz_per_objkt": {
+            "type": "string",
+            "$comment": "mutez"
+          }
+        },
+        "required": [
+          "issuer",
+          "objkt_amount",
+          "objkt_id",
+          "xtz_per_objkt"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    }
+  },
+  "required": [
+    "curate",
+    "genesis",
+    "hdao",
+    "locked",
+    "manager",
+    "metadata",
+    "objkt",
+    "objkt_id",
+    "royalties",
+    "size",
+    "swap_id",
+    "swaps"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

@@ -48,11 +48,22 @@ def filter_comments(line: str) -> bool:
 
 def read_config_yaml(path: Path) -> str:
     _logger.debug('Loading config from %s', path)
+    yml_path = path.with_suffix('.yml')
+    yaml_path = path.with_suffix('.yaml')
+    if path.is_file():
+        pass
+    elif yml_path.is_file():
+        path = yml_path
+    elif yaml_path.is_file():
+        path = yaml_path
+    else:
+        raise ConfigurationError(f'Config file `{path}` is missing.')
+
     try:
         with path.open() as file:
             return ''.join(filter(filter_comments, file.readlines()))
     except OSError as e:
-        raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
+        raise ConfigurationError(f'Config file `{path}` is not readable: {e}') from e
 
 
 def dump(value: Any) -> str:
@@ -82,6 +93,16 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
         config_yaml = config_yaml.replace(placeholder, value or default_value or '')
 
     return config_yaml, environment
+
+
+def get_default_env_variables(config_yaml: str) -> dict[str, str]:
+    environment: dict[str, str] = {}
+
+    for match in re.finditer(ENV_VARIABLE_REGEX, config_yaml):
+        variable, default_value = match.group('var_name'), match.group('default_value')
+        environment[variable] = default_value or ''
+
+    return environment
 
 
 def fix_dataclass_field_aliases(config: dict[str, Any]) -> None:
@@ -114,6 +135,8 @@ class DipDupYAMLConfig(dict[str, Any]):
             if environment:
                 path_yaml, path_environment = substitute_env_variables(path_yaml)
                 config_environment.update(path_environment)
+            else:
+                config_environment |= get_default_env_variables(path_yaml)
 
             config.update(yaml.load(path_yaml))
 

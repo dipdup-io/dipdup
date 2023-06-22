@@ -21,6 +21,7 @@ from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 from dipdup.utils import write
+from dipdup.yaml import DipDupYAMLConfig
 
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
@@ -201,15 +202,16 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             Path('dipdup.yml'),
             config_path,
         ]
-        config = DipDupConfig.load(
+        _, environment = DipDupYAMLConfig.load(
             paths=config_chain,
-            environment=True,
+            environment=False,
         )
+        env_lines = (f'{k}={v}' for k, v in sorted(environment.items()))
         lines: tuple[str, ...] = (
             '# This env file was generated automatically by DipDup. Do not edit it!',
             '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
             '#',
-            *config.dump_environment(),
+            *env_lines,
             '',
         )
         content = '\n'.join(lines)

@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema#",
+  "type": "object",
+  "properties": {
+    "administrator": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "balances": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "address"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "approvals": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "$comment": "address"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "$comment": "nat"
+            },
+            "$comment": "map"
+          },
+          "balance": {
+            "type": "string",
+            "$comment": "nat"
+          }
+        },
+        "required": [
+          "approvals",
+          "balance"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "debtCeiling": {
+      "type": "string",
+      "$comment": "nat"
+    },
+    "governorContractAddress": {
+      "type": "string",
+      "$comment": "address"
+    },
+    "metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "$comment": "bytes"
+      }
+    },
+    "paused": {
+      "type": "boolean",
+      "$comment": "bool"
+    },
+    "token_metadata": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "$comment": "nat"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "nat": {
+            "type": "string",
+            "$comment": "nat"
+          },
+          "map": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "$comment": "string"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "$comment": "bytes"
+            },
+            "$comment": "map"
+          }
+        },
+        "required": [
+          "nat",
+          "map"
+        ],
+        "additionalProperties": false,
+        "$comment": "pair"
+      }
+    },
+    "totalSupply": {
+      "type": "string",
+      "$comment": "nat"
+    }
+  },
+  "required": [
+    "administrator",
+    "balances",
+    "debtCeiling",
+    "governorContractAddress",
+    "metadata",
+    "paused",
+    "token_metadata",
+    "totalSupply"
+  ],
+  "additionalProperties": false,
+  "$comment": "pair"
+}

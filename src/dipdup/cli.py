@@ -312,7 +312,7 @@ async def config_env(ctx: click.Context, output: str | None) -> None:
         paths=ctx.obj.config.paths,
         environment=True,
     )
-    content = '\n'.join(config.dump_environment())
+    content = '\n'.join(f'{k}={v}' for k, v in sorted(config.environment.items()))
     if output:
         Path(output).write_text(content)
     else:

@@ -81,10 +81,10 @@ async def test_validators() -> None:
 async def test_dump() -> None:
     config = create_config()
 
-    tmp = tempfile.mkstemp()[1]
-    Path(tmp).write_text(config.dump())
+    tmp_path = Path(tempfile.mkstemp(suffix='yaml')[1])
+    tmp_path.write_text(config.dump())
 
-    config = DipDupConfig.load([Path(tmp)], environment=False)
+    config = DipDupConfig.load([tmp_path], environment=False)
     config.initialize()
 
 
