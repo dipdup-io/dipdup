@@ -26,11 +26,25 @@ from dipdup.project import DEFAULT_ANSWERS
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
-from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_process
 
-DEFAULT_CONFIG_NAME = 'dipdup.yml'
+ROOT_CONFIG = 'dipdup.yaml'
+CONFIG_RE = r'dipdup.*\.ya?ml'
 
+# NOTE: Do not try to load config for these commands as they don't need it
+NO_CONFIG_CMDS = {
+    'new',
+    'install',
+    'uninstall',
+    'update',
+}
+# NOTE: Our signal handler conflicts with Click's one in prompt mode
+NO_SIGNALS_CMDS = {
+    *NO_CONFIG_CMDS,
+    None,
+    'schema',
+    'wipe',
+}
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
@@ -72,7 +86,8 @@ class CLIContext:
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
     async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        set_up_process(ctx.invoked_subcommand)
+        signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
+        set_up_process(signals)
 
         try:
             await fn(ctx, *args, **kwargs)
@@ -122,8 +137,8 @@ async def _check_version() -> None:
     '-c',
     type=str,
     multiple=True,
-    help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
-    default=[DEFAULT_CONFIG_NAME],
+    help='A path to DipDup project config.',
+    default=[ROOT_CONFIG],
     metavar='PATH',
 )
 @click.option(
@@ -169,7 +184,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in IGNORE_CONFIG_CMDS:
+    if ctx.invoked_subcommand in NO_CONFIG_CMDS:
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
