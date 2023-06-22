@@ -604,7 +604,7 @@ class DipDupConfig:
     :param logging: Modify logging verbosity
     """
 
-    spec_version: str
+    spec_version: str | float
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
