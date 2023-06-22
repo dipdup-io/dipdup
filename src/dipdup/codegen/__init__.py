@@ -25,6 +25,8 @@ from dipdup.utils import write
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
 
+_logger = logging.getLogger('dipdup.codegen')
+
 
 class CodeGenerator(ABC):
     def __init__(
@@ -36,7 +38,7 @@ class CodeGenerator(ABC):
         self._config = config
         self._package = package
         self._datasources = datasources
-        self._logger = logging.getLogger('dipdup.codegen')
+        self._logger = _logger
 
     async def init(
         self,
@@ -188,6 +190,9 @@ class CodeGenerator(ABC):
 
 
 async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+    for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
+        default_env_path.unlink()
+
     for config_path in package.configs.iterdir():
         if config_path.suffix not in ('.yml', '.yaml'):
             continue
@@ -205,9 +210,13 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
             '#',
             *config.dump_environment(),
+            '',
         )
         content = '\n'.join(lines)
 
-        env_path = package.deploy / (config_path.stem + DEFAULT_ENV)
+        env_filename = config_path.stem.replace('dipdup.', '')
+        if env_filename == 'compose':
+            env_filename = ''
+        env_path = package.deploy / (env_filename + DEFAULT_ENV)
         env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text(content)
