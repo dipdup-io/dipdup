@@ -1,3 +1,4 @@
+from collections import deque
 from pathlib import Path
 from typing import Any
 from typing import Awaitable
@@ -17,6 +18,17 @@ from dipdup.utils import touch
 KEEP_MARKER = '.keep'
 PEP_561_MARKER = 'py.typed'
 DEFAULT_ENV = '.default.env'
+
+
+def draw_tree(root: Path, tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
+    lines: deque[str] = deque()
+
+    for section, paths in tree.items():
+        lines.append(f'{section}:')
+        for path in sorted(paths):
+            lines.append(f'  - {path.relative_to(root / section)}')
+
+    return tuple(lines)
 
 
 @dataclass(frozen=True)
@@ -50,6 +62,30 @@ class DipDupPackage:
         self._evm_events: dict[str, dict[str, EventAbiExtra]] = {}
         self._evm_topics: dict[str, dict[str, str]] = {}
 
+    @property
+    def skel(self) -> dict[Path, str | None]:
+        return {
+            self.abi: '**/*.json',
+            self.configs: '**/*.yaml',
+            self.deploy: None,
+            self.graphql: '**/*.graphql',
+            self.handlers: '**/*.py',
+            self.hasura: '**/*.json',
+            self.hooks: '**/*.py',
+            self.models: '**/*.py',
+            self.sql: '**/*.sql',
+            self.schemas: None,
+            self.types: '**/*.py',
+        }
+
+    def discover(self) -> dict[str, tuple[Path, ...]]:
+        tree = {}
+        for path, exp in self.skel.items():
+            if not exp:
+                continue
+            tree[path.name] = tuple(path.glob(exp))
+        return tree
+
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
         self.pre_init()
@@ -57,19 +93,7 @@ class DipDupPackage:
         touch(self.root / PEP_561_MARKER)
         touch(self.root / '__init__.py')
 
-        for path in (
-            self.abi,
-            self.configs,
-            self.deploy,
-            self.graphql,
-            self.handlers,
-            self.hasura,
-            self.hooks,
-            self.models,
-            self.sql,
-            self.schemas,
-            self.types,
-        ):
+        for path in self.skel:
             touch(path / KEEP_MARKER)
 
     def pre_init(self) -> None:
@@ -79,9 +103,7 @@ class DipDupPackage:
             raise ProjectImportError(f'`{self.root}` must be a directory')
 
     def post_init(self) -> None:
-        if not self.debug:
-            for path in self.schemas.glob('**/*.json'):
-                path.unlink()
+        ...
 
     def verify(self) -> None:
         import_submodules(self.name)

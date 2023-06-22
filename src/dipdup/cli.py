@@ -687,3 +687,26 @@ async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
         echo('No such report')
         return
     path.unlink()
+
+
+@cli.group()
+@click.pass_context
+@_cli_wrapper
+async def package(ctx: click.Context) -> None:
+    """Inspect and manage project package."""
+    pass
+
+
+@package.command(name='tree')
+@click.pass_context
+@_cli_wrapper
+async def package_tree(ctx: click.Context) -> None:
+    from dipdup.package import DipDupPackage
+    from dipdup.package import draw_tree
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.create()
+    tree = package.discover()
+    for line in draw_tree(package.root, tree):
+        echo(line)
