@@ -47,6 +47,8 @@ def filter_comments(line: str) -> bool:
 
 
 def read_config_yaml(path: Path) -> str:
+    if path.is_dir():
+        path /= 'dipdup.yaml'
     _logger.debug('Loading config from %s', path)
     yml_path = path.with_suffix('.yml')
     yaml_path = path.with_suffix('.yaml')
