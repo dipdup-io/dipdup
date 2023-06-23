@@ -47,9 +47,10 @@ def filter_comments(line: str) -> bool:
 
 
 def read_config_yaml(path: Path) -> str:
+    _logger.debug('Discovering config `%s`', path)
     if path.is_dir():
         path /= 'dipdup.yaml'
-    _logger.debug('Loading config from %s', path)
+
     yml_path = path.with_suffix('.yml')
     yaml_path = path.with_suffix('.yaml')
     if path.is_file():
@@ -61,6 +62,7 @@ def read_config_yaml(path: Path) -> str:
     else:
         raise ConfigurationError(f'Config file `{path}` is missing.')
 
+    _logger.debug('Loading config file `%s`', path)
     try:
         with path.open() as file:
             return ''.join(filter(filter_comments, file.readlines()))
