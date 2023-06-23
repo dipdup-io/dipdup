@@ -93,7 +93,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            report_id = save_report(e)
+            package = ctx.obj.config.package if ctx.obj else 'unknown'
+            report_id = save_report(package, e)
             _print_report(report_id)
             _print_help(e)
 
@@ -102,7 +103,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             sys.exit(1)
 
         if fn.__name__ == 'run':
-            save_report(None)
+            package = ctx.obj.config.package
+            save_report(package, None)
 
     return cast(WrappedCommandT, wrapper)
 

@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
 
-from dipdup import env
 from dipdup.performance import get_stats
 from dipdup.performance import metrics
 from dipdup.yaml import dump
@@ -20,7 +19,7 @@ class ReportHeader(TypedDict):
     content: str
 
 
-def save_report(error: Exception | None) -> str:
+def save_report(package: str, error: Exception | None) -> str:
     """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
 
     event, content = {}, []
@@ -45,7 +44,7 @@ def save_report(error: Exception | None) -> str:
     reason = error.__repr__() if error else 'success'
     header = ReportHeader(
         id=report_id,
-        package=env.PACKAGE_PATH.name if env.PACKAGE_PATH else 'unknown',
+        package=package,
         reason=reason,
         date=datetime.now().isoformat(),
         content=','.join(content),
