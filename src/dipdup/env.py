@@ -10,10 +10,14 @@ def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
     global PACKAGE_PATH
 
+    # NOTE: Integration tests run in isolated environment
+    if TEST:
+        set_package_path(Path.cwd() / package)
+
     if PACKAGE_PATH:
         return PACKAGE_PATH
 
-    if Path.cwd().name == package:
+    if Path.cwd().name == package and Path('pyproject.toml').exists():
         set_package_path(Path.cwd())
         return cast(Path, PACKAGE_PATH)
 

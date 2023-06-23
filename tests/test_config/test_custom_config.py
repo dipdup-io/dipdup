@@ -12,11 +12,11 @@ from dipdup.exceptions import ConfigurationError
 class TestCustomConfig:
     @pytest.fixture(scope='session')
     def dummy_config_path(self) -> Path:
-        return Path(__file__).parent.parent / 'configs' / 'dipdup.yaml'
+        return Path(__file__).parent.parent / 'configs' / 'dipdup.yml'
 
     @staticmethod
     def appended_config_path(dummy_config_path: str, tmp_path_factory: TempPathFactory, append_raw: str) -> str:
-        config_file = tmp_path_factory.mktemp('config') / 'dipdup.yaml'
+        config_file = tmp_path_factory.mktemp('config') / 'dipdup.yml'
         config_raw = Path(dummy_config_path).read_text()
         config_file.write_text(config_raw + append_raw)
 
