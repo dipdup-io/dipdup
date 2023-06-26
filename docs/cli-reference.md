@@ -103,12 +103,6 @@
 <dd><p>Regenerate existing types and ABIs.</p>
 </dd></dl>
 
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-init-keep-schemas">
-<span class="sig-name descname"><span class="pre">--keep-schemas</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-keep-schemas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Do not remove JSONSchemas after generating types.</p>
-</dd></dl>
-
 </section>
 <section id="dipdup-migrate">
 <h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this heading">¶</a></h2>
