@@ -21,4 +21,4 @@
 !**/*.yaml
 !**/*.yml
 !**/*.j2
-!**/*.default
+!**/*.env.default
