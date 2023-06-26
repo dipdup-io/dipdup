@@ -27,6 +27,4 @@
 !**/*.yaml
 !**/*.yml
 !**/*.j2
-
-# But example env files are okay
-!**/*.default.env
+!**/*.default

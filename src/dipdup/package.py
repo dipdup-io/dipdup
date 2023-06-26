@@ -17,7 +17,7 @@ from dipdup.utils import touch
 
 KEEP_MARKER = '.keep'
 PEP_561_MARKER = 'py.typed'
-DEFAULT_ENV = '.default.env'
+DEFAULT_ENV = '.env.default'
 
 
 _branch = '│   '
@@ -55,6 +55,7 @@ class DipDupPackage:
         self.debug = debug
         self.name = root.name
 
+        # NOTE: Package sections with .keep markers
         self.abi = root / 'abi'
         self.configs = root / 'configs'
         self.deploy = root / 'deploy'
@@ -64,9 +65,13 @@ class DipDupPackage:
         self.hooks = root / 'hooks'
         self.models = root / 'models'
         self.sql = root / 'sql'
-        self.schemas = root / 'schemas'
         self.types = root / 'types'
 
+        # NOTE: Shared directories; not a part of package
+        self._xdg_shared_dir = Path.home() / '.local' / 'share' / 'dipdup'
+        self.schemas = self._xdg_shared_dir / 'schemas' / self.name
+
+        # NOTE: Finally, internal in-memory stuff
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
@@ -77,15 +82,14 @@ class DipDupPackage:
     def skel(self) -> dict[Path, str | None]:
         return {
             self.abi: '**/*.json',
-            self.configs: '**/*.yaml',
-            self.deploy: None,
+            self.configs: '**/*.y[a]ml',
+            self.deploy: '**/*',
             self.graphql: '**/*.graphql',
             self.handlers: '**/*.py',
             self.hasura: '**/*.json',
             self.hooks: '**/*.py',
             self.models: '**/*.py',
             self.sql: '**/*.sql',
-            self.schemas: None,
             self.types: '**/*.py',
         }
 
