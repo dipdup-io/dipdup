@@ -11,7 +11,7 @@ If you're using Poetry, set caret version constraint in `pyproject.toml` to use 
 ```toml
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-dipdup = "^{{ cookiecutter.dipdup_version }}"
+dipdup = "^{{ project.dipdup_version }}"
 ```
 
 pipx installations always use latest version.
@@ -21,7 +21,7 @@ Run `dipdup update` periodically to update to the latest version.
 While building Docker images you can use `X` and `X.Y` tags to lock to specific major/minor releases:
 
 ```Dockerfile
-FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
+FROM dipdup/dipdup:{{ project.dipdup_version }}
 ```
 
 ## Ensure that config is correct
@@ -29,8 +29,8 @@ FROM dipdup/dipdup:{{ cookiecutter.dipdup_version }}
 DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use `config export` command to dump config the way DipDup "sees" it, after resolving all links and templates. `config env` command can help you to find missing environment variables.
 
 ```shell
-dipdup -c dipdup.yml -c dipdup.prod.yml config export
-dipdup -c dipdup.yml -c dipdup.prod.yml config env
+dipdup -c dipdup.yaml -c dipdup.prod.yaml config export
+dipdup -c dipdup.yaml -c dipdup.prod.yaml config env
 ```
 
 ```admonish info title="See Also"

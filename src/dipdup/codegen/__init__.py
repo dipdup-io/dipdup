@@ -14,16 +14,19 @@ from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
+from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 from dipdup.utils import write
+from dipdup.yaml import DipDupYAMLConfig
 
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
+
+_logger = logging.getLogger('dipdup.codegen')
 
 
 class CodeGenerator(ABC):
@@ -36,7 +39,7 @@ class CodeGenerator(ABC):
         self._config = config
         self._package = package
         self._datasources = datasources
-        self._logger = logging.getLogger('dipdup.codegen')
+        self._logger = _logger
 
     async def init(
         self,
@@ -89,9 +92,7 @@ class CodeGenerator(ABC):
         rel_path = schema_path.relative_to(self._package.schemas)
         type_pkg_path = self._package.types / rel_path
 
-        # TODO: Stop generating Python markers
         if schema_path.is_dir():
-            touch(type_pkg_path / PYTHON_MARKER)
             return
 
         if not schema_path.name.endswith('.json'):
@@ -113,8 +114,6 @@ class CodeGenerator(ABC):
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: Stop generating Python markers
-        (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
             '--input',
@@ -127,7 +126,7 @@ class CodeGenerator(ABC):
             '--input-file-type',
             'jsonschema',
             '--target-python-version',
-            '3.10',
+            '3.11',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)
@@ -189,3 +188,37 @@ class CodeGenerator(ABC):
             KEEP_MARKER,
         )
         touch(sql_path)
+
+
+async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+    for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
+        default_env_path.unlink()
+
+    for config_path in package.configs.iterdir():
+        if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
+            continue
+
+        config_chain = [
+            Path('dipdup.yaml'),
+            config_path,
+        ]
+        _, environment = DipDupYAMLConfig.load(
+            paths=config_chain,
+            environment=False,
+        )
+        env_lines = (f'{k}={v}' for k, v in sorted(environment.items()))
+        lines: tuple[str, ...] = (
+            '# This env file was generated automatically by DipDup. Do not edit it!',
+            '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
+            '#',
+            *env_lines,
+            '',
+        )
+        content = '\n'.join(lines)
+
+        env_filename = config_path.stem.replace('dipdup.', '')
+        if env_filename == 'compose':
+            env_filename = ''
+        env_path = package.deploy / (env_filename + DEFAULT_ENV)
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text(content)

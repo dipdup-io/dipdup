@@ -27,7 +27,7 @@ test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
 docs:           ## Build docs
-	scripts/update_cookiecutter.py
+	scripts/update_project.py
 	cd docs
 	make -s clean build lint
 
@@ -65,8 +65,9 @@ update:         ## Update dependencies, export requirements.txt
 	poetry export --without-hashes -o requirements.dev.txt --with dev
 
 demos:          ## Recreate demos from templates
-	python scripts/update_cookiecutter.py
+	python scripts/update_project.py
 	python scripts/update_demos.py
+	python scripts/init_demos.py
 	make lint
 
 replays:        ## Recreate replays for tests
@@ -78,10 +79,10 @@ replays:        ## Recreate replays for tests
 DEMO="demo-evm-events"
 
 demo_run:
-	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" run | tee ${DEMO}.log
+	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" run | tee ${DEMO}.log
 
 demo_init:
-	dipdup -c demos/${DEMO}/dipdup.yml -e "${DEMO}.env" init | tee ${DEMO}.log
+	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" init | tee ${DEMO}.log
 
 profile:
 	python tests/profile_abi_decoding.py

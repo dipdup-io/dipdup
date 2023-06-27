@@ -13,7 +13,6 @@ from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
 from dipdup.utils import json_dumps
@@ -130,7 +129,6 @@ class SubsquidCodeGenerator(CodeGenerator):
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
-        touch(self._package.types / PYTHON_MARKER)
 
         for path in self._package.schemas.glob('**/*.json'):
             await self._generate_type(path, force)

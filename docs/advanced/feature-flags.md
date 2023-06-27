@@ -43,7 +43,6 @@ Please note that they are not currently a part of the public API and can be chan
 | `DIPDUP_CI`           | `dipdup.env.CI`           | Running in GitHub Actions                                             |
 | `DIPDUP_DOCKER`       | `dipdup.env.DOCKER`       | Running in Docker                                                     |
 | `DIPDUP_NEXT`         | `dipdup.env.NEXT`         | Enable features thar require schema changes                           |
-| `DIPDUP_PACKAGE_PATH` | `dipdup.env.PACKAGE_PATH` | Path to the currently used package                                    |
 | `DIPDUP_REPLAY_PATH`  | `dipdup.env.REPLAY_PATH`  | Path to datasource replay files; used in tests                        |
 | `DIPDUP_TEST`         | `dipdup.env.TEST`         | Running in pytest                                                     |
 

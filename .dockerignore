@@ -1,16 +1,16 @@
 # Ignore all
 *
 
-# Add build files
+# Add metadata and build files
 !Makefile
 !pyproject.toml
 !poetry.lock
 !README.md
 !requirements**
 
-# Add code
+# Add Python package
 !src/dipdup/
 
 # Ignore caches
-**/.mypy_cache
+**/.*_cache
 **/__pycache__

@@ -1,0 +1,2298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "DipDupConfig",
+  "properties": {
+    "spec_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "package": {
+      "type": "string"
+    },
+    "datasources": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/CoinbaseDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EtherscanDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/HttpDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/IpfsDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EvmNodeDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzipMetadataDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktDatasourceConfig"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "database": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SqliteDatabaseConfig"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/PostgresDatabaseConfig"
+            }
+          ]
+        }
+      ]
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EvmContractConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TezosContractConfig"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "indexes": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktHeadIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/IndexTemplateConfig"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktHeadIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/JobConfig"
+          }
+        ]
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/HookConfig"
+          }
+        ]
+      }
+    },
+    "hasura": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/HasuraConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "sentry": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/SentryConfig"
+        }
+      ]
+    },
+    "prometheus": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/PrometheusConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "advanced": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/AdvancedConfig"
+        }
+      ]
+    },
+    "custom": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "logging": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          }
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "default": "INFO"
+    }
+  },
+  "required": [
+    "spec_version",
+    "package"
+  ],
+  "$defs": {
+    "HttpConfig": {
+      "type": "object",
+      "title": "HttpConfig",
+      "properties": {
+        "retry_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "retry_sleep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "retry_multiplier": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ratelimit_rate": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ratelimit_period": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ratelimit_sleep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "connection_limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "connection_timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "batch_size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "replay_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      }
+    },
+    "CoinbaseDatasourceConfig": {
+      "type": "object",
+      "title": "CoinbaseDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "coinbase"
+          ]
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "secret_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "passphrase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "EtherscanDatasourceConfig": {
+      "type": "object",
+      "title": "EtherscanDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "abi.etherscan"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "default": "https://api.etherscan.io/api"
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "HttpDatasourceConfig": {
+      "type": "object",
+      "title": "HttpDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "http"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ]
+    },
+    "IpfsDatasourceConfig": {
+      "type": "object",
+      "title": "IpfsDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "ipfs"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "default": "https://ipfs.io/ipfs"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "EvmNodeDatasourceConfig": {
+      "type": "object",
+      "title": "EvmNodeDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.node"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "ws_url": {
+          "type": "string"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "rollback_depth": {
+          "type": "integer",
+          "default": 32
+        }
+      },
+      "required": [
+        "kind",
+        "url",
+        "ws_url"
+      ]
+    },
+    "SubsquidDatasourceConfig": {
+      "type": "object",
+      "title": "SubsquidDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "node": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ]
+    },
+    "TzipMetadataNetwork": {
+      "title": "TzipMetadataNetwork",
+      "enum": [
+        "mainnet",
+        "ghostnet",
+        "mumbainet",
+        "nairobinet"
+      ]
+    },
+    "TzipMetadataDatasourceConfig": {
+      "type": "object",
+      "title": "TzipMetadataDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tzip_metadata"
+          ]
+        },
+        "network": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/TzipMetadataNetwork"
+            }
+          ]
+        },
+        "url": {
+          "type": "string",
+          "default": "https://metadata.dipdup.net"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "network"
+      ]
+    },
+    "TzktDatasourceConfig": {
+      "type": "object",
+      "title": "TzktDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "default": "https://api.tzkt.io"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "buffer_size": {
+          "type": "integer",
+          "default": 0
+        },
+        "merge_subscriptions": {
+          "type": "boolean",
+          "default": false
+        },
+        "rollback_depth": {
+          "type": "integer",
+          "default": 2
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "SqliteDatabaseConfig": {
+      "type": "object",
+      "title": "SqliteDatabaseConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "sqlite"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "default": ":memory:"
+        },
+        "immune_tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "PostgresDatabaseConfig": {
+      "type": "object",
+      "title": "PostgresDatabaseConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "postgres"
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "user": {
+          "type": "string",
+          "default": "postgres"
+        },
+        "database": {
+          "type": "string",
+          "default": "postgres"
+        },
+        "port": {
+          "type": "integer",
+          "default": 5432
+        },
+        "schema_name": {
+          "type": "string",
+          "default": "public"
+        },
+        "password": {
+          "type": "string",
+          "default": ""
+        },
+        "immune_tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "connection_timeout": {
+          "type": "integer",
+          "default": 60
+        }
+      },
+      "required": [
+        "kind",
+        "host"
+      ]
+    },
+    "EvmContractConfig": {
+      "type": "object",
+      "title": "EvmContractConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm"
+          ]
+        },
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "TezosContractConfig": {
+      "type": "object",
+      "title": "TezosContractConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos"
+          ]
+        },
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "code_hash": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ]
+    },
+    "SubsquidEventsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidEventsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "name"
+      ]
+    },
+    "AbiDatasourceConfig": {
+      "type": "object",
+      "title": "AbiDatasourceConfig",
+      "properties": {}
+    },
+    "SubsquidEventsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidEventsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.events"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
+    "SubsquidOperationsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidOperationsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "method": {
+          "type": "string"
+        },
+        "events": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "method",
+        "events"
+      ]
+    },
+    "SubsquidOperationsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidOperationsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.operations"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidOperationsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EvmContractConfig"
+              }
+            ]
+          }
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers",
+        "contracts"
+      ]
+    },
+    "TzktBigMapsHandlerConfig": {
+      "type": "object",
+      "title": "TzktBigMapsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "path"
+      ]
+    },
+    "SkipHistory": {
+      "title": "SkipHistory",
+      "enum": [
+        "never",
+        "once",
+        "always"
+      ]
+    },
+    "TzktBigMapsIndexConfig": {
+      "type": "object",
+      "title": "TzktBigMapsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.big_maps"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "skip_history": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SkipHistory"
+            }
+          ],
+          "default": "never"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
+    "TzktEventsHandlerConfig": {
+      "type": "object",
+      "title": "TzktEventsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "tag"
+      ]
+    },
+    "TzktEventsUnknownEventHandlerConfig": {
+      "type": "object",
+      "title": "TzktEventsUnknownEventHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "callback",
+        "contract"
+      ]
+    },
+    "TzktEventsIndexConfig": {
+      "type": "object",
+      "title": "TzktEventsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.events"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TzktEventsHandlerConfig"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TzktEventsUnknownEventHandlerConfig"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
+    "TzktHeadIndexConfig": {
+      "type": "object",
+      "title": "TzktHeadIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.head"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "callback": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "callback"
+      ]
+    },
+    "OperationsHandlerTransactionPatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerTransactionPatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "transaction"
+          ],
+          "default": "transaction"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      }
+    },
+    "OperationsHandlerOriginationPatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerOriginationPatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "origination"
+          ],
+          "default": "origination"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "originated_contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "strict": {
+          "type": "boolean",
+          "default": false
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      }
+    },
+    "TzktOperationsHandlerConfig": {
+      "type": "object",
+      "title": "TzktOperationsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerTransactionPatternConfig"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerOriginationPatternConfig"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "callback",
+        "pattern"
+      ]
+    },
+    "TzktOperationType": {
+      "title": "TzktOperationType",
+      "enum": [
+        "transaction",
+        "origination",
+        "migration"
+      ]
+    },
+    "TzktOperationsIndexConfig": {
+      "type": "object",
+      "title": "TzktOperationsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.operations"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TezosContractConfig"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationType"
+              }
+            ]
+          },
+          "default": [
+            "transaction"
+          ]
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers",
+        "contracts"
+      ]
+    },
+    "TzktOperationsUnfilteredIndexConfig": {
+      "type": "object",
+      "title": "TzktOperationsUnfilteredIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.operations_unfiltered"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "callback": {
+          "type": "string"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationType"
+              }
+            ]
+          },
+          "default": [
+            "transaction"
+          ]
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "callback"
+      ]
+    },
+    "TzktTokenTransfersHandlerConfig": {
+      "type": "object",
+      "title": "TzktTokenTransfersHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "token_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "from_": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "callback"
+      ]
+    },
+    "TzktTokenTransfersIndexConfig": {
+      "type": "object",
+      "title": "TzktTokenTransfersIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.token_transfers"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersHandlerConfig"
+              }
+            ]
+          }
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource"
+      ]
+    },
+    "IndexTemplateConfig": {
+      "type": "object",
+      "title": "IndexTemplateConfig",
+      "properties": {
+        "template": {
+          "type": "string"
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "template",
+        "values"
+      ]
+    },
+    "HookConfig": {
+      "type": "object",
+      "title": "HookConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "atomic": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "callback"
+      ]
+    },
+    "JobConfig": {
+      "type": "object",
+      "title": "JobConfig",
+      "properties": {
+        "hook": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HookConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "crontab": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "daemon": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "hook",
+        "args"
+      ]
+    },
+    "HasuraConfig": {
+      "type": "object",
+      "title": "HasuraConfig",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "admin_secret": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "create_source": {
+          "type": "boolean",
+          "default": false
+        },
+        "source": {
+          "type": "string",
+          "default": "default"
+        },
+        "select_limit": {
+          "type": "integer",
+          "default": 100
+        },
+        "allow_aggregations": {
+          "type": "boolean",
+          "default": true
+        },
+        "allow_inconsistent_metadata": {
+          "type": "boolean",
+          "default": false
+        },
+        "camel_case": {
+          "type": "boolean",
+          "default": false
+        },
+        "rest": {
+          "type": "boolean",
+          "default": true
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "SentryConfig": {
+      "type": "object",
+      "title": "SentryConfig",
+      "properties": {
+        "dsn": {
+          "type": "string",
+          "default": ""
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "server_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "release": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "debug": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "PrometheusConfig": {
+      "type": "object",
+      "title": "PrometheusConfig",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "default": 8000
+        },
+        "update_interval": {
+          "type": "number",
+          "default": 1.0
+        }
+      },
+      "required": [
+        "host"
+      ]
+    },
+    "ReindexingAction": {
+      "title": "ReindexingAction",
+      "enum": [
+        "exception",
+        "wipe",
+        "ignore"
+      ]
+    },
+    "ApiConfig": {
+      "type": "object",
+      "title": "ApiConfig",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "default": 46339
+        }
+      }
+    },
+    "MetricsLevel": {
+      "title": "MetricsLevel",
+      "enum": [
+        "off",
+        "basic",
+        "full"
+      ]
+    },
+    "AdvancedConfig": {
+      "type": "object",
+      "title": "AdvancedConfig",
+      "properties": {
+        "reindex": {
+          "type": "object",
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/ReindexingAction"
+              }
+            ]
+          }
+        },
+        "scheduler": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "postpone_jobs": {
+          "type": "boolean",
+          "default": false
+        },
+        "early_realtime": {
+          "type": "boolean",
+          "default": false
+        },
+        "skip_version_check": {
+          "type": "boolean",
+          "default": false
+        },
+        "rollback_depth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "decimal_precision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "unsafe_sqlite": {
+          "type": "boolean",
+          "default": false
+        },
+        "api": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/ApiConfig"
+            }
+          ]
+        },
+        "metrics": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/MetricsLevel"
+            }
+          ],
+          "default": "basic"
+        },
+        "alt_operation_matcher": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

@@ -169,7 +169,7 @@ Mem:            30Gi        16Gi       3,1Gi       1,3Gi        11Gi        12Gi
 Swap:           31Gi       6,0Mi        31Gi
 
 # Update database config to use tmpfs
-$ grep database -A2 dipdup.yml
+$ grep database -A2 dipdup.yaml
 database:
   kind: sqlite
   path: /tmp/uniswap.sqlite

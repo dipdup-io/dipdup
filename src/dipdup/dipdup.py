@@ -19,6 +19,7 @@ from typing import Awaitable
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.codegen import generate_environments
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -518,6 +519,8 @@ class DipDup:
             for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
                 codegen = codegen_cls(self._config, package, self._datasources)
                 await codegen.init(force=overwrite_types)
+
+            await generate_environments(self._config, package)
 
     async def run(self) -> None:
         """Run indexing process"""

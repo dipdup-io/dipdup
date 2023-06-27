@@ -1,0 +1,20 @@
+database:
+  kind: postgres
+  host: demo_domains_db
+  port: 5432
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD}
+  database: ${POSTGRES_DB:-dipdup}
+
+hasura:
+  url: http://demo_domains_hasura:8080
+  admin_secret: ${HASURA_SECRET}
+  allow_aggregations: false
+  camel_case: true
+
+sentry:
+  dsn: ${SENTRY_DSN:-""}
+  environment: ${SENTRY_ENVIRONMENT:-swarm}
+
+prometheus:
+  host: 0.0.0.0

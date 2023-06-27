@@ -16,7 +16,7 @@
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-c">
 <span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;PATH&gt;</span></span><a class="headerlink" href="#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
-<dd><p>A path to DipDup project config (default: dipdup.yml).</p>
+<dd><p>A path to DipDup project config.</p>
 </dd></dl>
 
 <dl class="std option">
@@ -103,12 +103,6 @@
 <dd><p>Regenerate existing types and ABIs.</p>
 </dd></dl>
 
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-init-keep-schemas">
-<span class="sig-name descname"><span class="pre">--keep-schemas</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dipdup-init-keep-schemas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Do not remove JSONSchemas after generating types.</p>
-</dd></dl>
-
 </section>
 <section id="dipdup-migrate">
 <h2>migrate<a class="headerlink" href="#dipdup-migrate" title="Permalink to this heading">¶</a></h2>
@@ -143,6 +137,19 @@
 <dd><p>Replay a previously saved state.</p>
 </dd></dl>
 
+</section>
+<section id="dipdup-package">
+<h2>package<a class="headerlink" href="#dipdup-package" title="Permalink to this heading">¶</a></h2>
+<p>Inspect and manage project package.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>package<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-package-tree">
+<h3>tree<a class="headerlink" href="#dipdup-package-tree" title="Permalink to this heading">¶</a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>package<span class="w"> </span>tree<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="dipdup-report">
 <h2>report<a class="headerlink" href="#dipdup-report" title="Permalink to this heading">¶</a></h2>

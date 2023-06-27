@@ -245,7 +245,10 @@ class HasuraGateway(HTTPGateway):
             raise UnsupportedAPIError(
                 self.url,
                 'hasura',
-                f'A critical vulnerability has been discovered in {version}!\n    Update to {vulnerable_versions[version]} or the latest stable version immediately.',
+                (
+                    f'A critical vulnerability has been discovered in {version}!\n    Update to'
+                    f' {vulnerable_versions[version]} or the latest stable version immediately.'
+                ),
             )
 
         self._logger.info('Connected to Hasura %s', version)
@@ -322,8 +325,9 @@ class HasuraGateway(HTTPGateway):
             row[0]
             for row in (
                 await conn.execute_query(
-                    f"SELECT table_name FROM information_schema.views WHERE table_schema = '{self._database_config.schema_name}' UNION "
-                    f"SELECT matviewname as table_name FROM pg_matviews WHERE schemaname = '{self._database_config.schema_name}'"
+                    "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                    f" '{self._database_config.schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
+                    f" WHERE schemaname = '{self._database_config.schema_name}'"
                 )
             )[1]
         ]
@@ -551,17 +555,9 @@ class HasuraGateway(HTTPGateway):
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': name,
-            'query': 'query '
-            + name
-            + ' ('
-            + query_arg
-            + ') {'
-            + table
-            + '('
-            + query_filter
-            + ') {'
-            + query_fields
-            + '}}',
+            'query': (
+                'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}'
+            ),
         }
 
     def _format_rest_head_status_query(self) -> dict[str, Any]:
