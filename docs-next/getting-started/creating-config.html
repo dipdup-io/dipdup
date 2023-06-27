@@ -175,7 +175,7 @@
                         <h1 id="creating-config"><a class="header" href="#creating-config">Creating config</a></h1>
 <p>Developing a DipDup indexer begins with creating a YAML config file. You can find a minimal example to start indexing on the Quickstart page.</p>
 <h2 id="general-structure"><a class="header" href="#general-structure">General structure</a></h2>
-<p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
+<p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yaml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
 <p>DipDup config file consists of several logical blocks:</p>
 <!-- markdownlint-disable first-line-h1 -->
 <div class="table-wrapper"><table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
@@ -204,7 +204,7 @@
 <p><strong>Tunables</strong> affect the behavior of the whole framework.</p>
 <h2 id="merging-config-files"><a class="header" href="#merging-config-files">Merging config files</a></h2>
 <p>DipDup allows you to customize the configuration for a specific environment or workflow. It works similarly to docker-compose anchors but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
-<pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml run
+<pre><code class="language-shell">dipdup -c dipdup.yaml -c dipdup.prod.yaml run
 </code></pre>
 <p>Run <code>config export</code> command if unsure about the final config used by DipDup.</p>
 <h2 id="full-example"><a class="header" href="#full-example">Full example</a></h2>
@@ -334,6 +334,7 @@ sentry:
 
 prometheus:
   host: 0.0.0.0
+
 
 hasura:
   url: http://hasura:8080

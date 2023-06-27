@@ -41,7 +41,7 @@ orphans:
 		-e "placeholders.md" \
 		-e "SUMMARY.md" \
 		-e "mdbook-summary" \
-		-e "mdbook-cookiecutter" \
+		-e "mdbook-project" \
 		-e "mdbook-admonish" \
 		-e "include" \
 		| cut -c "3-" | sort -o existing.tmp

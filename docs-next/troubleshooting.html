@@ -188,8 +188,8 @@ dipdup = &quot;^6&quot;
 </code></pre>
 <h2 id="ensure-that-config-is-correct"><a class="header" href="#ensure-that-config-is-correct">Ensure that config is correct</a></h2>
 <p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup &quot;sees&quot; it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
-<pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml config export
-dipdup -c dipdup.yml -c dipdup.prod.yml config env
+<pre><code class="language-shell">dipdup -c dipdup.yaml -c dipdup.prod.yaml config export
+dipdup -c dipdup.yaml -c dipdup.prod.yaml config env
 </code></pre>
 <div id="admonition-see-also" class="admonition info">
 <div class="admonition-title">

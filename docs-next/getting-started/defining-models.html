@@ -176,7 +176,8 @@
 <p>DipDup uses <a href="https://tortoise.github.io/examples.html">Tortoise ORM</a> library to work with database. It's fast, flexible, and similar to Django ORM.</p>
 <p>Please, don't report DipDup issues to the Tortoise ORM bugtracker! We patch it heavily to better suit our needs.</p>
 <p>Project models should be placed in <code>models.py</code> file and inherit from <code>dipdup.models.Model</code> class. A typical module looks like this (example from the <code>demo-domains</code>)</p>
-<pre><code class="language-python">from dipdup import fields
+<pre><code class="language-python">
+from dipdup import fields
 from dipdup.models import Model
 
 
@@ -187,7 +188,7 @@ class TLD(Model):
 
 class Domain(Model):
     id = fields.TextField(pk=True)
-    tld: fields.ForeignKeyFieldInstance[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
+    tld: fields.ForeignKeyField[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
     expiry = fields.DatetimeField(null=True)
     owner = fields.TextField()
     token_id = fields.BigIntField(null=True)
@@ -197,7 +198,7 @@ class Domain(Model):
 
 class Record(Model):
     id = fields.TextField(pk=True)
-    domain: fields.ForeignKeyFieldInstance[Domain] = fields.ForeignKeyField('models.Domain', 'records')
+    domain: fields.ForeignKeyField[Domain] = fields.ForeignKeyField('models.Domain', 'records')
     address = fields.TextField(null=True)
 </code></pre>
 <p>Now you can use these models in your callbacks.</p>

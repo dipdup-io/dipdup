@@ -278,13 +278,13 @@ poetry shell
 </div>
 </div>
 <h2 id="write-a-configuration-file"><a class="header" href="#write-a-configuration-file">Write a configuration file</a></h2>
-<p>DipDup configuration is stored in YAML files of a specific format. Create a new file named <code>dipdup.yml</code> in your current working directory with the following content:</p>
+<p>DipDup configuration is stored in YAML files of a specific format. Create a new file named <code>dipdup.yaml</code> in your current working directory with the following content:</p>
 <pre><code class="language-yaml">spec_version: 2.0
 package: demo_token
 
 database:
   kind: sqlite
-  path: demo-token.sqlite3
+  path: demo_token.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -585,7 +585,7 @@ DipDup is tightly coupled with [TzKT API](http://api.tzkt.io/) but can generally
 <div style="break-before: page; page-break-before: always;"></div><h1 id="creating-config"><a class="header" href="#creating-config">Creating config</a></h1>
 <p>Developing a DipDup indexer begins with creating a YAML config file. You can find a minimal example to start indexing on the Quickstart page.</p>
 <h2 id="general-structure"><a class="header" href="#general-structure">General structure</a></h2>
-<p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
+<p>DipDup configuration is stored in YAML files of a specific format. By default, DipDup searches for <code>dipdup.yaml</code> file in the current working directory, but you can provide any path with a <code>-c</code> CLI option.</p>
 <p>DipDup config file consists of several logical blocks:</p>
 <!-- markdownlint-disable first-line-h1 -->
 <div class="table-wrapper"><table><thead><tr><th></th><th></th><th></th></tr></thead><tbody>
@@ -614,7 +614,7 @@ DipDup is tightly coupled with [TzKT API](http://api.tzkt.io/) but can generally
 <p><strong>Tunables</strong> affect the behavior of the whole framework.</p>
 <h2 id="merging-config-files"><a class="header" href="#merging-config-files">Merging config files</a></h2>
 <p>DipDup allows you to customize the configuration for a specific environment or workflow. It works similarly to docker-compose anchors but only for top-level sections. If you want to override a nested property, you need to recreate a whole top-level section. To merge several DipDup config files, provide the <code>-c</code> command-line option multiple times:</p>
-<pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml run
+<pre><code class="language-shell">dipdup -c dipdup.yaml -c dipdup.prod.yaml run
 </code></pre>
 <p>Run <code>config export</code> command if unsure about the final config used by DipDup.</p>
 <h2 id="full-example"><a class="header" href="#full-example">Full example</a></h2>
@@ -745,6 +745,7 @@ sentry:
 prometheus:
   host: 0.0.0.0
 
+
 hasura:
   url: http://hasura:8080
   admin_secret: changeme
@@ -847,7 +848,8 @@ hooks:
 <p>DipDup uses <a href="https://tortoise.github.io/examples.html">Tortoise ORM</a> library to work with database. It's fast, flexible, and similar to Django ORM.</p>
 <p>Please, don't report DipDup issues to the Tortoise ORM bugtracker! We patch it heavily to better suit our needs.</p>
 <p>Project models should be placed in <code>models.py</code> file and inherit from <code>dipdup.models.Model</code> class. A typical module looks like this (example from the <code>demo-domains</code>)</p>
-<pre><code class="language-python">from dipdup import fields
+<pre><code class="language-python">
+from dipdup import fields
 from dipdup.models import Model
 
 
@@ -858,7 +860,7 @@ class TLD(Model):
 
 class Domain(Model):
     id = fields.TextField(pk=True)
-    tld: fields.ForeignKeyFieldInstance[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
+    tld: fields.ForeignKeyField[TLD] = fields.ForeignKeyField('models.TLD', 'domains')
     expiry = fields.DatetimeField(null=True)
     owner = fields.TextField()
     token_id = fields.BigIntField(null=True)
@@ -868,7 +870,7 @@ class Domain(Model):
 
 class Record(Model):
     id = fields.TextField(pk=True)
-    domain: fields.ForeignKeyFieldInstance[Domain] = fields.ForeignKeyField('models.Domain', 'records')
+    domain: fields.ForeignKeyField[Domain] = fields.ForeignKeyField('models.Domain', 'records')
     address = fields.TextField(null=True)
 </code></pre>
 <p>Now you can use these models in your callbacks.</p>
@@ -1154,7 +1156,7 @@ package: demo_head
 
 database:
   kind: sqlite
-  path: demo-head.sqlite3
+  path: demo_head.sqlite3
 
 datasources:
   tzkt_mainnet:
@@ -1267,7 +1269,7 @@ package: demo_token_transfers
 
 database:
   kind: sqlite
-  path: demo-token-transfers.sqlite3
+  path: demo_token_transfers.sqlite3
 
 contracts:
   tzbtc_mainnet:
@@ -1978,7 +1980,6 @@ async def calculate_stats(
 <tr><td><code>DIPDUP_CI</code></td><td><code>dipdup.env.CI</code></td><td>Running in GitHub Actions</td></tr>
 <tr><td><code>DIPDUP_DOCKER</code></td><td><code>dipdup.env.DOCKER</code></td><td>Running in Docker</td></tr>
 <tr><td><code>DIPDUP_NEXT</code></td><td><code>dipdup.env.NEXT</code></td><td>Enable features thar require schema changes</td></tr>
-<tr><td><code>DIPDUP_PACKAGE_PATH</code></td><td><code>dipdup.env.PACKAGE_PATH</code></td><td>Path to the currently used package</td></tr>
 <tr><td><code>DIPDUP_REPLAY_PATH</code></td><td><code>dipdup.env.REPLAY_PATH</code></td><td>Path to datasource replay files; used in tests</td></tr>
 <tr><td><code>DIPDUP_TEST</code></td><td><code>dipdup.env.TEST</code></td><td>Running in pytest</td></tr>
 </tbody></table>
@@ -2148,7 +2149,7 @@ Mem:            30Gi        16Gi       3,1Gi       1,3Gi        11Gi        12Gi
 Swap:           31Gi       6,0Mi        31Gi
 
 # Update database config to use tmpfs
-$ grep database -A2 dipdup.yml
+$ grep database -A2 dipdup.yaml
 database:
   kind: sqlite
   path: /tmp/uniswap.sqlite
@@ -2353,15 +2354,15 @@ We can go further and put the entire token info structure to IPFS:</p>
 </div>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
 <p>To run DipDup in container, you need to copy or mount your project directory and config file to the container.</p>
-<p>Given your project source code is in <code>src</code> directory and config file is <code>dipdup.yml</code>, you can run DipDup container using bind mounts with the following command:</p>
+<p>Given your project source code is in <code>src</code> directory and config file is <code>dipdup.yaml</code>, you can run DipDup container using bind mounts with the following command:</p>
 <pre><code class="language-shell">docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   dipdup/dipdup:6
 </code></pre>
 <p>If you're using SQLite database, you can also mount it as a volume:</p>
 <pre><code class="language-shell">docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   -v ./indexer.sqlite3:/home/dipdup/indexer.sqlite3 \
   dipdup/dipdup:6
@@ -2371,27 +2372,33 @@ We can go further and put the entire token info structure to IPFS:</p>
 <pre><code class="language-text"># Ignore all
 *
 
-# Add build files
-!Makefile
+# Add metadata and build files
 !pyproject.toml
 !poetry.lock
-!requirements**
+!requirements.*
 !README.md
 
-# Add code
-!src
+# Add Python code
+!**/*.py
 
-# Add configs
-!*.yml
-
-# Ignore caches
-**/.mypy_cache
-**/.pytest_cache
-**/.ruff_cache
+# Ignore caches and virtualenvs
+**/.*_cache
 **/__pycache__
+
+# Add configs and scripts (but not env!)
+!**/*.graphql
+!**/*.json
+!**/*.sql
+!**/*.yaml
+!**/*.yml
+!**/*.j2
+!**/*.env.default
 </code></pre>
 <p>Then copy your code and config file to the image:</p>
 <pre><code class="language-Dockerfile">FROM dipdup/dipdup:6
+# FROM ghcr.io/dipdup-io/dipdup:6
+# FROM ghcr.io/dipdup-io/dipdup:next
+
 COPY . .
 </code></pre>
 <p>If you need to install additional Python dependencies, just call pip directly during the build stage:</p>
@@ -2403,40 +2410,36 @@ COPY . .
 FROM ghcr.io/dipdup-io/dipdup:next
 </code></pre>
 <h2 id="deploying-with-docker-compose"><a class="header" href="#deploying-with-docker-compose">Deploying with <code>docker-compose</code></a></h2>
-<p>Here's an example <code>docker-compose.yml</code> file:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<p>Here's an example <code>compose.yaml</code> file:</p>
+<pre><code class="language-yaml">name: dipdup_indexer
 
 services:
   dipdup:
-    build: .
-    depends_on:
-      {% if cookiecutter.postgresql_image != 'sqlite' %}
-      - db
-      {% endif %}
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    env_file: .env
     ports:
-      - 127.0.0.1:9000:9000
-    {% if cookiecutter.postgresql_image == 'sqlite' %}
-    volumes:
-      - sqlite:./dipdup_indexer.sqlite3
-    {% endif %}
+      - 46339
+      - 9000
+    command: [&quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;configs/dipdup.compose.yaml&quot;, &quot;run&quot;]
+    depends_on:
+      - db
+      - hasura
 
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: postgres:15
     ports:
-      - 127.0.0.1:5432:5432
+      - 5432
     volumes:
       - db:/var/lib/postgresql/data
     restart: always
+    env_file: .env
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U dipdup&quot;]
       interval: 10s
@@ -2444,56 +2447,50 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.27.0
+    image: hasura/graphql-engine:v2.28.0
     ports:
-      - 127.0.0.1:8080:8080
+      - 8080
     depends_on:
       - db
     restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD}@db:5432/dipdup
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
+      - HASURA_GRAPHQL_LOG_LEVEL=info
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
-  {% endif %}
 
 volumes:
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
-  {% else %}
-  sqlite:
-  {% endif %}
 </code></pre>
 <p>Environment variables are expanded in the DipDup config file; PostgreSQL password and Hasura secret are forwarded from host environment in this example.</p>
-<p>You can create a separate <code>dipdup.&lt;environment&gt;.yml</code> file for this stack to apply environment-specific config overrides:</p>
+<p>You can create a separate <code>dipdup.&lt;environment&gt;.yaml</code> file for this stack to apply environment-specific config overrides:</p>
 <pre><code class="language-yaml">database:
   kind: postgres
-  host: db
+  host: ${POSTGRES_HOST:-db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
-  password: ${POSTGRES_PASSWORD:-changeme}
+  password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://hasura:8080
-  admin_secret: ${HASURA_SECRET:-changeme}
-  allow_aggregations: false
+  url: http://${HASURA_HOST:-hasura}:8080
+  admin_secret: ${HASURA_SECRET}
+  allow_aggregations: true
   camel_case: true
 
 sentry:
   dsn: ${SENTRY_DSN:-&quot;&quot;}
-  environment: ${SENTRY_ENVIRONMENT:-prod}
-
-prometheus:
-  host: 0.0.0.0
+  environment: ${SENTRY_ENVIRONMENT:-compose}
 </code></pre>
-<p>Then modify command in <code>docker-compose.yml</code>:</p>
+<p>Then modify command in <code>compose.yaml</code>:</p>
 <pre><code class="language-yaml">services:
   dipdup:
-    command: [&quot;dipdup&quot;, &quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: [&quot;dipdup&quot;, &quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yaml&quot;, &quot;run&quot;]
     ...
 </code></pre>
 <p>Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).</p>
@@ -2508,29 +2505,19 @@ prometheus:
 </div>
 </div>
 <p>Example stack:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">name: dipdup_indexer
 
 services:
   dipdup:
     image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
-    {% if cookiecutter.postgresql_image != 'sqlite' %}
     depends_on:
       - db
       - hasura
-    {% endif %}
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
-    environment:
-      - &quot;POSTGRES_USER=dipdup&quot;
-      - &quot;POSTGRES_PASSWORD=changeme&quot;
-      - &quot;POSTGRES_DB=dipdup&quot;
-      - &quot;HASURA_SECRET=changeme&quot;
+    command: [&quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;configs/dipdup.swarm.yaml&quot;, &quot;run&quot;]
+    env_file: .env
     networks:
       - dipdup-private
       - prometheus-private
-    {% if cookiecutter.postgresql_image == 'sqlite' %}
-    volumes:
-      - sqlite:./dipdup_indexer.sqlite3
-    {% endif %}
     deploy:
       mode: replicated
       replicas: ${INDEXER_ENABLED:-1}
@@ -2547,15 +2534,15 @@ services:
         max-file: &quot;10&quot;
         tag: &quot;\{\{.Name\}\}.\{\{.ImageID\}\}&quot;
 
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: postgres:15
     volumes:
       - db:/var/lib/postgresql/data
+    env_file: .env
     environment: 
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
       interval: 10s
@@ -2570,17 +2557,17 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.27.0
+    image: hasura/graphql-engine:v2.28.0
     depends_on:
       - db
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD}@dipdup_indexer_db:5432/dipdup
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
       - HASURA_GRAPHQL_LOG_LEVEL=warn
       - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
     networks:
@@ -2600,15 +2587,9 @@ services:
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
       placement: *placement
     logging: *logging
-  {% endif %}
-
 
 volumes:
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
-  {% else %}
-  sqlite:
-  {% endif %}
 
 networks:
   dipdup-private:
@@ -2618,7 +2599,7 @@ networks:
     external: true
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="sentry-integration"><a class="header" href="#sentry-integration">Sentry integration</a></h1>
-<p>Sentry is an error tracking software that can be used either as a service or on-premise. It dramatically improves the troubleshooting experience and requires nearly zero configuration. To start catching exceptions with Sentry in your project, add the following section in <code>dipdup.yml</code> config:</p>
+<p>Sentry is an error tracking software that can be used either as a service or on-premise. It dramatically improves the troubleshooting experience and requires nearly zero configuration. To start catching exceptions with Sentry in your project, add the following section in <code>dipdup.yaml</code> config:</p>
 <pre><code class="language-yaml">sentry:
   dsn: https://...
   environment: dev
@@ -3026,8 +3007,8 @@ dipdup = &quot;^6&quot;
 </code></pre>
 <h2 id="ensure-that-config-is-correct"><a class="header" href="#ensure-that-config-is-correct">Ensure that config is correct</a></h2>
 <p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup &quot;sees&quot; it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
-<pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml config export
-dipdup -c dipdup.yml -c dipdup.prod.yml config env
+<pre><code class="language-shell">dipdup -c dipdup.yaml -c dipdup.prod.yaml config export
+dipdup -c dipdup.yaml -c dipdup.prod.yaml config env
 </code></pre>
 <div id="admonition-see-also" class="admonition info">
 <div class="admonition-title">
@@ -3296,7 +3277,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-c">
 <span id="cmdoption-dipdup-config"></span><span class="sig-name descname"><span class="pre">-c</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--config</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;PATH&gt;</span></span><a class="headerlink" href="cli-reference.html#cmdoption-dipdup-c" title="Permalink to this definition">¶</a></dt>
-<dd><p>A path to DipDup project config (default: dipdup.yml).</p>
+<dd><p>A path to DipDup project config.</p>
 </dd></dl>
 <dl class="std option">
 <dt class="sig sig-object std" id="cmdoption-dipdup-e">
@@ -3376,11 +3357,6 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <span id="cmdoption-dipdup-init-force"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--force</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="cli-reference.html#cmdoption-dipdup-init-f" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regenerate existing types and ABIs.</p>
 </dd></dl>
-<dl class="std option">
-<dt class="sig sig-object std" id="cmdoption-dipdup-init-keep-schemas">
-<span class="sig-name descname"><span class="pre">--keep-schemas</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="cli-reference.html#cmdoption-dipdup-init-keep-schemas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Do not remove JSONSchemas after generating types.</p>
-</dd></dl>
 </section>
 <section id="dipdup-migrate">
 <h2 id="migrate"><a class="header" href="#migrate">migrate<a class="headerlink" href="cli-reference.html#dipdup-migrate" title="Permalink to this heading">¶</a></a></h2>
@@ -3412,6 +3388,19 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <span id="cmdoption-dipdup-new-replay"></span><span class="sig-name descname"><span class="pre">-r</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--replay</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;replay&gt;</span></span><a class="headerlink" href="cli-reference.html#cmdoption-dipdup-new-r" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replay a previously saved state.</p>
 </dd></dl>
+</section>
+<section id="dipdup-package">
+<h2 id="package"><a class="header" href="#package">package<a class="headerlink" href="cli-reference.html#dipdup-package" title="Permalink to this heading">¶</a></a></h2>
+<p>Inspect and manage project package.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>package<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="dipdup-package-tree">
+<h3 id="tree"><a class="header" href="#tree">tree<a class="headerlink" href="cli-reference.html#dipdup-package-tree" title="Permalink to this heading">¶</a></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>dipdup<span class="w"> </span>package<span class="w"> </span>tree<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="dipdup-report">
 <h2 id="report"><a class="header" href="#report">report<a class="headerlink" href="cli-reference.html#dipdup-report" title="Permalink to this heading">¶</a></a></h2>
@@ -3610,7 +3599,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>spec_version</strong> (<em>str</em>) – Version of config specification, currently always <cite>2.0</cite></p></li>
+<li><p><strong>spec_version</strong> (<em>str</em><em> | </em><em>float</em>) – Version of config specification, currently always <cite>2.0</cite></p></li>
 <li><p><strong>package</strong> (<em>str</em>) – Name of indexer’s Python package, existing or not</p></li>
 <li><p><strong>datasources</strong> (<em>dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="config/reference.html#CoinbaseDatasourceConfig" title="coinbase.CoinbaseDatasourceConfig"><em>coinbase.CoinbaseDatasourceConfig</em></a><em> | </em><em>abi_etherscan.EtherscanDatasourceConfig</em><em> | </em><a class="reference internal" href="config/reference.html#HttpDatasourceConfig" title="http.HttpDatasourceConfig"><em>http.HttpDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#ipfs.IpfsDatasourceConfig" title="ipfs.IpfsDatasourceConfig"><em>ipfs.IpfsDatasourceConfig</em></a><em> | </em><em>evm_subsquid.SubsquidDatasourceConfig</em><em> | </em><em>evm_node.EvmNodeDatasourceConfig</em><em> | </em><a class="reference internal" href="config/reference.html#tzip_metadata.TzipMetadataDatasourceConfig" title="tzip_metadata.TzipMetadataDatasourceConfig"><em>tzip_metadata.TzipMetadataDatasourceConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#tezos_tzkt.TzktDatasourceConfig" title="tezos_tzkt.TzktDatasourceConfig"><em>tezos_tzkt.TzktDatasourceConfig</em></a><em>]</em>) – Mapping of datasource aliases and datasource configs</p></li>
 <li><p><strong>database</strong> (<a class="reference internal" href="config/reference.html#SqliteDatabaseConfig" title="SqliteDatabaseConfig"><em>SqliteDatabaseConfig</em></a><em> | </em><a class="reference internal" href="config/reference.html#PostgresDatabaseConfig" title="PostgresDatabaseConfig"><em>PostgresDatabaseConfig</em></a>) – Database config</p></li>
@@ -4433,7 +4422,7 @@ custom:
 <pre><code class="language-yaml">logging: DEBUG
 </code></pre>
 <p>At the moment these values are equal to setting <code>dipdup</code> log level to <code>INFO</code>, <code>WARNING</code> or <code>DEBUG</code>, but this may change in the future.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="package"><a class="header" href="#package">package</a></h1>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="package-1"><a class="header" href="#package-1">package</a></h1>
 <p>DipDup uses this field to discover the Python package of your project.</p>
 <pre><code class="language-yaml">package: my_indexer_name
 </code></pre>
@@ -4443,6 +4432,7 @@ custom:
 <div style="break-before: page; page-break-before: always;"></div><h1 id="prometheus"><a class="header" href="#prometheus">prometheus</a></h1>
 <pre><code class="language-yaml">prometheus:
   host: 0.0.0.0
+
 </code></pre>
 <p>Prometheus integration options</p>
 <div class="table-wrapper"><table><thead><tr><th>field</th><th>description</th></tr></thead><tbody>
@@ -5824,6 +5814,7 @@ async for key_batch in batch_iter:
 <p>This version introduces initial Prometheus integration. It could help you set up monitoring, find performance issues in your code, and so on. To enable this integration, add the following lines to the config:</p>
 <pre><code class="language-yaml">prometheus:
   host: 0.0.0.0
+
 </code></pre>
 <div id="admonition-see-also" class="admonition info">
 <div class="admonition-title">

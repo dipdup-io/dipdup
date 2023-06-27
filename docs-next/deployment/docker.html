@@ -190,15 +190,15 @@
 </div>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
 <p>To run DipDup in container, you need to copy or mount your project directory and config file to the container.</p>
-<p>Given your project source code is in <code>src</code> directory and config file is <code>dipdup.yml</code>, you can run DipDup container using bind mounts with the following command:</p>
+<p>Given your project source code is in <code>src</code> directory and config file is <code>dipdup.yaml</code>, you can run DipDup container using bind mounts with the following command:</p>
 <pre><code class="language-shell">docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   dipdup/dipdup:6
 </code></pre>
 <p>If you're using SQLite database, you can also mount it as a volume:</p>
 <pre><code class="language-shell">docker run \
-  -v ./dipdup.yml:/home/dipdup/dipdup.yml \
+  -v ./dipdup.yaml:/home/dipdup/dipdup.yaml \
   -v ./src:/home/dipdup/src \
   -v ./indexer.sqlite3:/home/dipdup/indexer.sqlite3 \
   dipdup/dipdup:6
@@ -208,27 +208,33 @@
 <pre><code class="language-text"># Ignore all
 *
 
-# Add build files
-!Makefile
+# Add metadata and build files
 !pyproject.toml
 !poetry.lock
-!requirements**
+!requirements.*
 !README.md
 
-# Add code
-!src
+# Add Python code
+!**/*.py
 
-# Add configs
-!*.yml
-
-# Ignore caches
-**/.mypy_cache
-**/.pytest_cache
-**/.ruff_cache
+# Ignore caches and virtualenvs
+**/.*_cache
 **/__pycache__
+
+# Add configs and scripts (but not env!)
+!**/*.graphql
+!**/*.json
+!**/*.sql
+!**/*.yaml
+!**/*.yml
+!**/*.j2
+!**/*.env.default
 </code></pre>
 <p>Then copy your code and config file to the image:</p>
 <pre><code class="language-Dockerfile">FROM dipdup/dipdup:6
+# FROM ghcr.io/dipdup-io/dipdup:6
+# FROM ghcr.io/dipdup-io/dipdup:next
+
 COPY . .
 </code></pre>
 <p>If you need to install additional Python dependencies, just call pip directly during the build stage:</p>
@@ -240,40 +246,36 @@ COPY . .
 FROM ghcr.io/dipdup-io/dipdup:next
 </code></pre>
 <h2 id="deploying-with-docker-compose"><a class="header" href="#deploying-with-docker-compose">Deploying with <code>docker-compose</code></a></h2>
-<p>Here's an example <code>docker-compose.yml</code> file:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<p>Here's an example <code>compose.yaml</code> file:</p>
+<pre><code class="language-yaml">name: dipdup_indexer
 
 services:
   dipdup:
-    build: .
-    depends_on:
-      {% if cookiecutter.postgresql_image != 'sqlite' %}
-      - db
-      {% endif %}
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     restart: always
-    environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
-      - ADMIN_SECRET=${ADMIN_SECRET:-changeme}
+    env_file: .env
     ports:
-      - 127.0.0.1:9000:9000
-    {% if cookiecutter.postgresql_image == 'sqlite' %}
-    volumes:
-      - sqlite:./dipdup_indexer.sqlite3
-    {% endif %}
+      - 46339
+      - 9000
+    command: [&quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;configs/dipdup.compose.yaml&quot;, &quot;run&quot;]
+    depends_on:
+      - db
+      - hasura
 
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: postgres:15
     ports:
-      - 127.0.0.1:5432:5432
+      - 5432
     volumes:
       - db:/var/lib/postgresql/data
     restart: always
+    env_file: .env
     environment:
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U dipdup&quot;]
       interval: 10s
@@ -281,56 +283,50 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.27.0
+    image: hasura/graphql-engine:v2.28.0
     ports:
-      - 127.0.0.1:8080:8080
+      - 8080
     depends_on:
       - db
     restart: always
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD}@db:5432/dipdup
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=true
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, webhook-log, websocket-log, query-log
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET:-changeme}
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
+      - HASURA_GRAPHQL_LOG_LEVEL=info
+      - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
-  {% endif %}
 
 volumes:
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
-  {% else %}
-  sqlite:
-  {% endif %}
 </code></pre>
 <p>Environment variables are expanded in the DipDup config file; PostgreSQL password and Hasura secret are forwarded from host environment in this example.</p>
-<p>You can create a separate <code>dipdup.&lt;environment&gt;.yml</code> file for this stack to apply environment-specific config overrides:</p>
+<p>You can create a separate <code>dipdup.&lt;environment&gt;.yaml</code> file for this stack to apply environment-specific config overrides:</p>
 <pre><code class="language-yaml">database:
   kind: postgres
-  host: db
+  host: ${POSTGRES_HOST:-db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
-  password: ${POSTGRES_PASSWORD:-changeme}
+  password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://hasura:8080
-  admin_secret: ${HASURA_SECRET:-changeme}
-  allow_aggregations: false
+  url: http://${HASURA_HOST:-hasura}:8080
+  admin_secret: ${HASURA_SECRET}
+  allow_aggregations: true
   camel_case: true
 
 sentry:
   dsn: ${SENTRY_DSN:-&quot;&quot;}
-  environment: ${SENTRY_ENVIRONMENT:-prod}
-
-prometheus:
-  host: 0.0.0.0
+  environment: ${SENTRY_ENVIRONMENT:-compose}
 </code></pre>
-<p>Then modify command in <code>docker-compose.yml</code>:</p>
+<p>Then modify command in <code>compose.yaml</code>:</p>
 <pre><code class="language-yaml">services:
   dipdup:
-    command: [&quot;dipdup&quot;, &quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: [&quot;dipdup&quot;, &quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yaml&quot;, &quot;run&quot;]
     ...
 </code></pre>
 <p>Note the hostnames (resolved in the docker network) and environment variables (expanded by DipDup).</p>
@@ -345,29 +341,19 @@ prometheus:
 </div>
 </div>
 <p>Example stack:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">name: dipdup_indexer
 
 services:
   dipdup:
     image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
-    {% if cookiecutter.postgresql_image != 'sqlite' %}
     depends_on:
       - db
       - hasura
-    {% endif %}
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
-    environment:
-      - &quot;POSTGRES_USER=dipdup&quot;
-      - &quot;POSTGRES_PASSWORD=changeme&quot;
-      - &quot;POSTGRES_DB=dipdup&quot;
-      - &quot;HASURA_SECRET=changeme&quot;
+    command: [&quot;-c&quot;, &quot;dipdup.yaml&quot;, &quot;-c&quot;, &quot;configs/dipdup.swarm.yaml&quot;, &quot;run&quot;]
+    env_file: .env
     networks:
       - dipdup-private
       - prometheus-private
-    {% if cookiecutter.postgresql_image == 'sqlite' %}
-    volumes:
-      - sqlite:./dipdup_indexer.sqlite3
-    {% endif %}
     deploy:
       mode: replicated
       replicas: ${INDEXER_ENABLED:-1}
@@ -384,15 +370,15 @@ services:
         max-file: &quot;10&quot;
         tag: &quot;\{\{.Name\}\}.\{\{.ImageID\}\}&quot;
 
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
     image: postgres:15
     volumes:
       - db:/var/lib/postgresql/data
+    env_file: .env
     environment: 
       - POSTGRES_USER=dipdup
       - POSTGRES_DB=dipdup
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
       interval: 10s
@@ -407,17 +393,17 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.27.0
+    image: hasura/graphql-engine:v2.28.0
     depends_on:
       - db
     environment:
-      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD:-changeme}@db:5432
+      - HASURA_GRAPHQL_DATABASE_URL=postgres://dipdup:${POSTGRES_PASSWORD}@dipdup_indexer_db:5432/dipdup
+      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log
+      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
       - HASURA_GRAPHQL_LOG_LEVEL=warn
       - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
-      - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
     networks:
@@ -437,15 +423,9 @@ services:
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
       placement: *placement
     logging: *logging
-  {% endif %}
-
 
 volumes:
-  {% if cookiecutter.postgresql_image != 'sqlite' %}
   db:
-  {% else %}
-  sqlite:
-  {% endif %}
 
 networks:
   dipdup-private:
