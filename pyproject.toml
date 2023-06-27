@@ -75,6 +75,7 @@ sphinx-click = "*"
 sphinx-markdown-builder = "*"
 types-pytz = "*"
 types-tabulate = "*"
+watchdog = "^3.0.0"
 
 [tool.poetry.scripts]
 dipdup = "dipdup.cli:cli"
