@@ -34,12 +34,10 @@ from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils import touch
 from dipdup.utils import write
 
 
@@ -154,7 +152,6 @@ class TzktCodeGenerator(CodeGenerator):
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
 
         self._logger.info('Creating `types` package')
-        touch(self._package.types / PYTHON_MARKER)
 
         for path in self._package.schemas.glob('**/*'):
             await self._generate_type(path, force)

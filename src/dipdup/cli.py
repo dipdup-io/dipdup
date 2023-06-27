@@ -21,15 +21,28 @@ import asyncclick as click
 
 from dipdup import __version__
 from dipdup.performance import metrics
-from dipdup.project import DEFAULT_ANSWERS
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
-from dipdup.sys import IGNORE_CONFIG_CMDS
 from dipdup.sys import set_up_process
 
-DEFAULT_CONFIG_NAME = 'dipdup.yml'
+ROOT_CONFIG = 'dipdup.yaml'
+CONFIG_RE = r'dipdup.*\.ya?ml'
 
+# NOTE: Do not try to load config for these commands as they don't need it
+NO_CONFIG_CMDS = {
+    'new',
+    'install',
+    'uninstall',
+    'update',
+}
+# NOTE: Our signal handler conflicts with Click's one in prompt mode
+NO_SIGNALS_CMDS = {
+    *NO_CONFIG_CMDS,
+    None,
+    'schema',
+    'wipe',
+}
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
@@ -71,14 +84,16 @@ class CLIContext:
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
     async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        set_up_process(ctx.invoked_subcommand)
+        signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
+        set_up_process(signals)
 
         try:
             await fn(ctx, *args, **kwargs)
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            report_id = save_report(e)
+            package = ctx.obj.config.package if ctx.obj else 'unknown'
+            report_id = save_report(package, e)
             _print_report(report_id)
             _print_help(e)
 
@@ -87,7 +102,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             sys.exit(1)
 
         if fn.__name__ == 'run':
-            save_report(None)
+            package = ctx.obj.config.package
+            save_report(package, None)
 
     return cast(WrappedCommandT, wrapper)
 
@@ -121,8 +137,8 @@ async def _check_version() -> None:
     '-c',
     type=str,
     multiple=True,
-    help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
-    default=[DEFAULT_CONFIG_NAME],
+    help='A path to DipDup project config.',
+    default=[ROOT_CONFIG],
     metavar='PATH',
 )
 @click.option(
@@ -166,7 +182,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in IGNORE_CONFIG_CMDS:
+    if ctx.invoked_subcommand in NO_CONFIG_CMDS:
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
@@ -222,10 +238,9 @@ async def run(ctx: click.Context) -> None:
 
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
-@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
+async def init(ctx: click.Context, force: bool) -> None:
     """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -234,7 +249,7 @@ async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(force, keep_schemas)
+    await dipdup.init(force)
 
 
 @cli.command()
@@ -294,7 +309,7 @@ async def config_env(ctx: click.Context, output: str | None) -> None:
         paths=ctx.obj.config.paths,
         environment=True,
     )
-    content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
+    content = '\n'.join(f'{k}={v}' for k, v in sorted(config.environment.items()))
     if output:
         Path(output).write_text(content)
     else:
@@ -540,6 +555,7 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
+    from dipdup.project import DEFAULT_ANSWERS
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import render_project
@@ -669,3 +685,26 @@ async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
         echo('No such report')
         return
     path.unlink()
+
+
+@cli.group()
+@click.pass_context
+@_cli_wrapper
+async def package(ctx: click.Context) -> None:
+    """Inspect and manage project package."""
+    pass
+
+
+@package.command(name='tree')
+@click.pass_context
+@_cli_wrapper
+async def package_tree(ctx: click.Context) -> None:
+    from dipdup.package import DipDupPackage
+    from dipdup.package import draw_package_tree
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.create()
+    tree = package.discover()
+    for line in draw_package_tree(package.root, tree):
+        echo(line)

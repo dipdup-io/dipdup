@@ -12,11 +12,13 @@ from typing import TypeVar
 
 import asyncclick as cl
 import orjson
+from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
 from dipdup import __version__
 from dipdup.utils import load_template
 from dipdup.utils import write
+from dipdup.yaml import DipDupYAMLConfig
 
 _logger = logging.getLogger('dipdup.project')
 
@@ -56,7 +58,6 @@ class Answers(TypedDict):
 
     dipdup_version: str
     template: str
-    project_name: str
     package: str
     version: str
     description: str
@@ -64,14 +65,18 @@ class Answers(TypedDict):
     author: str
     postgresql_image: str
     hasura_image: str
-    linters: str
     line_length: str
+
+
+@dataclass
+class Replay:
+    spec_version: str | float
+    replay: Answers
 
 
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
     template='demo_dao',
-    project_name='dipdup_indexer',
     package='dipdup_indexer',
     version='0.0.1',
     description='Blockchain indexer built with DipDup',
@@ -79,8 +84,7 @@ DEFAULT_ANSWERS = Answers(
     author='John Smith <john_smith@localhost.lan>',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.27.0',
-    linters='default',
+    hasura_image='hasura/graphql-engine:v2.28.0',
     line_length='120',
 )
 
@@ -180,18 +184,18 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    project_name = prompt_str(
+    package = prompt_str(
         'Enter project name (the name will be used for folder name and package name)',
-        answers['project_name'],
+        answers['package'],
     )
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', project_name):
+    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
         cl.secho(
-            f'"{project_name}" is not valid Python package name. Please use only letters, numbers and underscores.',
+            f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
         quit(1)
-    answers['project_name'] = project_name
-    answers['package'] = project_name
+    answers['package'] = package
+    answers['package'] = package
 
     answers['version'] = prompt_str(
         'Enter project version',
@@ -206,50 +210,41 @@ def answers_from_terminal() -> Answers:
 
     # define author and license for new indexer
     answers['license'] = prompt_str(
-        'Enter project license\n' 'DipDup itself is MIT-licensed.',
+        'Enter project license\nDipDup itself is MIT-licensed.',
         answers['license'],
     )
     answers['author'] = prompt_str(
-        ('Enter project author\n' 'You can add more later in pyproject.toml.'),
+        'Enter project author\nYou can add more later in pyproject.toml.',
         answers['author'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
     _, answers['postgresql_image'] = prompt_anyof(
-        question=('Choose PostgreSQL version\n' 'Try TimescaleDB when working with time series.'),
+        question='Choose PostgreSQL version\nTry TimescaleDB when working with time series.',
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
             'timescale/timescaledb-ha:pg15-latest',
-            'sqlite',
         ),
         comments=(
             'PostgreSQL',
             'TimescaleDB',
-            'TimescaleDB HA (more extensions)',
-            'Sqlite (simplified in-memory configuration)',
+            'TimescaleDB HA',
         ),
         default=0,
     )
 
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
-    _, answers['linters'] = prompt_anyof(
-        'Choose tools to lint and test your code\n' 'You can always add more later in pyproject.toml.',
-        ('default', 'none'),
-        ('Swiss knife of modern Python: black, ruff, mypy', 'None'),
-        default=0,
-    )
-
     answers['line_length'] = prompt_str(
-        ('Enter maximum line length\n' 'Used by linters.'),
+        'Enter maximum line length\nUsed by linters.',
         default=answers['line_length'],
     )
     return answers
 
 
-def write_cookiecutter_json(answers: Answers, path: Path) -> None:
+def write_project_json(answers: Answers, path: Path) -> None:
     values = {k: v for k, v in answers.items() if not k.startswith('_')}
     path.write_bytes(
         orjson.dumps(
@@ -260,11 +255,9 @@ def write_cookiecutter_json(answers: Answers, path: Path) -> None:
 
 
 def answers_from_replay(path: Path) -> Answers:
-    if not path.is_file() and path.suffix != '.json':
-        raise Exception
-
-    replay_answers: Answers = orjson.loads(path.read_bytes())
-    return copy(DEFAULT_ANSWERS) | replay_answers
+    replay_config, _ = DipDupYAMLConfig.load([path])
+    answers = Replay(**replay_config).replay
+    return copy(DEFAULT_ANSWERS) | answers
 
 
 def render_project(
@@ -278,9 +271,6 @@ def render_project(
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
 
-    # NOTE: Linters and stuff
-    _render_templates(answers, Path('linters_' + answers['linters']), force)
-
 
 def _render_templates(answers: Answers, path: Path, force: bool = False) -> None:
     from jinja2 import Template
@@ -291,11 +281,11 @@ def _render_templates(answers: Answers, path: Path, force: bool = False) -> None
     for path in project_paths:
         template_path = path.relative_to(Path(__file__).parent)
         output_path = Path(
-            answers['project_name'],
+            answers['package'],
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
-        output_path = Path(Template(str(output_path)).render(cookiecutter=answers))
+        output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
 
 
@@ -305,5 +295,5 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
-    content = template.render(cookiecutter=answers)
+    content = template.render(project=answers)
     write(output_path, content, overwrite=force)

@@ -297,9 +297,11 @@ def prepare_models(package: str | None) -> None:
         # NOTE: Enforce our class for user models
         if app != 'int_models' and not issubclass(model, dipdup.models.Model):
             raise InvalidModelsError(
-                'Project models must be subclassed from `dipdup.models.Model`.'
-                '\n\n'
-                'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
+                (
+                    'Project models must be subclassed from `dipdup.models.Model`.'
+                    '\n\n'
+                    'Replace `from tortoise import Model` import with `from dipdup.models import Model`.'
+                ),
                 model,
             )
 
@@ -350,7 +352,7 @@ def prepare_models(package: str | None) -> None:
                 )
 
             # NOTE: The same for backward relations
-            if isinstance(field, dipdup.fields.ForeignKeyFieldInstance) and field.related_name == table_name:
+            if isinstance(field, dipdup.fields.ForeignKeyField) and field.related_name == table_name:
                 raise InvalidModelsError(
                     'Model field names must differ from table name.',
                     model,

@@ -214,7 +214,8 @@ def install(
         pipx_poetry = True
 
     done(
-        'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available commands.'
+        'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'
+        ' commands.'
     )
 
 

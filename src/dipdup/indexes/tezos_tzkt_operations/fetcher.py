@@ -118,8 +118,8 @@ async def get_origination_filters(
 
             if pattern_config.source:
                 _logger.warning(
-                    "`source.address` filter significantly hurts indexing performance and doesn't support strict typing. "
-                    'Consider using `originated_contract.code_hash` instead'
+                    "`source.address` filter significantly hurts indexing performance and doesn't support strict"
+                    " typing. Consider using `originated_contract.code_hash` instead"
                 )
                 if address := pattern_config.source.address:
                     async for batch in datasource.iter_originated_contracts(address):
