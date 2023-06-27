@@ -74,9 +74,6 @@ clean:          ## Remove all files from .gitignore except for `.venv`
 	git clean -xdf --exclude=".venv"
 
 update:         ## Update dependencies, export requirements.txt
-	git checkout HEAD requirements.* poetry.lock
-
-	make install
 	poetry update
 
 	cp pyproject.toml pyproject.toml.bak
