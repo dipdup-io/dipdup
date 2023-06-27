@@ -64,10 +64,9 @@ def before_send(
 
 def init_sentry(config: 'DipDupConfig') -> None:
     dsn = config.sentry.dsn
-    if not dsn:
-        pass
+    if dsn:
+        _logger.info('Sentry is enabled: %s', dsn)
 
-    _logger.info('Sentry is enabled: %s', dsn)
     if config.sentry.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:

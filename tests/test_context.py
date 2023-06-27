@@ -15,7 +15,7 @@
 
 # @pytest.fixture
 # async def dummy_dipdup() -> AsyncIterator[DipDup]:
-#     path = Path(__file__).parent / 'configs' / 'dipdup.yml'
+#     path = Path(__file__).parent / 'configs' / 'dipdup.yaml'
 #     config = DipDupConfig.load([path])
 #     async with AsyncExitStack() as stack:
 #         yield await DipDup.create_dummy(config, stack, in_memory=True)

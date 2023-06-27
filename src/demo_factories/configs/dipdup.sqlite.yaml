@@ -1,0 +1,7 @@
+database:
+  kind: sqlite
+  path: ${SQLITE_PATH:-/tmp/demo_factories.sqlite}
+
+sentry:
+  dsn: ${SENTRY_DSN:-""}
+  environment: ${SENTRY_ENVIRONMENT:-dev}

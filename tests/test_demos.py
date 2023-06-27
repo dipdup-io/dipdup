@@ -29,7 +29,7 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
 
     with tempfile.TemporaryDirectory() as tmp_root_path:
         # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_root_path) / 'dipdup.yml'
+        tmp_config_path = Path(tmp_root_path) / 'dipdup.yaml'
         os.symlink(config_path, tmp_config_path)
 
         tmp_bin_path = Path(tmp_root_path) / 'bin'
