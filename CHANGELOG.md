@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-...
+- cli: Fixed `init` crash when package name is equal to one of the project typenames.
 
 ## [6.5.7] - 2022-05-30
 

@@ -33,6 +33,9 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     results = {}
     for subpackage in pkgutil.walk_packages(module.__path__):
         name = subpackage.name
+        # NOTE: Special case; `<package>.types.<package>` causes infinite recursion
+        if '.' in name:
+            continue
         is_pkg = subpackage.ispkg
         full_name = package + '.' + name
         results[full_name] = importlib.import_module(full_name)
