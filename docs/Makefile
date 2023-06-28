@@ -18,7 +18,7 @@ build:
 
 lint: markdownlint orphans
 
-serve:
+serve: # TODO: rewrite
 	make clean build
 	mdbook serve
 
