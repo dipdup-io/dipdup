@@ -427,7 +427,8 @@ class CodeGenerator:
         rmtree(self._pkg.schemas, ignore_errors=True)
 
     async def verify_package(self) -> None:
-        import_submodules(self._config.package)
+        submodules = import_submodules(self._config.package)
+        self._logger.info('Package `%s` is valid; %d submodules found', self._config.package, len(submodules))
 
     async def _get_schema(
         self,
