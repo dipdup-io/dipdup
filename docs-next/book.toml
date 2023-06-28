@@ -16,8 +16,8 @@ git-repository-url = "https://github.com/dipdup-io/dipdup.git"
 [preprocessor.summary]
 command = "python mdbook-summary"
 
-[preprocessor.project]
-command = "python mdbook-project"
+[preprocessor.cookiecutter]
+command = "python mdbook-cookiecutter"
 after = [ "links" ]
 
 [preprocessor.admonish]

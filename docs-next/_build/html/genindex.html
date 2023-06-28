@@ -34,6 +34,7 @@
 <div class="genindex-jumpbox">
  <a href="#Symbols"><strong>Symbols</strong></a>
  | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -42,27 +43,23 @@
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#J"><strong>J</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="Symbols">Symbols</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    --all
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-a">dipdup-report-rm command line option</a>
-</li>
-      </ul></li>
       <li>
     --config
 
@@ -78,20 +75,25 @@
 </li>
       </ul></li>
       <li>
+    --file
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">dipdup-config-env command line option</a>
+</li>
+      </ul></li>
+      <li>
     --force
 
       <ul>
         <li><a href="cli-reference.html#cmdoption-dipdup-hasura-configure-force">dipdup-hasura-configure command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-init-f">dipdup-init command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">dipdup-install command line option</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-new-f">dipdup-new command line option</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-schema-wipe-force">dipdup-schema-wipe command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-f">dipdup-self-install command line option</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-f">dipdup-self-update command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">dipdup-update command line option</a>
 </li>
       </ul></li>
       <li>
@@ -109,41 +111,48 @@
 </li>
       </ul></li>
       <li>
-    --output
+    --keep-schemas
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-o">dipdup-config-env command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-init-keep-schemas">dipdup-init command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --overwrite-types
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-init-overwrite-types">dipdup-init command line option</a>
 </li>
       </ul></li>
       <li>
     --path
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-p">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">dipdup-install command line option</a>
 </li>
       </ul></li>
       <li>
     --quiet
 
       <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">dipdup-install command line option</a>
+</li>
         <li><a href="cli-reference.html#cmdoption-dipdup-new-q">dipdup-new command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-q">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">dipdup-uninstall command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-uninstall-q">dipdup-self-uninstall command line option</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-q">dipdup-self-update command line option</a>
-</li>
-      </ul></li>
-      <li>
-    --ref
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-r">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">dipdup-update command line option</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    --ref
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">dipdup-install command line option</a>
+</li>
+      </ul></li>
       <li>
     --replay
 
@@ -166,13 +175,6 @@
 </li>
       </ul></li>
       <li>
-    -a
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-a">dipdup-report-rm command line option</a>
-</li>
-      </ul></li>
-      <li>
     -c
 
       <ul>
@@ -190,49 +192,42 @@
     -f
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-init-f">dipdup-init command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">dipdup-config-env command line option</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">dipdup-install command line option</a>
 </li>
         <li><a href="cli-reference.html#cmdoption-dipdup-new-f">dipdup-new command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-f">dipdup-self-install command line option</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-f">dipdup-self-update command line option</a>
-</li>
-      </ul></li>
-      <li>
-    -o
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-o">dipdup-config-env command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">dipdup-update command line option</a>
 </li>
       </ul></li>
       <li>
     -p
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-p">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">dipdup-install command line option</a>
 </li>
       </ul></li>
       <li>
     -q
 
       <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">dipdup-install command line option</a>
+</li>
         <li><a href="cli-reference.html#cmdoption-dipdup-new-q">dipdup-new command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-q">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">dipdup-uninstall command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-uninstall-q">dipdup-self-uninstall command line option</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-q">dipdup-self-update command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">dipdup-update command line option</a>
 </li>
       </ul></li>
       <li>
     -r
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">dipdup-new command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">dipdup-install command line option</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-r">dipdup-self-install command line option</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-new-r">dipdup-new command line option</a>
 </li>
       </ul></li>
   </ul></td>
@@ -249,9 +244,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.AdvancedConfig">AdvancedConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.SkipHistory.always">always (dipdup.models.SkipHistory attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.SkipHistory.always">always (dipdup.enums.SkipHistory attribute)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.JobConfig.args">args (dipdup.config.JobConfig attribute)</a>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.config.BigMapHandlerConfig">BigMapHandlerConfig (class in dipdup.config)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.config.BigMapIndexConfig">BigMapIndexConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -261,13 +266,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="config-reference.html#dipdup.config.CoinbaseDatasourceConfig">CoinbaseDatasourceConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason.config_modified">config_modified (dipdup.models.ReindexingReason attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.ContractConfig">ContractConfig (class in dipdup.config)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingReason.config_modified">config_modified (dipdup.enums.ReindexingReason attribute)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.JobConfig.crontab">crontab (dipdup.config.JobConfig attribute)</a>
+      <li><a href="config-reference.html#dipdup.config.ContractConfig">ContractConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -275,7 +278,7 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.JobConfig.daemon">daemon (dipdup.config.JobConfig attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.LoggingValues.default">default (dipdup.enums.LoggingValues attribute)</a>
 </li>
       <li>
     dipdup command line option
@@ -296,9 +299,9 @@
     dipdup-config-env command line option
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-o">--output</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">--file</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-o">-o</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-config-env-f">-f</a>
 </li>
       </ul></li>
       <li>
@@ -321,11 +324,34 @@
     dipdup-init command line option
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-init-f">--force</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-init-keep-schemas">--keep-schemas</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-init-f">-f</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-init-overwrite-types">--overwrite-types</a>
 </li>
       </ul></li>
+      <li>
+    dipdup-install command line option
+
+      <ul>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">--force</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">--path</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">--quiet</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">--ref</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-f">-f</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-p">-p</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-q">-q</a>
+</li>
+        <li><a href="cli-reference.html#cmdoption-dipdup-install-r">-r</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     dipdup-new command line option
 
@@ -344,26 +370,6 @@
 </li>
       </ul></li>
       <li>
-    dipdup-report-rm command line option
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-a">--all</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-a">-a</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-arg-ID">ID</a>
-</li>
-      </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    dipdup-report-show command line option
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-show-arg-ID">ID</a>
-</li>
-      </ul></li>
-      <li>
     dipdup-schema-wipe command line option
 
       <ul>
@@ -373,46 +379,25 @@
 </li>
       </ul></li>
       <li>
-    dipdup-self-install command line option
+    dipdup-uninstall command line option
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-f">--force</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">--quiet</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-p">--path</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-q">--quiet</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-r">--ref</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-f">-f</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-p">-p</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-q">-q</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-install-r">-r</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-uninstall-q">-q</a>
 </li>
       </ul></li>
       <li>
-    dipdup-self-uninstall command line option
+    dipdup-update command line option
 
       <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-uninstall-q">--quiet</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">--force</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-uninstall-q">-q</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">--quiet</a>
 </li>
-      </ul></li>
-      <li>
-    dipdup-self-update command line option
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-f">--force</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-f">-f</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-q">--quiet</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-f">-f</a>
-</li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-self-update-q">-q</a>
+        <li><a href="cli-reference.html#cmdoption-dipdup-update-q">-q</a>
 </li>
       </ul></li>
       <li><a href="config-reference.html#dipdup.config.DipDupConfig">DipDupConfig (class in dipdup.config)</a>
@@ -425,10 +410,14 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingAction.exception">exception (dipdup.models.ReindexingAction attribute)</a>
+      <li><a href="config-reference.html#dipdup.config.EventHandlerConfig">EventHandlerConfig (class in dipdup.config)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.EventIndexConfig">EventIndexConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingAction.exception">exception (dipdup.enums.ReindexingAction attribute)</a>
+</li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.execute_sql">execute_sql() (dipdup.context.DipDupContext method)</a>
 </li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.execute_sql_query">execute_sql_query() (dipdup.context.DipDupContext method)</a>
@@ -469,9 +458,9 @@
 </li>
       <li><a href="config-reference.html#dipdup.config.HasuraConfig">HasuraConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_head.HeadHandlerConfig">HeadHandlerConfig (class in dipdup.config.tezos_tzkt_head)</a>
+      <li><a href="config-reference.html#dipdup.config.HeadHandlerConfig">HeadHandlerConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.JobConfig.hook">hook (dipdup.config.JobConfig attribute)</a>
+      <li><a href="config-reference.html#dipdup.config.HeadIndexConfig">HeadIndexConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -479,7 +468,7 @@
 </li>
       <li><a href="context-reference.html#dipdup.context.HookContext">HookContext (class in dipdup.context)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.HttpConfig">HttpConfig (class in dipdup.config)</a>
+      <li><a href="config-reference.html#dipdup.config.HTTPConfig">HTTPConfig (class in dipdup.config)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.HttpDatasourceConfig">HttpDatasourceConfig (class in dipdup.config)</a>
 </li>
@@ -489,24 +478,13 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    ID
-
-      <ul>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-rm-arg-ID">dipdup-report-rm command line option</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingAction.ignore">ignore (dipdup.enums.ReindexingAction attribute)</a>
 </li>
-        <li><a href="cli-reference.html#cmdoption-dipdup-report-show-arg-ID">dipdup-report-show command line option</a>
-</li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingAction.ignore">ignore (dipdup.models.ReindexingAction attribute)</a>
-</li>
       <li><a href="config-reference.html#dipdup.config.IndexTemplateConfig">IndexTemplateConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.JobConfig.interval">interval (dipdup.config.JobConfig attribute)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.ipfs.IpfsDatasourceConfig">IpfsDatasourceConfig (class in dipdup.config.ipfs)</a>
+      <li><a href="config-reference.html#dipdup.config.IpfsDatasourceConfig">IpfsDatasourceConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -519,17 +497,27 @@
   </ul></td>
 </tr></table>
 
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.enums.LoggingValues">LoggingValues (class in dipdup.enums)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason.manual">manual (dipdup.models.ReindexingReason attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingReason.manual">manual (dipdup.enums.ReindexingReason attribute)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.MetadataDatasourceConfig">MetadataDatasourceConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason.migration">migration (dipdup.models.ReindexingReason attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.OperationType.migration">migration (dipdup.enums.OperationType attribute)</a>
 
       <ul>
-        <li><a href="config-reference.html#dipdup.models.tezos_tzkt.TzktOperationType.migration">(dipdup.models.tezos_tzkt.TzktOperationType attribute)</a>
+        <li><a href="config-reference.html#dipdup.enums.ReindexingReason.migration">(dipdup.enums.ReindexingReason attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -538,7 +526,7 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.SkipHistory.never">never (dipdup.models.SkipHistory attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.SkipHistory.never">never (dipdup.enums.SkipHistory attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -546,15 +534,23 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.SkipHistory.once">once (dipdup.models.SkipHistory attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.SkipHistory.once">once (dipdup.enums.SkipHistory attribute)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig">OperationsHandlerOriginationPatternConfig (class in dipdup.config.tezos_tzkt_operations)</a>
+      <li><a href="config-reference.html#dipdup.config.OperationHandlerConfig">OperationHandlerConfig (class in dipdup.config)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.OperationHandlerOriginationPatternConfig">OperationHandlerOriginationPatternConfig (class in dipdup.config)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.OperationHandlerTransactionPatternConfig">OperationHandlerTransactionPatternConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig">OperationsHandlerTransactionPatternConfig (class in dipdup.config.tezos_tzkt_operations)</a>
+      <li><a href="config-reference.html#dipdup.config.OperationIndexConfig">OperationIndexConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.tezos_tzkt.TzktOperationType.origination">origination (dipdup.models.tezos_tzkt.TzktOperationType attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.OperationType">OperationType (class in dipdup.enums)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.config.OperationUnfilteredIndexConfig">OperationUnfilteredIndexConfig (class in dipdup.config)</a>
+</li>
+      <li><a href="config-reference.html#dipdup.enums.OperationType.origination">origination (dipdup.enums.OperationType attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -571,20 +567,28 @@
   </ul></td>
 </tr></table>
 
+<h2 id="Q">Q</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.enums.LoggingValues.quiet">quiet (dipdup.enums.LoggingValues attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.reindex">reindex() (dipdup.context.DipDupContext method)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.ReindexingAction">ReindexingAction (class in dipdup.models)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingAction">ReindexingAction (class in dipdup.enums)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason">ReindexingReason (class in dipdup.models)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingReason">ReindexingReason (class in dipdup.enums)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.restart">restart() (dipdup.context.DipDupContext method)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason.rollback">rollback (dipdup.models.ReindexingReason attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingReason.rollback">rollback (dipdup.enums.ReindexingReason attribute)</a>
 </li>
       <li><a href="context-reference.html#dipdup.context.HookContext.rollback">rollback() (dipdup.context.HookContext method)</a>
 </li>
@@ -594,13 +598,13 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingReason.schema_modified">schema_modified (dipdup.models.ReindexingReason attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingReason.schema_modified">schema_modified (dipdup.enums.ReindexingReason attribute)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.SentryConfig">SentryConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.SkipHistory">SkipHistory (class in dipdup.models)</a>
+      <li><a href="config-reference.html#dipdup.enums.SkipHistory">SkipHistory (class in dipdup.enums)</a>
 </li>
       <li><a href="config-reference.html#dipdup.config.SqliteDatabaseConfig">SqliteDatabaseConfig (class in dipdup.config)</a>
 </li>
@@ -610,37 +614,15 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.tezos_tzkt.TzktOperationType.transaction">transaction (dipdup.models.tezos_tzkt.TzktOperationType attribute)</a>
+      <li><a href="config-reference.html#dipdup.config.TokenTransferHandlerConfig">TokenTransferHandlerConfig (class in dipdup.config)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig">TzipMetadataDatasourceConfig (class in dipdup.config.tzip_metadata)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_big_maps.TzktBigMapsHandlerConfig">TzktBigMapsHandlerConfig (class in dipdup.config.tezos_tzkt_big_maps)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_big_maps.TzktBigMapsIndexConfig">TzktBigMapsIndexConfig (class in dipdup.config.tezos_tzkt_big_maps)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt.TzktDatasourceConfig">TzktDatasourceConfig (class in dipdup.config.tezos_tzkt)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_events.TzktEventsHandlerConfig">TzktEventsHandlerConfig (class in dipdup.config.tezos_tzkt_events)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_events.TzktEventsIndexConfig">TzktEventsIndexConfig (class in dipdup.config.tezos_tzkt_events)</a>
+      <li><a href="config-reference.html#dipdup.config.TokenTransferIndexConfig">TokenTransferIndexConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig">TzktEventsUnknownEventHandlerConfig (class in dipdup.config.tezos_tzkt_events)</a>
+      <li><a href="config-reference.html#dipdup.enums.OperationType.transaction">transaction (dipdup.enums.OperationType attribute)</a>
 </li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_head.TzktHeadIndexConfig">TzktHeadIndexConfig (class in dipdup.config.tezos_tzkt_head)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_operations.TzktOperationsHandlerConfig">TzktOperationsHandlerConfig (class in dipdup.config.tezos_tzkt_operations)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_operations.TzktOperationsIndexConfig">TzktOperationsIndexConfig (class in dipdup.config.tezos_tzkt_operations)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig">TzktOperationsUnfilteredIndexConfig (class in dipdup.config.tezos_tzkt_operations)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.models.tezos_tzkt.TzktOperationType">TzktOperationType (class in dipdup.models.tezos_tzkt)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_token_transfers.TzktTokenTransfersHandlerConfig">TzktTokenTransfersHandlerConfig (class in dipdup.config.tezos_tzkt_token_transfers)</a>
-</li>
-      <li><a href="config-reference.html#dipdup.config.tezos_tzkt_token_transfers.TzktTokenTransfersIndexConfig">TzktTokenTransfersIndexConfig (class in dipdup.config.tezos_tzkt_token_transfers)</a>
+      <li><a href="config-reference.html#dipdup.config.TzktDatasourceConfig">TzktDatasourceConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -648,11 +630,21 @@
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_contract_metadata">update_contract_metadata() (dipdup.context.DipDupContext method)</a>
+      <li><a href="config-reference.html#dipdup.config.UnknownEventHandlerConfig">UnknownEventHandlerConfig (class in dipdup.config)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="context-reference.html#dipdup.context.DipDupContext.update_contract_metadata">update_contract_metadata() (dipdup.context.DipDupContext method)</a>
+</li>
       <li><a href="context-reference.html#dipdup.context.DipDupContext.update_token_metadata">update_token_metadata() (dipdup.context.DipDupContext method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="config-reference.html#dipdup.enums.LoggingValues.verbose">verbose (dipdup.enums.LoggingValues attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -660,7 +652,7 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="config-reference.html#dipdup.models.ReindexingAction.wipe">wipe (dipdup.models.ReindexingAction attribute)</a>
+      <li><a href="config-reference.html#dipdup.enums.ReindexingAction.wipe">wipe (dipdup.enums.ReindexingAction attribute)</a>
 </li>
   </ul></td>
 </tr></table>

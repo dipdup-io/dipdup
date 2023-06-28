@@ -10,9 +10,12 @@ build:
 	poetry run sphinx-build -M html . _build
 
 	# FIXME: Using generated Sphinx HTML as a source for mdbook; looks terrible 
-	python dump_references.py _build/html/cli-reference.html cli-reference.md
-	python dump_references.py _build/html/config-reference.html config/reference.md
-	python dump_references.py _build/html/context-reference.html include/context-reference.md
+	echo '<!-- markdownlint-disable first-line-h1 -->' > cli-reference.md
+	echo '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->' > config/reference.md
+	echo '<!-- markdownlint-disable first-line-h1 -->' > include/context-reference.md
+	tail -n '+32' _build/html/cli-reference.html | head -n '-63' >> cli-reference.md
+	tail -n '+32' _build/html/config-reference.html | head -n '-63' | sed "s/dipdup.config.//g" | sed "s/dipdup.enums.//g" >> config/reference.md
+	tail -n '+32' _build/html/context-reference.html | head -n '-63' >> include/context-reference.md
 
 	mdbook build  --dest-dir=dist/docs
 
@@ -41,7 +44,7 @@ orphans:
 		-e "placeholders.md" \
 		-e "SUMMARY.md" \
 		-e "mdbook-summary" \
-		-e "mdbook-project" \
+		-e "mdbook-cookiecutter" \
 		-e "mdbook-admonish" \
 		-e "include" \
 		| cut -c "3-" | sort -o existing.tmp
