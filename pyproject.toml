@@ -99,6 +99,7 @@ flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
 [tool.mypy]
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
+strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
