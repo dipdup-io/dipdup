@@ -32,7 +32,7 @@ class MyHandler(FileSystemEventHandler):
 
 def include_callback(src_file: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
-        def replacer(match: re.Match):
+        def replacer(match: re.Match[str]) -> str:
             include_file = src_file.parent / Path(match.group(1)).relative_to('..')
             with include_file.open() as file:
                 return file.read()
@@ -47,7 +47,7 @@ def create_project_version_callback(json_file: Path) -> Callable[[str], str]:
         project_info = json.load(file)
 
     def callback(data: str) -> str:
-        def replacer(match):
+        def replacer(match: re.Match[str]) -> str:
             keys = match.group(1).split('.')
             value = project_info
             for key in keys:
@@ -97,16 +97,16 @@ def main(watch: list[str], copyto: list[str], json: str) -> None:
         callbacks = [include_cb, project_version_callback]
         event_handler = MyHandler(src_path, Path(dst_folder), callbacks=callbacks)
         observer = Observer()
-        observer.schedule(event_handler, path=src_folder, recursive=True)
+        observer.schedule(event_handler, path=src_folder, recursive=True)  # type: ignore
         observers.append(observer)
-        observer.start()
+        observer.start()  # type: ignore
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         for observer in observers:
-            observer.stop()
+            observer.stop()  # type: ignore
 
     for observer in observers:
         observer.join()
