@@ -1,41 +1,44 @@
 import json
-import time
-from pathlib import Path
-from typing import Callable, Optional, List
 import re
 import sys
+import time
+from pathlib import Path
+from typing import Callable
 
 import click
+from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 
 class MyHandler(FileSystemEventHandler):
-    def __init__(self, src_folder: Path, dst_folder: Path, callbacks: Optional[List[Callable[[str], str]]] = None):
+    def __init__(self, src_folder: Path, dst_folder: Path, callbacks: list[Callable[[str], str]] | None = None):
         self.src_folder = src_folder
         self.dst_folder = dst_folder
         self.callbacks = callbacks or []
 
-    def on_modified(self, event):
-        if not event.is_directory:
-            src_file = Path(event.src_path)
-            dst_file = self.dst_folder / src_file.name
-            with src_file.open('r') as file:
-                data = file.read()
-            for callback in self.callbacks:
-                data = callback(data)
-            with dst_file.open('w') as file:
-                file.write(data)
-            print(f'Modified and copied: {src_file} to {dst_file}')
+    def on_modified(self, event: FileSystemEvent) -> None:
+        if event.is_directory:
+            return
+        src_file = Path(event.src_path)
+        dst_file = self.dst_folder / src_file.name
+        data = src_file.read_text()
+        for callback in self.callbacks:
+            data = callback(data)
+        with dst_file.open('w') as file:
+            file.write(data)
+        print(f'Modified and copied: {src_file} to {dst_file}')
 
 
 def include_callback(src_file: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
-        def replacer(match):
+        def replacer(match: re.Match):
             include_file = src_file.parent / Path(match.group(1)).relative_to('..')
             with include_file.open() as file:
                 return file.read()
+
         return re.sub(r'{{ #include (.*?) }}', replacer, data)
+
     return callback
 
 
@@ -53,25 +56,40 @@ def create_project_version_callback(json_file: Path) -> Callable[[str], str]:
                 else:
                     return ''
             return str(value)
+
         # Exclude the json_file_name from the matched pattern
         return re.sub(r'{{ \w+?\.(.*?) }}', replacer, data)
 
     return callback
 
 
-
 @click.command()
-@click.option('--watch', multiple=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help='List of directories to watch.')
-@click.option('--copyto', multiple=True, type=click.Path(file_okay=False, dir_okay=True), help='List of directories to copy files to.')
-@click.option('--json', default='project.json', type=click.Path(exists=True, file_okay=True, dir_okay=False), help='JSON file with project information.')
-def main(watch: List[str], copyto: List[str], json: str):
+@click.option(
+    '--watch',
+    multiple=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help='List of directories to watch.',
+)
+@click.option(
+    '--copyto',
+    multiple=True,
+    type=click.Path(file_okay=False, dir_okay=True),
+    help='List of directories to copy files to.',
+)
+@click.option(
+    '--json',
+    default='project.json',
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help='JSON file with project information.',
+)
+def main(watch: list[str], copyto: list[str], json: str) -> None:
     if len(watch) != len(copyto):
         print('Error: The number of watch directories and copyto directories must be the same.')
-        sys.exit(1) 
+        sys.exit(1)
 
     json_path = Path(json)
     project_version_callback = create_project_version_callback(json_path)
-    
+
     observers = []
     for src_folder, dst_folder in zip(watch, copyto):
         src_path = Path(src_folder)
@@ -92,6 +110,7 @@ def main(watch: List[str], copyto: List[str], json: str):
 
     for observer in observers:
         observer.join()
+
 
 if __name__ == '__main__':
     main()
