@@ -119,20 +119,6 @@
 
                             theme_toggle.addEventListener('click', toggleTheme);
                         </script>
-                        <a class="icon-button" id="stable">stable</a>
-                        <a class="icon-button" id="latest">latest</a>
-                        <script type="text/javascript">
-                            stable_a = document.getElementById("stable");
-                            latest_a = document.getElementById("latest");
-                            if (window.location.href.includes("docs.")) {
-                                stable_a.style.color = "dimgray";
-                                latest_a.setAttribute('href', window.location.href.replace('docs.', 'docs-next.'));
-                            }
-                            else if (window.location.href.includes('docs-next.')) {
-                                latest_a.style.color = "dimgray";
-                                stable_a.setAttribute('href', window.location.href.replace('docs-next.', 'docs.'));
-                            }
-                        </script>
 
                     </div>
 
@@ -277,7 +263,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.25.1
+    image: hasura/graphql-engine:v2.28.0
     ports:
       - 127.0.0.1:8080:8080
     depends_on:
@@ -389,7 +375,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.25.1
+    image: hasura/graphql-engine:v2.28.0
     depends_on:
       - db
     environment:
