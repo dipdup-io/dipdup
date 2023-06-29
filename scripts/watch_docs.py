@@ -20,8 +20,10 @@ class MyHandler(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent) -> None:
         if event.is_directory:
             return
-        src_file = Path(event.src_path)
-        dst_file = self.dst_folder / src_file.name
+        src_file = Path(event.src_path).resolve()
+        rel_path = src_file.relative_to(self.src_folder.resolve())
+        dst_file = self.dst_folder / rel_path
+        dst_file.parent.mkdir(parents=True, exist_ok=True)  # Make sure the destination directory exists
         data = src_file.read_text()
         for callback in self.callbacks:
             data = callback(data)
@@ -93,9 +95,11 @@ def main(watch: list[str], copyto: list[str], json: str) -> None:
     observers = []
     for src_folder, dst_folder in zip(watch, copyto):
         src_path = Path(src_folder)
+        dst_path = Path(dst_folder)
+        # NOTE: uncomment when the docs will be fully ready for front copytree(src_path, dst_path, dirs_exist_ok=True)
         include_cb = include_callback(src_path)
         callbacks = [include_cb, project_version_callback]
-        event_handler = MyHandler(src_path, Path(dst_folder), callbacks=callbacks)
+        event_handler = MyHandler(src_path, dst_path, callbacks=callbacks)
         observer = Observer()
         observer.schedule(event_handler, path=src_folder, recursive=True)  # type: ignore
         observers.append(observer)
