@@ -14,7 +14,7 @@ help:           ## Show this help (default)
 	@grep -F -h "##" $(MAKEFILE_LIST) | grep -F -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
 
 all:            ## Run a whole CI pipeline: formatters, linters and tests
-	make install lint test docs
+	make install lint test
 
 install:        ## Install project dependencies
 	poetry install \
@@ -25,11 +25,6 @@ lint:           ## Lint with all tools
 
 test:           ## Run test suite
 	poetry run pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
-
-docs:           ## Build docs
-	scripts/update_project.py
-	cd docs
-	make -s clean build lint
 
 ##
 
@@ -76,13 +71,14 @@ replays:        ## Recreate replays for tests
 
 ##
 
-DEMO="demo-evm-events"
+DEMO= ?= demo_evm_events
+FRONT_PATH ?= ../interface
 
 demo_run:
-	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" run | tee ${DEMO}.log
+	dipdup -c ${DEMO}/dipdup.yaml -e "${DEMO}.env" run | tee ${DEMO}.log
 
 demo_init:
-	dipdup -c demos/${DEMO}/dipdup.yaml -e "${DEMO}.env" init | tee ${DEMO}.log
+	dipdup -c ${DEMO}/dipdup.yaml -e "${DEMO}.env" init | tee ${DEMO}.log
 
 profile:
 	python tests/profile_abi_decoding.py
@@ -92,4 +88,14 @@ unsafe:
 
 todo:
 	grep -r -e "TODO:" -e "FIXME:" src tests scripts
+
+docs_serve:
+	sh -c 'cd ${FRONT_PATH} && npm run dev' & NPM_PID=$$!
+	make watch_docs
+	kill $$NPM_PID
+
+docs_watch:
+	scripts/update_project.py
+	scripts/watch_docs.py --source docs --destination ${FRONT_PATH}/content/docs
+
 ##
