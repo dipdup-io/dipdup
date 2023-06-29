@@ -3,12 +3,25 @@ import re
 import sys
 import time
 from pathlib import Path
+from shutil import rmtree
 from typing import Callable
 
 import click
 from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+
+TEXT = (
+    '.md',
+    '.yml',
+    '.yaml',
+)
+
+IMAGES = (
+    '.svg',
+    '.png',
+    '.jpg',
+)
 
 
 class DocsUpdateHandler(FileSystemEventHandler):
@@ -18,33 +31,38 @@ class DocsUpdateHandler(FileSystemEventHandler):
         destination: Path,
         callbacks: list[Callable[[str], str]] | None = None,
     ):
-        self._source = source
-        self._destination = destination
+        self._source = source.resolve()
+        self._destination = destination.resolve()
         self._callbacks = callbacks or []
 
     def on_modified(self, event: FileSystemEvent) -> None:
-        if event.is_directory:
+        src_file = Path(event.src_path).resolve()
+        if src_file.is_dir():
             return
 
-        src_file = Path(event.src_path).resolve()
-        rel_path = src_file.relative_to(self._source.resolve())
+        rel_path = src_file.relative_to(self._source)
         dst_file = self._destination / rel_path
-        print(f'`{rel_path}` has been modified; copying to {dst_file}')
-
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
-        data = src_file.read_text()
-        for callback in self._callbacks:
-            data = callback(data)
-        dst_file.write_text(data)
+
+        print(f'`{rel_path}` has been modified; copying to {dst_file}')
+
+        if src_file.suffix in TEXT:
+            data = src_file.read_text()
+            for callback in self._callbacks:
+                data = callback(data)
+            dst_file.write_text(data)
+        elif src_file.suffix in IMAGES:
+            dst_file.write_bytes(src_file.read_bytes())
+        else:
+            pass
 
 
 def include_callback(src_file: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
         def replacer(match: re.Match[str]) -> str:
-            include_file = src_file.parent / Path(match.group(1)).relative_to('..')
-            with include_file.open() as file:
-                return file.read()
+            include_file = src_file.parent / Path(match.group(1))
+            return include_file.read_text()
 
         return re.sub(r'{{ #include (.*?) }}', replacer, data)
 
@@ -101,8 +119,6 @@ def main(watch: list[Path], copy_to: list[Path], json: Path) -> None:
 
     observers = []
     for source, destination in zip(watch, copy_to):
-        # NOTE: uncomment when the docs will be fully ready for front copytree(src_path, dst_path, dirs_exist_ok=True)
-
         event_handler = DocsUpdateHandler(
             source,
             destination,
@@ -111,6 +127,10 @@ def main(watch: list[Path], copy_to: list[Path], json: Path) -> None:
                 project_version_callback,
             ],
         )
+        rmtree(destination)
+        for path in source.glob('**/*'):
+            event_handler.on_modified(FileSystemEvent(path))  # type: ignore[no-untyped-call]
+
         observer = Observer()
         observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
         observers.append(observer)
@@ -121,7 +141,7 @@ def main(watch: list[Path], copy_to: list[Path], json: Path) -> None:
             time.sleep(1)
     except KeyboardInterrupt:
         for observer in observers:
-            observer.stop()  # type: ignore
+            observer.stop()  # type: ignore[no-untyped-call]
 
     for observer in observers:
         observer.join()
