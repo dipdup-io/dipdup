@@ -91,7 +91,7 @@ todo:
 
 docs_serve:
 	sh -c 'cd ${FRONT_PATH} && npm run dev' & NPM_PID=$$!
-	make watch_docs
+	make docs_watch
 	kill $$NPM_PID
 
 docs_watch:
