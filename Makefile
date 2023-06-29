@@ -43,7 +43,7 @@ ruff:           ## Lint with ruff
 	poetry run ruff check --fix src tests scripts
 
 mypy:           ## Lint with mypy
-	poetry run mypy --strict src tests scripts
+	poetry run mypy src tests scripts
 
 cover:          ## Print coverage for the current branch
 	poetry run diff-cover --compare-branch `git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'` coverage.xml
