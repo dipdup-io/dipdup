@@ -74,27 +74,27 @@ replays:        ## Recreate replays for tests
 DEMO= ?= demo_evm_events
 FRONT_PATH ?= ../interface
 
-demo_run:
+demo_run:       ## Run demo
 	dipdup -c ${DEMO}/dipdup.yaml -e "${DEMO}.env" run | tee ${DEMO}.log
 
-demo_init:
+demo_init:      ## Initialize demo
 	dipdup -c ${DEMO}/dipdup.yaml -e "${DEMO}.env" init | tee ${DEMO}.log
 
-profile:
+profile:        ## Run profiling
 	python tests/profile_abi_decoding.py
 
-unsafe:
+unsafe:         ## Print type-ignores
 	grep -r "type: ignore" src tests scripts | grep -v "import"
 
-todo:
+todo:           ## Print TODOs and FIXMEs
 	grep -r -e "TODO:" -e "FIXME:" src tests scripts
 
-docs_serve:
+docs_serve:     ## Build docs, watch for changes and start dev server
 	sh -c 'cd ${FRONT_PATH} && npm run dev' & NPM_PID=$$!
 	make docs_watch
 	kill $$NPM_PID
 
-docs_watch:
+docs_watch:     ## Watch for docs changes
 	scripts/update_project.py
 	scripts/watch_docs.py --source docs --destination ${FRONT_PATH}/content/docs
 
