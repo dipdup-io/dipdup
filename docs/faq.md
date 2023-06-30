@@ -26,11 +26,11 @@ DipDup provides convenient helpers to process off-chain data like market quotes 
 - Use generic `http` datasource for external APIs instead of plain `aiohttp` requests. It makes available the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.
 - Database tables that store off-chain data can be marked as immune, to speed up reindexing.
 
-```admonish info title="See Also"
-* {{ #summary advanced/jobs.md }}
-* {{ #summary datasources/http.md }}
-* {{ #summary config/database.md#immune-tables }}
-```
+::banner{type="note"}
+- {{ #summary advanced/jobs.md }}
+- {{ #summary datasources/http.md }}
+- {{ #summary config/database.md#immune-tables }}
+:
 
 ## How to process indexes in a specific order?
 
@@ -75,10 +75,10 @@ diff old-schema.sql new-schema.sql
 
 Now you can prepare and execute an `ALTER TABLE` query manually or using SQL hooks.
 
-```admonish info title="See Also"
-* {{ #summary advanced/reindexing.md}}
-* {{ #summary advanced/sql.md}}
-```
+::banner{type="note"}
+- {{ #summary advanced/reindexing.md}}
+- {{ #summary advanced/sql.md}}
+::
 
 ## I get `schema_modified` error, but I didn't change anything
 
@@ -129,6 +129,6 @@ advanced:
 
 Don't forget to reindex after this change. When decimal context precision is adjusted you'll get a warning in the logs.
 
-```text
+```
 WARNING  dipdup.database      Decimal context precision has been updated: 28 -> 128
 ```
