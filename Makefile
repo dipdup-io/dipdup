@@ -95,7 +95,6 @@ docs_serve:     ## Build docs, watch for changes and start dev server
 	kill $$NPM_PID
 
 docs_watch:     ## Watch for docs changes
-	scripts/update_project.py
 	scripts/watch_docs.py --source docs --destination ${FRONT_PATH}/content/docs
 
 ##
