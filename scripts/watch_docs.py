@@ -18,13 +18,11 @@ TEXT = (
     '.yml',
     '.yaml',
 )
-
-IMAGES = ()
-# IMAGES = (
-#     '.svg',
-#     '.png',
-#     '.jpg',
-# )
+IMAGES = (
+    '.svg',
+    '.png',
+    '.jpg',
+)
 
 
 class DocsBuilder(FileSystemEventHandler):
@@ -41,6 +39,10 @@ class DocsBuilder(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent) -> None:
         src_file = Path(event.src_path).relative_to(self._source)
         if src_file.is_dir():
+            return
+
+        # FIXME: front dies otherwise
+        if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
             return
 
         src_file = self._source / src_file
