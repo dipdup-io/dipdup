@@ -21,7 +21,10 @@ async def transfer(
 
         position = models.Position(id=event.payload.tokenId, **pending_position)
     else:
-        position = await models.Position.get(id=event.payload.tokenId)
+        position = await models.Position.get_or_none(id=event.payload.tokenId)
+        if position is None:
+            ctx.logger.warning('Skipping position %s (must be blacklisted pool)', event.payload.tokenId)
+            return
 
     position.owner = to_normalized_address(event.payload.to)
     await position.save()
