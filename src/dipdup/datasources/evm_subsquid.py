@@ -90,7 +90,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             query: Query = {
                 'logs': log_request,
                 'fields': {
-                    'block': {},
+                    'block': {
+                        'timestamp': True
+                    },
                     'log': LOG_FIELDS,
                 },
                 'fromBlock': current_level,
@@ -105,11 +107,12 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             for level_logs in response:
                 level = level_logs['header']['number']
+                timestamp = level_logs['header']['timestamp']
                 current_level = level + 1
                 logs: deque[SubsquidEventData] = deque()
                 for raw_log in level_logs['logs']:
                     logs.append(
-                        SubsquidEventData.from_json(raw_log, level),
+                        SubsquidEventData.from_json(raw_log, level, timestamp),
                     )
                 yield tuple(logs)
 

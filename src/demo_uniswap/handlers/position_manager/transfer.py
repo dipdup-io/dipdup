@@ -28,4 +28,4 @@ async def transfer(
 
     position.owner = to_normalized_address(event.payload.to)
     await position.save()
-    await save_position_snapshot(position, event.data.level)
+    await save_position_snapshot(position, event.data.level, event.data.timestamp)

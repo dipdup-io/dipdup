@@ -65,7 +65,7 @@ async def pool_created(
     pool = models.Pool(
         id=pool_id,
         fee_tier=int(event.payload.fee),
-        created_at_timestamp=int(0),  # TODO: get block (head) time by level
+        created_at_timestamp=event.data.timestamp,
         created_at_block_number=int(event.data.level),
         token0_id=token0,
         token1_id=token1,

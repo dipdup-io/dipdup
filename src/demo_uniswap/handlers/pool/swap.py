@@ -154,7 +154,7 @@ async def swap(
         sender=event.payload.sender,
         recipient=event.payload.recipient,
         origin=event.payload.sender,  # FIXME: transaction origin
-        timestamp=0,  # TODO
+        timestamp=event.data.timestamp,
         amount0=amount0,
         amount1=amount1,
         amount_usd=amount_total_usd_tracked,

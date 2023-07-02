@@ -33,4 +33,4 @@ async def decrease_liquidity(
 
     await position.save()
     # position.cache()
-    await save_position_snapshot(position, event.data.level)
+    await save_position_snapshot(position, event.data.level, event.data.timestamp)
