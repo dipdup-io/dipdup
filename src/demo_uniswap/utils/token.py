@@ -69,12 +69,13 @@ class ERC20Token:
     async def get_symbol(self) -> str:
         # FIXME: https://github.com/ethereum/web3.py/issues/2658
         with suppress(Exception):
-            return await self.contract.functions.symbol().call()
+            symbol = await self.contract.functions.symbol().call()
+            return str(symbol)
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
             symbol = await contract.functions.symbol().call()
-            return symbol.decode('utf-8').replace('\x00', '')
+            return bytes(symbol).decode('utf-8').replace('\x00', '')
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:
@@ -84,12 +85,13 @@ class ERC20Token:
 
     async def get_name(self) -> str:
         with suppress(Exception):
-            return await self.contract.functions.name().call()
+            name = await self.contract.functions.name().call()
+            return str(name)
 
         with suppress(Exception):
             contract = self.web3.eth.contract(address=self.address, abi=erc20_name_bytes_abi)
             name = await contract.functions.name().call()
-            return name.decode('utf-8').replace('\x00', '')
+            return bytes(name).decode('utf-8').replace('\x00', '')
 
         token = StaticTokenDefinition.from_address(self.address)
         if token:

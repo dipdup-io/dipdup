@@ -90,9 +90,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             query: Query = {
                 'logs': log_request,
                 'fields': {
-                    'block': {
-                        'timestamp': True
-                    },
+                    'block': {'timestamp': True},
                     'log': LOG_FIELDS,
                 },
                 'fromBlock': current_level,

@@ -158,7 +158,7 @@ class SubsquidEventsIndex(
                         'toBlock': hex(level),
                     }
                 )
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, int(block['timestamp'])) for log in level_logs)
                 await self._process_level_events(parsed_level_logs, self.topics, sync_level)
 
         else:

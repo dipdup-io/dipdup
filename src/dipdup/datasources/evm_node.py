@@ -272,7 +272,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             self._head_events[level].set()
 
         elif isinstance(subscription, EvmNodeLogsSubscription):
-            logs = EvmNodeLogData.from_json(data)
+            timestamp = int(time.time())  # FIXME: should be taken from the head instead
+            logs = EvmNodeLogData.from_json(data, timestamp)
             level = int(logs.block_number, 16)
 
             await self._head_events[level].wait()
