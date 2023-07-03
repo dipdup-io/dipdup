@@ -1,7 +1,8 @@
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import TypedDict
+
+from typing_extensions import TypedDict
 
 from dipdup.performance import get_stats
 from dipdup.performance import metrics

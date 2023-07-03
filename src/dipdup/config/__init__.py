@@ -583,7 +583,7 @@ class AdvancedConfig:
         extra = 'allow'
 
 
-@dataclass
+@dataclass()
 class DipDupConfig:
     """Main indexer config
 
@@ -1090,6 +1090,7 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
 
                 # NOTE: Wrap dataclass again to recreate magic methods
                 if reload:
+                    # FIXME: RuntimeError('dictionary changed size during iteration')
                     setattr(submodule, attr, dataclass(value))
 
             if hasattr(value, '__pydantic_model__'):

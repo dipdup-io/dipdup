@@ -7,12 +7,12 @@ import re
 from copy import copy
 from pathlib import Path
 from typing import Any
-from typing import TypedDict
 from typing import TypeVar
 
 import asyncclick as cl
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
+from typing_extensions import TypedDict
 
 from dipdup import __version__
 from dipdup.utils import load_template
