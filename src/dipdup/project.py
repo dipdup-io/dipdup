@@ -11,7 +11,6 @@ from typing import TypedDict
 from typing import TypeVar
 
 import asyncclick as cl
-import orjson
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
@@ -242,16 +241,6 @@ def answers_from_terminal() -> Answers:
         default=answers['line_length'],
     )
     return answers
-
-
-def write_project_json(answers: Answers, path: Path) -> None:
-    values = {k: v for k, v in answers.items() if not k.startswith('_')}
-    path.write_bytes(
-        orjson.dumps(
-            values,
-            option=orjson.OPT_INDENT_2,
-        )
-    )
 
 
 def answers_from_replay(path: Path) -> Answers:

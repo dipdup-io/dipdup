@@ -20,7 +20,7 @@ Run `dipdup update` periodically to update to the latest version.
 
 While building Docker images you can use `X` and `X.Y` tags to lock to specific major/minor releases:
 
-```Dockerfile
+```docker
 FROM dipdup/dipdup:{{ project.dipdup_version }}
 ```
 
@@ -33,11 +33,12 @@ dipdup -c dipdup.yaml -c dipdup.prod.yaml config export
 dipdup -c dipdup.yaml -c dipdup.prod.yaml config env
 ```
 
-```admonish info title="See Also"
+::banner{type="note"}
+
 * {{ #summary cli-reference.md#dipdup-config-export }}
 * {{ #summary cli-reference.md#dipdup-config-env }}
 * {{ #summary config/README.md }}
-```
+::
 
 ## Enable debug logging and crash reporting
 

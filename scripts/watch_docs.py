@@ -1,8 +1,9 @@
-import json
+#!/usr/bin/env python3
 import re
-import sys
 import time
+from contextlib import suppress
 from pathlib import Path
+from shutil import rmtree
 from typing import Callable
 
 import click
@@ -10,8 +11,21 @@ from watchdog.events import FileSystemEvent
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
+from dipdup.project import DEFAULT_ANSWERS
 
-class DocsUpdateHandler(FileSystemEventHandler):
+TEXT = (
+    '.md',
+    '.yml',
+    '.yaml',
+)
+IMAGES = (
+    '.svg',
+    '.png',
+    '.jpg',
+)
+
+
+class DocsBuilder(FileSystemEventHandler):
     def __init__(
         self,
         source: Path,
@@ -23,108 +37,90 @@ class DocsUpdateHandler(FileSystemEventHandler):
         self._callbacks = callbacks or []
 
     def on_modified(self, event: FileSystemEvent) -> None:
-        if event.is_directory:
+        src_file = Path(event.src_path).relative_to(self._source)
+        if src_file.is_dir():
             return
 
-        src_file = Path(event.src_path).resolve()
-        rel_path = src_file.relative_to(self._source.resolve())
-        dst_file = self._destination / rel_path
-        print(f'`{rel_path}` has been modified; copying to {dst_file}')
+        # FIXME: front dies otherwise
+        if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
+            return
 
+        src_file = self._source / src_file
+        dst_file = (self._destination / src_file.relative_to(self._source)).resolve()
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
-        data = src_file.read_text()
-        for callback in self._callbacks:
-            data = callback(data)
-        dst_file.write_text(data)
+
+        print(f'`{src_file}` has been modified; copying to {dst_file}')
+
+        if src_file.suffix in TEXT:
+            data = src_file.read_text()
+            for callback in self._callbacks:
+                data = callback(data)
+            dst_file.write_text(data)
+        elif src_file.suffix in IMAGES:
+            dst_file.write_bytes(src_file.read_bytes())
+        else:
+            pass
 
 
-def include_callback(src_file: Path) -> Callable[[str], str]:
+def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
         def replacer(match: re.Match[str]) -> str:
-            include_file = src_file.parent / Path(match.group(1)).relative_to('..')
-            with include_file.open() as file:
-                return file.read()
+            # FIXME: Slices are not handled yet
+            included_file = source / match.group(1).split(':')[0]
+            print(f'reading from {included_file}')
+            return included_file.read_text()
 
-        return re.sub(r'{{ #include (.*?) }}', replacer, data)
+        return re.sub(r'{{ #include (.*) }}', replacer, data)
 
     return callback
 
 
-def create_project_version_callback(json_file: Path) -> Callable[[str], str]:
-    with json_file.open() as file:
-        project_info = json.load(file)
-
+def create_project_callback() -> Callable[[str], str]:
     def callback(data: str) -> str:
-        def replacer(match: re.Match[str]) -> str:
-            keys = match.group(1).split('.')
-            value = project_info
-            for key in keys:
-                if isinstance(value, dict):
-                    value = value.get(key, '')
-                else:
-                    return ''
-            return str(value)
-
-        # NOTE: Exclude the json_file_name from the matched pattern
-        return re.sub(r'{{ \w+?\.(.*?) }}', replacer, data)
+        for match in re.finditer(r'{{ project.(.*) }}', data):
+            key = match.group(1)
+            value = DEFAULT_ANSWERS[key]  # type: ignore[literal-required]
+            data = data.replace(match.group(0), str(value))
+        return data
 
     return callback
 
 
 @click.command()
 @click.option(
-    '--watch',
-    multiple=True,
+    '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
-    help='List of directories to watch.',
+    help='docs/ directory path to watch.',
 )
 @click.option(
-    '--copy-to',
-    multiple=True,
+    '--destination',
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
-    help='List of directories to copy files to.',
+    help='content/ dirertory path to copy to.',
 )
-@click.option(
-    '--json',
-    default='project.json',
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
-    help='JSON file with project information.',
-)
-def main(watch: list[Path], copy_to: list[Path], json: Path) -> None:
-    if len(watch) != len(copy_to):
-        print('Error: The number of `watch` and `copy_to` arguments must be the same.')
-        sys.exit(1)
+def main(source: Path, destination: Path) -> None:
+    event_handler = DocsBuilder(
+        source,
+        destination,
+        callbacks=[
+            create_include_callback(source),
+            create_project_callback(),
+        ],
+    )
+    rmtree(destination, ignore_errors=True)
+    for path in source.glob('**/*'):
+        event_handler.on_modified(FileSystemEvent(path))  # type: ignore[no-untyped-call]
 
-    json_path = Path(json)
-    project_version_callback = create_project_version_callback(json_path)
+    observer = Observer()
+    observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
+    observer.start()  # type: ignore[no-untyped-call]
 
-    observers = []
-    for source, destination in zip(watch, copy_to):
-        # NOTE: uncomment when the docs will be fully ready for front copytree(src_path, dst_path, dirs_exist_ok=True)
-
-        event_handler = DocsUpdateHandler(
-            source,
-            destination,
-            callbacks=[
-                include_callback(source),
-                project_version_callback,
-            ],
-        )
-        observer = Observer()
-        observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
-        observers.append(observer)
-        observer.start()  # type: ignore[no-untyped-call]
-
-    try:
+    with suppress(KeyboardInterrupt):
         while True:
             time.sleep(1)
-    except KeyboardInterrupt:
-        for observer in observers:
-            observer.stop()  # type: ignore
 
-    for observer in observers:
-        observer.join()
+    observer.stop()  # type: ignore[no-untyped-call]
+    observer.join()
 
 
 if __name__ == '__main__':
