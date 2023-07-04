@@ -2,7 +2,7 @@
 name = "demo_factories"
 version = "0.0.1"
 description = "Blockchain indexer built with DipDup"
-license = "MIT"
+license = { name = "MIT" }
 authors = [
     { name = "John Smith", email = "john_smith@localhost.lan" }
 ]

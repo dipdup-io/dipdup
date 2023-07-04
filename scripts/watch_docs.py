@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import re
-from subprocess import Popen
 import time
 from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
+from subprocess import Popen
 from typing import Callable
 
 import click
@@ -121,7 +121,6 @@ def main(source: Path, destination: Path, run: bool) -> None:
     observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
     observer.start()  # type: ignore[no-untyped-call]
 
-    
     process = Popen(['npm', 'run', 'dev'], cwd=destination.parent.parent) if run else None
     if process:
         time.sleep(3)
@@ -136,6 +135,7 @@ def main(source: Path, destination: Path, run: bool) -> None:
 
     if process:
         process.terminate()
+
 
 if __name__ == '__main__':
     main()
