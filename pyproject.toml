@@ -108,12 +108,10 @@ demos = { shell = """
     pdm run lint
 """ }
 docs_serve = { shell = """
-	sh -c 'cd   && npm run dev' & NPM_PID=$$!
-	pdm run docs_watch
-	kill $$NPM_PID
+	python scripts/watch_docs.py --source docs --destination {args:../interface}/content/docs --run
 """ }
 docs_watch = { shell = """
-	"python scripts/watch_docs.py --source docs --destination {args:../interface}/content/docs"
+	python scripts/watch_docs.py --source docs --destination {args:../interface}/content/docs
 """ }
 
 [tool.pdm.build.targets.wheel]

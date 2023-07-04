@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import re
+from subprocess import Popen
 import time
 from contextlib import suppress
 from pathlib import Path
@@ -98,7 +99,12 @@ def create_project_callback() -> Callable[[str], str]:
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     help='content/ dirertory path to copy to.',
 )
-def main(source: Path, destination: Path) -> None:
+@click.option(
+    '--run',
+    is_flag=True,
+    help='Run frontend server',
+)
+def main(source: Path, destination: Path, run: bool) -> None:
     event_handler = DocsBuilder(
         source,
         destination,
@@ -115,6 +121,12 @@ def main(source: Path, destination: Path) -> None:
     observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
     observer.start()  # type: ignore[no-untyped-call]
 
+    
+    process = Popen(['npm', 'run', 'dev'], cwd=destination.parent.parent) if run else None
+    if process:
+        time.sleep(3)
+        click.launch('http://localhost:3000/docs')
+
     with suppress(KeyboardInterrupt):
         while True:
             time.sleep(1)
@@ -122,6 +134,8 @@ def main(source: Path, destination: Path) -> None:
     observer.stop()  # type: ignore[no-untyped-call]
     observer.join()
 
+    if process:
+        process.terminate()
 
 if __name__ == '__main__':
     main()
