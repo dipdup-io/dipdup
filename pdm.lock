@@ -781,7 +781,7 @@ summary = "An extremely fast Python linter, written in Rust."
 
 [[package]]
 name = "sentry-sdk"
-version = "1.26.0"
+version = "1.27.0"
 summary = "Python client for Sentry (https://sentry.io)"
 dependencies = [
     "certifi",
@@ -2641,9 +2641,9 @@ content_hash = "sha256:7bbf2127a8f2c1c17a31611f66f893cd2fe9f35316c60b08ec772c9ef
     {url = "https://files.pythonhosted.org/packages/f7/9b/e8c42f8e0bb21a2d82b8f414c55fbf498cdfe72922bf73c973267477fd46/ruff-0.0.276.tar.gz", hash = "sha256:d456c86eb6ce9225507f24fcc7bf72fa031bb7cc750023310e62889bf4ad4b6a"},
     {url = "https://files.pythonhosted.org/packages/fb/4b/b200d0bdaa7a30fae00ec8c6152389709abe2f9cf574b2af8917e4df1f90/ruff-0.0.276-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:100ad9055d50977c2b4ab3de0db62d6e525bcd4aafbb660a842733bdbf650be9"},
 ]
-"sentry-sdk 1.26.0" = [
-    {url = "https://files.pythonhosted.org/packages/88/73/fbd4b6ce03acd4c06d553a528e6835b37da857cd9353c3f2178a6fbd2459/sentry-sdk-1.26.0.tar.gz", hash = "sha256:760e4fb6d01c994110507133e08ecd4bdf4d75ee4be77f296a3579796cf73134"},
-    {url = "https://files.pythonhosted.org/packages/bb/b4/a5f11172cd441d9dbb1c0f12f61816b08bba473eba45dd0d2e00ad018fe5/sentry_sdk-1.26.0-py2.py3-none-any.whl", hash = "sha256:0c9f858337ec3781cf4851972ef42bba8c9828aea116b0dbed8f38c5f9a1896c"},
+"sentry-sdk 1.27.0" = [
+    {url = "https://files.pythonhosted.org/packages/40/5b/cbce09bb7d13f0a25a6d0ee4dd95eb9a0c1105a62230970d67ce0cf57a77/sentry_sdk-1.27.0-py2.py3-none-any.whl", hash = "sha256:8c0ba7a0ed4e39635d335fdac7c00840b14ce4319bb8629b934243d6306fee7d"},
+    {url = "https://files.pythonhosted.org/packages/5b/e7/40fd8715756891791f162c24638b8d091d2eb0dc559cc7a0578e70679366/sentry-sdk-1.27.0.tar.gz", hash = "sha256:eb2a5080912dc9b397925657669e3761d95d62c8aa4c0c6d6a73d5a31edaafe9"},
 ]
 "setuptools 68.0.0" = [
     {url = "https://files.pythonhosted.org/packages/c7/42/be1c7bbdd83e1bfb160c94b9cafd8e25efc7400346cf7ccdbdb452c467fa/setuptools-68.0.0-py3-none-any.whl", hash = "sha256:11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f"},

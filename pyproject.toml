@@ -99,6 +99,11 @@ all = { composite = ["fmt", "lint", "test"] }
 fmt = { composite = ["_isort", "_black"] }
 lint = { composite = ["_ruff", "_mypy"] }
 test = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests"
+update = { shell = """
+    pdm update
+    pdm export --without-hashes -f requirements --prod -o requirements.txt
+    pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
+""" }
 image = "docker buildx build . --load --progress plain -t dipdup:latest"
 clean = "git clean -xdf --exclude=.venv"
 demos = { shell = """

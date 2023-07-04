@@ -11,9 +11,9 @@ WORKDIR /opt/dipdup
 ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 ENV PATH="/root/.cargo/bin:$PATH"
 
-COPY pyproject.toml README.md /opt/dipdup/
-
-RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check -e .
+COPY pyproject.toml requirements.txt README.md /opt/dipdup/
+RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --no-deps \
+    -r /opt/dipdup/requirements.txt -e .
 
 FROM python:3.11-slim-buster AS build-image
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
