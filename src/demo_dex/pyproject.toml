@@ -1,20 +1,35 @@
-[tool.poetry]
+[project]
 name = "demo_dex"
 version = "0.0.1"
 description = "Blockchain indexer built with DipDup"
 license = "MIT"
-authors = ["John Smith <john_smith@localhost.lan>"]
+authors = [
+    { name = "John Smith", email = "john_smith@localhost.lan" }
+]
 readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "dipdup~=6.0"
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.12"
-dipdup = "^6"
+[tool.pdm.dev-dependencies]
+dev = [
+    "isort",
+    "black",
+    "ruff",
+    "mypy",
+]
 
-[tool.poetry.group.dev.dependencies]
-isort = "*"
-black = "*"
-ruff = "*"
-mypy = "*"
+[tool.pdm.scripts]
+_isort = "isort ."
+_black = "black ."
+_ruff = "ruff check --fix ."
+_mypy = "mypy ."
+all = { composite = ["fmt", "lint"] }
+fmt = { composite = ["_isort", "_black"] }
+lint = { composite = ["_ruff", "_mypy"] }
+image = "docker build . -f deploy/Dockerfile -t demo_dex:latest"
+clean = "git clean -xdf --exclude=.venv"
 
 [tool.isort]
 line_length = 120
@@ -34,5 +49,5 @@ python_version = "3.11"
 plugins = ["pydantic.mypy"]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

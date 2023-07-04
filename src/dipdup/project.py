@@ -41,7 +41,7 @@ EVM_DEMOS = (
     ('demo_uniswap', 'Uniswap V3 pools, positions, swaps, ticks, etc.'),
 )
 OTHER_DEMOS = (
-    ('blank', 'Empty config for a fresh start'),
+    ('demo_blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
     # TODO: demo_sql
@@ -61,7 +61,8 @@ class Answers(TypedDict):
     version: str
     description: str
     license: str
-    author: str
+    name: str
+    email: str
     postgresql_image: str
     hasura_image: str
     line_length: str
@@ -80,7 +81,8 @@ DEFAULT_ANSWERS = Answers(
     version='0.0.1',
     description='Blockchain indexer built with DipDup',
     license='MIT',
-    author='John Smith <john_smith@localhost.lan>',
+    name='John Smith',
+    email='john_smith@localhost.lan',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
     hasura_image='hasura/graphql-engine:v2.28.0',
@@ -212,9 +214,13 @@ def answers_from_terminal() -> Answers:
         'Enter project license\nDipDup itself is MIT-licensed.',
         answers['license'],
     )
-    answers['author'] = prompt_str(
-        'Enter project author\nYou can add more later in pyproject.toml.',
-        answers['author'],
+    answers['name'] = prompt_str(
+        'Enter your name',
+        answers['name'],
+    )
+    answers['name'] = prompt_str(
+        'Enter your email',
+        answers['email'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')

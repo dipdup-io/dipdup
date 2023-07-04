@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'scripts/install.py'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'pdm.lock'
       - '.github/workflows/installer.yml'
 
 jobs:
@@ -31,9 +31,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@main
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: macOS runner workaround
         run: pip install --upgrade pip pipx
@@ -48,10 +49,10 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Replace DipDup in project with current HEAD
-        run: cd dipdup_indexer; poetry remove dipdup; poetry add git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
+        run: cd dipdup_indexer; pip install -U git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
 
       - name: make install lint
-        run: cd dipdup_indexer; make install lint
+        run: cd dipdup_indexer; pdm run lint
 
       - name: Deploy scripts to GitHub Pages
         if: contains(github.ref, 'next')

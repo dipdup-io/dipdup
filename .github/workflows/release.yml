@@ -42,21 +42,16 @@ jobs:
             type=pep440,pattern={{major}}.{{minor}}
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@main
         with:
           python-version: '3.11'
+          cache: 'pip'
 
-      - name: Set up Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: '1.4.0'
+      - name: Install PDM
+        run: pipx install pdm
 
-      - name: Install project
-        run: make install
-      - name: Run lint
-        run: make lint
-      - name: Run tests
-        run: make test
+      - name: Run CI checks
+        run: pdm -e dev run all
 
       - name: Publish stable image
         uses: docker/build-push-action@v3

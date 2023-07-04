@@ -8,8 +8,7 @@
 !**/Dockerfile
 !**/Makefile
 !**/pyproject.toml
-!**/poetry.lock
-!**/requirements.*
+!**/pdm.lock
 !**/README.md
 !**/.keep
 

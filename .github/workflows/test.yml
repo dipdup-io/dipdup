@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'pdm.lock'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -30,19 +30,17 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: Install poetry
-        run: pipx install poetry
+      - name: Install PDM
+        run: pipx install pdm
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@main
         with:
           python-version: '3.11'
-          cache: 'poetry'
+          cache: 'pip'
 
-      - name: Install project
-        run: make install
       - name: Run lint
-        run: make lint
+        run: pdm run lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
       - name: Run tests
-        run: make test
+        run: pdm run test
