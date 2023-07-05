@@ -52,7 +52,7 @@ jobs:
         run: cd dipdup_indexer; pip install -U git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
 
       - name: make install lint
-        run: cd dipdup_indexer; pdm run lint
+        run: cd dipdup_indexer; pdm sync; pdm run lint
 
       - name: Deploy scripts to GitHub Pages
         if: contains(github.ref, 'next')

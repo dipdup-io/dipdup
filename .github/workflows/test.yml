@@ -40,7 +40,7 @@ jobs:
           cache: 'pip'
 
       - name: Run lint
-        run: pdm run lint
+        run: pdm sync; pdm run lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
       - name: Run tests
         run: pdm run test
