@@ -51,7 +51,7 @@ jobs:
         run: pipx install pdm
 
       - name: Run CI checks
-        run: pdm install; pdm -e dev run all
+        run: pdm install; pdm run all
 
       - name: Publish stable image
         uses: docker/build-push-action@v3
