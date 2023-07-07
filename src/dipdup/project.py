@@ -96,14 +96,14 @@ def prompt_anyof(
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
     table = tabulate(
-        zip(range(len(options)), options, comments),
-        colalign=('right', 'left', 'left'),
-        tablefmt='simple_outline',
+        zip(options, comments),
+        tablefmt='plain',
     )
-    cl.secho(f'=> {question}', fg='blue')
-    cl.echo(table)
-
-    index = survey.routines.numeric('Please choose an option: ', value=default)
+    index = survey.routines.select(
+        question + '\n',
+        options=table.split('\n'),
+        index=default,
+    )
     return index, options[index]
 
 
@@ -130,14 +130,14 @@ def answers_from_terminal() -> Answers:
             'Tezos',
             'Create project from scratch or learn advanced DipDup features',
         ),
-        default=0,
+        default=2,
     )
     templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
 
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
     _, answers['template'] = prompt_anyof(
-        'Choose a project template',
+        'Choose a project template:',
         options=tuple(i[0] for i in templates),
         comments=tuple(i[1] for i in templates),
         default=0,
@@ -162,10 +162,10 @@ def answers_from_terminal() -> Answers:
 
     # define author and license for new indexer
     answers['license'] = survey.routines.input(
-        'Enter project license\nDipDup itself is MIT-licensed.\n', value=answers['license']
+        'Enter project license (DipDup itself is MIT-licensed.): ', value=answers['license']
     )
     answers['author'] = survey.routines.input(
-        'Enter project author\nYou can add more later in pyproject.toml.\n', value=answers['author']
+        'Enter project author(can be edited in pyproject.toml): ', value=answers['author']
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
@@ -188,7 +188,7 @@ def answers_from_terminal() -> Answers:
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
     answers['line_length'] = survey.routines.input(
-        'Enter maximum line length\nUsed by linters.\n', value=answers['line_length']
+        'Enter maximum line length for linters: ', value=answers['line_length']
     )
     return answers
 
