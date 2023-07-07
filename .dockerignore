@@ -2,9 +2,8 @@
 *
 
 # Add metadata and build files
-!Makefile
 !pyproject.toml
-!poetry.lock
+!pdm.lock
 !README.md
 !requirements**
 
