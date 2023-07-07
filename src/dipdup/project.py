@@ -6,11 +6,11 @@ import logging
 import re
 from copy import copy
 from pathlib import Path
-from typing import Any
 from typing import TypedDict
 from typing import TypeVar
 
 import asyncclick as cl
+import survey  # type: ignore[import]
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
@@ -90,27 +90,6 @@ DEFAULT_ANSWERS = Answers(
 )
 
 
-def prompt(
-    text: str,
-    default: Any,
-    type_: type[_T],
-    print_default: bool = True,
-) -> _T:
-    """Ask user something with casting to type; print_default=True prints default choise be used"""
-    try:
-        value: _T = cl.prompt(
-            text=f'{text} [{default}]' if print_default else text,
-            default=default,
-            type=type_,
-            show_default=False,
-        )
-        cl.echo('\n')
-        return value
-    except cl.Abort:
-        cl.echo('\nAborted')
-        quit(0)
-
-
 def prompt_anyof(
     question: str,
     options: tuple[str, ...],
@@ -119,34 +98,15 @@ def prompt_anyof(
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
     table = tabulate(
-        zip(range(len(options)), options, comments),
-        colalign=('right', 'left', 'left'),
-        tablefmt='simple_outline',
+        zip(options, comments),
+        tablefmt='plain',
     )
-    cl.secho(f'=> {question}', fg='blue')
-    cl.echo(table)
-
-    index = prompt('Please choose an option', default, type_=int)
+    index = survey.routines.select(
+        question + '\n',
+        options=table.split('\n'),
+        index=default,
+    )
     return index, options[index]
-
-
-def prompt_str(
-    question: str,
-    default: str,
-) -> str:
-    """Blue prompt in dipdup style for str answers"""
-    cl.secho(f'=> {question}', fg='blue')
-    return prompt(f'[{default}]', default, str, print_default=False)
-
-
-def prompt_bool(
-    question: str,
-    default: bool,
-) -> bool:
-    """Blue prompt in dipdup style for bool answers"""
-    cl.secho(f'=> {question}', fg='blue')
-    default_str = ' [Y/n]' if default else ' [y/N]'
-    return prompt(default_str, default, bool, print_default=False)
 
 
 def answers_from_terminal() -> Answers:
@@ -179,54 +139,56 @@ def answers_from_terminal() -> Answers:
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
     _, answers['template'] = prompt_anyof(
-        'Choose a project template',
+        'Choose a project template:',
         options=tuple(i[0] for i in templates),
         comments=tuple(i[1] for i in templates),
         default=0,
     )
 
-    package = prompt_str(
-        'Enter project name (the name will be used for folder name and package name)',
-        answers['package'],
-    )
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
+    while True:
+        package = survey.routines.input(
+            'Enter project name (the name will be used for folder name and package name): ',
+            value=answers['package'],
+        )
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
+            break
+
         cl.secho(
             f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
-        quit(1)
-    answers['package'] = package
-    answers['package'] = package
 
-    answers['version'] = prompt_str(
-        'Enter project version',
-        answers['version'],
+    answers['package'] = package
+    answers['version'] = survey.routines.input(
+        'Enter project version: ',
+        value=answers['version'],
     )
 
     # NOTE: Used in pyproject.toml, README.md and some other places
-    answers['description'] = prompt_str(
-        'Enter project description',
-        answers['description'],
+    answers['description'] = survey.routines.input(
+        'Enter project description: ',
+        value=answers['description'],
     )
 
     # define author and license for new indexer
-    answers['license'] = prompt_str(
-        'Enter project license\nDipDup itself is MIT-licensed.',
-        answers['license'],
+    answers['license'] = survey.routines.input(
+        'Enter project license (DipDup itself is MIT-licensed.): ',
+        value=answers['license'],
     )
-    answers['name'] = prompt_str(
-        'Enter your name',
-        answers['name'],
+
+    answers['name'] = survey.routines.input(
+        "Enter author's name",
+        value=answers['name'],
     )
-    answers['name'] = prompt_str(
-        'Enter your email',
-        answers['email'],
+    answers['email'] = survey.routines.input(
+        "Enter author's email",
+        value=answers['email'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
     _, answers['postgresql_image'] = prompt_anyof(
-        question='Choose PostgreSQL version\nTry TimescaleDB when working with time series.',
+        question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
@@ -240,11 +202,14 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
+    cl.secho(
+        '\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n',
+        fg='yellow',
+    )
 
-    answers['line_length'] = prompt_str(
-        'Enter maximum line length\nUsed by linters.',
-        default=answers['line_length'],
+    answers['line_length'] = survey.routines.input(
+        'Enter maximum line length for linters: ',
+        value=answers['line_length'],
     )
     return answers
 
