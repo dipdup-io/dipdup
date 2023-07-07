@@ -88,7 +88,6 @@ def create_project_callback() -> Callable[[str], str]:
     return callback
 
 
-
 @click.command()
 @click.option(
     '--source',
@@ -121,7 +120,6 @@ def main(source: Path, destination: Path, action: str) -> None:
     observer = Observer()
     observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
     observer.start()  # type: ignore[no-untyped-call]
-
 
     if action == 'serve':
         process = Popen(['npm', 'run', 'dev'], cwd=destination.parent.parent)
