@@ -48,7 +48,7 @@ summary = "A configurable sidebar-enabled Sphinx theme"
 
 [[package]]
 name = "anyio"
-version = "3.7.0"
+version = "3.7.1"
 requires_python = ">=3.7"
 summary = "High level compatibility layer for multiple asynchronous event loop implementations"
 dependencies = [
@@ -781,7 +781,7 @@ summary = "An extremely fast Python linter, written in Rust."
 
 [[package]]
 name = "sentry-sdk"
-version = "1.27.0"
+version = "1.27.1"
 summary = "Python client for Sentry (https://sentry.io)"
 dependencies = [
     "certifi",
@@ -1025,7 +1025,7 @@ dependencies = [
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "dev"]
-content_hash = "sha256:7bbf2127a8f2c1c17a31611f66f893cd2fe9f35316c60b08ec772c9efaf708f1"
+content_hash = "sha256:b4caaa9c5470377242b23844cec8022009821cb9f7ff8627a6735e7b132f1de7"
 
 [metadata.files]
 "aiohttp 3.8.4" = [
@@ -1133,9 +1133,9 @@ content_hash = "sha256:7bbf2127a8f2c1c17a31611f66f893cd2fe9f35316c60b08ec772c9ef
     {url = "https://files.pythonhosted.org/packages/64/88/c7083fc61120ab661c5d0b82cb77079fc1429d3f913a456c1c82cf4658f7/alabaster-0.7.13-py3-none-any.whl", hash = "sha256:1ee19aca801bbabb5ba3f5f258e4422dfa86f82f3e9cefb0859b283cdd7f62a3"},
     {url = "https://files.pythonhosted.org/packages/94/71/a8ee96d1fd95ca04a0d2e2d9c4081dac4c2d2b12f7ddb899c8cb9bfd1532/alabaster-0.7.13.tar.gz", hash = "sha256:a27a4a084d5e690e16e01e03ad2b2e552c61a65469419b907243193de1a84ae2"},
 ]
-"anyio 3.7.0" = [
-    {url = "https://files.pythonhosted.org/packages/68/fe/7ce1926952c8a403b35029e194555558514b365ad77d75125f521a2bec62/anyio-3.7.0-py3-none-any.whl", hash = "sha256:eddca883c4175f14df8aedce21054bfca3adb70ffe76a9f607aef9d7fa2ea7f0"},
-    {url = "https://files.pythonhosted.org/packages/c6/b3/fefbf7e78ab3b805dec67d698dc18dd505af7a18a8dd08868c9b4fa736b5/anyio-3.7.0.tar.gz", hash = "sha256:275d9973793619a5374e1c89a4f4ad3f4b0a5510a2b5b939444bee8f4c4d37ce"},
+"anyio 3.7.1" = [
+    {url = "https://files.pythonhosted.org/packages/19/24/44299477fe7dcc9cb58d0a57d5a7588d6af2ff403fdd2d47a246c91a3246/anyio-3.7.1-py3-none-any.whl", hash = "sha256:91dee416e570e92c64041bd18b900d1d6fa78dff7048769ce5ac5ddad004fbb5"},
+    {url = "https://files.pythonhosted.org/packages/28/99/2dfd53fd55ce9838e6ff2d4dac20ce58263798bd1a0dbe18b3a9af3fcfce/anyio-3.7.1.tar.gz", hash = "sha256:44a3c9aba0f5defa43261a8b3efb97891f2bd7d804e0e1f56419befa1adfc780"},
 ]
 "apscheduler 3.10.1" = [
     {url = "https://files.pythonhosted.org/packages/d0/08/952d9570f4897dc2b30166fca5afd3a2cd19b3d408abdb470978484e8a09/APScheduler-3.10.1-py3-none-any.whl", hash = "sha256:e813ad5ada7aff36fb08cdda746b520531eaac7757832abc204868ba78e0c8f6"},
@@ -2641,9 +2641,9 @@ content_hash = "sha256:7bbf2127a8f2c1c17a31611f66f893cd2fe9f35316c60b08ec772c9ef
     {url = "https://files.pythonhosted.org/packages/f6/0b/e8bacb7d71fa6fea03f4b837be231270e0c715b4fdaf286f749d5fafbc26/ruff-0.0.277.tar.gz", hash = "sha256:2dab13cdedbf3af6d4427c07f47143746b6b95d9e4a254ac369a0edb9280a0d2"},
     {url = "https://files.pythonhosted.org/packages/ff/17/77ddf002d21fafae1e657f330e364f0b435b676ed1d9a191005100749e03/ruff-0.0.277-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:734165ea8feb81b0d53e3bf523adc2413fdb76f1264cde99555161dd5a725522"},
 ]
-"sentry-sdk 1.27.0" = [
-    {url = "https://files.pythonhosted.org/packages/40/5b/cbce09bb7d13f0a25a6d0ee4dd95eb9a0c1105a62230970d67ce0cf57a77/sentry_sdk-1.27.0-py2.py3-none-any.whl", hash = "sha256:8c0ba7a0ed4e39635d335fdac7c00840b14ce4319bb8629b934243d6306fee7d"},
-    {url = "https://files.pythonhosted.org/packages/5b/e7/40fd8715756891791f162c24638b8d091d2eb0dc559cc7a0578e70679366/sentry-sdk-1.27.0.tar.gz", hash = "sha256:eb2a5080912dc9b397925657669e3761d95d62c8aa4c0c6d6a73d5a31edaafe9"},
+"sentry-sdk 1.27.1" = [
+    {url = "https://files.pythonhosted.org/packages/75/a2/3e9e5e2fec1a97dac0963bcdc86a37bd233c7d0f45624698a63a2cb8b6f4/sentry-sdk-1.27.1.tar.gz", hash = "sha256:53f36293a0da271a22f476259d2fda76c0b8a1cb96b16d6e6e6aca490d7f3451"},
+    {url = "https://files.pythonhosted.org/packages/b9/1a/1edf053d6adcd99be83cb27ee809996a18d8458b8a16a802102bec0e5c36/sentry_sdk-1.27.1-py2.py3-none-any.whl", hash = "sha256:24308bd05a1f7d65e40acc68a768b4e5c35462039bfd6ae2ca116b92a7b53c78"},
 ]
 "setuptools 68.0.0" = [
     {url = "https://files.pythonhosted.org/packages/c7/42/be1c7bbdd83e1bfb160c94b9cafd8e25efc7400346cf7ccdbdb452c467fa/setuptools-68.0.0-py3-none-any.whl", hash = "sha256:11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f"},
