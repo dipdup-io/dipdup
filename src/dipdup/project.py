@@ -6,14 +6,13 @@ import logging
 import re
 from copy import copy
 from pathlib import Path
-from typing import Any
 from typing import TypedDict
 from typing import TypeVar
 
 import asyncclick as cl
+import survey  # type: ignore
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
-import survey
 
 from dipdup import __version__
 from dipdup.utils import load_template
@@ -162,8 +161,12 @@ def answers_from_terminal() -> Answers:
     answers['description'] = survey.routines.input('Enter project description: ', value=answers['description'])
 
     # define author and license for new indexer
-    answers['license'] = survey.routines.input('Enter project license\nDipDup itself is MIT-licensed.\n', value=answers['license'])
-    answers['author'] = survey.routines.input('Enter project author\nYou can add more later in pyproject.toml.\n', value=answers['author'])
+    answers['license'] = survey.routines.input(
+        'Enter project license\nDipDup itself is MIT-licensed.\n', value=answers['license']
+    )
+    answers['author'] = survey.routines.input(
+        'Enter project author\nYou can add more later in pyproject.toml.\n', value=answers['author']
+    )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
@@ -184,7 +187,9 @@ def answers_from_terminal() -> Answers:
 
     cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
 
-    answers['line_length'] = survey.routines.input('Enter maximum line length\nUsed by linters.\n', value=answers['line_length'])
+    answers['line_length'] = survey.routines.input(
+        'Enter maximum line length\nUsed by linters.\n', value=answers['line_length']
+    )
     return answers
 
 
