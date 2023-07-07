@@ -17,7 +17,21 @@ jobs:
   docs:
     name: Docs
     runs-on: ubuntu-22.04
-    # TODO: here will be new doc pipeline
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+
+      - name: Install PDM
+        run: pipx install pdm
+
+      - name: Set up Python
+        uses: actions/setup-python@main
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install project
+        run: pdm install
+  
+      - name: Build docs
+        run: pdm run docs_build

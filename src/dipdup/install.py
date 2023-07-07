@@ -11,7 +11,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from shutil import rmtree
 from shutil import which
 from typing import Any
 from typing import Dict
@@ -25,7 +24,7 @@ WHICH_CMDS = (
     'pipx',
     'dipdup',
     'datamodel-codegen',
-    'poetry',
+    'pdm',
     'pyvenv',
     'pyenv',
 )
@@ -180,7 +179,7 @@ def install(
     pipx_packages = env._pipx_packages
     pipx_dipdup = 'dipdup' in pipx_packages
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
-    pipx_poetry = 'poetry' in pipx_packages
+    pipx_pdm = 'pdm' in pipx_packages
 
     if pipx_dipdup:
         echo('Updating DipDup')
@@ -201,17 +200,14 @@ def install(
     else:
         env.run_cmd('pipx', 'install', 'datamodel-code-generator', force_str)
 
-    if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
-        rmtree(legacy_poetry, ignore_errors=True)
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-    elif pipx_poetry:
-        echo('Updating Poetry')
-        env.run_cmd('pipx', 'upgrade', 'poetry', force_str)
-    elif ask('Install poetry? Optional for `dipdup new` command', True, quiet):
-        echo('Installing poetry')
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-        env._commands['poetry'] = which('poetry')
-        pipx_poetry = True
+    if pipx_pdm:
+        echo('Updating PDM')
+        env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
+    else:
+        echo('Installing PDM')
+        env.run_cmd('pipx', 'install', 'pdm', force_str)
+        env._commands['pdm'] = which('pdm')
+        pipx_pdm = True
 
     done(
         'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'

@@ -61,7 +61,8 @@ class Answers(TypedDict):
     version: str
     description: str
     license: str
-    author: str
+    name: str
+    email: str
     postgresql_image: str
     hasura_image: str
     line_length: str
@@ -80,7 +81,8 @@ DEFAULT_ANSWERS = Answers(
     version='0.0.1',
     description='Blockchain indexer built with DipDup',
     license='MIT',
-    author='John Smith <john_smith@localhost.lan>',
+    name='John Smith',
+    email='john_smith@localhost.lan',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
     hasura_image='hasura/graphql-engine:v2.28.0',
@@ -173,9 +175,14 @@ def answers_from_terminal() -> Answers:
         'Enter project license (DipDup itself is MIT-licensed.): ',
         value=answers['license'],
     )
-    answers['author'] = survey.routines.input(
-        'Enter project author (can be edited in pyproject.toml): ',
-        value=answers['author'],
+
+    answers['name'] = survey.routines.input(
+        "Enter author's name",
+        value=answers['name'],
+    )
+    answers['email'] = survey.routines.input(
+        "Enter author's email",
+        value=answers['email'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')

@@ -3,8 +3,7 @@
 
 # Add metadata and build files
 !pyproject.toml
-!poetry.lock
-!requirements.*
+!pdm.lock
 !README.md
 
 # Add Python code

@@ -5,7 +5,8 @@
   "version": "0.0.1",
   "description": "Blockchain indexer built with DipDup",
   "license": "MIT",
-  "author": "John Smith <john_smith@localhost.lan>",
+  "name": "John Smith",
+  "email": "john_smith@localhost.lan",
   "postgresql_image": "postgres:15",
   "hasura_image": "hasura/graphql-engine:v2.28.0",
   "line_length": "120"
