@@ -45,13 +45,13 @@ jobs:
       - name: dipdup new
         run: dipdup new --quiet
 
+      - name: Replace DipDup in project with current HEAD
+        run: cd dipdup_indexer; pdm add -d git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}
+        
       - name: dipdup init
         run: cd dipdup_indexer; dipdup init
 
-      - name: Replace DipDup in project with current HEAD
-        run: cd dipdup_indexer; pdm add git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}; pdm install -d
-
-      - name: make install lint
+      - name: Run lint
         run: cd dipdup_indexer; pdm run lint
 
       - name: Deploy scripts to GitHub Pages
