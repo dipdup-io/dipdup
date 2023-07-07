@@ -10,7 +10,7 @@ from typing import TypedDict
 from typing import TypeVar
 
 import asyncclick as cl
-import survey  # type: ignore
+import survey  # type: ignore[import]
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
@@ -41,7 +41,7 @@ EVM_DEMOS = (
     ('demo_uniswap', 'Uniswap V3 pools, positions, swaps, ticks, etc.'),
 )
 OTHER_DEMOS = (
-    ('blank', 'Empty config for a fresh start'),
+    ('demo_blank', 'Empty config for a fresh start'),
     # TODO: demo_jobs
     # TODO: demo_backup
     # TODO: demo_sql
@@ -130,7 +130,7 @@ def answers_from_terminal() -> Answers:
             'Tezos',
             'Create project from scratch or learn advanced DipDup features',
         ),
-        default=2,
+        default=0,
     )
     templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
 
@@ -143,35 +143,45 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    package = survey.routines.input(
-        'Enter project name (the name will be used for folder name and package name): ', value=answers['package']
-    )
-    if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
+    while True:
+        package = survey.routines.input(
+            'Enter project name (the name will be used for folder name and package name): ',
+            value=answers['package'],
+        )
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
+            break
+
         cl.secho(
             f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
-        quit(1)
-    answers['package'] = package
-    answers['package'] = package
 
-    answers['version'] = survey.routines.input('Enter project version: ', value=answers['version'])
+    answers['package'] = package
+    answers['version'] = survey.routines.input(
+        'Enter project version: ',
+        value=answers['version'],
+    )
 
     # NOTE: Used in pyproject.toml, README.md and some other places
-    answers['description'] = survey.routines.input('Enter project description: ', value=answers['description'])
+    answers['description'] = survey.routines.input(
+        'Enter project description: ',
+        value=answers['description'],
+    )
 
     # define author and license for new indexer
     answers['license'] = survey.routines.input(
-        'Enter project license (DipDup itself is MIT-licensed.): ', value=answers['license']
+        'Enter project license (DipDup itself is MIT-licensed.): ',
+        value=answers['license'],
     )
     answers['author'] = survey.routines.input(
-        'Enter project author(can be edited in pyproject.toml): ', value=answers['author']
+        'Enter project author (can be edited in pyproject.toml): ',
+        value=answers['author'],
     )
 
     cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
 
     _, answers['postgresql_image'] = prompt_anyof(
-        question='Choose PostgreSQL version\nTry TimescaleDB when working with time series.',
+        question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
@@ -185,10 +195,14 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    cl.secho('\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n', fg='yellow')
+    cl.secho(
+        '\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n',
+        fg='yellow',
+    )
 
     answers['line_length'] = survey.routines.input(
-        'Enter maximum line length for linters: ', value=answers['line_length']
+        'Enter maximum line length for linters: ',
+        value=answers['line_length'],
     )
     return answers
 
