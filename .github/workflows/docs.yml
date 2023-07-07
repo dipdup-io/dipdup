@@ -30,5 +30,8 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      - name: Run install
+        run: pdm install
+  
       - name: Run lint
         run: pdm run docs_build
