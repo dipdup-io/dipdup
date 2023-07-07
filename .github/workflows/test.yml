@@ -39,8 +39,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      - name: Run install
+        run: pdm install
+
       - name: Run lint
-        run: pdm install; pdm run lint
+        run: pdm run lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
+
       - name: Run tests
         run: pdm run test

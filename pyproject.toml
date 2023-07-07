@@ -112,12 +112,9 @@ demos = { shell = """
     pdm run fmt
     pdm run lint
 """ }
-docs_serve = { shell = """
-	python scripts/watch_docs.py --source docs --destination {args:../interface}/content/docs --run
-""" }
-docs_watch = { shell = """
-	python scripts/watch_docs.py --source docs --destination {args:../interface}/content/docs
-""" }
+docs_build = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs build"
+docs_serve = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs serve"
+docs_watch = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs watch"
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]

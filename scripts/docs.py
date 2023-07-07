@@ -88,6 +88,7 @@ def create_project_callback() -> Callable[[str], str]:
     return callback
 
 
+
 @click.command()
 @click.option(
     '--source',
@@ -99,12 +100,10 @@ def create_project_callback() -> Callable[[str], str]:
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     help='content/ dirertory path to copy to.',
 )
-@click.option(
-    '--run',
-    is_flag=True,
-    help='Run frontend server',
-)
-def main(source: Path, destination: Path, run: bool) -> None:
+@click.argument('action', type=str)
+def main(source: Path, destination: Path, action: str) -> None:
+    rmtree(destination, ignore_errors=True)
+
     event_handler = DocsBuilder(
         source,
         destination,
@@ -113,18 +112,23 @@ def main(source: Path, destination: Path, run: bool) -> None:
             create_project_callback(),
         ],
     )
-    rmtree(destination, ignore_errors=True)
     for path in source.glob('**/*'):
         event_handler.on_modified(FileSystemEvent(path))  # type: ignore[no-untyped-call]
+
+    if action == 'build':
+        return
 
     observer = Observer()
     observer.schedule(event_handler, path=source, recursive=True)  # type: ignore[no-untyped-call]
     observer.start()  # type: ignore[no-untyped-call]
 
-    process = Popen(['npm', 'run', 'dev'], cwd=destination.parent.parent) if run else None
-    if process:
+
+    if action == 'serve':
+        process = Popen(['npm', 'run', 'dev'], cwd=destination.parent.parent)
         time.sleep(3)
         click.launch('http://localhost:3000/docs')
+    else:
+        process = None
 
     with suppress(KeyboardInterrupt):
         while True:
