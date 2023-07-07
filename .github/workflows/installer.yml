@@ -49,7 +49,7 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Replace DipDup in project with current HEAD
-        run: cd dipdup_indexer; pdm add git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}; pdm sync
+        run: cd dipdup_indexer; pdm add git+https://github.com/dipdup-io/dipdup.git@${{ github.sha }}; pdm install -d
 
       - name: make install lint
         run: cd dipdup_indexer; pdm run lint
