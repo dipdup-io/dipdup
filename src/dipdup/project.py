@@ -85,7 +85,7 @@ DEFAULT_ANSWERS = Answers(
     email='john_smith@localhost.lan',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.29.0 ',
+    hasura_image='hasura/graphql-engine:v2.29.0',
     line_length='120',
 )
 
