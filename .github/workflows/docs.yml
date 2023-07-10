@@ -19,6 +19,7 @@ on:
 
 env:
   FRONTEND_BRANCH: actual-docs
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   docs:
@@ -51,7 +52,6 @@ jobs:
 
       - name: Clone frontend
         run: |
-          gh auth login ${{ secrets.GITHUB_TOKEN }}
           gh auth setup-git
           gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
 
