@@ -12,8 +12,10 @@ def get_package_path(package: str) -> Path:
     if TEST:
         return Path.cwd() / package
 
-    if Path.cwd().name == package and Path('pyproject.toml').exists():
-        return Path.cwd()
+    # NOTE: If cwd is a package, use it    
+    if Path('pyproject.toml').exists():
+        if Path.cwd().name == package or DOCKER:
+            return Path.cwd()
 
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):
