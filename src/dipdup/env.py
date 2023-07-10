@@ -12,7 +12,7 @@ def get_package_path(package: str) -> Path:
     if TEST:
         return Path.cwd() / package
 
-    # NOTE: If cwd is a package, use it    
+    # NOTE: If cwd is a package, use it
     if Path('pyproject.toml').exists():
         if DOCKER or (Path.cwd().name == package):
             return Path.cwd()
