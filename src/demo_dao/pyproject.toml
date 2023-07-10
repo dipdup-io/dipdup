@@ -28,7 +28,8 @@ _mypy = "mypy ."
 all = { composite = ["fmt", "lint"] }
 fmt = { composite = ["_isort", "_black"] }
 lint = { composite = ["_ruff", "_mypy"] }
-image = "docker build . -f deploy/Dockerfile -t demo_dao:latest"
+image = "docker buildx build . --load --progress plain -f deploy/Dockerfile -t demo_dao:latest"
+
 clean = "git clean -xdf --exclude=.venv"
 
 [tool.isort]
