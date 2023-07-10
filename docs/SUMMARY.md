@@ -105,4 +105,5 @@
 # Community
 
 * [Contribution guide](CONTRIBUTING.md)
+* [Glossary](Glossary.md)
 * [MIT License](LICENSE.md)
