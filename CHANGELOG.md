@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [6.5.9] - 2022-07-11
+
+### Fixed
+
+- tzkt: Optimized queries for `operation_unfiltered` index.
+
 ## [6.5.8] - 2022-06-28
 
 ### Fixed
@@ -1028,7 +1034,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.8...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.9...HEAD
+[6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
 [6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
 [6.5.7]: https://github.com/dipdup-io/dipdup/compare/6.5.6...6.5.7
 [6.5.6]: https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6
