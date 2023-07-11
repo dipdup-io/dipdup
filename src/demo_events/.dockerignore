@@ -20,4 +20,4 @@
 !**/*.yaml
 !**/*.yml
 !**/*.j2
-!**/*.env.default
+!**/.keep

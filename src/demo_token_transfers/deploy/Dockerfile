@@ -2,4 +2,5 @@ FROM dipdup/dipdup:6
 # FROM ghcr.io/dipdup-io/dipdup:6
 # FROM ghcr.io/dipdup-io/dipdup:next
 
-COPY . .
+COPY --chown=dipdup . demo_token_transfers
+WORKDIR demo_token_transfers
