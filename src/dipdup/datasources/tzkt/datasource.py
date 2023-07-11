@@ -578,6 +578,7 @@ class TzktDatasource(SignalRDatasource):
             TRANSACTION_OPERATION_FIELDS,
             cursor=True,
             status='applied',
+            sort='level',
         )
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
@@ -831,6 +832,7 @@ class TzktDatasource(SignalRDatasource):
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
         cursor: bool = False,
+        sort: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
@@ -847,6 +849,13 @@ class TzktDatasource(SignalRDatasource):
                 params['offset'] = offset
         if select:
             params['select'] = ','.join(select)
+        if sort:
+            if sort.startswith('-'):
+                sort_param_name = 'sort.desc'
+                sort = sort[1:]
+            else:
+                sort_param_name = 'sort'
+            params[sort_param_name] = sort
         return {
             **params,
             **kwargs,
