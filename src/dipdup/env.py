@@ -1,7 +1,6 @@
 import importlib
 import importlib.util
 import platform
-import sys
 from contextlib import suppress
 from os import environ as env
 from pathlib import Path

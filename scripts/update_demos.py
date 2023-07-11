@@ -20,7 +20,7 @@ def _get_projects() -> list[Path]:
 
 
 for path in _get_demos():
-    if not path.name.startswith('demo_') or 'uniswap' in path.name:
+    if not path.name.startswith('demo_'):
         continue
     if path.is_dir():
         print(f'=> Removing `{path.name}`')

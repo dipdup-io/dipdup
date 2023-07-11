@@ -1,0 +1,23 @@
+# Ignore all
+*
+
+# Add metadata and build files
+!pyproject.toml
+!pdm.lock
+!README.md
+
+# Add Python code
+!**/*.py
+
+# Ignore caches and virtualenvs
+**/.*_cache
+**/__pycache__
+
+# Add configs and scripts (but not env!)
+!**/*.graphql
+!**/*.json
+!**/*.sql
+!**/*.yaml
+!**/*.yml
+!**/*.j2
+!**/.keep
