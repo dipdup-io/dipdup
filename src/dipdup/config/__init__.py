@@ -19,7 +19,6 @@ import importlib
 import inspect
 import logging.config
 import re
-import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -179,7 +178,7 @@ class HttpConfig:
 class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
-    retry_count: int = sys.maxsize
+    retry_count: int = 10
     retry_sleep: float = 1.0
     retry_multiplier: float = 2.0
     ratelimit_rate: int = 0
