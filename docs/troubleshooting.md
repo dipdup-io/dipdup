@@ -44,7 +44,7 @@ dipdup -c dipdup.yaml -c dipdup.prod.yaml config env
 
 More logs can give you a clue about the reason for an issue. Enable them in config:
 
-```yaml
+```yaml [dipdup.yaml]
 logging: DEBUG
 ```
 
