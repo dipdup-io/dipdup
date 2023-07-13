@@ -115,8 +115,8 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        if not sys.version.startswith('3.11'):
-            fail('DipDup requires Python 3.11')
+        #if not sys.version.startswith('3.11'):
+        #    fail('DipDup requires Python 3.11')
 
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:
@@ -128,9 +128,6 @@ class DipDupEnvironment:
 
         self.refresh()
         self.refresh_pipx()
-
-        if self._commands.get('pyenv'):
-            echo('WARNING: pyenv is installed, this may cause issues', Colors.YELLOW)
 
     def run_cmd(self, cmd: str, *args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         """Run command safely (relatively lol)"""
@@ -152,12 +149,10 @@ class DipDupEnvironment:
         if self._commands.get('pipx'):
             return
 
-        if sys.prefix != sys.base_prefix:
-            fail("pipx can't be installed in virtualenv, run `deactivate` and try again")
-
         echo('Installing pipx')
-        self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')  # TODO: tmp remove user
         self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
+        # ???
         os.environ['PATH'] = os.environ['PATH'] + ':' + str(Path.home() / '.local' / 'bin')
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
@@ -181,31 +176,35 @@ def install(
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
     pipx_pdm = 'pdm' in pipx_packages
 
+    python_inter_pipx = which('python3')
+    if 'pyenv' in python_inter_pipx:  # TODO: fix type
+        python_inter_pipx = subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+
     if pipx_dipdup:
         echo('Updating DipDup')
         env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
     else:
         if path:
             echo(f'Installing DipDup from `{path}`')
-            env.run_cmd('pipx', 'install', path, force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
         elif ref:
             echo(f'Installing DipDup from `{ref}`')
-            env.run_cmd('pipx', 'install', f'git+{GITHUB}@{ref}', force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, f'git+{GITHUB}@{ref}', force_str)
         else:
             echo('Installing DipDup from PyPI')
-            env.run_cmd('pipx', 'install', 'dipdup', force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'dipdup', force_str)
 
     if pipx_datamodel_codegen:
         env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
     else:
-        env.run_cmd('pipx', 'install', 'datamodel-code-generator', force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'datamodel-code-generator', force_str)
 
     if pipx_pdm:
         echo('Updating PDM')
         env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
     else:
         echo('Installing PDM')
-        env.run_cmd('pipx', 'install', 'pdm', force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
         env._commands['pdm'] = which('pdm')
         pipx_pdm = True
 
