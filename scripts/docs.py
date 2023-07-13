@@ -53,16 +53,18 @@ class DocsBuilder(FileSystemEventHandler):
 
         print(f'`{src_file}` has been modified; copying to {dst_file}')
 
-        if src_file.suffix in TEXT:
-            data = src_file.read_text()
-            for callback in self._callbacks:
-                data = callback(data)
-            dst_file.write_text(data)
-        elif src_file.suffix in IMAGES:
-            dst_file.write_bytes(src_file.read_bytes())
-        else:
-            pass
-
+        try:
+            if src_file.suffix in TEXT:
+                data = src_file.read_text()
+                for callback in self._callbacks:
+                    data = callback(data)
+                dst_file.write_text(data)
+            elif src_file.suffix in IMAGES:
+                dst_file.write_bytes(src_file.read_bytes())
+            else:
+                pass
+        except Exception as e:
+            print('Failed to copy:', e)
 
 def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
@@ -79,7 +81,7 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
 
 def create_project_callback() -> Callable[[str], str]:
     def callback(data: str) -> str:
-        for match in re.finditer(r'{{ project.(.*) }}', data):
+        for match in re.finditer(r'{{ project.([a-zA-Z_0-9]*) }}', data):
             key = match.group(1)
             value = DEFAULT_ANSWERS[key]  # type: ignore[literal-required]
             data = data.replace(match.group(0), str(value))
