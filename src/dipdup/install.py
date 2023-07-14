@@ -29,13 +29,18 @@ WHICH_CMDS = (
     'pyenv',
 )
 
-WELCOME_ASCII = r"""
+WELCOME_ASCII = """\0
         ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
-      / / / // // __ \ / / / // / / // __ \
+      / / / // // __ \ / / / // / / // __ \\
      / /_/ // // /_/ // /_/ // /_/ // /_/ /
     /_____//_// .___//_____/ \__,_// .___/ 
              /_/                  /_/      
+"""
+EPILOG = """\0
+Documentation:         https://docs.dipdup.io
+GitHub:                https://github.com/dipdup-io/dipdup
+Discord:               https://discord.gg/NbANhqCJHA
 """
 
 
@@ -79,6 +84,7 @@ class DipDupEnvironment:
     def refresh(self) -> None:
         if not self._quiet and not self._commands:
             print(WELCOME_ASCII)
+            print(EPILOG)
             print()
             print(_tab('OS:') + self._os)
             print(_tab('Arch:') + self._arch)
@@ -103,9 +109,6 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        # if not sys.version.startswith('3.11'):
-        #    fail('DipDup requires Python 3.11')
-
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:
             echo('WARNING: Running as root, this is not generally recommended', Colors.YELLOW)
