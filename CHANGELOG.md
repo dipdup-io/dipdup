@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
 - api: Added `/performance` endpoint to request indexing stats.
 - cli: Added `report` command group to manage performance and crash reports created by DipDup.
-- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models.
 - config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
 - config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
 - config: Added `advanced.metrics` field to configure amount of gathered metrics.
@@ -24,12 +24,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
-- database: Allow running project scripts and queries on SQLite. 
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite.
 - database: Don't cleanup model updates on every loop.
 
 ### Changed
 
+- ci: Docker images are now based on Debian 12.
 - cli: `config env --file` option renamed to `--output`.
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
