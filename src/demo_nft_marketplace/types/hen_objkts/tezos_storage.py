@@ -8,54 +8,54 @@ from typing import Dict
 from typing import List
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     address: str
     nat: str
 
 
 class LedgerItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     key: Key
     value: str
 
 
 class Key1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     owner: str
     operator: str
     token_id: str
 
 
 class Operator(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     key: Key1
     value: Dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     token_id: str
     token_info: Dict[str, str]
 
 
 class HenObjktsStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     administrator: str
     all_tokens: str
     ledger: List[LedgerItem]

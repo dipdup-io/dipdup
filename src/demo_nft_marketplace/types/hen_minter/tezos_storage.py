@@ -6,21 +6,21 @@ from __future__ import annotations
 from typing import Dict
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Royalties(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     issuer: str
     royalties: str
 
 
 class Swaps(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     issuer: str
     objkt_amount: str
     objkt_id: str
@@ -28,9 +28,9 @@ class Swaps(BaseModel):
 
 
 class HenMinterStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     curate: str
     genesis: str
     hdao: str

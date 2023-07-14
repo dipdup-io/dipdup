@@ -7,17 +7,17 @@ from typing import Dict
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class StoreRecordsValue(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    address: Optional[str]
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    address: Optional[str] = None
     data: Dict[str, str]
-    expiry_key: Optional[str]
+    expiry_key: Optional[str] = None
     internal_data: Dict[str, str]
     level: str
     owner: str
-    tzip12_token_id: Optional[str]
+    tzip12_token_id: Optional[str] = None

@@ -6,25 +6,26 @@ from __future__ import annotations
 from typing import List
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class Tx(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     to_: str
     token_id: str
     amount: str
 
 
 class TransferParameterItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     from_: str
     txs: List[Tx]
 
 
-class TransferParameter(BaseModel):
-    __root__: List[TransferParameterItem]
+class TransferParameter(RootModel):
+    root: List[TransferParameterItem]

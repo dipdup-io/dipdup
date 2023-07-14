@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class CollectParameter(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     objkt_amount: str
     swap_id: str

@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import RootModel
 
 
-class StoreExpiryMapKey(BaseModel):
-    __root__: str
+class StoreExpiryMapKey(RootModel):
+    root: str

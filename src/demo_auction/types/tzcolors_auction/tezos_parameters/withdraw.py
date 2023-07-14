@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import RootModel
 
 
-class WithdrawParameter(BaseModel):
-    __root__: str
+class WithdrawParameter(RootModel):
+    root: str

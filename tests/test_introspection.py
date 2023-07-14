@@ -42,13 +42,13 @@ def test_list_complex_arg() -> None:
 
 def test_pydantic_list_arg() -> None:
     class ListOfMapsStorage(BaseModel):
-        __root__: List[Union[int, Dict[str, str]]]
+        root: List[Union[int, Dict[str, str]]]
 
     class SomethingElse(BaseModel):
-        __root__: Dict[str, str]
+        root: Dict[str, str]
 
     class OptionalList(BaseModel):
-        __root__: Optional[List[str]]
+        root: Optional[List[str]]
 
     assert get_list_elt_type(ListOfMapsStorage) == Union[int, Dict[str, str]]
 
@@ -84,13 +84,13 @@ def test_dict_complex_arg() -> None:
 
 def test_pydantic_dict_arg() -> None:
     class DictOfMapsStorage(BaseModel):
-        __root__: Dict[str, Union[int, Dict[str, str]]]
+        root: Dict[str, Union[int, Dict[str, str]]]
 
     class SomethingElse(BaseModel):
-        __root__: List[str]
+        root: List[str]
 
     class OptionalDict(BaseModel):
-        __root__: Optional[Dict[str, str]]
+        root: Optional[Dict[str, str]]
 
     assert get_dict_value_type(DictOfMapsStorage) == Union[int, Dict[str, str]]
     with pytest.raises(IntrospectionError):
@@ -117,10 +117,10 @@ def test_pydantic_object_key() -> None:
 
 def test_is_array() -> None:
     class ListOfMapsStorage(BaseModel):
-        __root__: List[Union[int, Dict[str, str]]]
+        root: List[Union[int, Dict[str, str]]]
 
     class OptionalList(BaseModel):
-        __root__: Optional[List[str]]
+        root: Optional[List[str]]
 
     assert is_array_type(List[str]) is True
     assert is_array_type(ListOfMapsStorage) is True
@@ -134,10 +134,10 @@ def test_simple_union_unwrap() -> None:
 
 def test_pydantic_optional_unwrap() -> None:
     class UnionIntStr(BaseModel):
-        __root__: Union[int, str]
+        root: Union[int, str]
 
     class OptionalStr(BaseModel):
-        __root__: Optional[str]
+        root: Optional[str]
 
     assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
     assert unwrap_union_type(UnionIntStr) == (True, (int, str))
@@ -145,10 +145,10 @@ def test_pydantic_optional_unwrap() -> None:
 
 def test_root_type_extraction() -> None:
     class OptionalStr(BaseModel):
-        __root__: Optional[str]
+        root: Optional[str]
 
     class ListOfMapsStorage(BaseModel):
-        __root__: List[Union[int, Dict[str, str]]]
+        root: List[Union[int, Dict[str, str]]]
 
     assert extract_root_outer_type(OptionalStr) == Optional[str]
     # FIXME: left operand type: "Type[BaseModel]", right operand type: "Type[List[Any]]"

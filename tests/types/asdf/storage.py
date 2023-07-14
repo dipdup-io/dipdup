@@ -27,4 +27,4 @@ class AsdfStorageItem(BaseModel):
 
 
 class AsdfStorage(BaseModel):
-    __root__: List[Dict[str, List[AsdfStorageItem]]]
+    root: List[Dict[str, List[AsdfStorageItem]]]

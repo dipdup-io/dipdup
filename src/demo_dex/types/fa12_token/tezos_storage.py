@@ -6,29 +6,29 @@ from __future__ import annotations
 from typing import Dict
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Balances(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     approvals: Dict[str, str]
     balance: str
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     nat: str
     map: Dict[str, str]
 
 
 class Fa12TokenStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     administrator: str
     balances: Dict[str, Balances]
     debtCeiling: str

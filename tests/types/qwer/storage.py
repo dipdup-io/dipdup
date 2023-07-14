@@ -26,4 +26,4 @@ class QwerStorageItem1(BaseModel):
 
 
 class QwerStorage(BaseModel):
-    __root__: List[List[Union[QwerStorageItem, QwerStorageItem1]]]
+    root: List[List[Union[QwerStorageItem, QwerStorageItem1]]]

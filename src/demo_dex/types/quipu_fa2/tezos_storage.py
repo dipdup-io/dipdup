@@ -8,43 +8,43 @@ from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Ledger(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     allowances: List[str]
     balance: str
     frozen_balance: str
 
 
 class UserRewards(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     reward: str
     reward_paid: str
 
 
 class Voters(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    candidate: Optional[str]
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    candidate: Optional[str] = None
     last_veto: str
     veto: str
     vote: str
 
 
 class Storage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     baker_validator: str
-    current_candidate: Optional[str]
-    current_delegated: Optional[str]
+    current_candidate: Optional[str] = None
+    current_delegated: Optional[str] = None
     last_update_time: str
     last_veto: str
     ledger: Dict[str, Ledger]
@@ -68,9 +68,9 @@ class Storage(BaseModel):
 
 
 class QuipuFa2Storage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     dex_lambdas: Dict[str, str]
     metadata: Dict[str, str]
     storage: Storage

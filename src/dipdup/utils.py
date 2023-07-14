@@ -202,9 +202,9 @@ def parse_object(
 ) -> ObjectT:
     try:
         if plain is False:
-            return type_.parse_obj(data)
+            return type_.model_validate(data)
 
-        model_keys = tuple(field.alias for field in type_.__fields__.values())
+        model_keys = tuple(field.alias or key for key, field in type_.model_fields.items())
         return type_(**dict(zip(model_keys, data)))
 
     except ValidationError as e:

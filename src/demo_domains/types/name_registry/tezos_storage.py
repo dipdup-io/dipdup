@@ -8,35 +8,35 @@ from typing import List
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Records(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    address: Optional[str]
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    address: Optional[str] = None
     data: Dict[str, str]
-    expiry_key: Optional[str]
+    expiry_key: Optional[str] = None
     internal_data: Dict[str, str]
     level: str
     owner: str
-    tzip12_token_id: Optional[str]
+    tzip12_token_id: Optional[str] = None
 
 
 class ReverseRecords(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     internal_data: Dict[str, str]
-    name: Optional[str]
+    name: Optional[str] = None
     owner: str
 
 
 class Store(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     data: Dict[str, str]
     expiry_map: Dict[str, str]
     metadata: Dict[str, str]
@@ -48,9 +48,9 @@ class Store(BaseModel):
 
 
 class NameRegistryStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     actions: Dict[str, str]
     store: Store
     trusted_senders: List[str]

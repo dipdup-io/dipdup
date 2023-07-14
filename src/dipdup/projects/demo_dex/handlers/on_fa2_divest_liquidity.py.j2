@@ -26,7 +26,7 @@ async def on_fa2_divest_liquidity(
 
     assert transaction_1.amount is not None
     tez_qty = Decimal(transaction_1.amount) / (10**6)
-    token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10**decimals)
+    token_qty = sum(Decimal(tx.amount) for tx in transfer.parameter.root[0].txs) / (10**decimals)
     shares_qty = int(divest_liquidity.parameter.shares)
 
     tez_pool = Decimal(storage.storage.tez_pool) / (10**6)

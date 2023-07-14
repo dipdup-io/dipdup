@@ -8,29 +8,29 @@ from typing import Dict
 from typing import List
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     owner: str
     delegate: str
 
 
 class Delegate(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     key: Key
     value: Dict[str, Any]
 
 
 class FreezeHistory(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     current_stage_num: str
     current_unstaked: str
     past_unstaked: str
@@ -38,41 +38,41 @@ class FreezeHistory(BaseModel):
 
 
 class GovernanceToken(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     address: str
     token_id: str
 
 
 class ProposalKeyListSortByLevelItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     nat: str
     bytes: str
 
 
 class Key1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     address: str
     bool: bool
 
 
 class Voter(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     key: Key1
     value: str
 
 
 class Proposals(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     downvotes: str
     metadata: str
     proposer: str
@@ -85,18 +85,18 @@ class Proposals(BaseModel):
 
 
 class QuorumThresholdAtCycle(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     last_updated_cycle: str
     quorum_threshold: str
     staked: str
 
 
 class RegistryStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     admin: str
     delegates: List[Delegate]
     extra: Dict[str, str]

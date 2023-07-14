@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import RootModel
 
 
-class CancelSwapParameter(BaseModel):
-    __root__: str
+class CancelSwapParameter(RootModel):
+    root: str

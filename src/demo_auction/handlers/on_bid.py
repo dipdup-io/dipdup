@@ -12,7 +12,7 @@ async def on_bid(
     assert bid.data.amount is not None
 
     auction = await models.Auction.filter(
-        id=bid.parameter.__root__,
+        id=bid.parameter.root,
     ).get()
 
     bidder, _ = await models.User.get_or_create(address=bid.data.sender_address)

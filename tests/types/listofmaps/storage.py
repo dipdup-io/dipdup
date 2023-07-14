@@ -5,4 +5,4 @@ from pydantic import BaseModel
 
 
 class ListOfMapsStorage(BaseModel):
-    __root__: List[Dict[str, str]]
+    root: List[Dict[str, str]]

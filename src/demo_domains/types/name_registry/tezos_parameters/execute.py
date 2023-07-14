@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class ExecuteParameter(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     action_name: str
     payload: str
     original_sender: str

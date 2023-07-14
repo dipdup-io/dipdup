@@ -36,4 +36,4 @@ class HjklStorageItem(BaseModel):
 
 
 class HjklStorage(BaseModel):
-    __root__: List[HjklStorageItem]
+    root: List[HjklStorageItem]

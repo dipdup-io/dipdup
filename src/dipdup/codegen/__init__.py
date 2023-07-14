@@ -127,6 +127,8 @@ class CodeGenerator(ABC):
             'jsonschema',
             '--target-python-version',
             '3.11',
+            '--output-model-type',
+            'pydantic_v2.BaseModel',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)

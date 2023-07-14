@@ -7,13 +7,14 @@ from typing import Dict
 from typing import Optional
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class TzcolorsAuctionStorage1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     token_address: str
     token_id: str
     token_amount: str
@@ -23,5 +24,5 @@ class TzcolorsAuctionStorage1(BaseModel):
     bidder: str
 
 
-class TzcolorsAuctionStorage(BaseModel):
-    __root__: Optional[Dict[str, TzcolorsAuctionStorage1]] = None
+class TzcolorsAuctionStorage(RootModel):
+    root: Optional[Dict[str, TzcolorsAuctionStorage1]] = None

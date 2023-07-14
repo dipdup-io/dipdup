@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import field
 from typing import Any
 from typing import Iterator
 from typing import Literal
 from typing import cast
 
 from pydantic.dataclasses import dataclass
+from pydantic.fields import Field
 
 from dipdup.config import CodegenMixin
 from dipdup.config import ContractConfig
@@ -31,7 +31,7 @@ class SubgroupIndexMixin:
     :param subgroup_index:
     """
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         self._subgroup_index: int | None = None
 
     @property
@@ -142,8 +142,8 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
     optional: bool = False
     alias: str | None = None
 
-    def __post_init_post_parse__(self) -> None:
-        SubgroupIndexMixin.__post_init_post_parse__(self)
+    def __post_init__(self) -> None:
+        SubgroupIndexMixin.__post_init__(self)
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -248,7 +248,7 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
     kind: Literal['tezos.tzkt.operations']
     datasource: TzktDatasourceConfig
     handlers: tuple[TzktOperationsHandlerConfig, ...]
-    contracts: list[TezosContractConfig] = field(default_factory=list)
+    contracts: list[TezosContractConfig] = Field(default_factory=list)
     types: tuple[TzktOperationType, ...] = (TzktOperationType.transaction,)
 
     first_level: int = 0
@@ -350,8 +350,8 @@ class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     first_level: int = 0
     last_level: int = 0
 
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
+    def __post_init__(self) -> None:
+        super().__post_init__()
         self.handler_config = OperationUnfilteredHandlerConfig(callback=self.callback)
 
     def get_subscriptions(self) -> set[Subscription]:

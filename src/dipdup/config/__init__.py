@@ -209,7 +209,7 @@ class ResolvedHttpConfig:
 
 @dataclass
 class NameMixin:
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         self._name: str | None = None
 
     @property
@@ -291,7 +291,7 @@ ParentT = TypeVar('ParentT')
 class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
-    def __post_init_post_parse__(self: ParentMixin[ParentT]) -> None:
+    def __post_init__(self: ParentMixin[ParentT]) -> None:
         self._parent: ParentT | None = None
 
     @property
@@ -312,16 +312,16 @@ class CallbackMixin(CodegenMixin):
 
     callback: str
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
 
 @dataclass
 class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
-    def __post_init_post_parse__(self) -> None:
-        CallbackMixin.__post_init_post_parse__(self)
-        ParentMixin.__post_init_post_parse__(self)
+    def __post_init__(self) -> None:
+        CallbackMixin.__post_init__(self)
+        ParentMixin.__post_init__(self)
 
 
 @dataclass
@@ -353,9 +353,9 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     kind: str
     datasource: DatasourceConfig
 
-    def __post_init_post_parse__(self) -> None:
-        NameMixin.__post_init_post_parse__(self)
-        ParentMixin.__post_init_post_parse__(self)
+    def __post_init__(self) -> None:
+        NameMixin.__post_init__(self)
+        ParentMixin.__post_init__(self)
 
         self.template_values: dict[str, str] = {}
 
@@ -440,14 +440,14 @@ class JobConfig(NameMixin):
     interval: int | None = None
     daemon: bool = False
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
         elif not schedules_enabled:
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
-        NameMixin.__post_init_post_parse__(self)
+        NameMixin.__post_init__(self)
 
 
 @dataclass
@@ -621,7 +621,7 @@ class DipDupConfig:
     custom: dict[str, Any] = field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
 
@@ -900,7 +900,7 @@ class DipDupConfig:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
-    def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
+    def _resolve_index_links(self, index_config: 'ResolvedIndexConfigU') -> None:
         """Resolve contract and datasource configs by aliases.
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
@@ -1078,22 +1078,24 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
 
         for attr in dir(submodule):
             value = getattr(submodule, attr)
-            if hasattr(value, '__annotations__'):
+            if not hasattr(value, '__annotations__'):
+                continue
+
+            reload = False
+            for name, annotation in value.__annotations__.items():
                 # NOTE: All annotations are strings now
-                reload = False
-                for name, annotation in value.__annotations__.items():
-                    annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
-                    if new_annotation := replace_table.get(annotation):
-                        value.__annotations__[name] = new_annotation
-                        reload = True
+                if new_annotation := replace_table.get(annotation):
+                    value.__annotations__[name] = new_annotation
+                    reload = True
 
-                # NOTE: Wrap dataclass again to recreate magic methods
-                if reload:
-                    # FIXME: RuntimeError('dictionary changed size during iteration')
-                    setattr(submodule, attr, dataclass(value))
+            if not reload:
+                continue
 
-            if hasattr(value, '__pydantic_model__'):
-                value.__pydantic_model__.update_forward_refs()
+            # NOTE: Wrap dataclass again to recreate magic methods.
+            # NOTE: We need to trick Pydantic that it's a native dataclass.
+            delattr(value, '__pydantic_validator__')
+            value = dataclass(value)
+            setattr(submodule, attr, value)
 
 
 _original_to_aliased = {
@@ -1111,4 +1113,7 @@ _original_to_aliased = {
         'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
     ),
 }
+
+
 _patch_annotations(_original_to_aliased)
+# rebuild_dataclass(DipDupConfig, force=True, raise_errors=False)

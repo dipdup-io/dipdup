@@ -28,13 +28,13 @@ T = TypeVar('T', Hashable, Type[BaseModel])
 
 
 def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
-    """Extract Pydantic __root__ type"""
-    root_field = storage_type.__fields__['__root__']
-    if root_field.allow_none:
+    """Extract Pydantic root type"""
+    root_field = storage_type.model_fields['root']
+    if not root_field.is_required():
         # NOTE: Optional is a magic _SpecialForm
-        return cast(Type[BaseModel], Optional[root_field.type_])
+        return cast(Type[BaseModel], Optional[root_field.annotation])
 
-    return root_field.outer_type_  # type: ignore[no-any-return]
+    return root_field.annotation
 
 
 def is_array_type(storage_type: type[Any]) -> bool:
@@ -43,7 +43,7 @@ def is_array_type(storage_type: type[Any]) -> bool:
     if get_origin(storage_type) == list:
         return True
 
-    # NOTE: Pydantic model with __root__ field subclassing List
+    # NOTE: Pydantic model with root field subclassing List
     with suppress(*IntrospectionError):
         root_type = extract_root_outer_type(storage_type)
         return is_array_type(root_type)
@@ -58,7 +58,7 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
     if get_origin(list_type) == list:
         return get_args(list_type)[0]  # type: ignore[no-any-return]
 
-    # NOTE: Pydantic model with __root__ field subclassing List
+    # NOTE: Pydantic model with root field subclassing List
     root_type = extract_root_outer_type(list_type)
     return get_list_elt_type(root_type)
 
@@ -69,7 +69,7 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
     if get_origin(dict_type) == dict:
         return get_args(dict_type)[1]  # type: ignore[no-any-return]
 
-    # NOTE: Pydantic model with __root__ field subclassing Dict
+    # NOTE: Pydantic model with root field subclassing Dict
     with suppress(*IntrospectionError):
         root_type = extract_root_outer_type(dict_type)
         return get_dict_value_type(root_type, key)
@@ -78,14 +78,9 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
         raise KeyError('Field name or alias is required for object introspection')
 
     # NOTE: Pydantic model, find corresponding field and return it's type
-    fields = dict_type.__fields__
-    for field in fields.values():
-        if key in (field.name, field.alias):
-            # NOTE: Pydantic does not preserve outer_type_ for Optional
-            if field.allow_none:
-                return cast(Type[Any], Optional[field.type_])
-            else:
-                return field.outer_type_  # type: ignore[no-any-return]
+    for name, field in dict_type.model_fields.items():
+        if key in (name, field.alias):
+            return field.annotation
 
     # NOTE: Either we try the wrong Union path or model was modifier by user
     raise KeyError(f'Field `{key}` not found in {dict_type}')

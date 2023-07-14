@@ -29,4 +29,4 @@ class BazaarMarketPlaceStorageItem(BaseModel):
 
 
 class BazaarMarketPlaceStorage(BaseModel):
-    __root__: List[BazaarMarketPlaceStorageItem]
+    root: List[BazaarMarketPlaceStorageItem]
