@@ -11,12 +11,12 @@ import os
 import subprocess
 import sys
 from shutil import which
-from typing import cast
 from typing import Any
 from typing import Dict
 from typing import NoReturn
 from typing import Optional
 from typing import Set
+from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
@@ -103,7 +103,7 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        #if not sys.version.startswith('3.11'):
+        # if not sys.version.startswith('3.11'):
         #    fail('DipDup requires Python 3.11')
 
         # NOTE: Show warning if user is root
@@ -167,7 +167,9 @@ def install(
 
     python_inter_pipx = cast(str, which('python3'))
     if 'pyenv' in python_inter_pipx:
-        python_inter_pipx = subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+        python_inter_pipx = (
+            subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+        )
 
     if pipx_dipdup:
         echo('Updating DipDup')
