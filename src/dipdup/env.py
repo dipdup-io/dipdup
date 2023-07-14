@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import platform
 from contextlib import suppress
 from os import environ as env
@@ -12,7 +13,8 @@ def get_package_path(package: str) -> Path:
     if TEST:
         return Path.cwd() / package
 
-    if Path.cwd().name == package and Path('pyproject.toml').exists():
+    # NOTE: If cwd is a package, use it
+    if Path('pyproject.toml').exists() and Path.cwd().name == package:
         return Path.cwd()
 
     # NOTE: Detect existing package in current environment

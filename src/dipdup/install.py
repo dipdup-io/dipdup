@@ -10,14 +10,13 @@ import argparse
 import os
 import subprocess
 import sys
-from pathlib import Path
-from shutil import rmtree
 from shutil import which
 from typing import Any
 from typing import Dict
 from typing import NoReturn
 from typing import Optional
 from typing import Set
+from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
@@ -25,7 +24,7 @@ WHICH_CMDS = (
     'pipx',
     'dipdup',
     'datamodel-codegen',
-    'poetry',
+    'pdm',
     'pyvenv',
     'pyenv',
 )
@@ -62,18 +61,6 @@ def fail(msg: str) -> NoReturn:
 def done(msg: str) -> NoReturn:
     echo(msg, color=Colors.GREEN)
     sys.exit(0)
-
-
-def ask(msg: str, default: bool, quiet: bool) -> bool:
-    msg += ' [Y/n]' if default else ' [y/N]'
-    echo(msg, Colors.YELLOW)
-
-    if quiet:
-        return default
-    if default:
-        return input().lower() not in ('n', 'no')
-    else:
-        return input().lower() in ('y', 'yes')
 
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
@@ -116,8 +103,8 @@ class DipDupEnvironment:
         self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def check(self) -> None:
-        if not sys.version.startswith('3.11'):
-            fail('DipDup requires Python 3.11')
+        # if not sys.version.startswith('3.11'):
+        #    fail('DipDup requires Python 3.11')
 
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:
@@ -129,9 +116,6 @@ class DipDupEnvironment:
 
         self.refresh()
         self.refresh_pipx()
-
-        if self._commands.get('pyenv'):
-            echo('WARNING: pyenv is installed, this may cause issues', Colors.YELLOW)
 
     def run_cmd(self, cmd: str, *args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         """Run command safely (relatively lol)"""
@@ -153,14 +137,13 @@ class DipDupEnvironment:
         if self._commands.get('pipx'):
             return
 
-        if sys.prefix != sys.base_prefix:
-            fail("pipx can't be installed in virtualenv, run `deactivate` and try again")
-
         echo('Installing pipx')
-        self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        if sys.base_prefix != sys.prefix:
+            self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')
+        else:
+            self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
-        os.environ['PATH'] = os.environ['PATH'] + ':' + str(Path.home() / '.local' / 'bin')
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        self._commands['pipx'] = which('pipx')
 
 
 def install(
@@ -180,7 +163,13 @@ def install(
     pipx_packages = env._pipx_packages
     pipx_dipdup = 'dipdup' in pipx_packages
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
-    pipx_poetry = 'poetry' in pipx_packages
+    pipx_pdm = 'pdm' in pipx_packages
+
+    python_inter_pipx = cast(str, which('python3'))
+    if 'pyenv' in python_inter_pipx:
+        python_inter_pipx = (
+            subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+        )
 
     if pipx_dipdup:
         echo('Updating DipDup')
@@ -188,30 +177,27 @@ def install(
     else:
         if path:
             echo(f'Installing DipDup from `{path}`')
-            env.run_cmd('pipx', 'install', path, force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
         elif ref:
             echo(f'Installing DipDup from `{ref}`')
-            env.run_cmd('pipx', 'install', f'git+{GITHUB}@{ref}', force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, f'git+{GITHUB}@{ref}', force_str)
         else:
             echo('Installing DipDup from PyPI')
-            env.run_cmd('pipx', 'install', 'dipdup', force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'dipdup', force_str)
 
     if pipx_datamodel_codegen:
         env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
     else:
-        env.run_cmd('pipx', 'install', 'datamodel-code-generator', force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'datamodel-code-generator', force_str)
 
-    if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
-        rmtree(legacy_poetry, ignore_errors=True)
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-    elif pipx_poetry:
-        echo('Updating Poetry')
-        env.run_cmd('pipx', 'upgrade', 'poetry', force_str)
-    elif ask('Install poetry? Optional for `dipdup new` command', True, quiet):
-        echo('Installing poetry')
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-        env._commands['poetry'] = which('poetry')
-        pipx_poetry = True
+    if pipx_pdm:
+        echo('Updating PDM')
+        env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
+    else:
+        echo('Installing PDM')
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
+        env._commands['pdm'] = which('pdm')
+        pipx_pdm = True
 
     done(
         'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'
@@ -231,9 +217,12 @@ def uninstall(quiet: bool) -> NoReturn:
         env.run_cmd('pipx', 'uninstall', 'dipdup')
 
     if 'datamodel-code-generator' in pipx_packages:
-        if ask('Uninstall datamodel-code-generator?', True, quiet):
-            echo('Uninstalling datamodel-code-generator')
-            env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
+        echo('Uninstalling datamodel-code-generator')
+        env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
+
+    if 'pdm' in pipx_packages:
+        echo('Uninstalling pdm')
+        env.run_cmd('pipx', 'uninstall', 'pdm')
 
     done('Done! DipDup is uninstalled.')
 

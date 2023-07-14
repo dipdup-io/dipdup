@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
 - api: Added `/performance` endpoint to request indexing stats.
 - cli: Added `report` command group to manage performance and crash reports created by DipDup.
-- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models.
 - config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
 - config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
 - config: Added `advanced.metrics` field to configure amount of gathered metrics.
@@ -24,12 +24,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
-- database: Allow running project scripts and queries on SQLite. 
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite.
 - database: Don't cleanup model updates on every loop.
 
 ### Changed
 
+- ci: Docker images are now based on Debian 12.
 - cli: `config env --file` option renamed to `--output`.
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
@@ -57,6 +58,47 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Other
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
+
+## [6.5.9] - 2022-07-11
+
+### Fixed
+
+- tzkt: Optimized queries for `operation_unfiltered` index.
+
+## [6.5.8] - 2022-06-28
+
+### Fixed
+
+- cli: Fixed `init` crash when package name is equal to one of the project typenames.
+
+## [6.5.7] - 2022-05-30
+
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
+- http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
+
+## [6.5.6] - 2022-05-02
+
+### Fixed
+
+- config: Fixed crash due to incorrect parsing of `event` index definitions.
+- http: Fixed waiting for response indefinitely when IPFS hash is not available.
+
+### Other
+
+- ci: Slim Docker image updated to Alpine 3.17.
+- metadata: Added `nairobinet` to supported networks.
 
 ## [6.5.5] - 2022-04-17
 
@@ -1047,7 +1089,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.5...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.9...HEAD
+[6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
+[6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
+[6.5.7]: https://github.com/dipdup-io/dipdup/compare/6.5.6...6.5.7
+[6.5.6]: https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6
 [6.5.5]: https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5
 [6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
 [6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3

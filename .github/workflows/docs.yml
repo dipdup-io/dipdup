@@ -1,3 +1,7 @@
+# NOTE: to run pipeline in act
+# change ${{ secrets.GITHUB_TOKEN }} to $GITHUB_TOKEN
+# and uncommit Install GH
+
 name: Docs
 concurrency: 
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,11 +17,52 @@ on:
       - 'scripts/**'
       - '.github/workflows/docs.yml'
 
+env:
+  FRONTEND_BRANCH: actual-docs
+  GH_TOKEN: ${{ secrets.API_TOKEN_EXT }}
+
 jobs:
   docs:
     name: Docs
     runs-on: ubuntu-22.04
-    # TODO: here will be new doc pipeline
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@main
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install PDM
+        run: pip install pdm
+
+      - name: Install project
+        run: pdm install
+
+      # - name: Install GH
+      #   run: |
+      #     type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+      #     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+      #     && sudo apt update \
+      #     && sudo apt install gh -y
+
+      - name: Clone frontend
+        run: |
+          gh auth setup-git
+          gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
+
+      - name: Build docs
+        run: pdm run docs_build
+
+      - name: Commit and push frontend
+        run: |
+          cd ../interface
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "${{ github.event.head_commit.message }}"
+          git push origin $FRONTEND_BRANCH

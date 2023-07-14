@@ -8,15 +8,12 @@
 !**/Dockerfile
 !**/Makefile
 !**/pyproject.toml
-!**/poetry.lock
-!**/requirements.*
+!**/pdm.lock
 !**/README.md
 !**/.keep
 
 # Add Python code
 !**/*.py
-
-# Ignore caches and virtualenvs
 **/.*_cache
 **/__pycache__
 

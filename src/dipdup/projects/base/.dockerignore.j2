@@ -3,14 +3,11 @@
 
 # Add metadata and build files
 !pyproject.toml
-!poetry.lock
-!requirements.*
+!pdm.lock
 !README.md
 
 # Add Python code
 !**/*.py
-
-# Ignore caches and virtualenvs
 **/.*_cache
 **/__pycache__
 
@@ -21,4 +18,4 @@
 !**/*.yaml
 !**/*.yml
 !**/*.j2
-!**/*.env.default
+!**/.keep
