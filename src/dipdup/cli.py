@@ -645,6 +645,7 @@ async def self_update(
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
+    """List and manage reports."""
     if ctx.invoked_subcommand:
         return
 
@@ -657,7 +658,7 @@ async def report(ctx: click.Context) -> None:
         from ruamel.yaml import YAML
 
         event = YAML(typ='base').load(path)
-        row = [event.get(key, 'none') for key in header]
+        row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
 
     rows.sort(key=lambda row: str(row[3]))
