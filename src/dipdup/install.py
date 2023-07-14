@@ -10,8 +10,8 @@ import argparse
 import os
 import subprocess
 import sys
-from pathlib import Path
 from shutil import which
+from typing import cast
 from typing import Any
 from typing import Dict
 from typing import NoReturn
@@ -61,18 +61,6 @@ def fail(msg: str) -> NoReturn:
 def done(msg: str) -> NoReturn:
     echo(msg, color=Colors.GREEN)
     sys.exit(0)
-
-
-def ask(msg: str, default: bool, quiet: bool) -> bool:
-    msg += ' [Y/n]' if default else ' [y/N]'
-    echo(msg, Colors.YELLOW)
-
-    if quiet:
-        return default
-    if default:
-        return input().lower() not in ('n', 'no')
-    else:
-        return input().lower() in ('y', 'yes')
 
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
@@ -150,11 +138,12 @@ class DipDupEnvironment:
             return
 
         echo('Installing pipx')
-        self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')  # TODO: tmp remove user
+        if sys.base_prefix != sys.prefix:
+            self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')
+        else:
+            self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
-        # ???
-        os.environ['PATH'] = os.environ['PATH'] + ':' + str(Path.home() / '.local' / 'bin')
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        self._commands['pipx'] = which('pipx')
 
 
 def install(
@@ -176,8 +165,8 @@ def install(
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
     pipx_pdm = 'pdm' in pipx_packages
 
-    python_inter_pipx = which('python3')
-    if 'pyenv' in python_inter_pipx:  # TODO: fix type
+    python_inter_pipx = cast(str, which('python3'))
+    if 'pyenv' in python_inter_pipx:
         python_inter_pipx = subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
 
     if pipx_dipdup:
@@ -226,9 +215,12 @@ def uninstall(quiet: bool) -> NoReturn:
         env.run_cmd('pipx', 'uninstall', 'dipdup')
 
     if 'datamodel-code-generator' in pipx_packages:
-        if ask('Uninstall datamodel-code-generator?', True, quiet):
-            echo('Uninstalling datamodel-code-generator')
-            env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
+        echo('Uninstalling datamodel-code-generator')
+        env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
+
+    if 'pdm' in pipx_packages:
+        echo('Uninstalling pdm')
+        env.run_cmd('pipx', 'uninstall', 'pdm')
 
     done('Done! DipDup is uninstalled.')
 
