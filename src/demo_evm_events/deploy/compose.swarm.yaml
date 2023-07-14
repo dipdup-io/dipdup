@@ -58,7 +58,6 @@ services:
       - HASURA_GRAPHQL_ADMIN_SECRET=${HASURA_SECRET}
       - HASURA_GRAPHQL_ENABLE_CONSOLE=true
       - HASURA_GRAPHQL_DEV_MODE=false
-      - HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup, http-log, websocket-log, query-log, webhook-log
       - HASURA_GRAPHQL_LOG_LEVEL=warn
       - HASURA_GRAPHQL_ENABLE_TELEMETRY=false
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user

@@ -15,8 +15,6 @@
 
 # Add Python code
 !**/*.py
-
-# Ignore caches and virtualenvs
 **/.*_cache
 **/__pycache__
 

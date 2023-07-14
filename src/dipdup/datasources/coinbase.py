@@ -35,7 +35,11 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         )
 
     async def get_candles(
-        self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD'
+        self,
+        since: datetime,
+        until: datetime,
+        interval: CandleInterval,
+        ticker: str,
     ) -> list[CandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
@@ -52,7 +56,10 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         return sorted(candles, key=lambda c: c.timestamp)
 
     def _split_candle_requests(
-        self, since: datetime, until: datetime, interval: CandleInterval
+        self,
+        since: datetime,
+        until: datetime,
+        interval: CandleInterval,
     ) -> list[tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []

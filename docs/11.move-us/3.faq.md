@@ -44,7 +44,7 @@ Instead, save raw data in handlers and process it later with hooks when all cond
 
 DipDup does not provide any tooling for database migrations. The reason is that schema changes almost always imply reindexing when speaking about indexers. However, you can perform migrations yourself using any tool you like. First, disable schema hash check in config:
 
-```yaml
+```yaml [dipdup.yaml]
 advanced:
   reindex:
     schema_modified: ignore
@@ -122,7 +122,7 @@ class Token(Model):
 
 Default decimal precision in Python is 28 digits. DipDup tries to increase it automatically guessing the value from the schema. It works in most cases, but not for really big numbers. You can increase the precision manually in config.
 
-```yaml
+```yaml [dipdup.yaml]
 advanced:
   decimal_precision: 128
 ```
