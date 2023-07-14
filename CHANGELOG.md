@@ -59,6 +59,47 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 
+## [6.5.9] - 2022-07-11
+
+### Fixed
+
+- tzkt: Optimized queries for `operation_unfiltered` index.
+
+## [6.5.8] - 2022-06-28
+
+### Fixed
+
+- cli: Fixed `init` crash when package name is equal to one of the project typenames.
+
+## [6.5.7] - 2022-05-30
+
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
+- http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
+
+## [6.5.6] - 2022-05-02
+
+### Fixed
+
+- config: Fixed crash due to incorrect parsing of `event` index definitions.
+- http: Fixed waiting for response indefinitely when IPFS hash is not available.
+
+### Other
+
+- ci: Slim Docker image updated to Alpine 3.17.
+- metadata: Added `nairobinet` to supported networks.
+
 ## [6.5.5] - 2022-04-17
 
 ### Fixed
@@ -1048,7 +1089,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.5...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.9...HEAD
+[6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
+[6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
+[6.5.7]: https://github.com/dipdup-io/dipdup/compare/6.5.6...6.5.7
+[6.5.6]: https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6
 [6.5.5]: https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5
 [6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
 [6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3
