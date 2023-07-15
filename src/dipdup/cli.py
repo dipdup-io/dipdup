@@ -20,11 +20,27 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup.install import EPILOG
+from dipdup.install import WELCOME_ASCII
 from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
+
+_click_wrap_text = click.formatting.wrap_text
+
+
+def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
+    # NOTE: WELCOME_ASCII and EPILOG
+    if text.startswith(('    ')):
+        return text
+    if text.startswith(('\0\n')):
+        return text[2:]
+    return _click_wrap_text(text, *a, **kw)
+
+
+click.formatting.wrap_text = _wrap_text
 
 ROOT_CONFIG = 'dipdup.yaml'
 CONFIG_RE = r'dipdup.*\.ya?ml'
@@ -130,7 +146,11 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
-@click.group(context_settings={'max_content_width': 120})
+@click.group(
+    context_settings={'max_content_width': 120},
+    help=WELCOME_ASCII,
+    epilog=EPILOG,
+)
 @click.version_option(__version__)
 @click.option(
     '--config',
@@ -153,12 +173,6 @@ async def _check_version() -> None:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    """Manage and run DipDup indexers.
-
-    Documentation: https://docs.dipdup.io
-
-    Issues: https://github.com/dipdup-io/dipdup/issues
-    """
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
     if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
@@ -631,6 +645,7 @@ async def self_update(
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
+    """List and manage reports."""
     if ctx.invoked_subcommand:
         return
 
@@ -643,7 +658,7 @@ async def report(ctx: click.Context) -> None:
         from ruamel.yaml import YAML
 
         event = YAML(typ='base').load(path)
-        row = [event.get(key, 'none') for key in header]
+        row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
 
     rows.sort(key=lambda row: str(row[3]))
