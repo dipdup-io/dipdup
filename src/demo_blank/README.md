@@ -6,7 +6,7 @@ Blockchain indexer built with DipDup
 
 ## Installation
 
-This project is based on [DipDup](https://dipdup.io), framework for building featureful dapps.
+This project is based on [DipDup](https://dipdup.io), a framefork for building featureful dapps.
 
 You need a Linux/macOS system with Python 3.11 installed. Use our installer for easy setup:
 
@@ -27,14 +27,14 @@ dipdup run
 Store data in SQLite database:
 
 ```bash
-dipdup -c . -c configs/dipdup.sqlite.yml run
+dipdup run -c . -c configs/dipdup.sqlite.yml
 ```
 
 Or spawn a docker-compose stack:
 
 ```bash
 cp deploy/.env.example .env
-# Edit .env before running
+# Edit .env
 docker-compose -f deploy/docker-compose.yml up
 ```
 
