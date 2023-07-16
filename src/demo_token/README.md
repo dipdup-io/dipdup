@@ -27,14 +27,14 @@ dipdup run
 Store data in SQLite database:
 
 ```bash
-dipdup run -c . -c configs/dipdup.sqlite.yml
+dipdup -c . -c configs/dipdup.sqlite.yml run
 ```
 
 Or spawn a docker-compose stack:
 
 ```bash
 cp deploy/.env.example .env
-# Edit .env
+# Edit .env before running
 docker-compose -f deploy/docker-compose.yml up
 ```
 
