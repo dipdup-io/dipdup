@@ -346,7 +346,7 @@ def prepare_models(package: str | None) -> None:
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
                 raise InvalidModelsError(
-                    'Model field names must differ from table name.',
+                    'Model field names must differ from the table name.',
                     model,
                     field_name,
                 )
@@ -354,7 +354,7 @@ def prepare_models(package: str | None) -> None:
             # NOTE: The same for backward relations
             if isinstance(field, dipdup.fields.ForeignKeyField) and field.related_name == table_name:
                 raise InvalidModelsError(
-                    'Model field names must differ from table name.',
+                    'Model field names must differ from the table name.',
                     model,
                     f'related_name={field.related_name}',
                 )
