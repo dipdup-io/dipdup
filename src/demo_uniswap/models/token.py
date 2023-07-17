@@ -44,11 +44,6 @@ WHITELIST_TOKENS = {
 }
 
 
-erc20_abi = get_abi('erc20.ERC20')
-erc20_symbol_bytes_abi = get_abi('erc20.ERC20SymbolBytes')
-erc20_name_bytes_abi = get_abi('erc20.ERC20NameBytes')
-
-
 def convert_token_amount(amount: int, decimals: int) -> Decimal:
     if decimals == 0:
         return Decimal(amount)
@@ -59,7 +54,10 @@ class ERC20Token:
     def __init__(self, address: ChecksumAddress, web3: AsyncWeb3):
         self.web3 = web3
         self.address = address
-        self.contract = self.web3.eth.contract(address=self.address, abi=erc20_abi)
+        self.contract = self.web3.eth.contract(
+            address=self.address,
+            abi=get_abi('erc20.ERC20'),
+            )
 
     @classmethod
     def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':
@@ -72,7 +70,10 @@ class ERC20Token:
             return str(await self.contract.functions.symbol().call())
 
         with suppress(Exception):
-            contract = self.web3.eth.contract(address=self.address, abi=erc20_symbol_bytes_abi)
+            contract = self.web3.eth.contract(
+                address=self.address,
+                abi=get_abi('erc20.ERC20SymbolBytes'),
+            )
             symbol = await contract.functions.symbol().call() 
             return symbol.decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
@@ -87,7 +88,10 @@ class ERC20Token:
             return await self.contract.functions.name().call()  # type: ignore[no-any-return]
 
         with suppress(Exception):
-            contract = self.web3.eth.contract(address=self.address, abi=erc20_name_bytes_abi)
+            contract = self.web3.eth.contract(
+                address=self.address,
+                abi=get_abi('erc20.ERC20NameBytes'),
+            )
             name = await contract.functions.name().call()
             return name.decode('utf-8').rstrip('\x00')  # type: ignore[no-any-return]
 
