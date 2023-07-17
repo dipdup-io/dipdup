@@ -197,7 +197,7 @@ def install(
     if pipx_pdm:
         echo('Updating PDM')
         env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
-    elif ask('Install PDM? (recommended)', True):
+    elif quiet or ask('Install PDM? (recommended)', True):
         echo('Installing PDM')
         env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
         env._commands['pdm'] = which('pdm')
