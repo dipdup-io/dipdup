@@ -38,5 +38,4 @@ class ExampleModel(models.Model):
     m2m_relation_ids: list[int]
 
     class Meta:
-        table_name = 'example_model'
-        schema = 'public'
+        abstract=True
