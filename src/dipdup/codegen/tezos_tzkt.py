@@ -148,14 +148,6 @@ class TzktCodeGenerator(CodeGenerator):
                     except FrameworkException:
                         continue
 
-    async def generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-
-        self._logger.info('Creating `types` package')
-
-        for path in self._package.schemas.glob('**/*'):
-            await self._generate_type(path, force)
-
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         for index_config in self._config.indexes.values():
