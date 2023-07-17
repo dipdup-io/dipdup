@@ -74,41 +74,40 @@ def _tab(text: str, indent: int = 20) -> str:
 
 
 class DipDupEnvironment:
-    def __init__(self, quiet: bool = False) -> None:
+    def __init__(self) -> None:
         self._os = os.uname().sysname
         self._arch = os.uname().machine
-        self._quiet = quiet
         self._commands: Dict[str, Optional[str]] = {}
         self._pipx_packages: Set[str] = set()
 
     def refresh(self) -> None:
-        if not self._quiet and not self._commands:
-            print(WELCOME_ASCII)
-            print(EPILOG)
-            print()
-            print(_tab('OS:') + self._os)
-            print(_tab('Arch:') + self._arch)
-            print(_tab('Python:') + sys.version)
-            print(_tab('PATH:') + os.environ['PATH'])
-            print()
-
         for command in WHICH_CMDS:
             old, new = self._commands.get(command), which(command)
             if old == new:
                 continue
             self._commands[command] = new
-            self._quiet or print(_tab(f'{command}:') + (new or ''))
 
+    def print(self) -> None:
         print()
+        print(WELCOME_ASCII)
+        print(EPILOG)
+        print()
+        print(_tab('OS:') + f'{self._os} ({self._arch})')
+        print(_tab('Python:') + sys.version)
+        print(_tab('PATH:') + os.environ['PATH'])
+        print(_tab('PYTHONPATH:') + os.environ.get('PYTHONPATH', ''))
+        print()
+        for command, path in self._commands.items():
+            print(_tab(f'{command}:') + (path or ''))
+        print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
     def refresh_pipx(self) -> None:
         """Get installed pipx packages"""
         self.ensure_pipx()
         pipx_packages_raw = self.run_cmd('pipx', 'list', '--short', capture_output=True).stdout
         self._pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
-        self._quiet or print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
 
-    def check(self) -> None:
+    def prepare(self) -> None:
         # NOTE: Show warning if user is root
         if os.geteuid() == 0:
             echo('WARNING: Running as root, this is not generally recommended', Colors.YELLOW)
@@ -132,8 +131,7 @@ class DipDupEnvironment:
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            self._quiet or fail(f'{cmd} failed: {e.cmd} {e.returncode}')
-            raise
+            fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
         """Ensure pipx is installed for current user"""
@@ -160,7 +158,9 @@ def install(
         fail('Specify either ref or path, not both')
 
     env = DipDupEnvironment()
-    env.check()
+    env.prepare()
+    if not quiet:
+        env.print()
 
     force_str = '--force' if force else ''
     pipx_packages = env._pipx_packages
@@ -174,7 +174,7 @@ def install(
             subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
         )
 
-    if pipx_dipdup:
+    if pipx_dipdup and not force:
         echo('Updating DipDup')
         env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
     else:
@@ -182,8 +182,9 @@ def install(
             echo(f'Installing DipDup from `{path}`')
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
         elif ref:
-            echo(f'Installing DipDup from `{ref}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, f'git+{GITHUB}@{ref}', force_str)
+            url = f'git+{GITHUB}@{ref}'
+            echo(f'Installing DipDup from `{url}`')
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
         else:
             echo('Installing DipDup from PyPI')
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'dipdup', force_str)
@@ -196,7 +197,7 @@ def install(
     if pipx_pdm:
         echo('Updating PDM')
         env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
-    else:
+    elif ask('Install PDM? (recommended)', True):
         echo('Installing PDM')
         env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
         env._commands['pdm'] = which('pdm')
@@ -208,24 +209,35 @@ def install(
     )
 
 
+def ask(question: str, default: bool) -> bool:
+    """Ask user a yes/no question"""
+    while True:
+        answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
+        if not answer:
+            return default
+        return answer in ('n', 'no') if default else answer in ('y', 'yes')
+
+
 def uninstall(quiet: bool) -> NoReturn:
     """Uninstall DipDup and its dependencies with pipx"""
     env = DipDupEnvironment()
-    env.check()
+    env.prepare()
+    if not quiet:
+        env.print()
 
-    pipx_packages = env._pipx_packages
+    packages = (
+        ('dipdup', True),
+        ('datamodel-code-generator', False),
+        ('pdm', False),
+    )
+    for package, default in packages:
+        if package not in env._pipx_packages:
+            continue
+        if not quiet and not ask(f'Uninstall {package}?', default):
+            continue
 
-    if 'dipdup' in pipx_packages:
-        echo('Uninstalling DipDup')
-        env.run_cmd('pipx', 'uninstall', 'dipdup')
-
-    if 'datamodel-code-generator' in pipx_packages:
-        echo('Uninstalling datamodel-code-generator')
-        env.run_cmd('pipx', 'uninstall', 'datamodel-code-generator')
-
-    if 'pdm' in pipx_packages:
-        echo('Uninstalling pdm')
-        env.run_cmd('pipx', 'uninstall', 'pdm')
+        echo(f'Uninstalling {package}')
+        env.run_cmd('pipx', 'uninstall', package)
 
     done('Done! DipDup is uninstalled.')
 
