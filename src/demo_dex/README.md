@@ -14,7 +14,7 @@ You need a Linux/macOS system with Python 3.11 installed. Use our installer for 
 curl -Lsf https://dipdup.io/install.py | python
 ```
 
-See [Installation](https://docs.dipdup.net/installation) page for all options.
+See [Installation](https://docs.dipdup.io/installation) page for all options.
 
 ## Usage
 
