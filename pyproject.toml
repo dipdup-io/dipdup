@@ -5,19 +5,30 @@ version = "6.5.5"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
 ]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 keywords = [
-    "tezos",
+    "api",
+    "backend",
     "blockchain",
-    "sdk",
-    "michelson",
-    "indexers",
-    "tzkt",
+    "crypto",
     "cryptocurrencies",
+    "dapp",
+    "declarative",
+    "ethereum",
+    "evm",
+    "framework",
+    "indexer",
+    "indexers",
+    "michelson",
+    "scheduler",
+    "sdk",
     "smart-contracts",
+    "tezos",
+    "tzkt",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -33,10 +44,10 @@ classifiers = [
 ]
 
 dependencies = [
-    # NOTE: Core dependencies are pinned to exact versions to avoid breaking changes
-    "asyncpg===0.27.0",
-    "datamodel-code-generator===0.21.1",
-    "pydantic===1.10.11",
+    # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
+    "asyncpg~=0.28.0",
+    "datamodel-code-generator~=0.21.1",
+    "pydantic~=1.10.11",
     "tortoise-orm===0.19.3",
 
     "aiohttp~=3.8",
