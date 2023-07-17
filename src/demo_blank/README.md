@@ -1,7 +1,5 @@
 # demo_blank
 
-<a href="https://dipdup.io"><img src="https://img.shields.io/badge/made-with_dipdup-ff885e"></a>
-
 Blockchain indexer built with DipDup
 
 ## Installation
@@ -14,7 +12,7 @@ You need a Linux/macOS system with Python 3.11 installed. Use our installer for 
 curl -Lsf https://dipdup.io/install.py | python
 ```
 
-See [Installation](https://docs.dipdup.io/installation) page for all options.
+See the [Installation](https://docs.dipdup.io/installation) page for all options.
 
 ## Usage
 
@@ -27,14 +25,14 @@ dipdup run
 Store data in SQLite database:
 
 ```bash
-dipdup run -c . -c configs/dipdup.sqlite.yml
+dipdup -c . -c configs/dipdup.sqlite.yml run
 ```
 
 Or spawn a docker-compose stack:
 
 ```bash
 cp deploy/.env.example .env
-# Edit .env
+# Edit .env before running
 docker-compose -f deploy/docker-compose.yml up
 ```
 

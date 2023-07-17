@@ -1,7 +1,5 @@
 # demo_raw
 
-<a href="https://dipdup.io"><img src="https://img.shields.io/badge/made-with_dipdup-ff885e"></a>
-
 Blockchain indexer built with DipDup
 
 ## Installation
@@ -14,7 +12,7 @@ You need a Linux/macOS system with Python 3.11 installed. Use our installer for 
 curl -Lsf https://dipdup.io/install.py | python
 ```
 
-See [Installation](https://docs.dipdup.io/installation) page for all options.
+See the [Installation](https://docs.dipdup.io/installation) page for all options.
 
 ## Usage
 
