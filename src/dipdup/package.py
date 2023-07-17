@@ -1,3 +1,4 @@
+import logging
 from collections import deque
 from pathlib import Path
 from typing import Any
@@ -16,13 +17,19 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
 KEEP_MARKER = '.keep'
+PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
+PYPROJECT = 'pyproject.toml'
 DEFAULT_ENV = '.env.default'
 
+EVM_ABI = 'abi.json'
+EVM_EVENTS = 'events.json'
 
 _branch = '│   '
 _tee = '├── '
 _last = '└── '
+
+_logger = logging.getLogger(__name__)
 
 
 def _get_pointers(content_length: int) -> tuple[str, ...]:
@@ -31,7 +38,6 @@ def _get_pointers(content_length: int) -> tuple[str, ...]:
 
 def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
     lines: deque[str] = deque()
-    lines.append(root.name)
     pointers = _get_pointers(len(project_tree) - 1)
     for pointer, (section, paths) in zip(pointers, project_tree.items()):
         lines.append(pointer + section)
@@ -81,9 +87,10 @@ class DipDupPackage:
     @property
     def skel(self) -> dict[Path, str | None]:
         return {
+            # NOTE: Package sections
             self.abi: '**/*.json',
             self.configs: '**/*.y[a]ml',
-            self.deploy: '**/*',
+            self.deploy: '**/*[Dockerfile|.env.default|yml|yaml]',
             self.graphql: '**/*.graphql',
             self.handlers: '**/*.py',
             self.hasura: '**/*.json',
@@ -91,6 +98,12 @@ class DipDupPackage:
             self.models: '**/*.py',
             self.sql: '**/*.sql',
             self.types: '**/*.py',
+            # NOTE: Python metadata
+            Path(PEP_561_MARKER): None,
+            Path(PACKAGE_MARKER): None,
+            Path(PYPROJECT): None,
+            # NOTE: Not a part of package
+            self.schemas: '**/*.json',
         }
 
     def discover(self) -> dict[str, tuple[Path, ...]]:
@@ -101,24 +114,28 @@ class DipDupPackage:
 
     def create(self) -> None:
         """Create Python package skeleton if not exists"""
-        self.pre_init()
+        _logger.debug('Updating `%s` package structure', self.name)
+        self._pre_init()
 
-        touch(self.root / PEP_561_MARKER)
-        touch(self.root / '__init__.py')
+        for path, glob in self.skel.items():
+            if glob:
+                touch(path / KEEP_MARKER)
+            else:
+                touch(self.root / path)
 
-        for path in self.skel:
-            touch(path / KEEP_MARKER)
+        self._post_init()
 
-    def pre_init(self) -> None:
+    def _pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):
             raise ProjectImportError(f'`{self.name}` is not a valid Python package name')
         if self.root.exists() and not self.root.is_dir():
-            raise ProjectImportError(f'`{self.root}` must be a directory')
+            raise ProjectImportError(f'`{self.root}` exists and not a directory')
 
-    def post_init(self) -> None:
-        ...
+    def _post_init(self) -> None:
+        pass
 
     def verify(self) -> None:
+        _logger.debug('Verifying `%s` package', self.root)
         import_submodules(self.name)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
@@ -143,7 +160,7 @@ class DipDupPackage:
 
     def get_evm_abi(self, typename: str) -> dict[str, Any]:
         if (abi := self._evm_abis.get(typename)) is None:
-            path = self.abi / typename / 'abi.json'
+            path = self.abi / typename / EVM_ABI
             if not path.exists():
                 raise ProjectImportError(f'`{path}` does not exist')
             abi = cast(dict[str, Any], orjson.loads(path.read_text()))
@@ -152,7 +169,7 @@ class DipDupPackage:
 
     def get_evm_events(self, typename: str) -> dict[str, EventAbiExtra]:
         if (events := self._evm_events.get(typename)) is None:
-            path = self.abi / typename / 'events.json'
+            path = self.abi / typename / EVM_EVENTS
             if not path.exists():
                 raise ProjectImportError(f'`{path}` does not exist')
             extra_json = orjson.loads(path.read_text())

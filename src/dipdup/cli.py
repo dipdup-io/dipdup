@@ -721,5 +721,6 @@ async def package_tree(ctx: click.Context) -> None:
     package = DipDupPackage(config.package_path)
     package.create()
     tree = package.discover()
+    echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
     for line in draw_package_tree(package.root, tree):
         echo(line)

@@ -124,15 +124,6 @@ class SubsquidCodeGenerator(CodeGenerator):
 
         convert_abi(self._package, events, functions)
 
-    # FIXME: tzkt copypaste
-    async def generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-
-        self._logger.info('Creating `types` package')
-
-        for path in self._package.schemas.glob('**/*.json'):
-            await self._generate_type(path, force)
-
     async def generate_hooks(self) -> None:
         pass
 

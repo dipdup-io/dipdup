@@ -1,4 +1,3 @@
-"""DipDup ORM model definitions"""
 import enum
 
 from dipdup import fields
@@ -6,11 +5,6 @@ from dipdup import models
 
 
 class ExampleModel(models.Model):
-    """Example model with all supported fields. Use it as a reference when implementing yours.
-
-    This model is marked as abstract and won't be created in the database.
-    """
-
     id = fields.IntField(pk=True)
     array = fields.ArrayField()
     big_int = fields.BigIntField()
@@ -31,20 +25,17 @@ class ExampleModel(models.Model):
     uuid = fields.UUIDField()
 
     relation: fields.ForeignKeyField['ExampleModel'] = fields.ForeignKeyField(
-        'ExampleModel', related_name='reverse_relation'
+        'models.ExampleModel', related_name='reverse_relation'
     )
     m2m_relation: fields.ManyToManyField['ExampleModel'] = fields.ManyToManyField(
-        'ExampleModel', related_name='reverse_m2m_relation'
+        'models.ExampleModel', related_name='reverse_m2m_relation'
     )
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     relation_id: int
+    m2m_relation_ids: list[int]
 
     class Meta:
-        abstract = True
-
-
-# class MyModel(models.Model):
-#     ...
+        abstract=True
