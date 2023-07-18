@@ -1,6 +1,6 @@
 # demo_token
 
-Blockchain indexer built with DipDup
+TzBTC FA1.2 token operations
 
 ## Installation
 

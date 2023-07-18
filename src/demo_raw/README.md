@@ -1,6 +1,6 @@
 # demo_raw
 
-Blockchain indexer built with DipDup
+Process raw operations without filtering and strict typing
 
 ## Installation
 

@@ -1,6 +1,6 @@
 # demo_nft_marketplace
 
-Blockchain indexer built with DipDup
+hic at nunc NFT marketplace
 
 ## Installation
 

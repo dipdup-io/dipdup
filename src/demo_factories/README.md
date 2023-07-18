@@ -1,6 +1,6 @@
 # demo_factories
 
-Blockchain indexer built with DipDup
+A very basic indexer for USDt transfers
 
 ## Installation
 

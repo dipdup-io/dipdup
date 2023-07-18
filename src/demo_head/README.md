@@ -1,6 +1,6 @@
 # demo_head
 
-Blockchain indexer built with DipDup
+Processing head block metadata
 
 ## Installation
 

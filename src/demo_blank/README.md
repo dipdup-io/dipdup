@@ -1,6 +1,6 @@
 # demo_blank
 
-Blockchain indexer built with DipDup
+Empty config for a fresh start
 
 ## Installation
 

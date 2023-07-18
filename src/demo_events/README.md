@@ -1,6 +1,6 @@
 # demo_events
 
-Blockchain indexer built with DipDup
+Processing contract events
 
 ## Installation
 

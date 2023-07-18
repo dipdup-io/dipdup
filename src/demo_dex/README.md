@@ -1,6 +1,6 @@
 # demo_dex
 
-Blockchain indexer built with DipDup
+Quipuswap DEX balances and liquidity
 
 ## Installation
 

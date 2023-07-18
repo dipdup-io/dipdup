@@ -1,6 +1,6 @@
 # demo_uniswap
 
-Blockchain indexer built with DipDup
+Uniswap V3 pools, positions, swaps, ticks, etc.
 
 ## Installation
 

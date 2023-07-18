@@ -1,6 +1,6 @@
 # demo_big_maps
 
-Blockchain indexer built with DipDup
+Indexing specific big maps
 
 ## Installation
 

@@ -38,4 +38,4 @@ class ExampleModel(models.Model):
     m2m_relation_ids: list[int]
 
     class Meta:
-        abstract=True
+        abstract = True
