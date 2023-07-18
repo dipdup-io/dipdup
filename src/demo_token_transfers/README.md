@@ -1,6 +1,6 @@
 # demo_token_transfers
 
-Blockchain indexer built with DipDup
+TzBTC FA1.2 token transfers
 
 ## Installation
 

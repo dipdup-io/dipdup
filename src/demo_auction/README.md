@@ -1,6 +1,6 @@
 # demo_auction
 
-Blockchain indexer built with DipDup
+TzColors NFT marketplace
 
 ## Installation
 

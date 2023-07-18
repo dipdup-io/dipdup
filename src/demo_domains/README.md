@@ -1,6 +1,6 @@
 # demo_domains
 
-Blockchain indexer built with DipDup
+Tezos Domains name service
 
 ## Installation
 

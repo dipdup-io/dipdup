@@ -1,6 +1,6 @@
 # demo_dao
 
-Blockchain indexer built with DipDup
+Homebase DAO registry
 
 ## Installation
 

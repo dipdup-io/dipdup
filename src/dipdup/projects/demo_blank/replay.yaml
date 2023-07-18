@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: Empty config for a fresh start
+  package: demo_blank
+  template: demo_blank

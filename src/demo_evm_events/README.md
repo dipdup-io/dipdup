@@ -1,6 +1,6 @@
 # demo_evm_events
 
-Blockchain indexer built with DipDup
+A very basic indexer for USDt transfers
 
 ## Installation
 
