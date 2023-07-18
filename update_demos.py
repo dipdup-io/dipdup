@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import subprocess
-from copy import copy
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import DEFAULT_ANSWERS
+from dipdup.project import answers_from_replay
 from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
@@ -33,7 +32,7 @@ for path in _get_projects():
         continue
 
     print(f'=> Rendering {path}')
-    answers = copy(DEFAULT_ANSWERS)
+    answers = answers_from_replay(path / 'replay.yaml')
     answers['package'] = package
     answers['template'] = package
 
