@@ -142,7 +142,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
 @click.command()
 @click.option(
     '--source',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to watch.',
 )
 @click.option(
