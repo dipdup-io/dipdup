@@ -73,7 +73,7 @@ class Replay:
 
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
-    template='base',
+    template='demo_blank',
     package='dipdup_indexer',
     version='0.0.1',
     description='A blockchain indexer built with DipDup',
