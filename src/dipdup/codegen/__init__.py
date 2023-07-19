@@ -27,7 +27,7 @@ from dipdup.yaml import DipDupYAMLConfig
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
 
-_logger = logging.getLogger('dipdup.codegen')
+_logger = logging.getLogger(__name__)
 
 
 class CodeGenerator(ABC):

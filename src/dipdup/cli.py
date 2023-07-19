@@ -63,7 +63,7 @@ NO_SIGNALS_CMDS = {
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
-_logger = logging.getLogger('dipdup.cli')
+_logger = logging.getLogger(__name__)
 
 
 def echo(message: str) -> None:

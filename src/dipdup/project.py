@@ -18,7 +18,7 @@ from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
 
-_logger = logging.getLogger('dipdup.project')
+_logger = logging.getLogger(__name__)
 
 
 TEMPLATES: dict[str, tuple[str, ...]] = {

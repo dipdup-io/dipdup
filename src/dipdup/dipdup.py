@@ -78,7 +78,7 @@ class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
 
-        self._logger = logging.getLogger('dipdup')
+        self._logger = logging.getLogger(__name__)
         self._indexes: dict[str, Index[Any, Any, Any]] = {}
 
         self._entrypoint_filter: set[str | None] = set()
@@ -444,7 +444,7 @@ class DipDup:
     Spawns datasources, registers indexes, passes handler callbacks to executor"""
 
     def __init__(self, config: DipDupConfig) -> None:
-        self._logger = logging.getLogger('dipdup')
+        self._logger = logging.getLogger(__name__)
         self._config = config
         self._datasources: dict[str, Datasource[Any]] = {}
         self._transactions: TransactionManager = TransactionManager(

@@ -126,7 +126,7 @@ class HasuraGateway(HTTPGateway):
             hasura_config.url,
             ResolvedHttpConfig.create(self._default_http_config, http_config),
         )
-        self._logger = logging.getLogger('dipdup.hasura')
+        self._logger = logging.getLogger(__name__)
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config

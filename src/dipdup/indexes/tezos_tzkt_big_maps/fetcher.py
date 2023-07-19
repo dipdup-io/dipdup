@@ -55,7 +55,7 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
         big_map_paths: set[str],
     ) -> None:
         super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 

@@ -81,7 +81,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     Covers caching, retrying failed requests and ratelimiting"""
 
     def __init__(self, url: str, config: ResolvedHttpConfig) -> None:
-        self._logger = logging.getLogger('dipdup.http')
+        self._logger = logging.getLogger(__name__)
         parsed_url = urlsplit(url)
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
         self._alias = config.alias or parsed_url.netloc
