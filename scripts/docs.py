@@ -161,6 +161,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     help='Start frontend.',
 )
 def main(source: Path, destination: Path, watch: bool, serve: bool) -> None:
+    # TODO: ask before rm -rf, include relative to file not folder, check all relative links are valid
     rmtree(destination, ignore_errors=True)
 
     event_handler = DocsBuilder(
