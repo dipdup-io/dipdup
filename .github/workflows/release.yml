@@ -40,20 +40,28 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up metadata
-        id: meta
+      - name: Tag image for ghcr registry
         uses: docker/metadata-action@v3
         with:
           images: dipdup/dipdup
           flavor: |
             latest=false
           tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}/dipdup
+
+      - name: Set up metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            dipdup/dipdup
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}/dipdup
+          flavor: |
+            latest=false
+          tags: |
             type=pep440,pattern={{version}}
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
-            type=pep440,pattern=${{ env.DOCKER_REGISTRY }}/{{version}}
-            type=pep440,pattern=${{ env.DOCKER_REGISTRY }}/{{major}}
-            type=pep440,pattern=${{ env.DOCKER_REGISTRY }}/{{major}}.{{minor}}
 
       - name: Set up Python
         uses: actions/setup-python@main
