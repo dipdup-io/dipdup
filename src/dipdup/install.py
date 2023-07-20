@@ -274,7 +274,6 @@ def cli() -> None:
             path=args.path.strip() if args.path else None,
         )
 
-curl -Lsf https://raw.githubusercontent.com/dipdup-io/dipdup/docs/almost-there/src/dipdup/install.py | python3.11 - --ref 0fef5c74502dbdfe0e49766312feeef2568451e9
 
 if __name__ == '__main__':
     cli()

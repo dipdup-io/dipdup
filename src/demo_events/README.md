@@ -9,7 +9,7 @@ This project is based on [DipDup](https://dipdup.io), a framework for building f
 You need a Linux/macOS system with Python 3.11 installed. Use our installer for easy setup:
 
 ```bash
-curl -Lsf https://dipdup.io/install.py | python3.11
+curl -Lsf https://dipdup.io/install.py | python3
 ```
 
 See the [Installation](https://docs.dipdup.io/installation) page for all options.
