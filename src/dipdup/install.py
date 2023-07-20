@@ -147,6 +147,7 @@ class DipDupEnvironment:
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+        os.execv(sys.executable, ['python3.11'] + sys.argv, os.environ.copy())
         self._commands['pipx'] = which('pipx')
 
 
