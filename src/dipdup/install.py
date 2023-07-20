@@ -272,8 +272,5 @@ def cli() -> None:
         )
 
 
-https://raw.githubusercontent.com/dipdup-io/dipdup/docs/almost-there/src/dipdup/install.py
-fee18a00945cb516032fba2a3bcd8d9f26294fb3
-
 if __name__ == '__main__':
     cli()
