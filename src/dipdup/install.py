@@ -20,7 +20,7 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'python3',
+    'python3.11',
     'pipx',
     'dipdup',
     'datamodel-codegen',
@@ -140,10 +140,10 @@ class DipDupEnvironment:
 
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
-            self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
         self._commands['pipx'] = which('pipx')
 
 
@@ -169,10 +169,12 @@ def install(
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
     pipx_pdm = 'pdm' in pipx_packages
 
-    python_inter_pipx = cast(str, which('python3'))
+    python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
-            subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+            subprocess.run(['pyenv', 'which', 'python3.11'], capture_output=True, text=True)
+            .stdout.strip()
+            .split('\n')[0]
         )
 
     if pipx_dipdup and not force:
