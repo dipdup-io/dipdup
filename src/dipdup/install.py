@@ -141,8 +141,6 @@ class DipDupEnvironment:
         if self._commands.get('pipx'):
             return
 
-        self.run_cmd('python3.11', '-m', 'ensurepip')
-
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
