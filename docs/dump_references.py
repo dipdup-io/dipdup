@@ -8,4 +8,10 @@ from_, to = Path(args[0]), Path(args[1])
 out = '\n'.join(from_.read_text().split('\n')[32:-63])
 if 'config' in str(from_):
     out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
-to.write_text(MARKDOWNLINT_HINT + out)
+
+head = f"""---
+name: {args[2]}
+---
+"""
+
+to.write_text(head + MARKDOWNLINT_HINT + out)
