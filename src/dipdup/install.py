@@ -134,6 +134,9 @@ class DipDupEnvironment:
             fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
+        if not sys.version.startswith('3.11'):
+            fail('DipDup requires Python 3.11')
+
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
             return
@@ -271,6 +274,7 @@ def cli() -> None:
             path=args.path.strip() if args.path else None,
         )
 
+curl -Lsf https://raw.githubusercontent.com/dipdup-io/dipdup/docs/almost-there/src/dipdup/install.py | python3.11 - --ref 0fef5c74502dbdfe0e49766312feeef2568451e9
 
 if __name__ == '__main__':
     cli()
