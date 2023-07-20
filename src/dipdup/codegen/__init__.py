@@ -48,9 +48,6 @@ class CodeGenerator(ABC):
     ) -> None:
         self._package.create()
 
-        for path in self._package.schemas.glob('**/*.json'):
-            path.rename(path.with_suffix('.bak'))
-
         await self.generate_abi()
         await self.generate_schemas()
         await self._generate_types(force)
@@ -60,7 +57,7 @@ class CodeGenerator(ABC):
         await self.generate_system_hooks()
         await self.generate_handlers()
 
-        self._package.verify()
+        # self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:

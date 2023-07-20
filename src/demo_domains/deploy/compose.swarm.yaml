@@ -2,7 +2,7 @@ name: demo_domains
 
 services:
   dipdup:
-    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-7}
     depends_on:
       - db
       - hasura
