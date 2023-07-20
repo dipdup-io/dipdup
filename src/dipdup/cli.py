@@ -595,6 +595,7 @@ async def self(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@click.option('--version', '-v', default=None, help='Install DipDup from a specific version.')
 @click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
 @_cli_wrapper
@@ -602,13 +603,14 @@ async def self_install(
     ctx: click.Context,
     quiet: bool,
     force: bool,
+    version: str | None,
     ref: str | None,
     path: str | None,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, ref, path)
+    dipdup.install.install(quiet, force, version, ref, path)
 
 
 @self.command(name='uninstall')
@@ -638,7 +640,7 @@ async def self_update(
     """Update DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, None, None)
+    dipdup.install.install(quiet, force, None, None, None)
 
 
 @cli.group(invoke_without_command=True)

@@ -150,6 +150,7 @@ class DipDupEnvironment:
 def install(
     quiet: bool,
     force: bool,
+    version: str | None,
     ref: str | None,
     path: str | None,
 ) -> None:
@@ -187,7 +188,8 @@ def install(
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
         else:
             echo('Installing DipDup from PyPI')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'dipdup', force_str)
+            pkg = 'dipdup' if not version else f'dipdup=={version}'
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
 
     if pipx_datamodel_codegen:
         env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
@@ -248,6 +250,7 @@ def cli() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
     parser.add_argument('-f', '--force', action='store_true', help='Force reinstall')
+    parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
@@ -259,6 +262,7 @@ def cli() -> None:
         install(
             quiet=args.quiet,
             force=args.force,
+            version=args.version.strip() if args.version else None,
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
         )
