@@ -822,7 +822,7 @@ files = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.21.1"
+version = "0.21.2"
 requires_python = ">=3.7,<4.0"
 summary = "Datamodel Code Generator"
 dependencies = [
@@ -840,8 +840,8 @@ dependencies = [
     "toml<1.0.0,>=0.10.0",
 ]
 files = [
-    {file = "datamodel_code_generator-0.21.1-py3-none-any.whl", hash = "sha256:9898d4a39a54638022850b0df85fab0ef20394382e88482b8bf8925d4817c493"},
-    {file = "datamodel_code_generator-0.21.1.tar.gz", hash = "sha256:feab1c222c5bc3b7c53e1dc8b299bbc261bb17e9dbc22fdd60fc3a2806694ecc"},
+    {file = "datamodel_code_generator-0.21.2-py3-none-any.whl", hash = "sha256:99f07ddeb4b58dbbcd7822ee83f44e408b9a9550975ea64a483df1e101abf4c2"},
+    {file = "datamodel_code_generator-0.21.2.tar.gz", hash = "sha256:824a11c4a0b2e5b23e102a55db0e4e9120d58cdf77e0cc35abd6efbcf7a46326"},
 ]
 
 [[package]]
