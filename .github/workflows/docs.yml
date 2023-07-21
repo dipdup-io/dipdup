@@ -11,14 +11,14 @@ on:
     tags:
       - '*.*.*'
     branches:
-      - '**'
+      - 'next'
     paths:
       - 'docs/**'
       - 'scripts/**'
       - '.github/workflows/docs.yml'
 
 env:
-  FRONTEND_BRANCH: actual-docs
+  FRONTEND_BRANCH: master
   GH_TOKEN: ${{ secrets.API_TOKEN_EXT }}
 
 jobs:
