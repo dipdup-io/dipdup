@@ -74,7 +74,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://dipdup.io/"
-Documentation = "https://docs.dipdup.io"
+Documentation = "https://dipdup.io/docs"
 Repository = "https://github.com/dipdup-io/dipdup"
 
 [project.scripts]
