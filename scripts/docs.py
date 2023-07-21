@@ -61,8 +61,8 @@ class DocsBuilder(FileSystemEventHandler):
             return
 
         # FIXME: front dies otherwise
-        # if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
-        #     return
+        if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
+            return
 
         if event.event_type == EVENT_TYPE_DELETED:
             dst_file = (self._destination / src_file.relative_to(self._source)).resolve()
