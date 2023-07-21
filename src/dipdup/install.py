@@ -148,9 +148,8 @@ class DipDupEnvironment:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        proc_res = self.run_cmd('bash', '-c', 'python3.11 -m pipx ensurepath ; printenv', capture_output=True, text=True)
-        match = re.search(r'^PATH=(.*)$', proc_res.stdout, re.MULTILINE)
-        os.environ['PATH'] = match.group(1)
+        proc_res = self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath', capture_output=True, text=True)
+        os.environ['PATH'] = proc_res.stdout.split(0) + ';' + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
 
 
