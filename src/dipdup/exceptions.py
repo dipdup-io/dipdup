@@ -83,7 +83,7 @@ class DatasourceError(Error):
             
             {self.msg}
 
-            See https://docs.dipdup.io/getting-started/datasources
+            See https://dipdup.io/docs/getting-started/datasources
         """
 
 
@@ -114,7 +114,7 @@ class ConfigurationError(Error):
         return f"""
             {self.msg}
 
-            See https://docs.dipdup.io/getting-started/config
+            See https://dipdup.io/docs/getting-started/config
         """
 
 
@@ -134,7 +134,7 @@ class InvalidModelsError(Error):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://docs.dipdup.io/getting-started/models
+            See https://dipdup.io/docs/getting-started/models
         """
 
 
@@ -160,7 +160,7 @@ class ReindexingRequiredError(Error):
               - Eliminate the cause of reindexing and run `dipdup schema approve`.
               - Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://docs.dipdup.io/advanced/reindexing for more information.
+            See https://dipdup.io/docs/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -286,8 +286,8 @@ class CallbackTypeError(Error):
 
             Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
-            See https://docs.dipdup.io/getting-started/package
-            See https://docs.dipdup.io/references/cli#init
+            See https://dipdup.io/docs/getting-started/package
+            See https://dipdup.io/docs/references/cli#init
         """
 
 
@@ -305,7 +305,7 @@ class HasuraError(Error):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://docs.dipdup.io/graphql/hasura
+            See https://dipdup.io/docs/graphql/hasura
         """
 
 

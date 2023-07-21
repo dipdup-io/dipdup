@@ -156,7 +156,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         if config_spec_version != __spec_version__:
             raise ConfigurationError(
                 f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See'
-                ' https://docs.dipdup.io/config/spec_version'
+                ' https://dipdup.io/docs/config/spec_version'
             )
 
     def _post_load_hooks(self) -> None:
