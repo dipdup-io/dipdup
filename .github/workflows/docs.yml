@@ -11,7 +11,7 @@ on:
     tags:
       - '*.*.*'
     branches:
-      - 'next'
+      - '**'
     paths:
       - 'docs/**'
       - 'scripts/**'
@@ -59,6 +59,7 @@ jobs:
         run: pdm run docs_build
 
       - name: Commit and push frontend
+        if: github.ref == 'refs/heads/next'
         run: |
           cd ../interface
           git config --local user.email "action@github.com"
