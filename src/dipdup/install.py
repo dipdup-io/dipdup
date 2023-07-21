@@ -149,7 +149,9 @@ class DipDupEnvironment:
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         proc_res = self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath', capture_output=True, text=True)
-        self._commands['pipx'] = proc_res.stdout.split()[0]
+        pipx_path = re.search(r'(/[a-zA-Z0-9._-]+)+', proc_res.stdout).group()
+        os.environ['PATH'] = pipx_path + ';' + os.environ['PATH']
+        self._commands['pipx'] = pipx_path
 
 
 def install(
