@@ -10,6 +10,7 @@ import argparse
 import os
 import subprocess
 import sys
+from pathlib import Path
 from shutil import which
 from typing import Any
 from typing import Dict
@@ -20,7 +21,8 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'python3',
+    'bash',
+    'python3.11',
     'pipx',
     'dipdup',
     'datamodel-codegen',
@@ -134,28 +136,38 @@ class DipDupEnvironment:
             fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
+        if not sys.version.startswith('3.11'):
+            fail('DipDup requires Python 3.11')
+
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
             return
 
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3', '-m', 'pip', 'install', '-q', 'pipx')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
-            self.run_cmd('python3', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3', '-m', 'pipx', 'ensurepath')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+        pipx_path = str(Path.home() / '.local' / 'bin')
+        os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
 
 
 def install(
     quiet: bool,
     force: bool,
+    version: str | None,
     ref: str | None,
     path: str | None,
 ) -> None:
     """Install DipDup and its dependencies with pipx"""
     if ref and path:
         fail('Specify either ref or path, not both')
+
+    if not any((version, ref, path)):
+        # FIXME: Temporary, remove when 7.0.0 is released
+        version = '7.0.0rc1'
 
     env = DipDupEnvironment()
     env.prepare()
@@ -168,10 +180,12 @@ def install(
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
     pipx_pdm = 'pdm' in pipx_packages
 
-    python_inter_pipx = cast(str, which('python3'))
+    python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
-            subprocess.run(['pyenv', 'which', 'python3'], capture_output=True, text=True).stdout.strip().split('\n')[0]
+            subprocess.run(['pyenv', 'which', 'python3.11'], capture_output=True, text=True)
+            .stdout.strip()
+            .split('\n')[0]
         )
 
     if pipx_dipdup and not force:
@@ -187,7 +201,8 @@ def install(
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
         else:
             echo('Installing DipDup from PyPI')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'dipdup', force_str)
+            pkg = 'dipdup' if not version else f'dipdup=={version}'
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
 
     if pipx_datamodel_codegen:
         env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
@@ -248,6 +263,7 @@ def cli() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
     parser.add_argument('-f', '--force', action='store_true', help='Force reinstall')
+    parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
@@ -259,6 +275,7 @@ def cli() -> None:
         install(
             quiet=args.quiet,
             force=args.force,
+            version=args.version.strip() if args.version else None,
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
         )
