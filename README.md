@@ -15,7 +15,7 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 
 - **Ready to build your first indexer?** Head to [Quickstart](https://dipdup.io/docs/quickstart).
 
-- **Looking for examples?** Check out [Demo Projects](https://dipdup.io/docs/examples/demo-projects) and [Built with DipDup](https://dipdup.io/docs/examples/built-with-dipdup) pages.
+- **Looking for examples?** Check out [Demo Projects](https://dipdup.io/docs/examples/demos) and [Built with DipDup](https://dipdup.io/docs/examples/built-with-dipdup) pages.
 
 - **Want to participate?** Vote for [open issues](https://github.com/dipdup-io/dipdup/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc), join [discussions](https://github.com/dipdup-io/dipdup/discussions) or [become a sponsor](https://github.com/sponsors/dipdup-io).
 
@@ -23,7 +23,7 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 
 This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>
-Development is supported by [Tezos Foundation](https://tezos.foundation/).
+Development is supported by [Tezos Foundation](https://tezos.foundation/) and [OnlyDust](https://www.onlydust.xyz)
 
 ## Thanks
 
