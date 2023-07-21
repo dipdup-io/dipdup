@@ -10,7 +10,7 @@ import argparse
 import os
 import subprocess
 import sys
-import re
+from pathlib import Path
 from shutil import which
 from typing import Any
 from typing import Dict
@@ -148,10 +148,10 @@ class DipDupEnvironment:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        proc_res = self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath', capture_output=True, text=True)
-        pipx_path = re.search(r'(/[a-zA-Z0-9._-]+)+', proc_res.stdout).group()
-        os.environ['PATH'] = pipx_path + ';' + os.environ['PATH']
-        self._commands['pipx'] = pipx_path
+        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+        pipx_path = str(Path.home() / '.local' / 'bin')
+        os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
+        self._commands['pipx'] = which('pipx')
 
 
 def install(
