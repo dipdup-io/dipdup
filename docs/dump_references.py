@@ -10,7 +10,7 @@ if 'config' in str(from_):
     out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
 head = f"""---
-name: {args[2]}
+title: {args[2]}
 ---
 """
 
