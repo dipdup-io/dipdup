@@ -31,7 +31,7 @@ from dipdup.utils import json_dumps
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 
 
-_logger = logging.getLogger('dipdup.yaml')
+_logger = logging.getLogger(__name__)
 
 
 def exclude_none(config_json: Any) -> Any:

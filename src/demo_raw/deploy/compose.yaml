@@ -34,7 +34,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.29.1
+    image: hasura/graphql-engine:v2.30.0
     ports:
       - 8080
     depends_on:

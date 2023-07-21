@@ -596,7 +596,7 @@ class DipDupContext:
     ) -> Any:
         """Executes SQL query with given name included with the project
 
-        :param name: SQL query name within `<project>/sql` directory
+        :param name: SQL query name within `sql` directory
         """
 
         sql_path = self._get_sql_path(name)

@@ -60,7 +60,7 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
-_logger = logging.getLogger('dipdup.config')
+_logger = logging.getLogger(__name__)
 
 
 @dataclass

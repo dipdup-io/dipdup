@@ -18,7 +18,7 @@ from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
 
-_logger = logging.getLogger('dipdup.project')
+_logger = logging.getLogger(__name__)
 
 
 TEMPLATES: dict[str, tuple[str, ...]] = {
@@ -82,7 +82,7 @@ DEFAULT_ANSWERS = Answers(
     email='john_doe@example.com',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.29.1',
+    hasura_image='hasura/graphql-engine:v2.30.0',
     line_length='120',
 )
 

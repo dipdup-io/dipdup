@@ -27,7 +27,7 @@ from dipdup.yaml import DipDupYAMLConfig
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
 
-_logger = logging.getLogger('dipdup.codegen')
+_logger = logging.getLogger(__name__)
 
 
 class CodeGenerator(ABC):
@@ -57,7 +57,7 @@ class CodeGenerator(ABC):
         await self.generate_system_hooks()
         await self.generate_handlers()
 
-        self._package.verify()
+        # self._package.verify()
 
     @abstractmethod
     async def generate_abi(self) -> None:

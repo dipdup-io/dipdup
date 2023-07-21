@@ -2,7 +2,7 @@ name: demo_token_transfers
 
 services:
   dipdup:
-    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-6}
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-7}
     depends_on:
       - db
       - hasura
@@ -50,7 +50,7 @@ services:
     logging: *logging
 
   hasura:
-    image: hasura/graphql-engine:v2.29.1
+    image: hasura/graphql-engine:v2.30.0
     depends_on:
       - db
     environment:

@@ -78,10 +78,6 @@ We use `isort` and `black` for autoformatting, `ruff` for linting, and `mypy` fo
 - Demos are stored in `demos` root directory. They MUST be generated automatically from project templates using replay files.
 - Maintainers SHOULD run `make demos replays` command regularly to ensure that demo projects are up to date.
 
-```admonish warning title=""
-This page or paragraph is yet to be written. Come back later.
-```
-
 ## Releases
 
 - Release versions MUST conform to [Semantic Versioning](https://semver.org/). Releases that introduce breaking changes MUST be major ones.

@@ -9,14 +9,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/issues)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/dipdup-io/dipdup?color=2c2c2c)](https://github.com/dipdup-io/dipdup/pulls)
 
-```text
-        ____   _         ____              
-       / __ \ (_)____   / __ \ __  __ ____ 
-      / / / // // __ \ / / / // / / // __ \
-     / /_/ // // /_/ // /_/ // /_/ // /_/ /
-    /_____//_// .___//_____/ \__,_// .___/ 
-             /_/                  /_/      
-```
+<h3 align="center"><img src="https://actual-docs.interface-1bp.pages.dev/_nuxt/logo.9b02ab5e.svg" alt="DipDup logo"></h3>
 
 DipDup is a Python framework for building smart contract indexers. It helps developers focus on business logic instead of writing a boilerplate to store and serve data. DipDup-based indexers are selective, which means only required data is requested. This approach allows to achieve faster indexing times and decreased load on underlying APIs.
 
@@ -26,7 +19,7 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 
 * **Want to participate?** Vote for [open issues](https://github.com/dipdup-io/dipdup/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc), join [discussions](https://github.com/dipdup-io/dipdup/discussions) or [become a sponsor](https://github.com/sponsors/dipdup-io).
 
-* **Have a question?** Join our [Discord](https://discord.gg/sfqjBpmU) or tag @dipdup_io on [Twitter](https://twitter.com/dipdup_io).
+* **Have a question?** Join our [Discord](https://discord.gg/NbANhqCJHA) or tag @dipdup_io on [Twitter](https://twitter.com/dipdup_io).
 
 This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>

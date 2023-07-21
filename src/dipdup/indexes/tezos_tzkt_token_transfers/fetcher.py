@@ -23,7 +23,7 @@ class TokenTransferFetcher(DataFetcher[TzktTokenTransferData]):
         last_level: int,
     ) -> None:
         super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._token_addresses = token_addresses
         self._token_ids = token_ids
         self._from_addresses = from_addresses

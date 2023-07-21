@@ -14,8 +14,8 @@ from typing import Iterable
 from typing import Iterator
 from typing import cast
 
+import asyncpg.exceptions  # type: ignore[import]
 import sqlparse  # type: ignore[import]
-from asyncpg import CannotConnectNowError  # type: ignore[import]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -26,6 +26,7 @@ from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
@@ -80,7 +81,10 @@ async def tortoise_wrapper(
                 )
 
                 conn = get_connection()
-                await conn.execute_query('SELECT 1')
+                try:
+                    await conn.execute_query('SELECT 1')
+                except asyncpg.exceptions.InvalidPasswordError as e:
+                    raise ConfigurationError(f'{e.__class__.__name__}: {e}') from e
 
                 if unsafe_sqlite:
                     _logger.warning('Unsafe SQLite mode enabled; database integrity is not guaranteed!')
@@ -89,7 +93,7 @@ async def tortoise_wrapper(
                     await conn.execute_script('PRAGMA journal_mode = OFF')
 
             # FIXME: Poor logging
-            except (OSError, CannotConnectNowError):
+            except (OSError, asyncpg.exceptions.CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
                     raise

@@ -46,7 +46,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._queue: deque[IndexQueueItemT] = deque()
         queues.add_queue(self._queue, f'index_realtime:{config.name}')
 
-        self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
+        self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
