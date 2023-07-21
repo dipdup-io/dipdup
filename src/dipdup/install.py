@@ -10,6 +10,7 @@ import argparse
 import os
 import subprocess
 import sys
+import re
 from shutil import which
 from typing import Any
 from typing import Dict
@@ -20,6 +21,7 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
+    'bash',
     'python3.11',
     'pipx',
     'dipdup',
@@ -146,7 +148,9 @@ class DipDupEnvironment:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+        proc_res = self.run_cmd('bash', '-c', 'python3.11 -m pipx ensurepath ; printenv', capture_output=True, text=True)
+        match = re.search(r'^PATH=(.*)$', proc_res.stdout, re.MULTILINE)
+        os.environ['PATH'] = match.group(1)
         self._commands['pipx'] = which('pipx')
 
 
