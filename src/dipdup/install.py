@@ -149,7 +149,7 @@ class DipDupEnvironment:
         else:
             self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
         proc_res = self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath', capture_output=True, text=True)
-        os.environ['PATH'] = proc_res.stdout.split(0) + ';' + os.environ['PATH']
+        os.environ['PATH'] = proc_res.stdout.split()[0] + ';' + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
 
 
