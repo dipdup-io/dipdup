@@ -5,7 +5,7 @@ from typing import Set
 
 from dipdup.exceptions import FrameworkException
 
-_logger = logging.getLogger('dipdup.datasource')
+_logger = logging.getLogger(__name__)
 
 
 class Subscription:

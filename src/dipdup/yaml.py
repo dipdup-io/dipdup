@@ -31,7 +31,7 @@ from dipdup.utils import json_dumps
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 
 
-_logger = logging.getLogger('dipdup.yaml')
+_logger = logging.getLogger(__name__)
 
 
 def exclude_none(config_json: Any) -> Any:
@@ -156,7 +156,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         if config_spec_version != __spec_version__:
             raise ConfigurationError(
                 f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See'
-                ' https://docs.dipdup.io/config/spec_version'
+                ' https://dipdup.io/docs/config/spec_version'
             )
 
     def _post_load_hooks(self) -> None:

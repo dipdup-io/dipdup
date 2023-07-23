@@ -6,7 +6,6 @@ import logging
 import re
 from copy import copy
 from pathlib import Path
-from typing import TypeVar
 
 import asyncclick as cl
 import survey  # type: ignore[import]
@@ -19,37 +18,35 @@ from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
 
-_logger = logging.getLogger('dipdup.project')
+_logger = logging.getLogger(__name__)
 
 
-TEZOS_DEMOS = (
-    ('demo_domains', 'Tezos Domains name service'),
-    ('demo_big_maps', 'Indexing specific big maps'),
-    ('demo_events', 'Processing contract events'),
-    ('demo_head', 'Processing head block metadata'),
-    ('demo_nft_marketplace', 'hic at nunc NFT marketplace'),
-    ('demo_dex', 'Quipuswap DEX balances and liquidity'),
-    ('demo_factories', 'Example of spawning indexes in runtime'),
-    ('demo_dao', 'Homebase DAO registry'),
-    ('demo_token', 'TzBTC FA1.2 token operations'),
-    ('demo_token_transfers', 'TzBTC FA1.2 token transfers'),
-    ('demo_auction', 'TzColors NFT marketplace'),
-    ('demo_raw', 'Process raw operations without filtering and strict typing (experimental)'),
-)
-EVM_DEMOS = (
-    ('demo_evm_events', 'Very basic indexer for USDt transfers'),
-    ('demo_uniswap', 'Uniswap V3 pools, positions, swaps, ticks, etc.'),
-)
-OTHER_DEMOS = (
-    ('demo_blank', 'Empty config for a fresh start'),
-    # TODO: demo_jobs
-    # TODO: demo_backup
-    # TODO: demo_sql
-    # TODO: demo_timescale
-)
+TEMPLATES: dict[str, tuple[str, ...]] = {
+    'evm': (
+        'demo_evm_events',
+        'demo_uniswap',
+    ),
+    'tezos': (
+        'demo_domains',
+        'demo_big_maps',
+        'demo_events',
+        'demo_head',
+        'demo_nft_marketplace',
+        'demo_dex',
+        'demo_factories',
+        'demo_dao',
+        'demo_token',
+        'demo_token_transfers',
+        'demo_auction',
+        'demo_raw',
+    ),
+    'other': ('demo_blank',),
+}
 
-
-_T = TypeVar('_T')
+# TODO: demo_jobs
+# TODO: demo_backup
+# TODO: demo_sql
+# TODO: demo_timescale
 
 
 class Answers(TypedDict):
@@ -76,16 +73,16 @@ class Replay:
 
 DEFAULT_ANSWERS = Answers(
     dipdup_version=__version__.split('.')[0],
-    template='demo_dao',
+    template='demo_blank',
     package='dipdup_indexer',
     version='0.0.1',
-    description='Blockchain indexer built with DipDup',
+    description='A blockchain indexer built with DipDup',
     license='MIT',
-    name='John Smith',
-    email='john_smith@localhost.lan',
+    name='John Doe',
+    email='john_doe@example.com',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.29.1',
+    hasura_image='hasura/graphql-engine:v2.30.0',
     line_length='120',
 )
 
@@ -111,12 +108,10 @@ def prompt_anyof(
 
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
-    answers = copy(DEFAULT_ANSWERS)
-
     welcome_text = (
         '\n'
         'Welcome to DipDup! This command will help you to create a new project.\n'
-        'You can abort at any time by pressing Ctrl+C. Press Enter to use default value.\n'
+        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.\n'
     )
     cl.secho(welcome_text, fg='yellow')
 
@@ -134,16 +129,29 @@ def answers_from_terminal() -> Answers:
         ),
         default=0,
     )
-    templates = (EVM_DEMOS, TEZOS_DEMOS, OTHER_DEMOS)[group_index]
+    template_group = (
+        TEMPLATES['evm'],
+        TEMPLATES['tezos'],
+        TEMPLATES['other'],
+    )[group_index]
+
+    options, comments = [], []
+    for name in template_group:
+        replay_path = Path(__file__).parent / 'projects' / name / 'replay.yaml'
+        _answers = answers_from_replay(replay_path)
+        options.append(_answers['template'])
+        comments.append(_answers['description'])
 
     # list of options can contain folder name of template or folder name of template with description
     # all project templates are in src/dipdup/projects
-    _, answers['template'] = prompt_anyof(
+    _, template = prompt_anyof(
         'Choose a project template:',
-        options=tuple(i[0] for i in templates),
-        comments=tuple(i[1] for i in templates),
+        options=tuple(options),
+        comments=tuple(comments),
         default=0,
     )
+    answers = copy(DEFAULT_ANSWERS)
+    answers['template'] = template
 
     while True:
         package = survey.routines.input(
@@ -177,11 +185,11 @@ def answers_from_terminal() -> Answers:
     )
 
     answers['name'] = survey.routines.input(
-        "Enter author's name",
+        "Enter author's name: ",
         value=answers['name'],
     )
     answers['email'] = survey.routines.input(
-        "Enter author's email",
+        "Enter author's email: ",
         value=answers['email'],
     )
 
@@ -216,8 +224,9 @@ def answers_from_terminal() -> Answers:
 
 def answers_from_replay(path: Path) -> Answers:
     replay_config, _ = DipDupYAMLConfig.load([path])
-    answers = Replay(**replay_config).replay
-    return copy(DEFAULT_ANSWERS) | answers
+    answers = copy(DEFAULT_ANSWERS)
+    answers.update(replay_config['replay'])
+    return answers
 
 
 def render_project(
@@ -230,6 +239,14 @@ def render_project(
 
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
+
+    Path(answers['package']).joinpath('configs').mkdir(parents=True, exist_ok=True)
+    _render(
+        answers,
+        template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
+        output_path=Path(answers['package']) / 'configs' / 'replay.yaml',
+        force=force,
+    )
 
 
 def _render_templates(answers: Answers, path: Path, force: bool = False) -> None:

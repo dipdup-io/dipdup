@@ -34,7 +34,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
 
-_logger = logging.getLogger('dipdup.models')
+_logger = logging.getLogger(__name__)
 
 
 # NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.

@@ -20,11 +20,27 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup.install import EPILOG
+from dipdup.install import WELCOME_ASCII
 from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
+
+_click_wrap_text = click.formatting.wrap_text
+
+
+def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
+    # NOTE: WELCOME_ASCII and EPILOG
+    if text.startswith(('    ')):
+        return text
+    if text.startswith(('\0\n')):
+        return text[2:]
+    return _click_wrap_text(text, *a, **kw)
+
+
+click.formatting.wrap_text = _wrap_text
 
 ROOT_CONFIG = 'dipdup.yaml'
 CONFIG_RE = r'dipdup.*\.ya?ml'
@@ -47,7 +63,7 @@ NO_SIGNALS_CMDS = {
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
-_logger = logging.getLogger('dipdup.cli')
+_logger = logging.getLogger(__name__)
 
 
 def echo(message: str) -> None:
@@ -130,7 +146,11 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
-@click.group(context_settings={'max_content_width': 120})
+@click.group(
+    context_settings={'max_content_width': 120},
+    help=WELCOME_ASCII,
+    epilog=EPILOG,
+)
 @click.version_option(__version__)
 @click.option(
     '--config',
@@ -153,12 +173,6 @@ async def _check_version() -> None:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    """Manage and run DipDup indexers.
-
-    Documentation: https://docs.dipdup.io
-
-    Issues: https://github.com/dipdup-io/dipdup/issues
-    """
     # NOTE: Workaround for help pages. First argument check is for the test runner.
     args = sys.argv[1:] if sys.argv else ['--help']
     if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
@@ -581,6 +595,7 @@ async def self(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@click.option('--version', '-v', default=None, help='Install DipDup from a specific version.')
 @click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
 @_cli_wrapper
@@ -588,13 +603,14 @@ async def self_install(
     ctx: click.Context,
     quiet: bool,
     force: bool,
+    version: str | None,
     ref: str | None,
     path: str | None,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, ref, path)
+    dipdup.install.install(quiet, force, version, ref, path)
 
 
 @self.command(name='uninstall')
@@ -624,13 +640,14 @@ async def self_update(
     """Update DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, None, None)
+    dipdup.install.install(quiet, force, None, None, None)
 
 
 @cli.group(invoke_without_command=True)
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
+    """List and manage reports."""
     if ctx.invoked_subcommand:
         return
 
@@ -643,7 +660,7 @@ async def report(ctx: click.Context) -> None:
         from ruamel.yaml import YAML
 
         event = YAML(typ='base').load(path)
-        row = [event.get(key, 'none') for key in header]
+        row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
 
     rows.sort(key=lambda row: str(row[3]))
@@ -706,5 +723,6 @@ async def package_tree(ctx: click.Context) -> None:
     package = DipDupPackage(config.package_path)
     package.create()
     tree = package.discover()
+    echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
     for line in draw_package_tree(package.root, tree):
         echo(line)

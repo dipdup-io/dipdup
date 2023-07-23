@@ -16,6 +16,7 @@ from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
+from dipdup.package import PACKAGE_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
@@ -26,7 +27,7 @@ from dipdup.yaml import DipDupYAMLConfig
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
 
-_logger = logging.getLogger('dipdup.codegen')
+_logger = logging.getLogger(__name__)
 
 
 class CodeGenerator(ABC):
@@ -45,19 +46,17 @@ class CodeGenerator(ABC):
         self,
         force: bool = False,
     ) -> None:
-        self._package.pre_init()
         self._package.create()
 
         await self.generate_abi()
         await self.generate_schemas()
-        await self.generate_types(force)
+        await self._generate_types(force)
 
+        await self._generate_models()
         await self.generate_hooks()
         await self.generate_system_hooks()
         await self.generate_handlers()
 
-        self._package.post_init()
-        # FIXME: Called before types are generated?
         # self._package.verify()
 
     @abstractmethod
@@ -66,10 +65,6 @@ class CodeGenerator(ABC):
 
     @abstractmethod
     async def generate_schemas(self) -> None:
-        ...
-
-    @abstractmethod
-    async def generate_types(self, force: bool) -> None:
         ...
 
     @abstractmethod
@@ -88,6 +83,11 @@ class CodeGenerator(ABC):
     def get_typeclass_name(self, schema_path: Path) -> str:
         ...
 
+    async def _generate_types(self, force: bool = False) -> None:
+        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
+        for path in self._package.schemas.glob('**/*.json'):
+            await self._generate_type(path, force)
+
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._package.schemas)
         type_pkg_path = self._package.types / rel_path
@@ -103,7 +103,7 @@ class CodeGenerator(ABC):
         module_name = schema_path.stem
         output_path = type_pkg_path.parent / f'{pascal_to_snake(module_name)}.py'
         if output_path.exists() and not force:
-            self._logger.info('Skipping `%s`: type already exists', schema_path)
+            self._logger.debug('Skipping `%s`: type already exists', schema_path)
             return
 
         datamodel_codegen = which('datamodel-codegen')
@@ -190,6 +190,16 @@ class CodeGenerator(ABC):
             KEEP_MARKER,
         )
         touch(sql_path)
+
+    async def _generate_models(self) -> None:
+        for path in self._package.models.glob('**/*.py'):
+            if path.stat().st_size == 0:
+                continue
+            return
+
+        path = self._package.models / PACKAGE_MARKER
+        content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
+        write(path, content_path.read_text())
 
 
 async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:

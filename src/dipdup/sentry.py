@@ -18,7 +18,7 @@ from dipdup import env
 from dipdup.config import DipDupConfig
 from dipdup.sys import is_shutting_down
 
-_logger = logging.getLogger('dipdup.sentry')
+_logger = logging.getLogger(__name__)
 
 
 async def _heartbeat() -> None:

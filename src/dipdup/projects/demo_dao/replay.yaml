@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: Homebase DAO registry
+  package: demo_dao
+  template: demo_dao

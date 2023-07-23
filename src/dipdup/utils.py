@@ -32,7 +32,7 @@ from dipdup.exceptions import ProjectImportError
 
 ObjectT = TypeVar('ObjectT', bound=BaseModel)
 
-_logger = logging.getLogger('dipdup')
+_logger = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:

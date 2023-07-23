@@ -22,7 +22,7 @@ class EventFetcher(DataFetcher[TzktEventData]):
         event_addresses: set[str],
         event_tags: set[str],
     ) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level

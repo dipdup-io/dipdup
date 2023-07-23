@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: Processing contract events
+  package: demo_events
+  template: demo_events

@@ -48,7 +48,7 @@ class SchedulerManager:
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         if config:
             _verify_config(config)
-        self._logger = logging.getLogger('dipdup.jobs')
+        self._logger = logging.getLogger(__name__)
         self._scheduler = AsyncIOScheduler(config or DEFAULT_CONFIG)
         self._scheduler.add_listener(self._on_error, EVENT_JOB_ERROR)
         self._scheduler.add_listener(self._on_executed, EVENT_JOB_EXECUTED)

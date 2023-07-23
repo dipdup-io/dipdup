@@ -1,15 +1,15 @@
 [project]
 name = "demo_token_transfers"
 version = "0.0.1"
-description = "Blockchain indexer built with DipDup"
+description = "TzBTC FA1.2 token transfers"
 license = { text = "MIT" }
 authors = [
-    { name = "John Smith", email = "john_smith@localhost.lan" }
+    { name = "John Doe", email = "john_doe@example.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "dipdup~=6.0"
+    "dipdup>=7.0.0rc1,<8"
 ]
 
 [tool.pdm.dev-dependencies]

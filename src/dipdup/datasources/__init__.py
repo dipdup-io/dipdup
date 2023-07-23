@@ -15,7 +15,7 @@ from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
 
-_logger = logging.getLogger('dipdup.datasource')
+_logger = logging.getLogger(__name__)
 
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)

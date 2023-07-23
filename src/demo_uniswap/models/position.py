@@ -5,15 +5,15 @@ import demo_uniswap.models as models
 from demo_uniswap.models.abi import get_abi
 from dipdup.context import HandlerContext
 
-position_manager_abi = get_abi('position_manager.abi')
-factory_abi = get_abi('factory.abi')
-
 
 async def position_validate(
-    ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position
+    ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position,
 ) -> None:
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
-    manager = web3.eth.contract(address=to_checksum_address(contract_address), abi=position_manager_abi)
+    manager = web3.eth.contract(
+        address=to_checksum_address(contract_address),
+        abi=get_abi('position_manager.abi'),
+    )
 
     try:
         # nonce uint96,

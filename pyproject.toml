@@ -1,23 +1,34 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "6.5.5"
+version = "7.0.0rc1"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
 ]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 keywords = [
-    "tezos",
+    "api",
+    "backend",
     "blockchain",
-    "sdk",
-    "michelson",
-    "indexers",
-    "tzkt",
+    "crypto",
     "cryptocurrencies",
+    "dapp",
+    "declarative",
+    "ethereum",
+    "evm",
+    "framework",
+    "indexer",
+    "indexers",
+    "michelson",
+    "scheduler",
+    "sdk",
     "smart-contracts",
+    "tezos",
+    "tzkt",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -33,9 +44,9 @@ classifiers = [
 ]
 
 dependencies = [
-    # NOTE: Core dependencies are pinned to exact versions to avoid breaking changes
-    "asyncpg===0.27.0",
-    "datamodel-code-generator===0.21.1",
+    # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
+    "asyncpg~=0.28.0",
+    "datamodel-code-generator~=0.21.1",
     "pydantic~=2.0",
     "tortoise-orm===0.19.3",
 
@@ -63,7 +74,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://dipdup.io/"
-Documentation = "https://docs.dipdup.io"
+Documentation = "https://dipdup.io/docs"
 Repository = "https://github.com/dipdup-io/dipdup"
 
 [project.scripts]
@@ -139,6 +150,10 @@ flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
 strict = true
+
+[[tool.mypy.overrides]]
+module = "*.types.*"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

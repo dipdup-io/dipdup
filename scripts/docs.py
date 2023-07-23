@@ -8,6 +8,7 @@ from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
+from subprocess import run
 from typing import Any
 from typing import Callable
 from typing import Iterator
@@ -142,7 +143,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
 @click.command()
 @click.option(
     '--source',
-    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to watch.',
 )
 @click.option(
@@ -161,7 +162,9 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     help='Start frontend.',
 )
 def main(source: Path, destination: Path, watch: bool, serve: bool) -> None:
+    # TODO: ask before rm -rf, include relative to file not folder, check all relative links are valid
     rmtree(destination, ignore_errors=True)
+    run(['./build-sphinx.sh'], cwd=source)
 
     event_handler = DocsBuilder(
         source,

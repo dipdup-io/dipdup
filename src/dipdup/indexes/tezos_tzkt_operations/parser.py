@@ -34,7 +34,7 @@ def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
         # NOTE: Optional is a magic _SpecialForm
         return cast(Type[BaseModel], Optional[root_field.annotation])
 
-    return root_field.annotation
+    return root_field.annotation  # type: ignore[return-value]
 
 
 def is_array_type(storage_type: type[Any]) -> bool:
@@ -80,7 +80,7 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
     # NOTE: Pydantic model, find corresponding field and return it's type
     for name, field in dict_type.model_fields.items():
         if key in (name, field.alias):
-            return field.annotation
+            return field.annotation  # type: ignore[no-any-return]
 
     # NOTE: Either we try the wrong Union path or model was modifier by user
     raise KeyError(f'Field `{key}` not found in {dict_type}')
