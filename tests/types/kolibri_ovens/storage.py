@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 
 class KolibriOvensStorage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     borrowedTokens: str
     interestIndex: str

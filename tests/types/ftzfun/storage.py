@@ -7,11 +7,12 @@ from typing import Any
 from typing import Dict
 from typing import List
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     address_0: str
     address_1: str
@@ -19,21 +20,21 @@ class Key(BaseModel):
 
 
 class Operator(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     key: Key
     value: Dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     token_id: str
     token_info: Dict[str, str]
 
 
 class Assets(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     ledger: Dict[str, str]
     next_token_id: str
@@ -42,7 +43,7 @@ class Assets(BaseModel):
 
 
 class FtzFunStorage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     assets: Assets
     metadata: Dict[str, str]

@@ -7,17 +7,18 @@ from typing import Dict
 from typing import List
 from typing import Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 
 class QwerStorageItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     L: str
 
 
 class QwerStorageItem1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     R: Dict[str, str]
 

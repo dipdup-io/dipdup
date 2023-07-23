@@ -7,25 +7,26 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     string: str
     nat: str
 
 
 class Value(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     sw: Optional[str]
     mr: Optional[Dict[str, bool]]
 
 
 class HjklStorageItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     key: Key
     value: Value

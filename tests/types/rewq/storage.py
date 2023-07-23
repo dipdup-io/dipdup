@@ -7,36 +7,37 @@ from typing import Any
 from typing import Dict
 from typing import Union
 
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel
+from pydantic import ConfigDict
 from pydantic import Field
 
 
 class MapItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     L: Dict[str, str]
 
 
 class MapItem1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     R: Dict[str, Any]
 
 
 class OrItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     L: Dict[str, str]
 
 
 class OrItem1(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     R: Dict[str, Any]
 
 
 class RewqStorage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra='forbid')
 
     map: Dict[str, Union[MapItem, MapItem1]]
     or_: Union[OrItem, OrItem1] = Field(..., alias='or')
