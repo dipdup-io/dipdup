@@ -7,56 +7,48 @@ from typing import Any
 from typing import Dict
 from typing import Union
 
-from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict, BaseModel
 from pydantic import Field
 
 
 class MapItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     L: str
 
 
 class MapItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     R: str
 
 
 class OrItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     L: str
 
 
 class OrItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     R: str
 
 
 class BigMapItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     L: str
 
 
 class BigMapItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     R: str
 
 
 class ZxcvStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     map: Dict[str, Union[MapItem, MapItem1]]
     unit: Dict[str, Any]

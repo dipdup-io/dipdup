@@ -7,21 +7,18 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
-from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict, BaseModel
 
 
 class ResourceMap(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     id: str
     rate: str
 
 
 class ResourceCollectorStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     administrator: str
     current_user: Optional[str]

@@ -5,21 +5,18 @@ from __future__ import annotations
 
 from typing import Dict
 
-from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict, BaseModel
 
 
 class Invoices(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     invoice: str
     subjkt: str
 
 
 class HenSubjktStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     entries: Dict[str, bool]
     invoices: Dict[str, Invoices]

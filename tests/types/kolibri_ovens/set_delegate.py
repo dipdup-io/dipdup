@@ -9,4 +9,4 @@ from pydantic import BaseModel
 
 
 class SetDelegateParameter(BaseModel):
-    root: Optional[str]
+    root: Optional[str] = None

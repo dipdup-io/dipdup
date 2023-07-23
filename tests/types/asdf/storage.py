@@ -6,21 +6,18 @@ from __future__ import annotations
 from typing import Dict
 from typing import List
 
-from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict, BaseModel
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     string: str
     nat: str
 
 
 class AsdfStorageItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra="forbid")
 
     key: Key
     value: str
