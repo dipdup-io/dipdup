@@ -1,6 +1,4 @@
-# NOTE: to run pipeline in act
-# change ${{ secrets.GITHUB_TOKEN }} to $GITHUB_TOKEN
-# and uncommit Install GH
+# NOTE: To run this pipeline in act replace secrets.GITHUB_TOKEN with $GITHUB_TOKEN and uncomment the first step
 
 name: Docs
 concurrency: 
@@ -26,6 +24,16 @@ jobs:
     name: Docs
     runs-on: ubuntu-22.04
     steps:
+      # NOTE: Uncomment for local testing with act
+      # - name: Install GitHub CLI (act only)
+      #   run: |
+      #     type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+      #     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+      #     && sudo apt update \
+      #     && sudo apt install gh -y
+
       - name: Check out the repo
         uses: actions/checkout@v3
 
@@ -40,15 +48,6 @@ jobs:
 
       - name: Install project
         run: pdm install
-
-      # - name: Install GH
-      #   run: |
-      #     type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
-      #     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-      #     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-      #     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-      #     && sudo apt update \
-      #     && sudo apt install gh -y
 
       - name: Clone frontend
         run: |
