@@ -18,6 +18,7 @@ from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PACKAGE_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.project import render_base
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
@@ -47,6 +48,8 @@ class CodeGenerator(ABC):
         force: bool = False,
     ) -> None:
         self._package.create()
+        if replay := self._package.replay:
+            render_base(replay, force)
 
         await self.generate_abi()
         await self.generate_schemas()

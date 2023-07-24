@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_token_transfers
 
-database:
-  kind: sqlite
-  path: demo_token_transfers.sqlite3
-
 contracts:
   tzbtc_mainnet:
     kind: tezos

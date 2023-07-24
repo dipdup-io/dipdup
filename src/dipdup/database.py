@@ -59,6 +59,11 @@ async def tortoise_wrapper(
     unsafe_sqlite: bool = False,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
+    if ':memory' in url:
+        _logger.warning('Using in-memory database; data will be lost on exit')
+    if '/tmp/' in url:
+        _logger.warning('Using tmpfs database; data will be lost on reboot')
+
     model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
     }

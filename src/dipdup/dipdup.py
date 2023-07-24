@@ -629,10 +629,6 @@ class DipDup:
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         self._logger.info('Setting up database')
-        database_config = self._config.database
-        if isinstance(database_config, SqliteDatabaseConfig) and database_config.path == ':memory:':
-            self._logger.warning('Using in-memory SQLite database; data will be lost on restart')
-
         await stack.enter_async_context(
             tortoise_wrapper(
                 url=self._config.database.connection_string,

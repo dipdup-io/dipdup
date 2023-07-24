@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_evm_events
 
-database:
-  kind: sqlite
-  path: demo_evm_events.sqlite3
-
 datasources:
   ethscan:
     kind: abi.etherscan

@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_dex
 
-database:
-  kind: sqlite
-  path: demo_dex.sqlite3
-
 contracts:
   kusd_dex_mainnet:
     kind: tezos
