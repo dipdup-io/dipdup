@@ -49,6 +49,7 @@ class CodeGenerator(ABC):
     ) -> None:
         self._package.create()
         if replay := self._package.replay:
+            _logger.info('Using replay `%s`', replay)
             render_base(replay, force)
 
         await self.generate_abi()

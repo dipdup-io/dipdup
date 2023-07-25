@@ -91,7 +91,7 @@ class DipDupPackage:
     @property
     def replay(self) -> Answers | None:
         if not self._replay:
-            with suppress(Exception):
+            with suppress(FileNotFoundError):
                 self._replay = answers_from_replay(self.root / 'configs' / 'replay.yaml')
         return self._replay
 

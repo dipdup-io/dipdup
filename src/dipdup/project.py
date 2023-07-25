@@ -258,6 +258,13 @@ def render_base(
     # NOTE: Common base
     _render_templates(answers, Path('base'), force, refresh=True)
 
+    _render(
+        answers,
+        template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
+        output_path=Path('configs') / 'replay.yaml',
+        force=force,
+    )
+
 
 def _render_templates(answers: Answers, path: Path, force: bool = False, refresh: bool = False) -> None:
     from jinja2 import Template

@@ -31,7 +31,7 @@ dipdup -c . -c configs/dipdup.sqlite.yml run
 Or spawn a docker-compose stack:
 
 ```bash
-cp deploy/.env.example deploy/.env
+cp deploy/.env.default deploy/.env
 # Edit .env before running
 docker-compose -f deploy/compose.yaml up
 ```
