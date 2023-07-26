@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- package: Create missing files from project base on init.
+- package: Update replay.yaml on init.
+- demos: Don't include database config in root config.
+
 ## [7.0.0rc1] - 2023-07-21
 
 ### Added

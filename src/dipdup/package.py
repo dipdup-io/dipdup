@@ -1,5 +1,6 @@
 import logging
 from collections import deque
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 from typing import Awaitable
@@ -11,6 +12,8 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import ProjectImportError
+from dipdup.project import Answers
+from dipdup.project import answers_from_replay
 from dipdup.utils import import_from
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
@@ -78,11 +81,19 @@ class DipDupPackage:
         self.schemas = self._xdg_shared_dir / 'schemas' / self.name
 
         # NOTE: Finally, internal in-memory stuff
+        self._replay: Answers | None = None
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
         self._evm_events: dict[str, dict[str, EventAbiExtra]] = {}
         self._evm_topics: dict[str, dict[str, str]] = {}
+
+    @property
+    def replay(self) -> Answers | None:
+        if not self._replay:
+            with suppress(Exception):
+                self._replay = answers_from_replay(self.root / 'configs' / 'replay.yaml')
+        return self._replay
 
     @property
     def skel(self) -> dict[Path, str | None]:
