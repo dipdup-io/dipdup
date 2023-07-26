@@ -164,7 +164,6 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
 def main(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     # TODO: ask before rm -rf, include relative to file not folder, check all relative links are valid
     rmtree(destination, ignore_errors=True)
-    run(['./build-sphinx.sh'], cwd=source)
 
     event_handler = DocsBuilder(
         source,
