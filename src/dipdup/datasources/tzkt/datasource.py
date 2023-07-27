@@ -1233,6 +1233,8 @@ class TzktDatasource(SignalRDatasource):
         to_json = token_transfer_json.get('to') or {}
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
+        amount = token_transfer_json.get('amount')
+        amount = int(amount) if amount is not None else None
         return TokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
@@ -1247,7 +1249,7 @@ class TzktDatasource(SignalRDatasource):
             from_address=from_json.get('address'),
             to_alias=to_json.get('alias'),
             to_address=to_json.get('address'),
-            amount=token_transfer_json.get('amount'),
+            amount=amount,
             tzkt_transaction_id=token_transfer_json.get('transactionId'),
             tzkt_origination_id=token_transfer_json.get('originationId'),
             tzkt_migration_id=token_transfer_json.get('migrationId'),
