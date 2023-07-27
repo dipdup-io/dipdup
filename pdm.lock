@@ -2856,7 +2856,7 @@ files = [
 
 [[package]]
 name = "web3"
-version = "6.6.1"
+version = "6.7.0"
 requires_python = ">=3.7.2"
 summary = "web3.py"
 dependencies = [
@@ -2877,8 +2877,8 @@ dependencies = [
     "websockets>=10.0.0",
 ]
 files = [
-    {file = "web3-6.6.1-py3-none-any.whl", hash = "sha256:e8bfcf804fcf8890deb9851a872bbdf1d264c94486498062ecf56379920f7996"},
-    {file = "web3-6.6.1.tar.gz", hash = "sha256:4ce32307f327eb17ef87c292fa01a80381780e7acea663e022732134d2b1b572"},
+    {file = "web3-6.7.0-py3-none-any.whl", hash = "sha256:efceb098dc7fd9cf01a20b3c7197fc4808292d5752956b26a15a0e34392c7556"},
+    {file = "web3-6.7.0.tar.gz", hash = "sha256:dc05e4130ed2e1e67a18a6f012cd3095440f37c0b8334038071d5510176debb5"},
 ]
 
 [[package]]

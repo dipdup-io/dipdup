@@ -92,6 +92,6 @@ tortoise-orm==0.19.3
 typing-extensions==4.7.1
 tzlocal==5.0.1
 urllib3==2.0.4
-web3==6.6.1
+web3==6.7.0
 websockets==10.4
 yarl==1.9.2

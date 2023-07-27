@@ -123,7 +123,7 @@ typing-extensions==4.7.1
 tzlocal==5.0.1
 urllib3==2.0.4
 watchdog==3.0.0
-web3==6.6.1
+web3==6.7.0
 websocket-client==1.6.1
 websockets==10.4
 yarl==1.9.2
