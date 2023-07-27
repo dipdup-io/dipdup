@@ -23,7 +23,7 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 
 This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>
-Development is supported by [Tezos Foundation](https://tezos.foundation/) and [OnlyDust](https://www.onlydust.xyz)
+Development is supported by [Tezos Foundation](https://tezos.foundation/) and [OnlyDust](https://www.onlydust.xyz).
 
 ## Thanks
 

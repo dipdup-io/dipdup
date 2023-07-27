@@ -6,7 +6,6 @@ on:
   push:
     paths:
       - 'src/**'
-      - 'scripts/install.py'
       - 'pyproject.toml'
       - 'pdm.lock'
       - '.github/workflows/installer.yml'

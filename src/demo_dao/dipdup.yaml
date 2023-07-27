@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_dao
 
-database:
-  kind: sqlite
-  path: demo_dao.sqlite3
-
 contracts:
   registry:
     kind: tezos

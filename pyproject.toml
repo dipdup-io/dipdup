@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.0.0rc1"
+version = "7.0.0rc2"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -126,6 +126,7 @@ demos = { shell = """
 docs_build = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs"
 docs_serve = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch --serve"
 docs_watch = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch"
+docs_references = "python scripts/dump_references.py"
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]

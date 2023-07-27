@@ -14,6 +14,7 @@ from tabulate import tabulate
 from typing_extensions import TypedDict
 
 from dipdup import __version__
+from dipdup.env import get_package_path
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -82,7 +83,7 @@ DEFAULT_ANSWERS = Answers(
     email='john_doe@example.com',
     postgresql_image='postgres:15',
     # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.30.0',
+    hasura_image='hasura/graphql-engine:v2.30.1',
     line_length='120',
 )
 
@@ -249,7 +250,23 @@ def render_project(
     )
 
 
-def _render_templates(answers: Answers, path: Path, force: bool = False) -> None:
+def render_base(
+    answers: Answers,
+    force: bool = False,
+) -> None:
+    """Render base from template"""
+    # NOTE: Common base
+    _render_templates(answers, Path('base'), force, refresh=True)
+
+    _render(
+        answers,
+        template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
+        output_path=Path('configs') / 'replay.yaml',
+        force=force,
+    )
+
+
+def _render_templates(answers: Answers, path: Path, force: bool = False, refresh: bool = False) -> None:
     from jinja2 import Template
 
     project_path = Path(__file__).parent / 'projects' / path
@@ -257,8 +274,9 @@ def _render_templates(answers: Answers, path: Path, force: bool = False) -> None
 
     for path in project_paths:
         template_path = path.relative_to(Path(__file__).parent)
+        output_base = get_package_path(answers['package']) if refresh else Path(answers['package'])
         output_path = Path(
-            answers['package'],
+            output_base,
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
@@ -268,7 +286,7 @@ def _render_templates(answers: Answers, path: Path, force: bool = False) -> None
 
 def _render(answers: Answers, template_path: Path, output_path: Path, force: bool) -> None:
     if output_path.exists() and not force:
-        _logger.warning('File `%s` already exists, skipping', output_path)
+        _logger.info('File `%s` already exists, skipping', output_path)
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))

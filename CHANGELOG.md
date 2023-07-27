@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.0.0rc2] - 2023-07-26
+
+### Fixed
+
+- package: Create missing files from project base on init.
+- package: Update replay.yaml on init.
+- demos: Don't include database config in root config.
+
 ## [7.0.0rc1] - 2023-07-21
 
 ### Added
@@ -1089,7 +1097,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...HEAD
+[7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2
 [7.0.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.5.9...7.0.0rc1
 [6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
 [6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
