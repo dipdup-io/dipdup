@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - ci: Fixed dipdup package metadata.
+- cli: Generate base template from replay only when --base flag is set.
+- codegen: Don't create empty pyproject.toml during init.
 
 ## [7.0.0rc2] - 2023-07-26
 

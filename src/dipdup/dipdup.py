@@ -500,7 +500,11 @@ class DipDup:
 
         return dipdup
 
-    async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
+    async def init(
+        self,
+        force: bool = False,
+        base: bool = False,
+    ) -> None:
         """Create new or update existing dipdup project"""
         from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
         from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
@@ -511,14 +515,14 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            package = DipDupPackage(
-                root=self._config.package_path,
-                debug=keep_schemas,
-            )
+            package = DipDupPackage(self._config.package_path)
 
             for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
                 codegen = codegen_cls(self._config, package, self._datasources)
-                await codegen.init(force=overwrite_types)
+                await codegen.init(
+                    force=force,
+                    base=base,
+                )
 
             await generate_environments(self._config, package)
 

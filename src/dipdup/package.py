@@ -22,7 +22,6 @@ from dipdup.utils import touch
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
-PYPROJECT = 'pyproject.toml'
 DEFAULT_ENV = '.env.default'
 
 EVM_ABI = 'abi.json'
@@ -59,9 +58,8 @@ class EventAbiExtra:
 
 
 class DipDupPackage:
-    def __init__(self, root: Path, debug: bool = False) -> None:
+    def __init__(self, root: Path) -> None:
         self.root = root
-        self.debug = debug
         self.name = root.name
 
         # NOTE: Package sections with .keep markers
@@ -112,9 +110,6 @@ class DipDupPackage:
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
             Path(PACKAGE_MARKER): None,
-            Path(PYPROJECT): None,
-            # NOTE: Not a part of package
-            self.schemas: '**/*.json',
         }
 
     def discover(self) -> dict[str, tuple[Path, ...]]:

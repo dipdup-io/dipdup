@@ -46,10 +46,13 @@ class CodeGenerator(ABC):
     async def init(
         self,
         force: bool = False,
+        base: bool = False,
     ) -> None:
         self._package.create()
-        if replay := self._package.replay:
-            _logger.info('Using replay `%s`', replay)
+
+        replay = self._package.replay
+        if base and replay:
+            _logger.info('Recreating base template with replay.yaml')
             render_base(replay, force)
 
         await self.generate_abi()
