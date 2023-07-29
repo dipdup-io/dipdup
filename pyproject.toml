@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.0.0rc2"
+version = "7.0.0rc3"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -48,7 +48,7 @@ dependencies = [
     "asyncpg~=0.28.0",
     "datamodel-code-generator~=0.21.1",
     "pydantic~=1.10.11",
-    "tortoise-orm===0.19.3",
+    "tortoise-orm==0.19.3",
 
     "aiohttp~=3.8",
     "aiolimiter~=1.0",
