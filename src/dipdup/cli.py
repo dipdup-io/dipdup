@@ -178,6 +178,9 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
         return
 
+    # NOTE: https://github.com/python/cpython/issues/95778
+    sys.set_int_max_str_digits(0)
+
     from dotenv import load_dotenv
 
     from dipdup.exceptions import ConfigurationError

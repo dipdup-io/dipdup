@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- index: Remove Python limitation on large int<->str conversions.
+
 ## [7.0.0rc2] - 2023-07-26
 
 ### Fixed
