@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [6.5.10] - 2023-08-01
+## [6.5.10] - 2023-08-02
 
 ### Fixed
 
