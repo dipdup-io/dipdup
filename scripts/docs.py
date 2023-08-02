@@ -8,7 +8,6 @@ from contextlib import suppress
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
-from subprocess import run
 from typing import Any
 from typing import Callable
 from typing import Iterator
