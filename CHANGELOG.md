@@ -19,6 +19,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - index: Remove Python limitation on large int<->str conversions.
+- index: Fixed crash when parsing typed transactions with empty parameter.
+
+## [6.5.10] - 2023-08-02
+
+### Fixed
+
+- index: Remove Python limitation on large int<->str conversions.
 
 ## [7.0.0rc2] - 2023-07-26
 
