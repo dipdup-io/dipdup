@@ -7,8 +7,8 @@ from contextlib import suppress
 from typing import Any
 
 import sentry_sdk
-import sentry_sdk.serializer
 import sentry_sdk.consts
+import sentry_sdk.serializer
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.atexit import AtexitIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
