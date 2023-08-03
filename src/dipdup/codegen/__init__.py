@@ -3,7 +3,7 @@ import subprocess
 from abc import ABC
 from abc import abstractmethod
 from pathlib import Path
-from shutil import which
+from shutil import rmtree, which
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -56,7 +56,7 @@ class CodeGenerator(ABC):
             render_base(replay, force)
 
         await self.generate_abi()
-        await self.generate_schemas()
+        await self.generate_schemas(force)
         await self._generate_types(force)
 
         await self._generate_models()
@@ -71,7 +71,7 @@ class CodeGenerator(ABC):
         ...
 
     @abstractmethod
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
         ...
 
     @abstractmethod
@@ -206,6 +206,9 @@ class CodeGenerator(ABC):
         content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
         write(path, content_path.read_text())
 
+    def _cleanup_schemas(self) -> None:
+        rmtree(self._package.schemas)
+        self._package.schemas.mkdir()
 
 async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
     for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):

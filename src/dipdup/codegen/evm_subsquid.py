@@ -111,7 +111,10 @@ class SubsquidCodeGenerator(CodeGenerator):
             elif isinstance(index_config, SubsquidOperationsIndexConfig):
                 raise NotImplementedError
 
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
+        if force:
+            self._cleanup_schemas()
+
         events: set[str] = set()
         functions: set[str] = set()
 
@@ -180,3 +183,9 @@ class SubsquidCodeGenerator(CodeGenerator):
         # else:
         #     class_name = module_name
         return module_name
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        if 'evm_events' not in schema_path.parts:
+            return
+        await super()._generate_type(schema_path, force)
+            
