@@ -16,12 +16,7 @@ def workdir(file: str) -> None:
     from pathlib import Path
 
     package_path = Path(file).parent
-    if package_path != Path.cwd():
-        raise ImportError(f'`{file}` is not a working directory; no need to call `dipdup.workdir(__file__)`')
-    if package_path.stem != package_path.parent.name:
-        raise ImportError(f'`{file}` is not a valid DipDup package')
-
-    name = package_path.stem
+    name = package_path.name
     package_root = package_path / '__init__.py'
     if not package_root.exists():
         raise ImportError(f'`{name}` is not a valid DipDup package')
