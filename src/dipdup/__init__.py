@@ -15,10 +15,10 @@ def workdir(file: str) -> None:
     from importlib.util import spec_from_file_location
     from pathlib import Path
 
-    package_path = Path(file).parent
-    name = package_path.name
-    package_root = package_path / '__init__.py'
-    if not package_root.exists():
+    name = Path(file).stem
+    package_root = Path(file).parent / '__init__.py'
+    spec = spec_from_file_location(name, package_root)
+    if spec is None:
         package_root.write_text('')
 
     spec = spec_from_file_location(name, package_root)
