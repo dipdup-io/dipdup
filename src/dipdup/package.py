@@ -61,6 +61,7 @@ class DipDupPackage:
     def __init__(self, root: Path) -> None:
         self.root = root
         self.name = root.name
+        self.loader = root / f'{self.name}.py'
 
         # NOTE: Package sections with .keep markers
         self.abi = root / 'abi'
@@ -107,12 +108,13 @@ class DipDupPackage:
             self.models: '**/*.py',
             self.sql: '**/*.sql',
             self.types: '**/*.py',
+            self.loader: '',
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
             Path(PACKAGE_MARKER): None,
         }
 
-    def discover(self) -> dict[str, tuple[Path, ...]]:
+    def tree(self) -> dict[str, tuple[Path, ...]]:
         tree = {}
         for path, exp in self.skel.items():
             tree[path.name] = tuple(path.glob(exp)) if exp else ()
