@@ -188,4 +188,3 @@ class SubsquidCodeGenerator(CodeGenerator):
         if 'evm_events' not in schema_path.parts:
             return
         await super()._generate_type(schema_path, force)
-            

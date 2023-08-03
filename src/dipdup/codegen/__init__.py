@@ -3,7 +3,8 @@ import subprocess
 from abc import ABC
 from abc import abstractmethod
 from pathlib import Path
-from shutil import rmtree, which
+from shutil import rmtree
+from shutil import which
 from typing import Any
 from typing import Awaitable
 from typing import Callable
@@ -209,6 +210,7 @@ class CodeGenerator(ABC):
     def _cleanup_schemas(self) -> None:
         rmtree(self._package.schemas)
         self._package.schemas.mkdir()
+
 
 async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
     for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
