@@ -48,7 +48,7 @@ dependencies = [
     "asyncpg~=0.28.0",
     "datamodel-code-generator~=0.21.1",
     "pydantic~=1.10.11",
-    "tortoise-orm===0.19.3",
+    "tortoise-orm==0.19.3",
 
     "aiohttp~=3.8",
     "aiolimiter~=1.0",
@@ -65,7 +65,7 @@ dependencies = [
     "pysignalr~=0.2",
     "python-dotenv~=1.0",
     "ruamel.yaml~=0.17",
-    "sentry-sdk~=1.4",
+    "sentry-sdk~=1.29",
     "sqlparse~=0.4",
     "survey~=4.4",
     "tabulate~=0.9",

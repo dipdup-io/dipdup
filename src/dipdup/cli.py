@@ -255,9 +255,10 @@ async def run(ctx: click.Context) -> None:
 
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
+@click.option('--base', '-b', is_flag=True, help='Also generate tempalate base: pyproject.toml, README.md, etc.')
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, force: bool) -> None:
+async def init(ctx: click.Context, force: bool, base: bool) -> None:
     """Generate project tree, callbacks and types.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -266,7 +267,7 @@ async def init(ctx: click.Context, force: bool) -> None:
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(force)
+    await dipdup.init(force, base)
 
 
 @cli.command()
@@ -725,7 +726,7 @@ async def package_tree(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
     package.create()
-    tree = package.discover()
+    tree = package.tree()
     echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
     for line in draw_package_tree(package.root, tree):
         echo(line)

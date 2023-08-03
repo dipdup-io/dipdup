@@ -7,8 +7,8 @@ from contextlib import suppress
 from typing import Any
 
 import sentry_sdk
+import sentry_sdk.consts
 import sentry_sdk.serializer
-import sentry_sdk.utils
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.atexit import AtexitIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -107,9 +107,9 @@ def init_sentry(config: 'DipDupConfig') -> None:
         release=release,
         environment=environment,
         server_name=server_name,
+        # NOTE: Increase __repr__ length limit
+        max_value_length=sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH * 10,
     )
-    # NOTE: Increase __repr__ length limit
-    sentry_sdk.utils.MAX_STRING_LENGTH *= 10
 
     # NOTE: Setting session tags
     tags = {

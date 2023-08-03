@@ -8,8 +8,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- ci: Fixed dipdup package metadata.
+- cli: Generate base template from replay only when --base flag is set.
 - index: Remove Python limitation on large int<->str conversions.
 - index: Fixed crash when parsing typed transactions with empty parameter.
+- package: Don't create empty pyproject.toml during init.
+- package: Fixed discovery of the package when workdir is project root.
 
 ## [6.5.10] - 2023-08-02
 
