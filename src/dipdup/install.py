@@ -167,7 +167,7 @@ def install(
 
     if not any((version, ref, path)):
         # FIXME: Temporary, remove when 7.0.0 is released
-        version = '7.0.0rc3'
+        version = '7.0.0rc2'
 
     env = DipDupEnvironment()
     env.prepare()
