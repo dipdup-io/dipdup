@@ -1,4 +1,4 @@
 import dipdup
 
-# NOTE: Do not remove this line
+# NOTE: Allows to use the package as a working directory
 dipdup.load(__name__, __file__)
