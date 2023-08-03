@@ -19,7 +19,7 @@ def workdir(file: str) -> None:
     name = package_path.name
     package_root = package_path / '__init__.py'
     if not package_root.exists():
-        raise ImportError(f'`{name}` is not a valid DipDup package')
+        package_root.write_text('')
 
     spec = spec_from_file_location(name, package_root)
     if not spec or not spec.loader:
