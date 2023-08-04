@@ -133,7 +133,6 @@ async def assert_run_big_maps() -> None:
 
 async def assert_init(package: str) -> None:
     import_submodules(package)
-    # pass
 
 
 async def assert_run_dex() -> None:

@@ -79,7 +79,7 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     module = importlib.import_module(package)
     results = {}
 
-    # NOTE: First level
+    # NOTE: The first level; walk_packages falls into recursion with root symlink.
     if '.' not in package:
         for attr in dir(module):
             member = getattr(module, attr)
