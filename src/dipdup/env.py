@@ -2,6 +2,7 @@ import importlib
 import importlib.util
 import platform
 from contextlib import suppress
+import tomllib
 from os import environ as env
 from pathlib import Path
 
@@ -14,8 +15,9 @@ def get_package_path(package: str) -> Path:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
-    if Path('pyproject.toml').exists():
-        pyproject_package = Path('pyproject.toml').read_text().split('name = "')[1].split('"')[0]
+    pyproject_path = Path('pyproject.toml')
+    if pyproject_path.exists():
+        pyproject_package = tomllib.loads(pyproject_path.read_text())['project']['name']
         if pyproject_package == package:
             return Path.cwd()
 
