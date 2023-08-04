@@ -42,7 +42,7 @@ WELCOME_ASCII = """\0
 EPILOG = """\0
 Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
-Discord:               https://discord.gg/NbANhqCJHA
+Discord:               https://discord.gg/aG8XKuwsQd
 """
 
 
