@@ -57,13 +57,12 @@ jobs:
       - name: Build docs
         run: pdm run docs_build
 
-      # FIXME: Reenable before 7.0.0rc3 release
-      # - name: Commit and push frontend
-      #   if: github.ref == 'refs/heads/next'
-      #   run: |
-      #     cd ../interface
-      #     git config --local user.email "action@github.com"
-      #     git config --local user.name "GitHub Action"
-      #     git add .
-      #     git diff-index --quiet HEAD || git commit -m "${{ github.event.head_commit.message }}"
-      #     git push origin $FRONTEND_BRANCH
+      - name: Commit and push frontend
+        if: github.ref == 'refs/heads/next'
+        run: |
+          cd ../interface
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "${{ github.event.head_commit.message }}"
+          git push origin $FRONTEND_BRANCH
