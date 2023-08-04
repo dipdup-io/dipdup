@@ -2,6 +2,7 @@
 *
 
 # Add metadata and build files
+!demo_big_maps
 !pyproject.toml
 !pdm.lock
 !README.md
