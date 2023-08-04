@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - ci: Fixed dipdup package metadata.
 - cli: Generate base template from replay only when --base flag is set.
+- cli: Remove cached jsonschemas when calling init --force.
+- codegen: Filter jsonschemas by prefixes supported by code generator.
 - index: Remove Python limitation on large int<->str conversions.
 - index: Fixed crash when parsing typed transactions with empty parameter.
 - package: Don't create empty pyproject.toml during init.
