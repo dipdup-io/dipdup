@@ -1,8 +1,8 @@
 import importlib
 import importlib.util
 import platform
-from contextlib import suppress
 import tomllib
+from contextlib import suppress
 from os import environ as env
 from pathlib import Path
 
