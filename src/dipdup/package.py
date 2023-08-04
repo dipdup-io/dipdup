@@ -138,7 +138,10 @@ class DipDupPackage:
             raise ProjectImportError(f'`{self.root}` exists and not a directory')
 
     def _post_init(self) -> None:
-        pass
+        # NOTE: Allows plain package structure to be imported
+        symlink_path = self.root.joinpath(self.name)
+        if not symlink_path.exists():
+            symlink_path.symlink_to('.', True)
 
     def verify(self) -> None:
         _logger.debug('Verifying `%s` package', self.root)
