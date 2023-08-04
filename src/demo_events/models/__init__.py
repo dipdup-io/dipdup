@@ -1,10 +1,10 @@
 import enum
 
 from dipdup import fields
-from dipdup import models
+from dipdup.models import Model
 
 
-class ExampleModel(models.Model):
+class ExampleModel(Model):
     id = fields.IntField(pk=True)
     array = fields.ArrayField()
     big_int = fields.BigIntField()
