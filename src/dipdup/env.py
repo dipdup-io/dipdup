@@ -14,8 +14,10 @@ def get_package_path(package: str) -> Path:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
-    if Path('pyproject.toml').exists() and Path.cwd().name == package:
-        return Path.cwd()
+    if Path('pyproject.toml').exists():
+        pyproject_package = Path('pyproject.toml').read_text().split('name = "')[1].split('"')[0]
+        if pyproject_package == package:
+            return Path.cwd()
 
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):
