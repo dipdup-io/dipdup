@@ -42,7 +42,7 @@ WELCOME_ASCII = """\0
 EPILOG = """\0
 Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
-Discord:               https://discord.gg/NbANhqCJHA
+Discord:               https://discord.gg/aG8XKuwsQd
 """
 
 
@@ -167,7 +167,7 @@ def install(
 
     if not any((version, ref, path)):
         # FIXME: Temporary, remove when 7.0.0 is released
-        version = '7.0.0rc2'
+        version = '7.0.0rc3'
 
     env = DipDupEnvironment()
     env.prepare()
