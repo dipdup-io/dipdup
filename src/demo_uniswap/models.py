@@ -47,7 +47,7 @@ class Token(CachedModel):
     # volume in token units
     volume = fields.DecimalField(decimal_places=18, max_digits=82, default=0)
     # volume in derived USD
-    volume_usd = fields.DecimalField(decimal_places=18, max_digits=82, default=0)
+    volume_usd = fields.DecimalField(decimal_places=18, max_digits=82, default=0, index=True)
     # volume in USD even on pools with less reliable USD values
     untracked_volume_usd = fields.DecimalField(decimal_places=18, max_digits=82, default=0)
     # fees in USD
@@ -337,7 +337,7 @@ class Swap(Model):
     # pointer to transaction
     transaction_hash = fields.TextField()
     # timestamp of transaction
-    timestamp = fields.BigIntField()
+    timestamp = fields.BigIntField(index=True)
     # pool swap occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='swaps')
     # allow indexing by tokens
@@ -351,11 +351,11 @@ class Swap(Model):
     # txn origin
     origin = fields.CharField(max_length=42)  # the EOA that initiated the txn
     # delta of token0 swapped
-    amount0 = fields.DecimalField(decimal_places=18, max_digits=82, default=0)
+    amount0 = fields.DecimalField(decimal_places=18, max_digits=82, default=0, index=True)
     # delta of token1 swapped
-    amount1 = fields.DecimalField(decimal_places=18, max_digits=82, default=0)
+    amount1 = fields.DecimalField(decimal_places=18, max_digits=82, default=0, index=True)
     # derived info
-    amount_usd = fields.DecimalField(decimal_places=2, max_digits=20, default=0)
+    amount_usd = fields.DecimalField(decimal_places=2, max_digits=20, default=0, index=True)
     # The sqrt(price) of the pool after the swap, as a Q64.96
     sqrt_price_x96 = fields.DecimalField(decimal_places=0, max_digits=82, default=0)
     # the tick after the swap
