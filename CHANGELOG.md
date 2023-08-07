@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- context: Share internal state between context instances.
+- jobs: Don't add jobs before scheduler is started.
+
 ## [7.0.0rc3] - 2023-08-05
 
 ### Fixed

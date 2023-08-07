@@ -747,15 +747,18 @@ class DipDup:
         return event
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
-        # NOTE: Prepare SchedulerManager
         event = Event()
-        scheduler = SchedulerManager(self._config.advanced.scheduler)
-        run_task = create_task(scheduler.run(event))
+        scheduler = SchedulerManager(
+            jobs=self._config.jobs,
+            config=self._config.advanced.scheduler,
+        )
+        run_task = create_task(
+            scheduler.run(
+                ctx=self._ctx,
+                event=event,
+            ),
+        )
         tasks.add(run_task)
-
-        # NOTE: Register jobs
-        for job_config in self._config.jobs.values():
-            scheduler.add_job(self._ctx, job_config)
 
         return event
 
