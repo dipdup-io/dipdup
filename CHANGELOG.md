@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- package: Fixed package detection for poetry managed projects.
+- package: Fixed mypy command in default template.
+
 ## [7.0.0rc3] - 2023-08-05
 
 ### Fixed
