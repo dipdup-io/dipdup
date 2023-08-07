@@ -12,8 +12,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Generate base template from replay only when --base flag is set.
 - cli: Remove cached jsonschemas when calling init --force.
 - codegen: Filter jsonschemas by prefixes supported by code generator.
-- index: Remove Python limitation on large int<->str conversions.
 - index: Fixed crash when parsing typed transactions with empty parameter.
+- index: Remove Python limitation on large int<->str conversions.
+- package: Create jsonschemas directory if not exists.
 - package: Don't create empty pyproject.toml during init.
 - package: Fixed discovery of the package when workdir is project root.
 

@@ -574,7 +574,7 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    api: ApiConfig = field(default_factory=ApiConfig)
+    api: ApiConfig | None = None
     metrics: MetricsLevel = MetricsLevel.basic
     alt_operation_matcher: bool = False
 
