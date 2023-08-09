@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import importlib
 import os
@@ -284,6 +286,13 @@ class DipDupContext:
         """
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
+
+    def _link(self, new_ctx: DipDupContext) -> None:
+        new_ctx._pending_indexes = self._pending_indexes
+        new_ctx._pending_hooks = self._pending_hooks
+        new_ctx._rolled_back_indexes = self._rolled_back_indexes
+        new_ctx._handlers = self._handlers
+        new_ctx._hooks = self._hooks
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
@@ -668,7 +677,7 @@ class HookContext(DipDupContext):
         logger: FormattedLogger,
         hook_config: HookConfig,
     ) -> 'HookContext':
-        return cls(
+        new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
             datasources=ctx.datasources,
@@ -676,6 +685,8 @@ class HookContext(DipDupContext):
             logger=logger,
             hook_config=hook_config,
         )
+        ctx._link(new_ctx)
+        return new_ctx
 
 
 class _TemplateValues(dict[str, Any]):
@@ -729,7 +740,7 @@ class HandlerContext(DipDupContext):
         handler_config: HandlerConfig,
         datasource: IndexDatasource[Any],
     ) -> 'HandlerContext':
-        return cls(
+        new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
             datasources=ctx.datasources,
@@ -738,3 +749,5 @@ class HandlerContext(DipDupContext):
             handler_config=handler_config,
             datasource=datasource,
         )
+        ctx._link(new_ctx)
+        return new_ctx

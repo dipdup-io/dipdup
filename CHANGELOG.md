@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- context: Share internal state between context instances.
+- jobs: Don't add jobs before scheduler is started.
 - package: Fixed package detection for poetry managed projects.
 - package: Fixed mypy command in default template.
 
