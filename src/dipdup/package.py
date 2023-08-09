@@ -128,6 +128,7 @@ class DipDupPackage:
                 touch(path / KEEP_MARKER)
             else:
                 touch(self.root / path)
+        self.schemas.mkdir(parents=True, exist_ok=True)
 
         self._post_init()
 
