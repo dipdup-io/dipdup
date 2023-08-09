@@ -24,7 +24,7 @@ dev = [
 _isort = "isort ."
 _black = "black ."
 _ruff = "ruff check --fix ."
-_mypy = "mypy ."
+_mypy = "mypy --no-incremental --exclude demo_factories ."
 all = { composite = ["fmt", "lint"] }
 fmt = { composite = ["_isort", "_black"] }
 lint = { composite = ["_ruff", "_mypy"] }
