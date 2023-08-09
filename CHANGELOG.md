@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - context: Share internal state between context instances.
 - jobs: Don't add jobs before scheduler is started.
+- package: Fixed package detection for poetry managed projects.
+- package: Fixed mypy command in default template.
 
 ## [7.0.0rc3] - 2023-08-05
 
@@ -19,8 +21,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Generate base template from replay only when --base flag is set.
 - cli: Remove cached jsonschemas when calling init --force.
 - codegen: Filter jsonschemas by prefixes supported by code generator.
-- index: Remove Python limitation on large int<->str conversions.
 - index: Fixed crash when parsing typed transactions with empty parameter.
+- index: Remove Python limitation on large int<->str conversions.
+- package: Create jsonschemas directory if not exists.
 - package: Don't create empty pyproject.toml during init.
 - package: Fixed discovery of the package when workdir is project root.
 
