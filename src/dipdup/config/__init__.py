@@ -78,7 +78,8 @@ class SqliteDatabaseConfig:
 
     @property
     def schema_name(self) -> str:
-        return self.path
+        # NOTE: Used only in `dippup_schema` since Hasura integration is not supported for SQLite
+        return DEFAULT_POSTGRES_SCHEMA
 
     @property
     def connection_string(self) -> str:
@@ -642,10 +643,7 @@ class DipDupConfig:
 
     @property
     def schema_name(self) -> str:
-        if isinstance(self.database, PostgresDatabaseConfig):
-            return self.database.schema_name
-        # NOTE: Not exactly correct; historical reason
-        return DEFAULT_POSTGRES_SCHEMA
+        return self.database.schema_name
 
     @property
     def package_path(self) -> Path:
