@@ -78,7 +78,7 @@ class SqliteDatabaseConfig:
 
     @property
     def schema_name(self) -> str:
-        # NOTE: Used only in `dippup_schema` since Hasura integration is not supported for SQLite
+        # NOTE: Used only as identifier in `dipdup_schema` dable, since Hasura integration is not supported for SQLite.
         return DEFAULT_POSTGRES_SCHEMA
 
     @property
