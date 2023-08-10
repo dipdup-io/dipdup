@@ -7,7 +7,6 @@ from contextlib import AsyncExitStack
 from contextlib import suppress
 from copy import copy
 from dataclasses import dataclass
-from functools import partial
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,6 +24,7 @@ from dipdup.install import WELCOME_ASCII
 from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
+from dipdup.report import cleanup_reports
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
 
@@ -66,26 +66,24 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def echo(message: str) -> None:
+def echo(message: str, err: bool = False) -> None:
     with suppress(BrokenPipeError):
-        click.echo(message)
+        click.echo(message, err=err)
 
 
-def _print_help(error: Exception) -> None:
+def _print_help(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
     from dipdup.exceptions import Error
 
     def _print() -> None:
         if isinstance(error, Error):
-            click.echo(error.help(), err=True)
+            echo(error.help(), err=True)
         else:
-            click.echo(Error.default_help())
+            echo(Error.default_help(), err=True)
+
+        echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
 
     atexit.register(_print)
-
-
-def _print_report(name: str) -> None:
-    atexit.register(partial(click.echo, f'Report saved; run `dipdup report show {name}` to view it'))
 
 
 WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
@@ -110,8 +108,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
-            _print_report(report_id)
-            _print_help(e)
+            _print_help(e, report_id)
 
             if metrics:
                 raise e
@@ -453,9 +450,9 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
                 abort=True,
             )
         except AssertionError:
-            click.echo('Not in a TTY, skipping confirmation')
+            echo('Not in a TTY, skipping confirmation')
         except click.Abort:
-            click.echo('\nAborted')
+            echo('\nAborted')
             quit(0)
 
     _logger.info('Wiping schema `%s`', url)
@@ -647,30 +644,32 @@ async def self_update(
     dipdup.install.install(quiet, force, None, None, None)
 
 
-@cli.group(invoke_without_command=True)
+@cli.group()
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
     """List and manage reports."""
-    if ctx.invoked_subcommand:
-        return
+    cleanup_reports()
 
+
+@report.command(name='ls')
+@click.pass_context
+@_cli_wrapper
+async def report_ls(ctx: click.Context) -> None:
+    from ruamel.yaml import YAML
+    from tabulate import tabulate
+
+    cleanup_reports()
+
+    yaml = YAML(typ='base')
     header = tuple(ReportHeader.__annotations__.keys())
     rows = []
     for path in REPORTS_PATH.iterdir():
-        if path.suffix not in ('.yml', '.yaml'):
-            continue
-
-        from ruamel.yaml import YAML
-
-        event = YAML(typ='base').load(path)
+        event = yaml.load(path)
         row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
 
     rows.sort(key=lambda row: str(row[3]))
-
-    from tabulate import tabulate
-
     echo(tabulate(rows, headers=header))
 
 
