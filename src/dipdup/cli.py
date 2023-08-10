@@ -126,7 +126,7 @@ async def _check_version() -> None:
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
-        _logger.info('Set `skip_version_check` flag in config to hide this message.')
+        _logger.info('Set `advanced.skip_version_check` flag in config to hide this message.')
         return
 
     import aiohttp
@@ -188,7 +188,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]
 
-    # NOTE: Apply env files before loading config
+    # NOTE: Apply env files before loading the config
     for env_path in env_file_paths:
         if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
@@ -220,7 +220,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
-        # NOTE: `ConfigurationError` will be raised with more details.
+        # NOTE: `ConfigurationError` will be raised later with more details.
         DipDupPackage(_config.package_path).create()
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
@@ -236,7 +236,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 @click.pass_context
 @_cli_wrapper
 async def run(ctx: click.Context) -> None:
-    """Run indexer.
+    """Run the indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
@@ -251,12 +251,12 @@ async def run(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
-@click.option('--base', '-b', is_flag=True, help='Also generate tempalate base: pyproject.toml, README.md, etc.')
+@click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
+@click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
 @click.pass_context
 @_cli_wrapper
 async def init(ctx: click.Context, force: bool, base: bool) -> None:
-    """Generate project tree, callbacks and types.
+    """Generate project tree, typeclasses and callback stubs.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
@@ -288,7 +288,7 @@ async def config(ctx: click.Context) -> None:
 
 
 @config.command(name='export')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
 @click.option('--full', is_flag=True, help='Resolve index templates.')
 @click.pass_context
 @_cli_wrapper
@@ -482,7 +482,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 @_cli_wrapper
 async def schema_init(ctx: click.Context) -> None:
     """
-    Prepare a database for running DipDip.
+    Prepare database schema for running DipDup.
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
@@ -560,7 +560,7 @@ async def schema_export(ctx: click.Context) -> None:
     '-r',
     type=click.Path(exists=True, path_type=Path),
     default=None,
-    help='Replay a previously saved state.',
+    help='Use values from a replay file.',
 )
 @_cli_wrapper
 async def new(
@@ -596,9 +596,9 @@ async def self(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
-@click.option('--version', '-v', default=None, help='Install DipDup from a specific version.')
-@click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
-@click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
+@click.option('--version', '-v', default=None, help='Install DipDup from specific version.')
+@click.option('--ref', '-r', default=None, help='Install DipDup from specific git ref.')
+@click.option('--path', '-p', default=None, help='Install DipDup from local path.')
 @_cli_wrapper
 async def self_install(
     ctx: click.Context,
@@ -648,7 +648,7 @@ async def self_update(
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
-    """List and manage reports."""
+    """Manage crash and performance reports."""
     cleanup_reports()
 
 
@@ -656,10 +656,9 @@ async def report(ctx: click.Context) -> None:
 @click.pass_context
 @_cli_wrapper
 async def report_ls(ctx: click.Context) -> None:
+    """List reports."""
     from ruamel.yaml import YAML
     from tabulate import tabulate
-
-    cleanup_reports()
 
     yaml = YAML(typ='base')
     header = tuple(ReportHeader.__annotations__.keys())
@@ -678,6 +677,7 @@ async def report_ls(ctx: click.Context) -> None:
 @click.argument('id', type=str)
 @_cli_wrapper
 async def report_show(ctx: click.Context, id: str) -> None:
+    """Show report."""
     path = REPORTS_PATH / f'{id}.yaml'
     if not path.exists():
         echo('No such report')
@@ -691,6 +691,7 @@ async def report_show(ctx: click.Context, id: str) -> None:
 @click.option('--all', '-a', is_flag=True, help='Remove all reports.')
 @_cli_wrapper
 async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
+    """Remove report(s)."""
     if all and id:
         echo('Please specify either name or --all')
         return
@@ -719,6 +720,7 @@ async def package(ctx: click.Context) -> None:
 @click.pass_context
 @_cli_wrapper
 async def package_tree(ctx: click.Context) -> None:
+    """Draw package tree."""
     from dipdup.package import DipDupPackage
     from dipdup.package import draw_package_tree
 
