@@ -583,6 +583,10 @@ async def new(
         answers = answers_from_terminal()
     render_project(answers, force)
 
+    package = answers['package']
+    click.secho('Project created successfully!', fg='green')
+    click.secho(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
+
 
 @cli.group()
 @click.pass_context
