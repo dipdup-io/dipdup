@@ -9,11 +9,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - cli: Fixed `config export --full` command showing original config.
+- cli: Keep the last 100 reports only.
 - config: Don't create empty SentryConfig if DSN is not set.
 - context: Share internal state between context instances.
 - jobs: Don't add jobs before scheduler is started.
 - package: Fixed package detection for poetry managed projects.
 - package: Fixed mypy command in default template.
+
+### Changed
+
+- cli: `report` command renamed to `report ls`.
 
 ## [7.0.0rc3] - 2023-08-05
 
