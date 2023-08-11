@@ -73,6 +73,9 @@ from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
 
+METRICS_INTERVAL = 5
+STATUS_INTERVAL = 30
+
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
@@ -205,6 +208,21 @@ class IndexDispatcher:
             metrics.set('time_passed', time_passed)
             metrics.set('time_left', time_left)
             metrics.set('progress', progress)
+
+    async def _status_loop(self, update_interval: float) -> None:
+        while True:
+            await asyncio.sleep(update_interval)
+            stats = metrics.stats()
+            progress = stats.get('progress', 0)
+            total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
+            current_speed = stats.get('current_speed', 0)
+            if current_speed:
+                self._logger.info(
+                    'indexing %.2f%%: %s levels left (%s lps)',
+                    progress * 100,
+                    total - indexed,
+                    int(current_speed),
+                )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -730,7 +748,8 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._metrics_loop(1)))
+            tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
+            tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
