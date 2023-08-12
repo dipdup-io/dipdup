@@ -9,6 +9,7 @@ There are three module-level singletons, one for each type of resource:
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
 import logging
+import sys
 import time
 from collections import defaultdict
 from collections import deque
@@ -94,10 +95,11 @@ class _CacheManager:
         if cls.__name__ in self._model:
             raise Exception(f'Model cache for `{cls}` already exists')
 
-        maxsize = None
-        with suppress(AttributeError):
+        try:
             maxsize = cls.Meta.maxsize  # type: ignore[attr-defined]
-        self._model[cls.__name__] = LRU(maxsize)
+            self._model[cls.__name__] = LRU(maxsize)
+        except AttributeError:
+            self._model[cls.__name__] = {}
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
