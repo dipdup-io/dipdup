@@ -1,0 +1,31 @@
+spec_version: 2.0
+package: {{ project.package }}
+
+datasources:
+  ethscan:
+    kind: abi.etherscan
+
+  mainnet_node:
+    kind: evm.node
+    url: https://mainnet.infura.io/v3/${INFURA_KEY:-''}
+    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY:-''}
+
+  mainnet_subsquid:
+    kind: evm.subsquid
+    url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    node: mainnet_node
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_events:
+    kind: evm.subsquid.events
+    datasource: mainnet_subsquid
+    handlers:
+      - callback: on_transfer
+        contract: eth_usdt
+        name: Transfer

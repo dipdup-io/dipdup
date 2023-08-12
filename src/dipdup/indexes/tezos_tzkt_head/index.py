@@ -37,17 +37,16 @@ class TzktHeadIndex(
             if batch_level <= index_level:
                 raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
-            async with self._ctx._transactions.in_transaction(batch_level, message_level, self.name):
+            async with self._ctx.transactions.in_transaction(batch_level, message_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
-                for handler_config in self._config.handlers:
-                    await self._call_matched_handler(handler_config, head)
+                await self._call_matched_handler(self._config.handler_config, head)
                 await self._update_state(level=batch_level)
 
     async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: TzktHeadBlockData) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

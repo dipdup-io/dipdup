@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
+from contextlib import suppress
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -12,6 +14,7 @@ from typing import Protocol
 from typing import TypeVar
 
 from dipdup.datasources import IndexDatasource
+from dipdup.performance import queues
 
 
 class HasLevel(Protocol):
@@ -46,6 +49,46 @@ async def yield_by_level(
 
     if items:
         yield items[0].level, items
+
+
+async def readahead_by_level(
+    fetcher_iter: AsyncIterator[tuple[FetcherBufferT, ...]],
+    limit: int,
+) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+    queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
+    queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
+    queues.add_queue(
+        queue,
+        name=queue_name,
+        limit=limit,
+    )
+    has_more = asyncio.Event()
+    need_more = asyncio.Event()
+
+    async def _readahead() -> None:
+        async for level, batch in yield_by_level(fetcher_iter):
+            queue.append((level, batch))
+            has_more.set()
+
+            if len(queue) >= limit:
+                need_more.clear()
+                await need_more.wait()
+
+    task = asyncio.create_task(_readahead())
+
+    while True:
+        while queue:
+            level, batch = queue.popleft()
+            need_more.set()
+            yield level, batch
+        has_more.clear()
+        if task.done():
+            await task
+            break
+        with suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(has_more.wait(), timeout=10)
+
+    queues.remove_queue(queue_name)
 
 
 class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):

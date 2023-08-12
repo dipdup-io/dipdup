@@ -6,9 +6,8 @@ on:
   push:
     paths:
       - 'src/**'
-      - 'scripts/install.py'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'pdm.lock'
       - '.github/workflows/installer.yml'
 
 jobs:
@@ -31,9 +30,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@main
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: macOS runner workaround
         run: pip install --upgrade pip pipx
@@ -44,20 +44,21 @@ jobs:
       - name: dipdup new
         run: dipdup new --quiet
 
+      - name: Replace DipDup in project with current HEAD (until 7.0)
+        run: cd dipdup_indexer; pdm remove dipdup; pdm add ..
+        
       - name: dipdup init
-        run: cd dipdup-indexer; dipdup init
+        run: cd dipdup_indexer; dipdup init
 
-      - name: make install
-        run: cd dipdup-indexer; make install
+      - name: pdm all
+        run: cd dipdup_indexer; pdm all
 
-      - name: reinstall dipdup from HEAD
-        run: cd dipdup-indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
+      - name: Copy installer to scripts
+        if: contains(github.ref, 'next')
+        run: cp src/dipdup/install.py scripts/install.py
 
-      - name: make lint
-        run: cd dipdup-indexer; make lint
-
-      - name: Deploy scripts to GH Pages
-        if: contains(github.ref, 'master')
+      - name: Publish scripts to GitHub Pages
+        if: contains(github.ref, 'next')
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

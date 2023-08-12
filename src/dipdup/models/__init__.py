@@ -1,29 +1,24 @@
+from __future__ import annotations
+
 import logging
-from collections import defaultdict
 from collections import deque
+from contextlib import suppress
 from copy import copy
 from datetime import date
 from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
-from functools import cache
 from typing import Any
-from typing import DefaultDict
-from typing import Dict
 from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Type
 from typing import TypeVar
 from typing import cast
 
-import orjson
 import tortoise
+import tortoise.queryset
 from pydantic.dataclasses import dataclass
-from tortoise import fields
 from tortoise.backends.base.client import BaseDBAsyncClient
+from tortoise.exceptions import OperationalError
 from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
@@ -34,90 +29,16 @@ from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
+from dipdup import fields
 from dipdup.exceptions import FrameworkException
+from dipdup.performance import caches
+from dipdup.utils import json_dumps_plain
 
 _logger = logging.getLogger(__name__)
 
 
-versioned_fields: DefaultDict[str, Set[str]] = defaultdict(set)
-
-
-# NOTE: Below is one of several patches to Tortoise ORM to make it work with DipDup.
-# By default, Tortoise forbids index=True on TextField, and shows warning when it's pk=True.
-# However, we only support SQLite and PostgreSQL and have no plans for others.
-# For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference between TEXT and VARCHAR
-# except for length constraint. So we can safely use TEXT for both to avoid unnecessary schema changes.
-tortoise.fields.TextField.__init__ = tortoise.fields.Field.__init__  # type: ignore[assignment]
-tortoise.fields.TextField.indexable = True
-
-
-EnumFieldT = TypeVar('EnumFieldT', bound=Enum)
-
-
-class EnumField(fields.Field[EnumFieldT]):
-    """Like CharEnumField but without max_size and additional validation"""
-
-    indexable = True
-    SQL_TYPE = 'TEXT'
-
-    def __init__(
-        self,
-        enum_type: type[EnumFieldT],
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(**kwargs)
-        self.enum_type = enum_type
-
-    def to_db_value(
-        self,
-        value: Enum | str | None,
-        instance: type[TortoiseModel] | TortoiseModel,
-    ) -> str | None:
-        if isinstance(value, self.enum_type):
-            return value.value  # type: ignore[no-any-return]
-        if isinstance(value, str):
-            return value
-        if value is None:
-            return None
-        raise FrameworkException(f'Invalid enum value: {value}')
-
-    def to_python_value(
-        self,
-        value: Enum | str | None,
-    ) -> Enum | None:
-        if isinstance(value, str):
-            return self.enum_type(value)
-        if isinstance(value, self.enum_type):
-            return value
-        if value is None:
-            return None
-        raise FrameworkException(f'Invalid enum value: {value}')
-
-
-class ArrayField(fields.Field[list[str]]):
-    SQL_TYPE = 'TEXT'
-
-    def to_db_value(
-        self,
-        value: list[str],
-        instance: type[TortoiseModel] | TortoiseModel,
-    ) -> str | None:
-        return orjson.dumps(value).decode()
-
-    def to_python_value(self, value: str | list[str]) -> list[str] | None:
-        if isinstance(value, str):
-            array = orjson.loads(value)
-            return [str(x) for x in array]
-        return value
-
-
-def json_dumps_decimals(obj: Any) -> str:
-    def _default(obj: Any) -> Any:
-        if isinstance(obj, Decimal):
-            return str(obj)
-        raise TypeError
-
-    return orjson.dumps(obj, default=_default).decode()
+# NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
+tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 
 class IndexType(Enum):
@@ -172,31 +93,23 @@ class SkipHistory(Enum):
     always = 'always'
 
 
-class LoggingValues(Enum):
-    """Enum for `logging` field values."""
-
-    default = 'default'
-    quiet = 'quiet'
-    verbose = 'verbose'
-
-
 @dataclass
 class VersionedTransaction:
     """Metadata of currently opened versioned transaction."""
 
     level: int
     index: str
-    immune_tables: Set[str]
+    immune_tables: set[str]
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_transaction() -> Optional[VersionedTransaction]:
+def get_transaction() -> VersionedTransaction | None:
     """Get metadata of currently opened versioned transaction if any"""
     raise FrameworkException('TransactionManager is not registered')
 
 
 # NOTE: Overwritten by TransactionManager.register()
-def get_pending_updates() -> deque['ModelUpdate']:
+def get_pending_updates() -> deque[ModelUpdate]:
     """Get pending model updates queue"""
     raise FrameworkException('TransactionManager is not registered')
 
@@ -217,8 +130,8 @@ class ModelUpdate(TortoiseModel):
     level = fields.IntField()
     index = fields.TextField()
 
-    action = EnumField(ModelUpdateAction)
-    data: Dict[str, Any] = fields.JSONField(encoder=json_dumps_decimals, null=True)
+    action = fields.EnumField(ModelUpdateAction)
+    data: dict[str, Any] = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -227,7 +140,7 @@ class ModelUpdate(TortoiseModel):
         table = 'dipdup_model_update'
 
     @classmethod
-    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> Optional['ModelUpdate']:
+    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> 'ModelUpdate' | None:
         """Create model update from model instance if necessary"""
         if not (transaction := get_transaction()):
             return None
@@ -262,7 +175,7 @@ class ModelUpdate(TortoiseModel):
         )
         return self
 
-    async def revert(self, model: Type[TortoiseModel]) -> None:
+    async def revert(self, model: type[TortoiseModel]) -> None:
         """Revert a single model update"""
         data = copy(self.data)
         # NOTE: Deserialize non-JSON types
@@ -309,14 +222,14 @@ class ModelUpdate(TortoiseModel):
 class UpdateQuery(TortoiseUpdateQuery):
     def __init__(
         self,
-        model: Type[TortoiseModel],
-        update_kwargs: Dict[str, Any],
+        model: type[TortoiseModel],
+        update_kwargs: dict[str, Any],
         db: BaseDBAsyncClient,
-        q_objects: List[Q],
-        annotations: Dict[str, Any],
-        custom_filters: Dict[str, Dict[str, Any]],
-        limit: Optional[int],
-        orderings: List[tuple[str, str]],
+        q_objects: list[Q],
+        annotations: dict[str, Any],
+        custom_filters: dict[str, dict[str, Any]],
+        limit: int | None,
+        orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(
@@ -349,13 +262,13 @@ class UpdateQuery(TortoiseUpdateQuery):
 class DeleteQuery(TortoiseDeleteQuery):
     def __init__(
         self,
-        model: Type[TortoiseModel],
+        model: type[TortoiseModel],
         db: BaseDBAsyncClient,
-        q_objects: List[Q],
-        annotations: Dict[str, Any],
-        custom_filters: Dict[str, Dict[str, Any]],
-        limit: Optional[int],
-        orderings: List[tuple[str, str]],
+        q_objects: list[Q],
+        annotations: dict[str, Any],
+        custom_filters: dict[str, dict[str, Any]],
+        limit: int | None,
+        orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
@@ -386,7 +299,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):
 
 
 class BulkCreateQuery(TortoiseBulkCreateQuery):
-    async def _execute(self) -> List[MODEL]:
+    async def _execute(self) -> list[MODEL]:
         for model in self.objects:
             if update := ModelUpdate.from_model(
                 cast(Model, model),
@@ -394,7 +307,11 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):
             ):
                 get_pending_updates().append(update)
 
-        return await super()._execute()
+        # NOTE: A bug; raises "You should first call .save()..." otherwise
+        models: list[MODEL] = await super()._execute()
+        for model in models:
+            model._saved_in_db = True
+        return models
 
 
 class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
@@ -424,9 +341,15 @@ class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
         )
 
 
-@cache
-def get_versioned_fields(model: Type['Model']) -> Set[str]:
-    field_names: Set[str] = set()
+# NOTE: Don't register cache; plain dict is faster
+_versioned_fields: dict[type['Model'], frozenset[str]] = {}
+
+
+def get_versioned_fields(model: type['Model']) -> frozenset[str]:
+    if model in _versioned_fields:
+        return _versioned_fields[model]
+
+    field_names: set[str] = set()
     field_keys = model._meta.db_fields.union(model._meta.fk_fields)
 
     for key, field_ in model._meta.fields_map.items():
@@ -439,7 +362,8 @@ def get_versioned_fields(model: Type['Model']) -> Set[str]:
         else:
             field_names.add(key)
 
-    return field_names
+    _versioned_fields[model] = frozenset(field_names)
+    return frozenset(field_names)
 
 
 class Model(TortoiseModel):
@@ -456,17 +380,17 @@ class Model(TortoiseModel):
         return model
 
     @property
-    def original_versioned_data(self) -> Dict[str, Any]:
+    def original_versioned_data(self) -> dict[str, Any]:
         """Get versioned data of the model at the time of creation"""
         return self._original_versioned_data
 
     @property
-    def versioned_data(self) -> Dict[str, Any]:
+    def versioned_data(self) -> dict[str, Any]:
         """Get versioned data of the model at the current time"""
         return {name: getattr(self, name) for name in get_versioned_fields(self.__class__)}
 
     @property
-    def versioned_data_diff(self) -> Dict[str, Any]:
+    def versioned_data_diff(self) -> dict[str, Any]:
         """Get versioned data of the model changed since creation"""
         data = {}
         for key, value in self.original_versioned_data.items():
@@ -477,7 +401,7 @@ class Model(TortoiseModel):
     # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
     async def delete(
         self,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> None:
         await super().delete(using_db=using_db)
 
@@ -486,8 +410,8 @@ class Model(TortoiseModel):
 
     async def save(
         self,
-        using_db: Optional[BaseDBAsyncClient] = None,
-        update_fields: Optional[Iterable[str]] = None,
+        using_db: BaseDBAsyncClient | None = None,
+        update_fields: Iterable[str] | None = None,
         force_create: bool = False,
         force_update: bool = False,
     ) -> None:
@@ -508,8 +432,8 @@ class Model(TortoiseModel):
 
     @classmethod
     async def create(
-        cls: Type['ModelT'],
-        using_db: Optional[BaseDBAsyncClient] = None,
+        cls: type['ModelT'],
+        using_db: BaseDBAsyncClient | None = None,
         **kwargs: Any,
     ) -> 'ModelT':
         instance = cls(**kwargs)
@@ -520,13 +444,13 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_create(
-        cls: Type['Model'],
+        cls: type['Model'],
         objects: Iterable['Model'],
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         ignore_conflicts: bool = False,
-        update_fields: Optional[Iterable[str]] = None,
-        on_conflict: Optional[Iterable[str]] = None,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        update_fields: Iterable[str] | None = None,
+        on_conflict: Iterable[str] | None = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> BulkCreateQuery:
         if ignore_conflicts and update_fields:
             raise ValueError(
@@ -548,11 +472,11 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_update(
-        cls: Type['Model'],
+        cls: type['Model'],
         objects: Iterable['Model'],
         fields: Iterable[str],
-        batch_size: Optional[int] = None,
-        using_db: Optional[BaseDBAsyncClient] = None,
+        batch_size: int | None = None,
+        using_db: BaseDBAsyncClient | None = None,
     ) -> BulkUpdateQuery:
         if any(obj.pk is None for obj in objects):
             raise ValueError('All bulk_update() objects must have a primary key set.')
@@ -575,6 +499,48 @@ class Model(TortoiseModel):
         abstract = True
 
 
+class CachedModel(Model):
+    @classmethod
+    async def preload(cls) -> None:
+        # NOTE: Table can be missing
+        with suppress(OperationalError):
+            async for model in cls.all():
+                model.cache()
+
+    @classmethod
+    async def cached_get(
+        cls: type['ModelT'],
+        pk: int | str,
+    ) -> 'ModelT':
+        cls_cache = caches._model[cls.__name__]
+
+        if pk not in cls_cache:
+            cls_cache[pk] = await cls.get(pk=pk)
+        return cls_cache[pk]  # type: ignore[return-value]
+
+    @classmethod
+    async def cached_get_or_none(
+        cls: type['ModelT'],
+        pk: int | str,
+    ) -> 'ModelT' | None:
+        cls_cache = caches._model[cls.__name__]
+
+        if pk not in cls_cache:
+            cls_cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
+        return cls_cache[pk]  # type: ignore[return-value]
+
+    def cache(self) -> None:
+        cls_cache = caches._model[self.__class__.__name__]
+        if self.pk is None:
+            raise FrameworkException('Cannot cache model without PK')
+        if self.pk in cls_cache:
+            raise FrameworkException(f'Model {self} is already cached')
+        cls_cache[self.pk] = self
+
+    class Meta:
+        abstract = True
+
+
 ModelT = TypeVar('ModelT', bound=Model)
 
 
@@ -584,7 +550,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 class Schema(TortoiseModel):
     name = fields.TextField(pk=True)
     hash = fields.TextField(null=True)
-    reindex = EnumField(ReindexingReason, null=True)
+    reindex = fields.EnumField(ReindexingReason, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -608,12 +574,12 @@ class Head(TortoiseModel):
 
 class Index(TortoiseModel):
     name = fields.TextField(pk=True)
-    type = EnumField(IndexType)
-    status = EnumField(IndexStatus, default=IndexStatus.new)
+    type = fields.EnumField(IndexType)
+    status = fields.EnumField(IndexStatus, default=IndexStatus.new)
 
     config_hash = fields.TextField(null=True)
     template = fields.TextField(null=True)
-    template_values: Dict[str, Any] = fields.JSONField(null=True)
+    template_values: dict[str, Any] = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     level = fields.IntField(default=0)
 
@@ -636,7 +602,7 @@ class Contract(TortoiseModel):
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
     typename = fields.TextField(null=True)
-    kind = EnumField(ContractKind)
+    kind = fields.EnumField(ContractKind)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -647,7 +613,7 @@ class Contract(TortoiseModel):
 
 class Meta(TortoiseModel):
     key = fields.TextField(pk=True)
-    value = fields.JSONField(null=True)
+    value = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
@@ -662,7 +628,7 @@ class Meta(TortoiseModel):
 class ContractMetadata(Model):
     network = fields.TextField()
     contract = fields.TextField()
-    metadata = fields.JSONField(null=True)
+    metadata = fields.JSONField(encoder=json_dumps_plain, null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -677,7 +643,7 @@ class TokenMetadata(Model):
     network = fields.TextField()
     contract = fields.TextField()
     token_id = fields.TextField()
-    metadata = fields.JSONField(null=True)
+    metadata = fields.JSONField(encoder=json_dumps_plain, null=True)
     update_id = fields.IntField()
 
     created_at = fields.DatetimeField(auto_now_add=True)

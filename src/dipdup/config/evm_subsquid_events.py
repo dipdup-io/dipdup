@@ -21,6 +21,12 @@ from dipdup.utils import snake_to_pascal
 
 @dataclass
 class SubsquidEventsHandlerConfig(HandlerConfig):
+    """Subsquid event handler
+
+    :param contract: EVM contract
+    :param name: Method name
+    """
+
     contract: EvmContractConfig
     name: str
 
@@ -42,10 +48,20 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
 @dataclass
 class SubsquidEventsIndexConfig(IndexConfig):
+    """Subsquid datasource config
+
+    :param kind: Always 'evm.subsquid.events'
+    :param datasource: Subsquid datasource
+    :param handlers: Event handlers
+    :param abi: One or more `evm.abi` datasource(s) for the same network
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing and disable this index
+    """
+
     kind: Literal['evm.subsquid.events']
     datasource: SubsquidDatasourceConfig
     handlers: tuple[SubsquidEventsHandlerConfig, ...] = field(default_factory=tuple)
-    abi: tuple[AbiDatasourceConfig, ...] = field(default_factory=tuple)
+    abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
 
     first_level: int = 0
     last_level: int = 0

@@ -13,9 +13,9 @@ from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.package import EventAbiExtra
+from dipdup.utils import json_dumps
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -72,11 +72,11 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 name = abi_item['name']
                 if name in event_extras:
                     raise NotImplementedError('wow much overload many signatures')
+                inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
                 event_extras[name] = EventAbiExtra(
                     name=name,
                     topic0=topic_from_abi(abi_item),
-                    inputs=tuple(i['type'] for i in abi_item['inputs']),
-                    indexed=tuple(i['indexed'] for i in abi_item['inputs']),
+                    inputs=inputs,
                 )
                 if name not in events:
                     continue
@@ -87,12 +87,12 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 continue
 
             touch(schema_path)
-            schema_path.write_bytes(orjson.dumps(schema, option=orjson.OPT_INDENT_2))
+            schema_path.write_bytes(json_dumps(schema))
 
         if event_extras:
             event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
             touch(event_extras_path)
-            event_extras_path.write_bytes(orjson.dumps(event_extras, option=orjson.OPT_INDENT_2))
+            event_extras_path.write_bytes(json_dumps(event_extras))
 
 
 def topic_from_abi(event: dict[str, Any]) -> str:
@@ -111,7 +111,10 @@ class SubsquidCodeGenerator(CodeGenerator):
             elif isinstance(index_config, SubsquidOperationsIndexConfig):
                 raise NotImplementedError
 
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
+        if force:
+            self._cleanup_schemas()
+
         events: set[str] = set()
         functions: set[str] = set()
 
@@ -124,27 +127,22 @@ class SubsquidCodeGenerator(CodeGenerator):
 
         convert_abi(self._package, events, functions)
 
-    # FIXME: tzkt copypaste
-    async def generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-
-        self._logger.info('Creating `types` package')
-        touch(self._package.types / PYTHON_MARKER)
-
-        for path in self._package.schemas.glob('**/*.json'):
-            await self._generate_type(path, force)
-
     async def generate_hooks(self) -> None:
         pass
 
-    async def generate_event_hooks(self) -> None:
+    async def generate_system_hooks(self) -> None:
         pass
 
     async def generate_handlers(self) -> None:
         pass
 
     async def _fetch_abi(self, index_config: SubsquidEventsIndexConfig) -> None:
-        datasource_configs = index_config.abi or self._config.abi_datasources
+        if isinstance(index_config.abi, tuple):
+            datasource_configs = index_config.abi
+        elif index_config.abi:
+            datasource_configs = (index_config.abi,)
+        else:
+            datasource_configs = self._config.abi_datasources
 
         for handler_config in index_config.handlers:
             abi_path = self._package.abi / handler_config.contract.module_name / 'abi.json'
@@ -152,7 +150,7 @@ class SubsquidCodeGenerator(CodeGenerator):
                 continue
 
             if handler_config.contract.abi:
-                # TODO: handle path / url to abi file if necessary
+                # TODO: Ability to specify path/url to ABI .json if necessary
                 # abi_json = await resolve(handler_config.contract.abi)
                 address = handler_config.contract.abi
             elif handler_config.contract.address:
@@ -161,6 +159,7 @@ class SubsquidCodeGenerator(CodeGenerator):
                 raise NotImplementedError
 
             for datasource_config in datasource_configs:
+                # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
                 if not isinstance(datasource_config, AbiDatasourceConfig):
                     raise ConfigurationError('`abi` must be a list of ABI datasources')
 
@@ -172,11 +171,11 @@ class SubsquidCodeGenerator(CodeGenerator):
                 raise ConfigurationError(f'ABI for contract `{address}` not found')
 
             touch(abi_path)
-            abi_path.write_bytes(orjson.dumps(abi_json, option=orjson.OPT_INDENT_2))
+            abi_path.write_bytes(json_dumps(abi_json))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        # FIXME: Prefixes, postfixes?
+        # FIXME: Do we need prefixes or postfixes there?
         # if schema_path.parent.name == 'evm_events':
         #     class_name = f'{module_name}_event'
         # elif schema_path.parent.name == 'evm_functions':
@@ -184,3 +183,8 @@ class SubsquidCodeGenerator(CodeGenerator):
         # else:
         #     class_name = module_name
         return module_name
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        if 'evm_events' not in schema_path.parts:
+            return
+        await super()._generate_type(schema_path, force)

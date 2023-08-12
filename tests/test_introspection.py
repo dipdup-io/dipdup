@@ -128,8 +128,8 @@ def test_is_array() -> None:
 
 
 def test_simple_union_unwrap() -> None:
-    assert unwrap_union_type(Optional[str]) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
-    assert unwrap_union_type(Union[int, str]) == (True, (int, str))
+    assert unwrap_union_type(Optional[str]) == (True, (str, NoneType))  # type: ignore[arg-type,comparison-overlap]
+    assert unwrap_union_type(Union[int, str]) == (True, (int, str))  # type: ignore[arg-type]
 
 
 def test_pydantic_optional_unwrap() -> None:

@@ -3,12 +3,16 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Type
 
-from tortoise.models import Model
+if TYPE_CHECKING:
+    from tortoise.models import Model
+
+    from dipdup.models import ReindexingReason  # noqa: E402
 
 tab = ('_' * 80) + '\n\n'
 
@@ -79,7 +83,7 @@ class DatasourceError(Error):
             
             {self.msg}
 
-            See https://docs.dipdup.io/advanced/datasources
+            See https://dipdup.io/docs/getting-started/datasources
         """
 
 
@@ -110,7 +114,7 @@ class ConfigurationError(Error):
         return f"""
             {self.msg}
 
-            See https://docs.dipdup.io/config
+            See https://dipdup.io/docs/getting-started/config
         """
 
 
@@ -119,7 +123,7 @@ class InvalidModelsError(Error):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
-    model: Type[Model]
+    model: Type['Model']
     field: Optional[str] = None
 
     def _help(self) -> str:
@@ -130,30 +134,7 @@ class InvalidModelsError(Error):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://docs.dipdup.io/getting-started/defining-models
-            See https://docs.dipdup.io/config/database
-            See https://docs.dipdup.io/advanced/internal-tables
-        """
-
-
-@dataclass(repr=False)
-class DatabaseEngineError(Error):
-    """Some of the features are not supported with the current database engine"""
-
-    msg: str
-    kind: str
-    required: str
-
-    def _help(self) -> str:
-        return f"""
-            {self.msg}
-
-              database: `{self.kind}`
-              required: `{self.required}`
-
-            See https://docs.dipdup.io/deployment/database-engines
-            See https://docs.dipdup.io/advanced/sql
-            See https://docs.dipdup.io/config/database
+            See https://dipdup.io/docs/getting-started/models
         """
 
 
@@ -176,10 +157,10 @@ class ReindexingRequiredError(Error):
               {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-              * Eliminate the cause of reindexing and run `dipdup schema approve`.
-              * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+              - Eliminate the cause of reindexing and run `dipdup schema approve`.
+              - Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://docs.dipdup.io/advanced/reindexing for more information.
+            See https://dipdup.io/docs/advanced/reindexing for more information.
         """.format(
             reason=self.reason.value,
             context=context,
@@ -198,8 +179,8 @@ class InitializationRequiredError(Error):
 
             Perform the following actions:
 
-              * Run `dipdup init`.
-              * Review and commit changes.
+              - Run `dipdup init`.
+              - Review and commit changes.
         """
 
 
@@ -305,8 +286,8 @@ class CallbackTypeError(Error):
 
             Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
-            See https://docs.dipdup.io/getting-started/project-package
-            See https://docs.dipdup.io/cli-reference#init
+            See https://dipdup.io/docs/getting-started/package
+            See https://dipdup.io/docs/references/cli#init
         """
 
 
@@ -324,27 +305,7 @@ class HasuraError(Error):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://docs.dipdup.io/graphql/
-            See https://docs.dipdup.io/config/hasura
-            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
-        """
-
-
-@dataclass(repr=False)
-class FeatureAvailabilityError(Error):
-    """Requested feature is not supported in the current environment"""
-
-    feature: str
-    reason: str
-
-    def _help(self) -> str:
-        return f"""
-            Feature `{self.feature}` is not available in the current environment.
-
-            {self.reason}
-
-            See https://docs.dipdup.io/installation
-            See https://docs.dipdup.io/advanced/docker
+            See https://dipdup.io/docs/graphql/hasura
         """
 
 
@@ -362,6 +323,3 @@ class UnsupportedAPIError(Error):
 
             {self.reason}
         """
-
-
-from dipdup.models import ReindexingReason  # noqa: E402

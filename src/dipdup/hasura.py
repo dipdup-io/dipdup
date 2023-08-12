@@ -12,9 +12,9 @@ import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
-from tortoise import fields
 
 from dipdup import env
+from dipdup import fields
 from dipdup.config import DEFAULT_POSTGRES_SCHEMA
 from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
@@ -112,6 +112,7 @@ class HasuraGateway(HTTPGateway):
         retry_sleep=1,
         retry_multiplier=1.1,
         retry_count=3,
+        alias='hasura',
     )
 
     def __init__(
@@ -125,7 +126,7 @@ class HasuraGateway(HTTPGateway):
             hasura_config.url,
             ResolvedHttpConfig.create(self._default_http_config, http_config),
         )
-        self._logger = logging.getLogger('dipdup.hasura')
+        self._logger = logging.getLogger(__name__)
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config
@@ -244,7 +245,10 @@ class HasuraGateway(HTTPGateway):
             raise UnsupportedAPIError(
                 self.url,
                 'hasura',
-                f'A critical vulnerability has been discovered in {version}!\n    Update to {vulnerable_versions[version]} or the latest stable version immediately.',
+                (
+                    f'A critical vulnerability has been discovered in {version}!\n    Update to'
+                    f' {vulnerable_versions[version]} or the latest stable version immediately.'
+                ),
             )
 
         self._logger.info('Connected to Hasura %s', version)
@@ -272,12 +276,14 @@ class HasuraGateway(HTTPGateway):
 
     async def _fetch_metadata(self) -> dict[str, Any]:
         self._logger.info('Fetching existing metadata')
-        return await self._hasura_request(
-            endpoint='metadata',
-            json={
-                'type': 'export_metadata',
-                'args': {},
-            },
+        return dict(
+            await self._hasura_request(
+                endpoint='metadata',
+                json={
+                    'type': 'export_metadata',
+                    'args': {},
+                },
+            )
         )
 
     def _hash_metadata(self, metadata: dict[str, Any]) -> str:
@@ -319,8 +325,9 @@ class HasuraGateway(HTTPGateway):
             row[0]
             for row in (
                 await conn.execute_query(
-                    f"SELECT table_name FROM information_schema.views WHERE table_schema = '{self._database_config.schema_name}' UNION "
-                    f"SELECT matviewname as table_name FROM pg_matviews WHERE schemaname = '{self._database_config.schema_name}'"
+                    "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                    f" '{self._database_config.schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
+                    f" WHERE schemaname = '{self._database_config.schema_name}'"
                 )
             )[1]
         ]
@@ -548,17 +555,9 @@ class HasuraGateway(HTTPGateway):
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': name,
-            'query': 'query '
-            + name
-            + ' ('
-            + query_arg
-            + ') {'
-            + table
-            + '('
-            + query_filter
-            + ') {'
-            + query_fields
-            + '}}',
+            'query': (
+                'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}'
+            ),
         }
 
     def _format_rest_head_status_query(self) -> dict[str, Any]:

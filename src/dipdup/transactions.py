@@ -1,8 +1,8 @@
+import asyncio
 from collections import deque
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from typing import Optional
-from typing import Set
 
 from tortoise.transactions import in_transaction
 
@@ -10,14 +10,16 @@ import dipdup.models
 from dipdup.database import get_connection
 from dipdup.database import set_connection
 
+CLEANUP_INTERVAL = 60
+
 
 class TransactionManager:
     """Manages versioned transactions"""
 
     def __init__(
         self,
-        depth: int = 2,
-        immune_tables: Optional[Set[str]] = None,
+        depth: int | None = None,
+        immune_tables: set[str] | None = None,
     ) -> None:
         self._depth = depth
         self._immune_tables = immune_tables or set()
@@ -75,9 +77,17 @@ class TransactionManager:
 
     async def cleanup(self) -> None:
         """Cleanup outdated model updates"""
+        if not self._depth:
+            return
         most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
         if not most_recent_index:
             return
 
         last_level = most_recent_index.level - self._depth
         await dipdup.models.ModelUpdate.filter(level__lt=last_level).delete()
+
+    async def cleanup_loop(self) -> None:
+        """Cleanup outdated model updates periodically"""
+        while True:
+            await self.cleanup()
+            await asyncio.sleep(CLEANUP_INTERVAL)

@@ -18,12 +18,13 @@ from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
-from dipdup.config import event_hooks
+from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerPatternConfigU as PatternConfigU
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -33,11 +34,10 @@ from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils import touch
 from dipdup.utils import write
 
 
@@ -101,9 +101,11 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         pass
 
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
+        if force:
+            self._cleanup_schemas()
 
         unused_operation_templates = [
             t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
@@ -148,21 +150,13 @@ class TzktCodeGenerator(CodeGenerator):
                     except FrameworkException:
                         continue
 
-    async def generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-
-        self._logger.info('Creating `types` package')
-        touch(self._package.types / PYTHON_MARKER)
-
-        for path in self._package.schemas.glob('**/*'):
-            await self._generate_type(path, force)
-
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 continue
-            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
+            # NOTE: Always single handler
+            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig)):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
@@ -170,16 +164,16 @@ class TzktCodeGenerator(CodeGenerator):
                 await self._generate_callback(handler_config, 'handlers')
 
     async def generate_hooks(self) -> None:
-        for hook_configs in self._config.hooks.values(), event_hooks.values():
+        for hook_configs in self._config.hooks.values(), system_hooks.values():
             for hook_config in hook_configs:
                 await self._generate_callback(hook_config, 'hooks', sql=True)
 
-    async def generate_event_hooks(self) -> None:
+    async def generate_system_hooks(self) -> None:
         pass
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        if schema_path.name == 'tezos_storage.json':
+        if module_name == 'tezos_storage':
             class_name = f'{schema_path.parent.name}_storage'
         elif schema_path.parent.name == 'tezos_parameters':
             class_name = f'{module_name}_parameter'
@@ -187,7 +181,18 @@ class TzktCodeGenerator(CodeGenerator):
             class_name = f'{module_name}_payload'
         else:
             class_name = module_name
-        return class_name
+        return snake_to_pascal(class_name)
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        markers = {
+            'tezos_storage.json',
+            'tezos_parameters',
+            'tezos_events',
+            'tezos_big_maps',
+        }
+        if not set(schema_path.parts).intersection(markers):
+            return
+        await super()._generate_type(schema_path, force)
 
     async def _get_schema(
         self,
@@ -258,7 +263,7 @@ class TzktCodeGenerator(CodeGenerator):
         storage_schema_path = contract_schemas_path / 'tezos_storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
-        write(storage_schema_path, orjson.dumps(storage_schema, option=orjson.OPT_INDENT_2))
+        write(storage_schema_path, json_dumps(storage_schema))
 
         if not isinstance(operation_pattern_config, TransactionPatternConfig):
             return
@@ -276,10 +281,9 @@ class TzktCodeGenerator(CodeGenerator):
 
         entrypoint = entrypoint.replace('.', '_').lstrip('_')
         entrypoint_schema_path = parameter_schemas_path / f'{entrypoint}.json'
-        written = write(entrypoint_schema_path, orjson.dumps(entrypoint_schema, option=orjson.OPT_INDENT_2))
+        written = write(entrypoint_schema_path, json_dumps(entrypoint_schema))
         if not written and contract_config.typename is not None:
-            with open(entrypoint_schema_path, 'r') as file:
-                existing_schema = orjson.loads(file.read())
+            existing_schema = orjson.loads(entrypoint_schema_path.read_text())
             if entrypoint_schema != existing_schema:
                 self._logger.warning(
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
@@ -313,15 +317,14 @@ class TzktCodeGenerator(CodeGenerator):
             big_map_key_schema_path = big_map_schemas_path / f'{big_map_path}_key.json'
             write(
                 big_map_key_schema_path,
-                orjson.dumps(
+                json_dumps(
                     big_map_key_schema,
-                    option=orjson.OPT_INDENT_2,
                 ),
             )
 
             big_map_value_schema = big_map_schema['valueSchema']
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
-            write(big_map_value_schema_path, orjson.dumps(big_map_value_schema, option=orjson.OPT_INDENT_2))
+            write(big_map_value_schema_path, json_dumps(big_map_value_schema))
 
     async def _fetch_event_index_schema(self, index_config: TzktEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
@@ -346,7 +349,7 @@ class TzktCodeGenerator(CodeGenerator):
             event_tag = handler_config.tag.replace('.', '_')
             event_schema = event_schema['eventSchema']
             event_schema_path = event_schemas_path / f'{event_tag}.json'
-            write(event_schema_path, orjson.dumps(event_schema, option=orjson.OPT_INDENT_2))
+            write(event_schema_path, json_dumps(event_schema))
 
     async def get_schemas(
         self,
@@ -388,7 +391,7 @@ def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -
 
 def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeClass:
     tag = pascal_to_snake(tag.replace('.', '_'))
-    module_name = f'tezos_event.{tag}'
+    module_name = f'tezos_events.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return package.get_type(typename, module_name, cls_name)
 

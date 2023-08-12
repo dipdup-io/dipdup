@@ -7,11 +7,6 @@ from pathlib import Path
 
 from dipdup import env
 
-# NOTE: Do not try to load config for these commands as they don't need it
-IGNORE_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update'}
-# NOTE: Our signal handler conflicts with Click's one in prompt mode
-IGNORE_SIGINT_CMDS = {*IGNORE_CONFIG_CMDS, None, 'schema', 'wipe'}
-
 _is_shutting_down = False
 
 
@@ -22,7 +17,7 @@ async def _shutdown() -> None:  # pragma: no cover
     _is_shutting_down = True
 
     # NOTE: Prevents BrokenPipeError when piping output to another process
-    sys.stderr.close()
+    # sys.stderr.close()
 
     tasks = filter(lambda t: t != asyncio.current_task(), asyncio.all_tasks())
     list(map(asyncio.Task.cancel, tasks))
@@ -44,14 +39,14 @@ def set_up_logging() -> None:
     logging.getLogger('tortoise').setLevel(logging.WARNING)
 
 
-def set_up_process(cmd: str | None) -> None:
+def set_up_process(signals: bool) -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
     if env.TEST:
         return
 
     # NOTE: Register shutdown handler for non-interactive commands (avoiding conflicts with Click prompts)
-    if cmd not in IGNORE_SIGINT_CMDS:
+    if signals:
         loop = asyncio.get_running_loop()
         loop.add_signal_handler(
             signal.SIGINT,
@@ -61,6 +56,7 @@ def set_up_process(cmd: str | None) -> None:
     # NOTE: Better discoverability of DipDup packages and configs
     sys.path.append(str(Path.cwd()))
     sys.path.append(str(Path.cwd() / 'src'))
+    sys.path.append(str(Path.cwd() / '..'))
 
     # NOTE: Format warnings as normal log messages
     logging.captureWarnings(True)

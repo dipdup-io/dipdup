@@ -38,7 +38,7 @@ class TzktHeadIndexConfig(TzktIndexConfig):
 
     kind: Literal['tezos.tzkt.head']
     datasource: TzktDatasourceConfig
-    handlers: tuple[HeadHandlerConfig, ...]
+    callback: str
 
     @property
     def first_level(self) -> int:
@@ -47,3 +47,7 @@ class TzktHeadIndexConfig(TzktIndexConfig):
     @property
     def last_level(self) -> int:
         return 0
+
+    def __post_init_post_parse__(self) -> None:
+        super().__post_init_post_parse__()
+        self.handler_config = HeadHandlerConfig(callback=self.callback)

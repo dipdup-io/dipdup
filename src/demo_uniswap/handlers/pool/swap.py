@@ -1,12 +1,13 @@
 from decimal import Decimal
 
 from demo_uniswap import models as models
+from demo_uniswap.models.repo import USDC_WETH_03_POOL
+from demo_uniswap.models.repo import get_ctx_factory
+from demo_uniswap.models.repo import models_repo
+from demo_uniswap.models.token import WHITELIST_TOKENS
+from demo_uniswap.models.token import convert_token_amount
+from demo_uniswap.models.token import token_derive_eth
 from demo_uniswap.types.pool.evm_events.swap import Swap
-from demo_uniswap.utils.repo import USDC_WETH_03_POOL
-from demo_uniswap.utils.repo import models_repo
-from demo_uniswap.utils.token import WHITELIST_TOKENS
-from demo_uniswap.utils.token import convert_token_amount
-from demo_uniswap.utils.token import token_derive_eth
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
@@ -49,10 +50,12 @@ async def swap(
     ctx: HandlerContext,
     event: SubsquidEvent[Swap],
 ) -> None:
-    factory = await models_repo.get_ctx_factory(ctx)
-    pool = await models_repo.get_pool(event.data.address)
-    token0 = await models_repo.get_token(pool.token0_id)
-    token1 = await models_repo.get_token(pool.token1_id)
+    factory = await get_ctx_factory(ctx)
+    pool = await models.Pool.cached_get_or_none(event.data.address)
+    if not pool:
+        return
+    token0 = await models.Token.cached_get(pool.token0_id)
+    token1 = await models.Token.cached_get(pool.token1_id)
 
     amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
     amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
@@ -121,7 +124,7 @@ async def swap(
     price0, price1 = sqrt_price_x96_to_token_prices(int(pool.sqrt_price), token0, token1)
     pool.token0_price = price0
     pool.token1_price = price1
-    await models_repo.update_pool(pool)
+    await pool.save()
 
     # update USD pricing
     if pool.id == USDC_WETH_03_POOL:
@@ -143,7 +146,7 @@ async def swap(
     token1.total_value_locked_usd = token1.total_value_locked * token1.derived_eth * eth_usd
 
     swap_tx = await models.Swap.create(
-        id=f'{event.data.transaction_hash}#{event.data.index}',
+        id=f'{event.data.transaction_hash}#{event.data.log_index}',
         transaction_hash=event.data.transaction_hash,
         pool=pool,
         token0=token0,
@@ -157,10 +160,11 @@ async def swap(
         amount_usd=amount_total_usd_tracked,
         tick=event.payload.tick,
         sqrt_price_x96=event.payload.sqrtPriceX96,
-        log_index=event.data.index,
+        log_index=event.data.log_index,
     )
     await swap_tx.save()
 
-    await models_repo.update_factory(factory)
-    await models_repo.update_pool(pool)
-    await models_repo.update_tokens(token0, token1)
+    await factory.save()
+    await pool.save()
+    await token0.save()
+    await token1.save()

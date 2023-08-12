@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_token_transfers
 
-database:
-  kind: sqlite
-  path: db.sqlite3
-
 contracts:
   tzbtc_mainnet:
     kind: tezos
@@ -28,4 +24,4 @@ indexes:
     first_level: 1364999
     last_level: 1366000
 
-logging: quiet
+logging: WARN

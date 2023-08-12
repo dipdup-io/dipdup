@@ -17,12 +17,8 @@ class TestCustomConfig:
     @staticmethod
     def appended_config_path(dummy_config_path: str, tmp_path_factory: TempPathFactory, append_raw: str) -> str:
         config_file = tmp_path_factory.mktemp('config') / 'dipdup.yml'
-        with open(dummy_config_path, 'r') as f:
-            config_raw = f.read()
-
-        with open(config_file, 'a') as f:
-            f.write(config_raw)
-            f.write(append_raw)
+        config_raw = Path(dummy_config_path).read_text()
+        config_file.write_text(config_raw + append_raw)
 
         return str(config_file)
 

@@ -3,10 +3,11 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from dipdup.project import BaseProject
+from dipdup.project import answers_from_replay
+from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
-demos_path = Path(__file__).parent.parent / 'demos'
+demos_path = Path(__file__).parent.parent / 'src'
 
 
 def _get_demos() -> list[Path]:
@@ -17,35 +18,24 @@ def _get_projects() -> list[Path]:
     return list(projects_path.iterdir())
 
 
-for demo_path in _get_demos():
-    if demo_path.is_dir():
-        print(f'=> Removing `{demo_path.name}`')
-        rmtree(demo_path, ignore_errors=True)
-        rmtree(demo_path.parent / 'src' / demo_path.name, ignore_errors=True)
+for path in _get_demos():
+    if not path.name.startswith('demo_'):
+        continue
+    if path.is_dir():
+        print(f'=> Removing `{path.name}`')
+        rmtree(path, ignore_errors=True)
+        rmtree(path.parent / 'src' / path.name, ignore_errors=True)
 
-for project_path in _get_projects():
-    if not project_path.name.endswith('.json'):
+for path in _get_projects():
+    package = path.name
+    if not package.startswith('demo_'):
         continue
 
-    print(f'=> Rendering {project_path.name}')
-    project = BaseProject()
-    project.run(quiet=True, replay=str(project_path))
-    project.render(force=True)
+    print(f'=> Rendering {path}')
+    answers = answers_from_replay(path / 'replay.yaml')
+    answers['package'] = package
+    answers['template'] = package
 
-    project_name = project.answers['project_name']
-    package = project.answers['package']
-    subprocess.run(['mv', project_name, 'demos'], check=True)
+    render_project(answers, force=True)
 
-    print(f'=> Linking `{project_name}`')
-    subprocess.run(
-        ['ln', '-sf', f'../demos/{project_name}/src/{package}', package],
-        cwd=Path(__file__).parent.parent / 'src',
-        check=True,
-    )
-
-    print(f'=> Initializing `{project_name}`')
-    subprocess.run(
-        ['dipdup', 'init', '--force'],
-        cwd=Path(__file__).parent.parent / 'demos' / project_name,
-        check=True,
-    )
+    subprocess.run(['mv', package, 'src'], check=True)

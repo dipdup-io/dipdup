@@ -1,10 +1,6 @@
 spec_version: 2.0
 package: demo_big_maps
 
-database:
-  kind: sqlite
-  path: db.sqlite3
-
 contracts:
   name_registry:
     kind: tezos
@@ -39,4 +35,4 @@ indexes:
       datasource: tzkt
       name_registry: name_registry
 
-logging: quiet
+logging: WARN

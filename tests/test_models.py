@@ -114,7 +114,7 @@ def test_deserialize_storage_dict() -> None:
     operation_data = get_operation_data(storage, diffs)
 
     # Act
-    storage_obj = deserialize_storage(operation_data, NameRegistryStorage)
+    _, storage_obj = deserialize_storage(operation_data, NameRegistryStorage)
 
     # Assert
     assert isinstance(storage_obj, NameRegistryStorage)
@@ -145,7 +145,7 @@ def test_deserialize_storage_nested_dicts() -> None:
     operation_data = get_operation_data(storage, ())
 
     # Arc
-    storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
+    _, storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
 
     # Assert
     assert isinstance(storage_obj, ResourceCollectorStorage)
@@ -177,7 +177,7 @@ def test_deserialize_storage_plain_list() -> None:
     operation_data = get_operation_data(storage, diffs)
 
     # Act
-    storage_obj = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
+    _, storage_obj = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
 
     # Assert
     assert isinstance(storage_obj, BazaarMarketPlaceStorage)
@@ -226,7 +226,7 @@ def test_deserialize_storage_list_of_maps() -> None:
     operation_data = get_operation_data(storage, diffs)
 
     # Act
-    storage_obj = deserialize_storage(operation_data, ListOfMapsStorage)
+    _, storage_obj = deserialize_storage(operation_data, ListOfMapsStorage)
 
     # Assert
     assert isinstance(storage_obj, ListOfMapsStorage)
@@ -256,7 +256,7 @@ def test_deserialize_storage_dict_key() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], FtzFunStorage)
+    _, storage_obj = deserialize_storage(operations[0], FtzFunStorage)
 
     # Assert
     assert isinstance(storage_obj, FtzFunStorage)
@@ -271,7 +271,7 @@ def test_qwer() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], QwerStorage)
+    _, storage_obj = deserialize_storage(operations[0], QwerStorage)
 
     # Assert
     assert isinstance(storage_obj, QwerStorage)
@@ -286,7 +286,7 @@ def test_asdf() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], AsdfStorage)
+    _, storage_obj = deserialize_storage(operations[0], AsdfStorage)
 
     # Assert
     assert isinstance(storage_obj, AsdfStorage)
@@ -300,7 +300,7 @@ def test_hjkl() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], HjklStorage)
+    _, storage_obj = deserialize_storage(operations[0], HjklStorage)
 
     # Assert
     assert isinstance(storage_obj, HjklStorage)
@@ -315,7 +315,7 @@ def test_zxcv() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], ZxcvStorage)
+    _, storage_obj = deserialize_storage(operations[0], ZxcvStorage)
 
     # Assert
     assert isinstance(storage_obj, ZxcvStorage)
@@ -333,7 +333,7 @@ def test_rewq() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], RewqStorage)
+    _, storage_obj = deserialize_storage(operations[0], RewqStorage)
 
     # Assert
     assert isinstance(storage_obj, RewqStorage)
@@ -350,7 +350,7 @@ def test_hen_subjkt() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
+    _, storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
 
     # Assert
     assert isinstance(storage_obj, HenSubjktStorage)
@@ -364,7 +364,7 @@ def test_kolibri_ovens() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
+    _, storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
     parameter_obj = SetDelegateParameter.parse_obj(operations[0].parameter_json)
 
     # Assert
@@ -379,7 +379,7 @@ def test_yupana() -> None:
 
     # Act
     operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], YupanaStorage)
+    _, storage_obj = deserialize_storage(operations[0], YupanaStorage)
 
     # Assert
     assert isinstance(storage_obj, YupanaStorage)

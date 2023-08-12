@@ -1,0 +1,26 @@
+spec_version: 2.0
+package: demo_events
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: https://api.ghostnet.tzkt.io
+
+contracts:
+  events_contract:
+    kind: tezos
+    code_hash: KT1Up6AMehze2VTdt3w85xaZPtrEWn1AeyR3
+
+indexes:
+  events:
+    kind: tezos.tzkt.events
+    datasource: tzkt
+    handlers:
+      - callback: on_move_event
+        contract: events_contract
+        tag: move
+      - callback: on_roll_event
+        contract: events_contract
+        tag: roll
+      - callback: on_other_event
+        contract: events_contract

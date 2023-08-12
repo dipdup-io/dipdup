@@ -6,39 +6,145 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Added
+### Fixed
 
-- database: Added `dipdup_meta` immune table to store arbitrary JSON values.
-- evm.node: Added `evm.node` datasource to receive events from Ethereum node.
-- evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
-- evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
-- abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
+- cli: Fixed `config export --full` command showing original config.
+- cli: Keep the last 100 reports only.
+- config: Don't create empty SentryConfig if DSN is not set.
+- context: Share internal state between context instances.
+- jobs: Don't add jobs before scheduler is started.
+- package: Fixed package detection for poetry managed projects.
+- package: Fixed mypy command in default template.
 
 ### Changed
 
+- cli: `report` command renamed to `report ls`.
 
-- tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
-- models: `CharEnumField` now uses `TEXT` type instead of `VARCHAR`.
-- database: Store datasource aliases instead of URLs in `dipdup_head` table.
-- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+## [7.0.0rc3] - 2023-08-05
+
+### Fixed
+
+- ci: Fixed dipdup package metadata.
+- cli: Generate base template from replay only when --base flag is set.
+- cli: Remove cached jsonschemas when calling init --force.
+- codegen: Filter jsonschemas by prefixes supported by code generator.
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- index: Remove Python limitation on large int<->str conversions.
+- package: Create jsonschemas directory if not exists.
+- package: Don't create empty pyproject.toml during init.
+- package: Fixed discovery of the package when workdir is project root.
+
+## [6.5.10] - 2023-08-02
+
+### Fixed
+
+- index: Remove Python limitation on large int<->str conversions.
+
+## [7.0.0rc2] - 2023-07-26
+
+### Fixed
+
+- package: Create missing files from project base on init.
+- package: Update replay.yaml on init.
+- demos: Don't include database config in root config.
+
+## [7.0.0rc1] - 2023-07-21
+
+### Added
+
+- abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
+- api: Added `/performance` endpoint to request indexing stats.
+- cli: Added `report` command group to manage performance and crash reports created by DipDup.
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models.
+- config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
+- config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
+- config: Added `advanced.metrics` field to configure amount of gathered metrics.
+- config: Added `http.alias` field to overwrite alias of datasource HTTP gateway.
+- database: Added `dipdup_meta` immune table to store arbitrary JSON values.
+- database: Added experimental support for immune tables in SQLite.
+- evm.node: Added `evm.node` datasource to receive events from Ethereum node and use web3 API.
+- evm.subsquid: Added `evm.subsquid` datasource to fetch historical data from Subsquid Archives.
+- evm.subsquid.events: Added `evm.subsquid.events` index to process event logs from Subsquid Archives.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite.
+- database: Don't cleanup model updates on every loop.
+
+### Changed
+
+- ci: Docker images are now based on Debian 12.
 - cli: `config env --file` option renamed to `--output`.
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
+- config: `advanced.rollback_depth` value set based on indexes used in the project if not set explicitly.
+- config: `logging` field now can contain either loglevel or name-loglevel mapping.
 - context: Signature of `add_contract` method has changed.
+- database: `EnumField` now uses `TEXT` type instead of `VARCHAR(n)`.
+- database: Querysets are no longer copied between chained method calls (`.filter().order_by().limit()`)
+- database: Store datasource aliases instead of URLs in `dipdup_head` table.
+- models: User models must use field classes from `dipdup.fields` module instead of `tortoise.fields`.
+- tezos.tzkt: Signatures of `[get/iter]_similar_contracts` and `[get/iter]_originated_contracts` methods have changed.
+- tezos.tzkt.head: Replaced `handlers` section with a single `callback` field in config.
 
 ### Removed
 
 - ci: `-slim` and `-pytezos` Docker images are no longer published.
 - ci: Docker images no longer contain git, poetry and custom scripts.
 - cli: Removed `dipdup-install` alias to `dipdup.install`.
+- cli: Removed `status` command.
 - config: Removed `similar_to` filter of `operation` index pattern.
 - config: Removed `# dipdup: ignore` hint used to ignore typeclass during init.
+- config: Removed `advanced.metadata_interface` flag (always enabled).
+- sentry: Removed `crash_reporting` flag and built-in DSN.
 
-### Performance
+### Other
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 
-## [6.5.5] - 2022-04-17
+## [6.5.9] - 2023-07-11
+
+### Fixed
+
+- tzkt: Optimized queries for `operation_unfiltered` index.
+
+## [6.5.8] - 2023-06-28
+
+### Fixed
+
+- cli: Fixed `init` crash when package name is equal to one of the project typenames.
+
+## [6.5.7] - 2023-05-30
+
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
+- http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
+
+## [6.5.6] - 2023-05-02
+
+### Fixed
+
+- config: Fixed crash due to incorrect parsing of `event` index definitions.
+- http: Fixed waiting for response indefinitely when IPFS hash is not available.
+
+### Other
+
+- ci: Slim Docker image updated to Alpine 3.17.
+- metadata: Added `nairobinet` to supported networks.
+
+## [6.5.5] - 2023-04-17
 
 ### Fixed
 
@@ -50,7 +156,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - ci: Default git branch switched to `next`.
 
-## [6.5.4] - 2022-03-31
+## [6.5.4] - 2023-03-31
 
 ### Fixed
 
@@ -60,7 +166,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - deps: Updated pytezos to 3.9.0.
 
-## [6.5.3] - 2022-03-28
+## [6.5.3] - 2023-03-28
 
 ### Fixed
 
@@ -1027,7 +1133,15 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.5...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...HEAD
+[7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
+[6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
+[7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2
+[7.0.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.5.9...7.0.0rc1
+[6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
+[6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
+[6.5.7]: https://github.com/dipdup-io/dipdup/compare/6.5.6...6.5.7
+[6.5.6]: https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6
 [6.5.5]: https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5
 [6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
 [6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3

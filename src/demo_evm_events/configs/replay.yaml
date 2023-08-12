@@ -1,0 +1,14 @@
+# Run `dipdup new --replay configs/replay.yaml` to generate new project from this replay
+spec_version: 2.0
+replay:
+  dipdup_version: 7
+  template: demo_evm_events
+  package: demo_evm_events
+  version: 0.0.1
+  description: A very basic indexer for USDt transfers
+  license: MIT
+  name: John Doe
+  email: john_doe@example.com
+  postgresql_image: postgres:15
+  hasura_image: hasura/graphql-engine:v2.30.1
+  line_length: 120

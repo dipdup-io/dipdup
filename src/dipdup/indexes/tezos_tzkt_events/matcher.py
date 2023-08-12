@@ -33,7 +33,7 @@ def prepare_event_handler_args(
     matched_event: TzktEventData,
 ) -> TzktEvent[Any] | TzktUnknownEvent | None:
     """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-    _logger.info('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
+    _logger.debug('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     if isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):
         return TzktUnknownEvent(
@@ -46,9 +46,10 @@ def prepare_event_handler_args(
         typename=handler_config.contract.module_name,
         tag=handler_config.tag,
     )
+    if not matched_event.payload:
+        raise FrameworkException('Event is typed, but payload is empty')
+
     with suppress(InvalidDataError):
-        if not matched_event.payload:
-            raise FrameworkException('Event payload is empty')
         typed_payload = parse_object(type_, matched_event.payload)
         return TzktEvent(
             data=matched_event,
@@ -97,6 +98,6 @@ def match_events(
     # NOTE: We don't care about `merge_subscriptions` here implying that all events will be processed
     # NOTE: Maybe "unfiltered" indexes will cover that case?
     for address in {event.contract_address for event in events}:
-        _logger.warning('Some events were not matched; fallback handler is missing for `{}`', address)
+        _logger.warning('Some events were not matched; fallback handler is missing for `%s`', address)
 
     return matched_handlers

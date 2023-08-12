@@ -14,6 +14,7 @@ from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import FrameworkException
+from dipdup.fetcher import HasLevel
 from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 
@@ -143,8 +144,8 @@ class EventSubscription(TzktSubscription):
         return [{}]
 
 
-@dataclass
-class TzktOperationData:
+@dataclass(frozen=True)
+class TzktOperationData(HasLevel):
     """Basic structure for operations from TzKT response"""
 
     type: str
@@ -268,7 +269,7 @@ class TzktOperationData:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class TzktTransaction(Generic[ParameterType, StorageType]):
     """Wrapper for matched transaction with typed data passed to the handler"""
 
@@ -277,7 +278,7 @@ class TzktTransaction(Generic[ParameterType, StorageType]):
     storage: StorageType
 
 
-@dataclass
+@dataclass(frozen=True)
 class TzktOrigination(Generic[StorageType]):
     """Wrapper for matched origination with typed data passed to the handler"""
 
@@ -303,8 +304,8 @@ class TzktBigMapAction(Enum):
         return self in (TzktBigMapAction.ADD_KEY, TzktBigMapAction.UPDATE_KEY)
 
 
-@dataclass
-class TzktBigMapData:
+@dataclass(frozen=True)
+class TzktBigMapData(HasLevel):
     """Basic structure for big map diffs from TzKT response"""
 
     id: int
@@ -343,7 +344,7 @@ class TzktBigMapData:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class TzktBigMapDiff(Generic[KeyType, ValueType]):
     """Wrapper for matched big map diff with typed data passed to the handler"""
 
@@ -353,8 +354,8 @@ class TzktBigMapDiff(Generic[KeyType, ValueType]):
     value: Optional[ValueType]
 
 
-@dataclass
-class TzktBlockData:
+@dataclass(frozen=True)
+class TzktBlockData(HasLevel):
     """Basic structure for blocks received from TzKT REST API"""
 
     level: int
@@ -392,8 +393,8 @@ class TzktBlockData:
         )
 
 
-@dataclass
-class TzktHeadBlockData:
+@dataclass(frozen=True)
+class TzktHeadBlockData(HasLevel):
     """Basic structure for head block received from TzKT SignalR API"""
 
     chain: str
@@ -451,8 +452,8 @@ class TzktHeadBlockData:
         )
 
 
-@dataclass
-class TzktQuoteData:
+@dataclass(frozen=True)
+class TzktQuoteData(HasLevel):
     """Basic structure for quotes received from TzKT REST API"""
 
     level: int
@@ -483,8 +484,8 @@ class TzktQuoteData:
         )
 
 
-@dataclass
-class TzktTokenTransferData:
+@dataclass(frozen=True)
+class TzktTokenTransferData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -514,6 +515,9 @@ class TzktTokenTransferData:
         to_json = token_transfer_json.get('to') or {}
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
+        amount = token_transfer_json.get('amount')
+        amount = int(amount) if amount is not None else None
+
         return TzktTokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
@@ -528,15 +532,15 @@ class TzktTokenTransferData:
             from_address=from_json.get('address'),
             to_alias=to_json.get('alias'),
             to_address=to_json.get('address'),
-            amount=token_transfer_json.get('amount'),
+            amount=amount,
             tzkt_transaction_id=token_transfer_json.get('transactionId'),
             tzkt_origination_id=token_transfer_json.get('originationId'),
             tzkt_migration_id=token_transfer_json.get('migrationId'),
         )
 
 
-@dataclass
-class TzktEventData:
+@dataclass(frozen=True)
+class TzktEventData(HasLevel):
     """Basic structure for events received from TzKT REST API"""
 
     id: int
@@ -565,13 +569,13 @@ class TzktEventData:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class TzktEvent(Generic[EventType]):
     data: TzktEventData
     payload: EventType
 
 
-@dataclass
+@dataclass(frozen=True)
 class TzktUnknownEvent:
     data: TzktEventData
     payload: Any | None

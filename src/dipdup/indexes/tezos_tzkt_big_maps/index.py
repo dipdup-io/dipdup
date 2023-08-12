@@ -94,7 +94,7 @@ class TzktBigMapsIndex(
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
-        async with self._ctx._transactions.in_transaction(head_level, head_level, self.name):
+        async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
@@ -143,7 +143,7 @@ class TzktBigMapsIndex(
             await self._update_state(level=batch_level)
             return
 
-        async with self._ctx._transactions.in_transaction(batch_level, sync_level, self.name):
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for handler_config, big_map_diff in matched_handlers:
                 await self._call_matched_handler(handler_config, big_map_diff)
             await self._update_state(level=batch_level)
@@ -154,7 +154,7 @@ class TzktBigMapsIndex(
         if not handler_config.parent:
             raise ConfigInitializationException
 
-        await self._ctx._fire_handler(
+        await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,

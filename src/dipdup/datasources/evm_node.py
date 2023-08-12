@@ -1,11 +1,18 @@
 import asyncio
+import time
 from collections import defaultdict
 from typing import Any
 from typing import Awaitable
 from typing import Callable
 from uuid import uuid4
 
+import pysignalr
+import pysignalr.exceptions
 from pysignalr.messages import CompletionMessage
+from web3 import AsyncWeb3
+from web3.middleware.async_cache import async_construct_simple_cache_middleware
+from web3.providers.async_base import AsyncJSONBaseProvider
+from web3.utils.caching import SimpleCache
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -19,10 +26,15 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.performance import caches
+from dipdup.performance import metrics
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
+
+WEB3_CACHE_SIZE = 256
+
 
 EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
@@ -33,10 +45,11 @@ RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitabl
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     # TODO: Make dynamic
-    _default_http_config = HttpConfig()
+    _default_http_config = HttpConfig(ratelimit_sleep=30)
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
+        self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
@@ -50,12 +63,48 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._on_logs_callbacks: set[LogsCallback] = set()
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
-    async def initialize(self) -> None:
-        pass
+    @property
+    def web3(self) -> AsyncWeb3:
+        if not self._web3_client:
+            raise FrameworkException('web3 client is not initialized; is datasource running?')
+        return self._web3_client
 
+    async def initialize(self) -> None:
+        web3_cache = SimpleCache(WEB3_CACHE_SIZE)
+        caches.add_plain(web3_cache._data, f'{self.name}:web3_cache')
+
+        class MagicWeb3Provider(AsyncJSONBaseProvider):
+            async def make_request(_, method: str, params: list[Any]) -> Any:
+                return await self._jsonrpc_request(
+                    method,
+                    params,
+                    raw=True,
+                )
+
+        self._web3_client = AsyncWeb3(
+            provider=MagicWeb3Provider(),
+        )
+        self._web3_client.middleware_onion.add(
+            await async_construct_simple_cache_middleware(web3_cache),
+            'cache',
+        )
+
+    # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:
+        self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
-        await client.run()
+        retry_sleep = self._http_config.retry_sleep
+
+        for _ in range(1, self._http_config.retry_count + 1):
+            try:
+                await client.run()
+            except pysignalr.exceptions.ConnectionError as e:
+                self._logger.error('Websocket connection error: %s', e)
+                await self.emit_disconnected()
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= self._http_config.retry_multiplier
+
+        raise DatasourceError('Websocket connection failed', self.name)
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
@@ -123,11 +172,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     async def _subscribe(self, subscription: EvmNodeSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         response = await self._jsonrpc_request(
-            'eth_subscribe',
-            subscription.get_params(),
+            method='eth_subscribe',
+            params=subscription.get_params(),
+            ws=True,
         )
         self._subscription_ids[response] = subscription
-        # NOTE: This is possibly unnecessary and/or unreliable, but node doesn't return sync level on subscription.
+        # NOTE: Is's likely unnecessary and/or unreliable, but node doesn't return sync level.
         level = await self.get_head_level()
         self._subscriptions.set_sync_level(subscription, level)
 
@@ -135,6 +185,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self,
         method: str,
         params: Any,
+        raw: bool = False,
+        ws: bool = False,
     ) -> Any:
         request_id = uuid4().hex
         request = {
@@ -143,17 +195,36 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             'method': method,
             'params': params,
         }
-        event = asyncio.Event()
-        self._requests[request_id] = (event, None)
 
-        message = WebsocketMessage(request)
-        client = self._get_ws_client()
-        await client.send(message)
+        if ws:
+            started_at = time.time()
+            namespace = f'{self._config.name}.ws'
+            event = asyncio.Event()
+            self._requests[request_id] = (event, None)
 
-        await event.wait()
-        data = self._requests[request_id][1]
-        del self._requests[request_id]
-        return data
+            message = WebsocketMessage(request)
+            client = self._get_ws_client()
+            await client.send(message)
+
+            await event.wait()
+            data = self._requests[request_id][1]
+            del self._requests[request_id]
+
+            metrics and metrics.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
+            metrics and metrics.inc(f'{namespace}:requests_total', 1.0)
+        else:
+            data = await self.request(
+                method='post',
+                url='',
+                json=request,
+            )
+
+        if raw:
+            return data
+
+        if 'error' in data:
+            raise DatasourceError(data['error']['message'], self.name)
+        return data['result']
 
     async def _on_message(self, message: Message) -> None:
         # NOTE: pysignalr will eventually get a raw client
@@ -163,22 +234,19 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         data = message.data
 
         if 'id' in data:
-            if 'error' in data:
-                raise DatasourceError(f'JSON-RPC error: {data["error"]}', self.name)
-
             request_id = data['id']
             if request_id not in self._requests:
                 raise DatasourceError(f'Unknown request ID: {data["id"]}', self.name)
 
             event = self._requests[request_id][0]
-            self._requests[request_id] = (event, data['result'])
+            # NOTE: Don't unpack; processed later
+            self._requests[request_id] = (event, data)
             event.set()
         elif 'method' in data:
             if data['method'] == 'eth_subscription':
                 subscription_id = data['params']['subscription']
                 subscription = self._subscription_ids[subscription_id]
                 await self._handle_subscription(subscription, data['params']['result'])
-
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)
         else:
@@ -230,7 +298,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         if self._ws_client:
             return self._ws_client
 
-        self._logger.info('Creating Websocket client')
+        self._logger.debug('Creating Websocket client')
 
         url = self._config.ws_url
         self._ws_client = WebsocketTransport(

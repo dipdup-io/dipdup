@@ -1,1 +1,0 @@
-# `evm.subsquid.events` index

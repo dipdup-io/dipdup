@@ -17,10 +17,8 @@ from __future__ import annotations
 import hashlib
 import importlib
 import inspect
-import json
 import logging.config
 import re
-import sys
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
@@ -37,6 +35,7 @@ from typing import cast
 from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
+import orjson
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -46,10 +45,10 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.models import LoggingValues
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
+from dipdup.performance import MetricsLevel
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
@@ -61,7 +60,7 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
-_logger = logging.getLogger('dipdup.config')
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -75,18 +74,16 @@ class SqliteDatabaseConfig:
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
+    immune_tables: set[str] = field(default_factory=set)
 
     @property
     def schema_name(self) -> str:
-        return 'public'
+        # NOTE: Used only as identifier in `dipdup_schema` dable, since Hasura integration is not supported for SQLite.
+        return DEFAULT_POSTGRES_SCHEMA
 
     @property
     def connection_string(self) -> str:
         return f'{self.kind}://{self.path}'
-
-    @property
-    def immune_tables(self) -> set[str]:
-        return set()
 
     @property
     def connection_timeout(self) -> int:
@@ -160,8 +157,9 @@ class HttpConfig:
     :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
-    :param batch_size: Number of items fetched in a single paginated request (for some APIs)
-    :param replay_path: Development-only option to use cached HTTP responses instead of making real requests
+    :param batch_size: Number of items fetched in a single paginated request
+    :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
+    :param alias: Alias for this HTTP client (dev only)
     """
 
     retry_count: int | None = None
@@ -174,22 +172,24 @@ class HttpConfig:
     connection_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
+    alias: str | None = None
 
 
 @dataclass
 class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
-    retry_count: int = sys.maxsize
+    retry_count: int = 10
     retry_sleep: float = 1.0
-    retry_multiplier: float = 1.0
+    retry_multiplier: float = 2.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
-    ratelimit_sleep: float = 5.0
+    ratelimit_sleep: float = 0.0
     connection_limit: int = 100
     connection_timeout: int = 60
-    batch_size: int = 1000
+    batch_size: int = 10_000
     replay_path: str | None = None
+    alias: str | None = None
 
     @classmethod
     def create(
@@ -224,7 +224,7 @@ class NameMixin:
 class ContractConfig(NameMixin):
     """Contract config
 
-    :param typename: User-defined alias for the contract script
+    :param typename: Alias for the contract script
     """
 
     kind: str
@@ -367,13 +367,13 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
-        config_json = json.dumps(self, default=pydantic_encoder)
-        config_dict = json.loads(config_json)
+        config_json = orjson.dumps(self, default=pydantic_encoder)
+        config_dict = orjson.loads(config_json)
 
         self.strip(config_dict)
 
-        config_json = json.dumps(config_dict)
-        return hashlib.sha256(config_json.encode()).hexdigest()
+        config_json = orjson.dumps(config_dict)
+        return hashlib.sha256(config_json).hexdigest()
 
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
@@ -393,7 +393,7 @@ class HasuraConfig:
     :param select_limit: Row limit for unauthenticated queries.
     :param allow_aggregations: Whether to allow aggregations in unauthenticated queries.
     :param allow_inconsistent_metadata: Whether to ignore errors when applying Hasura metadata.
-    :param camel_case: Whether to use camelCase instead of default pascal_case for the field names (incompatible with `metadata_interface` flag)
+    :param camel_case: Whether to use camelCase instead of default pascal_case for the field names.
     :param rest: Enable REST API both for autogenerated and custom queries.
     :param http: HTTP connection tunables
     """
@@ -463,7 +463,7 @@ class SentryConfig:
     :param debug: Catch warning messages, increase verbosity.
     """
 
-    dsn: str = ''
+    dsn: str
     environment: str | None = None
     server_name: str | None = None
     release: str | None = None
@@ -511,19 +511,19 @@ class HookConfig(CallbackMixin):
 
 
 @dataclass
-class EventHookConfig(HookConfig):
+class SystemHookConfig(HookConfig):
     pass
 
 
-event_hooks = {
+system_hooks = {
     # NOTE: Fires on every run after datasources and schema are initialized.
     # NOTE: Default: nothing.
-    'on_restart': EventHookConfig(
+    'on_restart': SystemHookConfig(
         callback='on_restart',
     ),
     # NOTE: Fires on rollback which affects specific index and can't be processed unattended.
     # NOTE: Default: database rollback.
-    'on_index_rollback': EventHookConfig(
+    'on_index_rollback': SystemHookConfig(
         callback='on_index_rollback',
         args={
             'index': 'dipdup.index.Index',
@@ -533,15 +533,21 @@ event_hooks = {
     ),
     # NOTE: Fires when DipDup runs with empty schema, right after schema is initialized.
     # NOTE: Default: nothing.
-    'on_reindex': EventHookConfig(
+    'on_reindex': SystemHookConfig(
         callback='on_reindex',
     ),
     # NOTE: Fires when all indexes reach REALTIME state.
     # NOTE: Default: nothing.
-    'on_synchronized': EventHookConfig(
+    'on_synchronized': SystemHookConfig(
         callback='on_synchronized',
     ),
 }
+
+
+@dataclass
+class ApiConfig:
+    host = '127.0.0.1'
+    port: int = 46339  # dial INDEX 😎
 
 
 @dataclass
@@ -552,26 +558,29 @@ class AdvancedConfig:
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
     :param early_realtime: Establish realtime connection immediately after startup
-    :param metadata_interface: Expose metadata interface for TzKT
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
-    :param crash_reporting: Enable crash reporting
+    :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
+    :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
+    :param api: Monitoring API config
+    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
+    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
-    metadata_interface: bool = False
     skip_version_check: bool = False
     rollback_depth: int | None = None
-    crash_reporting: bool = False
+    decimal_precision: int | None = None
+    unsafe_sqlite: bool = False
+    api: ApiConfig | None = None
+    metrics: MetricsLevel = MetricsLevel.basic
+    alt_operation_matcher: bool = False
 
-    @property
-    def rollback_depth_int(self) -> int:
-        if self.rollback_depth is None:
-            raise FrameworkException('`rollback_depth` was not set on config initialization')
-        return self.rollback_depth
+    class Config:
+        extra = 'allow'
 
 
 @dataclass
@@ -595,7 +604,7 @@ class DipDupConfig:
     :param logging: Modify logging verbosity
     """
 
-    spec_version: str
+    spec_version: str | float
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
@@ -607,19 +616,19 @@ class DipDupConfig:
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = field(default_factory=SentryConfig)
+    sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
-    logging: LoggingValues = LoggingValues.default
+    logging: dict[str, str | int] | str | int = 'INFO'
 
     def __post_init_post_parse__(self) -> None:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
 
-        self.paths: list[Path] = []
-        self.environment: dict[str, str] = {}
-        self.json = DipDupYAMLConfig()
+        self._paths: list[Path] = []
+        self._environment: dict[str, str] = {}
+        self._json = DipDupYAMLConfig()
         # FIXME: Tezos-specific config validation
         self._contract_addresses = {
             v.address: k
@@ -634,10 +643,7 @@ class DipDupConfig:
 
     @property
     def schema_name(self) -> str:
-        if isinstance(self.database, PostgresDatabaseConfig):
-            return self.database.schema_name
-        # NOTE: Not exactly correct; historical reason
-        return DEFAULT_POSTGRES_SCHEMA
+        return self.database.schema_name
 
     @property
     def package_path(self) -> Path:
@@ -671,9 +677,9 @@ class DipDupConfig:
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 
-        config.paths = paths
-        config.json = config_json
-        config.environment = config_environment
+        config._paths = paths
+        config._json = config_json
+        config._environment = config_environment
         return config
 
     def get_contract(self, name: str) -> ContractConfig:
@@ -730,13 +736,30 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
         return datasource
 
+    def get_evm_node_datasource(self, name: str) -> EvmNodeDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, EvmNodeDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to TzKT datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
-        level = {
-            LoggingValues.default: logging.INFO,
-            LoggingValues.quiet: logging.WARNING,
-            LoggingValues.verbose: logging.DEBUG,
-        }[self.logging]
-        logging.getLogger('dipdup').setLevel(level)
+        loglevels = self.logging
+        if not isinstance(loglevels, dict):
+            loglevels = {
+                'dipdup': loglevels,
+                self.package: loglevels,
+            }
+
+        for name, level in loglevels.items():
+            try:
+                if isinstance(level, str):
+                    level = getattr(logging, level.upper())
+                if not isinstance(level, int):
+                    raise ValueError
+            except (AttributeError, ValueError):
+                raise ConfigurationError(f'Invalid logging level `{level}` for logger `{name}`') from None
+
+            logging.getLogger(name).setLevel(level)
 
     def initialize(self) -> None:
         self._set_names()
@@ -745,7 +768,14 @@ class DipDupConfig:
         self._validate()
 
     def dump(self) -> str:
-        return DipDupYAMLConfig.dump(self.json)
+        return DipDupYAMLConfig(
+            **orjson.loads(
+                orjson.dumps(
+                    self,
+                    default=pydantic_encoder,
+                )
+            )
+        ).dump()
 
     def add_index(
         self,
@@ -774,20 +804,15 @@ class DipDupConfig:
         if self.hasura:
             if isinstance(self.database, SqliteDatabaseConfig):
                 raise ConfigurationError('SQLite database engine is not supported by Hasura')
-            if self.advanced.metadata_interface and self.hasura.camel_case:
-                raise ConfigurationError('`metadata_interface` flag is incompatible with `camel_case` one')
-        else:
-            if self.advanced.metadata_interface:
-                raise ConfigurationError('`metadata_interface` flag requires `hasura` section to be present')
 
         # NOTE: Hook names and callbacks
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
-            if name in event_hooks:
-                raise ConfigurationError(f'`{name}` hook name is reserved by event hook')
+            if name in system_hooks:
+                raise ConfigurationError(f'`{name}` hook name is reserved by system hook')
 
-        # NOTE: Rollback depth and conflicting techniques
+        # NOTE: Rollback depth euristics and validation
         rollback_depth = self.advanced.rollback_depth
         if rollback_depth is None:
             rollback_depth = 0
@@ -817,11 +842,19 @@ class DipDupConfig:
                 self.advanced.early_realtime = True
                 break
 
+        # NOTE: Optional checks
+        for flag in (
+            'crash_reporting',
+            'metadata_interface',
+        ):
+            if getattr(self.advanced, flag, None):
+                _logger.warning('`%s flag was removed and has no effect', flag)
+
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
-        raw_template = json.dumps(template, default=pydantic_encoder)
+        raw_template = orjson.dumps(template, default=pydantic_encoder).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
@@ -831,7 +864,7 @@ class DipDupConfig:
                 f'`{template_config.name}` index config is missing required template value `{missing_value}`'
             )
 
-        json_template = json.loads(raw_template)
+        json_template = orjson.loads(raw_template)
         new_index_config = template.__class__(**json_template)
         new_index_config.template_values = template_config.values
         new_index_config.parent = template
@@ -850,8 +883,14 @@ class DipDupConfig:
         for datasource_config in self.datasources.values():
             if not isinstance(datasource_config, SubsquidDatasourceConfig):
                 continue
-            if isinstance(datasource_config.node, str):
-                datasource_config.node = self.datasources[datasource_config.node]
+            node_field = datasource_config.node
+            if isinstance(node_field, str):
+                datasource_config.node = self.datasources[node_field]
+            elif isinstance(node_field, tuple):
+                nodes = []
+                for node in node_field:
+                    nodes.append(self.get_evm_node_datasource(node) if isinstance(node, str) else node)
+                datasource_config.node = tuple(nodes)
 
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
@@ -916,8 +955,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktHeadIndexConfig):
-            for handler_config in index_config.handlers:
-                handler_config.parent = index_config
+            index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:
@@ -979,26 +1017,26 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 """
 
 # NOTE: Reimport to avoid circular imports
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig  # noqa: E402
-from dipdup.config.coinbase import CoinbaseDatasourceConfig  # noqa: E402
-from dipdup.config.evm import EvmContractConfig  # noqa: E402
-from dipdup.config.evm_node import EvmNodeDatasourceConfig  # noqa: E402
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig  # noqa: E402
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig  # noqa: E402
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig  # noqa: E402
-from dipdup.config.http import HttpDatasourceConfig  # noqa: E402
-from dipdup.config.ipfs import IpfsDatasourceConfig  # noqa: E402
-from dipdup.config.tezos import TezosContractConfig  # noqa: E402
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig  # noqa: E402
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig  # noqa: E402
-from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig  # noqa: E402
+from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
+from dipdup.config.coinbase import CoinbaseDatasourceConfig
+from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
+from dipdup.config.http import HttpDatasourceConfig
+from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
 ContractConfigU = EvmContractConfig | TezosContractConfig
@@ -1040,6 +1078,9 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
     submodules += ((__name__, self),)
 
     for name, submodule in submodules:
+        if not submodule.__name__.startswith('dipdup.config'):
+            continue
+
         for attr in dir(submodule):
             value = getattr(submodule, attr)
             if hasattr(value, '__annotations__'):
@@ -1070,6 +1111,8 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | None': 'str | EvmNodeDatasourceConfig | None',
+    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
+        'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
+    ),
 }
 _patch_annotations(_original_to_aliased)

@@ -26,14 +26,15 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
     config_path = CONFIGS_PATH / config
     dipdup_pkg_path = SRC_PATH / 'dipdup'
     demo_pkg_path = SRC_PATH / package
+    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
 
     with tempfile.TemporaryDirectory() as tmp_root_path:
         # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_root_path) / 'dipdup.yml'
+        tmp_config_path = Path(tmp_root_path) / 'dipdup.yaml'
         os.symlink(config_path, tmp_config_path)
 
         tmp_bin_path = Path(tmp_root_path) / 'bin'
-        os.mkdir(tmp_bin_path)
+        tmp_bin_path.mkdir()
         for executable in ('dipdup', 'datamodel-codegen'):
             if (executable_path := which(executable)) is None:
                 raise FrameworkException(f'Executable `{executable}` not found')
@@ -56,7 +57,7 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
         }
 
         subprocess.run(
-            f'dipdup -c {tmp_config_path} {cmd}',
+            f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {cmd}',
             cwd=tmp_root_path,
             check=True,
             shell=True,

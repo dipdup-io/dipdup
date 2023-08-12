@@ -206,7 +206,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
-        batch_size=1000,
+        batch_size=10_000,
     )
 
     def __init__(
@@ -722,6 +722,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             cursor=True,
             values=True,
             status='applied',
+            sort='level',
         )
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
@@ -990,6 +991,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         select: tuple[str, ...] | None = None,
         values: bool = False,  # return only list of chosen values instead of dict
         cursor: bool = False,
+        sort: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
@@ -1007,6 +1009,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         if select:
             #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
+        if sort:
+            if sort.startswith('-'):
+                sort_param_name = 'sort.desc'
+                sort = sort[1:]
+            else:
+                sort_param_name = 'sort'
+            params[sort_param_name] = sort
         return {
             **params,
             **kwargs,
