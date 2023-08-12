@@ -204,12 +204,14 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
-    from dipdup.sentry import init_sentry
 
     _config = DipDupConfig.load(config_paths)
     _config.set_up_logging()
 
-    init_sentry(_config)
+    if _config.sentry:
+        from dipdup.sentry import init_sentry
+
+        init_sentry(_config.sentry, _config.package)
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize()
@@ -301,7 +303,7 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
     from dipdup.config import DipDupConfig
 
     config = DipDupConfig.load(
-        paths=ctx.obj.config.paths,
+        paths=ctx.obj.config._paths,
         environment=unsafe,
     )
     if full:
@@ -321,10 +323,10 @@ async def config_env(ctx: click.Context, output: str | None) -> None:
     from dipdup.config import DipDupConfig
 
     config = DipDupConfig.load(
-        paths=ctx.obj.config.paths,
+        paths=ctx.obj.config._paths,
         environment=True,
     )
-    content = '\n'.join(f'{k}={v}' for k, v in sorted(config.environment.items()))
+    content = '\n'.join(f'{k}={v}' for k, v in sorted(config._environment.items()))
     if output:
         Path(output).write_text(content)
     else:

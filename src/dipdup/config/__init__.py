@@ -78,7 +78,8 @@ class SqliteDatabaseConfig:
 
     @property
     def schema_name(self) -> str:
-        return self.path
+        # NOTE: Used only as identifier in `dipdup_schema` dable, since Hasura integration is not supported for SQLite.
+        return DEFAULT_POSTGRES_SCHEMA
 
     @property
     def connection_string(self) -> str:
@@ -462,7 +463,7 @@ class SentryConfig:
     :param debug: Catch warning messages, increase verbosity.
     """
 
-    dsn: str = ''
+    dsn: str
     environment: str | None = None
     server_name: str | None = None
     release: str | None = None
@@ -615,7 +616,7 @@ class DipDupConfig:
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = field(default_factory=SentryConfig)
+    sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
@@ -625,9 +626,9 @@ class DipDupConfig:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
 
-        self.paths: list[Path] = []
-        self.environment: dict[str, str] = {}
-        self.json = DipDupYAMLConfig()
+        self._paths: list[Path] = []
+        self._environment: dict[str, str] = {}
+        self._json = DipDupYAMLConfig()
         # FIXME: Tezos-specific config validation
         self._contract_addresses = {
             v.address: k
@@ -642,10 +643,7 @@ class DipDupConfig:
 
     @property
     def schema_name(self) -> str:
-        if isinstance(self.database, PostgresDatabaseConfig):
-            return self.database.schema_name
-        # NOTE: Not exactly correct; historical reason
-        return DEFAULT_POSTGRES_SCHEMA
+        return self.database.schema_name
 
     @property
     def package_path(self) -> Path:
@@ -679,9 +677,9 @@ class DipDupConfig:
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 
-        config.paths = paths
-        config.json = config_json
-        config.environment = config_environment
+        config._paths = paths
+        config._json = config_json
+        config._environment = config_environment
         return config
 
     def get_contract(self, name: str) -> ContractConfig:
@@ -770,7 +768,14 @@ class DipDupConfig:
         self._validate()
 
     def dump(self) -> str:
-        return DipDupYAMLConfig.dump(self.json)
+        return DipDupYAMLConfig(
+            **orjson.loads(
+                orjson.dumps(
+                    self,
+                    default=pydantic_encoder,
+                )
+            )
+        ).dump()
 
     def add_index(
         self,
