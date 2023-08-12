@@ -57,6 +57,7 @@ dependencies = [
     "async-lru~=2.0",
     "asyncclick~=8.0",
     "eth-abi~=4.0",
+    "lru-dict~=1.2",
     "orjson~=3.9",
     "prometheus-client~=0.17",
     "pyarrow~=12.0",

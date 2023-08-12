@@ -63,6 +63,6 @@ def save_report(package: str, error: Exception | None) -> str:
 
 def cleanup_reports() -> None:
     """Removes old reports"""
-    for i, path in enumerate(REPORTS_PATH.glob('*.yaml')):
-        if i > 100:
+    for i, path in enumerate(tuple(REPORTS_PATH.glob('*.yaml'))[::-1]):
+        if i >= 100:
             path.unlink()

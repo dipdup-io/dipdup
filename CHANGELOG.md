@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- models: Added optional `maxsize` meta field to `CachedModel` to limit the LRU cache size.
+
 ### Fixed
 
 - cli: Fixed `config export --full` command showing original config.

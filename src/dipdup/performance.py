@@ -13,11 +13,13 @@ import time
 from collections import defaultdict
 from collections import deque
 from contextlib import asynccontextmanager
+from contextlib import suppress
 from enum import Enum
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import Callable
@@ -26,9 +28,13 @@ from typing import Sized
 from typing import cast
 
 from async_lru import alru_cache
+from lru import LRU  # type: ignore[import]
 from tortoise.models import Model
 
 from dipdup.exceptions import FrameworkException
+
+if TYPE_CHECKING:
+    from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)
 
@@ -83,12 +89,15 @@ class _CacheManager:
 
     def add_model(
         self,
-        cls: type,
+        cls: 'type[CachedModel]',
     ) -> None:
         if cls.__name__ in self._model:
             raise Exception(f'Model cache for `{cls}` already exists')
 
-        self._model[cls.__name__] = {}
+        maxsize = None
+        with suppress(AttributeError):
+            maxsize = cls.Meta.maxsize  # type: ignore[attr-defined]
+        self._model[cls.__name__] = LRU(maxsize)
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}

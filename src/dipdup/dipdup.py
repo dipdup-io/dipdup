@@ -178,6 +178,8 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
             if not self._indexes:
                 continue
+            if not all(i.state.level for i in self._indexes.values()):
+                continue
 
             levels_indexed, levels_total, levels_interval = 0, 0, 0
             for index in self._indexes.values():
