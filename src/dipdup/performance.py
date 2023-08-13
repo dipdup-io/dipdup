@@ -9,12 +9,10 @@ There are three module-level singletons, one for each type of resource:
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
 import logging
-import sys
 import time
 from collections import defaultdict
 from collections import deque
 from contextlib import asynccontextmanager
-from contextlib import suppress
 from enum import Enum
 from functools import _CacheInfo
 from functools import lru_cache
@@ -38,6 +36,25 @@ if TYPE_CHECKING:
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def with_pprofile(name: str) -> AsyncIterator[None]:
+    try:
+        import pprofile  # type: ignore[import]
+
+        _logger.warning('Full profiling is enabled, this will affect performance')
+    except ImportError:
+        _logger.error('pprofile not installed, falling back to basic profiling')
+        return
+
+    profiler = pprofile.Profile()
+    with profiler():
+        yield
+
+    dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
+    _logger.info('Dumping profiling data to %s', dump_path)
+    profiler.dump_stats(dump_path)
 
 
 class MetricsLevel(Enum):
@@ -213,25 +230,6 @@ class _MetricManager:
 
     def stats(self) -> dict[str, float]:
         return self._stats
-
-    @asynccontextmanager
-    async def with_pprofile(self, name: str) -> AsyncIterator[None]:
-        try:
-            import pprofile  # type: ignore[import]
-
-            _logger.warning('Full profiling is enabled, this will affect performance')
-        except ImportError:
-            _logger.error('pprofile not installed, falling back to basic profiling')
-            self._level = MetricsLevel.basic
-            return
-
-        profiler = pprofile.Profile()
-        with profiler():
-            yield
-
-        dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
-        _logger.info('Dumping profiling data to %s', dump_path)
-        profiler.dump_stats(dump_path)
 
 
 caches = _CacheManager()

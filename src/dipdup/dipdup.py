@@ -69,6 +69,7 @@ from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import MetricsLevel
 from dipdup.performance import metrics
+from dipdup.performance import with_pprofile
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -787,4 +788,4 @@ class DipDup:
         level = self._config.advanced.metrics
         metrics.set_level(level)
         if level == MetricsLevel.full:
-            await stack.enter_async_context(metrics.with_pprofile(self._config.package))
+            await stack.enter_async_context(with_pprofile(self._config.package))
