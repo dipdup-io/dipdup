@@ -18,6 +18,7 @@ from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import Callable
@@ -26,11 +27,34 @@ from typing import Sized
 from typing import cast
 
 from async_lru import alru_cache
+from lru import LRU  # type: ignore[import]
 from tortoise.models import Model
 
 from dipdup.exceptions import FrameworkException
 
+if TYPE_CHECKING:
+    from dipdup.models import CachedModel
+
 _logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def with_pprofile(name: str) -> AsyncIterator[None]:
+    try:
+        import pprofile  # type: ignore[import]
+
+        _logger.warning('Full profiling is enabled, this will affect performance')
+    except ImportError:
+        _logger.error('pprofile not installed, falling back to basic profiling')
+        return
+
+    profiler = pprofile.Profile()
+    with profiler():
+        yield
+
+    dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
+    _logger.info('Dumping profiling data to %s', dump_path)
+    profiler.dump_stats(dump_path)
 
 
 class MetricsLevel(Enum):
@@ -83,12 +107,16 @@ class _CacheManager:
 
     def add_model(
         self,
-        cls: type,
+        cls: 'type[CachedModel]',
     ) -> None:
         if cls.__name__ in self._model:
             raise Exception(f'Model cache for `{cls}` already exists')
 
-        self._model[cls.__name__] = {}
+        try:
+            maxsize = cls.Meta.maxsize  # type: ignore[attr-defined]
+            self._model[cls.__name__] = LRU(maxsize)
+        except AttributeError:
+            self._model[cls.__name__] = {}
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
@@ -202,25 +230,6 @@ class _MetricManager:
 
     def stats(self) -> dict[str, float]:
         return self._stats
-
-    @asynccontextmanager
-    async def with_pprofile(self, name: str) -> AsyncIterator[None]:
-        try:
-            import pprofile  # type: ignore[import]
-
-            _logger.warning('Full profiling is enabled, this will affect performance')
-        except ImportError:
-            _logger.error('pprofile not installed, falling back to basic profiling')
-            self._level = MetricsLevel.basic
-            return
-
-        profiler = pprofile.Profile()
-        with profiler():
-            yield
-
-        dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
-        _logger.info('Dumping profiling data to %s', dump_path)
-        profiler.dump_stats(dump_path)
 
 
 caches = _CacheManager()

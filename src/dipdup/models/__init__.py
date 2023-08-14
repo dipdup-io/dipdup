@@ -502,9 +502,13 @@ class Model(TortoiseModel):
 class CachedModel(Model):
     @classmethod
     async def preload(cls) -> None:
+        query = cls.all()
+        with suppress(AttributeError):
+            query = query.limit(cls.Meta.maxsize)  # type: ignore[attr-defined]
+
         # NOTE: Table can be missing
         with suppress(OperationalError):
-            async for model in cls.all():
+            async for model in query:
                 model.cache()
 
     @classmethod
