@@ -38,6 +38,7 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
     if non_indexed_bytes:
         non_indexed_values = iter(decode_abi(tuple(n for n, i in inputs if not i), non_indexed_bytes))
     else:
+        # NOTE: Node truncates trailing zeros in event data
         non_indexed_values = cycle((0,))
 
     values: deque[Any] = deque()
@@ -97,7 +98,9 @@ def match_events(
             name = handler_config.name
             if topics[typename][name] != event.topics[0]:
                 continue
-            if event.address != handler_config.contract.address:
+            
+            address = handler_config.contract.address
+            if address and address != event.address:
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)

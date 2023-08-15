@@ -29,9 +29,3 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
-    first_level: 17920353
-logging:
-  dipdup: DEBUG
-  dipdup.models: INFO
-  websockets: DEBUG
-  pysignalr: DEBUG
