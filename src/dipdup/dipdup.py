@@ -75,7 +75,7 @@ from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
 
 METRICS_INTERVAL = 5
-STATUS_INTERVAL = 30
+STATUS_INTERVAL = 15
 
 
 class IndexDispatcher:
@@ -106,9 +106,17 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set():
-                if (self._every_index_is(IndexStatus.realtime) or early_realtime) and not self._ctx.config.oneshot:
+            if not spawn_datasources_event.is_set() and not self._ctx.config.oneshot:
+                if self._every_index_is(IndexStatus.realtime) or early_realtime:
                     spawn_datasources_event.set()
+
+                # FIXME: A temporary ugly check.
+                for index in self._indexes.values():
+                    if not isinstance(index, SubsquidEventsIndex) or not index.node_datasources:
+                        continue
+                    if index.state.level >= index.get_sync_level():
+                        spawn_datasources_event.set()
+                        break
 
             if spawn_datasources_event.is_set():
                 for datasource in self._ctx.datasources.values():
@@ -190,6 +198,7 @@ class IndexDispatcher:
                     continue
 
                 levels_interval += index.state.level - previous_levels[index.name]
+                # FIXME: indexing 490.96%: -735 levels left (4 lps)
                 levels_indexed += index.state.level - initial_level
                 levels_total += index.get_sync_level() - initial_level
 

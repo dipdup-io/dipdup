@@ -502,6 +502,7 @@ class Model(TortoiseModel):
 class CachedModel(Model):
     @classmethod
     async def preload(cls) -> None:
+        _logger.info('Loading `%s` into memory', cls.__name__)
         query = cls.all()
         with suppress(AttributeError):
             query = query.limit(cls.Meta.maxsize)  # type: ignore[attr-defined]

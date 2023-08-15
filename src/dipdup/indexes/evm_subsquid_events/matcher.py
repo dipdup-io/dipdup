@@ -1,4 +1,5 @@
 from collections import deque
+from itertools import cycle
 from typing import Any
 from typing import Iterable
 
@@ -34,7 +35,10 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
     indexed_values = iter(decode_indexed_topics(tuple(n for n, i in inputs if i), topics))
 
     non_indexed_bytes = decode_hex(data)
-    non_indexed_values = iter(decode_abi(tuple(n for n, i in inputs if not i), non_indexed_bytes))
+    if non_indexed_bytes:
+        non_indexed_values = iter(decode_abi(tuple(n for n, i in inputs if not i), non_indexed_bytes))
+    else:
+        non_indexed_values = cycle((0,))
 
     values: deque[Any] = deque()
     for _, indexed in inputs:
@@ -92,6 +96,8 @@ def match_events(
             typename = handler_config.contract.module_name
             name = handler_config.name
             if topics[typename][name] != event.topics[0]:
+                continue
+            if event.address != handler_config.contract.address:
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
