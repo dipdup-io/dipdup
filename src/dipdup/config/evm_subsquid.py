@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import random
 from typing import Literal
 
 from pydantic import validator
@@ -26,12 +25,6 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     url: str
     node: EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None = None
     http: HttpConfig | None = None
-
-    @property
-    def random_node(self) -> EvmNodeDatasourceConfig | None:
-        if not isinstance(self.node, tuple):
-            return self.node
-        return random.choice(self.node)
 
     @property
     def merge_subscriptions(self) -> bool:
