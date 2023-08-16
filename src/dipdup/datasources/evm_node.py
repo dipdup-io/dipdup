@@ -89,6 +89,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             'cache',
         )
 
+        level = await self.get_head_level()
+        self.set_sync_level(None, level)
+
     # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:
         self._logger.info('Establishing realtime connection')
