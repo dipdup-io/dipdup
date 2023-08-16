@@ -98,7 +98,7 @@ def match_events(
             name = handler_config.name
             if topics[typename][name] != event.topics[0]:
                 continue
-            
+
             address = handler_config.contract.address
             if address and address != event.address:
                 continue
