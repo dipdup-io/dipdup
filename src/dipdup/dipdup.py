@@ -114,11 +114,6 @@ class IndexDispatcher:
                     if not isinstance(index, SubsquidEventsIndex) or not index.node_datasources:
                         continue
 
-                    # NOTE: Subsquid has no levels left to process and we're syncing with node already.
-                    if index.state.level >= index.get_sync_level():
-                        spawn_datasources_event.set()
-                        break
-
             if spawn_datasources_event.is_set():
                 for datasource in self._ctx.datasources.values():
                     if not isinstance(datasource, IndexDatasource):
