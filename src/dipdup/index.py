@@ -193,7 +193,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level: int | None = None,
     ) -> None:
         state = self.state
-        self._logger.debug('Status %s (was %s) at %s (was %s)', status, state.status, level, state.level)
+        if level:
+            self._logger.debug('Level updated: %s -> %s', state.level, level)
+        if status:
+            self._logger.info('Status updated: %s -> %s', state.status, status)
         state.status = status or state.status
         state.level = level or state.level
         await state.save()

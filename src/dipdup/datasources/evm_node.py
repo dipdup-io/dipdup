@@ -119,8 +119,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             if isinstance(subscription, EvmNodeSubscription):
                 await self._subscribe(subscription)
 
-        self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
-
     async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback_callbacks:
             await fn(self, type_, from_level, to_level)
@@ -238,6 +236,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         if 'id' in data:
             request_id = data['id']
+            self._logger.debug('Received response for request %s', request_id)
             if request_id not in self._requests:
                 raise DatasourceError(f'Unknown request ID: {data["id"]}', self.name)
 
@@ -248,7 +247,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         elif 'method' in data:
             if data['method'] == 'eth_subscription':
                 subscription_id = data['params']['subscription']
+                if subscription_id not in self._subscription_ids:
+                    raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
+                self._logger.debug('Received subscription for channel %s', subscription_id)
                 await self._handle_subscription(subscription, data['params']['result'])
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)

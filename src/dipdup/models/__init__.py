@@ -167,11 +167,10 @@ class ModelUpdate(TortoiseModel):
             data=data,
         )
         _logger.debug(
-            'Saving %s(%s) %s: %s',
+            'ModelUpdate saved: %s(%s) %s',
             self.model_name,
             self.model_pk,
             self.action.value,
-            data,
         )
         return self
 

@@ -1,3 +1,4 @@
+import logging
 from collections import deque
 from itertools import cycle
 from typing import Any
@@ -15,6 +16,8 @@ from dipdup.package import EventAbiExtra
 from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
+
+_logger = logging.getLogger(__name__)
 
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
@@ -107,4 +110,5 @@ def match_events(
             matched_handlers.append((handler_config, arg))
             break
 
+    _logger.debug('%d handlers matched', len(matched_handlers))
     return matched_handlers
