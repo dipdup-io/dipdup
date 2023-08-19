@@ -51,6 +51,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         super().__init__(config, merge_subscriptions)
         self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
+        self._realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
         self._head_hashes: dict[int, str] = {}
@@ -79,6 +80,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     method,
                     params,
                     raw=True,
+                    ws=False,
                 )
 
         self._web3_client = AsyncWeb3(
@@ -92,8 +94,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         level = await self.get_head_level()
         self.set_sync_level(None, level)
 
-    # FIXME: Join retry logic with other index datasources
     async def run(self) -> None:
+        await self._realtime.wait()
+
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
@@ -109,7 +112,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         raise DatasourceError('Websocket connection failed', self.name)
 
+    def realtime(self) -> None:
+        self._realtime.set()
+
     async def subscribe(self) -> None:
+        if not self._realtime.is_set():
+            return
+
         missing_subscriptions = self._subscriptions.missing_subscriptions
         if not missing_subscriptions:
             return
