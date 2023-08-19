@@ -191,7 +191,6 @@ class IndexDispatcher:
                     continue
 
                 levels_interval += index.state.level - previous_levels[index.name]
-                # FIXME: indexing 490.96%: -735 levels left (4 lps)
                 levels_indexed += index.state.level - initial_level
                 levels_total += index.get_sync_level() - initial_level
 
