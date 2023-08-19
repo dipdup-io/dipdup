@@ -101,9 +101,11 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         pass
 
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
+        if force:
+            self._cleanup_schemas()
 
         unused_operation_templates = [
             t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
@@ -171,7 +173,7 @@ class TzktCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        if schema_path.name == 'tezos_storage.json':
+        if module_name == 'tezos_storage':
             class_name = f'{schema_path.parent.name}_storage'
         elif schema_path.parent.name == 'tezos_parameters':
             class_name = f'{module_name}_parameter'
@@ -179,7 +181,18 @@ class TzktCodeGenerator(CodeGenerator):
             class_name = f'{module_name}_payload'
         else:
             class_name = module_name
-        return class_name
+        return snake_to_pascal(class_name)
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        markers = {
+            'tezos_storage.json',
+            'tezos_parameters',
+            'tezos_events',
+            'tezos_big_maps',
+        }
+        if not set(schema_path.parts).intersection(markers):
+            return
+        await super()._generate_type(schema_path, force)
 
     async def _get_schema(
         self,
@@ -378,7 +391,7 @@ def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -
 
 def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeClass:
     tag = pascal_to_snake(tag.replace('.', '_'))
-    module_name = f'tezos_event.{tag}'
+    module_name = f'tezos_events.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return package.get_type(typename, module_name, cls_name)
 

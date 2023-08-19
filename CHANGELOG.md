@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- models: Added optional `maxsize` meta field to `CachedModel` to limit the LRU cache size.
+
+### Fixed
+
+- cli: Fixed `config export --full` command showing original config.
+- cli: Keep the last 100 reports only.
+- config: Don't create empty SentryConfig if DSN is not set.
+- context: Share internal state between context instances.
+- jobs: Don't add jobs before scheduler is started.
+- package: Fixed package detection for poetry managed projects.
+- package: Fixed mypy command in default template.
+
+### Changed
+
+- cli: `report` command renamed to `report ls`.
+
+## [7.0.0rc3] - 2023-08-05
+
+### Fixed
+
+- ci: Fixed dipdup package metadata.
+- cli: Generate base template from replay only when --base flag is set.
+- cli: Remove cached jsonschemas when calling init --force.
+- codegen: Filter jsonschemas by prefixes supported by code generator.
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- index: Remove Python limitation on large int<->str conversions.
+- package: Create jsonschemas directory if not exists.
+- package: Don't create empty pyproject.toml during init.
+- package: Fixed discovery of the package when workdir is project root.
+
+## [6.5.10] - 2023-08-02
+
+### Fixed
+
+- index: Remove Python limitation on large int<->str conversions.
+
 ## [7.0.0rc2] - 2023-07-26
 
 ### Fixed
@@ -67,19 +107,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 
-## [6.5.9] - 2022-07-11
+## [6.5.9] - 2023-07-11
 
 ### Fixed
 
 - tzkt: Optimized queries for `operation_unfiltered` index.
 
-## [6.5.8] - 2022-06-28
+## [6.5.8] - 2023-06-28
 
 ### Fixed
 
 - cli: Fixed `init` crash when package name is equal to one of the project typenames.
 
-## [6.5.7] - 2022-05-30
+## [6.5.7] - 2023-05-30
 
 ### Added
 
@@ -96,7 +136,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - http: Deserialize JSON responses with `orjson`.
 
-## [6.5.6] - 2022-05-02
+## [6.5.6] - 2023-05-02
 
 ### Fixed
 
@@ -108,7 +148,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - ci: Slim Docker image updated to Alpine 3.17.
 - metadata: Added `nairobinet` to supported networks.
 
-## [6.5.5] - 2022-04-17
+## [6.5.5] - 2023-04-17
 
 ### Fixed
 
@@ -120,7 +160,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - ci: Default git branch switched to `next`.
 
-## [6.5.4] - 2022-03-31
+## [6.5.4] - 2023-03-31
 
 ### Fixed
 
@@ -130,7 +170,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - deps: Updated pytezos to 3.9.0.
 
-## [6.5.3] - 2022-03-28
+## [6.5.3] - 2023-03-28
 
 ### Fixed
 
@@ -1097,7 +1137,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...HEAD
+[7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
+[6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
 [7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2
 [7.0.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.5.9...7.0.0rc1
 [6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9

@@ -42,7 +42,7 @@ We recommend [PDM](https://pdm.fming.dev/latest/) for managing Python projects. 
 
 ```bash
 pdm install
-pdm venv activate
+$(pdm venv activate)
 ```
 
 Some tools are included to help you keep the code quality high: black, ruff and mypy.

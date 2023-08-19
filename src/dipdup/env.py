@@ -1,9 +1,12 @@
 import importlib
 import importlib.util
 import platform
+import tomllib
 from contextlib import suppress
 from os import environ as env
 from pathlib import Path
+
+from dipdup.exceptions import FrameworkException
 
 
 def get_package_path(package: str) -> Path:
@@ -14,8 +17,17 @@ def get_package_path(package: str) -> Path:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
-    if Path('pyproject.toml').exists() and Path.cwd().name == package:
-        return Path.cwd()
+    pyproject_path = Path('pyproject.toml')
+    if pyproject_path.exists():
+        content = tomllib.loads(pyproject_path.read_text())
+        if 'project' in content:
+            pyproject_package = content['project']['name']
+        elif 'tool' in content and 'poetry' in content['tool']:
+            pyproject_package = content['tool']['poetry']['name']
+        else:
+            raise FrameworkException('`pyproject.toml` found, but has neither `project` nor `tool.poetry` section')
+        if pyproject_package == package:
+            return Path.cwd()
 
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):

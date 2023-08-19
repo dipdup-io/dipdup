@@ -3,9 +3,6 @@ import logging
 from contextlib import suppress
 from functools import partial
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Set
 
 from apscheduler.events import EVENT_JOB_ERROR  # type: ignore[import]
 from apscheduler.events import EVENT_JOB_EXECUTED
@@ -30,7 +27,7 @@ DEFAULT_CONFIG = {
 }
 
 
-def _verify_config(config: Dict[str, Any]) -> None:
+def _verify_config(config: dict[str, Any]) -> None:
     """Ensure that dict is a valid `apscheduler` config"""
     json_config = json_dumps(config).decode()
     if 'apscheduler.executors.pool' in json_config:
@@ -45,24 +42,34 @@ def _verify_config(config: Dict[str, Any]) -> None:
 
 
 class SchedulerManager:
-    def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(
+        self,
+        jobs: dict[str, JobConfig],
+        config: dict[str, Any] | None = None,
+    ) -> None:
         if config:
             _verify_config(config)
         self._logger = logging.getLogger(__name__)
+        self._jobs = jobs
         self._scheduler = AsyncIOScheduler(config or DEFAULT_CONFIG)
         self._scheduler.add_listener(self._on_error, EVENT_JOB_ERROR)
         self._scheduler.add_listener(self._on_executed, EVENT_JOB_EXECUTED)
-        self._exception: Optional[Exception] = None
+        self._exception: Exception | None = None
         self._exception_event: asyncio.Event = asyncio.Event()
-        self._daemons: Set[str] = set()
+        self._daemons: set[str] = set()
 
-    async def run(self, event: asyncio.Event) -> None:
-        self._logger.info('Waiting for an event to start scheduler')
+    async def run(self, ctx: DipDupContext, event: asyncio.Event) -> None:
+        if not event.is_set():
+            self._logger.info('Job scheduler is waiting for an event')
         await event.wait()
 
-        self._logger.info('Starting scheduler')
         try:
+            self._logger.info('Starting job scheduler')
             self._scheduler.start()
+
+            for job_config in self._jobs.values():
+                self.add_job(ctx, job_config)
+
             await self._exception_event.wait()
             if self._exception is None:
                 raise FrameworkException('Job has failed but exception is not set')
@@ -89,11 +96,8 @@ class SchedulerManager:
             **kwargs: Any,
         ) -> None:
             nonlocal job_config, hook_config
-            job_ctx = HookContext(
-                config=ctx.config,
-                package=ctx.package,
-                datasources=ctx.datasources,
-                transactions=ctx.transactions,
+            job_ctx = HookContext._wrap(
+                ctx=ctx,
                 logger=logger,
                 hook_config=hook_config,
             )

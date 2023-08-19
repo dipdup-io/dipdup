@@ -22,7 +22,6 @@ from dipdup.utils import touch
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
-PYPROJECT = 'pyproject.toml'
 DEFAULT_ENV = '.env.default'
 
 EVM_ABI = 'abi.json'
@@ -59,9 +58,8 @@ class EventAbiExtra:
 
 
 class DipDupPackage:
-    def __init__(self, root: Path, debug: bool = False) -> None:
+    def __init__(self, root: Path) -> None:
         self.root = root
-        self.debug = debug
         self.name = root.name
 
         # NOTE: Package sections with .keep markers
@@ -112,12 +110,9 @@ class DipDupPackage:
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
             Path(PACKAGE_MARKER): None,
-            Path(PYPROJECT): None,
-            # NOTE: Not a part of package
-            self.schemas: '**/*.json',
         }
 
-    def discover(self) -> dict[str, tuple[Path, ...]]:
+    def tree(self) -> dict[str, tuple[Path, ...]]:
         tree = {}
         for path, exp in self.skel.items():
             tree[path.name] = tuple(path.glob(exp)) if exp else ()
@@ -133,6 +128,7 @@ class DipDupPackage:
                 touch(path / KEEP_MARKER)
             else:
                 touch(self.root / path)
+        self.schemas.mkdir(parents=True, exist_ok=True)
 
         self._post_init()
 
@@ -143,7 +139,12 @@ class DipDupPackage:
             raise ProjectImportError(f'`{self.root}` exists and not a directory')
 
     def _post_init(self) -> None:
-        pass
+        # NOTE: Allows plain package structure to be imported
+        symlink_path = self.root.joinpath(self.name)
+        if symlink_path.exists() and not symlink_path.is_symlink():
+            raise ProjectImportError(f'`{symlink_path}` exists and not a symlink')
+        if not symlink_path.exists():
+            symlink_path.symlink_to('.', True)
 
     def verify(self) -> None:
         _logger.debug('Verifying `%s` package', self.root)

@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from tortoise.exceptions import DoesNotExist
+
 from demo_evm_events import models as models
 from demo_evm_events.types.eth_usdt.evm_events.transfer import Transfer
 from dipdup.context import HandlerContext
@@ -28,7 +30,17 @@ async def on_balance_update(
     balance_update: Decimal,
     level: int,
 ) -> None:
-    holder, _ = await models.Holder.get_or_create(address=address)
+    try:
+        holder = await models.Holder.cached_get(pk=address)
+    except DoesNotExist:
+        holder = models.Holder(
+            address=address,
+            balance=0,
+            turnover=0,
+            tx_count=0,
+            last_seen=None,
+        )
+        holder.cache()
     holder.balance += balance_update
     holder.turnover += abs(balance_update)
     holder.tx_count += 1

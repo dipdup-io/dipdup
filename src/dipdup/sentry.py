@@ -1,22 +1,24 @@
-# NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
 import hashlib
 import logging
 import platform
 from contextlib import suppress
+from typing import TYPE_CHECKING
 from typing import Any
 
 import sentry_sdk
+import sentry_sdk.consts
 import sentry_sdk.serializer
-import sentry_sdk.utils
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 from sentry_sdk.integrations.atexit import AtexitIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
 from dipdup import env
-from dipdup.config import DipDupConfig
 from dipdup.sys import is_shutting_down
+
+if TYPE_CHECKING:
+    from dipdup.config import SentryConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -62,12 +64,12 @@ def before_send(
     return event
 
 
-def init_sentry(config: 'DipDupConfig') -> None:
-    dsn = config.sentry.dsn
+def init_sentry(config: 'SentryConfig', package: str) -> None:
+    dsn = config.dsn
     if dsn:
         _logger.info('Sentry is enabled: %s', dsn)
 
-    if config.sentry.debug:
+    if config.debug:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
@@ -81,10 +83,9 @@ def init_sentry(config: 'DipDupConfig') -> None:
         # NOTE: Suppresses `atexit` notification
         AtexitIntegration(lambda _, __: None),
     ]
-    package = config.package or 'dipdup'
-    release = config.sentry.release or __version__
-    environment = config.sentry.environment
-    server_name = config.sentry.server_name
+    release = config.release or __version__
+    environment = config.environment
+    server_name = config.server_name
 
     if not environment:
         if env.DOCKER:
@@ -107,9 +108,9 @@ def init_sentry(config: 'DipDupConfig') -> None:
         release=release,
         environment=environment,
         server_name=server_name,
+        # NOTE: Increase __repr__ length limit
+        max_value_length=sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH * 10,
     )
-    # NOTE: Increase __repr__ length limit
-    sentry_sdk.utils.MAX_STRING_LENGTH *= 10
 
     # NOTE: Setting session tags
     tags = {
@@ -128,7 +129,7 @@ def init_sentry(config: 'DipDupConfig') -> None:
     # NOTE: User ID allows to track release adoption. It's sent on every session,
     # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
     # NOTE: generated Docker hostnames may spoil this metric.
-    user_id = config.sentry.user_id
+    user_id = config.user_id
     if user_id is None:
         user_id = package + environment + server_name
         user_id = hashlib.sha256(user_id.encode()).hexdigest()[:8]

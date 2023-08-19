@@ -10,6 +10,7 @@ from dipdup.yaml import dump
 
 # FIXME: Hardcoded path
 REPORTS_PATH = Path.home() / '.local' / 'share' / 'dipdup' / 'reports'
+REPORTS_LIMIT = 100
 
 
 class ReportHeader(TypedDict):
@@ -59,3 +60,10 @@ def save_report(package: str, error: Exception | None) -> str:
     event_yaml = dump(event)
     path.write_text(event_yaml)
     return report_id
+
+
+def cleanup_reports() -> None:
+    """Removes old reports"""
+    for i, path in enumerate(tuple(REPORTS_PATH.glob('*.yaml'))[::-1]):
+        if i >= 100:
+            path.unlink()

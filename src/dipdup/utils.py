@@ -78,6 +78,17 @@ def import_submodules(package: str) -> Dict[str, types.ModuleType]:
     """Recursively import all submodules of a package"""
     module = importlib.import_module(package)
     results = {}
+
+    # NOTE: The first level; walk_packages falls into recursion with root symlink.
+    if '.' not in package:
+        for attr in dir(module):
+            member = getattr(module, attr)
+            if not isinstance(member, types.ModuleType):
+                continue
+            full_name = package + '.' + attr
+            results[full_name] = importlib.import_module(full_name)
+        return results
+
     for subpackage in pkgutil.walk_packages(module.__path__):
         name = subpackage.name
         is_pkg = subpackage.ispkg

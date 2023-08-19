@@ -9,7 +9,7 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "dipdup>=7.0.0rc2,<8"
+    "dipdup>=7.0.0rc3,<8"
 ]
 
 [tool.pdm.dev-dependencies]
@@ -24,7 +24,7 @@ dev = [
 _isort = "isort ."
 _black = "black ."
 _ruff = "ruff check --fix ."
-_mypy = "mypy ."
+_mypy = "mypy --no-incremental --exclude demo_blank ."
 all = { composite = ["fmt", "lint"] }
 fmt = { composite = ["_isort", "_black"] }
 lint = { composite = ["_ruff", "_mypy"] }

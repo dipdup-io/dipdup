@@ -69,9 +69,13 @@ from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import MetricsLevel
 from dipdup.performance import metrics
+from dipdup.performance import with_pprofile
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
+
+METRICS_INTERVAL = 5
+STATUS_INTERVAL = 30
 
 
 class IndexDispatcher:
@@ -175,6 +179,8 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
             if not self._indexes:
                 continue
+            if not all(i.state.level for i in self._indexes.values()):
+                continue
 
             levels_indexed, levels_total, levels_interval = 0, 0, 0
             for index in self._indexes.values():
@@ -205,6 +211,21 @@ class IndexDispatcher:
             metrics.set('time_passed', time_passed)
             metrics.set('time_left', time_left)
             metrics.set('progress', progress)
+
+    async def _status_loop(self, update_interval: float) -> None:
+        while True:
+            await asyncio.sleep(update_interval)
+            stats = metrics.stats()
+            progress = stats.get('progress', 0)
+            total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
+            current_speed = stats.get('current_speed', 0)
+            if current_speed:
+                self._logger.info(
+                    'indexing %.2f%%: %s levels left (%s lps)',
+                    progress * 100,
+                    total - indexed,
+                    int(current_speed),
+                )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -500,7 +521,11 @@ class DipDup:
 
         return dipdup
 
-    async def init(self, overwrite_types: bool = False, keep_schemas: bool = False) -> None:
+    async def init(
+        self,
+        force: bool = False,
+        base: bool = False,
+    ) -> None:
         """Create new or update existing dipdup project"""
         from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
         from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
@@ -511,14 +536,14 @@ class DipDup:
             for datasource in self._datasources.values():
                 await stack.enter_async_context(datasource)
 
-            package = DipDupPackage(
-                root=self._config.package_path,
-                debug=keep_schemas,
-            )
+            package = DipDupPackage(self._config.package_path)
 
             for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
                 codegen = codegen_cls(self._config, package, self._datasources)
-                await codegen.init(force=overwrite_types)
+                await codegen.init(
+                    force=force,
+                    base=base,
+                )
 
             await generate_environments(self._config, package)
 
@@ -726,7 +751,8 @@ class DipDup:
         if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
         if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._metrics_loop(1)))
+            tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
+            tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
@@ -743,15 +769,18 @@ class DipDup:
         return event
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
-        # NOTE: Prepare SchedulerManager
         event = Event()
-        scheduler = SchedulerManager(self._config.advanced.scheduler)
-        run_task = create_task(scheduler.run(event))
+        scheduler = SchedulerManager(
+            jobs=self._config.jobs,
+            config=self._config.advanced.scheduler,
+        )
+        run_task = create_task(
+            scheduler.run(
+                ctx=self._ctx,
+                event=event,
+            ),
+        )
         tasks.add(run_task)
-
-        # NOTE: Register jobs
-        for job_config in self._config.jobs.values():
-            scheduler.add_job(self._ctx, job_config)
 
         return event
 
@@ -759,4 +788,4 @@ class DipDup:
         level = self._config.advanced.metrics
         metrics.set_level(level)
         if level == MetricsLevel.full:
-            await stack.enter_async_context(metrics.with_pprofile(self._config.package))
+            await stack.enter_async_context(with_pprofile(self._config.package))

@@ -3,6 +3,7 @@
 !*/
 
 # Add metadata and build files
+!demo_dex
 !.gitignore
 !.dockerignore
 !**/Dockerfile

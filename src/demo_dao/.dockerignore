@@ -2,6 +2,7 @@
 *
 
 # Add metadata and build files
+!demo_dao
 !pyproject.toml
 !pdm.lock
 !README.md
