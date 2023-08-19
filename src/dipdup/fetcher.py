@@ -6,6 +6,7 @@ from abc import abstractmethod
 from collections import defaultdict
 from collections import deque
 from contextlib import suppress
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncGenerator
 from typing import AsyncIterator
@@ -13,8 +14,10 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
-from dipdup.datasources import IndexDatasource
 from dipdup.performance import queues
+
+if TYPE_CHECKING:
+    from dipdup.datasources import IndexDatasource
 
 
 class HasLevel(Protocol):

@@ -103,10 +103,9 @@ class BigMapSubscription(TzktSubscription):
     def get_request(self) -> list[dict[str, Any]]:
         if self.address and self.path:
             return [{'address': self.address, 'paths': [self.path]}]
-        elif not self.address and not self.path:
+        if not self.address and not self.path:
             return [{}]
-        else:
-            raise FrameworkException('Either both `address` and `path` should be set or none of them')
+        raise FrameworkException('Either both `address` and `path` should be set or none of them')
 
 
 @dataclass(frozen=True)

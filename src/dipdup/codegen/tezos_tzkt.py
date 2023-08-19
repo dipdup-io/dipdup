@@ -66,20 +66,19 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
                 prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()
             },
         }
-    elif 'items' in schema:
+    if 'items' in schema:
         return {
             **schema,
             'items': preprocess_storage_jsonschema(schema['items']),
         }
-    elif 'additionalProperties' in schema:
+    if 'additionalProperties' in schema:
         return {
             **schema,
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
-    elif schema.get('$comment') == 'big_map':
+    if schema.get('$comment') == 'big_map':
         return cast(dict[str, Any], schema['oneOf'][1])
-    else:
-        return schema
+    return schema
 
 
 class TzktCodeGenerator(CodeGenerator):
@@ -232,7 +231,7 @@ class TzktCodeGenerator(CodeGenerator):
             return
 
         # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
-        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+        if isinstance(contract_config, str) and contract_config in self._config.contracts:
             contract_config = self._config.get_tezos_contract(contract_config)
 
         elif isinstance(contract_config, str):

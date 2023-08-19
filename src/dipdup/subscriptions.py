@@ -27,7 +27,7 @@ class SubscriptionManager:
 
     def remove(self, subscription: Subscription) -> None:
         if subscription not in self._subscriptions:
-            _logger.warning(f'Subscription does not exist: {subscription}')
+            _logger.warning('Subscription does not exist: %s', subscription)
         else:
             self._subscriptions.pop(subscription)
 

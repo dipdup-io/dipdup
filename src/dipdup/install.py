@@ -125,7 +125,7 @@ class DipDupEnvironment:
         """Run command safely (relatively lol)"""
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')
-        args = (found_cmd,) + tuple(a for a in args if a)
+        args = (found_cmd, *tuple(a for a in args if a))
         try:
             return subprocess.run(
                 args,
@@ -183,7 +183,11 @@ def install(
     python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
-            subprocess.run(['pyenv', 'which', 'python3.11'], capture_output=True, text=True)
+            subprocess.run(
+                ['pyenv', 'which', 'python3.11'],
+                capture_output=True,
+                text=True,
+            )
             .stdout.strip()
             .split('\n')[0]
         )

@@ -300,8 +300,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Performs an HTTP request."""
         if self._config.replay_path:
             return await self._replay_request(method, url, weight, **kwargs)
-        else:
-            return await self._retry_request(method, url, weight, **kwargs)
+        return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

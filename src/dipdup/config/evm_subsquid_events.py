@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import Literal
 
@@ -14,9 +15,11 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

@@ -28,11 +28,12 @@ from typing import cast
 
 from async_lru import alru_cache
 from lru import LRU  # type: ignore[import]
-from tortoise.models import Model
 
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
+    from tortoise.models import Model
+
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)

@@ -12,6 +12,7 @@ from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from copy import copy
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import Awaitable
@@ -42,7 +43,6 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.index import Index
 from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
@@ -73,6 +73,9 @@ from dipdup.performance import with_pprofile
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
+
+if TYPE_CHECKING:
+    from dipdup.index import Index
 
 METRICS_INTERVAL = 5
 STATUS_INTERVAL = 30
@@ -335,7 +338,7 @@ class IndexDispatcher:
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        asyncio.ensure_future(
+        _ = asyncio.ensure_future(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -353,7 +356,7 @@ class IndexDispatcher:
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        asyncio.ensure_future(
+        _ = asyncio.ensure_future(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={

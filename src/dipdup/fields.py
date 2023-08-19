@@ -4,6 +4,7 @@ from contextlib import suppress
 from copy import copy
 from decimal import Decimal
 from enum import Enum
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 
@@ -41,10 +42,12 @@ from tortoise.fields.relational import OneToOneField as OneToOneField
 from tortoise.fields.relational import OneToOneNullableRelation as OneToOneNullableRelation
 from tortoise.fields.relational import OneToOneRelation as OneToOneRelation
 from tortoise.fields.relational import ReverseRelation as ReverseRelation
-from tortoise.models import Model as _TortoiseModel
 
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
+
+if TYPE_CHECKING:
+    from tortoise.models import Model as _TortoiseModel
 
 IntEnumField = IntEnumFieldInstance
 ForeignKeyField = ForeignKeyFieldInstance

@@ -68,7 +68,7 @@ class DocsBuilder(FileSystemEventHandler):
             dst_file.unlink(True)
             return
 
-        elif event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
+        if event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
             return
 
         src_file = self._source / src_file
@@ -76,7 +76,7 @@ class DocsBuilder(FileSystemEventHandler):
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
-        _logger.info(f'`{src_file}` has been modified; copying')
+        _logger.info('`%s` has been modified; copying', src_file)
 
         try:
             if src_file.suffix in TEXT:
@@ -97,7 +97,7 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
         def replacer(match: re.Match[str]) -> str:
             # FIXME: Slices are not handled yet
             included_file = source / match.group(1).split(':')[0]
-            _logger.info(f'including `{included_file.name}`')
+            _logger.info('including `%s`', included_file.name)
             return included_file.read_text()
 
         return re.sub(INCLUDE_REGEX, replacer, data)

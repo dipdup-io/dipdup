@@ -96,7 +96,7 @@ def prompt_anyof(
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
     table = tabulate(
-        zip(options, comments),
+        zip(options, comments, strict=True),
         tablefmt='plain',
     )
     index = survey.routines.select(

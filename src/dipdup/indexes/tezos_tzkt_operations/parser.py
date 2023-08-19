@@ -84,8 +84,7 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
             # NOTE: Pydantic does not preserve outer_type_ for Optional
             if field.allow_none:
                 return cast(Type[Any], Optional[field.type_])
-            else:
-                return field.outer_type_  # type: ignore[no-any-return]
+            return field.outer_type_  # type: ignore[no-any-return]
 
     # NOTE: Either we try the wrong Union path or model was modifier by user
     raise KeyError(f'Field `{key}` not found in {dict_type}')
@@ -129,11 +128,10 @@ def _apply_bigmap_diffs(
             list_storage.append({'key': key, 'value': value})
         return list_storage
 
-    else:
-        dict_storage: dict[str, Any] = {}
-        for key, value in diffs_items:
-            dict_storage[key] = value
-        return dict_storage
+    dict_storage: dict[str, Any] = {}
+    for key, value in diffs_items:
+        dict_storage[key] = value
+    return dict_storage
 
 
 def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iterable[dict[str, Any]]]) -> Any:

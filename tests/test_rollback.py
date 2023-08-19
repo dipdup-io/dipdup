@@ -231,7 +231,7 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.Domain.bulk_create(domains)
 
-        for tld, domain in zip(tlds, domains):
+        for tld, domain in zip(tlds, domains, strict=True):
             tld.owner = tld.id
             domain.token_id = int(domain.id)
 

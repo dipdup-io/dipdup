@@ -216,7 +216,7 @@ def parse_object(
             return type_.parse_obj(data)
 
         model_keys = tuple(field.alias for field in type_.__fields__.values())
-        return type_(**dict(zip(model_keys, data)))
+        return type_(**dict(zip(model_keys, data, strict=True)))
 
     except ValidationError as e:
         raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e

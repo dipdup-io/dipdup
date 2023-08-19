@@ -7,7 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from pathlib import Path
-from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import AsyncIterator
 from typing import Iterable
@@ -31,6 +31,9 @@ from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 _logger = logging.getLogger(__name__)
 

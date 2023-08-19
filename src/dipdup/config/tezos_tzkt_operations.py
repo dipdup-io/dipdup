@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterator
 from typing import Literal
@@ -19,9 +20,11 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import OriginationSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

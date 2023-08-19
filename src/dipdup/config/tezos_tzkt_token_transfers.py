@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import Literal
 
@@ -12,7 +13,9 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.models.tezos_tzkt import TokenTransferSubscription
-from dipdup.subscriptions import Subscription
+
+if TYPE_CHECKING:
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

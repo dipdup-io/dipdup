@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import deque
 from contextlib import suppress
 from copy import copy
 from datetime import date
@@ -9,6 +8,7 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Iterable
 from typing import TypeVar
@@ -17,9 +17,7 @@ from typing import cast
 import tortoise
 import tortoise.queryset
 from pydantic.dataclasses import dataclass
-from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.exceptions import OperationalError
-from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
 from tortoise.models import Model as TortoiseModel
@@ -33,6 +31,12 @@ from dipdup import fields
 from dipdup.exceptions import FrameworkException
 from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
+
+if TYPE_CHECKING:
+    from collections import deque
+
+    from tortoise.backends.base.client import BaseDBAsyncClient
+    from tortoise.expressions import Q
 
 _logger = logging.getLogger(__name__)
 
@@ -357,7 +361,7 @@ def get_versioned_fields(model: type['Model']) -> frozenset[str]:
             continue
         if field_.pk:
             continue
-        elif isinstance(field_, relational.ForeignKeyFieldInstance):
+        if isinstance(field_, relational.ForeignKeyFieldInstance):
             field_names.add(f'{key}_id')
         else:
             field_names.add(key)

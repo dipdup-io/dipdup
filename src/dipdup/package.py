@@ -41,9 +41,9 @@ def _get_pointers(content_length: int) -> tuple[str, ...]:
 def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
     lines: deque[str] = deque()
     pointers = _get_pointers(len(project_tree) - 1)
-    for pointer, (section, paths) in zip(pointers, project_tree.items()):
+    for pointer, (section, paths) in zip(pointers, project_tree.items(), strict=True):
         lines.append(pointer + section)
-        for inner_pointer, path in zip(_get_pointers(len(paths)), sorted(paths)):
+        for inner_pointer, path in zip(_get_pointers(len(paths)), sorted(paths), strict=True):
             relative_path = path.relative_to(root / section)
             lines.append(_branch + inner_pointer + relative_path.as_posix())
 

@@ -143,9 +143,13 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = ["E402", "E501", "B905"]
+ignore = [
+    "E402",  # module level import not at top of file
+    "E501",  # line too long
+    "TCH001", # breaks our runtime Pydantic magic
+]
 target-version = "py311"
-extend-select = ["B", "C4", "PTH", "Q"]                                   # todo: G, RET, RUF, S, TCH
+extend-select = ["B", "C4", "G", "PTH", "Q", "RET", "RUF", "TCH"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 
 [tool.mypy]

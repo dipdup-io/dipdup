@@ -12,7 +12,7 @@ from typing import Type
 if TYPE_CHECKING:
     from tortoise.models import Model
 
-    from dipdup.models import ReindexingReason  # noqa: E402
+    from dipdup.models import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
 

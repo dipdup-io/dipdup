@@ -24,8 +24,8 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
-from pathlib import Path
 from pydoc import locate
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Iterator
@@ -49,9 +49,13 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
 from dipdup.performance import MetricsLevel
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from dipdup.subscriptions import Subscription
 
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
@@ -445,7 +449,7 @@ class JobConfig(NameMixin):
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
-        elif not schedules_enabled:
+        if not schedules_enabled:
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
         NameMixin.__post_init_post_parse__(self)
