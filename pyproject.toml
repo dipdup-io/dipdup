@@ -67,6 +67,7 @@ dependencies = [
     "python-dotenv~=1.0",
     "ruamel.yaml~=0.17",
     "sentry-sdk~=1.29",
+    "setuptools>=68.1.2",
     "sqlparse~=0.4",
     "survey~=4.4",
     "tabulate~=0.9",

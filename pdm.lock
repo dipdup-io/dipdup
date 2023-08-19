@@ -6,7 +6,7 @@ groups = ["default", "dev"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:367fd9d756df84e60c66a44dca02daccfe8242bc98ddb959ef0d98f0611b5a8d"
+content_hash = "sha256:db5c00e2acba4ce353f30c4cc01f2c4710394e7f97b3d7bfc4dc8ce954281d81"
 
 [[package]]
 name = "aiohttp"
@@ -1492,6 +1492,16 @@ dependencies = [
 files = [
     {file = "sentry-sdk-1.29.2.tar.gz", hash = "sha256:a99ee105384788c3f228726a88baf515fe7b5f1d2d0f215a03d194369f158df7"},
     {file = "sentry_sdk-1.29.2-py2.py3-none-any.whl", hash = "sha256:3e17215d8006612e2df02b0e73115eb8376c37e3f586d8436fa41644e605074d"},
+]
+
+[[package]]
+name = "setuptools"
+version = "68.1.2"
+requires_python = ">=3.8"
+summary = "Easily download, build, install, upgrade, and uninstall Python packages"
+files = [
+    {file = "setuptools-68.1.2-py3-none-any.whl", hash = "sha256:3d8083eed2d13afc9426f227b24fd1659489ec107c0e86cec2ffdde5c92e790b"},
+    {file = "setuptools-68.1.2.tar.gz", hash = "sha256:3d4dfa6d95f1b101d695a6160a7626e15583af71a5f52176efa5d39a054d475d"},
 ]
 
 [[package]]
