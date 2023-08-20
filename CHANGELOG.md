@@ -17,8 +17,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Don't create empty SentryConfig if DSN is not set.
 - context: Share internal state between context instances.
 - jobs: Don't add jobs before scheduler is started.
+- node: Fixed keepalive loop for websocket connection.
+- node: Fixed parsing empty realtime message payloads.
 - package: Fixed package detection for poetry managed projects.
 - package: Fixed mypy command in default template.
+- package: Create package symlink only when needed.
 
 ### Changed
 

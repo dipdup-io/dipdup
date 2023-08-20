@@ -1,4 +1,3 @@
-import logging
 from abc import abstractmethod
 from typing import Any
 from typing import Generic
@@ -15,9 +14,6 @@ from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
 
-_logger = logging.getLogger(__name__)
-
-
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)
 
@@ -33,14 +29,15 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
             url=config.url,
             http_config=http_config,
         )
-        self._logger = _logger
+        self._logger = FormattedLogger(__name__, config.name + ': {}')
 
     @abstractmethod
     async def run(self) -> None:
         ...
 
-    def set_logger(self, name: str) -> None:
-        self._logger = FormattedLogger(self._logger.name, name + ': {}')
+    @property
+    def name(self) -> str:
+        return self._config.name
 
 
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
@@ -57,10 +54,6 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     ) -> None:
         super().__init__(config)
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
-
-    @property
-    def name(self) -> str:
-        return self._config.name
 
     @abstractmethod
     async def subscribe(self) -> None:

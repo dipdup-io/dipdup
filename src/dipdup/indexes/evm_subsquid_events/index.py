@@ -23,8 +23,7 @@ from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import metrics
 
 LEVEL_BATCH_TIMEOUT = 1
-LAST_MILE_TRIGGER = 256
-LEVELS_LEFT_TRIGGER = 256
+NODE_SYNC_LIMIT = 128
 
 
 class SubsquidEventsIndex(
@@ -39,6 +38,7 @@ class SubsquidEventsIndex(
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._node_datasources: tuple[EvmNodeDatasource, ...] | None = None
+        self._realtime_node: EvmNodeDatasource | None = None
         self._topics: dict[str, dict[str, str]] | None = None
 
     @property
@@ -57,10 +57,17 @@ class SubsquidEventsIndex(
         return self._node_datasources
 
     @property
-    def node_datasource(self) -> EvmNodeDatasource:
+    def random_node(self) -> EvmNodeDatasource:
         if not self.node_datasources:
             raise FrameworkException('A node datasource requested, but none attached to this index')
         return random.choice(self.node_datasources)
+
+    @property
+    def realtime_node(self) -> EvmNodeDatasource:
+        if self._realtime_node is None:
+            self._realtime_node = self.random_node
+            self._realtime_node.realtime()
+        return self._realtime_node
 
     @property
     def topics(self) -> dict[str, dict[str, str]]:
@@ -132,30 +139,29 @@ class SubsquidEventsIndex(
 
         subsquid_sync_level = await self.datasource.get_head_level()
 
+        use_node = False
         if self.node_datasources:
-            node_sync_level = await self.node_datasource.get_head_level()
-            last_mile = abs(node_sync_level - subsquid_sync_level)
-            self._logger.info('Subsquid is %s levels behind the node; %s levels left to sync', last_mile, levels_left)
-        else:
-            self._logger.info('Subsquid head is %s; %s levels to sync', subsquid_sync_level, levels_left)
-            last_mile, node_datasource = 0, None
-
-        use_node = last_mile < LAST_MILE_TRIGGER and levels_left < LEVELS_LEFT_TRIGGER
+            node_sync_level = await self.realtime_node.get_head_level()
+            subsquid_lag = abs(node_sync_level - subsquid_sync_level)
+            subsquid_available = subsquid_sync_level - index_level
+            self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
+            if subsquid_available < NODE_SYNC_LIMIT:
+                use_node = True
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
         if use_node and self.node_datasources:
             sync_level = node_sync_level
+            topics = set()
+            for handler in self._config.handlers:
+                typename = handler.contract.module_name
+                topics.add(self.topics[typename][handler.name])
             for level in range(first_level, sync_level):
                 # NOTE: Get random one every time
-                node_datasource = self.node_datasource
-                block = await node_datasource.get_block_by_level(level)
-                if block is None:
-                    raise FrameworkException(f'Block {level} not found')
-                level_logs = await node_datasource.get_logs(
+                level_logs = await self.random_node.get_logs(
                     {
-                        # TODO: Filter by addresses too
                         'fromBlock': hex(level),
                         'toBlock': hex(level),
+                        'topics': tuple(topics),
                     }
                 )
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
