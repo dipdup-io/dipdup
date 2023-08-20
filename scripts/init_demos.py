@@ -31,3 +31,4 @@ for path in _get_projects():
             'HASURA_SECRET': '',
         },
     )
+    Path(package_path).joinpath(package).unlink()

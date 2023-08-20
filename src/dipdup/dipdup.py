@@ -77,17 +77,17 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 5
-STATUS_INTERVAL = 30
+METRICS_INTERVAL = 3
+STATUS_INTERVAL = 10
+
+_logger = logging.getLogger(__name__)
 
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
-
-        self._logger = logging.getLogger(__name__)
         self._indexes: dict[str, Index[Any, Any, Any]] = {}
-
+        # FIXME: Tezos-specific
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
@@ -98,7 +98,7 @@ class IndexDispatcher:
         start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
-        self._logger.info('Starting index dispatcher')
+        _logger.info('Starting index dispatcher')
         await self._subscribe_to_datasource_events()
         await self._load_index_state()
 
@@ -109,8 +109,8 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set():
-                if (self._every_index_is(IndexStatus.realtime) or early_realtime) and not self._ctx.config.oneshot:
+            if not spawn_datasources_event.is_set() and not self._ctx.config.oneshot:
+                if self._every_index_is(IndexStatus.realtime) or early_realtime:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
@@ -139,18 +139,19 @@ class IndexDispatcher:
                     await self._apply_filters(index)
 
             if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.disabled)):
-                self._logger.info('No indexes left, exiting')
+                _logger.info('No indexes left, exiting')
                 break
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
                     on_synchronized_fired = True
                     await self._ctx.fire_hook('on_synchronized')
-                    metrics and metrics.set('synchronized_at', time.time())
+                    metrics.set('synchronized_at', time.time())
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
+                metrics.set('synchronized_at', 0)
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
 
@@ -222,8 +223,11 @@ class IndexDispatcher:
             progress = stats.get('progress', 0)
             total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
             current_speed = stats.get('current_speed', 0)
-            if current_speed:
-                self._logger.info(
+            synchronized_at = stats.get('synchronized_at', 0)
+            if synchronized_at:
+                _logger.info('realtime: %s levels and counting', indexed)
+            else:
+                _logger.info(
                     'indexing %.2f%%: %s levels left (%s lps)',
                     progress * 100,
                     total - indexed,
@@ -246,7 +250,7 @@ class IndexDispatcher:
     async def _fetch_contracts(self) -> None:
         """Add contracts spawned from context to config"""
         contracts = await Contract.filter().all()
-        self._logger.info('%s contracts fetched from database', len(contracts))
+        _logger.info('%s contracts fetched from database', len(contracts))
 
         for contract in contracts:
             if contract.name in self._ctx.config.contracts:
@@ -278,7 +282,7 @@ class IndexDispatcher:
             raise FrameworkException('Index states are already loaded')
 
         await self._fetch_contracts()
-        self._logger.info('%s indexes found in database', await IndexState.all().count())
+        _logger.info('%s indexes found in database', await IndexState.all().count())
 
         async def _process(index_state: IndexState) -> None:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
@@ -316,11 +320,10 @@ class IndexDispatcher:
 
             # NOTE: Index config is missing, possibly just commented-out
             else:
-                self._logger.warning('Index `%s` not found in config, ignoring', name)
+                _logger.warning('Index `%s` not found in config, ignoring', name)
 
-        # FIXME: Outdated optimization
-        tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
-        await gather(*tasks)
+        async for index_state in IndexState.all():
+            await _process(index_state)
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
@@ -426,7 +429,7 @@ class IndexDispatcher:
             raise FrameworkException(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
         channel = f'{datasource.name}:{type_.value}'
-        self._logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
+        _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 
@@ -437,21 +440,21 @@ class IndexDispatcher:
             index_level = index.state.level
 
             if index.message_type != type_:
-                self._logger.debug('%s: different channel, skipping', index_name)
+                _logger.debug('%s: different channel, skipping', index_name)
 
             elif index.datasource != datasource:
-                self._logger.debug('%s: different datasource, skipping', index_name)
+                _logger.debug('%s: different datasource, skipping', index_name)
 
             elif to_level >= index_level:
-                self._logger.debug('%s: level is too low, skipping', index_name)
+                _logger.debug('%s: level is too low, skipping', index_name)
 
             else:
-                self._logger.debug('%s: affected', index_name)
+                _logger.debug('%s: affected', index_name)
                 affected_indexes.add(index_name)
 
         hook_name = 'on_index_rollback'
         for index_name in affected_indexes:
-            self._logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
+            _logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
             await self._ctx.fire_hook(
                 hook_name,
                 index=self._indexes[index_name],
@@ -459,7 +462,7 @@ class IndexDispatcher:
                 to_level=to_level,
             )
 
-        self._logger.info('`%s` rollback complete', channel)
+        _logger.info('`%s` rollback complete', channel)
 
 
 class DipDup:
@@ -468,7 +471,6 @@ class DipDup:
     Spawns datasources, registers indexes, passes handler callbacks to executor"""
 
     def __init__(self, config: DipDupConfig) -> None:
-        self._logger = logging.getLogger(__name__)
         self._config = config
         self._datasources: dict[str, Datasource[Any]] = {}
         self._transactions: TransactionManager = TransactionManager(
@@ -581,7 +583,7 @@ class DipDup:
                 spawn_datasources_event = Event()
 
                 if self._config.jobs:
-                    self._logger.warning('Running in oneshot mode; `jobs` are ignored')
+                    _logger.warning('Running in oneshot mode; `jobs` are ignored')
             else:
                 start_scheduler_event = await self._set_up_scheduler(tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
@@ -609,7 +611,7 @@ class DipDup:
                 self._datasources[name] = create_datasource(config)
 
     async def _initialize_schema(self) -> None:
-        self._logger.info('Initializing database schema')
+        _logger.info('Initializing database schema')
         schema_name = self._config.schema_name
         conn = get_connection()
 
@@ -656,7 +658,7 @@ class DipDup:
         await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
-        self._logger.info('Setting up database')
+        _logger.info('Setting up database')
         await stack.enter_async_context(
             tortoise_wrapper(
                 url=self._config.database.connection_string,
@@ -761,10 +763,10 @@ class DipDup:
         event = Event()
 
         async def _event_wrapper() -> None:
-            self._logger.info('Waiting for indexes to synchronize before spawning datasources')
+            _logger.info('Waiting for indexes to synchronize before spawning datasources')
             await event.wait()
 
-            self._logger.info('Spawning datasources')
+            _logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]
             await gather(*_tasks)
 

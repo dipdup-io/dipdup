@@ -38,7 +38,6 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
 from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100
@@ -214,7 +213,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         config: TzktDatasourceConfig,
     ) -> None:
         super().__init__(config)
-        self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
@@ -359,10 +357,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         if self._network:
             raise FrameworkException('Network is already set')
         self._network = network
-
-    def set_logger(self, name: str) -> None:
-        super().set_logger(name)
-        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: TzktMessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""

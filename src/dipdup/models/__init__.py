@@ -171,11 +171,10 @@ class ModelUpdate(TortoiseModel):
             data=data,
         )
         _logger.debug(
-            'Saving %s(%s) %s: %s',
+            'ModelUpdate saved: %s(%s) %s',
             self.model_name,
             self.model_pk,
             self.action.value,
-            data,
         )
         return self
 
@@ -506,6 +505,7 @@ class Model(TortoiseModel):
 class CachedModel(Model):
     @classmethod
     async def preload(cls) -> None:
+        _logger.info('Loading `%s` into memory', cls.__name__)
         query = cls.all()
         with suppress(AttributeError):
             query = query.limit(cls.Meta.maxsize)  # type: ignore[attr-defined]

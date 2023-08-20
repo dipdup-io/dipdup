@@ -140,6 +140,9 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
+        if self.root != Path.cwd():
+            return
+
         symlink_path = self.root.joinpath(self.name)
         if symlink_path.exists() and not symlink_path.is_symlink():
             raise ProjectImportError(f'`{symlink_path}` exists and not a symlink')
