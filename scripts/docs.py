@@ -2,6 +2,8 @@
 import logging
 import re
 import time
+from collections.abc import Callable
+from collections.abc import Iterator
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
@@ -9,8 +11,6 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
 from typing import Any
-from typing import Callable
-from typing import Iterator
 
 import click
 from watchdog.events import EVENT_TYPE_CREATED

@@ -85,7 +85,6 @@ dipdup = "dipdup.cli:cli"
 dev = [
     "black",
     "docker",
-    "isort",
     "mypy",
     "pprofile",
     "pytest",
@@ -103,12 +102,11 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-_isort = "isort src tests scripts"
 _black = "black src tests scripts"
 _ruff = "ruff check --fix src tests scripts"
 _mypy = "mypy src tests scripts"
 all = { composite = ["fmt", "lint", "test"] }
-fmt = { composite = ["_isort", "_black"] }
+fmt = { composite = ["_black"] }
 lint = { composite = ["_ruff", "_mypy"] }
 test = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests"
 update = { shell = """
@@ -132,10 +130,6 @@ docs_references = "python scripts/dump_references.py"
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]
 
-[tool.isort]
-line_length = 120
-force_single_line = true
-
 [tool.black]
 line-length = 120
 target-version = ["py311"]
@@ -147,10 +141,12 @@ ignore = [
     "E402",  # module level import not at top of file
     "E501",  # line too long
     "TCH001", # breaks our runtime Pydantic magic
+    "UP007",
 ]
 target-version = "py311"
-extend-select = ["B", "C4", "G", "PTH", "Q", "RET", "RUF", "TCH"]
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+isort = { force-single-line = true, known-first-party = ["dipdup"] }
 
 [tool.mypy]
 python_version = "3.11"
