@@ -4,7 +4,6 @@ Ask user some question with Click; render Jinja2 templates with answers.
 """
 import logging
 import re
-from copy import copy
 from pathlib import Path
 from typing import TypedDict
 
@@ -51,7 +50,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
 
 
 class Answers(TypedDict):
-    """Survey answers"""
+    """Answers for survey/replay in order of appearance"""
 
     dipdup_version: str
     template: str
@@ -66,26 +65,29 @@ class Answers(TypedDict):
     line_length: str
 
 
+def get_default_answers() -> Answers:
+    return Answers(
+        dipdup_version=__version__.split('.')[0],
+        template='demo_blank',
+        package='dipdup_indexer',
+        version='0.0.1',
+        description='A blockchain indexer built with DipDup',
+        license='MIT',
+        name='John Doe',
+        email='john_doe@example.com',
+        postgresql_image='postgres:15',
+        # TODO: fetch latest from GH
+        hasura_image='hasura/graphql-engine:v2.30.1',
+        line_length='120',
+    )
+
+
 @dataclass
 class Replay:
     spec_version: str | float
     replay: Answers
 
 
-DEFAULT_ANSWERS = Answers(
-    dipdup_version=__version__.split('.')[0],
-    template='demo_blank',
-    package='dipdup_indexer',
-    version='0.0.1',
-    description='A blockchain indexer built with DipDup',
-    license='MIT',
-    name='John Doe',
-    email='john_doe@example.com',
-    postgresql_image='postgres:15',
-    # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.30.1',
-    line_length='120',
-)
 
 
 def prompt_anyof(
@@ -151,7 +153,7 @@ def answers_from_terminal() -> Answers:
         comments=tuple(comments),
         default=0,
     )
-    answers = copy(DEFAULT_ANSWERS)
+    answers = get_default_answers()
     answers['template'] = template
 
     while True:
@@ -224,9 +226,9 @@ def answers_from_terminal() -> Answers:
 
 
 def answers_from_replay(path: Path) -> Answers:
-    replay_config, _ = DipDupYAMLConfig.load([path])
-    answers = copy(DEFAULT_ANSWERS)
-    answers.update(replay_config['replay'])
+    replay_config = Replay(**DipDupYAMLConfig.load([path])[1])
+    answers = get_default_answers()
+    answers.update(replay_config.replay)
     return answers
 
 

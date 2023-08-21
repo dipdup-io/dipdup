@@ -7,7 +7,6 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -590,13 +589,13 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import DEFAULT_ANSWERS
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
+    from dipdup.project import get_default_answers
     from dipdup.project import render_project
 
     if quiet:
-        answers = copy(DEFAULT_ANSWERS)
+        answers = get_default_answers()
     elif replay:
         answers = answers_from_replay(replay)
     else:

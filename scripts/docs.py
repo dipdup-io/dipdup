@@ -23,7 +23,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
-from dipdup.project import DEFAULT_ANSWERS
+from dipdup.project import get_default_answers
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
 _logger = logging.getLogger()
@@ -106,10 +106,11 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
 
 
 def create_project_callback() -> Callable[[str], str]:
+    answers = get_default_answers()
     def callback(data: str) -> str:
         for match in re.finditer(PROJECT_REGEX, data):
             key = match.group(1)
-            value = DEFAULT_ANSWERS[key]  # type: ignore[literal-required]
+            value = answers[key]  # type: ignore[literal-required]
             data = data.replace(match.group(0), str(value))
         return data
 
