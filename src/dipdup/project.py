@@ -83,11 +83,9 @@ def get_default_answers() -> Answers:
 
 
 @dataclass
-class Replay:
+class ReplayConfig:
     spec_version: str | float
     replay: Answers
-
-
 
 
 def prompt_anyof(
@@ -226,10 +224,12 @@ def answers_from_terminal() -> Answers:
 
 
 def answers_from_replay(path: Path) -> Answers:
-    replay_config = Replay(**DipDupYAMLConfig.load([path])[1])
-    answers = get_default_answers()
-    answers.update(replay_config.replay)
-    return answers
+    yaml_config, _ = DipDupYAMLConfig.load([path])
+    yaml_config['replay'] = {
+        **get_default_answers(),
+        **yaml_config['replay'],
+    }
+    return ReplayConfig(**yaml_config).replay
 
 
 def render_project(
@@ -243,6 +243,7 @@ def render_project(
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
 
+    # NOTE: Replay to use with `init --base` and `new --replay`
     Path(answers['package']).joinpath('configs').mkdir(parents=True, exist_ok=True)
     _render(
         answers,
