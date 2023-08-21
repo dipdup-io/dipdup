@@ -67,9 +67,21 @@ NO_SIGNALS_CMDS = {
 _logger = logging.getLogger(__name__)
 
 
-def echo(message: str, err: bool = False) -> None:
+def echo(message: str, err: bool = False, **styles: Any) -> None:
     with suppress(BrokenPipeError):
-        click.echo(message, err=err)
+        click.secho(message, err=err, **styles)
+
+
+def big_yellow_echo(message: str) -> None:
+    echo(f'\n{message}\n', fg='yellow')
+
+
+def green_echo(message: str) -> None:
+    echo(message, fg='green')
+
+
+def red_echo(message: str) -> None:
+    echo(message, err=True, fg='red')
 
 
 def _print_help(error: Exception, report_id: str) -> None:
@@ -603,8 +615,8 @@ async def new(
     render_project(answers, force)
 
     package = answers['package']
-    click.secho('Project created successfully!', fg='green')
-    click.secho(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
+    echo('Project created successfully!', fg='green')
+    echo(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
 
 
 @cli.group()

@@ -107,6 +107,7 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
 
 def create_project_callback() -> Callable[[str], str]:
     answers = get_default_answers()
+
     def callback(data: str) -> str:
         for match in re.finditer(PROJECT_REGEX, data):
             key = match.group(1)

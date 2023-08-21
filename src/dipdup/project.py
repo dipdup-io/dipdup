@@ -7,12 +7,13 @@ import re
 from pathlib import Path
 from typing import TypedDict
 
-import asyncclick as cl
 import survey  # type: ignore[import]
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
 from dipdup import __version__
+from dipdup.cli import big_yellow_echo
+from dipdup.cli import echo
 from dipdup.env import get_package_path
 from dipdup.utils import load_template
 from dipdup.utils import write
@@ -109,12 +110,10 @@ def prompt_anyof(
 
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
-    welcome_text = (
-        '\n'
+    big_yellow_echo(
         'Welcome to DipDup! This command will help you to create a new project.\n'
-        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.\n'
+        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
     )
-    cl.secho(welcome_text, fg='yellow')
 
     group_index, _ = prompt_anyof(
         question='What blockchain are you going to index?',
@@ -162,7 +161,7 @@ def answers_from_terminal() -> Answers:
         if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
             break
 
-        cl.secho(
+        echo(
             f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
@@ -194,7 +193,7 @@ def answers_from_terminal() -> Answers:
         value=answers['email'],
     )
 
-    cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
+    big_yellow_echo('Now choose versions of software you want to use.')
 
     _, answers['postgresql_image'] = prompt_anyof(
         question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
@@ -211,10 +210,7 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    cl.secho(
-        '\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n',
-        fg='yellow',
-    )
+    big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 
     answers['line_length'] = survey.routines.input(
         'Enter maximum line length for linters: ',
