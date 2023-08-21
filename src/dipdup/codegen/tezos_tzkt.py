@@ -155,7 +155,7 @@ class TzktCodeGenerator(CodeGenerator):
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             # NOTE: Always single handler
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig)):
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 

@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -29,4 +27,4 @@ class BazaarMarketPlaceStorageItem(BaseModel):
 
 
 class BazaarMarketPlaceStorage(BaseModel):
-    __root__: List[BazaarMarketPlaceStorageItem]
+    __root__: list[BazaarMarketPlaceStorageItem]

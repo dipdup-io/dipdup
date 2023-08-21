@@ -1,10 +1,9 @@
+from collections.abc import Hashable
+from collections.abc import Iterable
 from contextlib import suppress
 from itertools import groupby
+from types import UnionType
 from typing import Any
-from typing import Hashable
-from typing import Iterable
-from typing import Optional
-from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -24,15 +23,15 @@ StorageType = TypeVar('StorageType', bound=BaseModel)
 
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
-T = TypeVar('T', Hashable, Type[BaseModel])
+T = TypeVar('T', Hashable, type[BaseModel])
 
 
-def extract_root_outer_type(storage_type: Type[BaseModel]) -> T:
+def extract_root_outer_type(storage_type: type[BaseModel]) -> T:
     """Extract Pydantic __root__ type"""
     root_field = storage_type.__fields__['__root__']
     if root_field.allow_none:
         # NOTE: Optional is a magic _SpecialForm
-        return cast(Type[BaseModel], Optional[root_field.type_])
+        return cast(type[BaseModel], root_field.type_ | None)
 
     return root_field.outer_type_  # type: ignore[no-any-return]
 
@@ -52,7 +51,7 @@ def is_array_type(storage_type: type[Any]) -> bool:
     return False
 
 
-def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
+def get_list_elt_type(list_type: type[Any]) -> type[Any]:
     """Extract list item type from list type"""
     # NOTE: regular list
     if get_origin(list_type) == list:
@@ -63,7 +62,7 @@ def get_list_elt_type(list_type: Type[Any]) -> Type[Any]:
     return get_list_elt_type(root_type)
 
 
-def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[Any]:
+def get_dict_value_type(dict_type: type[Any], key: str | None = None) -> type[Any]:
     """Extract dict value types from field type"""
     # NOTE: Regular dict
     if get_origin(dict_type) == dict:
@@ -83,7 +82,7 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
         if key in (field.name, field.alias):
             # NOTE: Pydantic does not preserve outer_type_ for Optional
             if field.allow_none:
-                return cast(Type[Any], Optional[field.type_])
+                return cast(type[Any], field.type_ | None)
             return field.outer_type_  # type: ignore[no-any-return]
 
     # NOTE: Either we try the wrong Union path or model was modifier by user
@@ -92,6 +91,8 @@ def get_dict_value_type(dict_type: Type[Any], key: str | None = None) -> Type[An
 
 def unwrap_union_type(union_type: type[Any]) -> tuple[bool, tuple[type[Any], ...]]:
     """Check if the type is either optional or union and return arg types if so"""
+    if isinstance(union_type, UnionType):
+        return True, union_type.__args__
     if get_origin(union_type) == Union:
         return True, get_args(union_type)
 
@@ -117,7 +118,7 @@ def _apply_bigmap_diffs(
     bigmap_id: int,
     bigmap_diffs: dict[int, Iterable[dict[str, Any]]],
     is_array: bool,
-) -> Union[list[dict[str, Any]], dict[str, Any]]:
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Apply bigmap diffs to the storage"""
     diffs = bigmap_diffs.get(bigmap_id, ())
     diffs_items = ((d['content']['key'], d['content']['value']) for d in diffs)
@@ -136,7 +137,7 @@ def _apply_bigmap_diffs(
 
 def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iterable[dict[str, Any]]]) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
-    storage_type = cast(Type[BaseModel], storage_type)  # type: ignore[redundant-cast]
+    storage_type = cast(type[BaseModel], storage_type)  # type: ignore[redundant-cast]
     # NOTE: First, check if the type is a Union. Remember, Optional is a Union too.
     is_union, arg_types = unwrap_union_type(storage_type)
     if is_union:

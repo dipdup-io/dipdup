@@ -13,8 +13,6 @@ from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -74,6 +72,8 @@ from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from collections.abc import Iterator
     from types import ModuleType
 
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -316,7 +316,7 @@ class DipDupContext:
         datasource: TzktDatasource | SubsquidDatasource
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
-        if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+        if isinstance(index_config, TzktOperationsIndexConfig | TzktOperationsUnfilteredIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktOperationsIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktBigMapsIndexConfig):
@@ -349,7 +349,7 @@ class DipDupContext:
 
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig))
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -680,7 +680,7 @@ class HookContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         hook_config: HookConfig,
-    ) -> 'HookContext':
+    ) -> HookContext:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -743,7 +743,7 @@ class HandlerContext(DipDupContext):
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: IndexDatasource[Any],
-    ) -> 'HandlerContext':
+    ) -> HandlerContext:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,

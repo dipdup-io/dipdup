@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import Tuple
 
 import orjson as json
 from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
@@ -26,7 +24,7 @@ from tests.types.yupana.storage import YupanaStorage
 from tests.types.zxcv.storage import ZxcvStorage
 
 
-def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> TzktOperationData:
+def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> TzktOperationData:
     return TzktOperationData(
         storage=storage,
         diffs=diffs,

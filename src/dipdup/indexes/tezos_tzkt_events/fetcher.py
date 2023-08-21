@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from typing import AsyncGenerator
 
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktEventData
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
     from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 

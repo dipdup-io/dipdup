@@ -1,7 +1,7 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from typing import Any
-from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 

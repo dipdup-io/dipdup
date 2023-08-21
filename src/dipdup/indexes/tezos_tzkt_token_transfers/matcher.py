@@ -1,6 +1,6 @@
 import logging
 from collections import deque
-from typing import Iterable
+from collections.abc import Iterable
 
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig
 from dipdup.models.tezos_tzkt import TzktTokenTransferData

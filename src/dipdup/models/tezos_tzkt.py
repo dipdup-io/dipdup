@@ -1,12 +1,11 @@
 from abc import abstractmethod
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any
 from typing import Generic
 from typing import Literal
-from typing import Optional
 from typing import TypeVar
 
 from pydantic import BaseModel
@@ -26,7 +25,7 @@ EventType = TypeVar('EventType', bound=BaseModel)
 
 
 def _parse_timestamp(timestamp: str) -> datetime:
-    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=UTC)
 
 
 class TzktTokenStandard(Enum):
@@ -153,30 +152,30 @@ class TzktOperationData(HasLevel):
     timestamp: datetime
     hash: str
     counter: int
-    sender_address: Optional[str]
-    target_address: Optional[str]
-    initiator_address: Optional[str]
-    amount: Optional[int]
+    sender_address: str | None
+    target_address: str | None
+    initiator_address: str | None
+    amount: int | None
     status: str
-    has_internals: Optional[bool]
+    has_internals: bool | None
     storage: Any
     diffs: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
-    block: Optional[str] = None
-    sender_alias: Optional[str] = None
-    nonce: Optional[int] = None
-    target_alias: Optional[str] = None
-    initiator_alias: Optional[str] = None
-    entrypoint: Optional[str] = None
-    parameter_json: Optional[Any] = None
-    originated_contract_address: Optional[str] = None
-    originated_contract_alias: Optional[str] = None
-    originated_contract_type_hash: Optional[int] = None
-    originated_contract_code_hash: Optional[int] = None
-    originated_contract_tzips: Optional[tuple[str, ...]] = None
-    delegate_address: Optional[str] = None
-    delegate_alias: Optional[str] = None
-    target_code_hash: Optional[int] = None
-    sender_code_hash: Optional[int] = None
+    block: str | None = None
+    sender_alias: str | None = None
+    nonce: int | None = None
+    target_alias: str | None = None
+    initiator_alias: str | None = None
+    entrypoint: str | None = None
+    parameter_json: Any | None = None
+    originated_contract_address: str | None = None
+    originated_contract_alias: str | None = None
+    originated_contract_type_hash: int | None = None
+    originated_contract_code_hash: int | None = None
+    originated_contract_tzips: tuple[str, ...] | None = None
+    delegate_address: str | None = None
+    delegate_alias: str | None = None
+    target_code_hash: int | None = None
+    sender_code_hash: int | None = None
 
     @classmethod
     def from_json(
@@ -316,8 +315,8 @@ class TzktBigMapData(HasLevel):
     path: str
     action: TzktBigMapAction
     active: bool
-    key: Optional[Any] = None
-    value: Optional[Any] = None
+    key: Any | None = None
+    value: Any | None = None
 
     @classmethod
     def from_json(
@@ -349,8 +348,8 @@ class TzktBigMapDiff(Generic[KeyType, ValueType]):
 
     action: TzktBigMapAction
     data: TzktBigMapData
-    key: Optional[KeyType]
-    value: Optional[ValueType]
+    key: KeyType | None
+    value: ValueType | None
 
 
 @dataclass(frozen=True)
@@ -366,9 +365,9 @@ class TzktBlockData(HasLevel):
     reward: int
     fees: int
     nonce_revealed: bool
-    priority: Optional[int] = None
-    baker_address: Optional[str] = None
-    baker_alias: Optional[str] = None
+    priority: int | None = None
+    baker_address: str | None = None
+    baker_alias: str | None = None
 
     @classmethod
     def from_json(
@@ -491,19 +490,19 @@ class TzktTokenTransferData(HasLevel):
     level: int
     timestamp: datetime
     tzkt_token_id: int
-    contract_address: Optional[str] = None
-    contract_alias: Optional[str] = None
-    token_id: Optional[int] = None
-    standard: Optional[TzktTokenStandard] = None
-    metadata: Optional[dict[str, Any]] = None
-    from_alias: Optional[str] = None
-    from_address: Optional[str] = None
-    to_alias: Optional[str] = None
-    to_address: Optional[str] = None
-    amount: Optional[int] = None
-    tzkt_transaction_id: Optional[int] = None
-    tzkt_origination_id: Optional[int] = None
-    tzkt_migration_id: Optional[int] = None
+    contract_address: str | None = None
+    contract_alias: str | None = None
+    token_id: int | None = None
+    standard: TzktTokenStandard | None = None
+    metadata: dict[str, Any] | None = None
+    from_alias: str | None = None
+    from_address: str | None = None
+    to_alias: str | None = None
+    to_address: str | None = None
+    amount: int | None = None
+    tzkt_transaction_id: int | None = None
+    tzkt_origination_id: int | None = None
+    tzkt_migration_id: int | None = None
 
     @classmethod
     def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenTransferData':
@@ -548,9 +547,9 @@ class TzktEventData(HasLevel):
     tag: str
     payload: Any | None
     contract_address: str
-    contract_alias: Optional[str] = None
-    contract_code_hash: Optional[int] = None
-    transaction_id: Optional[int] = None
+    contract_alias: str | None = None
+    contract_code_hash: int | None = None
+    transaction_id: int | None = None
 
     @classmethod
     def from_json(cls, event_json: dict[str, Any]) -> 'TzktEventData':

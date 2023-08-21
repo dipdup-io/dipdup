@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -23,8 +19,8 @@ class Value(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    sw: Optional[str]
-    mr: Optional[Dict[str, bool]]
+    sw: str | None
+    mr: dict[str, bool] | None
 
 
 class HjklStorageItem(BaseModel):
@@ -36,4 +32,4 @@ class HjklStorageItem(BaseModel):
 
 
 class HjklStorage(BaseModel):
-    __root__: List[HjklStorageItem]
+    __root__: list[HjklStorageItem]

@@ -28,7 +28,6 @@ from pydoc import locate
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -53,6 +52,7 @@ from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from dipdup.subscriptions import Subscription
@@ -200,7 +200,7 @@ class ResolvedHttpConfig:
         cls,
         default: HttpConfig,
         user: HttpConfig | None,
-    ) -> 'ResolvedHttpConfig':
+    ) -> ResolvedHttpConfig:
         config = cls()
         # NOTE: Apply datasource defaults first
         for merge_config in (default, user):

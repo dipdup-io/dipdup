@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -19,6 +18,7 @@ from dipdup.models.tezos_tzkt import TzktOperationType
 if TYPE_CHECKING:
     from collections import defaultdict
     from collections import deque
+    from collections.abc import AsyncIterator
 
     from dipdup.datasources.tezos_tzkt import TzktDatasource
 

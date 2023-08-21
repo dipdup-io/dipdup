@@ -1,8 +1,8 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
 
 from dipdup.codegen.tezos_tzkt import get_big_map_key_type
 from dipdup.codegen.tezos_tzkt import get_big_map_value_type

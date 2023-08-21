@@ -1,10 +1,10 @@
 import logging
 from collections import deque
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import cast
 
 import orjson

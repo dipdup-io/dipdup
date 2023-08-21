@@ -8,14 +8,14 @@ from asyncio import create_task
 from asyncio import gather
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from copy import copy
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 

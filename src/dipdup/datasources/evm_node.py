@@ -1,9 +1,9 @@
 import asyncio
 import time
 from collections import defaultdict
+from collections.abc import Awaitable
+from collections.abc import Callable
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from uuid import uuid4
 
 import pysignalr

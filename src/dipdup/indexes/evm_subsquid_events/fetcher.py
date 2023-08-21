@@ -1,4 +1,4 @@
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.fetcher import DataFetcher

@@ -2,9 +2,9 @@ import asyncio
 import zipfile
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
 from io import BytesIO
 from typing import Any
-from typing import AsyncIterator
 
 import pyarrow.ipc  # type: ignore[import]
 

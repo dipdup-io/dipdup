@@ -1,6 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
 
 from dipdup import env
 from dipdup.config import HttpConfig

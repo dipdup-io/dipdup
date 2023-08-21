@@ -3,10 +3,8 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel
 
 
 class SetDelegateParameter(BaseModel):
-    __root__: Optional[str]
+    __root__: str | None

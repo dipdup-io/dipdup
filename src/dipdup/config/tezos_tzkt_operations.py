@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import Literal
 from typing import cast
 
@@ -24,6 +23,8 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from dipdup.subscriptions import Subscription
 
 

@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Type
 
 if TYPE_CHECKING:
     from tortoise.models import Model
@@ -123,8 +120,8 @@ class InvalidModelsError(Error):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
-    model: Type['Model']
-    field: Optional[str] = None
+    model: type['Model']
+    field: str | None = None
 
     def _help(self) -> str:
         return f"""
@@ -143,17 +140,17 @@ class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
     reason: 'ReindexingReason'
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
         # FIXME: Indentation hell
         prefix = '\n' + ' ' * 14
         context = prefix.join(f'{k}: {v}' for k, v in self.context.items())
         if context:
-            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
+            context = f'{prefix}{context}\n'
 
-        return """
-            Reindexing required! Reason: {reason}.
+        return f"""
+            Reindexing required! Reason: {self.reason.value}.
               {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
@@ -161,10 +158,7 @@ class ReindexingRequiredError(Error):
               - Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
             See https://dipdup.io/docs/advanced/reindexing for more information.
-        """.format(
-            reason=self.reason.value,
-            context=context,
-        )
+        """
 
 
 @dataclass(repr=False)
@@ -189,7 +183,7 @@ class ProjectImportError(Error):
     """Can't import type or callback from the project package"""
 
     module: str
-    obj: Optional[str] = None
+    obj: str | None = None
 
     def _help(self) -> str:
         what = f'`{self.obj}` from ' if self.obj else ''
@@ -234,7 +228,7 @@ class InvalidDataError(Error):
     """Failed to validate datasource message against generated type class"""
 
     msg: str
-    type_: Type[Any]
+    type_: type[Any]
     data: Any
 
     def _help(self) -> str:
@@ -273,8 +267,8 @@ class CallbackTypeError(Error):
     name: str
 
     arg: str
-    type_: Type[Any]
-    expected_type: Type[Any]
+    type_: type[Any]
+    expected_type: type[Any]
 
     def _help(self) -> str:
         return f"""

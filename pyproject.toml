@@ -127,6 +127,7 @@ docs_build = "python scripts/docs.py --source docs --destination {args:../interf
 docs_serve = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch --serve"
 docs_watch = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch"
 docs_references = "python scripts/dump_references.py"
+fixme = "grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color"
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]
@@ -142,10 +143,9 @@ ignore = [
     "E402",  # module level import not at top of file
     "E501",  # line too long
     "TCH001", # breaks our runtime Pydantic magic
-    "UP007",
 ]
 target-version = "py311"
-extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH"]
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["dipdup"] }
 

@@ -3,6 +3,8 @@ import asyncio
 import atexit
 import logging
 import sys
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from copy import copy
@@ -11,8 +13,6 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import TypeVar
 from typing import cast
 
@@ -37,9 +37,9 @@ _click_wrap_text = click.formatting.wrap_text
 
 def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
     # NOTE: WELCOME_ASCII and EPILOG
-    if text.startswith(('    ')):
+    if text.startswith('    '):
         return text
-    if text.startswith(('\0\n')):
+    if text.startswith('\0\n'):
         return text[2:]
     return _click_wrap_text(text, *a, **kw)
 

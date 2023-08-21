@@ -1,8 +1,7 @@
 import asyncio
 from collections import deque
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
-from typing import Optional
 
 from tortoise.transactions import in_transaction
 
@@ -23,7 +22,7 @@ class TransactionManager:
     ) -> None:
         self._depth = depth
         self._immune_tables = immune_tables or set()
-        self._transaction: Optional[dipdup.models.VersionedTransaction] = None
+        self._transaction: dipdup.models.VersionedTransaction | None = None
         self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
 
     @asynccontextmanager
@@ -41,9 +40,9 @@ class TransactionManager:
     @asynccontextmanager
     async def in_transaction(
         self,
-        level: Optional[int] = None,
-        sync_level: Optional[int] = None,
-        index: Optional[str] = None,
+        level: int | None = None,
+        sync_level: int | None = None,
+        index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
         try:

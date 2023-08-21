@@ -4,14 +4,14 @@ import decimal
 import hashlib
 import importlib
 import logging
+from collections.abc import AsyncIterator
+from collections.abc import Iterable
+from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Iterable
-from typing import Iterator
 from typing import cast
 
 import asyncpg.exceptions  # type: ignore[import]
