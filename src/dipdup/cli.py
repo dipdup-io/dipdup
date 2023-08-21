@@ -145,6 +145,23 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
+def _skip_cli_group() -> bool:
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    is_help = '--help' in args
+    is_empty_group = args in (
+        ['config'],
+        ['hasura'],
+        ['schema'],
+    )
+    # NOTE: Simple helpers that don't use any of our cli boilerplate
+    is_script = args[0] in (
+        'self',
+        'report',
+    )
+    return not any((is_help, is_empty_group, is_script))
+
+
 @click.group(
     context_settings={'max_content_width': 120},
     help=WELCOME_ASCII,
@@ -172,9 +189,7 @@ async def _check_version() -> None:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
+    if _skip_cli_group():
         return
 
     # NOTE: https://github.com/python/cpython/issues/95778
