@@ -159,7 +159,10 @@ def _skip_cli_group() -> bool:
         'self',
         'report',
     )
-    return not any((is_help, is_empty_group, is_script))
+    if not (is_help or is_empty_group or is_script):
+        _logger.debug('Skipping cli group')
+        return False
+    return True
 
 
 @click.group(
