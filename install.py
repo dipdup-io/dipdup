@@ -13,10 +13,7 @@ import sys
 from pathlib import Path
 from shutil import which
 from typing import Any
-from typing import Dict
 from typing import NoReturn
-from typing import Optional
-from typing import Set
 from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
@@ -79,8 +76,8 @@ class DipDupEnvironment:
     def __init__(self) -> None:
         self._os = os.uname().sysname
         self._arch = os.uname().machine
-        self._commands: Dict[str, Optional[str]] = {}
-        self._pipx_packages: Set[str] = set()
+        self._commands: dict[str, str | None] = {}
+        self._pipx_packages: set[str] = set()
 
     def refresh(self) -> None:
         for command in WHICH_CMDS:
@@ -125,7 +122,7 @@ class DipDupEnvironment:
         """Run command safely (relatively lol)"""
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')
-        args = (found_cmd,) + tuple(a for a in args if a)
+        args = (found_cmd, *tuple(a for a in args if a))
         try:
             return subprocess.run(
                 args,
@@ -183,7 +180,11 @@ def install(
     python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
-            subprocess.run(['pyenv', 'which', 'python3.11'], capture_output=True, text=True)
+            subprocess.run(
+                ['pyenv', 'which', 'python3.11'],
+                capture_output=True,
+                text=True,
+            )
             .stdout.strip()
             .split('\n')[0]
         )
