@@ -601,6 +601,9 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
+    import os
+
+    from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import get_default_answers
@@ -612,11 +615,23 @@ async def new(
         answers = answers_from_replay(replay)
     else:
         answers = answers_from_terminal()
+
+    _logger.info('Rendering project')
     render_project(answers, force)
 
-    package = answers['package']
-    echo('Project created successfully!', fg='green')
-    echo(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
+    _logger.info('Initializing project')
+    config = DipDupConfig.load([Path(answers['package'])])
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
+        config=config,
+    )
+    # NOTE: datamodel-codegen fails otherwise
+    os.chdir(answers['package'])
+    await ctx.invoke(init, base=True, force=force)
+
+    green_echo('Project created successfully!')
+    green_echo(f'Enter `{package.name}` directory and see README.md for the next steps.')
 
 
 @cli.group()
