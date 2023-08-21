@@ -1,6 +1,6 @@
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from typing import Any
 from typing import cast
 
@@ -47,8 +47,8 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
                 'get',
                 url=f'products/{ticker}/candles',
                 params={
-                    'start': _since.replace(tzinfo=timezone.utc).isoformat(),
-                    'end': _until.replace(tzinfo=timezone.utc).isoformat(),
+                    'start': _since.replace(tzinfo=UTC).isoformat(),
+                    'end': _until.replace(tzinfo=UTC).isoformat(),
                     'granularity': interval.seconds,
                 },
             )

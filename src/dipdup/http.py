@@ -4,6 +4,7 @@ import logging
 import platform
 import sys
 import time
+from collections.abc import Mapping
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
@@ -11,8 +12,6 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 from typing import Literal
-from typing import Mapping
-from typing import Optional
 from typing import cast
 from typing import overload
 from urllib.parse import urlsplit
@@ -88,13 +87,13 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self._path = parsed_url.path
         self._config = config
         self._user_agent_args: tuple[str, ...] = ()
-        self._user_agent: Optional[str] = None
+        self._user_agent: str | None = None
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)
             if config.ratelimit_rate and config.ratelimit_period
             else None
         )
-        self.__session: Optional[aiohttp.ClientSession] = None
+        self.__session: aiohttp.ClientSession | None = None
 
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
@@ -300,8 +299,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Performs an HTTP request."""
         if self._config.replay_path:
             return await self._replay_request(method, url, weight, **kwargs)
-        else:
-            return await self._retry_request(method, url, weight, **kwargs)
+        return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

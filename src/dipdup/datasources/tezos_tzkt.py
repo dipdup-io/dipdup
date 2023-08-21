@@ -3,17 +3,17 @@ import logging
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Sequence
 from dataclasses import fields
 from enum import Enum
 from functools import partial
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
-from typing import Generator
 from typing import NamedTuple
 from typing import NoReturn
-from typing import Sequence
 from typing import cast
 
 import pysignalr.exceptions
@@ -974,7 +974,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         # NOTE: select.values supported for methods with multiple objects in response only
         response: list[list[str]] = await self.request(*args, **kwargs)
-        return tuple([dict(zip(fields, values)) for values in response])
+        return tuple([dict(zip(fields, values, strict=True)) for values in response])
 
     def _get_request_params(
         self,

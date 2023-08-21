@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -12,7 +12,11 @@ from dipdup.config import HandlerConfig
 from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.subscriptions import Subscription
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

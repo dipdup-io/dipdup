@@ -18,7 +18,7 @@ import re
 from copy import copy
 from io import StringIO
 from os import environ as env
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -26,6 +26,9 @@ from ruamel.yaml import YAML
 from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import json_dumps
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
@@ -35,7 +38,7 @@ _logger = logging.getLogger(__name__)
 
 
 def exclude_none(config_json: Any) -> Any:
-    if isinstance(config_json, (list, tuple)):
+    if isinstance(config_json, list | tuple):
         return [exclude_none(i) for i in config_json if i is not None]
     if isinstance(config_json, dict):
         return {k: exclude_none(v) for k, v in config_json.items() if v is not None}

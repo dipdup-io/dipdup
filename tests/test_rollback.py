@@ -1,11 +1,10 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from typing import List
-
-from tortoise.expressions import F
 
 import demo_domains.models as domains_models
 import demo_nft_marketplace.models as hen_models
+from tortoise.expressions import F
+
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.dipdup import DipDup
@@ -205,7 +204,7 @@ async def test_bulk_create_update() -> None:
         dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
         in_transaction = dipdup._transactions.in_transaction
 
-        tlds: List[domains_models.TLD] = []
+        tlds: list[domains_models.TLD] = []
         for i in range(3):
             tld = domains_models.TLD(
                 id=str(i),
@@ -216,7 +215,7 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.TLD.bulk_create(tlds)
 
-        domains: List[domains_models.Domain] = []
+        domains: list[domains_models.Domain] = []
         for tld in tlds:
             domain = domains_models.Domain(
                 id=tld.id,
@@ -231,7 +230,7 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.Domain.bulk_create(domains)
 
-        for tld, domain in zip(tlds, domains):
+        for tld, domain in zip(tlds, domains, strict=True):
             tld.owner = tld.id
             domain.token_id = int(domain.id)
 
@@ -288,7 +287,7 @@ async def test_update_prefetch() -> None:
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
-        tlds: List[domains_models.TLD] = []
+        tlds: list[domains_models.TLD] = []
         for i in range(3):
             tld = domains_models.TLD(
                 id=str(i),

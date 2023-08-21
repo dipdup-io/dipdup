@@ -1,15 +1,15 @@
 import os
 import subprocess
 import tempfile
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
 from shutil import which
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
 
 import pytest
 
@@ -62,8 +62,7 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
             check=True,
             shell=True,
             env=env,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+            capture_output=True,
         )
 
         yield Path(tmp_root_path)
@@ -136,9 +135,8 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    from tortoise.transactions import in_transaction
-
     import demo_dex.models
+    from tortoise.transactions import in_transaction
 
     trades = await demo_dex.models.Trade.filter().count()
     positions = await demo_dex.models.Position.filter().count()

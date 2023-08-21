@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Union
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -39,7 +35,7 @@ class Value(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    allowances: List[str]
+    allowances: list[str]
     borrow: str
     lastBorrowIndex: str
 
@@ -78,7 +74,7 @@ class Tokens(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    mainToken: Union[MainTokenItem, MainTokenItem1]
+    mainToken: MainTokenItem | MainTokenItem1
     interestRateModel: str
     interestUpdateTime: str
     priceUpdateTime: str
@@ -101,7 +97,7 @@ class TokenMetadata(BaseModel):
         extra = Extra.forbid
 
     token_id: str
-    tokens: Dict[str, str]
+    tokens: dict[str, str]
 
 
 class KeyItem(BaseModel):
@@ -130,7 +126,7 @@ class Asset(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    key: Union[KeyItem, KeyItem1]
+    key: KeyItem | KeyItem1
     value: str
 
 
@@ -139,19 +135,19 @@ class Storage(BaseModel):
         extra = Extra.forbid
 
     admin: str
-    ledger: List[LedgerItem]
-    accounts: List[Account]
-    tokens: Dict[str, Tokens]
-    metadata: Dict[str, str]
-    tokenMetadata: Dict[str, TokenMetadata]
+    ledger: list[LedgerItem]
+    accounts: list[Account]
+    tokens: dict[str, Tokens]
+    metadata: dict[str, str]
+    tokenMetadata: dict[str, TokenMetadata]
     lastTokenId: str
     priceFeedProxy: str
     closeFactorF: str
     liqIncentiveF: str
-    markets: Dict[str, List[str]]
-    borrows: Dict[str, List[str]]
+    markets: dict[str, list[str]]
+    borrows: dict[str, list[str]]
     maxMarkets: str
-    assets: List[Asset]
+    assets: list[Asset]
 
 
 class YupanaStorage(BaseModel):
@@ -159,5 +155,5 @@ class YupanaStorage(BaseModel):
         extra = Extra.forbid
 
     storage: Storage
-    tokenLambdas: Dict[str, str]
-    useLambdas: Dict[str, str]
+    tokenLambdas: dict[str, str]
+    useLambdas: dict[str, str]

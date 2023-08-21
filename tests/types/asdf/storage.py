@@ -3,9 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -27,4 +24,4 @@ class AsdfStorageItem(BaseModel):
 
 
 class AsdfStorage(BaseModel):
-    __root__: List[Dict[str, List[AsdfStorageItem]]]
+    __root__: list[dict[str, list[AsdfStorageItem]]]

@@ -174,7 +174,7 @@ class SubsquidCodeGenerator(CodeGenerator):
             abi_path.write_bytes(json_dumps(abi_json))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
-        module_name = schema_path.stem
+        return schema_path.stem
         # FIXME: Do we need prefixes or postfixes there?
         # if schema_path.parent.name == 'evm_events':
         #     class_name = f'{module_name}_event'
@@ -182,7 +182,6 @@ class SubsquidCodeGenerator(CodeGenerator):
         #     class_name = f'{module_name}_function'
         # else:
         #     class_name = module_name
-        return module_name
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         if 'evm_events' not in schema_path.parts:

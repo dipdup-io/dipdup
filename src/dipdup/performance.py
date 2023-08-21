@@ -12,6 +12,10 @@ import logging
 import time
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
+from collections.abc import Callable
+from collections.abc import Coroutine
+from collections.abc import Sized
 from contextlib import asynccontextmanager
 from enum import Enum
 from functools import _CacheInfo
@@ -20,19 +24,16 @@ from itertools import chain
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Callable
-from typing import Coroutine
-from typing import Sized
 from typing import cast
 
 from async_lru import alru_cache
 from lru import LRU  # type: ignore[import]
-from tortoise.models import Model
 
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
+    from tortoise.models import Model
+
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)

@@ -1,10 +1,10 @@
 import logging
 from collections import defaultdict
 from collections import deque
+from collections.abc import Iterable
+from collections.abc import Iterator
+from collections.abc import Sequence
 from contextlib import ExitStack
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig

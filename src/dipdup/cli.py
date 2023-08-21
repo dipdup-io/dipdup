@@ -3,6 +3,8 @@ import asyncio
 import atexit
 import logging
 import sys
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from copy import copy
@@ -11,8 +13,6 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import TypeVar
 from typing import cast
 
@@ -28,14 +28,18 @@ from dipdup.report import cleanup_reports
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
 
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
+
+
 _click_wrap_text = click.formatting.wrap_text
 
 
 def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
     # NOTE: WELCOME_ASCII and EPILOG
-    if text.startswith(('    ')):
+    if text.startswith('    '):
         return text
-    if text.startswith(('\0\n')):
+    if text.startswith('\0\n'):
         return text[2:]
     return _click_wrap_text(text, *a, **kw)
 
@@ -60,8 +64,6 @@ NO_SIGNALS_CMDS = {
     'wipe',
 }
 
-if TYPE_CHECKING:
-    from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger(__name__)
 
@@ -218,7 +220,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        asyncio.ensure_future(_check_version())
+        _ = asyncio.ensure_future(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
@@ -242,7 +244,6 @@ async def run(ctx: click.Context) -> None:
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -388,7 +389,6 @@ async def schema(ctx: click.Context) -> None:
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
 
-    from dipdup.config import DipDupConfig
     from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
     from dipdup.models import Schema

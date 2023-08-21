@@ -3,12 +3,12 @@ import atexit
 import os
 from contextlib import AsyncExitStack
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import orjson as json
 import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
-from aiohttp.test_utils import TestClient
 from docker.client import DockerClient  # type: ignore[import]
 from tortoise import Tortoise
 
@@ -22,6 +22,9 @@ from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.project import DEFAULT_ANSWERS
+
+if TYPE_CHECKING:
+    from aiohttp.test_utils import TestClient
 
 
 def get_docker_client() -> DockerClient:

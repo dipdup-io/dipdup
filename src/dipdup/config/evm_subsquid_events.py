@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Iterator
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -13,9 +13,13 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

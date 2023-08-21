@@ -2,12 +2,12 @@ import logging
 import subprocess
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Awaitable
+from collections.abc import Callable
 from pathlib import Path
 from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 
 from pydantic import BaseModel
 

@@ -1,11 +1,10 @@
 import hashlib
 import logging
 import re
+from collections.abc import Iterable
+from collections.abc import Iterator
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import TextIO
-from typing import Union
 from typing import cast
 
 import orjson
@@ -59,10 +58,8 @@ vulnerable_versions = {
     'v1.3.0': 'v1.3.4',
 }
 
-RelationalFieldT = Union[
-    fields.relational.ForeignKeyFieldInstance,
-    fields.relational.ManyToManyFieldInstance,
-]
+RelationalFieldT = fields.relational.ForeignKeyFieldInstance | fields.relational.ManyToManyFieldInstance
+
 _get_fields_query = """
 query introspectionQuery($name: String!) {
   __type(name: $name) {
@@ -254,7 +251,7 @@ class HasuraGateway(HTTPGateway):
         self._logger.info('Connected to Hasura %s', version)
 
     async def _create_source(self) -> dict[str, Any]:
-        self._logger.info(f'Adding source `{self._hasura_config.source}`')
+        self._logger.info('Adding source `%s`', self._hasura_config.source)
         return await self._hasura_request(
             endpoint='metadata',
             json={
@@ -606,8 +603,7 @@ class HasuraGateway(HTTPGateway):
     def _format_custom_column_names(self, fields: list[Field]) -> dict[str, Any]:
         if self._hasura_config.camel_case:
             return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
-        else:
-            return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
+        return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
 
     def _format_table(self, name: str) -> dict[str, Any]:
         return {
@@ -670,5 +666,4 @@ class HasuraGateway(HTTPGateway):
 
     def _iterate_metadata_requests(self) -> Iterator[TextIO]:
         metadata_path = env.get_package_path(self._package) / 'hasura'
-        for file in iter_files(metadata_path, '.json'):
-            yield file
+        yield from iter_files(metadata_path, '.json')

@@ -33,7 +33,7 @@ def save_report(package: str, error: Exception | None) -> str:
         # NOTE: Merge pieces of code into a single list
         for exception in event['exception']['values']:
             for frame in exception['stacktrace']['frames']:
-                frame['code'] = frame.pop('pre_context') + [frame.pop('context_line')] + frame.pop('post_context')
+                frame['code'] = [*frame.pop('pre_context'), frame.pop('context_line'), *frame.pop('post_context')]
 
     # NOTE: Performance stats if any
     if metrics:

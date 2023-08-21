@@ -1,8 +1,8 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from itertools import cycle
 from typing import Any
-from typing import Iterable
 
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
