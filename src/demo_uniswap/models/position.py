@@ -6,6 +6,7 @@ from demo_uniswap.models.abi import get_abi
 from dipdup.context import HandlerContext
 
 
+
 async def position_validate(
     ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position,
 ) -> None:

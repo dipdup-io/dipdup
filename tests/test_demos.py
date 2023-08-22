@@ -160,11 +160,9 @@ async def assert_run_domains() -> None:
 async def assert_run_factories() -> None:
     import demo_factories.models
 
-    proposals = await demo_factories.models.DAO.filter().count()
-    votes = await demo_factories.models.Proposal.filter().count()
+    transfers = await demo_factories.models.Transfer.filter().count()
 
-    assert proposals == 19
-    assert votes == 86
+    assert transfers == 19
 
 
 async def assert_run_raw() -> None:

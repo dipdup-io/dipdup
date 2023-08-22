@@ -4,7 +4,7 @@ package: {{ project.package }}
 contracts:
   registry:
     kind: tezos
-    address: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
+    address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
     typename: registry
 
 datasources:
@@ -12,20 +12,31 @@ datasources:
     kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
-indexes:
+templates:
   registry_dao:
     kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - transaction
-      - origination
+    contracts:
+      - <contract>
     handlers:
-      - callback: on_origination
-        pattern:
-          - type: origination
-            originated_contract: registry
-      - callback: on_propose
+      - callback: on_transfer
         pattern:
           - type: transaction
-            destination: registry
-            entrypoint: propose
+            destination: <contract>
+            entrypoint: transfer
+
+indexes:
+  factory:
+    kind: tezos.tzkt.operations
+    datasource: tzkt
+    contracts:
+      - registry
+    types:
+      - origination
+    handlers:
+      - callback: on_factory_origination
+        pattern:
+          - type: origination
+            source: registry
