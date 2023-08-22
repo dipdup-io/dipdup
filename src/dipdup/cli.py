@@ -464,14 +464,17 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     models = f'{config.package}.models'
 
     # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-    immune_tables = set() if immune else config.database.immune_tables | {'dipdup_meta'}
+    immune_tables = set() if immune else config.database.immune_tables
 
-    if isinstance(config.database, SqliteDatabaseConfig) and immune_tables:
+    if isinstance(config.database, SqliteDatabaseConfig):
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
+            immune_tables.add('dipdup_meta')
             _logger.warning(message)
-        else:
+        elif immune_tables:
             raise ConfigurationError(message)
+    else:
+        immune_tables.add('dipdup_meta')
 
     if not force:
         try:

@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed `config export --full` command showing original config.
 - cli: Keep the last 100 reports only.
+- cli: Fixed `schema wipe` command crash due to `dipdup_meta` table being always immune.
 - config: Don't create empty SentryConfig if DSN is not set.
 - context: Share internal state between context instances.
 - jobs: Don't add jobs before scheduler is started.
