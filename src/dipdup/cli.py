@@ -7,7 +7,6 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -68,9 +67,21 @@ NO_SIGNALS_CMDS = {
 _logger = logging.getLogger(__name__)
 
 
-def echo(message: str, err: bool = False) -> None:
+def echo(message: str, err: bool = False, **styles: Any) -> None:
     with suppress(BrokenPipeError):
-        click.echo(message, err=err)
+        click.secho(message, err=err, **styles)
+
+
+def big_yellow_echo(message: str) -> None:
+    echo(f'\n{message}\n', fg='yellow')
+
+
+def green_echo(message: str) -> None:
+    echo(message, fg='green')
+
+
+def red_echo(message: str) -> None:
+    echo(message, err=True, fg='red')
 
 
 def _print_help(error: Exception, report_id: str) -> None:
@@ -145,6 +156,26 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
+def _skip_cli_group() -> bool:
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    is_help = '--help' in args
+    is_empty_group = args in (
+        ['config'],
+        ['hasura'],
+        ['schema'],
+    )
+    # NOTE: Simple helpers that don't use any of our cli boilerplate
+    is_script = args[0] in (
+        'self',
+        'report',
+    )
+    if not (is_help or is_empty_group or is_script):
+        _logger.debug('Skipping cli group')
+        return False
+    return True
+
+
 @click.group(
     context_settings={'max_content_width': 120},
     help=WELCOME_ASCII,
@@ -172,9 +203,7 @@ async def _check_version() -> None:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
+    if _skip_cli_group():
         return
 
     # NOTE: https://github.com/python/cpython/issues/95778
@@ -572,22 +601,37 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import DEFAULT_ANSWERS
+    import os
+
+    from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
+    from dipdup.project import get_default_answers
     from dipdup.project import render_project
 
     if quiet:
-        answers = copy(DEFAULT_ANSWERS)
+        answers = get_default_answers()
     elif replay:
         answers = answers_from_replay(replay)
     else:
         answers = answers_from_terminal()
+
+    _logger.info('Rendering project')
     render_project(answers, force)
 
-    package = answers['package']
-    click.secho('Project created successfully!', fg='green')
-    click.secho(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
+    _logger.info('Initializing project')
+    config = DipDupConfig.load([Path(answers['package'])])
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
+        config=config,
+    )
+    # NOTE: datamodel-codegen fails otherwise
+    os.chdir(answers['package'])
+    await ctx.invoke(init, base=True, force=force)
+
+    green_echo('Project created successfully!')
+    green_echo(f'Enter `{package.name}` directory and see README.md for the next steps.')
 
 
 @cli.group()

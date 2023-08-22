@@ -4,16 +4,16 @@ Ask user some question with Click; render Jinja2 templates with answers.
 """
 import logging
 import re
-from copy import copy
 from pathlib import Path
 from typing import TypedDict
 
-import asyncclick as cl
 import survey  # type: ignore[import]
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
 from dipdup import __version__
+from dipdup.cli import big_yellow_echo
+from dipdup.cli import echo
 from dipdup.env import get_package_path
 from dipdup.utils import load_template
 from dipdup.utils import write
@@ -51,7 +51,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
 
 
 class Answers(TypedDict):
-    """Survey answers"""
+    """Answers for survey/replay in order of appearance"""
 
     dipdup_version: str
     template: str
@@ -66,26 +66,27 @@ class Answers(TypedDict):
     line_length: str
 
 
+def get_default_answers() -> Answers:
+    return Answers(
+        dipdup_version=__version__.split('.')[0],
+        template='demo_blank',
+        package='dipdup_indexer',
+        version='0.0.1',
+        description='A blockchain indexer built with DipDup',
+        license='MIT',
+        name='John Doe',
+        email='john_doe@example.com',
+        postgresql_image='postgres:15',
+        # TODO: fetch latest from GH
+        hasura_image='hasura/graphql-engine:v2.30.1',
+        line_length='120',
+    )
+
+
 @dataclass
-class Replay:
+class ReplayConfig:
     spec_version: str | float
     replay: Answers
-
-
-DEFAULT_ANSWERS = Answers(
-    dipdup_version=__version__.split('.')[0],
-    template='demo_blank',
-    package='dipdup_indexer',
-    version='0.0.1',
-    description='A blockchain indexer built with DipDup',
-    license='MIT',
-    name='John Doe',
-    email='john_doe@example.com',
-    postgresql_image='postgres:15',
-    # TODO: fetch latest from GH
-    hasura_image='hasura/graphql-engine:v2.30.1',
-    line_length='120',
-)
 
 
 def prompt_anyof(
@@ -109,12 +110,10 @@ def prompt_anyof(
 
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
-    welcome_text = (
-        '\n'
+    big_yellow_echo(
         'Welcome to DipDup! This command will help you to create a new project.\n'
-        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.\n'
+        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
     )
-    cl.secho(welcome_text, fg='yellow')
 
     group_index, _ = prompt_anyof(
         question='What blockchain are you going to index?',
@@ -151,7 +150,7 @@ def answers_from_terminal() -> Answers:
         comments=tuple(comments),
         default=0,
     )
-    answers = copy(DEFAULT_ANSWERS)
+    answers = get_default_answers()
     answers['template'] = template
 
     while True:
@@ -162,7 +161,7 @@ def answers_from_terminal() -> Answers:
         if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
             break
 
-        cl.secho(
+        echo(
             f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
             fg='red',
         )
@@ -194,7 +193,7 @@ def answers_from_terminal() -> Answers:
         value=answers['email'],
     )
 
-    cl.secho('\n' + 'Now choose versions of software you want to use.' + '\n', fg='yellow')
+    big_yellow_echo('Now choose versions of software you want to use.')
 
     _, answers['postgresql_image'] = prompt_anyof(
         question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
@@ -211,10 +210,7 @@ def answers_from_terminal() -> Answers:
         default=0,
     )
 
-    cl.secho(
-        '\n' + 'Miscellaneous tunables; leave default values if unsure' + '\n',
-        fg='yellow',
-    )
+    big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 
     answers['line_length'] = survey.routines.input(
         'Enter maximum line length for linters: ',
@@ -224,10 +220,12 @@ def answers_from_terminal() -> Answers:
 
 
 def answers_from_replay(path: Path) -> Answers:
-    replay_config, _ = DipDupYAMLConfig.load([path])
-    answers = copy(DEFAULT_ANSWERS)
-    answers.update(replay_config['replay'])
-    return answers
+    yaml_config, _ = DipDupYAMLConfig.load([path])
+    yaml_config['replay'] = {
+        **get_default_answers(),
+        **yaml_config['replay'],
+    }
+    return ReplayConfig(**yaml_config).replay
 
 
 def render_project(
@@ -241,6 +239,7 @@ def render_project(
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
 
+    # NOTE: Replay to use with `init --base` and `new --replay`
     Path(answers['package']).joinpath('configs').mkdir(parents=True, exist_ok=True)
     _render(
         answers,
