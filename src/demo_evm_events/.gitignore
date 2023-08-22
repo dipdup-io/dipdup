@@ -6,6 +6,7 @@
 !demo_evm_events
 !.gitignore
 !.dockerignore
+!py.typed
 !**/Dockerfile
 !**/Makefile
 !**/pyproject.toml
