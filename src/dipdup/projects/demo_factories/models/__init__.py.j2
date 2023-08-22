@@ -4,16 +4,26 @@ from dipdup import fields
 from dipdup.models import Model
 
 
-class Transfer(Model):
-    id = fields.IntField(pk=True)
-    from_ = fields.TextField()
-    
+class DAO(Model):
+    address = fields.TextField(pk=True)
 
-class Tx(Model):
+
+class User(Model):
+    address = fields.TextField(pk=True)
+    balance = fields.IntField()
+
+
+class Proposal(Model):
     id = fields.IntField(pk=True)
-    to_ = fields.TextField()
-    amount = fields.TextField()
-    from_: fields.ForeignKeyField['Transfer'] = fields.ForeignKeyField(
-        'models.Transfer', related_name='to_'
-    )
-    from_id: int
+    dao: fields.ForeignKeyField[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
+    # upvotes = fields.IntField(default=0)
+    # downvotes = fields.IntField(default=0)
+    # start_date = fields.DatetimeField()
+    # metadata = fields.JSONField()
+    # proposer = fields.ForeignKeyField('models.Address', 'proposals')
+
+
+class Vote(Model):
+    id = fields.IntField(pk=True)
+    proposal: fields.ForeignKeyField[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
+    amount = fields.IntField()

@@ -26,7 +26,6 @@ async def on_transfer(
         balance_update=amount,
         level=event.data.level,
     )
-    
 
 async def on_balance_update(
     address: str,
