@@ -374,17 +374,11 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         config_json = orjson.dumps(self, default=pydantic_encoder)
         config_dict = orjson.loads(config_json)
 
-        self.strip(config_dict)
-
-        config_json = orjson.dumps(config_dict)
-        return hashlib.sha256(config_json).hexdigest()
-
-    @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        """Strip config from tunables that are not needed for hash calculation."""
         config_dict['datasource'].pop('http', None)
         config_dict['datasource'].pop('buffer_size', None)
 
+        config_json = orjson.dumps(config_dict)
+        return hashlib.sha256(config_json).hexdigest()
 
 @dataclass
 class HasuraConfig:
