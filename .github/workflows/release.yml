@@ -46,7 +46,7 @@ jobs:
         with:
           images: |
             dipdup/dipdup
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}/dipdup
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
