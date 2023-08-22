@@ -30,3 +30,5 @@
 # Docs
 !docs/**
 docs/_build
+
+dipdup_indexer
