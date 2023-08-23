@@ -634,7 +634,7 @@ async def new(
     await ctx.invoke(init, base=True, force=force)
 
     green_echo('Project created successfully!')
-    green_echo(f'Enter `{package.name}` directory and see README.md for the next steps.')
+    green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
 
 
 @cli.group()

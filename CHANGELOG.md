@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.0.0rc4] - 2023-08-23
 
 ### Added
 
@@ -17,9 +17,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed `schema wipe` command crash due to `dipdup_meta` table being always immune.
 - config: Don't create empty SentryConfig if DSN is not set.
 - context: Share internal state between context instances.
+- evm.node: Fixed keepalive loop for websocket connection.
+- evm.node: Fixed parsing empty realtime message payloads.
 - jobs: Don't add jobs before scheduler is started.
-- node: Fixed keepalive loop for websocket connection.
-- node: Fixed parsing empty realtime message payloads.
 - package: Fixed package detection for poetry managed projects.
 - package: Fixed mypy command in default template.
 - package: Create package symlink only when needed.
@@ -1141,7 +1141,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...HEAD
+[7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
 [7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
 [6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
 [7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2
