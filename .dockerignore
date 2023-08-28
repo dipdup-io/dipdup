@@ -1,15 +1,19 @@
 # Ignore all
 *
 
-# Add metadata and build files
+# Add build files
+!Makefile
 !pyproject.toml
-!pdm.lock
+!poetry.lock
 !README.md
 !requirements**
 
-# Add Python package
+# Add code
 !src/dipdup/
 
 # Ignore caches
-**/.*_cache
+**/.mypy_cache
 **/__pycache__
+
+# TEMP: Add Uniswap package and configs
+!src/demo_uniswap/
