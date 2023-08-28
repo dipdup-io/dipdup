@@ -1,15 +1,6 @@
 spec_version: 2.0
 package: demo_uniswap
 
-<<<<<<<< HEAD:demos/demo-uniswap/dipdup.yml
-========
-database:
-  kind: sqlite
-  path: /tmp/demo_uniswap.sqlite
-  immune_tables:
-    - token
-
->>>>>>>> next:src/demo_uniswap/dipdup.yaml
 datasources:
   ethscan:
     kind: abi.etherscan
@@ -90,8 +81,4 @@ indexes:
       first_level: 12369521
 
 advanced:
-<<<<<<<< HEAD:demos/demo-uniswap/dipdup.yml
   decimal_precision: 128
-========
-  decimal_precision: 128
->>>>>>>> next:src/demo_uniswap/dipdup.yaml

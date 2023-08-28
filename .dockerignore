@@ -13,7 +13,3 @@
 # Ignore caches
 **/.*_cache
 **/__pycache__
-
-# TEMP: Add Uniswap package and configs
-!src/demo_uniswap/
-!demos/demo-uniswap/

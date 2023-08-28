@@ -18,7 +18,7 @@ WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
     with suppress(Exception):
         await models.Token.cached_get(address)
-        return
+        return None
 
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     erc20_iface = ERC20Token.from_address(web3, address)
