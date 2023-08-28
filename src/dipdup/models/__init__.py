@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from collections import deque
 from contextlib import suppress
 from copy import copy
 from datetime import date
@@ -9,17 +8,15 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
 from typing import TypeVar
 from typing import cast
 
 import tortoise
 import tortoise.queryset
 from pydantic.dataclasses import dataclass
-from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.exceptions import OperationalError
-from tortoise.expressions import Q
 from tortoise.fields import relational
 from tortoise.models import MODEL
 from tortoise.models import Model as TortoiseModel
@@ -34,7 +31,14 @@ from dipdup.exceptions import FrameworkException
 from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
 
-_logger = logging.getLogger('dipdup.models')
+if TYPE_CHECKING:
+    from collections import deque
+    from collections.abc import Iterable
+
+    from tortoise.backends.base.client import BaseDBAsyncClient
+    from tortoise.expressions import Q
+
+_logger = logging.getLogger(__name__)
 
 
 # NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
@@ -140,7 +144,7 @@ class ModelUpdate(TortoiseModel):
         table = 'dipdup_model_update'
 
     @classmethod
-    def from_model(cls, model: 'Model', action: ModelUpdateAction) -> 'ModelUpdate' | None:
+    def from_model(cls, model: Model, action: ModelUpdateAction) -> ModelUpdate | None:
         """Create model update from model instance if necessary"""
         if not (transaction := get_transaction()):
             return None
@@ -167,11 +171,10 @@ class ModelUpdate(TortoiseModel):
             data=data,
         )
         _logger.debug(
-            'Saving %s(%s) %s: %s',
+            'ModelUpdate saved: %s(%s) %s',
             self.model_name,
             self.model_pk,
             self.action.value,
-            data,
         )
         return self
 
@@ -342,10 +345,10 @@ class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
 
 
 # NOTE: Don't register cache; plain dict is faster
-_versioned_fields: dict[type['Model'], frozenset[str]] = {}
+_versioned_fields: dict[type[Model], frozenset[str]] = {}
 
 
-def get_versioned_fields(model: type['Model']) -> frozenset[str]:
+def get_versioned_fields(model: type[Model]) -> frozenset[str]:
     if model in _versioned_fields:
         return _versioned_fields[model]
 
@@ -357,7 +360,7 @@ def get_versioned_fields(model: type['Model']) -> frozenset[str]:
             continue
         if field_.pk:
             continue
-        elif isinstance(field_, relational.ForeignKeyFieldInstance):
+        if isinstance(field_, relational.ForeignKeyFieldInstance):
             field_names.add(f'{key}_id')
         else:
             field_names.add(key)
@@ -374,7 +377,7 @@ class Model(TortoiseModel):
         self._original_versioned_data = self.versioned_data
 
     @classmethod
-    def _init_from_db(cls, **kwargs: Any) -> 'Model':
+    def _init_from_db(cls, **kwargs: Any) -> Model:
         model = super()._init_from_db(**kwargs)
         model._original_versioned_data = model.versioned_data
         return model
@@ -432,10 +435,10 @@ class Model(TortoiseModel):
 
     @classmethod
     async def create(
-        cls: type['ModelT'],
+        cls: type[ModelT],
         using_db: BaseDBAsyncClient | None = None,
         **kwargs: Any,
-    ) -> 'ModelT':
+    ) -> ModelT:
         instance = cls(**kwargs)
         instance._saved_in_db = False
         db = using_db or cls._choose_db(True)
@@ -444,8 +447,8 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_create(
-        cls: type['Model'],
-        objects: Iterable['Model'],
+        cls: type[Model],
+        objects: Iterable[Model],
         batch_size: int | None = None,
         ignore_conflicts: bool = False,
         update_fields: Iterable[str] | None = None,
@@ -472,8 +475,8 @@ class Model(TortoiseModel):
 
     @classmethod
     def bulk_update(
-        cls: type['Model'],
-        objects: Iterable['Model'],
+        cls: type[Model],
+        objects: Iterable[Model],
         fields: Iterable[str],
         batch_size: int | None = None,
         using_db: BaseDBAsyncClient | None = None,
@@ -502,16 +505,21 @@ class Model(TortoiseModel):
 class CachedModel(Model):
     @classmethod
     async def preload(cls) -> None:
+        _logger.info('Loading `%s` into memory', cls.__name__)
+        query = cls.all()
+        with suppress(AttributeError):
+            query = query.limit(cls.Meta.maxsize)  # type: ignore[attr-defined]
+
         # NOTE: Table can be missing
         with suppress(OperationalError):
-            async for model in cls.all():
+            async for model in query:
                 model.cache()
 
     @classmethod
     async def cached_get(
-        cls: type['ModelT'],
+        cls: type[ModelT],
         pk: int | str,
-    ) -> 'ModelT':
+    ) -> ModelT:
         cls_cache = caches._model[cls.__name__]
 
         if pk not in cls_cache:
@@ -520,9 +528,9 @@ class CachedModel(Model):
 
     @classmethod
     async def cached_get_or_none(
-        cls: type['ModelT'],
+        cls: type[ModelT],
         pk: int | str,
-    ) -> 'ModelT' | None:
+    ) -> ModelT | None:
         cls_cache = caches._model[cls.__name__]
 
         if pk not in cls_cache:

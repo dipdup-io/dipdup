@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import field
-from typing import Iterator
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -13,10 +13,13 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
-from dipdup.models.evm_node import EvmNodeSyncingSubscription
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass
@@ -69,7 +72,11 @@ class SubsquidEventsIndexConfig(IndexConfig):
     def get_subscriptions(self) -> set[Subscription]:
         subs: set[Subscription] = set()
         subs.add(EvmNodeNewHeadsSubscription())
-        # FIXME: Be selective
-        subs.add(EvmNodeLogsSubscription())
-        subs.add(EvmNodeSyncingSubscription())
+        for handler in self.handlers:
+            if address := handler.contract.address:
+                subs.add(EvmNodeLogsSubscription(address=address))
+            elif abi := handler.contract.abi:
+                subs.add(EvmNodeLogsSubscription(topics=((abi,),)))
+            else:
+                raise NotImplementedError
         return subs

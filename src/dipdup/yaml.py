@@ -18,7 +18,7 @@ import re
 from copy import copy
 from io import StringIO
 from os import environ as env
-from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -27,15 +27,18 @@ from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import json_dumps
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 # NOTE: ${VARIABLE:-default} | ${VARIABLE}
 ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 
 
-_logger = logging.getLogger('dipdup.yaml')
+_logger = logging.getLogger(__name__)
 
 
 def exclude_none(config_json: Any) -> Any:
-    if isinstance(config_json, (list, tuple)):
+    if isinstance(config_json, list | tuple):
         return [exclude_none(i) for i in config_json if i is not None]
     if isinstance(config_json, dict):
         return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
@@ -47,12 +50,27 @@ def filter_comments(line: str) -> bool:
 
 
 def read_config_yaml(path: Path) -> str:
-    _logger.debug('Loading config from %s', path)
+    _logger.debug('Discovering config `%s`', path)
+    if path.is_dir():
+        path /= 'dipdup.yaml'
+
+    yml_path = path.with_suffix('.yml')
+    yaml_path = path.with_suffix('.yaml')
+    if path.is_file():
+        pass
+    elif yml_path.is_file():
+        path = yml_path
+    elif yaml_path.is_file():
+        path = yaml_path
+    else:
+        raise ConfigurationError(f'Config file `{path}` is missing.')
+
+    _logger.debug('Loading config file `%s`', path)
     try:
         with path.open() as file:
             return ''.join(filter(filter_comments, file.readlines()))
     except OSError as e:
-        raise ConfigurationError(f'Config file `{path}` is missing or not readable.') from e
+        raise ConfigurationError(f'Config file `{path}` is not readable: {e}') from e
 
 
 def dump(value: Any) -> str:
@@ -82,6 +100,16 @@ def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
         config_yaml = config_yaml.replace(placeholder, value or default_value or '')
 
     return config_yaml, environment
+
+
+def get_default_env_variables(config_yaml: str) -> dict[str, str]:
+    environment: dict[str, str] = {}
+
+    for match in re.finditer(ENV_VARIABLE_REGEX, config_yaml):
+        variable, default_value = match.group('var_name'), match.group('default_value')
+        environment[variable] = default_value or ''
+
+    return environment
 
 
 def fix_dataclass_field_aliases(config: dict[str, Any]) -> None:
@@ -114,6 +142,8 @@ class DipDupYAMLConfig(dict[str, Any]):
             if environment:
                 path_yaml, path_environment = substitute_env_variables(path_yaml)
                 config_environment.update(path_environment)
+            else:
+                config_environment |= get_default_env_variables(path_yaml)
 
             config.update(yaml.load(path_yaml))
 
@@ -128,7 +158,8 @@ class DipDupYAMLConfig(dict[str, Any]):
         config_spec_version = self['spec_version']
         if config_spec_version != __spec_version__:
             raise ConfigurationError(
-                f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See https://docs.dipdup.io/config/spec_version'
+                f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See'
+                ' https://dipdup.io/docs/config/spec_version'
             )
 
     def _post_load_hooks(self) -> None:

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING
 
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktEventData
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
 class EventFetcher(DataFetcher[TzktEventData]):
@@ -22,7 +26,7 @@ class EventFetcher(DataFetcher[TzktEventData]):
         event_addresses: set[str],
         event_tags: set[str],
     ) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._datasource = datasource
         self._first_level = first_level
         self._last_level = last_level

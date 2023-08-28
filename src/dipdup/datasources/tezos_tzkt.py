@@ -3,17 +3,17 @@ import logging
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Sequence
 from dataclasses import fields
 from enum import Enum
 from functools import partial
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
-from typing import Generator
 from typing import NamedTuple
 from typing import NoReturn
-from typing import Sequence
 from typing import cast
 
 import pysignalr.exceptions
@@ -38,7 +38,6 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
 from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100
@@ -200,6 +199,9 @@ class ContractHashes:
 
 class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     _default_http_config = HttpConfig(
+        retry_sleep=1,
+        retry_multiplier=1.1,
+        retry_count=10,
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
@@ -211,7 +213,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         config: TzktDatasourceConfig,
     ) -> None:
         super().__init__(config)
-        self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
@@ -260,9 +261,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._logger.info('Establishing realtime connection')
         signalr_client = self._get_signalr_client()
         retry_sleep = self._http_config.retry_sleep
-        retry_count = 9000 if self._http_config.retry_count is None else self._http_config.retry_count
 
-        for _ in range(1, retry_count + 1):
+        for _ in range(1, self._http_config.retry_count + 1):
             try:
                 await signalr_client.run()
             except pysignalr.exceptions.ConnectionError as e:
@@ -357,10 +357,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         if self._network:
             raise FrameworkException('Network is already set')
         self._network = network
-
-    def set_logger(self, name: str) -> None:
-        super().set_logger(name)
-        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
 
     def get_channel_level(self, message_type: TzktMessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""
@@ -714,13 +710,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(
             first_level,
             last_level,
-            offset,
-            limit,
-            TRANSACTION_OPERATION_FIELDS,
-            cursor=True,
+            limit=limit,
+            select=TRANSACTION_OPERATION_FIELDS,
             values=True,
             status='applied',
+            sort='level',
         )
+        # implement cursor with id
+        if offset:
+            params['id.gt'] = offset
+
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
@@ -977,7 +976,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         # NOTE: select.values supported for methods with multiple objects in response only
         response: list[list[str]] = await self.request(*args, **kwargs)
-        return tuple([dict(zip(fields, values)) for values in response])
+        return tuple([dict(zip(fields, values, strict=True)) for values in response])
 
     def _get_request_params(
         self,
@@ -988,6 +987,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         select: tuple[str, ...] | None = None,
         values: bool = False,  # return only list of chosen values instead of dict
         cursor: bool = False,
+        sort: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
@@ -1005,6 +1005,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         if select:
             #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
+        if sort:
+            if sort.startswith('-'):
+                sort_param_name = 'sort.desc'
+                sort = sort[1:]
+            else:
+                sort_param_name = 'sort'
+            params[sort_param_name] = sort
         return {
             **params,
             **kwargs,

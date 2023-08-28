@@ -1,0 +1,90 @@
+spec_version: 2.0
+package: {{ project.package }}
+
+database:
+  kind: sqlite
+  path: /tmp/{{ project.package }}.sqlite
+  immune_tables:
+    - token
+
+datasources:
+  ethscan:
+    kind: abi.etherscan
+
+  mainnet_infura_node:
+    kind: evm.node
+    url: https://mainnet.infura.io/v3/${INFURA_KEY:-''}
+    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY:-''}
+
+  mainnet_alchemy_node:
+    kind: evm.node
+    url: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
+    ws_url: wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
+
+  mainnet_subsquid:
+    kind: evm.subsquid
+    url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    node:
+      - mainnet_infura_node
+      - mainnet_alchemy_node
+
+contracts:
+  factory:
+    kind: evm
+    address: 0x1f98431c8ad98523631ae4a59f267346ea31f984
+    typename: factory
+  position_manager:
+    kind: evm
+    address: 0xc36442b4a4522e871399cd717abdd847ab11fe88
+    typename: position_manager
+  pool:
+    kind: evm
+    abi: 0x7668b2ea8490955f68f5c33e77fe150066c94fb9
+    typename: pool
+
+templates:
+  uniswap_v3_factory:
+    kind: evm.subsquid.events
+    datasource: <datasource>
+    first_level: 12369521
+    handlers:
+      - callback: factory.pool_created
+        contract: factory
+        name: PoolCreated
+      - callback: position_manager.increase_liquidity
+        contract: position_manager
+        name: IncreaseLiquidity
+      - callback: position_manager.decrease_liquidity
+        contract: position_manager
+        name: DecreaseLiquidity
+      - callback: position_manager.collect
+        contract: position_manager
+        name: Collect
+      - callback: position_manager.transfer
+        contract: position_manager
+        name: Transfer
+      - callback: pool.initialize
+        contract: pool
+        name: Initialize
+      - callback: pool.swap
+        contract: pool
+        name: Swap
+      - callback: pool.mint
+        contract: pool
+        name: Mint
+      - callback: pool.burn
+        contract: pool
+        name: Burn
+      - callback: pool.flash
+        contract: pool
+        name: Flash
+
+indexes:
+  uniswap_mainnet:
+    template: uniswap_v3_factory
+    values:
+      datasource: mainnet_subsquid
+      first_level: 12369521
+
+advanced:
+  decimal_precision: 128

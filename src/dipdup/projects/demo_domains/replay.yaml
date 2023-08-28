@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: Tezos Domains name service
+  package: demo_domains
+  template: demo_domains

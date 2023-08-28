@@ -1,0 +1,36 @@
+spec_version: 2.0
+package: {{ project.package }}
+
+contracts:
+  tzbtc_mainnet:
+    kind: tezos
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
+datasources:
+  tzkt_mainnet:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  tzbtc_holders_mainnet:
+    template: tzbtc_holders
+    values:
+      contract: tzbtc_mainnet
+      datasource: tzkt_mainnet
+
+templates:
+  tzbtc_holders:
+    kind: tezos.tzkt.operations
+    datasource: <datasource>
+    contracts:
+      - <contract>
+    handlers:
+      - callback: on_transfer
+        pattern:
+          - destination: <contract>
+            entrypoint: transfer
+      - callback: on_mint
+        pattern:
+          - destination: <contract>
+            entrypoint: mint

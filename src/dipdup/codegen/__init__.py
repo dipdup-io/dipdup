@@ -2,11 +2,12 @@ import logging
 import subprocess
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Awaitable
+from collections.abc import Callable
 from pathlib import Path
+from shutil import rmtree
 from shutil import which
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 
 from pydantic import BaseModel
 
@@ -14,16 +15,21 @@ from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
+from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
-from dipdup.package import PYTHON_MARKER
+from dipdup.package import PACKAGE_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.project import render_base
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 from dipdup.utils import write
+from dipdup.yaml import DipDupYAMLConfig
 
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
+
+_logger = logging.getLogger(__name__)
 
 
 class CodeGenerator(ABC):
@@ -36,25 +42,29 @@ class CodeGenerator(ABC):
         self._config = config
         self._package = package
         self._datasources = datasources
-        self._logger = logging.getLogger('dipdup.codegen')
+        self._logger = _logger
 
     async def init(
         self,
         force: bool = False,
+        base: bool = False,
     ) -> None:
-        self._package.pre_init()
         self._package.create()
 
-        await self.generate_abi()
-        await self.generate_schemas()
-        await self.generate_types(force)
+        replay = self._package.replay
+        if base and replay:
+            _logger.info('Recreating base template with replay.yaml')
+            render_base(replay, force)
 
+        await self.generate_abi()
+        await self.generate_schemas(force)
+        await self._generate_types(force)
+
+        await self._generate_models()
         await self.generate_hooks()
         await self.generate_system_hooks()
         await self.generate_handlers()
 
-        self._package.post_init()
-        # FIXME: Called before types are generated?
         # self._package.verify()
 
     @abstractmethod
@@ -62,11 +72,7 @@ class CodeGenerator(ABC):
         ...
 
     @abstractmethod
-    async def generate_schemas(self) -> None:
-        ...
-
-    @abstractmethod
-    async def generate_types(self, force: bool) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
         ...
 
     @abstractmethod
@@ -85,13 +91,16 @@ class CodeGenerator(ABC):
     def get_typeclass_name(self, schema_path: Path) -> str:
         ...
 
+    async def _generate_types(self, force: bool = False) -> None:
+        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
+        for path in self._package.schemas.glob('**/*.json'):
+            await self._generate_type(path, force)
+
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         rel_path = schema_path.relative_to(self._package.schemas)
         type_pkg_path = self._package.types / rel_path
 
-        # TODO: Stop generating Python markers
         if schema_path.is_dir():
-            touch(type_pkg_path / PYTHON_MARKER)
             return
 
         if not schema_path.name.endswith('.json'):
@@ -102,7 +111,7 @@ class CodeGenerator(ABC):
         module_name = schema_path.stem
         output_path = type_pkg_path.parent / f'{pascal_to_snake(module_name)}.py'
         if output_path.exists() and not force:
-            self._logger.info('Skipping `%s`: type already exists', schema_path)
+            self._logger.debug('Skipping `%s`: type already exists', schema_path)
             return
 
         datamodel_codegen = which('datamodel-codegen')
@@ -113,8 +122,6 @@ class CodeGenerator(ABC):
 
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: Stop generating Python markers
-        (output_path.parent / PYTHON_MARKER).touch(exist_ok=True)
         args = [
             datamodel_codegen,
             '--input',
@@ -127,7 +134,7 @@ class CodeGenerator(ABC):
             '--input-file-type',
             'jsonschema',
             '--target-python-version',
-            '3.10',
+            '3.11',
         ]
         self._logger.debug(' '.join(args))
         subprocess.run(args, check=True)
@@ -189,3 +196,51 @@ class CodeGenerator(ABC):
             KEEP_MARKER,
         )
         touch(sql_path)
+
+    async def _generate_models(self) -> None:
+        for path in self._package.models.glob('**/*.py'):
+            if path.stat().st_size == 0:
+                continue
+            return
+
+        path = self._package.models / PACKAGE_MARKER
+        content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
+        write(path, content_path.read_text())
+
+    def _cleanup_schemas(self) -> None:
+        rmtree(self._package.schemas)
+        self._package.schemas.mkdir()
+
+
+async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+    for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
+        default_env_path.unlink()
+
+    for config_path in package.configs.iterdir():
+        if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
+            continue
+
+        config_chain = [
+            Path('dipdup.yaml'),
+            config_path,
+        ]
+        _, environment = DipDupYAMLConfig.load(
+            paths=config_chain,
+            environment=False,
+        )
+        env_lines = (f'{k}={v}' for k, v in sorted(environment.items()))
+        lines: tuple[str, ...] = (
+            '# This env file was generated automatically by DipDup. Do not edit it!',
+            '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
+            '#',
+            *env_lines,
+            '',
+        )
+        content = '\n'.join(lines)
+
+        env_filename = config_path.stem.replace('dipdup.', '')
+        if env_filename == 'compose':
+            env_filename = ''
+        env_path = package.deploy / (env_filename + DEFAULT_ENV)
+        env_path.parent.mkdir(parents=True, exist_ok=True)
+        env_path.write_text(content)

@@ -6,7 +6,11 @@ from dipdup.datasources import Datasource
 
 
 class IpfsDatasource(Datasource[IpfsDatasourceConfig]):
-    _default_http_config = HttpConfig()
+    _default_http_config = HttpConfig(
+        retry_sleep=1,
+        retry_multiplier=1.1,
+        retry_count=10,
+    )
 
     async def run(self) -> None:
         pass

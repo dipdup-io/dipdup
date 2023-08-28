@@ -12,7 +12,8 @@ on:
       - 'src/**'
       - 'Dockerfile'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      # NOTE: Dumped with `pdm run update`
+      - 'requirements.txt'
       - '.github/workflows/build.yml'
 
 jobs:

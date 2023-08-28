@@ -1,9 +1,7 @@
+from datetime import UTC
 from datetime import datetime
-from datetime import timezone
 from decimal import Decimal
 from enum import Enum
-from typing import List
-from typing import Union
 
 from pydantic.dataclasses import dataclass
 
@@ -38,9 +36,9 @@ class CandleData:
     volume: Decimal
 
     @classmethod
-    def from_json(cls, json: List[Union[int, float]]) -> 'CandleData':
+    def from_json(cls, json: list[int | float]) -> 'CandleData':
         return CandleData(
-            timestamp=datetime.fromtimestamp(json[0], tz=timezone.utc),
+            timestamp=datetime.fromtimestamp(json[0], tz=UTC),
             low=Decimal(str(json[1])),
             high=Decimal(str(json[2])),
             open=Decimal(str(json[3])),

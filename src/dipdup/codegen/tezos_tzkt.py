@@ -34,12 +34,10 @@ from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import PYTHON_MARKER
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-from dipdup.utils import touch
 from dipdup.utils import write
 
 
@@ -68,20 +66,19 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
                 prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()
             },
         }
-    elif 'items' in schema:
+    if 'items' in schema:
         return {
             **schema,
             'items': preprocess_storage_jsonschema(schema['items']),
         }
-    elif 'additionalProperties' in schema:
+    if 'additionalProperties' in schema:
         return {
             **schema,
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
-    elif schema.get('$comment') == 'big_map':
+    if schema.get('$comment') == 'big_map':
         return cast(dict[str, Any], schema['oneOf'][1])
-    else:
-        return schema
+    return schema
 
 
 class TzktCodeGenerator(CodeGenerator):
@@ -103,9 +100,11 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         pass
 
-    async def generate_schemas(self) -> None:
+    async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
+        if force:
+            self._cleanup_schemas()
 
         unused_operation_templates = [
             t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
@@ -150,22 +149,13 @@ class TzktCodeGenerator(CodeGenerator):
                     except FrameworkException:
                         continue
 
-    async def generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-
-        self._logger.info('Creating `types` package')
-        touch(self._package.types / PYTHON_MARKER)
-
-        for path in self._package.schemas.glob('**/*'):
-            await self._generate_type(path, force)
-
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             # NOTE: Always single handler
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig)):
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
@@ -182,7 +172,7 @@ class TzktCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        if schema_path.name == 'tezos_storage.json':
+        if module_name == 'tezos_storage':
             class_name = f'{schema_path.parent.name}_storage'
         elif schema_path.parent.name == 'tezos_parameters':
             class_name = f'{module_name}_parameter'
@@ -190,7 +180,18 @@ class TzktCodeGenerator(CodeGenerator):
             class_name = f'{module_name}_payload'
         else:
             class_name = module_name
-        return class_name
+        return snake_to_pascal(class_name)
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        markers = {
+            'tezos_storage.json',
+            'tezos_parameters',
+            'tezos_events',
+            'tezos_big_maps',
+        }
+        if not set(schema_path.parts).intersection(markers):
+            return
+        await super()._generate_type(schema_path, force)
 
     async def _get_schema(
         self,
@@ -230,7 +231,7 @@ class TzktCodeGenerator(CodeGenerator):
             return
 
         # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
-        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+        if isinstance(contract_config, str) and contract_config in self._config.contracts:
             contract_config = self._config.get_tezos_contract(contract_config)
 
         elif isinstance(contract_config, str):
@@ -389,7 +390,7 @@ def get_parameter_type(package: DipDupPackage, typename: str, entrypoint: str) -
 
 def get_event_payload_type(package: DipDupPackage, typename: str, tag: str) -> TypeClass:
     tag = pascal_to_snake(tag.replace('.', '_'))
-    module_name = f'tezos_event.{tag}'
+    module_name = f'tezos_events.{tag}'
     cls_name = snake_to_pascal(f'{tag}_payload')
     return package.get_type(typename, module_name, cls_name)
 

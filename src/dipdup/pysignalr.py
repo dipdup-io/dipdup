@@ -3,8 +3,9 @@ Turning pysignalr back into a basic websocket client usable for JSONRPC nodes, b
 
 Eventually this code will be moved to the upstream library.
 """
+import asyncio
+from collections.abc import Iterable
 from typing import Any
-from typing import Iterable
 
 import orjson
 from pysignalr.messages import HandshakeRequestMessage
@@ -26,7 +27,9 @@ class WebsocketMessage(Message, type_=MessageType.invocation):
 
 class WebsocketTransport(SignalRWebsocketTransport):
     async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
-        return
+        while True:
+            await conn.ensure_open()
+            await asyncio.sleep(5)
 
     async def _handshake(self, conn: WebSocketClientProtocol) -> None:
         return

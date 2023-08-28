@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncIterator
+from typing import TYPE_CHECKING
 
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
 class TokenTransferFetcher(DataFetcher[TzktTokenTransferData]):
@@ -23,7 +27,7 @@ class TokenTransferFetcher(DataFetcher[TzktTokenTransferData]):
         last_level: int,
     ) -> None:
         super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._token_addresses = token_addresses
         self._token_ids = token_ids
         self._from_addresses = from_addresses

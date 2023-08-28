@@ -3,13 +3,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
 
-from dipdup import env
 from dipdup.performance import get_stats
 from dipdup.performance import metrics
 from dipdup.yaml import dump
 
 # FIXME: Hardcoded path
 REPORTS_PATH = Path.home() / '.local' / 'share' / 'dipdup' / 'reports'
+REPORTS_LIMIT = 100
 
 
 class ReportHeader(TypedDict):
@@ -20,7 +20,7 @@ class ReportHeader(TypedDict):
     content: str
 
 
-def save_report(error: Exception | None) -> str:
+def save_report(package: str, error: Exception | None) -> str:
     """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
 
     event, content = {}, []
@@ -33,7 +33,7 @@ def save_report(error: Exception | None) -> str:
         # NOTE: Merge pieces of code into a single list
         for exception in event['exception']['values']:
             for frame in exception['stacktrace']['frames']:
-                frame['code'] = frame.pop('pre_context') + [frame.pop('context_line')] + frame.pop('post_context')
+                frame['code'] = [*frame.pop('pre_context'), frame.pop('context_line'), *frame.pop('post_context')]
 
     # NOTE: Performance stats if any
     if metrics:
@@ -45,7 +45,7 @@ def save_report(error: Exception | None) -> str:
     reason = error.__repr__() if error else 'success'
     header = ReportHeader(
         id=report_id,
-        package=env.PACKAGE_PATH.name if env.PACKAGE_PATH else 'unknown',
+        package=package,
         reason=reason,
         date=datetime.now().isoformat(),
         content=','.join(content),
@@ -59,3 +59,10 @@ def save_report(error: Exception | None) -> str:
     event_yaml = dump(event)
     path.write_text(event_yaml)
     return report_id
+
+
+def cleanup_reports() -> None:
+    """Removes old reports"""
+    for i, path in enumerate(tuple(REPORTS_PATH.glob('*.yaml'))[::-1]):
+        if i >= 100:
+            path.unlink()

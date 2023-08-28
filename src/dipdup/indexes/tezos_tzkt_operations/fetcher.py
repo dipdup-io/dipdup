@@ -1,22 +1,26 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
-from collections import deque
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
+
+if TYPE_CHECKING:
+    from collections import defaultdict
+    from collections import deque
+    from collections.abc import AsyncIterator
+
+    from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 _logger = logging.getLogger('dipdup.fetcher')
 
@@ -87,7 +91,7 @@ async def get_transaction_filters(
                         pattern_config.destination.code_hash = code_hash
                     hashes.add(code_hash)
 
-    _logger.info(f'Fetching transactions from {len(addresses)} addresses and {len(hashes)} code hashes')
+    _logger.info('Fetching transactions from %s addresses and %s code hashes', len(addresses), len(hashes))
     return addresses, hashes
 
 
@@ -118,8 +122,8 @@ async def get_origination_filters(
 
             if pattern_config.source:
                 _logger.warning(
-                    "`source.address` filter significantly hurts indexing performance and doesn't support strict typing. "
-                    'Consider using `originated_contract.code_hash` instead'
+                    "`source.address` filter significantly hurts indexing performance and doesn't support strict"
+                    " typing. Consider using `originated_contract.code_hash` instead"
                 )
                 if address := pattern_config.source.address:
                     async for batch in datasource.iter_originated_contracts(address):
@@ -127,7 +131,7 @@ async def get_origination_filters(
                 if code_hash := pattern_config.source.code_hash:
                     raise FrameworkException('Invalid transaction filter `source.code_hash`')
 
-    _logger.info(f'Fetching originations from {len(addresses)} addresses and {len(hashes)} code hashes')
+    _logger.info('Fetching originations from %s addresses and %s code hashes', len(addresses), len(hashes))
     return addresses, hashes
 
 

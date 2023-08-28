@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import Literal
 from typing import cast
 
@@ -19,9 +19,13 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import OriginationSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass
@@ -303,7 +307,10 @@ class TzktOperationsHandlerConfig(HandlerConfig):
             arg, arg_type = next(pattern.iter_arguments())
             if arg in arg_names:
                 raise ConfigurationError(
-                    f'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler: `{self.callback}`\n              entrypoint: `{arg}`',
+                    (
+                        'Pattern item is not unique. Set `alias` field to avoid duplicates.\n\n              handler:'
+                        f' `{self.callback}`\n              entrypoint: `{arg}`'
+                    ),
                 )
             arg_names.add(arg)
             yield arg, arg_type

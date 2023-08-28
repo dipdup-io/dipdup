@@ -1,0 +1,169 @@
+spec_version: 2.0
+package: demo_dex
+
+contracts:
+  kusd_dex_mainnet:
+    kind: tezos
+    address: KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6
+    typename: quipu_fa12
+  kusd_token_mainnet:
+    kind: tezos
+    address: KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV
+    typename: fa12_token
+  hdao_dex_mainnet:
+    kind: tezos
+    address: KT1QxLqukyfohPV5kPkw97Rs6cw1DDDvYgbB
+    typename: quipu_fa2
+  hdao_token_mainnet:
+    kind: tezos
+    address: KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW
+    typename: fa2_token
+
+datasources:
+  tzkt_mainnet:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+
+templates:
+  quipuswap_fa12:
+    kind: tezos.tzkt.operations
+    datasource: tzkt_mainnet
+    contracts:
+      - <dex_contract>
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_fa12_origination
+        pattern:
+          - type: origination
+            originated_contract: <dex_contract>
+      - callback: on_fa12_token_to_tez
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToTezPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
+      - callback: on_fa12_tez_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tezToTokenPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_invest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: investLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa12_transfer
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: transfer
+      - callback: on_fa12_divest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: divestLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
+      - callback: on_fa12_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
+
+  quipuswap_fa2:
+    kind: tezos.tzkt.operations
+    datasource: tzkt_mainnet
+    contracts:
+      - <dex_contract>
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_fa2_origination
+        pattern:
+          - type: origination
+            originated_contract: <dex_contract>
+      - callback: on_fa2_token_to_tez
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tokenToTezPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
+      - callback: on_fa2_tez_to_token
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: tezToTokenPayment
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa2_invest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: investLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+      - callback: on_fa2_transfer
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: transfer
+      - callback: on_fa2_divest_liquidity
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: divestLiquidity
+          - type: transaction
+            destination: <token_contract>
+            entrypoint: transfer
+          - type: transaction
+            source: <dex_contract>
+      - callback: on_fa2_withdraw_profit
+        pattern:
+          - type: transaction
+            destination: <dex_contract>
+            entrypoint: withdrawProfit
+          - type: transaction
+            source: <dex_contract>
+            optional: True
+
+indexes:
+  kusd_mainnet:
+    template: quipuswap_fa12
+    values:
+      dex_contract: kusd_dex_mainnet
+      token_contract: kusd_token_mainnet
+      symbol: kUSD
+      decimals: 18
+
+  hdao_mainnet:
+    template: quipuswap_fa2
+    values:
+      dex_contract: hdao_dex_mainnet
+      token_contract: hdao_token_mainnet
+      symbol: hDAO
+      decimals: 6

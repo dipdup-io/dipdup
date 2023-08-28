@@ -3,12 +3,12 @@ import atexit
 import os
 from contextlib import AsyncExitStack
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import orjson as json
 import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
-from aiohttp.test_utils import TestClient
 from docker.client import DockerClient  # type: ignore[import]
 from tortoise import Tortoise
 
@@ -21,7 +21,10 @@ from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.project import DEFAULT_ANSWERS
+from dipdup.project import get_default_answers
+
+if TYPE_CHECKING:
+    from aiohttp.test_utils import TestClient
 
 
 def get_docker_client() -> DockerClient:
@@ -40,7 +43,7 @@ def get_docker_client() -> DockerClient:
 async def run_postgres_container() -> PostgresDatabaseConfig:
     docker = get_docker_client()
     postgres_container = docker.containers.run(
-        image=DEFAULT_ANSWERS['postgresql_image'],
+        image=get_default_answers()['postgresql_image'],
         environment={
             'POSTGRES_USER': 'test',
             'POSTGRES_PASSWORD': 'test',
@@ -69,7 +72,7 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
 async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
     docker = get_docker_client()
     hasura_container = docker.containers.run(
-        image=DEFAULT_ANSWERS['hasura_image'],
+        image=get_default_answers()['hasura_image'],
         environment={
             'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
         },

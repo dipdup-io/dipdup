@@ -1,0 +1,14 @@
+from demo_raw import models
+from dipdup.context import HandlerContext
+from dipdup.models.tezos_tzkt import TzktOperationData
+
+
+async def on_operation(
+    ctx: HandlerContext,
+    operation: TzktOperationData,
+) -> None:
+    await models.Operation.create(
+        hash=operation.hash,
+        level=operation.level,
+        type=operation.type,
+    )

@@ -5,14 +5,11 @@ from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Type
 
 if TYPE_CHECKING:
     from tortoise.models import Model
 
-    from dipdup.models import ReindexingReason  # noqa: E402
+    from dipdup.models import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
 
@@ -83,7 +80,7 @@ class DatasourceError(Error):
             
             {self.msg}
 
-            See https://docs.dipdup.io/advanced/datasources
+            See https://dipdup.io/docs/getting-started/datasources
         """
 
 
@@ -114,7 +111,7 @@ class ConfigurationError(Error):
         return f"""
             {self.msg}
 
-            See https://docs.dipdup.io/config
+            See https://dipdup.io/docs/getting-started/config
         """
 
 
@@ -123,8 +120,8 @@ class InvalidModelsError(Error):
     """Can't initialize database, `models.py` module is invalid"""
 
     msg: str
-    model: Type['Model']
-    field: Optional[str] = None
+    model: type['Model']
+    field: str | None = None
 
     def _help(self) -> str:
         return f"""
@@ -134,30 +131,7 @@ class InvalidModelsError(Error):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://docs.dipdup.io/getting-started/defining-models
-            See https://docs.dipdup.io/config/database
-            See https://docs.dipdup.io/advanced/internal-tables
-        """
-
-
-@dataclass(repr=False)
-class DatabaseEngineError(Error):
-    """Some of the features are not supported with the current database engine"""
-
-    msg: str
-    kind: str
-    required: str
-
-    def _help(self) -> str:
-        return f"""
-            {self.msg}
-
-              database: `{self.kind}`
-              required: `{self.required}`
-
-            See https://docs.dipdup.io/deployment/database-engines
-            See https://docs.dipdup.io/advanced/sql
-            See https://docs.dipdup.io/config/database
+            See https://dipdup.io/docs/getting-started/models
         """
 
 
@@ -166,28 +140,25 @@ class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
     reason: 'ReindexingReason'
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
         # FIXME: Indentation hell
         prefix = '\n' + ' ' * 14
         context = prefix.join(f'{k}: {v}' for k, v in self.context.items())
         if context:
-            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
+            context = f'{prefix}{context}\n'
 
-        return """
-            Reindexing required! Reason: {reason}.
+        return f"""
+            Reindexing required! Reason: {self.reason.value}.
               {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-              * Eliminate the cause of reindexing and run `dipdup schema approve`.
-              * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+              - Eliminate the cause of reindexing and run `dipdup schema approve`.
+              - Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://docs.dipdup.io/advanced/reindexing for more information.
-        """.format(
-            reason=self.reason.value,
-            context=context,
-        )
+            See https://dipdup.io/docs/advanced/reindexing for more information.
+        """
 
 
 @dataclass(repr=False)
@@ -202,8 +173,8 @@ class InitializationRequiredError(Error):
 
             Perform the following actions:
 
-              * Run `dipdup init`.
-              * Review and commit changes.
+              - Run `dipdup init`.
+              - Review and commit changes.
         """
 
 
@@ -212,7 +183,7 @@ class ProjectImportError(Error):
     """Can't import type or callback from the project package"""
 
     module: str
-    obj: Optional[str] = None
+    obj: str | None = None
 
     def _help(self) -> str:
         what = f'`{self.obj}` from ' if self.obj else ''
@@ -257,7 +228,7 @@ class InvalidDataError(Error):
     """Failed to validate datasource message against generated type class"""
 
     msg: str
-    type_: Type[Any]
+    type_: type[Any]
     data: Any
 
     def _help(self) -> str:
@@ -296,8 +267,8 @@ class CallbackTypeError(Error):
     name: str
 
     arg: str
-    type_: Type[Any]
-    expected_type: Type[Any]
+    type_: type[Any]
+    expected_type: type[Any]
 
     def _help(self) -> str:
         return f"""
@@ -309,8 +280,8 @@ class CallbackTypeError(Error):
 
             Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
-            See https://docs.dipdup.io/getting-started/project-package
-            See https://docs.dipdup.io/cli-reference#init
+            See https://dipdup.io/docs/getting-started/package
+            See https://dipdup.io/docs/references/cli#init
         """
 
 
@@ -328,27 +299,7 @@ class HasuraError(Error):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://docs.dipdup.io/graphql/
-            See https://docs.dipdup.io/config/hasura
-            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
-        """
-
-
-@dataclass(repr=False)
-class FeatureAvailabilityError(Error):
-    """Requested feature is not supported in the current environment"""
-
-    feature: str
-    reason: str
-
-    def _help(self) -> str:
-        return f"""
-            Feature `{self.feature}` is not available in the current environment.
-
-            {self.reason}
-
-            See https://docs.dipdup.io/installation
-            See https://docs.dipdup.io/advanced/docker
+            See https://dipdup.io/docs/graphql/hasura
         """
 
 

@@ -1,10 +1,9 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from contextlib import suppress
 from copy import copy
 from typing import Any
-from typing import Iterable
-from typing import Union
 
 from dipdup.codegen.tezos_tzkt import get_event_payload_type
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
@@ -21,10 +20,9 @@ from dipdup.utils import parse_object
 _logger = logging.getLogger('dipdup.matcher')
 
 
-MatchedEventsT = Union[
-    tuple[TzktEventsHandlerConfig, TzktEvent[Any]],
-    tuple[TzktEventsUnknownEventHandlerConfig, TzktUnknownEvent],
-]
+MatchedEventsT = (
+    tuple[TzktEventsHandlerConfig, TzktEvent[Any]] | tuple[TzktEventsUnknownEventHandlerConfig, TzktUnknownEvent]
+)
 
 
 def prepare_event_handler_args(
@@ -46,9 +44,10 @@ def prepare_event_handler_args(
         typename=handler_config.contract.module_name,
         tag=handler_config.tag,
     )
+    if not matched_event.payload:
+        raise FrameworkException('Event is typed, but payload is empty')
+
     with suppress(InvalidDataError):
-        if not matched_event.payload:
-            raise FrameworkException('Event payload is empty')
         typed_payload = parse_object(type_, matched_event.payload)
         return TzktEvent(
             data=matched_event,
@@ -97,6 +96,6 @@ def match_events(
     # NOTE: We don't care about `merge_subscriptions` here implying that all events will be processed
     # NOTE: Maybe "unfiltered" indexes will cover that case?
     for address in {event.contract_address for event in events}:
-        _logger.warning('Some events were not matched; fallback handler is missing for `{}`', address)
+        _logger.warning('Some events were not matched; fallback handler is missing for `%s`', address)
 
     return matched_handlers

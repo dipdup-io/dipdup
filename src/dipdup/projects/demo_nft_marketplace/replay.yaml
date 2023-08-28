@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: hic at nunc NFT marketplace
+  package: demo_nft_marketplace
+  template: demo_nft_marketplace

@@ -4,14 +4,66 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.0.0rc4] - 2023-08-23
+
+### Added
+
+- models: Added optional `maxsize` meta field to `CachedModel` to limit the LRU cache size.
+
+### Fixed
+
+- cli: Fixed `config export --full` command showing original config.
+- cli: Keep the last 100 reports only.
+- cli: Fixed `schema wipe` command crash due to `dipdup_meta` table being always immune.
+- config: Don't create empty SentryConfig if DSN is not set.
+- context: Share internal state between context instances.
+- evm.node: Fixed keepalive loop for websocket connection.
+- evm.node: Fixed parsing empty realtime message payloads.
+- jobs: Don't add jobs before scheduler is started.
+- package: Fixed package detection for poetry managed projects.
+- package: Fixed mypy command in default template.
+- package: Create package symlink only when needed.
+
+### Changed
+
+- cli: `report` command renamed to `report ls`.
+
+## [7.0.0rc3] - 2023-08-05
+
+### Fixed
+
+- ci: Fixed dipdup package metadata.
+- cli: Generate base template from replay only when --base flag is set.
+- cli: Remove cached jsonschemas when calling init --force.
+- codegen: Filter jsonschemas by prefixes supported by code generator.
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- index: Remove Python limitation on large int<->str conversions.
+- package: Create jsonschemas directory if not exists.
+- package: Don't create empty pyproject.toml during init.
+- package: Fixed discovery of the package when workdir is project root.
+
+## [6.5.10] - 2023-08-02
+
+### Fixed
+
+- index: Remove Python limitation on large int<->str conversions.
+
+## [7.0.0rc2] - 2023-07-26
+
+### Fixed
+
+- package: Create missing files from project base on init.
+- package: Update replay.yaml on init.
+- demos: Don't include database config in root config.
+
+## [7.0.0rc1] - 2023-07-21
 
 ### Added
 
 - abi.etherscan: Added `abi.etherscan` datasource to fetch ABIs from Etherscan.
 - api: Added `/performance` endpoint to request indexing stats.
 - cli: Added `report` command group to manage performance and crash reports created by DipDup.
-- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models. 
+- config: Added `advanced.decimal_precision` field to overwrite precision if it's not guessed correctly based on project models.
 - config: Added `advanced.unsafe_sqlite` field to disable journaling and data integrity checks.
 - config: Added `advanced.api` section to configure monitoring API exposed by DipDup.
 - config: Added `advanced.metrics` field to configure amount of gathered metrics.
@@ -24,12 +76,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- database: Fixed `OperationalError` raised in some cases after calling `bulk_create` 
-- database: Allow running project scripts and queries on SQLite. 
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite.
 - database: Don't cleanup model updates on every loop.
 
 ### Changed
 
+- ci: Docker images are now based on Debian 12.
 - cli: `config env --file` option renamed to `--output`.
 - cli: Commands to manage local dipdup installation moved to the `self` group.
 - cli: `init --overwrite-types` flag renamed to `--force` and now also affects ABIs.
@@ -58,7 +111,48 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Request plain values instead of mappings from TzKT when possible.
 
-## [6.5.5] - 2022-04-17
+## [6.5.9] - 2023-07-11
+
+### Fixed
+
+- tzkt: Optimized queries for `operation_unfiltered` index.
+
+## [6.5.8] - 2023-06-28
+
+### Fixed
+
+- cli: Fixed `init` crash when package name is equal to one of the project typenames.
+
+## [6.5.7] - 2023-05-30
+
+### Added
+
+- config: Added `advanced.decimal_precision` option to adjust decimal context precision.
+
+### Fixed
+
+- database: Fixed `OperationalError` raised in some cases after calling `bulk_create`.
+- database: Allow running project scripts and queries on SQLite. 
+- database: Don't cleanup model updates on every loop.
+- http: Mark `asyncio.TimeoutError` exception as safe to retry.
+
+### Other
+
+- http: Deserialize JSON responses with `orjson`.
+
+## [6.5.6] - 2023-05-02
+
+### Fixed
+
+- config: Fixed crash due to incorrect parsing of `event` index definitions.
+- http: Fixed waiting for response indefinitely when IPFS hash is not available.
+
+### Other
+
+- ci: Slim Docker image updated to Alpine 3.17.
+- metadata: Added `nairobinet` to supported networks.
+
+## [6.5.5] - 2023-04-17
 
 ### Fixed
 
@@ -70,7 +164,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - ci: Default git branch switched to `next`.
 
-## [6.5.4] - 2022-03-31
+## [6.5.4] - 2023-03-31
 
 ### Fixed
 
@@ -80,7 +174,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - deps: Updated pytezos to 3.9.0.
 
-## [6.5.3] - 2022-03-28
+## [6.5.3] - 2023-03-28
 
 ### Fixed
 
@@ -1047,7 +1141,16 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.5...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...HEAD
+[7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
+[7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
+[6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
+[7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2
+[7.0.0rc1]: https://github.com/dipdup-io/dipdup/compare/6.5.9...7.0.0rc1
+[6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
+[6.5.8]: https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8
+[6.5.7]: https://github.com/dipdup-io/dipdup/compare/6.5.6...6.5.7
+[6.5.6]: https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6
 [6.5.5]: https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5
 [6.5.4]: https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4
 [6.5.3]: https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3

@@ -1,9 +1,9 @@
 import asyncio
 import time
 from collections import defaultdict
+from collections.abc import Awaitable
+from collections.abc import Callable
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from uuid import uuid4
 
 import pysignalr
@@ -45,14 +45,13 @@ RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitabl
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     # TODO: Make dynamic
-    _default_http_config = HttpConfig(
-        ratelimit_sleep=30,
-    )
+    _default_http_config = HttpConfig(ratelimit_sleep=30)
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
         self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
+        self._realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
         self._head_hashes: dict[int, str] = {}
@@ -81,6 +80,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     method,
                     params,
                     raw=True,
+                    ws=False,
                 )
 
         self._web3_client = AsyncWeb3(
@@ -91,14 +91,17 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             'cache',
         )
 
-    # FIXME: Join retry logic with other index datasources
+        level = await self.get_head_level()
+        self.set_sync_level(None, level)
+
     async def run(self) -> None:
+        await self._realtime.wait()
+
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
-        retry_count = 9000 if self._http_config.retry_count is None else self._http_config.retry_count
 
-        for _ in range(1, retry_count + 1):
+        for _ in range(1, self._http_config.retry_count + 1):
             try:
                 await client.run()
             except pysignalr.exceptions.ConnectionError as e:
@@ -109,7 +112,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         raise DatasourceError('Websocket connection failed', self.name)
 
+    def realtime(self) -> None:
+        self._realtime.set()
+
     async def subscribe(self) -> None:
+        if not self._realtime.is_set():
+            return
+
         missing_subscriptions = self._subscriptions.missing_subscriptions
         if not missing_subscriptions:
             return
@@ -118,8 +127,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for subscription in missing_subscriptions:
             if isinstance(subscription, EvmNodeSubscription):
                 await self._subscribe(subscription)
-
-        self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
     async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
         for fn in self._on_rollback_callbacks:
@@ -238,6 +245,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         if 'id' in data:
             request_id = data['id']
+            self._logger.debug('Received response for request %s', request_id)
             if request_id not in self._requests:
                 raise DatasourceError(f'Unknown request ID: {data["id"]}', self.name)
 
@@ -248,7 +256,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         elif 'method' in data:
             if data['method'] == 'eth_subscription':
                 subscription_id = data['params']['subscription']
+                if subscription_id not in self._subscription_ids:
+                    raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
+                self._logger.debug('Received subscription for channel %s', subscription_id)
                 await self._handle_subscription(subscription, data['params']['result'])
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)

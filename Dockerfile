@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.3-labs
-FROM python:3.11-slim-buster AS compile-image
+FROM python:3.11-slim-bookworm AS compile-image
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt update && \
     apt install -y build-essential && \
@@ -12,11 +12,10 @@ ENV PATH="/opt/dipdup/.venv/bin:$PATH"
 ENV PATH="/root/.cargo/bin:$PATH"
 
 COPY pyproject.toml requirements.txt README.md /opt/dipdup/
-
 RUN /usr/local/bin/pip install --prefix /opt/dipdup --no-cache-dir --disable-pip-version-check --no-deps \
     -r /opt/dipdup/requirements.txt -e .
 
-FROM python:3.11-slim-buster AS build-image
+FROM python:3.11-slim-bookworm AS build-image
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN useradd -ms /bin/bash dipdup
 USER dipdup

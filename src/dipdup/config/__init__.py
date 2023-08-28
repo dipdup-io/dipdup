@@ -24,11 +24,10 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
-from pathlib import Path
 from pydoc import locate
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -49,9 +48,14 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
 from dipdup.performance import MetricsLevel
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from dipdup.subscriptions import Subscription
 
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
@@ -60,7 +64,7 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
-_logger = logging.getLogger('dipdup.config')
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -78,7 +82,8 @@ class SqliteDatabaseConfig:
 
     @property
     def schema_name(self) -> str:
-        return self.path
+        # NOTE: Used only as identifier in `dipdup_schema` dable, since Hasura integration is not supported for SQLite.
+        return DEFAULT_POSTGRES_SCHEMA
 
     @property
     def connection_string(self) -> str:
@@ -178,9 +183,8 @@ class HttpConfig:
 class ResolvedHttpConfig:
     """HTTP client configuration with defaults"""
 
-    # NOTE: Total retry time is ~10 minutes
-    retry_count: int | None = 5
-    retry_sleep: float = 3.0
+    retry_count: int = 10
+    retry_sleep: float = 1.0
     retry_multiplier: float = 2.0
     ratelimit_rate: int = 0
     ratelimit_period: int = 0
@@ -196,7 +200,7 @@ class ResolvedHttpConfig:
         cls,
         default: HttpConfig,
         user: HttpConfig | None,
-    ) -> 'ResolvedHttpConfig':
+    ) -> ResolvedHttpConfig:
         config = cls()
         # NOTE: Apply datasource defaults first
         for merge_config in (default, user):
@@ -445,7 +449,7 @@ class JobConfig(NameMixin):
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
-        elif not schedules_enabled:
+        if not schedules_enabled:
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
         NameMixin.__post_init_post_parse__(self)
@@ -463,7 +467,7 @@ class SentryConfig:
     :param debug: Catch warning messages, increase verbosity.
     """
 
-    dsn: str = ''
+    dsn: str
     environment: str | None = None
     server_name: str | None = None
     release: str | None = None
@@ -575,7 +579,7 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    api: ApiConfig = field(default_factory=ApiConfig)
+    api: ApiConfig | None = None
     metrics: MetricsLevel = MetricsLevel.basic
     alt_operation_matcher: bool = False
 
@@ -604,7 +608,7 @@ class DipDupConfig:
     :param logging: Modify logging verbosity
     """
 
-    spec_version: str
+    spec_version: str | float
     package: str
     datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
@@ -616,7 +620,7 @@ class DipDupConfig:
     jobs: dict[str, JobConfig] = field(default_factory=dict)
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
-    sentry: SentryConfig = field(default_factory=SentryConfig)
+    sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
@@ -626,9 +630,9 @@ class DipDupConfig:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
 
-        self.paths: list[Path] = []
-        self.environment: dict[str, str] = {}
-        self.json = DipDupYAMLConfig()
+        self._paths: list[Path] = []
+        self._environment: dict[str, str] = {}
+        self._json = DipDupYAMLConfig()
         # FIXME: Tezos-specific config validation
         self._contract_addresses = {
             v.address: k
@@ -643,10 +647,7 @@ class DipDupConfig:
 
     @property
     def schema_name(self) -> str:
-        if isinstance(self.database, PostgresDatabaseConfig):
-            return self.database.schema_name
-        # NOTE: Not exactly correct; historical reason
-        return DEFAULT_POSTGRES_SCHEMA
+        return self.database.schema_name
 
     @property
     def package_path(self) -> Path:
@@ -680,9 +681,9 @@ class DipDupConfig:
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 
-        config.paths = paths
-        config.json = config_json
-        config.environment = config_environment
+        config._paths = paths
+        config._json = config_json
+        config._environment = config_environment
         return config
 
     def get_contract(self, name: str) -> ContractConfig:
@@ -771,7 +772,14 @@ class DipDupConfig:
         self._validate()
 
     def dump(self) -> str:
-        return DipDupYAMLConfig.dump(self.json)
+        return DipDupYAMLConfig(
+            **orjson.loads(
+                orjson.dumps(
+                    self,
+                    default=pydantic_encoder,
+                )
+            )
+        ).dump()
 
     def add_index(
         self,
@@ -1107,6 +1115,8 @@ _original_to_aliased = {
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': 'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None',
+    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
+        'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
+    ),
 }
 _patch_annotations(_original_to_aliased)

@@ -1,15 +1,15 @@
 import os
 import subprocess
 import tempfile
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
 from shutil import which
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
 
 import pytest
 
@@ -26,10 +26,11 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
     config_path = CONFIGS_PATH / config
     dipdup_pkg_path = SRC_PATH / 'dipdup'
     demo_pkg_path = SRC_PATH / package
+    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
 
     with tempfile.TemporaryDirectory() as tmp_root_path:
         # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_root_path) / 'dipdup.yml'
+        tmp_config_path = Path(tmp_root_path) / 'dipdup.yaml'
         os.symlink(config_path, tmp_config_path)
 
         tmp_bin_path = Path(tmp_root_path) / 'bin'
@@ -56,13 +57,12 @@ async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncI
         }
 
         subprocess.run(
-            f'dipdup -c {tmp_config_path} {cmd}',
+            f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {cmd}',
             cwd=tmp_root_path,
             check=True,
             shell=True,
             env=env,
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+            capture_output=True,
         )
 
         yield Path(tmp_root_path)
@@ -135,9 +135,8 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    from tortoise.transactions import in_transaction
-
     import demo_dex.models
+    from tortoise.transactions import in_transaction
 
     trades = await demo_dex.models.Trade.filter().count()
     positions = await demo_dex.models.Position.filter().count()

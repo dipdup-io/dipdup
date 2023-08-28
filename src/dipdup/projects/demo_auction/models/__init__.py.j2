@@ -1,0 +1,48 @@
+from enum import IntEnum
+
+
+from dipdup import fields
+from dipdup.models import Model
+
+
+class AuctionStatus(IntEnum):
+    ACTIVE = 0
+    FINISHED = 1
+
+
+class User(Model):
+    address = fields.TextField(pk=True)
+
+
+class Token(Model):
+    id = fields.BigIntField(pk=True)
+    address = fields.TextField()
+    amount = fields.BigIntField()
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+    holder: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'tokens')
+
+    token_id: int
+
+
+class Auction(Model):
+    id = fields.BigIntField(pk=True)
+    token: fields.ForeignKeyField[Token] = fields.ForeignKeyField('models.Token', 'auctions')
+    bid_amount = fields.BigIntField()
+    bidder: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'winning_auctions')
+    seller: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'created_auctions')
+    end_timestamp = fields.DatetimeField()
+    status = fields.IntEnumField(AuctionStatus)
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()
+
+    token_id: int
+
+
+class Bid(Model):
+    id = fields.BigIntField(pk=True)
+    auction: fields.ForeignKeyField[Auction] = fields.ForeignKeyField('models.Auction', 'bids')
+    bid_amount = fields.BigIntField()
+    bidder: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'bids')
+    level = fields.BigIntField()
+    timestamp = fields.DatetimeField()

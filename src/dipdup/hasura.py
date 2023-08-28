@@ -1,11 +1,10 @@
 import hashlib
 import logging
 import re
+from collections.abc import Iterable
+from collections.abc import Iterator
 from typing import Any
-from typing import Iterable
-from typing import Iterator
 from typing import TextIO
-from typing import Union
 from typing import cast
 
 import orjson
@@ -59,10 +58,8 @@ vulnerable_versions = {
     'v1.3.0': 'v1.3.4',
 }
 
-RelationalFieldT = Union[
-    fields.relational.ForeignKeyFieldInstance,
-    fields.relational.ManyToManyFieldInstance,
-]
+RelationalFieldT = fields.relational.ForeignKeyFieldInstance | fields.relational.ManyToManyFieldInstance
+
 _get_fields_query = """
 query introspectionQuery($name: String!) {
   __type(name: $name) {
@@ -110,6 +107,7 @@ class HasuraGateway(HTTPGateway):
         # NOTE: Fail fast; most Hasura errors are 500's that won't fix by themselves.
         # NOTE: Does not apply to initial healthcheck
         retry_sleep=1,
+        retry_multiplier=1.1,
         retry_count=3,
         alias='hasura',
     )
@@ -125,7 +123,7 @@ class HasuraGateway(HTTPGateway):
             hasura_config.url,
             ResolvedHttpConfig.create(self._default_http_config, http_config),
         )
-        self._logger = logging.getLogger('dipdup.hasura')
+        self._logger = logging.getLogger(__name__)
         self._package = package
         self._hasura_config = hasura_config
         self._database_config = database_config
@@ -244,13 +242,16 @@ class HasuraGateway(HTTPGateway):
             raise UnsupportedAPIError(
                 self.url,
                 'hasura',
-                f'A critical vulnerability has been discovered in {version}!\n    Update to {vulnerable_versions[version]} or the latest stable version immediately.',
+                (
+                    f'A critical vulnerability has been discovered in {version}!\n    Update to'
+                    f' {vulnerable_versions[version]} or the latest stable version immediately.'
+                ),
             )
 
         self._logger.info('Connected to Hasura %s', version)
 
     async def _create_source(self) -> dict[str, Any]:
-        self._logger.info(f'Adding source `{self._hasura_config.source}`')
+        self._logger.info('Adding source `%s`', self._hasura_config.source)
         return await self._hasura_request(
             endpoint='metadata',
             json={
@@ -321,8 +322,9 @@ class HasuraGateway(HTTPGateway):
             row[0]
             for row in (
                 await conn.execute_query(
-                    f"SELECT table_name FROM information_schema.views WHERE table_schema = '{self._database_config.schema_name}' UNION "
-                    f"SELECT matviewname as table_name FROM pg_matviews WHERE schemaname = '{self._database_config.schema_name}'"
+                    "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                    f" '{self._database_config.schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
+                    f" WHERE schemaname = '{self._database_config.schema_name}'"
                 )
             )[1]
         ]
@@ -550,17 +552,9 @@ class HasuraGateway(HTTPGateway):
         query_fields = ' '.join(f.name for f in fields)
         return {
             'name': name,
-            'query': 'query '
-            + name
-            + ' ('
-            + query_arg
-            + ') {'
-            + table
-            + '('
-            + query_filter
-            + ') {'
-            + query_fields
-            + '}}',
+            'query': (
+                'query ' + name + ' (' + query_arg + ') {' + table + '(' + query_filter + ') {' + query_fields + '}}'
+            ),
         }
 
     def _format_rest_head_status_query(self) -> dict[str, Any]:
@@ -609,8 +603,7 @@ class HasuraGateway(HTTPGateway):
     def _format_custom_column_names(self, fields: list[Field]) -> dict[str, Any]:
         if self._hasura_config.camel_case:
             return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
-        else:
-            return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
+        return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
 
     def _format_table(self, name: str) -> dict[str, Any]:
         return {
@@ -673,5 +666,4 @@ class HasuraGateway(HTTPGateway):
 
     def _iterate_metadata_requests(self) -> Iterator[TextIO]:
         metadata_path = env.get_package_path(self._package) / 'hasura'
-        for file in iter_files(metadata_path, '.json'):
-            yield file
+        yield from iter_files(metadata_path, '.json')

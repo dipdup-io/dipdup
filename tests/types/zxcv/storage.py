@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import Union
 
 from pydantic import BaseModel
 from pydantic import Extra
@@ -58,7 +56,7 @@ class ZxcvStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    map: Dict[str, Union[MapItem, MapItem1]]
-    unit: Dict[str, Any]
-    or_: Union[OrItem, OrItem1] = Field(..., alias='or')
-    big_map: Dict[str, Union[BigMapItem, BigMapItem1]]
+    map: dict[str, MapItem | MapItem1]
+    unit: dict[str, Any]
+    or_: OrItem | OrItem1 = Field(..., alias='or')
+    big_map: dict[str, BigMapItem | BigMapItem1]

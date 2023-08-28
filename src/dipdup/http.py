@@ -2,7 +2,9 @@ import asyncio
 import hashlib
 import logging
 import platform
+import sys
 import time
+from collections.abc import Mapping
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
@@ -10,8 +12,6 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 from typing import Literal
-from typing import Mapping
-from typing import Optional
 from typing import cast
 from typing import overload
 from urllib.parse import urlsplit
@@ -80,20 +80,20 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     Covers caching, retrying failed requests and ratelimiting"""
 
     def __init__(self, url: str, config: ResolvedHttpConfig) -> None:
-        self._logger = logging.getLogger('dipdup.http')
+        self._logger = logging.getLogger(__name__)
         parsed_url = urlsplit(url)
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
         self._alias = config.alias or parsed_url.netloc
         self._path = parsed_url.path
         self._config = config
         self._user_agent_args: tuple[str, ...] = ()
-        self._user_agent: Optional[str] = None
+        self._user_agent: str | None = None
         self._ratelimiter = (
             AsyncLimiter(max_rate=config.ratelimit_rate, time_period=config.ratelimit_period)
             if config.ratelimit_rate and config.ratelimit_period
             else None
         )
-        self.__session: Optional[aiohttp.ClientSession] = None
+        self.__session: aiohttp.ClientSession | None = None
 
     async def __aenter__(self) -> None:
         """Create underlying aiohttp session"""
@@ -144,9 +144,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         attempt = 1
         retry_sleep = self._config.retry_sleep
         retry_count = self._config.retry_count
+        retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
 
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count or 'inf')
+            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
             try:
                 return await self._request(
                     method=method,
@@ -155,7 +156,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     **kwargs,
                 )
             except safe_exceptions as e:
-                if retry_count is not None and attempt - 1 == retry_count:
+                if self._config.retry_count and attempt - 1 == self._config.retry_count:
                     raise e
 
                 ratelimit_sleep: float | None = None
@@ -173,10 +174,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     if Metrics.enabled:
                         Metrics.set_http_error(self._url, 0)
 
-                sleep_seconds = ratelimit_sleep or retry_sleep
-                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count, e)
-                self._logger.info('Waiting %s seconds before retry', sleep_seconds)
-                await asyncio.sleep(sleep_seconds)
+                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
+                self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
+                await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1
                 if not ratelimit_sleep:
                     retry_sleep *= self._config.retry_multiplier
@@ -299,8 +299,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Performs an HTTP request."""
         if self._config.replay_path:
             return await self._replay_request(method, url, weight, **kwargs)
-        else:
-            return await self._retry_request(method, url, weight, **kwargs)
+        return await self._retry_request(method, url, weight, **kwargs)
 
     def set_user_agent(self, *args: str) -> None:
         """Add list of arguments to User-Agent header"""

@@ -1,0 +1,5 @@
+# Run `dipdup new --replay configs/replay.yaml` to generate new project from this replay
+spec_version: 2.0
+replay:
+{% for k, v in project.items() %}{{ '  ' + k + ': ' + v }}
+{% endfor %}

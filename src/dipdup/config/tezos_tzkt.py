@@ -18,7 +18,7 @@ TZKT_API_URLS: dict[str, str] = {
 }
 
 
-DEFAULT_TZKT_URL = tuple(TZKT_API_URLS.keys())[0]
+DEFAULT_TZKT_URL = next(iter(TZKT_API_URLS.keys()))
 MAX_BATCH_SIZE = 10000
 
 

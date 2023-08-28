@@ -1,6 +1,8 @@
+import logging
 from collections import deque
+from collections.abc import Iterable
+from itertools import cycle
 from typing import Any
-from typing import Iterable
 
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
@@ -14,6 +16,8 @@ from dipdup.package import EventAbiExtra
 from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
+
+_logger = logging.getLogger(__name__)
 
 MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 
@@ -34,7 +38,11 @@ def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExt
     indexed_values = iter(decode_indexed_topics(tuple(n for n, i in inputs if i), topics))
 
     non_indexed_bytes = decode_hex(data)
-    non_indexed_values = iter(decode_abi(tuple(n for n, i in inputs if not i), non_indexed_bytes))
+    if non_indexed_bytes:
+        non_indexed_values = iter(decode_abi(tuple(n for n, i in inputs if not i), non_indexed_bytes))
+    else:
+        # NOTE: Node truncates trailing zeros in event data
+        non_indexed_values = cycle((0,))
 
     values: deque[Any] = deque()
     for _, indexed in inputs:
@@ -94,8 +102,13 @@ def match_events(
             if topics[typename][name] != event.topics[0]:
                 continue
 
+            address = handler_config.contract.address
+            if address and address != event.address:
+                continue
+
             arg = prepare_event_handler_args(package, handler_config, event)
             matched_handlers.append((handler_config, arg))
             break
 
+    _logger.debug('%d handlers matched', len(matched_handlers))
     return matched_handlers

@@ -1,0 +1,52 @@
+[project]
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = { text = "{{ project.license }}" }
+authors = [
+    { name = "{{ project.name }}", email = "{{ project.email }}" }
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "dipdup>={{ project.dipdup_version }}.0.0rc4,<{{ project.dipdup_version | int + 1 }}"
+]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "isort",
+    "black",
+    "ruff",
+    "mypy",
+]
+
+[tool.pdm.scripts]
+_isort = "isort ."
+_black = "black ."
+_ruff = "ruff check --fix ."
+_mypy = "mypy --no-incremental --exclude {{ project.package }} ."
+all = { composite = ["fmt", "lint"] }
+fmt = { composite = ["_isort", "_black"] }
+lint = { composite = ["_ruff", "_mypy"] }
+image = "docker buildx build . --load --progress plain -f deploy/Dockerfile -t {{ project.package }}:latest"
+
+[tool.isort]
+line_length = {{ project.line_length }}
+force_single_line = true
+
+[tool.black]
+line-length = {{ project.line_length }}
+target-version = ['py311']
+skip-string-normalization = true
+
+[tool.ruff]
+line-length = {{ project.line_length }}
+target-version = 'py311'
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

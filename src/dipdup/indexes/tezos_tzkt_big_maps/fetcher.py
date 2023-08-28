@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
-from typing import Iterable
+from typing import TYPE_CHECKING
 
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktBigMapData
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+    from collections.abc import Iterable
+
+    from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
+    from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+    from dipdup.datasources.tezos_tzkt import TzktDatasource
 
 
 def get_big_map_addresses(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[str]:
@@ -55,7 +59,7 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
         big_map_paths: set[str],
     ) -> None:
         super().__init__(datasource, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger('dipdup.fetcher')
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 

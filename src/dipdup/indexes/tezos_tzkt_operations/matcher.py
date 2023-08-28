@@ -1,7 +1,7 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from typing import Any
-from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
@@ -45,7 +45,7 @@ def prepare_operation_handler_args(
 ) -> deque[OperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[OperationsHandlerArgumentU] = deque()
-    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
+    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=True):
         if operation_data is None:
             args.append(None)
 
@@ -54,8 +54,8 @@ def prepare_operation_handler_args(
                 args.append(operation_data)
                 continue
 
-            if not operation_data.parameter_json:
-                raise FrameworkException('Transaction parameter is empty')
+            if operation_data.parameter_json is None:
+                raise FrameworkException('Processing typed transaction, but parameter_json is None')
             typename = pattern_config.typed_contract.module_name
             type_ = get_parameter_type(package, typename, pattern_config.entrypoint)
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
@@ -215,7 +215,7 @@ def match_operation_subgroup(
         else:
             raise FrameworkException('Type of the first handler argument is unknown')
 
-    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
+    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list, strict=True))]
     if index_list == sorted_index_list:
         return matched_handlers
 

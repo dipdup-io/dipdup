@@ -46,7 +46,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._queue: deque[IndexQueueItemT] = deque()
         queues.add_queue(self._queue, f'index_realtime:{config.name}')
 
-        self._logger = FormattedLogger('dipdup.index', fmt=f'{config.name}: ' + '{}')
+        self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
@@ -193,7 +193,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level: int | None = None,
     ) -> None:
         state = self.state
-        self._logger.debug('Status %s (was %s) at %s (was %s)', status, state.status, level, state.level)
+        if level:
+            self._logger.debug('Level updated: %s -> %s', state.level, level)
+        if status:
+            self._logger.info('Status updated: %s -> %s', state.status, status)
         state.status = status or state.status
         state.level = level or state.level
         await state.save()

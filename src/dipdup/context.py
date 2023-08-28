@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import importlib
 import os
@@ -9,10 +11,8 @@ from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
-from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -62,7 +62,6 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
-from dipdup.package import DipDupPackage
 from dipdup.performance import _CacheManager
 from dipdup.performance import _MetricManager
 from dipdup.performance import _QueueManager
@@ -70,8 +69,17 @@ from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
 from dipdup.prometheus import Metrics
-from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from collections.abc import Iterator
+    from types import ModuleType
+
+    from dipdup.config.evm_node import EvmNodeDatasourceConfig
+    from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
+    from dipdup.package import DipDupPackage
+    from dipdup.transactions import TransactionManager
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
@@ -184,14 +192,14 @@ class DipDupContext:
                 await Index.filter().update(config_hash='')
             return
 
-        elif action == ReindexingAction.exception:
+        if action == ReindexingAction.exception:
             schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
                 schema.reindex = reason
                 await schema.save()
             raise ReindexingRequiredError(schema.reindex, context)
 
-        elif action == ReindexingAction.wipe:
+        if action == ReindexingAction.wipe:
             conn = get_connection()
             immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
             await wipe_schema(
@@ -285,11 +293,16 @@ class DipDupContext:
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
 
+    def _link(self, new_ctx: DipDupContext) -> None:
+        new_ctx._pending_indexes = self._pending_indexes
+        new_ctx._pending_hooks = self._pending_hooks
+        new_ctx._rolled_back_indexes = self._rolled_back_indexes
+        new_ctx._handlers = self._handlers
+        new_ctx._hooks = self._hooks
+
     async def _spawn_index(self, name: str, state: Index | None = None) -> None:
         # NOTE: Avoiding circular import
-        from dipdup.config.evm_node import EvmNodeDatasourceConfig
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
-        from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -303,7 +316,7 @@ class DipDupContext:
         datasource: TzktDatasource | SubsquidDatasource
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
-        if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+        if isinstance(index_config, TzktOperationsIndexConfig | TzktOperationsUnfilteredIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktOperationsIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktBigMapsIndexConfig):
@@ -336,7 +349,7 @@ class DipDupContext:
 
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig))
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -469,7 +482,7 @@ class DipDupContext:
             ).order_by('-id')
 
             if updates:
-                self.logger.info(f'Reverting {len(updates)} updates')
+                self.logger.info('Reverting %s updates', len(updates))
             for update in updates:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
@@ -596,7 +609,7 @@ class DipDupContext:
     ) -> Any:
         """Executes SQL query with given name included with the project
 
-        :param name: SQL query name within `<project>/sql` directory
+        :param name: SQL query name within `sql` directory
         """
 
         sql_path = self._get_sql_path(name)
@@ -667,8 +680,8 @@ class HookContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         hook_config: HookConfig,
-    ) -> 'HookContext':
-        return cls(
+    ) -> HookContext:
+        new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
             datasources=ctx.datasources,
@@ -676,6 +689,8 @@ class HookContext(DipDupContext):
             logger=logger,
             hook_config=hook_config,
         )
+        ctx._link(new_ctx)
+        return new_ctx
 
 
 class _TemplateValues(dict[str, Any]):
@@ -728,8 +743,8 @@ class HandlerContext(DipDupContext):
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: IndexDatasource[Any],
-    ) -> 'HandlerContext':
-        return cls(
+    ) -> HandlerContext:
+        new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
             datasources=ctx.datasources,
@@ -738,3 +753,5 @@ class HandlerContext(DipDupContext):
             handler_config=handler_config,
             datasource=datasource,
         )
+        ctx._link(new_ctx)
+        return new_ctx

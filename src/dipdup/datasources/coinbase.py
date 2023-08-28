@@ -1,6 +1,6 @@
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
-from datetime import timezone
 from typing import Any
 from typing import cast
 
@@ -16,6 +16,8 @@ API_URL = 'https://api.pro.coinbase.com'
 
 class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
     _default_http_config = HttpConfig(
+        retry_sleep=1,
+        retry_multiplier=1.1,
         ratelimit_rate=10,
         ratelimit_period=1,
     )
@@ -33,7 +35,11 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         )
 
     async def get_candles(
-        self, since: datetime, until: datetime, interval: CandleInterval, ticker: str = 'XTZ-USD'
+        self,
+        since: datetime,
+        until: datetime,
+        interval: CandleInterval,
+        ticker: str,
     ) -> list[CandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
@@ -41,8 +47,8 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
                 'get',
                 url=f'products/{ticker}/candles',
                 params={
-                    'start': _since.replace(tzinfo=timezone.utc).isoformat(),
-                    'end': _until.replace(tzinfo=timezone.utc).isoformat(),
+                    'start': _since.replace(tzinfo=UTC).isoformat(),
+                    'end': _until.replace(tzinfo=UTC).isoformat(),
                     'granularity': interval.seconds,
                 },
             )
@@ -50,7 +56,10 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         return sorted(candles, key=lambda c: c.timestamp)
 
     def _split_candle_requests(
-        self, since: datetime, until: datetime, interval: CandleInterval
+        self,
+        since: datetime,
+        until: datetime,
+        interval: CandleInterval,
     ) -> list[tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []

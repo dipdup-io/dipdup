@@ -1,0 +1,38 @@
+spec_version: 2.0
+package: {{ project.package }}
+
+contracts:
+  mainnet_name_registry:
+    kind: tezos
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt_mainnet:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  domains:
+    kind: tezos.tzkt.operations
+    datasource: <datasource>
+    contracts:
+      - <name_registry>
+    handlers:
+      - callback: on_admin_update
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: admin_update
+      - callback: on_execute
+        pattern:
+          - type: transaction
+            destination: <name_registry>
+            entrypoint: execute
+
+indexes:
+  domains_mainnet:
+    template: domains
+    values:
+      datasource: tzkt_mainnet
+      name_registry: mainnet_name_registry

@@ -4,18 +4,18 @@ import decimal
 import hashlib
 import importlib
 import logging
+from collections.abc import AsyncIterator
+from collections.abc import Iterable
+from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from pathlib import Path
-from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Iterable
-from typing import Iterator
 from typing import cast
 
+import asyncpg.exceptions  # type: ignore[import]
 import sqlparse  # type: ignore[import]
-from asyncpg import CannotConnectNowError  # type: ignore[import]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -26,10 +26,14 @@ from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
 
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 _logger = logging.getLogger(__name__)
 
@@ -58,6 +62,11 @@ async def tortoise_wrapper(
     unsafe_sqlite: bool = False,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
+    if ':memory' in url:
+        _logger.warning('Using in-memory database; data will be lost on exit')
+    if '/tmp/' in url:
+        _logger.warning('Using tmpfs database; data will be lost on reboot')
+
     model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
     }
@@ -80,7 +89,10 @@ async def tortoise_wrapper(
                 )
 
                 conn = get_connection()
-                await conn.execute_query('SELECT 1')
+                try:
+                    await conn.execute_query('SELECT 1')
+                except asyncpg.exceptions.InvalidPasswordError as e:
+                    raise ConfigurationError(f'{e.__class__.__name__}: {e}') from e
 
                 if unsafe_sqlite:
                     _logger.warning('Unsafe SQLite mode enabled; database integrity is not guaranteed!')
@@ -89,7 +101,7 @@ async def tortoise_wrapper(
                     await conn.execute_script('PRAGMA journal_mode = OFF')
 
             # FIXME: Poor logging
-            except (OSError, CannotConnectNowError):
+            except (OSError, asyncpg.exceptions.CannotConnectNowError):
                 _logger.warning("Can't establish database connection, attempt %s/%s", attempt, timeout)
                 if attempt == timeout - 1:
                     raise
@@ -297,9 +309,11 @@ def prepare_models(package: str | None) -> None:
         # NOTE: Enforce our class for user models
         if app != 'int_models' and not issubclass(model, dipdup.models.Model):
             raise InvalidModelsError(
-                'Project models must be subclassed from `dipdup.models.Model`.'
-                '\n\n'
-                'Replace `from tortoise import Model` import with `from dipdup.models import Model`.',
+                (
+                    'Project models must be subclassed from `dipdup.models.Model`.'
+                    '\n\n'
+                    'Replace `from tortoise import Model` import with `from dipdup.models import Model`.'
+                ),
                 model,
             )
 
@@ -344,15 +358,15 @@ def prepare_models(package: str | None) -> None:
             # NOTE: Enforce unique field names to avoid GraphQL issues
             if field_name == table_name:
                 raise InvalidModelsError(
-                    'Model field names must differ from table name.',
+                    'Model field names must differ from the table name.',
                     model,
                     field_name,
                 )
 
             # NOTE: The same for backward relations
-            if isinstance(field, dipdup.fields.ForeignKeyFieldInstance) and field.related_name == table_name:
+            if isinstance(field, dipdup.fields.ForeignKeyField) and field.related_name == table_name:
                 raise InvalidModelsError(
-                    'Model field names must differ from table name.',
+                    'Model field names must differ from the table name.',
                     model,
                     f'related_name={field.related_name}',
                 )
