@@ -3,6 +3,7 @@ import zipfile
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
+from copy import copy
 from io import BytesIO
 from typing import Any
 
@@ -10,6 +11,7 @@ import pyarrow.ipc  # type: ignore[import]
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.models.evm_subsquid import LogFieldSelection
@@ -86,6 +88,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                     f'{self._config.url}/{current_level}/worker',
                 )
             ).decode()
+            worker_config = copy(self._config)
+            worker_config.url = worker_url
+            worker_datasource: SubsquidWorker = SubsquidWorker(worker_config)
 
             query: Query = {
                 'logs': log_request,
@@ -97,11 +102,12 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 'toBlock': last_level,
             }
 
-            response: list[dict[str, Any]] = await self.request(
-                'post',
-                url=worker_url,
-                json=query,
-            )
+            async with worker_datasource:
+                response: list[dict[str, Any]] = await worker_datasource.request(
+                    'post',
+                    url=worker_url,
+                    json=query,
+                )
 
             for level_logs in response:
                 level = level_logs['header']['number']
@@ -125,3 +131,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')
         return int(response)
+
+
+class SubsquidWorker(Datasource[Any]):
+    async def run(self) -> None:
+        pass
