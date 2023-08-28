@@ -1,6 +1,6 @@
 database:
   kind: postgres
-  host: demo_uniswap_db
+  host: ${POSTGRES_HOST:-demo-uniswap_db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD}
