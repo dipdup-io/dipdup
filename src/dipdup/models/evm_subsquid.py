@@ -189,7 +189,7 @@ class SubsquidEventData(HasLevel):
     transaction_hash: str
     transaction_index: int
     level: int
-    # TODO: timestamp
+    timestamp: int
     # block_hash: str
     # block_number: int
 
@@ -198,6 +198,7 @@ class SubsquidEventData(HasLevel):
         cls,
         event_json: dict[str, Any],
         level: int,
+        timestamp: int,
     ) -> 'SubsquidEventData':
         return SubsquidEventData(
             address=event_json['address'],
@@ -209,6 +210,7 @@ class SubsquidEventData(HasLevel):
             # block_hash=event_json['blockHash'],
             # level=event_json['blockNumber'],
             level=level,
+            timestamp=timestamp,
         )
 
     @property

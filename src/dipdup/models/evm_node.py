@@ -93,9 +93,10 @@ class EvmNodeLogData:
     transaction_index: str
     log_index: str
     removed: bool
+    timestamp: int
 
     @classmethod
-    def from_json(cls, log_json: dict[str, Any]) -> 'EvmNodeLogData':
+    def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
         return cls(
             address=log_json['address'],
             topics=log_json['topics'],
@@ -105,6 +106,7 @@ class EvmNodeLogData:
             transaction_index=log_json['transactionIndex'],
             log_index=log_json['logIndex'],
             removed=log_json['removed'],
+            timestamp=timestamp,
         )
 
     @property
