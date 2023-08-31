@@ -1,13 +1,13 @@
 database:
   kind: postgres
-  host: {{ project.package }}_db
+  host: ${POSTGRES_HOST:-{{ project.package }}_db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://{{ project.package }}_hasura:8080
+  url: http://${HASURA_HOST:-{{ project.package }}_hasura}:8080
   admin_secret: ${HASURA_SECRET}
   allow_aggregations: false
   camel_case: true

@@ -135,9 +135,8 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    from tortoise.transactions import in_transaction
-
     import demo_dex.models
+    from tortoise.transactions import in_transaction
 
     trades = await demo_dex.models.Trade.filter().count()
     positions = await demo_dex.models.Position.filter().count()
