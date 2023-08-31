@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import orjson as json
-from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
 
+from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TzktOperationData
 from tests.types.asdf.storage import AsdfStorage
