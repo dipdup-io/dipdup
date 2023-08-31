@@ -26,7 +26,10 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
     topics: tuple[tuple[str, ...], ...] | None = None
 
     def get_params(self) -> list[Any]:
-        return [*super().get_params(), {'address': self.address, 'topics': self.topics}]
+        return [
+            *super().get_params(),
+            {'address': self.address, 'topics': self.topics},
+        ]
 
 
 @dataclass(frozen=True)
