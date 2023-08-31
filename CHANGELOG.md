@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- evm.subsquid: Create a separate aiohttp session for each worker.
+- evm.node: Set `timestamp` field to the block timestamp.
+
 ## [7.0.0rc4] - 2023-08-23
 
 ### Added
