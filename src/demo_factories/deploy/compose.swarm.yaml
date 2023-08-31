@@ -1,3 +1,4 @@
+version: "3.8"
 name: demo_factories
 
 services:
@@ -9,7 +10,7 @@ services:
     command: ["-c", "dipdup.yaml", "-c", "configs/dipdup.swarm.yaml", "run"]
     env_file: .env
     networks:
-      - dipdup-private
+      - internal
       - prometheus-private
     deploy:
       mode: replicated
@@ -42,7 +43,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - dipdup-private
+      - internal
     deploy:
       mode: replicated
       replicas: 1
@@ -63,7 +64,7 @@ services:
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
     networks:
-      - dipdup-private
+      - internal
       - traefik-public
     deploy:
       mode: replicated
@@ -84,7 +85,7 @@ volumes:
   db:
 
 networks:
-  dipdup-private:
+  internal:
   traefik-public:
     external: true
   prometheus-private:

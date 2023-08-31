@@ -1,13 +1,13 @@
 database:
   kind: postgres
-  host: demo_factories_db
+  host: ${POSTGRES_HOST:-demo_factories_db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://demo_factories_hasura:8080
+  url: http://${HASURA_HOST:-demo_factories_hasura}:8080
   admin_secret: ${HASURA_SECRET}
   allow_aggregations: false
   camel_case: true
