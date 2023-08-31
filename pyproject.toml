@@ -147,7 +147,7 @@ ignore = [
 target-version = "py311"
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
-isort = { force-single-line = true, known-first-party = ["dipdup"] }
+isort = { force-single-line = true }
 
 [tool.mypy]
 python_version = "3.11"

@@ -90,12 +90,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             ).decode()
             worker_config = copy(self._config)
             worker_config.url = worker_url
-            worker_datasource: SubsquidWorker = SubsquidWorker(worker_config)
+            worker_datasource: _SubsquidWorker = _SubsquidWorker(worker_config)
 
             query: Query = {
                 'logs': log_request,
                 'fields': {
-                    'block': {'timestamp': True},
+                    'block': {
+                        'timestamp': True,
+                    },
                     'log': LOG_FIELDS,
                 },
                 'fromBlock': current_level,
@@ -133,6 +135,6 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         return int(response)
 
 
-class SubsquidWorker(Datasource[Any]):
+class _SubsquidWorker(Datasource[Any]):
     async def run(self) -> None:
         pass
