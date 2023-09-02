@@ -5,7 +5,8 @@ concurrency:
 on:
   push:
     branches:
-      - master'
+      - master
+      - fix/tzkt-transactions-backport
     paths:
       - 'docs/**'
       - 'scripts/**'

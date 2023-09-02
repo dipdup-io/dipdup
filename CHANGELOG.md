@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- tzkt: Fixed pagination when requesting transactions.
+- tzkt: Use cursor iteration where possible.
+
 ## [6.5.10] - 2023-08-02
 
 ### Fixed
