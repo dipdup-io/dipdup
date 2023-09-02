@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.subsquid: Create a separate aiohttp session for each worker.
 - evm.node: Set `timestamp` field to the block timestamp.
 
+## [6.5.11] - 2023-09-02
+
+### Fixed
+
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- tzkt: Fixed pagination when requesting transactions.
+- tzkt: Use cursor iteration where possible.
+
 ## [7.0.0rc4] - 2023-08-23
 
 ### Added
