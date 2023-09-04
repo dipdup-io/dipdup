@@ -1,7 +1,7 @@
 # NOTE: To run this pipeline in act replace secrets.GITHUB_TOKEN with $GITHUB_TOKEN and uncomment the first step
 
 name: Docs
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
