@@ -162,10 +162,6 @@ def install(
     if ref and path:
         fail('Specify either ref or path, not both')
 
-    if not any((version, ref, path)):
-        # FIXME: Temporary, remove when 7.0.0 is released
-        version = '7.0.0rc4'
-
     env = DipDupEnvironment()
     env.prepare()
     if not quiet:
