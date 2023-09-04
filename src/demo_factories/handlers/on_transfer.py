@@ -1,16 +1,18 @@
 import demo_factories.models as models
+from demo_factories.types.token.tezos_parameters.transfer import TransferParameter
+from demo_factories.types.token.tezos_storage import TokenStorage
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    transfer: TzktTransaction,
+    transfer: TzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
     transfers = []
-    for transfer in TzktTransaction.parameter:
+    for transfer_item in transfer.parameter:
         transfers.append(models.Transfer(
-            from_=TzktTransaction.parameter.from_,
-            to=[models.Tx(to_=tx.to_, amount=tx.amount) for tx in transfer.txs]
+            from_=transfer_item.parameter.from_,
+            to_=[models.Tx(to_=tx.to_, amount=tx.amount) for tx in transfer_item.txs]
         ))
     await models.Transfer.bulk_create(transfers)
