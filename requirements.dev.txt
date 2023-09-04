@@ -79,7 +79,7 @@ pypika-tortoise==0.1.6
 pyrsistent==0.19.3
 pysignalr==0.2.0
 PySnooper==1.2.0
-pytest==7.4.0
+pytest==7.4.1
 pytest-aiohttp==1.0.4
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
@@ -94,7 +94,7 @@ rfc3339-validator==0.1.4
 rlp==3.0.0
 ruamel-yaml==0.17.32
 ruamel-yaml-clib==0.2.7
-ruff==0.0.286
+ruff==0.0.287
 sentry-sdk==1.30.0
 setuptools==68.1.2
 six==1.16.0
