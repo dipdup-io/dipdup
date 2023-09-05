@@ -116,6 +116,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (dev only)
     :param logger: Context-aware logger instance
     """
 
@@ -220,11 +221,11 @@ class DipDupContext:
     ) -> None:
         """Adds contract to the inventory.
 
+        :param kind: Either 'tezos' or 'evm' allowed
         :param name: Contract name
         :param address: Contract address
         :param typename: Alias for the contract script
         :param code_hash: Contract code hash
-        :param kind: Either 'tezos' or 'evm' allowed
         """
         self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
@@ -287,6 +288,9 @@ class DipDupContext:
         :param name: Index name
         :param template: Index template to use
         :param values: Mapping of values to fill template with
+        :param first_level: First level to start indexing from
+        :param last_level: Last level to index
+        :param state: Initial index state (dev only)
         """
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
@@ -606,6 +610,7 @@ class DipDupContext:
         """Executes SQL query with given name included with the project
 
         :param name: SQL query name within `sql` directory
+        :param values: Values to pass to the query
         """
 
         sql_path = self._get_sql_path(name)

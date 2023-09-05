@@ -569,7 +569,7 @@ class AdvancedConfig:
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param api: Monitoring API config
     :param metrics: off/basic/advanced based on how much performance metrics you want to collect
-    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
+    :param alt_operation_matcher: Use different algorithm to match operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
