@@ -27,7 +27,6 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -77,7 +76,6 @@ if TYPE_CHECKING:
     from types import ModuleType
 
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
-    from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
@@ -310,7 +308,7 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidOperationsIndex | SubsquidEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
@@ -337,8 +335,6 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            raise NotImplementedError
         else:
             raise NotImplementedError
 

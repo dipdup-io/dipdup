@@ -222,8 +222,3 @@ class SubsquidEventData(HasLevel):
 class SubsquidEvent(Generic[PayloadT]):
     data: SubsquidEventData | EvmNodeLogData
     payload: PayloadT
-
-
-@dataclass(frozen=True)
-class SubsquidOperation:
-    ...
