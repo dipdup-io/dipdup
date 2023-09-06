@@ -20,7 +20,7 @@ chardet==5.2.0
 charset-normalizer==3.2.0
 click==8.1.7
 cytoolz==0.12.2
-datamodel-code-generator==0.21.4
+datamodel-code-generator==0.21.5
 dnspython==2.4.2
 email-validator==2.0.0.post2
 eth-abi==4.2.0
