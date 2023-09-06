@@ -179,6 +179,13 @@ async def assert_run_raw() -> None:
     assert migrations == 2
 
 
+async def assert_run_evm_events() -> None:
+    import demo_evm_events.models
+
+    holders = await demo_evm_events.models.Holder.filter().count()
+    assert holders == 5296
+
+
 async def assert_run_dao() -> None:
     import demo_dao.models
 
@@ -225,6 +232,8 @@ test_params = (
     ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
+    ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
 )
 
 

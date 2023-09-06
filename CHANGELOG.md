@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [7.0.0] - 2023-09-XX
 
+This release contains no changes except for the version number.
+
+## [7.0.0rc5] - 2023-09-06
+
 ### Fixed
 
 - evm.subsquid: Create a separate aiohttp session for each worker.
@@ -1158,6 +1162,7 @@ This release contains no changes except for the version number.
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0...HEAD
 [7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0
+[7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
 [7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3

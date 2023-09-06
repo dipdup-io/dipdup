@@ -3,6 +3,8 @@ import time
 from collections import defaultdict
 from collections.abc import Awaitable
 from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field
 from typing import Any
 from uuid import uuid4
 
@@ -43,6 +45,13 @@ SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[
 RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
 
 
+@dataclass
+class NodeHead:
+    event: asyncio.Event = field(default_factory=asyncio.Event)
+    hash: str | None = None
+    timestamp: int | None = None
+
+
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     # TODO: Make dynamic
     _default_http_config = HttpConfig(ratelimit_sleep=30)
@@ -54,8 +63,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
-        self._head_hashes: dict[int, str] = {}
-        self._head_events: defaultdict[int, asyncio.Event] = defaultdict(asyncio.Event)
+        self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
@@ -267,28 +275,30 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             raise DatasourceError(f'Unknown message: {data}', self.name)
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
-        msg_type = MessageType()
-
         if isinstance(subscription, EvmNodeNewHeadsSubscription):
             head = EvmNodeHeadData.from_json(data)
             level = int(head.number, 16)
 
-            known_hash = self._head_hashes.get(level, None)
-            current_level = max(self._head_hashes.keys() or (level,))
-            self._head_hashes[level] = head.hash
-            if known_hash != head.hash:
-                await self.emit_rollback(msg_type, from_level=current_level, to_level=level - 1)
+            known_hash = self._heads[level].hash
+            if known_hash not in (head.hash, None):
+                await self.emit_rollback(
+                    MessageType(),
+                    from_level=max(self._heads.keys() or (level,)),
+                    to_level=level - 1,
+                )
 
+            self._heads[level].hash = head.hash
+            self._heads[level].timestamp = int(head.timestamp, 16)
             await self.emit_head(head)
-            self._head_events[level].set()
+            self._heads[level].event.set()
 
         elif isinstance(subscription, EvmNodeLogsSubscription):
-            # FIXME: Take from the head instead.
-            timestamp = int(time.time())
+            level = int(data['blockNumber'], 16)
+            await self._heads[level].event.wait()
+            timestamp = self._heads[level].timestamp
+            if timestamp is None:
+                raise FrameworkException('Head cached but timestamp is None')
             logs = EvmNodeLogData.from_json(data, timestamp)
-            level = int(logs.block_number, 16)
-
-            await self._head_events[level].wait()
             await self.emit_logs(logs)
 
         elif isinstance(subscription, EvmNodeSyncingData):
