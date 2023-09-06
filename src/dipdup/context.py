@@ -27,7 +27,6 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -77,7 +76,6 @@ if TYPE_CHECKING:
     from types import ModuleType
 
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
-    from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
@@ -118,6 +116,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (dev only)
     :param logger: Context-aware logger instance
     """
 
@@ -222,11 +221,11 @@ class DipDupContext:
     ) -> None:
         """Adds contract to the inventory.
 
+        :param kind: Either 'tezos' or 'evm' allowed
         :param name: Contract name
         :param address: Contract address
         :param typename: Alias for the contract script
         :param code_hash: Contract code hash
-        :param kind: Either 'tezos' or 'evm' allowed
         """
         self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
         addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
@@ -289,6 +288,9 @@ class DipDupContext:
         :param name: Index name
         :param template: Index template to use
         :param values: Mapping of values to fill template with
+        :param first_level: First level to start indexing from
+        :param last_level: Last level to index
+        :param state: Initial index state (dev only)
         """
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
@@ -310,7 +312,7 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidOperationsIndex | SubsquidEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
@@ -337,8 +339,6 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            raise NotImplementedError
         else:
             raise NotImplementedError
 
@@ -610,6 +610,7 @@ class DipDupContext:
         """Executes SQL query with given name included with the project
 
         :param name: SQL query name within `sql` directory
+        :param values: Values to pass to the query
         """
 
         sql_path = self._get_sql_path(name)
