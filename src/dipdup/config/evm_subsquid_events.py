@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 class SubsquidEventsHandlerConfig(HandlerConfig):
     """Subsquid event handler
 
+    :param callback: Callback name
     :param contract: EVM contract
     :param name: Method name
     """

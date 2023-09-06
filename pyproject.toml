@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.0.0rc4"
+version = "7.0.0rc5"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -147,7 +147,7 @@ ignore = [
 target-version = "py311"
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
-isort = { force-single-line = true }
+isort = { force-single-line = true, known-first-party = ["dipdup"] }
 
 [tool.mypy]
 python_version = "3.11"

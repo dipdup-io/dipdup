@@ -48,6 +48,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
 # TODO: demo_backup
 # TODO: demo_sql
 # TODO: demo_timescale
+# TODO: demo_cli
 
 
 class Answers(TypedDict):
