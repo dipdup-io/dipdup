@@ -135,9 +135,8 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    from tortoise.transactions import in_transaction
-
     import demo_dex.models
+    from tortoise.transactions import in_transaction
 
     trades = await demo_dex.models.Trade.filter().count()
     positions = await demo_dex.models.Position.filter().count()
@@ -178,6 +177,13 @@ async def assert_run_raw() -> None:
     assert transactions == 167
     assert originations == 1
     assert migrations == 2
+
+
+async def assert_run_evm_events() -> None:
+    import demo_evm_events.models
+
+    holders = await demo_evm_events.models.Holder.filter().count()
+    assert holders == 5296
 
 
 async def assert_run_dao() -> None:
@@ -226,6 +232,8 @@ test_params = (
     ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
+    ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
 )
 
 
