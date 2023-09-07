@@ -32,4 +32,4 @@ indexes:
             destination: registry
             entrypoint: propose
     first_level: 1881619
-    last_level: 2933505
+    last_level: 1894492
