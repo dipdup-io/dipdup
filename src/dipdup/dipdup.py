@@ -183,7 +183,6 @@ class IndexDispatcher:
         Metrics.set_indexes_count(active, synced, realtime)
 
     async def _metrics_loop(self, update_interval: float) -> None:
-
         while True:
             await asyncio.sleep(update_interval)
             await self._update_metrics()
@@ -725,7 +724,7 @@ class DipDup:
         start_scheduler_event: Event,
         early_realtime: bool,
         run: bool,
-        metrics: bool
+        metrics: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
         self._index_dispatcher = index_dispatcher
@@ -746,6 +745,11 @@ class DipDup:
             if not self._ctx.config.oneshot:
                 tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
                 tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+
+    def _get_event_dispatcher(self) -> IndexDispatcher:
+        if self._index_dispatcher is None:
+            raise FrameworkException('Index dispatcher is not initialized')
+        return self._index_dispatcher
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

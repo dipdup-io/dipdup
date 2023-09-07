@@ -6,7 +6,7 @@ import pytest
 from pytz import UTC
 
 from dipdup.config import DipDupConfig
-from dipdup.dipdup import IndexDispatcher
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
 from dipdup.models import IndexStatus
@@ -34,6 +34,8 @@ class IndexStateTest:
         name = 'demo_nft_marketplace.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
+        self.config.database = SqliteDatabaseConfig(kind='sqlite')
+        self.config.advanced.rollback_depth = 2
         self.config.initialize()
 
         self.new_hash = '98858ec743f2c84ef9505ccefa2235fc6bb9e9b209b14b2028dd4650eaf96756'
@@ -41,11 +43,10 @@ class IndexStateTest:
     async def test_first_run(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
-            dispatcher = IndexDispatcher(dipdup._ctx)
+            dipdup = await create_dummy_dipdup(self.config, stack)
 
             # Act
-            await spawn_index(dispatcher, 'hen_mainnet')
+            await spawn_index(dipdup, 'hen_mainnet')
 
             # Assert
             index = await Index.filter().get()
@@ -54,12 +55,12 @@ class IndexStateTest:
     async def test_new_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
-            dispatcher = IndexDispatcher(dipdup._ctx)
+            dipdup = await create_dummy_dipdup(self.config, stack)
+
             await _create_index(self.new_hash)
 
             # Act
-            await dispatcher._load_index_state()
+            await dipdup._get_event_dispatcher()._load_index_state()
 
             # Assert
             index = await Index.filter().get()
@@ -68,19 +69,19 @@ class IndexStateTest:
     async def test_invalid_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
-            dispatcher = IndexDispatcher(dipdup._ctx)
+            dipdup = await create_dummy_dipdup(self.config, stack)
+
             await _create_index('hehehe')
 
             # Act, Assert
             with pytest.raises(ReindexingRequiredError):
-                await dispatcher._load_index_state()
+                await dipdup._get_event_dispatcher()._load_index_state()
 
     async def test_metrics(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
-            dispatcher = IndexDispatcher(dipdup._ctx)
+            dipdup = await create_dummy_dipdup(self.config, stack)
+            dispatcher = dipdup._get_event_dispatcher()
 
             # Act
             await dispatcher._update_metrics()
