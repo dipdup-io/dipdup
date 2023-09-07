@@ -497,6 +497,7 @@ class DipDup:
             datasources=self._datasources,
             transactions=self._transactions,
         )
+        self._index_dispatcher: IndexDispatcher | None = None
         self._schema: Schema | None = None
         self._api: Any | None = None
 
@@ -581,6 +582,8 @@ class DipDup:
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
+                run=True,
+                metrics=not self._config.oneshot,
             )
 
             await gather(*tasks)
@@ -721,23 +724,28 @@ class DipDup:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
+        run: bool,
+        metrics: bool
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
-        tasks.add(
-            create_task(
-                index_dispatcher.run(
-                    spawn_datasources_event,
-                    start_scheduler_event,
-                    early_realtime,
+        self._index_dispatcher = index_dispatcher
+        if run:
+            tasks.add(
+                create_task(
+                    index_dispatcher.run(
+                        spawn_datasources_event,
+                        start_scheduler_event,
+                        early_realtime,
+                    )
                 )
             )
-        )
-        # FIXME: Initialize with metrics
-        if prometheus_config := self._ctx.config.prometheus:
-            tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
-        if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
-            tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+
+        if metrics:
+            if prometheus_config := self._ctx.config.prometheus:
+                tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
+            if not self._ctx.config.oneshot:
+                tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
+                tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
