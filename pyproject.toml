@@ -161,11 +161,11 @@ asyncio_mode = "auto"
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "raise FrameworkError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "if TYPE_CHECKING:",
 ]
 
 [build-system]
