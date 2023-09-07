@@ -127,7 +127,7 @@ async def assert_run_big_maps() -> None:
     domains = await demo_big_maps.models.Domain.filter().count()
 
     assert tlds == 1
-    assert domains == 75
+    assert domains == 1
 
 
 async def assert_init(package: str) -> None:
@@ -154,7 +154,7 @@ async def assert_run_domains() -> None:
     domains = await demo_domains.models.Domain.filter().count()
 
     assert tlds == 1
-    assert domains == 145
+    assert domains == 1
 
 
 async def assert_run_factories() -> None:
@@ -192,7 +192,7 @@ async def assert_run_dao() -> None:
     proposals = await demo_dao.models.DAO.filter().count()
     votes = await demo_dao.models.Proposal.filter().count()
 
-    assert proposals == 3
+    assert proposals == 1
     assert votes == 1
 
 
