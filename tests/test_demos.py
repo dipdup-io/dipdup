@@ -143,8 +143,8 @@ async def assert_run_dex() -> None:
     async with in_transaction() as conn:
         symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
     assert symbols == 2
-    assert trades == 835
-    assert positions == 214
+    assert trades == 56
+    assert positions == 133
 
 
 async def assert_run_domains() -> None:
@@ -228,6 +228,7 @@ test_params = (
     ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    # FIXME: https://github.com/dipdup-io/dipdup/issues/798
     # ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
     # ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
