@@ -6,12 +6,12 @@ import pytest
 from pytz import UTC
 
 from dipdup.config import DipDupConfig
-from dipdup.dipdup import DipDup
 from dipdup.dipdup import IndexDispatcher
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Index
 from dipdup.models import IndexStatus
 from dipdup.models import IndexType
+from dipdup.test import create_dummy_dipdup
 
 
 async def _create_index(hash_: str) -> None:
@@ -45,7 +45,7 @@ class IndexStateTest:
     async def test_first_run(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await DipDup.create_dummy(self.config, stack, in_memory=True)
+            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
             dispatcher = IndexDispatcher(dipdup._ctx)
 
             # Act
@@ -58,7 +58,7 @@ class IndexStateTest:
     async def test_new_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await DipDup.create_dummy(self.config, stack, in_memory=True)
+            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index(self.new_hash)
 
@@ -72,7 +72,7 @@ class IndexStateTest:
     async def test_invalid_hash(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
-            dipdup = await DipDup.create_dummy(self.config, stack, in_memory=True)
+            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
             dispatcher = IndexDispatcher(dipdup._ctx)
             await _create_index('hehehe')
 

@@ -24,7 +24,6 @@ from dipdup.codegen import generate_environments
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import system_hooks
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -491,40 +490,6 @@ class DipDup:
         if self._schema is None:
             raise FrameworkException('Schema is not initialized')
         return self._schema
-
-    @classmethod
-    async def create_dummy(
-        cls,
-        config: DipDupConfig,
-        stack: AsyncExitStack,
-        in_memory: bool = False,
-    ) -> 'DipDup':
-        """Create a dummy DipDup instance for testing purposes.
-
-        Only basic initialization is performed:
-
-          - Create datasources without spawning them
-          - Register system hooks
-          - Initialize Tortoise ORM and create schema
-
-        You need to enter `AsyncExitStack` context manager prior to calling this method.
-        """
-        if in_memory:
-            config.database = SqliteDatabaseConfig(
-                kind='sqlite',
-                path=':memory:',
-            )
-        config.advanced.rollback_depth = 2
-        config.initialize()
-
-        dipdup = DipDup(config)
-        await dipdup._create_datasources()
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
-        await dipdup._set_up_transactions(stack)
-
-        return dipdup
 
     async def init(
         self,
