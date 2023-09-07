@@ -75,3 +75,13 @@ class IndexStateTest:
             # Act, Assert
             with pytest.raises(ReindexingRequiredError):
                 await dispatcher._load_index_state()
+
+    async def test_metrics(self) -> None:
+        async with AsyncExitStack() as stack:
+            # Arrange
+            dipdup = await create_dummy_dipdup(self.config, stack, in_memory=True)
+            dispatcher = IndexDispatcher(dipdup._ctx)
+
+            # Act
+            await dispatcher._update_metrics()
+            await dispatcher._update_prometheus()

@@ -90,6 +90,11 @@ class IndexDispatcher:
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        # NOTE: Monitoring purposes
+        self._initial_levels: defaultdict[str, int] = defaultdict(int)
+        self._previous_levels: defaultdict[str, int] = defaultdict(int)
+        self._started_at: float = 0.0
+        self._metrics_at: float = 0.0
 
     async def run(
         self,
@@ -98,6 +103,9 @@ class IndexDispatcher:
         early_realtime: bool = False,
     ) -> None:
         _logger.info('Starting index dispatcher')
+        self._started_at = time.time()
+        metrics.set('started_at', self._started_at)
+
         await self._subscribe_to_datasource_events()
         await self._load_index_state()
 
@@ -161,77 +169,84 @@ class IndexDispatcher:
     async def _prometheus_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
+            await self._update_prometheus()
 
-            active, synced, realtime = 0, 0, 0
-            for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
-                active += 1
-                if index.synchronized:
-                    synced += 1
-                if index.realtime:
-                    realtime += 1
+    async def _update_prometheus(self) -> None:
+        active, synced, realtime = 0, 0, 0
+        for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
+            active += 1
+            if index.synchronized:
+                synced += 1
+            if index.realtime:
+                realtime += 1
 
-            Metrics.set_indexes_count(active, synced, realtime)
+        Metrics.set_indexes_count(active, synced, realtime)
 
     async def _metrics_loop(self, update_interval: float) -> None:
-        started_at = time.time()
-        initial_levels: defaultdict[str, int] = defaultdict(int)
-        previous_levels: defaultdict[str, int] = defaultdict(int)
-        metrics.set('started_at', started_at)
 
         while True:
             await asyncio.sleep(update_interval)
-            if not self._indexes:
+            await self._update_metrics()
+
+    async def _update_metrics(self) -> None:
+        if not self._indexes:
+            return
+        if not all(i.state.level for i in self._indexes.values()):
+            return
+
+        levels_indexed, levels_total, levels_interval = 0, 0, 0
+        for index in self._indexes.values():
+            initial_level = self._initial_levels[index.name]
+            if not initial_level:
+                self._initial_levels[index.name] |= index.state.level
                 continue
-            if not all(i.state.level for i in self._indexes.values()):
-                continue
 
-            levels_indexed, levels_total, levels_interval = 0, 0, 0
-            for index in self._indexes.values():
-                initial_level = initial_levels[index.name]
-                if not initial_level:
-                    initial_levels[index.name] |= index.state.level
-                    continue
+            levels_interval += index.state.level - self._previous_levels[index.name]
+            levels_indexed += index.state.level - initial_level
+            levels_total += index.get_sync_level() - initial_level
 
-                levels_interval += index.state.level - previous_levels[index.name]
-                levels_indexed += index.state.level - initial_level
-                levels_total += index.get_sync_level() - initial_level
+            self._previous_levels[index.name] = index.state.level
 
-                previous_levels[index.name] = index.state.level
+        update_interval = time.time() - self._metrics_at
+        self._metrics_at = time.time()
 
-            current_speed = levels_interval / update_interval
-            average_speed = levels_indexed / (time.time() - started_at)
-            time_passed = (time.time() - started_at) / 60
-            time_left, progress = 0.0, 0.0
-            if average_speed:
-                time_left = (levels_total - levels_indexed) / average_speed / 60
-            if levels_total:
-                progress = levels_indexed / levels_total
+        current_speed = levels_interval / update_interval
+        average_speed = levels_indexed / (time.time() - self._started_at)
+        time_passed = (time.time() - self._started_at) / 60
+        time_left, progress = 0.0, 0.0
+        if average_speed:
+            time_left = (levels_total - levels_indexed) / average_speed / 60
+        if levels_total:
+            progress = levels_indexed / levels_total
 
-            metrics.set('levels_indexed', levels_indexed)
-            metrics.set('levels_total', levels_total)
-            metrics.set('current_speed', current_speed)
-            metrics.set('average_speed', average_speed)
-            metrics.set('time_passed', time_passed)
-            metrics.set('time_left', time_left)
-            metrics.set('progress', progress)
+        metrics.set('levels_indexed', levels_indexed)
+        metrics.set('levels_total', levels_total)
+        metrics.set('current_speed', current_speed)
+        metrics.set('average_speed', average_speed)
+        metrics.set('time_passed', time_passed)
+        metrics.set('time_left', time_left)
+        metrics.set('progress', progress)
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
-            stats = metrics.stats()
-            progress = stats.get('progress', 0)
-            total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
-            current_speed = stats.get('current_speed', 0)
-            synchronized_at = stats.get('synchronized_at', 0)
-            if synchronized_at:
-                _logger.info('realtime: %s levels and counting', indexed)
-            else:
-                _logger.info(
-                    'indexing %.2f%%: %s levels left (%s lps)',
-                    progress * 100,
-                    total - indexed,
-                    int(current_speed),
-                )
+            await self._log_status()
+
+    async def _log_status(self) -> None:
+        stats = metrics.stats()
+        progress = stats.get('progress', 0)
+        total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
+        current_speed = stats.get('current_speed', 0)
+        synchronized_at = stats.get('synchronized_at', 0)
+        if synchronized_at:
+            _logger.info('realtime: %s levels and counting', indexed)
+        else:
+            _logger.info(
+                'indexing %.2f%%: %s levels left (%s lps)',
+                progress * 100,
+                total - indexed,
+                int(current_speed),
+            )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
