@@ -1,13 +1,9 @@
-# 1. start sync
-# 2. open realtime connection
-# 3. receive a message or two
-# 4. finish sync
-# 5. check for missing operations
 from contextlib import AsyncExitStack
 
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.dipdup import DipDup
+from dipdup.dipdup import IndexDispatcher
 
 
 async def create_dummy_dipdup(
@@ -41,3 +37,9 @@ async def create_dummy_dipdup(
     await dipdup._set_up_transactions(stack)
 
     return dipdup
+
+
+async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
+    """Spawn index from config and add it to dispatcher."""
+    await dispatcher._ctx._spawn_index(name)
+    dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.pop()

@@ -12,6 +12,7 @@ from dipdup.models import Index
 from dipdup.models import IndexStatus
 from dipdup.models import IndexType
 from dipdup.test import create_dummy_dipdup
+from dipdup.test import spawn_index
 
 
 async def _create_index(hash_: str) -> None:
@@ -26,11 +27,6 @@ async def _create_index(hash_: str) -> None:
         updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
         type=IndexType.tezos_tzkt_operations,
     )
-
-
-async def spawn_index(dispatcher: IndexDispatcher, name: str) -> None:
-    await dispatcher._ctx._spawn_index(name)
-    dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.pop()
 
 
 class IndexStateTest:
