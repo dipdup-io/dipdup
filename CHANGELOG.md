@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-- cli: Add imports check before `dipdup run` to catch exceptions faster
+- cli: Import package submodules before starting indexing to fail early on import errors.
+- cli: Fixed ordering of crash reports in `report` group commands.
 
 ## [7.0.0rc5] - 2023-09-06
 
