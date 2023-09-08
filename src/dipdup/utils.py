@@ -193,11 +193,11 @@ def import_from(module: str, obj: str) -> Any:
 
 def parse_object(
     type_: type[ObjectT],
-    data: Mapping[str, Any] | Sequence[Any],
+    data: Mapping[str, Any] | Sequence[Any] | None,
     plain: bool = False,
 ) -> ObjectT:
     try:
-        if plain is False:
+        if plain is False or data is None:
             return type_.parse_obj(data)
 
         model_keys = tuple(field.alias for field in type_.__fields__.values())
