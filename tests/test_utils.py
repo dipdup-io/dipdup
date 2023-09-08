@@ -1,12 +1,15 @@
 from contextlib import suppress
 
+from pytest import raises
 from tortoise import Tortoise
 
 from dipdup.database import iter_models
 from dipdup.database import tortoise_wrapper
+from dipdup.exceptions import FrameworkException
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
+from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -70,3 +73,11 @@ async def test_iter_models() -> None:
     assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
+
+
+async def test_import_submodules() -> None:
+    with raises(FrameworkException):
+        import_submodules('demo_token')
+
+    submodules = import_submodules('demo_token.handlers')
+    assert len(submodules) == 3

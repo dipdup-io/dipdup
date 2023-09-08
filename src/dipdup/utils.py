@@ -76,13 +76,7 @@ def import_submodules(package: str) -> dict[str, types.ModuleType]:
 
     # NOTE: The first level; walk_packages falls into recursion with root symlink.
     if '.' not in package:
-        for attr in dir(module):
-            member = getattr(module, attr)
-            if not isinstance(member, types.ModuleType):
-                continue
-            full_name = package + '.' + attr
-            results[full_name] = importlib.import_module(full_name)
-        return results
+        raise FrameworkException("Don't use `import_submodules` for top-level package")
 
     for subpackage in pkgutil.walk_packages(module.__path__):
         name = subpackage.name
