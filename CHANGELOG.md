@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - evm.subsquid: Create a separate aiohttp session for each worker.
+- evm.subsquid.events: Sync to `last_level` if specified in config.
 - evm.node: Set `timestamp` field to the block timestamp.
 
 ## [6.5.11] - 2023-09-02

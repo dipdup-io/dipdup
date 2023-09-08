@@ -103,6 +103,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
+            self._logger.debug('Worker query: %s', query)
 
             async with worker_datasource:
                 response: list[dict[str, Any]] = await worker_datasource.request(

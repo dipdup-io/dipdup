@@ -183,7 +183,7 @@ async def assert_run_evm_events() -> None:
     import demo_evm_events.models
 
     holders = await demo_evm_events.models.Holder.filter().count()
-    assert holders == 5296
+    assert holders == 26
 
 
 async def assert_run_dao() -> None:
