@@ -7,8 +7,12 @@ from dipdup.database import tortoise_wrapper
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
+from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from tests.types.kolibri_ovens.set_delegate import SetDelegateParameter
+from tests.types.qwer.storage import QwerStorage
+from tests.types.qwer.storage import QwerStorageItem1
 
 
 class SomeException(Exception):
@@ -70,3 +74,16 @@ async def test_iter_models() -> None:
     assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
+
+
+async def test_parse_object() -> None:
+    # empty
+    empty = parse_object(SetDelegateParameter, None)
+    assert empty.__root__ is None
+    # string only
+    str_ = parse_object(SetDelegateParameter, 'some')
+    assert str_.__root__ == 'some'
+    # map
+    map_ = parse_object(QwerStorage, [[{'R': {'a': 'b'}}, {'R': {}}], [{'L': 'test'}]])
+    assert isinstance(map_.__root__[0][0], QwerStorageItem1)
+    assert map_.__root__[0][0].R['a'] == 'b'
