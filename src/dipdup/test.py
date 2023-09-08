@@ -1,8 +1,10 @@
 import asyncio
 from contextlib import AsyncExitStack
+from typing import Any
 
 from dipdup.config import DipDupConfig
 from dipdup.dipdup import DipDup
+from dipdup.index import Index
 
 
 async def create_dummy_dipdup(
@@ -39,8 +41,9 @@ async def create_dummy_dipdup(
     return dipdup
 
 
-async def spawn_index(dipdup: DipDup, name: str) -> None:
+async def spawn_index(dipdup: DipDup, name: str) -> Index[Any, Any, Any]:
     """Spawn index from config and add it to dispatcher."""
     dispatcher = dipdup._get_event_dispatcher()
-    await dispatcher._ctx._spawn_index(name)
+    index: Index[Any, Any, Any] = await dispatcher._ctx._spawn_index(name)
     dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.pop()
+    return index

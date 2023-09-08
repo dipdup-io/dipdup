@@ -302,7 +302,7 @@ class DipDupContext:
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
-    async def _spawn_index(self, name: str, state: Index | None = None) -> None:
+    async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
@@ -358,6 +358,7 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         self._pending_indexes.append(index)
+        return index
 
     # TODO: disable_index(name: str)
 

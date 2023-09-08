@@ -24,10 +24,12 @@ from dipdup.config import HttpConfig
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
-from dipdup.exceptions import DatasourceError, ReindexingRequiredError
+from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.models import Head, ReindexingReason
+from dipdup.exceptions import ReindexingRequiredError
+from dipdup.models import Head
 from dipdup.models import MessageType
+from dipdup.models import ReindexingReason
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
@@ -287,7 +289,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                     'level': db_head.level,
                     'stored_block_hash': db_head.hash,
                     'actual_block_hash': actual_head.hash,
-                }
+                },
             )
 
     def call_on_head(self, fn: HeadCallback) -> None:
