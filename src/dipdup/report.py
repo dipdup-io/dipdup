@@ -61,8 +61,14 @@ def save_report(package: str, error: Exception | None) -> str:
     return report_id
 
 
+def get_reports() -> list[Path]:
+    """Returns a sorted list of crashdump files"""
+    report_files = list(REPORTS_PATH.glob('*.yaml'))
+    report_files.sort(key=lambda p: p.stat().st_mtime)
+    return report_files
+
+
 def cleanup_reports() -> None:
     """Removes old reports"""
-    for i, path in enumerate(tuple(REPORTS_PATH.glob('*.yaml'))[::-1]):
-        if i >= 100:
-            path.unlink()
+    for path in get_reports()[:-REPORTS_LIMIT]:
+        path.unlink()

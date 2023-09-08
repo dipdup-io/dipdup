@@ -54,8 +54,6 @@ def prepare_operation_handler_args(
                 args.append(operation_data)
                 continue
 
-            if operation_data.parameter_json is None:
-                raise FrameworkException('Processing typed transaction, but parameter_json is None')
             typename = pattern_config.typed_contract.module_name
             type_ = get_parameter_type(package, typename, pattern_config.entrypoint)
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
