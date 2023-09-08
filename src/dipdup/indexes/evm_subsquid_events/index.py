@@ -164,11 +164,15 @@ class SubsquidEventsIndex(
                         'topics': tuple(topics),
                     }
                 )
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log) for log in level_logs)
+                block = await self.random_node.get_block_by_level(level)
+                if block is None:
+                    raise FrameworkException(f'Block {level} not found')
+                timestamp = int(block['timestamp'], 16)
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
                 await self._process_level_events(parsed_level_logs, self.topics, sync_level)
 
         else:
-            sync_level = subsquid_sync_level
+            sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
 
             async for _level, events in fetcher.fetch_by_level():

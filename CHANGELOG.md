@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.0.0rc5] - 2023-09-06
+
+### Fixed
+
+- evm.subsquid: Create a separate aiohttp session for each worker.
+- evm.subsquid.events: Sync to `last_level` if specified in config.
+- evm.node: Set `timestamp` field to the block timestamp.
+
+## [6.5.11] - 2023-09-02
+
+### Fixed
+
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- tzkt: Fixed pagination when requesting transactions.
+- tzkt: Use cursor iteration where possible.
+
 ## [7.0.0rc4] - 2023-08-23
 
 ### Added
@@ -1141,7 +1157,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...HEAD
+[7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
+[6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
 [7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
 [6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10

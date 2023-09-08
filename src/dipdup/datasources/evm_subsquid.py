@@ -3,6 +3,7 @@ import zipfile
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
+from copy import copy
 from io import BytesIO
 from typing import Any
 
@@ -10,6 +11,7 @@ import pyarrow.ipc  # type: ignore[import]
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.models.evm_subsquid import LogFieldSelection
@@ -86,30 +88,38 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                     f'{self._config.url}/{current_level}/worker',
                 )
             ).decode()
+            worker_config = copy(self._config)
+            worker_config.url = worker_url
+            worker_datasource: _SubsquidWorker = _SubsquidWorker(worker_config)
 
             query: Query = {
                 'logs': log_request,
                 'fields': {
-                    'block': {},
+                    'block': {
+                        'timestamp': True,
+                    },
                     'log': LOG_FIELDS,
                 },
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
+            self._logger.debug('Worker query: %s', query)
 
-            response: list[dict[str, Any]] = await self.request(
-                'post',
-                url=worker_url,
-                json=query,
-            )
+            async with worker_datasource:
+                response: list[dict[str, Any]] = await worker_datasource.request(
+                    'post',
+                    url=worker_url,
+                    json=query,
+                )
 
             for level_logs in response:
                 level = level_logs['header']['number']
+                timestamp = level_logs['header']['timestamp']
                 current_level = level + 1
                 logs: deque[SubsquidEventData] = deque()
                 for raw_log in level_logs['logs']:
                     logs.append(
-                        SubsquidEventData.from_json(raw_log, level),
+                        SubsquidEventData.from_json(raw_log, level, timestamp),
                     )
                 yield tuple(logs)
 
@@ -124,3 +134,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')
         return int(response)
+
+
+class _SubsquidWorker(Datasource[Any]):
+    async def run(self) -> None:
+        pass

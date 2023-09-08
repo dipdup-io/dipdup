@@ -12,6 +12,4 @@ hasura:
   allow_aggregations: true
   camel_case: true
 
-sentry:
-  dsn: ${SENTRY_DSN:-""}
-  environment: ${SENTRY_ENVIRONMENT:-compose}
+logging: ${LOGLEVEL:-INFO}
