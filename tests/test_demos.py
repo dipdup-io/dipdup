@@ -16,7 +16,6 @@ import pytest
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
-from dipdup.utils import import_submodules
 from tests import CONFIGS_PATH
 from tests import SRC_PATH
 
@@ -131,7 +130,7 @@ async def assert_run_big_maps() -> None:
 
 
 async def assert_init(package: str) -> None:
-    import_submodules(package)
+    pass
 
 
 async def assert_run_dex() -> None:

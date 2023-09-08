@@ -558,6 +558,10 @@ class DipDup:
         # NOTE: Order matters. But usually you can skip some layers if you don't need them.
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
+
+        # verify before start so obvious mistakes can be seen instantly
+        self._ctx.package.verify()
+
         async with AsyncExitStack() as stack:
             await self._set_up_metrics(stack)
 
