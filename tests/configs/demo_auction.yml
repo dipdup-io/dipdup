@@ -5,8 +5,6 @@ datasources:
   tzkt:
     kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
-    http:
-      replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 contracts:
   tzcolors_minter:

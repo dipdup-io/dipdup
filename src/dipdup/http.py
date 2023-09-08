@@ -23,6 +23,7 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
@@ -260,16 +261,17 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int = 1,
         **kwargs: Any,
     ) -> Any:
-        if not self._config.replay_path:
+        replay_path_str = env.REPLAY_PATH or self._config.replay_path
+        if not replay_path_str:
             raise FrameworkException('Replay path is not set')
 
-        replay_path = Path(self._config.replay_path).expanduser()
+        replay_path = Path(replay_path_str).expanduser()
         replay_path.mkdir(parents=True, exist_ok=True)
 
         request_hash = hashlib.sha256(
             f'{self._url} {method} {self._path}/{url} {kwargs}'.encode(),
         ).hexdigest()
-        replay_path = Path(self._config.replay_path).joinpath(request_hash).expanduser()
+        replay_path = Path(replay_path_str).joinpath(request_hash).expanduser()
 
         if replay_path.exists():
             if not replay_path.stat().st_size:
@@ -297,7 +299,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Performs an HTTP request."""
-        if self._config.replay_path:
+        if self._config.replay_path or env.REPLAY_PATH:
             return await self._replay_request(method, url, weight, **kwargs)
         return await self._retry_request(method, url, weight, **kwargs)
 
