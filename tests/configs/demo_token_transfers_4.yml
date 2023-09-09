@@ -14,6 +14,8 @@ datasources:
   tzkt:
     kind: tezos.tzkt
     url: https://api.tzkt.io
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 indexes:
   tzbtc_holders_mainnet:

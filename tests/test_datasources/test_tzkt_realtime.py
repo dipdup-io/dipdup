@@ -1,4 +1,3 @@
-# 0. index
 # 1. start sync
 # 2. open realtime connection
 # 3. receive a message or two
