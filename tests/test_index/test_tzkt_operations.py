@@ -155,6 +155,7 @@ async def test_realtime() -> None:
         dispatcher = dipdup._get_event_dispatcher()
         index = cast(TzktOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
 
+        # NOTE: Start sync and realtime connection simultaneously.
         first_level = 1365000
         last_level = first_level + 500
         realtime_level = first_level + 1000
@@ -164,6 +165,7 @@ async def test_realtime() -> None:
 
         assert len(all_operations) == 4
 
+        # NOTE: Fill the queue while index is IndexStatus.new
         for _, operations in all_operations.items():
             await dispatcher._on_tzkt_operations(
                 datasource=index.datasource,
@@ -173,6 +175,7 @@ async def test_realtime() -> None:
         assert len(index._queue) == 4
         assert await models.Holder.filter().count() == 0
 
+        # NOTE: We don't want index with `last_level` to be disabled
         await index._enter_sync_state(last_level + 9999)
         await index._synchronize(last_level)
         await index._exit_sync_state(last_level)
@@ -180,11 +183,13 @@ async def test_realtime() -> None:
         assert index.state.level == last_level
         holders = await models.Holder.all()
         balances = {h.address: h.balance for h in holders}
+        # NOTE: A single transfer operation processed
         assert balances == {
             'tz1Rqx3aeJWzLm8S3nuQrTDdGHxucz2twWFL': Decimal('-0.01912431'),
             'tz1RA7UVfpxFML8XSBrtftszHh5fyn53D1DP': Decimal('0.01912431'),
         }
 
+        # NOTE: Skipping the first 500 levels synced and processing the rest
         await index._process_queue()
 
         assert index.state.level == tuple(all_operations.keys())[-1]
@@ -196,10 +201,3 @@ async def test_realtime() -> None:
             'KT1Ap287P1NzsnToSJdA4aqSNjPomRaHBZSr': Decimal('0'),
             'tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a': Decimal('0.01912431'),
         }
-
-        # )
-        # 1. start sync
-        # 2. open realtime connection
-        # 3. receive a message or two
-        # 4. finish sync
-        # 5. check for missing operations
