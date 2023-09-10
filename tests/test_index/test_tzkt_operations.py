@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
+from decimal import Decimal
 from typing import cast
 
 import pytest
@@ -12,6 +13,7 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
+from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
@@ -140,3 +142,64 @@ async def test_get_sync_level() -> None:
         for i, sub in enumerate(subs):
             index.datasource.set_sync_level(sub, i + 1)
             assert index.get_sync_level() == i + 1
+
+
+async def test_realtime() -> None:
+    from demo_token import models
+
+    config = DipDupConfig.load([CONFIGS_PATH / 'demo_token.yml'], True)
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        await dipdup._set_up_datasources(stack)
+
+        dispatcher = dipdup._get_event_dispatcher()
+        index = cast(TzktOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
+
+        first_level = 1365000
+        last_level = first_level + 500
+        realtime_level = first_level + 1000
+
+        fetcher = await index._create_fetcher(first_level, realtime_level)
+        all_operations = {level: ops async for level, ops in fetcher.fetch_by_level()}
+
+        assert len(all_operations) == 4
+
+        for _, operations in all_operations.items():
+            await dispatcher._on_tzkt_operations(
+                datasource=index.datasource,
+                operations=operations,
+            )
+
+        assert len(index._queue) == 4
+        assert await models.Holder.filter().count() == 0
+
+        await index._enter_sync_state(last_level + 9999)
+        await index._synchronize(last_level)
+        await index._exit_sync_state(last_level)
+
+        assert index.state.level == last_level
+        holders = await models.Holder.all()
+        balances = {h.address: h.balance for h in holders}
+        assert balances == {
+            'tz1Rqx3aeJWzLm8S3nuQrTDdGHxucz2twWFL': Decimal('-0.01912431'),
+            'tz1RA7UVfpxFML8XSBrtftszHh5fyn53D1DP': Decimal('0.01912431'),
+        }
+
+        await index._process_queue()
+
+        assert index.state.level == tuple(all_operations.keys())[-1]
+        holders = await models.Holder.all()
+        balances = {h.address: h.balance for h in holders}
+        assert balances == {
+            'tz1Rqx3aeJWzLm8S3nuQrTDdGHxucz2twWFL': Decimal('-0.01912431'),
+            'tz1RA7UVfpxFML8XSBrtftszHh5fyn53D1DP': Decimal('0'),
+            'KT1Ap287P1NzsnToSJdA4aqSNjPomRaHBZSr': Decimal('0'),
+            'tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a': Decimal('0.01912431'),
+        }
+
+        # )
+        # 1. start sync
+        # 2. open realtime connection
+        # 3. receive a message or two
+        # 4. finish sync
+        # 5. check for missing operations

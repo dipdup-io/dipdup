@@ -156,6 +156,7 @@ strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+log_cli_level = "WARNING"
 
 [tool.coverage.report]
 precision = 2

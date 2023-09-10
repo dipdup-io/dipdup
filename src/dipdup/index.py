@@ -44,7 +44,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._config = config
         self._datasource = datasource
         self._queue: deque[IndexQueueItemT] = deque()
-        queues.add_queue(self._queue, f'index_realtime:{config.name}')
+        queues.add_queue(self._queue, f'index_realtime:{config.name}:{id(self)})')
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
