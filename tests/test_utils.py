@@ -78,12 +78,14 @@ async def test_iter_models() -> None:
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
 
+
 async def test_import_submodules() -> None:
     with raises(FrameworkException):
         import_submodules('demo_token')
 
     submodules = import_submodules('demo_token.handlers')
     assert len(submodules) == 3
+
 
 async def test_parse_object() -> None:
     # empty

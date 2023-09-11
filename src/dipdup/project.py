@@ -7,7 +7,6 @@ import re
 from pathlib import Path
 from typing import TypedDict
 
-import survey  # type: ignore[import]
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 
@@ -97,6 +96,8 @@ def prompt_anyof(
     default: int,
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
+    import survey  # type: ignore[import]
+
     table = tabulate(
         zip(options, comments, strict=True),
         tablefmt='plain',
@@ -111,6 +112,8 @@ def prompt_anyof(
 
 def answers_from_terminal() -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
+    import survey
+
     big_yellow_echo(
         'Welcome to DipDup! This command will help you to create a new project.\n'
         'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'

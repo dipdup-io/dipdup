@@ -1,0 +1,30 @@
+{
+  "id": 1798955,
+  "type": "contract",
+  "address": "KT1J2e6sDkgdTuB9hmE1AntzrghJem1wzT7a",
+  "kind": "smart_contract",
+  "balance": 3000000,
+  "creator": {
+    "alias": "Michael Kernaghan",
+    "address": "tz1bkhCGUuA5bveCsMqXe9tEkopkZX3hiB9i"
+  },
+  "numContracts": 0,
+  "activeTokensCount": 1,
+  "tokensCount": 0,
+  "tokenBalancesCount": 1,
+  "tokenTransfersCount": 1,
+  "numDelegations": 0,
+  "numOriginations": 1,
+  "numTransactions": 5,
+  "numReveals": 0,
+  "numMigrations": 0,
+  "transferTicketCount": 0,
+  "increasePaidStorageCount": 0,
+  "eventsCount": 0,
+  "firstActivity": 1685991,
+  "firstActivityTime": "2021-09-12T02:14:32Z",
+  "lastActivity": 1686024,
+  "lastActivityTime": "2021-09-12T02:31:02Z",
+  "typeHash": -1585634750,
+  "codeHash": 309523258
+}

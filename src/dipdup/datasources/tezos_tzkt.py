@@ -26,8 +26,10 @@ from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
+from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Head
 from dipdup.models import MessageType
+from dipdup.models import ReindexingReason
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
@@ -224,7 +226,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._on_big_maps_callbacks: set[BigMapsCallback] = set()
         self._on_events_callbacks: set[EventsCallback] = set()
         self._on_rollback_callbacks: set[RollbackCallback] = set()
-        self._network: str | None = None
 
         self._signalr_client: SignalRClient | None = None
         self._channel_levels: defaultdict[TzktMessageType, int | None] = defaultdict(lambda: None)
@@ -245,12 +246,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             )
         except Exception as e:
             raise DatasourceError(f'Failed to connect to TzKT: {e}', self.name) from e
-
-    @property
-    def network(self) -> str:
-        if not self._network:
-            raise FrameworkException('Network is not set')
-        return self._network
 
     @property
     def request_limit(self) -> int:
@@ -275,7 +270,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
     async def initialize(self) -> None:
         head_block = await self.get_head_block()
-        self.set_network(head_block.chain)
         self.set_sync_level(
             subscription=None,
             level=head_block.level,
@@ -285,17 +279,18 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         if not db_head:
             return
 
-        # FIXME: No ctx to throw reorg; VERY IMPORTANT CHECK
         # NOTE: Ensure that no reorgs happened while we were offline
-        # actual_head = await self.get_block(db_head.level)
-        # if db_head.hash != actual_head.hash:
-        #     await self._ctx.reindex(
-        #         ReindexingReason.rollback,
-        #         datasource=self.name,
-        #         level=db_head.level,
-        #         stored_block_hash=db_head.hash,
-        #         actual_block_hash=actual_head.hash,
-        #     )
+        actual_head = await self.get_block(db_head.level)
+        if db_head.hash != actual_head.hash:
+            raise ReindexingRequiredError(
+                ReindexingReason.rollback,
+                context={
+                    'datasource': self,
+                    'level': db_head.level,
+                    'stored_block_hash': db_head.hash,
+                    'actual_block_hash': actual_head.hash,
+                },
+            )
 
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
@@ -352,11 +347,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     async def emit_disconnected(self) -> None:
         for fn in self._on_disconnected_callbacks:
             await fn()
-
-    def set_network(self, network: str) -> None:
-        if self._network:
-            raise FrameworkException('Network is already set')
-        self._network = network
 
     def get_channel_level(self, message_type: TzktMessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""

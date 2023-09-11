@@ -155,13 +155,13 @@ class _QueueManager:
         if name is None:
             name = f'{queue.__module__}:{id(queue)}'
         if name in self._queues:
-            raise Exception(f'Queue `{name}` already exists')
+            raise FrameworkException(f'Queue `{name}` already exists')
         self._queues[name] = queue
         self._limits[name] = limit
 
     def remove_queue(self, name: str) -> None:
         if name not in self._queues:
-            raise Exception(f'Queue `{name}` does not exist')
+            raise FrameworkException(f'Queue `{name}` does not exist')
         del self._queues[name]
         del self._limits[name]
 

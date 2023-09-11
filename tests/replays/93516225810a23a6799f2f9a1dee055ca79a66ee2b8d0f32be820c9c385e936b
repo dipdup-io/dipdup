@@ -1,0 +1,55 @@
+[
+  [
+    null,
+    24969533718528,
+    889027,
+    "2020-03-31T12:53:51Z",
+    "oou2EEfkSSE5jihsBzywzX9G5rXHuuS81RvS4guqJE5MHxSdgNQ",
+    3611720,
+    {
+      "address": "tz1bytfCuLdfGerT95yZKmswNQ9NK7awarYf"
+    },
+    null,
+    null,
+    null,
+    null,
+    {
+      "nat": "0",
+      "bool": false,
+      "lambda": "[{\"prim\":\"CDR\"},{\"prim\":\"NIL\",\"args\":[{\"prim\":\"operation\"}]},{\"prim\":\"PAIR\"}]",
+      "big_map": 31
+    },
+    "applied",
+    null,
+    [
+      {
+        "bigmap": 31,
+        "path": "big_map",
+        "action": "allocate"
+      },
+      {
+        "bigmap": 31,
+        "path": "big_map",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtu6vJPJCkTXVHfqSY4e3WUVnRgozHnAZoFRrEyCE8XfHRi9LZm",
+          "key": "0501000000056f776e6572",
+          "value": "050a000000160000b343a04d2c5a36242d617490540a175052b7ad7e"
+        }
+      }
+    ],
+    null,
+    null,
+    null,
+    {
+      "kind": "asset",
+      "alias": "tzBTC",
+      "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn",
+      "typeHash": -644342245,
+      "codeHash": -1120012485,
+      "tzips": [
+        "fa12"
+      ]
+    }
+  ]
+]

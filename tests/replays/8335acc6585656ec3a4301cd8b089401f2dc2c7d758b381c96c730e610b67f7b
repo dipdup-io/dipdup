@@ -1,0 +1,20 @@
+[
+  [
+    66864948445184,
+    1589247,
+    "2021-08-06T09:29:54Z",
+    {
+      "xtzPool": "100",
+      "lqtTotal": "100",
+      "tokenPool": "1",
+      "lqtAddress": "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo",
+      "tokenAddress": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+    },
+    null,
+    {
+      "alias": "Sirius DEX",
+      "address": "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5"
+    },
+    100
+  ]
+]
