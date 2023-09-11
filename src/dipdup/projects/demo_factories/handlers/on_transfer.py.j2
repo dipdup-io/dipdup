@@ -1,8 +1,9 @@
+from dipdup.context import HandlerContext
+from dipdup.models.tezos_tzkt import TzktTransaction
+
 import {{project.package}}.models as models
 from {{project.package}}.types.token.tezos_parameters.transfer import TransferParameter
 from {{project.package}}.types.token.tezos_storage import TokenStorage
-from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TzktTransaction
 
 
 async def on_transfer(
@@ -10,9 +11,9 @@ async def on_transfer(
     transfer: TzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
     transfers = []
-    for transfer_item in transfer.parameter:
+    for transfer_item in transfer.parameter.__root__:
         transfers.append(models.Transfer(
-            from_=transfer_item.parameter.from_,
+            from_=transfer_item.from_,
             to_=[models.Tx(to_=tx.to_, amount=tx.amount) for tx in transfer_item.txs]
         ))
     await models.Transfer.bulk_create(transfers)

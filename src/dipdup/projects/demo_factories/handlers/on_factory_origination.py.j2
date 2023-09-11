@@ -9,15 +9,15 @@ async def on_factory_origination(
     origination_0: TzktOperationData,
 ) -> None:
     originated_contract = cast(str, origination_0.originated_contract_address)
-    name = f'registry_dao_{originated_contract}'
+    name = f'dex_{originated_contract}'
     await ctx.add_contract(
         kind='tezos',
         name=originated_contract,
         address=originated_contract,
-        typename='registry',
+        typename='dex',
     )
     await ctx.add_index(
         name=name,
-        template='registry_dao',
+        template='dex',
         values={'contract': originated_contract},
     )

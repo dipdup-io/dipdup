@@ -6,10 +6,11 @@ contracts:
     kind: tezos
     address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
     typename: factory
+  # token for code hash reference
   token:
-   kind: tezos
-   code_hash: KT1VaEsVNiBoA56eToEK6n6BcPgh1tdx9eXi
-   typename: token
+    kind: tezos
+    code_hash: KT1VaEsVNiBoA56eToEK6n6BcPgh1tdx9eXi
+    typename: token
 
 datasources:
   tzkt:
@@ -39,7 +40,6 @@ indexes:
       - factory
     types:
       - origination
-    first_level: 3000024
     handlers:
       - callback: on_factory_origination
         pattern:
