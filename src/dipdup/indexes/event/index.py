@@ -13,10 +13,11 @@ from dipdup.indexes.event.fetcher import EventFetcher
 from dipdup.indexes.event.matcher import match_events
 from dipdup.models import Event
 from dipdup.models import EventData
+from dipdup.models import TzktRollbackMessage
 from dipdup.models import UnknownEvent
 from dipdup.prometheus import Metrics
 
-EventQueueItem = tuple[EventData, ...]
+EventQueueItem = tuple[EventData, ...] | TzktRollbackMessage
 
 
 class EventIndex(
@@ -31,8 +32,12 @@ class EventIndex(
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
-            events = self._queue.popleft()
-            message_level = events[0].level
+            message = self._queue.popleft()
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
@@ -40,7 +45,7 @@ class EventIndex(
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_events(events, message_level)
+                await self._process_level_events(message, message_level)
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()

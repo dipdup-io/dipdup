@@ -7,8 +7,9 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.models import HeadBlockData
+from dipdup.models import TzktRollbackMessage
 
-HeadQueueItem = HeadBlockData
+HeadQueueItem = HeadBlockData | TzktRollbackMessage
 
 
 class HeadIndex(
@@ -24,15 +25,19 @@ class HeadIndex(
 
     async def _process_queue(self) -> None:
         while self._queue:
-            head = self._queue.popleft()
-            message_level = head.level
+            message = self._queue.popleft()
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message.level
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
             self._logger.debug('Processing head realtime message, %s left in queue', len(self._queue))
 
-            batch_level = head.level
+            batch_level = message.level
             index_level = self.state.level
             if batch_level <= index_level:
                 raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
@@ -40,7 +45,7 @@ class HeadIndex(
             async with self._ctx._transactions.in_transaction(batch_level, message_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
                 for handler_config in self._config.handlers:
-                    await self._call_matched_handler(handler_config, head)
+                    await self._call_matched_handler(handler_config, message)
                 await self._update_state(level=batch_level)
 
     async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: HeadBlockData) -> None:

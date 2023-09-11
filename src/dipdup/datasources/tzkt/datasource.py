@@ -43,6 +43,7 @@ from dipdup.models import HeadBlockData
 from dipdup.models import OperationData
 from dipdup.models import QuoteData
 from dipdup.models import TokenTransferData
+from dipdup.models import TzktRollbackMessage
 from dipdup.utils import FormattedLogger
 from dipdup.utils import split_by_chunks
 
@@ -119,7 +120,7 @@ class TzktMessageType(Enum):
     REORG = 2
 
 
-MessageData = dict[str, Any] | list[dict[str, Any]]
+MessageData = dict[str, Any] | list[dict[str, Any]] | TzktRollbackMessage
 
 
 class BufferedMessage(NamedTuple):
