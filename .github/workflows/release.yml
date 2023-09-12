@@ -46,7 +46,7 @@ jobs:
         with:
           images: |
             dipdup/dipdup
-            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}/dipdup
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
             latest=false
           tags: |
@@ -79,6 +79,7 @@ jobs:
       - name: Publish package on PyPi
         run: pdm publish --password ${{secrets.PYPI_TOKEN}}
 
+      # FIXME: Fails on prereleases; https://github.com/mindsers/changelog-reader-action/pull/39
       - name: Parse changelog
         id: changelog
         uses: mindsers/changelog-reader-action@v2
@@ -97,7 +98,7 @@ jobs:
             ## ${{ steps.changelog.outputs.version }} - ${{ steps.changelog.outputs.date }}
 
             ${{ steps.changelog.outputs.changes }}
-          draft: true
+          draft: false
           prerelease: ${{ steps.changelog.outputs.status == 'prereleased' }}
 
       - name: Create Sentry release

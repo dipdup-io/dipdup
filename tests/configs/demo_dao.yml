@@ -4,7 +4,7 @@ package: demo_dao
 contracts:
   registry:
     kind: tezos
-    code_hash: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
+    code_hash: KT1J2e6sDkgdTuB9hmE1AntzrghJem1wzT7a
     typename: registry
 
 datasources:
@@ -31,5 +31,5 @@ indexes:
           - type: transaction
             destination: registry
             entrypoint: propose
-    first_level: 1881619
-    last_level: 2933505
+    first_level: 1685991 
+    last_level: 1686024

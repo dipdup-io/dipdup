@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Fixed
+
+- cli: Import package submodules before starting indexing to fail early on import errors.
+- cli: Fixed ordering of crash reports in `report` group commands.
+- tezos.tzkt.operations: Fixed parsing operations with empty parameters.
+
+## [7.0.0rc5] - 2023-09-06
+
+### Fixed
+
+- evm.subsquid: Create a separate aiohttp session for each worker.
+- evm.subsquid.events: Sync to `last_level` if specified in config.
+- evm.node: Set `timestamp` field to the block timestamp.
+
+## [6.5.11] - 2023-09-02
+
+### Fixed
+
+- index: Fixed crash when parsing typed transactions with empty parameter.
+- tzkt: Fixed pagination when requesting transactions.
+- tzkt: Use cursor iteration where possible.
+
+## [7.0.0rc4] - 2023-08-23
+
 ### Added
 
 - models: Added optional `maxsize` meta field to `CachedModel` to limit the LRU cache size.
@@ -14,11 +38,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed `config export --full` command showing original config.
 - cli: Keep the last 100 reports only.
+- cli: Fixed `schema wipe` command crash due to `dipdup_meta` table being always immune.
 - config: Don't create empty SentryConfig if DSN is not set.
 - context: Share internal state between context instances.
+- evm.node: Fixed keepalive loop for websocket connection.
+- evm.node: Fixed parsing empty realtime message payloads.
 - jobs: Don't add jobs before scheduler is started.
-- node: Fixed keepalive loop for websocket connection.
-- node: Fixed parsing empty realtime message payloads.
 - package: Fixed package detection for poetry managed projects.
 - package: Fixed mypy command in default template.
 - package: Create package symlink only when needed.
@@ -1140,7 +1165,10 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...HEAD
+[7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
+[6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
+[7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
 [7.0.0rc3]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc2...7.0.0rc3
 [6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
 [7.0.0rc2]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc1...7.0.0rc2

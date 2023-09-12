@@ -76,13 +76,7 @@ def import_submodules(package: str) -> dict[str, types.ModuleType]:
 
     # NOTE: The first level; walk_packages falls into recursion with root symlink.
     if '.' not in package:
-        for attr in dir(module):
-            member = getattr(module, attr)
-            if not isinstance(member, types.ModuleType):
-                continue
-            full_name = package + '.' + attr
-            results[full_name] = importlib.import_module(full_name)
-        return results
+        raise FrameworkException("Don't use `import_submodules` for top-level package")
 
     for subpackage in pkgutil.walk_packages(module.__path__):
         name = subpackage.name
@@ -199,11 +193,11 @@ def import_from(module: str, obj: str) -> Any:
 
 def parse_object(
     type_: type[ObjectT],
-    data: Mapping[str, Any] | Sequence[Any],
+    data: Mapping[str, Any] | Sequence[Any] | None,
     plain: bool = False,
 ) -> ObjectT:
     try:
-        if plain is False:
+        if plain is False or data is None:
             return type_.parse_obj(data)
 
         model_keys = tuple(field.alias for field in type_.__fields__.values())

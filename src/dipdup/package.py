@@ -41,9 +41,9 @@ def _get_pointers(content_length: int) -> tuple[str, ...]:
 def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> tuple[str, ...]:
     lines: deque[str] = deque()
     pointers = _get_pointers(len(project_tree) - 1)
-    for pointer, (section, paths) in zip(pointers, project_tree.items(), strict=True):
+    for pointer, (section, paths) in zip(pointers, project_tree.items(), strict=False):
         lines.append(pointer + section)
-        for inner_pointer, path in zip(_get_pointers(len(paths)), sorted(paths), strict=True):
+        for inner_pointer, path in zip(_get_pointers(len(paths)), sorted(paths), strict=False):
             relative_path = path.relative_to(root / section)
             lines.append(_branch + inner_pointer + relative_path.as_posix())
 
@@ -151,7 +151,9 @@ class DipDupPackage:
 
     def verify(self) -> None:
         _logger.debug('Verifying `%s` package', self.root)
-        import_submodules(self.name)
+        import_submodules(f'{self.name}.handlers')
+        import_submodules(f'{self.name}.hooks')
+        import_submodules(f'{self.name}.types')
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'

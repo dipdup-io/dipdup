@@ -205,6 +205,23 @@ class TzktOperationsIndex(
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
+    async def _create_fetcher(self, first_level: int, sync_level: int) -> OperationFetcher | OperationUnfilteredFetcher:
+        if isinstance(self._config, TzktOperationsIndexConfig):
+            return await OperationFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
+            return await OperationUnfilteredFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        raise NotImplementedError
+
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(sync_level)
@@ -214,21 +231,7 @@ class TzktOperationsIndex(
         first_level = index_level + 1
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
 
-        fetcher: OperationFetcher | OperationUnfilteredFetcher
-        if isinstance(self._config, TzktOperationsIndexConfig):
-            fetcher = await OperationFetcher.create(
-                self._config,
-                self._datasource,
-                first_level,
-                sync_level,
-            )
-        elif isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
-            fetcher = await OperationUnfilteredFetcher.create(
-                self._config,
-                self._datasource,
-                first_level,
-                sync_level,
-            )
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:

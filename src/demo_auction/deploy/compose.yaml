@@ -1,3 +1,4 @@
+version: "3.8"
 name: demo_auction
 
 services:
@@ -34,7 +35,7 @@ services:
       retries: 5
 
   hasura:
-    image: hasura/graphql-engine:v2.30.1
+    image: hasura/graphql-engine:latest
     ports:
       - 8080
     depends_on:

@@ -1,0 +1,33 @@
+[
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44172786532354,
+    1366840,
+    "2021-03-02T06:32:35Z",
+    "767376",
+    44172786532352,
+    null,
+    null
+  ]
+]
