@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Import package submodules before starting indexing to fail early on import errors.
 - cli: Fixed ordering of crash reports in `report` group commands.
+- tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt.operations: Fixed parsing operations with empty parameters.
 
 ## [7.0.0rc5] - 2023-09-06
