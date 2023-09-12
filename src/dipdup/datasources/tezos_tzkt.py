@@ -8,6 +8,7 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Sequence
+from contextlib import suppress
 from dataclasses import fields
 from enum import Enum
 from functools import partial
@@ -20,9 +21,12 @@ import pysignalr.exceptions
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
+from dipdup.config import DipDupConfig
 from dipdup.config import HttpConfig
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -1187,3 +1191,24 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         for _level, events in level_events.items():
             await self.emit_events(tuple(events))
+
+
+async def resolve_tzkt_code_hashes(
+    config: DipDupConfig,
+    datasources: dict[str, Datasource[Any]],
+) -> None:
+    """Late config initialization. We can resolve code hashes only after all datasources are initialized."""
+    tzkt_datasources = tuple(d for d in datasources.values() if isinstance(d, TzktDatasource))
+    tezos_contracts = tuple(c for c in config.contracts.values() if isinstance(c, TezosContractConfig))
+
+    for contract in tezos_contracts:
+        code_hash = contract.code_hash
+        if not isinstance(code_hash, str):
+            continue
+
+        for datasource in tzkt_datasources:
+            with suppress(DatasourceError):
+                contract.code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                break
+        else:
+            raise FrameworkException(f'Failed to resolve code hash for contract `{contract.code_hash}`')

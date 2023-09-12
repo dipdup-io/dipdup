@@ -228,20 +228,9 @@ class DipDupContext:
         :param code_hash: Contract code hash
         """
         self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
-        addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
 
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(name)
-
-        if address:
-            if address in addresses:
-                raise ContractAlreadyExistsError(addresses[address])
-            addresses[address] = name
-
-        if code_hash:
-            if code_hash in self.config._contract_code_hashes:
-                raise ContractAlreadyExistsError(code_hashes[code_hash])
-            code_hashes[code_hash] = name
 
         contract_config: ContractConfigU
         if kind == 'tezos':
@@ -262,8 +251,6 @@ class DipDupContext:
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
-        if isinstance(contract_config, TezosContractConfig):
-            code_hash = contract_config.code_hash
 
         with suppress(OperationalError):
             await Contract(

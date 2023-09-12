@@ -634,17 +634,6 @@ class DipDupConfig:
         self._paths: list[Path] = []
         self._environment: dict[str, str] = {}
         self._json = DipDupYAMLConfig()
-        # FIXME: Tezos-specific config validation
-        self._contract_addresses = {
-            v.address: k
-            for k, v in self.contracts.items()
-            if isinstance(v, TezosContractConfig) and v.address is not None
-        }
-        self._contract_code_hashes = {
-            v.code_hash: k
-            for k, v in self.contracts.items()
-            if isinstance(v, TezosContractConfig) and v.code_hash is not None
-        }
 
     @property
     def schema_name(self) -> str:
