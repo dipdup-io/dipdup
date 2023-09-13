@@ -17,9 +17,10 @@ from dipdup.indexes.big_map.matcher import match_big_maps
 from dipdup.models import BigMapAction
 from dipdup.models import BigMapData
 from dipdup.models import BigMapDiff
+from dipdup.models import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 
-BigMapQueueItem = tuple[BigMapData, ...]
+BigMapQueueItem = tuple[BigMapData, ...] | TzktRollbackMessage
 
 
 class BigMapIndex(
@@ -35,8 +36,12 @@ class BigMapIndex(
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
-            big_maps = self._queue.popleft()
-            message_level = big_maps[0].level
+            message = self._queue.popleft()
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
@@ -44,7 +49,7 @@ class BigMapIndex(
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_big_maps(big_maps, message_level)
+                await self._process_level_big_maps(message, message_level)
 
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""

@@ -10,9 +10,10 @@ from dipdup.index import Index
 from dipdup.indexes.token_transfer.fetcher import TokenTransferFetcher
 from dipdup.indexes.token_transfer.matcher import match_token_transfers
 from dipdup.models import TokenTransferData
+from dipdup.models import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 
-TokenTransferQueueItem = tuple[TokenTransferData, ...]
+TokenTransferQueueItem = tuple[TokenTransferData, ...] | TzktRollbackMessage
 
 
 class TokenTransferIndex(
@@ -115,8 +116,12 @@ class TokenTransferIndex(
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
-            token_transfers = self._queue.popleft()
-            message_level = token_transfers[0].level
+            message = self._queue.popleft()
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
@@ -124,4 +129,4 @@ class TokenTransferIndex(
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_token_transfers(token_transfers, message_level)
+                await self._process_level_token_transfers(message, message_level)

@@ -264,6 +264,12 @@ class UnknownEvent:
     payload: Any | None
 
 
+@dataclass(frozen=True)
+class TzktRollbackMessage:
+    from_level: int
+    to_level: int
+
+
 # ===> Model Versioning
 
 

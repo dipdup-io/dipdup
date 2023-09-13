@@ -55,6 +55,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import OperationData
 from dipdup.models import Schema
 from dipdup.models import TokenTransferData
+from dipdup.models import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -300,7 +301,11 @@ class IndexDispatcher:
                 index.push_events(events)
 
     async def _on_rollback(
-        self, datasource: IndexDatasource, type_: MessageType, from_level: int, to_level: int
+        self,
+        datasource: IndexDatasource,
+        type_: MessageType,
+        from_level: int,
+        to_level: int,
     ) -> None:
         """Call `on_index_rollback` hook for each index that is affected by rollback"""
         if from_level <= to_level:
@@ -312,8 +317,6 @@ class IndexDispatcher:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        affected_indexes: set[str] = set()
-
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
@@ -328,19 +331,11 @@ class IndexDispatcher:
 
             else:
                 self._logger.debug('%s: affected', index_name)
-                affected_indexes.add(index_name)
+                index.push_realtime_message(
+                    TzktRollbackMessage(from_level, to_level),
+                )
 
-        hook_name = 'on_index_rollback'
-        for index_name in affected_indexes:
-            self._logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
-            await self._ctx.fire_hook(
-                hook_name,
-                index=self._indexes[index_name],
-                from_level=from_level,
-                to_level=to_level,
-            )
-
-        self._logger.info('`%s` rollback complete', channel)
+        self._logger.info('`%s` rollback processed', channel)
 
 
 class DipDup:
