@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tzkt: Fixed issue with processing rollbacks while sync is in progress.
+
 ## [6.5.11] - 2023-09-02
 
 ### Fixed
