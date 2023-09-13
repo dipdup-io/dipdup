@@ -65,6 +65,7 @@ from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import MetricsLevel
@@ -347,7 +348,7 @@ class IndexDispatcher:
                 datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
                 datasource.call_on_big_maps(self._on_tzkt_big_maps)
                 datasource.call_on_events(self._on_tzkt_events)
-                datasource.call_on_rollback(self._on_rollback)
+                datasource.call_on_rollback(self._on_tzkt_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
@@ -431,9 +432,9 @@ class IndexDispatcher:
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
-    async def _on_rollback(
+    async def _on_tzkt_rollback(
         self,
-        datasource: IndexDatasource[Any],
+        datasource: TzktDatasource,
         type_: MessageType,
         from_level: int,
         to_level: int,
@@ -448,8 +449,6 @@ class IndexDispatcher:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        affected_indexes: set[str] = set()
-
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
@@ -464,19 +463,11 @@ class IndexDispatcher:
 
             else:
                 _logger.debug('%s: affected', index_name)
-                affected_indexes.add(index_name)
+                index.push_realtime_message(
+                    TzktRollbackMessage(from_level, to_level),
+                )
 
-        hook_name = 'on_index_rollback'
-        for index_name in affected_indexes:
-            _logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
-            await self._ctx.fire_hook(
-                hook_name,
-                index=self._indexes[index_name],
-                from_level=from_level,
-                to_level=to_level,
-            )
-
-        _logger.info('`%s` rollback complete', channel)
+        _logger.info('`%s` rollback processed', channel)
 
 
 class DipDup:

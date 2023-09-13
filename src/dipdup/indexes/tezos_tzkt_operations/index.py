@@ -27,11 +27,12 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgrou
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
 
-OperationQueueItem = tuple[OperationSubgroup, ...]
+OperationQueueItem = tuple[OperationSubgroup, ...] | TzktRollbackMessage
 
 
 def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str | None]:
@@ -180,12 +181,12 @@ class TzktOperationsIndex(
 
         while self._queue:
             message = self._queue.popleft()
-            messages_left = len(self._queue)
-
-            if not message:
-                raise FrameworkException('Got empty message from realtime queue')
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
 
             if Metrics.enabled:
+                messages_left = len(self._queue)
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
 
             message_level = message[0].operations[0].level

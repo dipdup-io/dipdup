@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
+
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 

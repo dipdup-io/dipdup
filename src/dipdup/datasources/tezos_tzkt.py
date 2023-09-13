@@ -42,6 +42,7 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.utils import split_by_chunks
@@ -119,8 +120,7 @@ OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]],
 TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
 BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
 EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
-# TODO: move somewhere
-RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
+RollbackCallback = Callable[['TzktDatasource', MessageType, int, int], Awaitable[None]]
 
 
 class TzktMessageAction(Enum):
@@ -129,7 +129,7 @@ class TzktMessageAction(Enum):
     REORG = 2
 
 
-MessageData = dict[str, Any] | list[dict[str, Any]]
+MessageData = dict[str, Any] | list[dict[str, Any]] | TzktRollbackMessage
 
 
 class BufferedMessage(NamedTuple):

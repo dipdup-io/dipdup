@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed ordering of crash reports in `report` group commands.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt.operations: Fixed parsing operations with empty parameters.
+- tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
 
 ## [7.0.0rc5] - 2023-09-06
 
