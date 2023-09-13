@@ -158,9 +158,12 @@ async def assert_run_domains() -> None:
 
 async def assert_run_factories() -> None:
     import demo_factories.models
+    from dipdup import models
 
+    indexes = await models.Index.filter().count()
     transfers = await demo_factories.models.Transfer.filter().count()
 
+    assert indexes == 2
     assert transfers == 19
 
 
@@ -225,9 +228,8 @@ test_params = (
     ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
-    # FIXME: https://github.com/dipdup-io/dipdup/issues/798
-    # ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
-    # ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
+    ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
