@@ -32,6 +32,7 @@ from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.factory import DatasourceFactory
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.datasource import resolve_tzkt_code_hashes
 from dipdup.enums import IndexStatus
 from dipdup.enums import MessageType
 from dipdup.enums import ReindexingReason
@@ -588,6 +589,8 @@ class DipDup:
                     stored_block_hash=db_head.hash,
                     actual_block_hash=actual_head.hash,
                 )
+
+        await resolve_tzkt_code_hashes(self._config, self._datasources)
 
     async def _set_up_index_dispatcher(
         self,

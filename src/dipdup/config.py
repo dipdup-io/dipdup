@@ -275,6 +275,12 @@ class ContractConfig(NameMixin):
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
         return self.address
 
+    @property
+    def resolved_code_hash(self) -> int | None:
+        if isinstance(self.code_hash, str):
+            raise FrameworkException('`code_hash` was not resolved during startup')
+        return self.code_hash
+
 
 class DatasourceConfig(ABC, NameMixin):
     kind: str
@@ -1536,8 +1542,6 @@ class DipDupConfig:
         self.paths: list[Path] = []
         self.environment: dict[str, str] = {}
         self.json = DipDupYAMLConfig()
-        self._contract_addresses = {v.address: k for k, v in self.contracts.items() if v.address is not None}
-        self._contract_code_hashes = {v.code_hash: k for k, v in self.contracts.items() if v.code_hash is not None}
 
     @property
     def schema_name(self) -> str:

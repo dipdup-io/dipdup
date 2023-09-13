@@ -39,6 +39,7 @@ from dipdup.config import UnknownEventHandlerConfig
 from dipdup.config import event_hooks
 from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.tzkt.datasource import TzktDatasource
+from dipdup.datasources.tzkt.datasource import resolve_tzkt_code_hashes
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FeatureAvailabilityError
@@ -282,7 +283,7 @@ class CodeGenerator:
     async def fetch_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
-
+        await resolve_tzkt_code_hashes(self._config, self._datasources)  # type: ignore[arg-type]
         unused_operation_templates = [t for t in self._config.templates.values() if isinstance(t, OperationIndexConfig)]
 
         for index_config in self._config.indexes.values():
@@ -440,12 +441,10 @@ class CodeGenerator:
         if not isinstance(datasource, TzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
-        if isinstance(contract_config.address, str):
+        if contract_config.address:
             address = contract_config.address
-        elif isinstance(contract_config.code_hash, str):
-            address = contract_config.code_hash
-        elif isinstance(contract_config.code_hash, int):
-            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        elif contract_config.resolved_code_hash:
+            address = await datasource.get_contract_address(contract_config.resolved_code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 

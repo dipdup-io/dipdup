@@ -1,23 +1,22 @@
 from typing import cast
 
-from demo_factories.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Origination
+from dipdup.models import OperationData
 
 
 async def on_factory_origination(
     ctx: HandlerContext,
-    registry_origination: Origination[RegistryStorage],
+    origination_0: OperationData,
 ) -> None:
-    originated_contract = cast(str, registry_origination.data.originated_contract_address)
-    name = f'registry_dao_{originated_contract}'
+    originated_contract = cast(str, origination_0.originated_contract_address)
+    name = f'dex_{originated_contract}'
     await ctx.add_contract(
         name=originated_contract,
         address=originated_contract,
-        typename='registry',
+        typename='dex',
     )
     await ctx.add_index(
         name=name,
-        template='registry_dao',
+        template='dex',
         values={'contract': originated_contract},
     )

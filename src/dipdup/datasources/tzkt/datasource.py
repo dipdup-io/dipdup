@@ -5,6 +5,7 @@ from abc import abstractmethod
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
+from contextlib import suppress
 from dataclasses import fields
 from datetime import datetime
 from datetime import timezone
@@ -26,8 +27,11 @@ from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
 from dipdup import baking_bad
+from dipdup.config import ContractConfig
+from dipdup.config import DipDupConfig
 from dipdup.config import HTTPConfig
 from dipdup.config import ResolvedIndexConfigU
+from dipdup.datasources.datasource import Datasource
 from dipdup.datasources.datasource import IndexDatasource
 from dipdup.datasources.subscription import Subscription
 from dipdup.datasources.tzkt.models import HeadSubscription
@@ -616,15 +620,13 @@ class TzktDatasource(SignalRDatasource):
         params = self._get_request_params(
             first_level,
             last_level,
-            limit=limit,
-            select=TRANSACTION_OPERATION_FIELDS,
+            offset,
+            limit,
+            TRANSACTION_OPERATION_FIELDS,
             values=True,
             status='applied',
             sort='level',
         )
-        # implement cursor with id
-        if offset:
-            params['id.gt'] = offset
 
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
@@ -1341,3 +1343,24 @@ class TzktDatasource(SignalRDatasource):
 
 def _parse_timestamp(timestamp: str) -> datetime:
     return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+
+
+async def resolve_tzkt_code_hashes(
+    config: DipDupConfig,
+    datasources: dict[str, Datasource],
+) -> None:
+    """Late config initialization. We can resolve code hashes only after all datasources are initialized."""
+    tzkt_datasources = tuple(d for d in datasources.values() if isinstance(d, TzktDatasource))
+    tezos_contracts = tuple(c for c in config.contracts.values() if isinstance(c, ContractConfig))
+
+    for contract in tezos_contracts:
+        code_hash = contract.code_hash
+        if not isinstance(code_hash, str):
+            continue
+
+        for datasource in tzkt_datasources:
+            with suppress(DatasourceError):
+                contract.code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                break
+        else:
+            raise FrameworkException(f'Failed to resolve code hash for contract `{contract.code_hash}`')
