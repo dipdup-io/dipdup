@@ -577,3 +577,9 @@ class TzktEvent(Generic[EventType]):
 class TzktUnknownEvent:
     data: TzktEventData
     payload: Any | None
+
+
+@dataclass(frozen=True)
+class TzktRollbackMessage:
+    from_level: int
+    to_level: int
