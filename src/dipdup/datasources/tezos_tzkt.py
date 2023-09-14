@@ -898,8 +898,9 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 'tag.in': ','.join(tags),
                 'level.ge': first_level,
                 'level.le': last_level,
+                # In TzktEventData this fields will be parsed another way, so we can't rely on class attributes
                 'select.values': ','.join(
-                    ['id', 'level', 'timestamp', 'tag', 'payload', 'contract', 'codeHash', 'transactionId']
+                    ['id', 'timestamp', 'tag', 'payload', 'contract', 'codeHash', 'transactionId']
                 ),
                 'offset.cr': offset,
                 'limit': limit,
