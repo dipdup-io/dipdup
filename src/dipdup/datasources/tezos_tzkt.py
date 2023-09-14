@@ -702,20 +702,22 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         limit: int | None = None,
     ) -> tuple[TzktOperationData, ...]:
         params = self._get_request_params(
-            first_level,
-            last_level,
-            offset,
-            limit,
-            TRANSACTION_OPERATION_FIELDS,
-            cursor=True,
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+            select=TRANSACTION_OPERATION_FIELDS,
             values=True,
-            status='applied',
+            cursor=True,
             sort='level',
+            status='applied',
         )
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
             params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
+        else:
+            pass
 
         raw_transactions = await self._request_values_dict(
             'get',

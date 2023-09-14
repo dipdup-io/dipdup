@@ -9,11 +9,10 @@ async def on_transfer(
     ctx: HandlerContext,
     transfer: TzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
-    raise Exception('it\'t working!')
-    transfers = []
     for transfer_item in transfer.parameter.__root__:
-        transfers.append(models.Transfer(
-            from_=transfer_item.from_,
-            to_=[models.Tx(to_=tx.to_, amount=tx.amount) for tx in transfer_item.txs]
-        ))
-    await models.Transfer.bulk_create(transfers)
+        for tx in transfer_item.txs:
+            await models.Transfer.create(
+                from_=transfer_item.from_,
+                to=tx.to_,
+                amount=tx.amount,
+            )
