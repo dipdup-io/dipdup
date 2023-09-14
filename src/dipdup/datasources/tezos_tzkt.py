@@ -8,7 +8,6 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Sequence
-from dataclasses import fields
 from enum import Enum
 from functools import partial
 from typing import Any
@@ -899,7 +898,9 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 'tag.in': ','.join(tags),
                 'level.ge': first_level,
                 'level.le': last_level,
-                'select.values': ','.join(f.name for f in fields(TzktEventData)),
+                'select.values': ','.join(
+                    ['id', 'level', 'timestamp', 'tag', 'payload', 'contract', 'codeHash', 'transactionId']
+                ),
                 'offset.cr': offset,
                 'limit': limit,
             },

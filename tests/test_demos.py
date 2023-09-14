@@ -156,6 +156,10 @@ async def assert_run_domains() -> None:
     assert domains == 1
 
 
+async def assert_run_events() -> None:
+    pass
+
+
 async def assert_run_factories() -> None:
     import demo_factories.models
 
@@ -227,6 +231,8 @@ test_params = (
     ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    ('demo_events.yml', 'demo_events', 'run', assert_run_events),
+    ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
     # FIXME: https://github.com/dipdup-io/dipdup/issues/798
     # ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
     # ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
