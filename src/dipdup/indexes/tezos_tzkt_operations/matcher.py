@@ -98,14 +98,15 @@ def match_transaction(
         if entrypoint != operation.entrypoint:
             return False
     if destination := pattern_config.destination:
+        print(operation.target_code_hash, destination.resolved_code_hash)
         if destination.address not in (operation.target_address, None):
             return False
-        if destination.code_hash not in (operation.target_code_hash, None):
+        if destination.resolved_code_hash not in (operation.target_code_hash, None):
             return False
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
             return False
-        if source.code_hash not in (operation.sender_code_hash, None):
+        if source.resolved_code_hash not in (operation.sender_code_hash, None):
             return False
 
     return True

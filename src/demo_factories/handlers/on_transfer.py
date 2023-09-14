@@ -9,6 +9,7 @@ async def on_transfer(
     ctx: HandlerContext,
     transfer: TzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
+    raise Exception('it\'t working!')
     transfers = []
     for transfer_item in transfer.parameter.__root__:
         transfers.append(models.Transfer(

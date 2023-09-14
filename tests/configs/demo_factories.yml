@@ -1,6 +1,7 @@
 spec_version: 2.0
 package: demo_factories
 
+logging: debug
 contracts:
   factory:
     kind: tezos
@@ -27,8 +28,8 @@ templates:
       - transaction
     contracts:
       - <contract>
-    first_level: 3384525
-    last_level: 3384650
+    # first_level: 4115533
+    # last_level: 4115533
     handlers:
       - callback: on_transfer
         pattern:
@@ -44,8 +45,8 @@ indexes:
       - factory
     types:
       - origination
-    first_level: 3384525
-    last_level: 3385825
+    first_level: 2428590
+    last_level: 2428590
     handlers:
       - callback: on_factory_origination
         pattern:
