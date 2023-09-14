@@ -1,6 +1,6 @@
-import {{ project.package }}.models as models
-from {{ project.package }}.types.token.parameter.transfer import TransferParameter
-from {{ project.package }}.types.token.storage import TokenStorage
+import demo_factories.models as models
+from demo_factories.types.token.parameter.transfer import TransferParameter
+from demo_factories.types.token.storage import TokenStorage
 from dipdup.context import HandlerContext
 from dipdup.models import Transaction
 

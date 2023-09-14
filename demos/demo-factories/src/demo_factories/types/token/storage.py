@@ -3,11 +3,45 @@
 
 from __future__ import annotations
 
+from typing import Any
 from typing import Dict
 from typing import List
 
 from pydantic import BaseModel
 from pydantic import Extra
+
+
+class Key(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    address: str
+    nat: str
+
+
+class LedgerItem(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key
+    value: str
+
+
+class Key1(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    owner: str
+    operator: str
+    token_id: str
+
+
+class Operator(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    key: Key1
+    value: Dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
@@ -22,9 +56,14 @@ class TokenStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    ledger: Dict[str, str]
-    operators: Dict[str, List[str]]
-    total_supply: str
+    administrator: str
+    all_tokens: str
+    isMinter1Locked: bool
+    isMinter2Locked: bool
+    ledger: List[LedgerItem]
     metadata: Dict[str, str]
+    minter1: str
+    minter2: str
+    operators: List[Operator]
+    paused: bool
     token_metadata: Dict[str, TokenMetadata]
-    admin: str

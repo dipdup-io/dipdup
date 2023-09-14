@@ -1,22 +1,36 @@
+from contextlib import suppress
 from typing import cast
 
 from dipdup.context import HandlerContext
 from dipdup.models import OperationData
+from dipdup.exceptions import ContractAlreadyExistsError
 
 
 async def on_factory_origination(
     ctx: HandlerContext,
-    origination_0: OperationData,
+    transaction_0: OperationData,
+    origination_1: OperationData,
 ) -> None:
-    originated_contract = cast(str, origination_0.originated_contract_address)
-    name = f'dex_{originated_contract}'
+    assert transaction_0.parameter_json
+    dex_contract = cast(str, origination_1.originated_contract_address)
+    token_contract = cast(str, transaction_0.parameter_json['token']['address'])
+
     await ctx.add_contract(
-        name=originated_contract,
-        address=originated_contract,
+        name=dex_contract,
+        address=dex_contract,
         typename='dex',
     )
+    with suppress(ContractAlreadyExistsError):
+        await ctx.add_contract(
+            name=token_contract,
+            address=token_contract,
+            typename='token',
+        )
     await ctx.add_index(
-        name=name,
+        name=dex_contract,
         template='dex',
-        values={'contract': originated_contract},
+        values={
+            'dex': dex_contract,
+            'token': token_contract,
+        }
     )

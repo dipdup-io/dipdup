@@ -170,7 +170,7 @@ async def assert_run_factories() -> None:
     transfers = await demo_factories.models.Transfer.filter().count()
 
     assert indexes == 2
-    assert transfers == 19
+    assert transfers == 1
 
 
 async def assert_run_raw() -> None:

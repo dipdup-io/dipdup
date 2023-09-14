@@ -1,17 +1,23 @@
+from typing import AsyncIterator
+from typing import cast
 
-from typing import AsyncIterator, cast
 import pytest
-from dipdup.config import DipDupConfig, OperationHandlerConfig, OperationHandlerOriginationPatternConfig, OperationIndexConfig
-from dipdup.datasources.datasource import Datasource
+
+from dipdup.config import DipDupConfig
+from dipdup.config import OperationHandlerConfig
+from dipdup.config import OperationHandlerOriginationPatternConfig
+from dipdup.config import OperationIndexConfig
+from dipdup.datasources.tzkt.datasource import TzktDatasource
 from dipdup.enums import OperationType
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.operation.fetcher import get_origination_filters, get_transaction_filters
+from dipdup.indexes.operation.fetcher import get_origination_filters
+from dipdup.indexes.operation.fetcher import get_transaction_filters
 from tests import CONFIGS_PATH
 from tests import tzkt_replay
 
 
 @pytest.fixture
-async def tzkt() -> AsyncIterator[Datasource]:
+async def tzkt() -> AsyncIterator[TzktDatasource]:
     async with tzkt_replay() as tzkt:
         yield tzkt
 
@@ -24,21 +30,21 @@ def index_config() -> OperationIndexConfig:
 
 
 async def test_ignored_type_filter(
-    tzkt: Datasource,
+    tzkt: TzktDatasource,
     index_config: OperationIndexConfig,
 ) -> None:
     index_config.types = ()
-    addresses, hashes = await get_origination_filters(index_config, tzkt)  # type: ignore[arg-type]
+    addresses, hashes = await get_origination_filters(index_config, tzkt)
     assert not addresses
     assert not hashes
 
-    addresses, hashes = await get_transaction_filters(index_config, tzkt)  # type: ignore[arg-type]
+    addresses, hashes = await get_transaction_filters(index_config, tzkt)
     assert not addresses
     assert not hashes
 
 
 async def test_get_origination_filters(
-    tzkt: Datasource,
+    tzkt: TzktDatasource,
     index_config: OperationIndexConfig,
 ) -> None:
     index_config.handlers = (
@@ -98,7 +104,7 @@ async def test_get_origination_filters(
     assert hashes == set()
 
 
-async def test_get_transaction_filters(tzkt: Datasource, index_config: OperationIndexConfig) -> None:
+async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: OperationIndexConfig) -> None:
     index_config.types = (OperationType.transaction,)
     index_config.contracts[2].code_hash = -680664524
 

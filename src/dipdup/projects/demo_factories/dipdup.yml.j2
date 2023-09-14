@@ -5,9 +5,8 @@ contracts:
   factory:
     address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
     typename: factory
-  # token for code hash reference
   token:
-    address: KT1VaEsVNiBoA56eToEK6n6BcPgh1tdx9eXi
+    address: KT1UsSfaXyqcjSVPeiD7U1bWgKy3taYN7NWY
     typename: token
 
 datasources:
@@ -22,13 +21,16 @@ templates:
     types:
       - transaction
     contracts:
-      - <contract>
+      - <dex>
+      - <token>
     handlers:
       - callback: on_transfer
         pattern:
           - type: transaction
-            destination: token
+            destination: <token>
             entrypoint: transfer
+    first_level: 2393103
+    last_level: 2393103
 
 indexes:
   factory:
@@ -38,11 +40,13 @@ indexes:
       - factory
     types:
       - origination
+      - transaction
     handlers:
       - callback: on_factory_origination
         pattern:
+          - type: transaction
+            entrypoint: launchExchange
           - type: origination
             source: factory
-
-advanced:
-  merge_subscriptions: True
+    first_level: 2428590
+    last_level: 2428590

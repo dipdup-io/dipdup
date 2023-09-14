@@ -46,7 +46,7 @@ def prepare_operation_handler_args(
             args.append(None)
 
         elif isinstance(pattern_config, TransactionPatternConfig):
-            if not pattern_config.entrypoint:
+            if not (pattern_config.entrypoint and pattern_config.destination):
                 args.append(operation_data)
                 continue
 

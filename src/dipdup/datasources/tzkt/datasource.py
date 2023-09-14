@@ -336,7 +336,7 @@ class TzktDatasource(SignalRDatasource):
                 'address',
             ),
             values=True,
-            cursor=True,
+            cursor=False,
         )
         response = await self._request_values_dict(
             'get',
@@ -352,7 +352,7 @@ class TzktDatasource(SignalRDatasource):
         async for batch in self._iter_batches(
             self.get_originated_contracts,
             address,
-            cursor=True,
+            cursor=False,
         ):
             yield batch
 
@@ -618,20 +618,23 @@ class TzktDatasource(SignalRDatasource):
         limit: int | None = None,
     ) -> tuple[OperationData, ...]:
         params = self._get_request_params(
-            first_level,
-            last_level,
-            offset,
-            limit,
-            TRANSACTION_OPERATION_FIELDS,
+            first_level=first_level,
+            last_level=last_level,
+            offset=offset,
+            limit=limit,
+            select=TRANSACTION_OPERATION_FIELDS,
             values=True,
-            status='applied',
+            cursor=True,
             sort='level',
+            status='applied',
         )
 
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
             params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
+        else:
+            pass
 
         raw_transactions = await self._request_values_dict(
             'get',
