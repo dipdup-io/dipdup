@@ -172,7 +172,7 @@ class SubsquidEventsIndex(
                 await self._process_level_events(parsed_level_logs, self.topics, sync_level)
 
         else:
-            sync_level = subsquid_sync_level
+            sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
 
             async for _level, events in fetcher.fetch_by_level():

@@ -212,6 +212,7 @@ async def test_on_operation_message_data() -> None:
         assert isinstance(emit_mock.await_args_list[0][0][1][0], TzktOperationData)
 
 
+# FIXME: Hangs without internet
 async def test_no_content() -> None:
     async with tzkt_replay('https://api.ghostnet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):

@@ -1,0 +1,76 @@
+[
+  {
+    "id": 1212641,
+    "level": 1417329,
+    "timestamp": "2021-04-06T15:02:33Z",
+    "bigmap": 1264,
+    "contract": {
+      "alias": "Tezos Domains NameRegistry",
+      "address": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS"
+    },
+    "path": "store.records",
+    "action": "allocate"
+  },
+  {
+    "id": 1212644,
+    "level": 1417329,
+    "timestamp": "2021-04-06T15:02:33Z",
+    "bigmap": 1262,
+    "contract": {
+      "alias": "Tezos Domains NameRegistry",
+      "address": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS"
+    },
+    "path": "store.expiry_map",
+    "action": "allocate"
+  },
+  {
+    "id": 1214018,
+    "level": 1417362,
+    "timestamp": "2021-04-06T15:37:33Z",
+    "bigmap": 1264,
+    "contract": {
+      "alias": "Tezos Domains NameRegistry",
+      "address": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS"
+    },
+    "path": "store.records",
+    "action": "add_key",
+    "content": {
+      "hash": "expru1RHeDi7qRWzGiBbjaZ3VtZ2ePgpVos2gmX4L1oujsjDMWGinn",
+      "key": "74657a",
+      "value": {
+        "data": {},
+        "level": "1",
+        "owner": "KT1Mqx5meQbhufngJnUAGEGpa4ZRxhPSiCgB",
+        "address": null,
+        "expiry_key": null,
+        "internal_data": {},
+        "tzip12_token_id": null
+      }
+    }
+  },
+  {
+    "id": 1223182,
+    "level": 1417673,
+    "timestamp": "2021-04-06T20:57:13Z",
+    "bigmap": 1264,
+    "contract": {
+      "alias": "Tezos Domains NameRegistry",
+      "address": "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS"
+    },
+    "path": "store.records",
+    "action": "add_key",
+    "content": {
+      "hash": "exprtbX5t7W4xHSnio5ymqwRXTaG2F9z7MYbeXE2qrxUkEExoYiJeM",
+      "key": "646f6d61696e732e74657a",
+      "value": {
+        "data": {},
+        "level": "2",
+        "owner": "KT1Mqx5meQbhufngJnUAGEGpa4ZRxhPSiCgB",
+        "address": "KT1Mqx5meQbhufngJnUAGEGpa4ZRxhPSiCgB",
+        "expiry_key": null,
+        "internal_data": {},
+        "tzip12_token_id": null
+      }
+    }
+  }
+]

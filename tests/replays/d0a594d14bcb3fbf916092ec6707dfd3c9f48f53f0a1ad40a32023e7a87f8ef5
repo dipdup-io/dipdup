@@ -1,1 +1,42 @@
-{"id":1157826,"type":"contract","address":"KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9","kind":"smart_contract","alias":"hic et nunc Minter","balance":21450045,"creator":{"alias":"hicetnunc2000lab","address":"tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"},"numContracts":0,"activeTokensCount":35647,"tokensCount":0,"tokenBalancesCount":144212,"tokenTransfersCount":1387667,"numDelegations":0,"numOriginations":1,"numTransactions":6515971,"numReveals":0,"numMigrations":0,"transferTicketCount":0,"increasePaidStorageCount":0,"eventsCount":0,"firstActivity":1365148,"firstActivityTime":"2021-03-01T02:04:41Z","lastActivity":3171234,"lastActivityTime":"2023-02-23T15:49:59Z","typeHash":-760897556,"codeHash":-680664524,"metadata":{"site":"https://www.hicetnunc.xyz/","alias":"hic et nunc Minter","email":"hicetnunc2000@protonmail.com","reddit":"r/hicetnunc","discord":"jKNy6PynPK","twitter":"hicetnunc2000","telegram":"hicetnunc2000","description":"Digital assets NFT minter."}}
+{
+  "id": 1157826,
+  "type": "contract",
+  "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9",
+  "kind": "smart_contract",
+  "alias": "hic et nunc Minter",
+  "balance": 22350045,
+  "creator": {
+    "alias": "hicetnunc2000lab",
+    "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+  },
+  "numContracts": 0,
+  "activeTokensCount": 35613,
+  "tokensCount": 0,
+  "tokenBalancesCount": 144221,
+  "tokenTransfersCount": 1387746,
+  "numDelegations": 0,
+  "numOriginations": 1,
+  "numTransactions": 6558255,
+  "numReveals": 0,
+  "numMigrations": 0,
+  "transferTicketCount": 0,
+  "increasePaidStorageCount": 0,
+  "eventsCount": 0,
+  "firstActivity": 1365148,
+  "firstActivityTime": "2021-03-01T02:04:41Z",
+  "lastActivity": 4190950,
+  "lastActivityTime": "2023-09-07T21:33:14Z",
+  "typeHash": -760897556,
+  "codeHash": -680664524,
+  "metadata": {
+    "kind": "minter",
+    "site": "https://www.hicetnunc.xyz/",
+    "alias": "hic et nunc Minter",
+    "email": "hicetnunc2000@protonmail.com",
+    "reddit": "r/hicetnunc",
+    "discord": "jKNy6PynPK",
+    "twitter": "hicetnunc2000",
+    "telegram": "hicetnunc2000",
+    "description": "Digital assets NFT minter."
+  }
+}

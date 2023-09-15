@@ -18,7 +18,7 @@
 #     path = Path(__file__).parent / 'configs' / 'dipdup.yaml'
 #     config = DipDupConfig.load([path])
 #     async with AsyncExitStack() as stack:
-#         yield await DipDup.create_dummy(config, stack, in_memory=True)
+#         yield await create_dummy_dipdup(config, stack, in_memory=True)
 
 
 # async def test_reindex_manual(dummy_dipdup: DipDup) -> None:

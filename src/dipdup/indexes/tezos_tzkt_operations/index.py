@@ -27,11 +27,12 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgrou
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
 
-OperationQueueItem = tuple[OperationSubgroup, ...]
+OperationQueueItem = tuple[OperationSubgroup, ...] | TzktRollbackMessage
 
 
 def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str | None]:
@@ -66,25 +67,25 @@ def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str
     return addresses
 
 
-def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[int | str]:
+def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[int]:
     """Set of code hashes to filter operations with before an actual matching"""
-    code_hashes = set()
+    code_hashes: set[int] = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
             if isinstance(pattern_config, TransactionPatternConfig):
                 if pattern_config.source:
-                    if code_hash := pattern_config.source.code_hash:
+                    if code_hash := pattern_config.source.resolved_code_hash:
                         code_hashes.add(code_hash)
                 if pattern_config.destination:
-                    if code_hash := pattern_config.destination.code_hash:
+                    if code_hash := pattern_config.destination.resolved_code_hash:
                         code_hashes.add(code_hash)
             elif isinstance(pattern_config, OriginationPatternConfig):
                 if pattern_config.source:
-                    if code_hash := pattern_config.source.code_hash:
+                    if code_hash := pattern_config.source.resolved_code_hash:
                         raise FrameworkException('`source.code_hash` is not supported for origination patterns')
 
                 if pattern_config.originated_contract:
-                    if code_hash := pattern_config.originated_contract.code_hash:
+                    if code_hash := pattern_config.originated_contract.resolved_code_hash:
                         code_hashes.add(code_hash)
 
     return code_hashes
@@ -167,8 +168,6 @@ class TzktOperationsIndex(
             return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
         for code_hash in code_hash_filter(self._config.handlers):
-            if not isinstance(code_hash, int):
-                code_hash, _ = await self._datasource.get_contract_hashes(code_hash)
             self._code_hash_filter.add(code_hash)
 
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)
@@ -182,12 +181,12 @@ class TzktOperationsIndex(
 
         while self._queue:
             message = self._queue.popleft()
-            messages_left = len(self._queue)
-
-            if not message:
-                raise FrameworkException('Got empty message from realtime queue')
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
 
             if Metrics.enabled:
+                messages_left = len(self._queue)
                 Metrics.set_levels_to_realtime(self._config.name, messages_left)
 
             message_level = message[0].operations[0].level
@@ -205,6 +204,23 @@ class TzktOperationsIndex(
             if Metrics.enabled:
                 Metrics.set_levels_to_realtime(self._config.name, 0)
 
+    async def _create_fetcher(self, first_level: int, sync_level: int) -> OperationFetcher | OperationUnfilteredFetcher:
+        if isinstance(self._config, TzktOperationsIndexConfig):
+            return await OperationFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
+            return await OperationUnfilteredFetcher.create(
+                self._config,
+                self._datasource,
+                first_level,
+                sync_level,
+            )
+        raise NotImplementedError
+
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(sync_level)
@@ -214,21 +230,7 @@ class TzktOperationsIndex(
         first_level = index_level + 1
         self._logger.info('Fetching operations from level %s to %s', first_level, sync_level)
 
-        fetcher: OperationFetcher | OperationUnfilteredFetcher
-        if isinstance(self._config, TzktOperationsIndexConfig):
-            fetcher = await OperationFetcher.create(
-                self._config,
-                self._datasource,
-                first_level,
-                sync_level,
-            )
-        elif isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
-            fetcher = await OperationUnfilteredFetcher.create(
-                self._config,
-                self._datasource,
-                first_level,
-                sync_level,
-            )
+        fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, operations in fetcher.fetch_by_level():
             if Metrics.enabled:

@@ -24,6 +24,7 @@ from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
+from dipdup.report import get_reports
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
 
@@ -716,7 +717,7 @@ async def report_ls(ctx: click.Context) -> None:
     yaml = YAML(typ='base')
     header = tuple(ReportHeader.__annotations__.keys())
     rows = []
-    for path in REPORTS_PATH.iterdir():
+    for path in get_reports():
         event = yaml.load(path)
         row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
@@ -735,7 +736,7 @@ async def report_show(ctx: click.Context, id: str) -> None:
     if not path.exists():
         echo('No such report')
         return
-    print(path.read_text())
+    echo(path.read_text())
 
 
 @report.command(name='rm')

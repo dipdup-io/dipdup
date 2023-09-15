@@ -79,6 +79,7 @@ if TYPE_CHECKING:
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
+
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
 
@@ -228,20 +229,9 @@ class DipDupContext:
         :param code_hash: Contract code hash
         """
         self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
-        addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
 
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(name)
-
-        if address:
-            if address in addresses:
-                raise ContractAlreadyExistsError(addresses[address])
-            addresses[address] = name
-
-        if code_hash:
-            if code_hash in self.config._contract_code_hashes:
-                raise ContractAlreadyExistsError(code_hashes[code_hash])
-            code_hashes[code_hash] = name
 
         contract_config: ContractConfigU
         if kind == 'tezos':
@@ -262,8 +252,6 @@ class DipDupContext:
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
-        if isinstance(contract_config, TezosContractConfig):
-            code_hash = contract_config.code_hash
 
         with suppress(OperationalError):
             await Contract(
@@ -302,7 +290,7 @@ class DipDupContext:
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
-    async def _spawn_index(self, name: str, state: Index | None = None) -> None:
+    async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
@@ -358,6 +346,7 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         self._pending_indexes.append(index)
+        return index
 
     # TODO: disable_index(name: str)
 

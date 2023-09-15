@@ -54,8 +54,6 @@ def prepare_operation_handler_args(
                 args.append(operation_data)
                 continue
 
-            if operation_data.parameter_json is None:
-                raise FrameworkException('Processing typed transaction, but parameter_json is None')
             typename = pattern_config.typed_contract.module_name
             type_ = get_parameter_type(package, typename, pattern_config.entrypoint)
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
@@ -102,12 +100,12 @@ def match_transaction(
     if destination := pattern_config.destination:
         if destination.address not in (operation.target_address, None):
             return False
-        if destination.code_hash not in (operation.target_code_hash, None):
+        if destination.resolved_code_hash not in (operation.target_code_hash, None):
             return False
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
             return False
-        if source.code_hash not in (operation.sender_code_hash, None):
+        if source.resolved_code_hash not in (operation.sender_code_hash, None):
             return False
 
     return True
