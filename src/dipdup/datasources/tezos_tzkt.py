@@ -9,7 +9,6 @@ from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Sequence
 from contextlib import suppress
-from dataclasses import fields
 from enum import Enum
 from functools import partial
 from typing import Any
@@ -100,7 +99,7 @@ BIGMAP_FIELDS = (
     'keyType',
     'valueType',
 )
-TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
+TOKEN_TRANSFER_FIELDS = (
     'token',
     'from',
     'to',
@@ -111,6 +110,16 @@ TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
     'transactionId',
     'originationId',
     'migrationId',
+)
+EVENT_FIELDS = (
+    'id',
+    'level',
+    'timestamp',
+    'tag',
+    'payload',
+    'contract',
+    'codeHash',
+    'transactionId',
 )
 
 
@@ -849,7 +858,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             last_level,
             offset=offset or 0,
             limit=limit,
-            select=TZKT_TOKEN_TRANSFER_DATA_FIELDS,
+            select=TOKEN_TRANSFER_FIELDS,
             values=True,
             cursor=True,
             **{
@@ -893,20 +902,24 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[TzktEventData, ...]:
-        # FIXME: no tests for function
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=EVENT_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'contract.in': ','.join(addresses),
+                'tag.in': ','.join(tags),
+            },
+        )
         offset, limit = offset or 0, limit or self.request_limit
         raw_events = await self._request_values_dict(
             'get',
             url='v1/contracts/events',
-            params={
-                'contract.in': ','.join(addresses),
-                'tag.in': ','.join(tags),
-                'level.ge': first_level,
-                'level.le': last_level,
-                'select.values': ','.join(f.name for f in fields(TzktEventData)),
-                'offset.cr': offset,
-                'limit': limit,
-            },
+            params=params,
         )
         return tuple(TzktEventData.from_json(e) for e in raw_events)
 

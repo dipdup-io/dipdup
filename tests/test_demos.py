@@ -156,6 +156,10 @@ async def assert_run_domains() -> None:
     assert domains == 1
 
 
+async def assert_run_events() -> None:
+    pass
+
+
 async def assert_run_factories() -> None:
     import demo_factories.models
 
@@ -231,6 +235,8 @@ test_params = (
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
     ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
     ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_events.yml', 'demo_events', 'run', assert_run_events),
+    ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
