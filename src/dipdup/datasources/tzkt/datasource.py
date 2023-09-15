@@ -6,7 +6,6 @@ from asyncio import Event
 from collections import defaultdict
 from collections import deque
 from contextlib import suppress
-from dataclasses import fields
 from datetime import datetime
 from datetime import timezone
 from decimal import Decimal
@@ -115,6 +114,16 @@ TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
     'transactionId',
     'originationId',
     'migrationId',
+)
+EVENT_FIELDS = (
+    'id',
+    'level',
+    'timestamp',
+    'tag',
+    'payload',
+    'contract',
+    'codeHash',
+    'transactionId',
 )
 
 
@@ -814,21 +823,26 @@ class TzktDatasource(SignalRDatasource):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[EventData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=EVENT_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'contract.in': ','.join(addresses),
+                'tag.in': ','.join(tags),
+            },
+        )
         offset, limit = offset or 0, limit or self.request_limit
         raw_events = await self._request_values_dict(
             'get',
             url='v1/contracts/events',
-            params={
-                'contract.in': ','.join(addresses),
-                'tag.in': ','.join(tags),
-                'level.ge': first_level,
-                'level.le': last_level,
-                'select.values': ','.join(f.name for f in fields(EventData)),
-                'offset.cr': offset,
-                'limit': limit,
-            },
+            params=params,
         )
-        return tuple(self.convert_event(e) for e in raw_events)
+        return tuple(EventData.from_json(e) for e in raw_events)
 
     async def iter_events(
         self,
