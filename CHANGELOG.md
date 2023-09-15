@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - tezos.tzkt.events: Fixed parsing contract event data.
 - tezos.tzkt.operations: Fixed parsing operations with empty parameters.
 
+## [6.5.12] - 2023-09-15
+
+### Fixed
+
+- tzkt: Fixed issue with processing rollbacks while sync is in progress.
+- tzkt: Fixed operation matching when contract code hash specified as a string.
+- tzkt: Fixed parsing contract event data.
+
 ## [7.0.0rc5] - 2023-09-06
 
 ### Fixed
