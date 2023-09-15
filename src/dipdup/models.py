@@ -6,6 +6,7 @@ from dataclasses import field
 from datetime import date
 from datetime import datetime
 from datetime import time
+from datetime import timezone
 from decimal import Decimal
 from enum import Enum
 from functools import cache
@@ -52,6 +53,10 @@ EventType = TypeVar('EventType', bound=BaseModel)
 _logger = logging.getLogger(__name__)
 
 # ===> Dataclasses
+
+
+def _parse_timestamp(timestamp: str) -> datetime:
+    return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
 
 
 @dataclass
@@ -250,6 +255,21 @@ class EventData:
     contract_alias: Optional[str] = None
     contract_code_hash: Optional[int] = None
     transaction_id: Optional[int] = None
+
+    @classmethod
+    def from_json(cls, event_json: dict[str, Any]) -> 'EventData':
+        """Convert raw event message from WS/REST into dataclass"""
+        return EventData(
+            id=event_json['id'],
+            level=event_json['level'],
+            timestamp=_parse_timestamp(event_json['timestamp']),
+            tag=event_json['tag'],
+            payload=event_json.get('payload'),
+            contract_address=event_json['contract']['address'],
+            contract_alias=event_json['contract'].get('alias'),
+            contract_code_hash=event_json['codeHash'],
+            transaction_id=event_json.get('transactionId'),
+        )
 
 
 @dataclass
