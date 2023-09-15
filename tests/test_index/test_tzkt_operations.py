@@ -92,9 +92,9 @@ async def test_get_origination_filters(
             ),
         ),
     )
-    addresses, hashes = await get_origination_filters(index_config, tzkt)
-    assert not addresses
-    assert hashes == {-680664524}
+    # NOTE: Resolved earlier
+    with pytest.raises(FrameworkException):
+        await get_origination_filters(index_config, tzkt)
 
     index_config.handlers = (
         TzktOperationsHandlerConfig(
@@ -113,6 +113,8 @@ async def test_get_origination_filters(
 
 async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: TzktOperationsIndexConfig) -> None:
     index_config.types = (TzktOperationType.transaction,)
+    index_config.contracts[2].code_hash = -680664524
+
     filters = await get_transaction_filters(index_config, tzkt)
     assert filters == ({'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}, {-680664524, -1585533315})
 

@@ -163,11 +163,13 @@ async def assert_run_events() -> None:
 async def assert_run_factories() -> None:
     import demo_factories.models
 
-    proposals = await demo_factories.models.DAO.filter().count()
-    votes = await demo_factories.models.Proposal.filter().count()
+    from dipdup import models
 
-    assert proposals == 19
-    assert votes == 86
+    indexes = await models.Index.filter().count()
+    transfers = await demo_factories.models.Transfer.filter().count()
+
+    assert indexes == 2
+    assert transfers == 1
 
 
 async def assert_run_raw() -> None:
@@ -231,11 +233,10 @@ test_params = (
     ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
+    ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_events.yml', 'demo_events', 'run', assert_run_events),
     ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
-    # FIXME: https://github.com/dipdup-io/dipdup/issues/798
-    # ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
-    # ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),

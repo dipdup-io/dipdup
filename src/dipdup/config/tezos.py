@@ -5,6 +5,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 
 TEZOS_ADDRESS_PREFIXES = (
     'KT1',
@@ -47,3 +48,9 @@ class TezosContractConfig(ContractConfig):
         if self.address is None:
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
         return self.address
+
+    @property
+    def resolved_code_hash(self) -> int | None:
+        if isinstance(self.code_hash, str):
+            raise FrameworkException('`code_hash` was not resolved during startup')
+        return self.code_hash

@@ -32,6 +32,7 @@ from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DipDupPackage
@@ -103,6 +104,8 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
+        await resolve_tzkt_code_hashes(self._config, self._datasources)
+
         if force:
             self._cleanup_schemas()
 
@@ -203,12 +206,10 @@ class TzktCodeGenerator(CodeGenerator):
         if not isinstance(datasource, TzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
-        if isinstance(contract_config.address, str):
+        if contract_config.address:
             address = contract_config.address
-        elif isinstance(contract_config.code_hash, str):
-            address = contract_config.code_hash
-        elif isinstance(contract_config.code_hash, int):
-            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        elif contract_config.resolved_code_hash:
+            address = await datasource.get_contract_address(contract_config.resolved_code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 
@@ -358,12 +359,10 @@ class TzktCodeGenerator(CodeGenerator):
         """Get contract JSONSchema from TzKT or from cache"""
         schemas: dict[str, Any] = {}
 
-        if isinstance(contract_config.address, str):
+        if contract_config.address:
             address = contract_config.address
-        elif isinstance(contract_config.code_hash, str):
-            address = contract_config.code_hash
-        elif isinstance(contract_config.code_hash, int):
-            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        elif contract_config.resolved_code_hash:
+            address = await datasource.get_contract_address(contract_config.resolved_code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 

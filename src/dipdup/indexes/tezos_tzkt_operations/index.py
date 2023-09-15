@@ -67,25 +67,25 @@ def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str
     return addresses
 
 
-def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[int | str]:
+def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[int]:
     """Set of code hashes to filter operations with before an actual matching"""
-    code_hashes = set()
+    code_hashes: set[int] = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
             if isinstance(pattern_config, TransactionPatternConfig):
                 if pattern_config.source:
-                    if code_hash := pattern_config.source.code_hash:
+                    if code_hash := pattern_config.source.resolved_code_hash:
                         code_hashes.add(code_hash)
                 if pattern_config.destination:
-                    if code_hash := pattern_config.destination.code_hash:
+                    if code_hash := pattern_config.destination.resolved_code_hash:
                         code_hashes.add(code_hash)
             elif isinstance(pattern_config, OriginationPatternConfig):
                 if pattern_config.source:
-                    if code_hash := pattern_config.source.code_hash:
+                    if code_hash := pattern_config.source.resolved_code_hash:
                         raise FrameworkException('`source.code_hash` is not supported for origination patterns')
 
                 if pattern_config.originated_contract:
-                    if code_hash := pattern_config.originated_contract.code_hash:
+                    if code_hash := pattern_config.originated_contract.resolved_code_hash:
                         code_hashes.add(code_hash)
 
     return code_hashes
@@ -168,8 +168,6 @@ class TzktOperationsIndex(
             return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
         for code_hash in code_hash_filter(self._config.handlers):
-            if not isinstance(code_hash, int):
-                code_hash, _ = await self._datasource.get_contract_hashes(code_hash)
             self._code_hash_filter.add(code_hash)
 
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)

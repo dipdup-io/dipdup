@@ -39,6 +39,7 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
@@ -711,6 +712,8 @@ class DipDup:
             if not isinstance(datasource, IndexDatasource):
                 continue
             await datasource.initialize()
+
+        await resolve_tzkt_code_hashes(self._config, self._datasources)
 
     async def _set_up_index_dispatcher(
         self,
