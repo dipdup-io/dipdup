@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Fixed issue with processing rollbacks while sync is in progress.
 - tzkt: Fixed operation matching when contract code hash specified as a string.
+- tzkt: Fixed parsing contract event data.
 
 ## [6.5.11] - 2023-09-02
 
