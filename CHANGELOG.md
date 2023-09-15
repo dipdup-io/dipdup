@@ -4,12 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.5.12] - 2023-09-15
 
 ### Fixed
 
 - tzkt: Fixed issue with processing rollbacks while sync is in progress.
 - tzkt: Fixed operation matching when contract code hash specified as a string.
+- tzkt: Fixed parsing contract event data.
 
 ## [6.5.11] - 2023-09-02
 
@@ -1055,7 +1056,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.11...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.12...HEAD
+[6.5.12]: https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10
 [6.5.9]: https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9
