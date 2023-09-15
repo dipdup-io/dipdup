@@ -46,7 +46,7 @@ def prepare_operation_handler_args(
             args.append(None)
 
         elif isinstance(pattern_config, TransactionPatternConfig):
-            if not pattern_config.entrypoint:
+            if not (pattern_config.entrypoint and pattern_config.destination):
                 args.append(operation_data)
                 continue
 
@@ -97,12 +97,12 @@ def match_transaction(
     if destination := pattern_config.destination:
         if destination.address not in (operation.target_address, None):
             return False
-        if destination.code_hash not in (operation.target_code_hash, None):
+        if destination.resolved_code_hash not in (operation.target_code_hash, None):
             return False
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
             return False
-        if source.code_hash not in (operation.sender_code_hash, None):
+        if source.resolved_code_hash not in (operation.sender_code_hash, None):
             return False
 
     return True

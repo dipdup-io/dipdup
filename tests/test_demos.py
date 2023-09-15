@@ -164,12 +164,13 @@ async def assert_run_domains() -> None:
 
 async def assert_run_factories() -> None:
     import demo_factories.models
+    from dipdup import models
 
-    proposals = await demo_factories.models.DAO.filter().count()
-    votes = await demo_factories.models.Proposal.filter().count()
+    indexes = await models.Index.filter().count()
+    transfers = await demo_factories.models.Transfer.filter().count()
 
-    assert proposals == 19
-    assert votes == 86
+    assert indexes == 2
+    assert transfers == 1
 
 
 async def assert_run_raw() -> None:

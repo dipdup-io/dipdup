@@ -1,14 +1,13 @@
 spec_version: 1.2
-package: {{ cookiecutter.package }}
-
-database:
-  kind: sqlite
-  path: {{ cookiecutter.project_name }}.sqlite3
+package: demo_factories
 
 contracts:
-  registry:
-    address: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
-    typename: registry
+  factory:
+    address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
+    typename: factory
+  token:
+    address: KT1UsSfaXyqcjSVPeiD7U1bWgKy3taYN7NWY
+    typename: token
 
 datasources:
   tzkt:
@@ -16,33 +15,38 @@ datasources:
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
-  registry_dao:
+  dex:
     kind: operation
     datasource: tzkt
     types:
       - transaction
-      - origination
     contracts:
-      - <contract>
+      - <dex>
+      - <token>
     handlers:
-      - callback: on_origination
-        pattern:
-          - type: origination
-            originated_contract: <contract>
-      - callback: on_propose
+      - callback: on_transfer
         pattern:
           - type: transaction
-            destination: <contract>
-            entrypoint: propose
+            destination: <token>
+            entrypoint: transfer
+    first_level: 2393103
+    last_level: 2393103
 
 indexes:
   factory:
     kind: operation
     datasource: tzkt
+    contracts:
+      - factory
     types:
       - origination
+      - transaction
     handlers:
-        - callback: on_factory_origination
-          pattern:
-            - type: origination
-              similar_to: registry
+      - callback: on_factory_origination
+        pattern:
+          - type: transaction
+            entrypoint: launchExchange
+          - type: origination
+            source: factory
+    first_level: 2428590
+    last_level: 2428590

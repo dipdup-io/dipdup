@@ -1,23 +1,36 @@
+from contextlib import suppress
 from typing import cast
 
-from {{cookiecutter.package}}.types.registry.storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models import Origination
+from dipdup.models import OperationData
+from dipdup.exceptions import ContractAlreadyExistsError
 
 
 async def on_factory_origination(
     ctx: HandlerContext,
-    registry_origination: Origination[RegistryStorage],
+    transaction_0: OperationData,
+    origination_1: OperationData,
 ) -> None:
-    originated_contract = cast(str, registry_origination.data.originated_contract_address)
-    name = f'registry_dao_{originated_contract}'
+    assert transaction_0.parameter_json
+    dex_contract = cast(str, origination_1.originated_contract_address)
+    token_contract = cast(str, transaction_0.parameter_json['token']['address'])
+
     await ctx.add_contract(
-        name=originated_contract,
-        address=originated_contract,
-        typename='registry',
+        name=dex_contract,
+        address=dex_contract,
+        typename='dex',
     )
+    with suppress(ContractAlreadyExistsError):
+        await ctx.add_contract(
+            name=token_contract,
+            address=token_contract,
+            typename='token',
+        )
     await ctx.add_index(
-        name=name,
-        template='registry_dao',
-        values={'contract': originated_contract},
+        name=dex_contract,
+        template='dex',
+        values={
+            'dex': dex_contract,
+            'token': token_contract,
+        }
     )

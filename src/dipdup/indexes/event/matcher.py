@@ -87,6 +87,6 @@ def match_events(
     # NOTE: We don't care about `merge_subscriptions` here implying that all events will be processed
     # NOTE: Maybe "unfiltered" indexes will cover that case?
     for address in {event.contract_address for event in events}:
-        _logger.warning('Some events were not matched; fallback handler is missing for `{}`', address)
+        _logger.warning('Some events were not matched; fallback handler is missing for `%s`', address)
 
     return matched_handlers

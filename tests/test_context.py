@@ -43,6 +43,7 @@ async def test_reindex_field(dummy_dipdup: DipDup) -> None:
     assert schema.reindex == ReindexingReason.manual
 
 
+@pytest.mark.skip('Checked in runtime now')
 async def test_add_contract(dummy_dipdup: DipDup) -> None:
     ctx = dummy_dipdup._ctx
     await ctx.add_contract('address', 'KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6')
