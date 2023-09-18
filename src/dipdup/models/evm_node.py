@@ -37,10 +37,9 @@ class EvmNodeSyncingSubscription(EvmNodeSubscription):
     name: Literal['syncing'] = 'syncing'
 
 
-# FIXME: Frozen?
-@dataclass
+@dataclass(frozen=True)
 class EvmNodeHeadData:
-    number: str
+    number: int
     hash: str
     parent_hash: str
     sha3_uncles: str
@@ -49,12 +48,12 @@ class EvmNodeHeadData:
     state_root: str
     receipts_root: str
     miner: str
-    difficulty: str
+    difficulty: int
     extra_data: str
-    gas_limit: str
-    gas_used: str
-    timestamp: str
-    base_fee_per_gas: str
+    gas_limit: int
+    gas_used: int
+    timestamp: int
+    base_fee_per_gas: int
     withdrawals_root: str
     nonce: str
     mix_hash: str
@@ -62,7 +61,7 @@ class EvmNodeHeadData:
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
         return cls(
-            number=block_json['number'],
+            number=int(block_json['number'], 16),
             hash=block_json['hash'],
             parent_hash=block_json['parentHash'],
             sha3_uncles=block_json['sha3Uncles'],
@@ -71,27 +70,31 @@ class EvmNodeHeadData:
             state_root=block_json['stateRoot'],
             receipts_root=block_json['receiptsRoot'],
             miner=block_json['miner'],
-            difficulty=block_json['difficulty'],
+            difficulty=int(block_json['difficulty'], 16),
             extra_data=block_json['extraData'],
-            gas_limit=block_json['gasLimit'],
-            gas_used=block_json['gasUsed'],
-            timestamp=block_json['timestamp'],
+            gas_limit=int(block_json['gasLimit'], 16),
+            gas_used=int(block_json['gasUsed'], 16),
+            timestamp=int(block_json['timestamp'], 16),
             base_fee_per_gas=block_json['baseFeePerGas'],
             withdrawals_root=block_json['withdrawalsRoot'],
             nonce=block_json['nonce'],
             mix_hash=block_json['mixHash'],
         )
 
+    @property
+    def level(self) -> int:
+        return self.number
 
-@dataclass
+
+@dataclass(frozen=True)
 class EvmNodeLogData:
     address: str
-    topics: list[str]
+    topics: tuple[str, ...]
     data: str
-    block_number: str
+    block_number: int
     transaction_hash: str
-    transaction_index: str
-    log_index: str
+    transaction_index: int
+    log_index: int
     removed: bool
     timestamp: int
 
@@ -99,35 +102,31 @@ class EvmNodeLogData:
     def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
         return cls(
             address=log_json['address'],
-            topics=log_json['topics'],
+            topics=tuple(log_json['topics']),
             data=log_json['data'],
-            block_number=log_json['blockNumber'],
+            block_number=int(log_json['blockNumber'], 16),
             transaction_hash=log_json['transactionHash'],
-            transaction_index=log_json['transactionIndex'],
-            log_index=log_json['logIndex'],
+            transaction_index=int(log_json['transactionIndex'], 16),
+            log_index=int(log_json['logIndex'], 16),
             removed=log_json['removed'],
             timestamp=timestamp,
         )
 
     @property
     def level(self) -> int:
-        return int(self.block_number, 16)
-
-    @property
-    def index(self) -> str:
-        return self.log_index
+        return self.block_number
 
 
-@dataclass
+@dataclass(frozen=True)
 class EvmNodeSyncingData:
-    starting_block: str
-    current_block: str
-    highest_block: str
+    starting_block: int
+    current_block: int
+    highest_block: int
 
     @classmethod
     def from_json(cls, syncing_json: dict[str, Any]) -> 'EvmNodeSyncingData':
         return cls(
-            starting_block=syncing_json['startingBlock'],
-            current_block=syncing_json['currentBlock'],
-            highest_block=syncing_json['highestBlock'],
+            starting_block=int(syncing_json['startingBlock'], 16),
+            current_block=int(syncing_json['currentBlock'], 16),
+            highest_block=int(syncing_json['highestBlock'], 16),
         )
