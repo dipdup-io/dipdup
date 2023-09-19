@@ -2,10 +2,14 @@ spec_version: 2.0
 package: demo_factories
 
 contracts:
-  registry:
+  factory:
     kind: tezos
-    code_hash: KT19CF3KKrvdW77ttFomCuin2k4uAVkryYqh
-    typename: registry
+    address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
+    typename: factory
+  token:
+    kind: tezos
+    address: KT1UsSfaXyqcjSVPeiD7U1bWgKy3taYN7NWY
+    typename: token
 
 datasources:
   tzkt:
@@ -15,30 +19,38 @@ datasources:
       replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 templates:
-
-  registry_dao:
+  dex:
     kind: tezos.tzkt.operations
     datasource: tzkt
     types:
       - transaction
-      - origination
     contracts:
-      - <contract>
+      - <dex>
+      - <token>
     handlers:
-      - callback: on_propose
+      - callback: on_transfer
         pattern:
           - type: transaction
-            destination: <contract>
-            entrypoint: propose
-      - callback: on_origination
-        pattern:
-          - type: origination
-            originated_contract: <contract>
+            destination: <token>
+            entrypoint: transfer
+    first_level: 2393103
+    last_level: 2393103
 
 indexes:
-  registry:
-    template: registry_dao
-    values:
-      contract: registry
-    first_level: 1881619
-    last_level: 2933505
+  factory:
+    kind: tezos.tzkt.operations
+    datasource: tzkt
+    contracts:
+      - factory
+    types:
+      - origination
+      - transaction
+    handlers:
+      - callback: on_factory_origination
+        pattern:
+          - type: transaction
+            entrypoint: launchExchange
+          - type: origination
+            source: factory
+    first_level: 2428590
+    last_level: 2428590

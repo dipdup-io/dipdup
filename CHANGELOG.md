@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Import package submodules before starting indexing to fail early on import errors.
+- cli: Fixed ordering of crash reports in `report` group commands.
+- evm.node: Fixed parsing topics and integers in datasource models.
+- tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
+- tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
+- tezos.tzkt.events: Fixed parsing contract event data.
+- tezos.tzkt.operations: Fixed parsing operations with empty parameters.
+
 ## [7.0.0rc5] - 2023-09-06
 
 ### Fixed

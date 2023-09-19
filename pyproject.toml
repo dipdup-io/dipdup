@@ -156,16 +156,18 @@ strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+log_cli_level = "WARNING"
 
 [tool.coverage.report]
+precision = 2
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "raise FrameworkError",
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "if TYPE_CHECKING:",
 ]
 
 [build-system]

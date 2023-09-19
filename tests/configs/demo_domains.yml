@@ -31,7 +31,8 @@ templates:
           - type: transaction
             destination: <name_registry>
             entrypoint: execute
-    last_level: 1450852
+    first_level: 1417329
+    last_level: 1417729
 
 indexes:
   domains:

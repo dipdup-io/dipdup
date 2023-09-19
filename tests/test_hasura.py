@@ -16,12 +16,12 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.database import tortoise_wrapper
-from dipdup.dipdup import DipDup
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.project import get_default_answers
+from dipdup.test import create_dummy_dipdup
 
 if TYPE_CHECKING:
     from aiohttp.test_utils import TestClient
@@ -103,7 +103,7 @@ async def test_configure_hasura() -> None:
     config.initialize()
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack)
+        dipdup = await create_dummy_dipdup(config, stack)
         hasura_gateway = await dipdup._set_up_hasura(stack)
         assert isinstance(hasura_gateway, HasuraGateway)
 

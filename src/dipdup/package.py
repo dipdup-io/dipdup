@@ -151,7 +151,9 @@ class DipDupPackage:
 
     def verify(self) -> None:
         _logger.debug('Verifying `%s` package', self.root)
-        import_submodules(self.name)
+        import_submodules(f'{self.name}.handlers')
+        import_submodules(f'{self.name}.hooks')
+        import_submodules(f'{self.name}.types')
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'

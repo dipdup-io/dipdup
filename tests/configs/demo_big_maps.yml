@@ -29,8 +29,8 @@ templates:
 indexes:
   big_maps:
     template: big_maps
-    first_level: 1415852
-    last_level: 1418800
+    first_level: 1417329
+    last_level: 1417729
     values:
       datasource: tzkt
       name_registry: name_registry

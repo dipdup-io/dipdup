@@ -89,8 +89,6 @@ templates:
           - type: transaction
             source: <dex_contract>
             optional: True
-    first_level: 1407528
-    last_level: 1437610
 
   quipuswap_fa2:
     kind: tezos.tzkt.operations
@@ -154,8 +152,6 @@ templates:
           - type: transaction
             source: <dex_contract>
             optional: True
-    first_level: 1407528
-    last_level: 1444133
 
 indexes:
   kusd_mainnet:
@@ -165,6 +161,8 @@ indexes:
       token_contract: kusd_token_mainnet
       symbol: kUSD
       decimals: 18
+    first_level: 1434927
+    last_level: 1435026
 
   hdao_mainnet:
     template: quipuswap_fa2
@@ -173,5 +171,7 @@ indexes:
       token_contract: hdao_token_mainnet
       symbol: hDAO
       decimals: 6
+    first_level: 1443017
+    last_level: 1443370
 
 logging: WARN

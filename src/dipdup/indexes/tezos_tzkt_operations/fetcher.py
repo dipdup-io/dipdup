@@ -60,11 +60,8 @@ async def get_transaction_filters(
         for contract in config.contracts:
             if contract.address:
                 addresses.add(contract.address)
-            if isinstance(contract.code_hash, int):
-                hashes.add(contract.code_hash)
-            elif isinstance(contract.code_hash, str):
-                code_hash, _ = await datasource.get_contract_hashes(contract.code_hash)
-                hashes.add(code_hash)
+            elif contract.resolved_code_hash:
+                hashes.add(contract.resolved_code_hash)
 
         return addresses, hashes
 
@@ -76,19 +73,13 @@ async def get_transaction_filters(
             if pattern_config.source:
                 if address := pattern_config.source.address:
                     addresses.add(address)
-                if code_hash := pattern_config.source.code_hash:
-                    if isinstance(code_hash, str):
-                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
-                        pattern_config.source.code_hash = code_hash
+                if code_hash := pattern_config.source.resolved_code_hash:
                     hashes.add(code_hash)
 
             if pattern_config.destination:
                 if address := pattern_config.destination.address:
                     addresses.add(address)
-                if code_hash := pattern_config.destination.code_hash:
-                    if isinstance(code_hash, str):
-                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
-                        pattern_config.destination.code_hash = code_hash
+                if code_hash := pattern_config.destination.resolved_code_hash:
                     hashes.add(code_hash)
 
     _logger.info('Fetching transactions from %s addresses and %s code hashes', len(addresses), len(hashes))
@@ -114,10 +105,7 @@ async def get_origination_filters(
             if pattern_config.originated_contract:
                 if address := pattern_config.originated_contract.address:
                     addresses.add(address)
-                if code_hash := pattern_config.originated_contract.code_hash:
-                    if isinstance(code_hash, str):
-                        code_hash, _ = await datasource.get_contract_hashes(code_hash)
-                        pattern_config.originated_contract.code_hash = code_hash
+                if code_hash := pattern_config.originated_contract.resolved_code_hash:
                     hashes.add(code_hash)
 
             if pattern_config.source:
@@ -128,7 +116,7 @@ async def get_origination_filters(
                 if address := pattern_config.source.address:
                     async for batch in datasource.iter_originated_contracts(address):
                         addresses.update(item['address'] for item in batch)
-                if code_hash := pattern_config.source.code_hash:
+                if code_hash := pattern_config.source.resolved_code_hash:
                     raise FrameworkException('Invalid transaction filter `source.code_hash`')
 
     _logger.info('Fetching originations from %s addresses and %s code hashes', len(addresses), len(hashes))

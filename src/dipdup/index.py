@@ -44,7 +44,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._config = config
         self._datasource = datasource
         self._queue: deque[IndexQueueItemT] = deque()
-        queues.add_queue(self._queue, f'index_realtime:{config.name}')
+        queues.add_queue(self._queue, f'index_realtime:{config.name}:{id(self)})')
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
@@ -200,3 +200,18 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         state.status = status or state.status
         state.level = level or state.level
         await state.save()
+
+    # TODO: Move to TezosTzktIndex
+    async def _tzkt_rollback(
+        self,
+        from_level: int,
+        to_level: int,
+    ) -> None:
+        hook_name = 'on_index_rollback'
+        self._logger.warning('Affected by rollback; firing `%s` hook', self.name, hook_name)
+        await self._ctx.fire_hook(
+            name=hook_name,
+            index=self,
+            from_level=from_level,
+            to_level=to_level,
+        )

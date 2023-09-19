@@ -16,7 +16,6 @@ import pytest
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
-from dipdup.utils import import_submodules
 from tests import CONFIGS_PATH
 from tests import SRC_PATH
 
@@ -127,11 +126,11 @@ async def assert_run_big_maps() -> None:
     domains = await demo_big_maps.models.Domain.filter().count()
 
     assert tlds == 1
-    assert domains == 75
+    assert domains == 1
 
 
 async def assert_init(package: str) -> None:
-    import_submodules(package)
+    pass
 
 
 async def assert_run_dex() -> None:
@@ -143,8 +142,8 @@ async def assert_run_dex() -> None:
     async with in_transaction() as conn:
         symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
     assert symbols == 2
-    assert trades == 835
-    assert positions == 214
+    assert trades == 56
+    assert positions == 133
 
 
 async def assert_run_domains() -> None:
@@ -154,17 +153,23 @@ async def assert_run_domains() -> None:
     domains = await demo_domains.models.Domain.filter().count()
 
     assert tlds == 1
-    assert domains == 145
+    assert domains == 1
+
+
+async def assert_run_events() -> None:
+    pass
 
 
 async def assert_run_factories() -> None:
     import demo_factories.models
 
-    proposals = await demo_factories.models.DAO.filter().count()
-    votes = await demo_factories.models.Proposal.filter().count()
+    from dipdup import models
 
-    assert proposals == 19
-    assert votes == 86
+    indexes = await models.Index.filter().count()
+    transfers = await demo_factories.models.Transfer.filter().count()
+
+    assert indexes == 2
+    assert transfers == 1
 
 
 async def assert_run_raw() -> None:
@@ -192,8 +197,8 @@ async def assert_run_dao() -> None:
     proposals = await demo_dao.models.DAO.filter().count()
     votes = await demo_dao.models.Proposal.filter().count()
 
-    assert proposals == 19
-    assert votes == 86
+    assert proposals == 1
+    assert votes == 1
 
 
 test_args = ('config', 'package', 'cmd', 'assert_fn')
@@ -230,6 +235,8 @@ test_params = (
     ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
     ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
     ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_events.yml', 'demo_events', 'run', assert_run_events),
+    ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),

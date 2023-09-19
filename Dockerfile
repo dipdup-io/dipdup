@@ -28,6 +28,3 @@ CMD ["run"]
 
 COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
-
-# TEMP: Demo projects
-WORKDIR /opt/dipdup/src
