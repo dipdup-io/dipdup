@@ -173,7 +173,7 @@ class Tick(Model):
     # fee_growth_outside_1x128 = fields.BigIntField()
 
 
-# NOTE: Cached, but with custom logic; see `demo_uniswap.utils.position`
+# NOTE: Cached, but with custom logic; see `{{ project.package }}.utils.position`
 class Position(Model):
     id = fields.BigIntField(pk=True)
     # owner of the NFT
