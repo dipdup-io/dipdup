@@ -33,7 +33,6 @@ async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
     )
     token.cache()
     await token.save()
-    return None
 
 
 async def pool_created(
@@ -49,39 +48,29 @@ async def pool_created(
     factory.pool_count += 1
     await factory.save()
 
+    pool_id = event.payload.pool
     try:
-        await create_token(ctx, event.payload.token0, event.payload.pool)
-        await create_token(ctx, event.payload.token1, event.payload.pool)
-    except ValueError:
-        ctx.logger.warning(
-            'Failed to get tokens (%s, %s) for pool %s', event.payload.token0, event.payload.token1, event.payload.pool
-        )
+        token0 = event.payload.token0
+        await create_token(ctx, token0, pool_id)
+    except Exception as e:
+        ctx.logger.warning('Failed to get token %s for pool %s: %s', token0, pool_id, e)
+        return  # skip this pool
+    try:
+        token1 = event.payload.token1
+        await create_token(ctx, token1, pool_id)
+    except Exception as e:
+        ctx.logger.warning('Failed to get token %s for pool %s: %s', token1, pool_id, e)
         return  # skip this pool
 
     pool = models.Pool(
-        id=event.payload.pool,
+        id=pool_id,
         fee_tier=int(event.payload.fee),
-        created_at_timestamp=int(0),  # TODO: get block (head) time by level
+        created_at_timestamp=event.data.timestamp,
         created_at_block_number=int(event.data.level),
-        token0_id=event.payload.token0,
-        token1_id=event.payload.token1,
+        token0_id=token0,
+        token1_id=token1,
     )
     # NOTE: Could present after wipe with immune_tables
     with suppress(OperationalError):
         await pool.save()
         pool.cache()
-
-    #
-    # name = f'{token0.symbol.lower()}_{token1.symbol.lower()}#{pool.id[-6:]}'
-    # await ctx.add_contract(
-    #     name=name,
-    #     address=pool.id,
-    #     typename='pool',
-    #     kind='evm',
-    # )
-    # await ctx.add_index(
-    #     name=f'pool#{name}',
-    #     template='uniswap_v3_pool',
-    #     values={'datasource': ctx.datasource.name, 'pool': name},
-    #     first_level=event.data.level - 1,  # FIXME: ?
-    # )

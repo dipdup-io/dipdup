@@ -86,7 +86,7 @@ class SubsquidEventsIndex(
         while True:
             while self._queue:
                 logs = self._queue.popleft()
-                message_level = int(logs.block_number, 16)
+                message_level = logs.level
                 if message_level <= self.state.level:
                     self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                     continue

@@ -1,7 +1,7 @@
 from {{ project.package }} import models
-from {{ project.package }}.types.pool.evm_events.burn import Burn
 from {{ project.package }}.models.pool import PoolUpdateSign
 from {{ project.package }}.models.pool import pool_update
+from {{ project.package }}.types.pool.evm_events.burn import Burn
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 

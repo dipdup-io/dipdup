@@ -90,12 +90,12 @@ async def pool_update(
         raise Exception('Invalid event type')
     await tx.save()
 
-    lower_tick = await tick_get_or_create(event.payload.tickLower, pool, event.data.level)
+    lower_tick = await tick_get_or_create(event.payload.tickLower, pool, event.data.level, event.data.timestamp)
     lower_tick.liquidity_gross = lower_tick.liquidity_gross + sign * event.payload.amount
     lower_tick.liquidity_net = lower_tick.liquidity_net + sign * event.payload.amount
     await lower_tick.save()
 
-    upper_tick = await tick_get_or_create(event.payload.tickUpper, pool, event.data.level)
+    upper_tick = await tick_get_or_create(event.payload.tickUpper, pool, event.data.level, event.data.timestamp)
     upper_tick.liquidity_gross = upper_tick.liquidity_gross + sign * event.payload.amount
     upper_tick.liquidity_net = upper_tick.liquidity_net - sign * event.payload.amount
     await upper_tick.save()
