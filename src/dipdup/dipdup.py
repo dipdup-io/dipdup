@@ -378,9 +378,9 @@ class IndexDispatcher:
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
-                    'level': int(head.number, 16),
+                    'level': head.number,
                     'hash': head.hash,
-                    'timestamp': int(head.timestamp, 16),
+                    'timestamp': head.timestamp,
                 },
             ),
         )

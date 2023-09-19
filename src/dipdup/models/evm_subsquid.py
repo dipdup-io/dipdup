@@ -171,12 +171,8 @@ class Query(TypedDict):
     stateDiffs: NotRequired[list[StateDiffRequest]]
 
 
-# FIXME: Outdated values
 class SubsquidMessageType(Enum):
-    """Enum for filenames in squid archives"""
-
-    blocks = 'blocks.arrow_stream'
-    logs = 'logs.arrow_stream'
+    logs = 'logs'
 
 
 @dataclass(frozen=True)
@@ -184,14 +180,11 @@ class SubsquidEventData(HasLevel):
     address: str
     data: str
     log_index: int
-    # removed: bool
     topics: tuple[str, ...]
     transaction_hash: str
     transaction_index: int
-    level: int
+    block_number: int
     timestamp: int
-    # block_hash: str
-    # block_number: int
 
     @classmethod
     def from_json(
@@ -207,15 +200,13 @@ class SubsquidEventData(HasLevel):
             log_index=event_json['logIndex'],
             transaction_hash=event_json['transactionHash'],
             transaction_index=event_json['transactionIndex'],
-            # block_hash=event_json['blockHash'],
-            # level=event_json['blockNumber'],
-            level=level,
+            block_number=level,
             timestamp=timestamp,
         )
 
     @property
-    def block_number(self) -> int:
-        return self.level
+    def level(self) -> int:  # type: ignore[override]
+        return self.block_number
 
 
 @dataclass(frozen=True)

@@ -277,7 +277,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeNewHeadsSubscription):
             head = EvmNodeHeadData.from_json(data)
-            level = int(head.number, 16)
+            level = head.number
 
             known_hash = self._heads[level].hash
             if known_hash not in (head.hash, None):
@@ -288,7 +288,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 )
 
             self._heads[level].hash = head.hash
-            self._heads[level].timestamp = int(head.timestamp, 16)
+            self._heads[level].timestamp = head.timestamp
             await self.emit_head(head)
             self._heads[level].event.set()
 

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Import package submodules before starting indexing to fail early on import errors.
 - cli: Fixed ordering of crash reports in `report` group commands.
+- evm.node: Fixed parsing topics and integers in datasource models.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
 - tezos.tzkt.events: Fixed parsing contract event data.
