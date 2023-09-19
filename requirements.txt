@@ -60,7 +60,7 @@ prance==23.6.21.0
 prometheus-client==0.17.1
 protobuf==4.24.1
 pyarrow==12.0.1
-pycryptodome==3.18.0
+pycryptodome==3.19.0
 pydantic==1.10.12
 pyhumps==3.8.0
 pypika-tortoise==0.1.6
