@@ -10,9 +10,6 @@
 # Add Python packages
 !src/
 
-# TEMP: Demo projects
-!src/
-
 # Ignore caches
 **/.*_cache
 **/__pycache__
