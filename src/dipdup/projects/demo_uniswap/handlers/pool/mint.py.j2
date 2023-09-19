@@ -1,10 +1,10 @@
 from eth_utils.address import to_normalized_address
 
-from demo_uniswap import models
-from demo_uniswap.models.pool import PoolUpdateSign
-from demo_uniswap.models.pool import pool_update
-from demo_uniswap.models.repo import models_repo
-from demo_uniswap.types.pool.evm_events.mint import Mint
+from {{ project.package }} import models
+from {{ project.package }}.models.pool import PoolUpdateSign
+from {{ project.package }}.models.pool import pool_update
+from {{ project.package }}.models.repo import models_repo
+from {{ project.package }}.types.pool.evm_events.mint import Mint
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
