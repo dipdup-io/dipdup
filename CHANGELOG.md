@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Added
-
-- ci: Include rendered demo projects in Docker image.
-
 ### Fixed
 
 - cli: Import package submodules before starting indexing to fail early on import errors.

@@ -28,4 +28,3 @@ CMD ["run"]
 
 COPY --chown=dipdup --from=compile-image /opt/dipdup /opt/dipdup
 COPY --chown=dipdup . /opt/dipdup
-RUN ls /opt/dipdup/src | grep -v dipdup | xargs -t -I {} ln -s /opt/dipdup/src/{} {}
