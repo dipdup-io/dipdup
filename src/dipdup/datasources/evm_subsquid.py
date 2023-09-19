@@ -73,13 +73,12 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
-        log_request = [
-            LogRequest(
-                address=[a] if a else [],
-                topic0=t,
-            )
-            for a, t in topics_by_address.items()
-        ]
+        log_request: list[LogRequest] = []
+        for address, topic_list in topics_by_address.items():
+            if address:
+                log_request.append(LogRequest(address=[address], topic0=topic_list))
+            else:
+                log_request.append(LogRequest(topic0=topic_list))
 
         while current_level <= last_level:
             worker_url = (
