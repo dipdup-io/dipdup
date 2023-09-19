@@ -122,8 +122,8 @@ class FieldSelection(TypedDict, total=False):
 
 
 class LogRequest(TypedDict, total=False):
-    address: list[str]
-    topic0: list[str]
+    address: NotRequired[list[str]]
+    topic0: NotRequired[list[str]]
     transaction: bool
 
 
