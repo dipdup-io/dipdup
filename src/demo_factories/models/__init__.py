@@ -1,8 +1,7 @@
 
 from dipdup import fields
-
 from dipdup.models import Model
-    
+
 
 class Transfer(Model):
     id = fields.IntField(pk=True)
