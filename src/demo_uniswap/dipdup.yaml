@@ -1,12 +1,6 @@
 spec_version: 2.0
 package: demo_uniswap
 
-database:
-  kind: sqlite
-  path: /tmp/demo_uniswap.sqlite
-  immune_tables:
-    - token
-
 datasources:
   ethscan:
     kind: abi.etherscan

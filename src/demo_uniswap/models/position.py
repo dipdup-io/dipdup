@@ -50,7 +50,7 @@ async def position_validate(
     )
 
 
-async def save_position_snapshot(position: models.Position, level: int) -> None:
+async def save_position_snapshot(position: models.Position, level: int, timestamp: int) -> None:
     snapshot, exists = await models.PositionSnapshot.get_or_create(
         id=f'{position.id}#{level}',
         defaults={
@@ -58,7 +58,7 @@ async def save_position_snapshot(position: models.Position, level: int) -> None:
             'pool_id': position.pool_id,
             'position_id': position.id,
             'block_number': level,
-            'timestamp': 0,  # TODO:
+            'timestamp': timestamp,
         },
     )  # TODO: less i/o, update only what's necessary
     snapshot.liquidity = position.liquidity
