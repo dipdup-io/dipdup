@@ -575,7 +575,7 @@ async def install(
     """Install DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, ref, path)
+    dipdup.install.install(quiet, force, None, ref, path)
 
 
 @cli.command()
@@ -605,4 +605,4 @@ async def update(
     """Update DipDup for the current user."""
     import dipdup.install
 
-    dipdup.install.install(quiet, force, None, None)
+    dipdup.install.install(quiet, force, None, None, None)
