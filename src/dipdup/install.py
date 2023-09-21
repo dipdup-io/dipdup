@@ -273,6 +273,9 @@ def cli() -> None:
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
     args = parser.parse_args()
 
+    if not args.quiet:
+        sys.stdin = open('/dev/tty')  # noqa: PTH123
+
     if args.uninstall:
         uninstall(args.quiet)
     else:
@@ -286,5 +289,4 @@ def cli() -> None:
 
 
 if __name__ == '__main__':
-    sys.stdin = open('/dev/tty')  # noqa: PTH123
     cli()
