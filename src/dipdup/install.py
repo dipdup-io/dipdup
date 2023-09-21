@@ -231,7 +231,10 @@ def ask(question: str, default: bool) -> bool:
         answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
         if not answer:
             return default
-        return answer in ('n', 'no') if default else answer in ('y', 'yes')
+        if answer in ('n', 'no'):
+            return False
+        if answer in ('y', 'yes'):
+            return True
 
 
 def uninstall(quiet: bool) -> NoReturn:
@@ -269,6 +272,9 @@ def cli() -> None:
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
     args = parser.parse_args()
+
+    if not args.quiet:
+        sys.stdin = open('/dev/tty')  # noqa: PTH123
 
     if args.uninstall:
         uninstall(args.quiet)
