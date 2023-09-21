@@ -76,7 +76,10 @@ def ask(question: str, default: bool) -> bool:
         answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
         if not answer:
             return default
-        return answer in ('n', 'no') if default else answer in ('y', 'yes')
+        if answer in ('n', 'no'):
+            return False
+        if answer in ('y', 'yes'):
+            return True
 
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
