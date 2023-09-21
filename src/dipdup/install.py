@@ -286,4 +286,5 @@ def cli() -> None:
 
 
 if __name__ == '__main__':
+    sys.stdin = open('/dev/tty')  # noqa: PTH123
     cli()
