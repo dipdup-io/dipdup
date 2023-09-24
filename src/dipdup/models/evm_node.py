@@ -75,7 +75,7 @@ class EvmNodeHeadData:
             gas_limit=int(block_json['gasLimit'], 16),
             gas_used=int(block_json['gasUsed'], 16),
             timestamp=int(block_json['timestamp'], 16),
-            base_fee_per_gas=block_json['baseFeePerGas'],
+            base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
             withdrawals_root=block_json['withdrawalsRoot'],
             nonce=block_json['nonce'],
             mix_hash=block_json['mixHash'],
