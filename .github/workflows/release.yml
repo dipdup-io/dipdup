@@ -63,8 +63,13 @@ jobs:
       - name: Install PDM
         run: pipx install pdm
 
-      - name: Run CI checks
-        run: pdm install; pdm run all
+      - name: Run install
+        run: pdm install
+
+      - name: Run all checks
+        run: pdm run all
+        env:
+          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
 
       - name: Publish stable image
         uses: docker/build-push-action@v3
