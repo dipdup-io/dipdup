@@ -12,21 +12,21 @@ class Factory(CachedModel):
     # amount of transactions all time
     tx_count = fields.BigIntField(default=0)
     # total volume all time in derived USD
-    total_volume_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    total_volume_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # total volume all time in derived ETH
     total_volume_eth = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # total swap fees all time in USD
-    total_fees_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    total_fees_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # total swap fees all time in USD
     total_fees_eth = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # all volume even through less reliable USD values
-    untracked_volume_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    untracked_volume_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # TVL derived in USD
-    total_value_locked_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    total_value_locked_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # TVL derived in ETH
     total_value_locked_eth = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # TVL derived in USD untracked
-    total_value_locked_usd_untracked = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    total_value_locked_usd_untracked = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # TVL derived in ETH untracked
     total_value_locked_eth_untracked = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # current owner of the factory
@@ -322,7 +322,7 @@ class Burn(Model):
     # amount of token 1 burned
     amount1 = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # derived amount based on available prices of tokens
-    amount_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    amount_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # lower tick of position
     tick_lower = fields.BigIntField()
     # upper tick of position
@@ -354,7 +354,7 @@ class Swap(Model):
     # delta of token1 swapped
     amount1 = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # derived info
-    amount_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    amount_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # The sqrt(price) of the pool after the swap, as a Q64.96
     sqrt_price_x96 = fields.DecimalField(decimal_places=0, max_digits=76, default=0)
     # the tick after the swap
@@ -404,7 +404,7 @@ class Flash(Model):
     # amount of token1 flashed
     amount1 = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # derived amount based on available prices of tokens
-    amount_usd = fields.DecimalField(decimal_places=2, max_digits=13, default=0)
+    amount_usd = fields.DecimalField(decimal_places=2, max_digits=16, default=0)
     # amount token0 paid for flash
     amount0_paid = fields.DecimalField(decimal_places=18, max_digits=76, default=0)
     # amount token1 paid for flash
