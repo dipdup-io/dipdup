@@ -1,7 +1,7 @@
 """This script (un)installs DipDup and its dependencies with pipx.
 
 WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic will break.
-And no pre-3.10 code too. Just to print nice colored "not supported" message instead of crashing.
+And no 3.11-only code too. Just to print nice colored "not supported" message instead of crashing.
 
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
@@ -11,7 +11,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from shutil import rmtree
 from shutil import which
 from typing import Any
 from typing import NoReturn
@@ -19,12 +18,11 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'python3.10',
-    'python3',
+    'bash',
+    'python3.11',
     'pipx',
     'dipdup',
     'datamodel-codegen',
-    'poetry',
     'pdm',
     'pyvenv',
     'pyenv',
@@ -43,7 +41,6 @@ Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
 Discord:               https://discord.gg/aG8XKuwsQd
 """
-DIPDUP_LTS_VERSION = '6.5.12'
 
 
 class Colors:
@@ -68,18 +65,6 @@ def fail(msg: str) -> NoReturn:
 def done(msg: str) -> NoReturn:
     echo(msg, color=Colors.GREEN)
     sys.exit(0)
-
-
-def ask(question: str, default: bool) -> bool:
-    """Ask user a yes/no question"""
-    while True:
-        answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
-        if not answer:
-            return default
-        if answer in ('n', 'no'):
-            return False
-        if answer in ('y', 'yes'):
-            return True
 
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
@@ -148,8 +133,8 @@ class DipDupEnvironment:
             fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
-        if not sys.version.startswith('3.10'):
-            fail('DipDup 6 requires Python 3.10')
+        if not sys.version.startswith('3.11'):
+            fail('DipDup requires Python 3.11')
 
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
@@ -157,10 +142,10 @@ class DipDupEnvironment:
 
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3.10', '-m', 'pip', 'install', '-q', 'pipx')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
         else:
-            self.run_cmd('python3.10', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3.10', '-m', 'pipx', 'ensurepath')
+            self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
         pipx_path = str(Path.home() / '.local' / 'bin')
         os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
@@ -176,10 +161,10 @@ def install(
     """Install DipDup and its dependencies with pipx"""
     if ref and path:
         fail('Specify either ref or path, not both')
-    pkg = 'dipdup' if not version else f'dipdup=={version}'
 
     if not any((version, ref, path)):
-        version = DIPDUP_LTS_VERSION
+        # FIXME: Temporary, remove when 7.0.0 is released
+        version = '7.0.0rc5'
 
     env = DipDupEnvironment()
     env.prepare()
@@ -190,13 +175,13 @@ def install(
     pipx_packages = env._pipx_packages
     pipx_dipdup = 'dipdup' in pipx_packages
     pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
-    pipx_poetry = 'poetry' in pipx_packages
+    pipx_pdm = 'pdm' in pipx_packages
 
-    python_inter_pipx = cast(str, which('python3.10'))
+    python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
             subprocess.run(
-                ['pyenv', 'which', 'python3.10'],
+                ['pyenv', 'which', 'python3.11'],
                 capture_output=True,
                 text=True,
             )
@@ -205,9 +190,8 @@ def install(
         )
 
     if pipx_dipdup and not force:
-        if quiet or ask(f'Reinstall dipdup to {version}', False):
-            env.run_cmd('pipx', 'uninstall', 'dipdup')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
+        echo('Updating DipDup')
+        env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
     else:
         if path:
             echo(f'Installing DipDup from `{path}`')
@@ -218,6 +202,7 @@ def install(
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
         else:
             echo('Installing DipDup from PyPI')
+            pkg = 'dipdup' if not version else f'dipdup=={version}'
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
 
     if pipx_datamodel_codegen:
@@ -225,22 +210,31 @@ def install(
     else:
         env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'datamodel-code-generator', force_str)
 
-    if (legacy_poetry := Path(Path.home(), '.poetry')).exists():
-        rmtree(legacy_poetry, ignore_errors=True)
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-    elif pipx_poetry:
-        echo('Updating Poetry')
-        env.run_cmd('pipx', 'upgrade', 'poetry', force_str)
-    elif quiet or ask('Install poetry? Optional for `dipdup new` command', True):
-        echo('Installing poetry')
-        env.run_cmd('pipx', 'install', 'poetry', force_str)
-        env._commands['poetry'] = which('poetry')
-        pipx_poetry = True
+    if pipx_pdm:
+        echo('Updating PDM')
+        env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
+    elif quiet or ask('Install PDM? (recommended)', True):
+        echo('Installing PDM')
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
+        env._commands['pdm'] = which('pdm')
+        pipx_pdm = True
 
     done(
         'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'
         ' commands.'
     )
+
+
+def ask(question: str, default: bool) -> bool:
+    """Ask user a yes/no question"""
+    while True:
+        answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
+        if not answer:
+            return default
+        if answer in ('n', 'no'):
+            return False
+        if answer in ('y', 'yes'):
+            return True
 
 
 def uninstall(quiet: bool) -> NoReturn:
@@ -253,7 +247,7 @@ def uninstall(quiet: bool) -> NoReturn:
     packages = (
         ('dipdup', True),
         ('datamodel-code-generator', False),
-        ('poetry', False),
+        ('pdm', False),
     )
     for package, default in packages:
         if package not in env._pipx_packages:
