@@ -1180,7 +1180,7 @@ This release contains no changes except for the version number.
 
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0...HEAD
-[7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0
+[7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...7.0.0
 [7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4
