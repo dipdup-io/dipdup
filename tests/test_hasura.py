@@ -43,7 +43,7 @@ def get_docker_client() -> DockerClient:
 async def run_postgres_container() -> PostgresDatabaseConfig:
     docker = get_docker_client()
     postgres_container = docker.containers.run(
-        image=get_default_answers()['postgresql_image'],
+        image=get_default_answers()['postgres_image'],
         environment={
             'POSTGRES_USER': 'test',
             'POSTGRES_PASSWORD': 'test',

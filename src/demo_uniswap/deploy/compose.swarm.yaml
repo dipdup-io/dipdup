@@ -29,9 +29,9 @@ services:
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
-    image: postgres:15
+    image: timescale/timescaledb-ha:pg15-latest
     volumes:
-      - db:/var/lib/postgresql/data
+      - db:/home/postgres/pgdata/data
     env_file: .env
     environment:
       - POSTGRES_USER=dipdup

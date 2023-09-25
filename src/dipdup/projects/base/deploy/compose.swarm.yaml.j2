@@ -29,9 +29,9 @@ services:
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
-    image: {{ project.postgresql_image }}
+    image: {{ project.postgres_image }}
     volumes:
-      - db:/var/lib/postgresql/data
+      - db:{{ project.postgres_data_path }}
     env_file: .env
     environment:
       - POSTGRES_USER=dipdup

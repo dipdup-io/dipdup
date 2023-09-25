@@ -9,6 +9,7 @@ replay:
   license: MIT
   name: John Doe
   email: john_doe@example.com
-  postgresql_image: postgres:15
+  postgres_image: timescale/timescaledb-ha:pg15-latest
+  postgres_data_path: /home/postgres/pgdata/data
   hasura_image: hasura/graphql-engine:latest
   line_length: 120

@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.0.0] - 2023-09-25
 
 ### Fixed
 
@@ -12,11 +12,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed ordering of crash reports in `report` group commands.
 - evm.node: Fixed parsing topics and integers in datasource models.
 - evm.subsquid.events: Fixed incorrrect log request parameters.
+- install: Fixed issue with interpreting user answers in some cases.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
 - tezos.tzkt.events: Fixed parsing contract event data.
 - tezos.tzkt.operations: Fixed parsing operations with empty parameters.
-- install: fix error with all meaningful answers interpreted as yes in some cases.
+
+## [6.5.12] - 2023-09-15
+
+### Fixed
+
+- tzkt: Fixed issue with processing rollbacks while sync is in progress.
+- tzkt: Fixed operation matching when contract code hash specified as a string.
+- tzkt: Fixed parsing contract event data.
 
 ## [7.0.0rc5] - 2023-09-06
 
@@ -1171,7 +1179,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.0...HEAD
+[7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...7.0.0
 [7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4

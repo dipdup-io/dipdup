@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.0.0rc5"
+version = "7.0.0"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -121,6 +121,8 @@ demos = { shell = """
 	python scripts/update_demos.py
 	python scripts/init_demos.py
     pdm run fmt
+    # FIXME: Run isort once to fix import sorting (bug in ruff)
+    isort . --force-single-line -l 120
     pdm run lint
 """ }
 docs_build = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs"

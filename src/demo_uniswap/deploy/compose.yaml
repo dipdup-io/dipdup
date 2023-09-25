@@ -17,11 +17,11 @@ services:
       - hasura
 
   db:
-    image: postgres:15
+    image: timescale/timescaledb-ha:pg15-latest
     ports:
       - 5432
     volumes:
-      - db:/var/lib/postgresql/data
+      - db:/home/postgres/pgdata/data
     restart: always
     env_file: .env
     environment:

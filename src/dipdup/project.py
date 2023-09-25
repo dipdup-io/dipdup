@@ -61,7 +61,8 @@ class Answers(TypedDict):
     license: str
     name: str
     email: str
-    postgresql_image: str
+    postgres_image: str
+    postgres_data_path: str
     hasura_image: str
     line_length: str
 
@@ -76,8 +77,8 @@ def get_default_answers() -> Answers:
         license='MIT',
         name='John Doe',
         email='john_doe@example.com',
-        postgresql_image='postgres:15',
-        # TODO: fetch latest from GH
+        postgres_image='postgres:15',
+        postgres_data_path='/var/lib/postgresql/data',
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
     )
@@ -199,7 +200,7 @@ def answers_from_terminal() -> Answers:
 
     big_yellow_echo('Now choose versions of software you want to use.')
 
-    _, answers['postgresql_image'] = prompt_anyof(
+    _, answers['postgres_image'] = prompt_anyof(
         question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
         options=(
             'postgres:15',
@@ -213,6 +214,8 @@ def answers_from_terminal() -> Answers:
         ),
         default=0,
     )
+    if 'timescale-ha' in answers['postgres_image']:
+        answers['postgres_data_path'] = '/home/postgres/pgdata/data'
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 
