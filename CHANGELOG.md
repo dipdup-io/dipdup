@@ -12,11 +12,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed ordering of crash reports in `report` group commands.
 - evm.node: Fixed parsing topics and integers in datasource models.
 - evm.subsquid.events: Fixed incorrrect log request parameters.
+- install: Fixed issue with interpreting user answers in some cases.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
 - tezos.tzkt.events: Fixed parsing contract event data.
 - tezos.tzkt.operations: Fixed parsing operations with empty parameters.
-- install: fix error with all meaningful answers interpreted as yes in some cases.
 
 ## [6.5.12] - 2023-09-15
 
