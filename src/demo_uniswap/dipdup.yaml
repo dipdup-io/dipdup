@@ -13,7 +13,8 @@ datasources:
   mainnet_subsquid:
     kind: evm.subsquid
     url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
-    node: mainnet_node
+    node:
+      - mainnet_node
 
 contracts:
   factory:
