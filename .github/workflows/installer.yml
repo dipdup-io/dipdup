@@ -53,6 +53,10 @@ jobs:
       - name: make lint
         run: cd dipdup-indexer; make lint
 
+      - name: Copy installer to scripts
+        if: contains(github.ref, 'master')
+        run: rm scripts/* && cp src/dipdup/install.py scripts/install_lts.py
+
       - name: Deploy scripts to GH Pages
         if: contains(github.ref, 'master')
         uses: peaceiris/actions-gh-pages@v3
