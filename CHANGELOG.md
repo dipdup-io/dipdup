@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- database: Added `dipdup_wipe` and `dipdup_approve` SQL functions to the schema.
+
 ## [7.0.0] - 2023-09-25
 
 ### Fixed
