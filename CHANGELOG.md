@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- demos: Fixed decimal overflow in `demo_uniswap` project.
+- evm.node: Fixed incorrect log request parameters.
+
 ## [7.0.0] - 2023-09-25
 
 ### Fixed

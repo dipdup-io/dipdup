@@ -344,34 +344,20 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 
 @config.command(name='env')
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
-@click.option('--compose', is_flag=True, help='Output in docker-compose format.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, output: str | None, unsafe: bool, compose: bool) -> None:
+async def config_env(ctx: click.Context, output: str | None) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
     """
-    from dipdup.yaml import DipDupYAMLConfig
+    from dipdup.config import DipDupConfig
 
-    config, environment = DipDupYAMLConfig.load(
+    config = DipDupConfig.load(
         paths=ctx.obj.config._paths,
-        environment=unsafe,
+        environment=True,
     )
-    if compose:
-        content = '\nservices:\n  dipdup:\n    environment:\n'
-        _tab = ' ' * 6
-        for k, v in sorted(environment.items()):
-            line = f'{_tab}- {k}=' + '${' + k
-            if v:
-                line += ':-' + v + '}'
-            else:
-                line += '}'
-
-            content += line + '\n'
-    else:
-        content = '\n'.join(f'{k}={v}' for k, v in sorted(environment.items()))
+    content = '\n'.join(f'{k}={v}' for k, v in sorted(config._environment.items()))
     if output:
         Path(output).write_text(content)
     else:
