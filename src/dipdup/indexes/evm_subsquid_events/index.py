@@ -161,7 +161,7 @@ class SubsquidEventsIndex(
                     {
                         'fromBlock': hex(level),
                         'toBlock': hex(level),
-                        'topics': tuple(topics),
+                        # 'topics': tuple(topics),
                     }
                 )
                 block = await self.random_node.get_block_by_level(level)
