@@ -155,13 +155,13 @@ class SubsquidEventsIndex(
             for handler in self._config.handlers:
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
+            # FIXME: This is terribly inefficient (but okay for the last mile); see advanced example in web3.py docs.
             for level in range(first_level, sync_level):
                 # NOTE: Get random one every time
                 level_logs = await self.random_node.get_logs(
                     {
                         'fromBlock': hex(level),
                         'toBlock': hex(level),
-                        'topics': tuple(topics),
                     }
                 )
                 block = await self.random_node.get_block_by_level(level)
