@@ -99,13 +99,6 @@ class SubsquidEventsIndex(
                 break
 
         for message_level, level_logs in logs_by_level.items():
-            # NOTE: If it's not a next block - resync with Subsquid
-            if message_level != self.state.level + 1:
-                self._logger.info('Not enough messages in queue; resyncing to %s', message_level)
-                self._queue.clear()
-                self.datasource.set_sync_level(None, message_level)
-                return
-
             await self._process_level_events(tuple(level_logs), self.topics, message_level)
 
     def get_sync_level(self) -> int:
