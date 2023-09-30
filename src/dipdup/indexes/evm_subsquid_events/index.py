@@ -147,16 +147,20 @@ class SubsquidEventsIndex(
             self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
             if subsquid_available < NODE_SYNC_LIMIT:
                 use_node = True
+            elif self._config.node_only:
+                self._logger.debug('Using node anyway')
+                use_node = True
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
         if use_node and self.node_datasources:
-            sync_level = node_sync_level
+            sync_level = min(sync_level, node_sync_level)
+            self._logger.debug('Using node datasource; sync level: %s', sync_level)
             topics = set()
             for handler in self._config.handlers:
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
             # FIXME: This is terribly inefficient (but okay for the last mile); see advanced example in web3.py docs.
-            for level in range(first_level, sync_level):
+            for level in range(first_level, sync_level + 1):
                 # NOTE: Get random one every time
                 level_logs = await self.random_node.get_logs(
                     {
