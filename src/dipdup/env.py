@@ -62,17 +62,30 @@ def get_path(key: str) -> Path | None:
 def set_test() -> None:
     global TEST, REPLAY_PATH
     TEST = True
-    REPLAY_PATH = str(Path(__file__).parent.parent.parent / 'tests' / 'replays')
-    env['DIPDUP_REPLAY_PATH'] = REPLAY_PATH
+    REPLAY_PATH = Path(__file__).parent.parent.parent / 'tests' / 'replays'
 
 
-if get('CI') == 'true':
-    env['DIPDUP_CI'] = '1'
-if platform.system() == 'Linux' and Path('/.dockerenv').exists():
-    env['DIPDUP_DOCKER'] = '1'
+CI: bool
+DEBUG: bool
+DOCKER: bool
+NEXT: bool
+REPLAY_PATH: Path | None
+TEST: bool
 
-CI = get_bool('DIPDUP_CI')
-DOCKER = get_bool('DIPDUP_DOCKER')
-NEXT = get_bool('DIPDUP_NEXT')
-REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
-TEST = get_bool('DIPDUP_TEST')
+
+def read() -> None:
+    global CI, DEBUG, DOCKER, NEXT, REPLAY_PATH, TEST
+    CI = get_bool('DIPDUP_CI')
+    DEBUG = get_bool('DIPDUP_DEBUG')
+    DOCKER = get_bool('DIPDUP_DOCKER')
+    NEXT = get_bool('DIPDUP_NEXT')
+    REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
+    TEST = get_bool('DIPDUP_TEST')
+
+    if get('CI') == 'true':
+        CI = True
+    if platform.system() == 'Linux' and Path('/.dockerenv').exists():
+        DOCKER = True
+
+
+read()
