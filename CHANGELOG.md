@@ -6,11 +6,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- env: Added `DIPDUP_DEBUG` environment variable to enable debug logging.
+
 ### Fixed
 
+
+- cli: Added warning for timescaledb-ha users
 - demos: Fixed decimal overflow in `demo_uniswap` project.
 - evm.node: Fixed incorrect log request parameters.
-- cli: Added warning for timescaledb-ha users
+- evm.subsquid.events: Fixed issue with determining the last level when syncing with node.
 
 ## [7.0.0] - 2023-09-25
 

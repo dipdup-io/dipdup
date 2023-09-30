@@ -241,6 +241,7 @@ test_params = (
     ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
+    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
 )
 
 
