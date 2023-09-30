@@ -12,11 +12,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-
-- cli: Added warning for timescaledb-ha users
+- cli: Use correct data path with timescaledb-ha Docker image.
 - demos: Fixed decimal overflow in `demo_uniswap` project.
 - evm.node: Fixed incorrect log request parameters.
 - evm.subsquid.events: Fixed issue with determining the last level when syncing with node.
+- hasura: Increated retry count for initial connection (healthcheck).
 
 ## [7.0.0] - 2023-09-25
 
