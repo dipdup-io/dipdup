@@ -214,7 +214,10 @@ def answers_from_terminal() -> Answers:
         ),
         default=0,
     )
-    if 'timescale-ha' in answers['postgres_image']:
+    if 'timescaledb-ha' in answers['postgres_image']:
+        message = ('WARNING: `timescaledb-ha` docker image uses an alternative data path.\n'
+                   'Our generated files are configured correctly.')
+        echo(message, err=True, fg='red', bold=True)
         answers['postgres_data_path'] = '/home/postgres/pgdata/data'
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
