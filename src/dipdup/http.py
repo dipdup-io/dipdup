@@ -23,6 +23,7 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
@@ -143,7 +144,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep
-        retry_count = self._config.retry_count
+        retry_count = 0 if env.TEST else self._config.retry_count
         retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
 
         while True:
