@@ -21,50 +21,58 @@ from tests import SRC_PATH
 
 
 @asynccontextmanager
-async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
-    config_path = CONFIGS_PATH / config
-    dipdup_pkg_path = SRC_PATH / 'dipdup'
-    demo_pkg_path = SRC_PATH / package
-    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
-
-    with tempfile.TemporaryDirectory() as tmp_root_path:
+async def tmp_project(config_path: Path, package: str, exists: bool) -> AsyncIterator[tuple[Path, dict[str, str]]]:
+    with tempfile.TemporaryDirectory() as tmp_package_path:
         # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_root_path) / 'dipdup.yaml'
+        tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
         os.symlink(config_path, tmp_config_path)
 
-        tmp_bin_path = Path(tmp_root_path) / 'bin'
+        tmp_bin_path = Path(tmp_package_path) / 'bin'
         tmp_bin_path.mkdir()
         for executable in ('dipdup', 'datamodel-codegen'):
             if (executable_path := which(executable)) is None:
                 raise FrameworkException(f'Executable `{executable}` not found')
             os.symlink(executable_path, tmp_bin_path / executable)
 
-        tmp_dipdup_pkg_path = Path(tmp_root_path) / 'dipdup'
-        os.symlink(dipdup_pkg_path, tmp_dipdup_pkg_path)
+        os.symlink(
+            SRC_PATH / 'dipdup',
+            Path(tmp_package_path) / 'dipdup',
+        )
 
         # NOTE: Ensure that `run` uses existing package and `init` creates a new one
-        if cmd == 'run':
-            tmp_demo_pkg_path = Path(tmp_root_path) / package
-            os.symlink(demo_pkg_path, tmp_demo_pkg_path)
+        if exists:
+            os.symlink(
+                SRC_PATH / package,
+                Path(tmp_package_path) / package,
+            )
 
         # NOTE: Prepare environment
         env = {
             **os.environ,
             'PATH': str(tmp_bin_path),
-            'PYTHONPATH': str(tmp_root_path),
+            'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
         }
 
-        subprocess.run(
-            f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {cmd}',
-            cwd=tmp_root_path,
-            check=True,
-            shell=True,
-            env=env,
-            capture_output=True,
-        )
+        yield Path(tmp_package_path), env
 
-        yield Path(tmp_root_path)
+
+async def run_in_tmp(
+    tmp_path: Path,
+    env: dict[str, str],
+    *cmd: str,
+) -> None:
+    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
+    tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
+
+    subprocess.run(
+        f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {" ".join(cmd)}',
+        cwd=tmp_path,
+        check=True,
+        shell=True,
+        env=env,
+        capture_output=True,
+    )
 
 
 async def assert_run_token() -> None:
@@ -252,13 +260,19 @@ async def test_demos(
     cmd: str,
     assert_fn: Callable[[], Awaitable[None]],
 ) -> None:
+    config_path = CONFIGS_PATH / config
     async with AsyncExitStack() as stack:
-        tmp_root_path = await stack.enter_async_context(
-            run_dipdup_demo(config, package, cmd),
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                config_path,
+                package,
+                exists=cmd != 'init',
+            ),
         )
+        await run_in_tmp(tmp_package_path, env, cmd)
         await stack.enter_async_context(
             tortoise_wrapper(
-                f'sqlite://{tmp_root_path}/db.sqlite3',
+                f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )
         )
