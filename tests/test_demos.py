@@ -4,6 +4,7 @@ import tempfile
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from decimal import Decimal
@@ -13,6 +14,7 @@ from shutil import which
 
 import pytest
 
+from dipdup.database import get_connection
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
@@ -254,7 +256,7 @@ test_params = (
 
 
 @pytest.mark.parametrize(test_args, test_params)
-async def test_demos(
+async def test_run_init(
     config: str,
     package: str,
     cmd: str,
@@ -278,3 +280,47 @@ async def test_demos(
         )
 
         await assert_fn()
+
+
+async def _count_tables() -> int:
+    conn = get_connection()
+    _, res = await conn.execute_query('SELECT count(name) FROM sqlite_master WHERE type = "table";')
+    return int(res[0][0])
+
+
+async def test_schema() -> None:
+    package = 'demo_token'
+    config_path = CONFIGS_PATH / f'{package}.yml'
+
+    async with AsyncExitStack() as stack:
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                config_path,
+                package,
+                exists=True,
+            ),
+        )
+
+        def tortoise() -> AbstractAsyncContextManager[None]:
+            return tortoise_wrapper(
+                f'sqlite://{tmp_package_path}/db.sqlite3',
+                f'{package}.models',
+            )
+
+        async with tortoise():
+            conn = get_connection()
+            assert (await _count_tables()) == 0
+
+        await run_in_tmp(tmp_package_path, env, 'schema', 'init')
+
+        async with tortoise():
+            conn = get_connection()
+            assert (await _count_tables()) == 10
+            await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
+            assert (await _count_tables()) == 11
+
+        await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
+
+        async with tortoise():
+            conn = get_connection()
+            assert (await _count_tables()) == 0

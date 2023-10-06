@@ -257,10 +257,10 @@ async def _sqlite_wipe_schema(
     await conn.execute_script(f'ATTACH DATABASE "{immune_path}" AS {namespace}')
 
     # NOTE: Copy immune tables to the new database.
-    master_query = 'SELECT name, type FROM sqlite_master'
+    master_query = 'SELECT name FROM sqlite_master WHERE type = "table"'
     result = await conn.execute_query(master_query)
-    for name, type_ in result[1]:
-        if type_ != 'table' or name not in immune_tables:
+    for name in result[1]:
+        if name not in immune_tables:
             continue
 
         expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'

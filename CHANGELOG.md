@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - database: Added `dipdup_wipe` and `dipdup_approve` SQL functions to the schema.
 
+### Fixed
+
+- cli: Fixed `schema wipe` command for SQLite databases.
+
 ## [7.0.1] - 2023-09-30
 
 ### Added
