@@ -235,7 +235,7 @@ async def _pg_wipe_schema(
         for table in immune_tables:
             await _pg_move_table(conn, table, schema_name, immune_schema_name)
 
-    await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
+    await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
 
     if immune_tables:
         for table in immune_tables:
