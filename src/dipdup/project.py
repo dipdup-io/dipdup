@@ -216,7 +216,10 @@ def answers_from_terminal() -> Answers:
     )
     if 'timescaledb-ha' in answers['postgres_image']:
         answers['postgres_data_path'] = '/home/postgres/pgdata/data'
-        echo('`timescaledb-ha` Docker image uses `/home/postgres/pgdata/data` as a data path; generated files were updated accordingly.', fg='yellow')
+        echo(
+            '`timescaledb-ha` Docker image uses `/home/postgres/pgdata/data` as a data path; generated files were updated accordingly.',
+            fg='yellow',
+        )
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 

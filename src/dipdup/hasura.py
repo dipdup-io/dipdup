@@ -210,7 +210,12 @@ class HasuraGateway(HTTPGateway):
         else:
             return None
 
-    async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None, retry_count: int | None = None) -> dict[str, Any]:
+    async def _hasura_request(
+        self,
+        endpoint: str,
+        json: dict[str, Any] | None = None,
+        retry_count: int | None = None,
+    ) -> dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, orjson.dumps(json))
         try:
             if retry_count is not None:
