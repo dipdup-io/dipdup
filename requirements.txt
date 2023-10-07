@@ -20,7 +20,7 @@ chardet==5.2.0
 charset-normalizer==3.2.0
 click==8.1.7
 cytoolz==0.12.2
-datamodel-code-generator==0.21.5
+datamodel-code-generator==0.22.0
 dnspython==2.4.2
 email-validator==2.0.0.post2
 eth-abi==4.2.1
@@ -75,7 +75,7 @@ regex==2023.8.8
 requests==2.31.0
 rfc3339-validator==0.1.4
 rlp==3.0.0
-ruamel-yaml==0.17.33
+ruamel-yaml==0.17.35
 ruamel-yaml-clib==0.2.7
 sentry-sdk==1.31.0
 setuptools==68.2.2
@@ -89,7 +89,7 @@ toolz==0.12.0
 tortoise-orm==0.19.3
 typing-extensions==4.7.1
 tzlocal==5.0.1
-urllib3==2.0.4
+urllib3==2.0.6
 web3==6.10.0
 websockets==10.4
 yarl==1.9.2

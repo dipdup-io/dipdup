@@ -46,7 +46,7 @@ classifiers = [
 dependencies = [
     # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
     "asyncpg~=0.28.0",
-    "datamodel-code-generator~=0.21.1",
+    "datamodel-code-generator~=0.22.0",
     "pydantic~=1.10.11",
     "tortoise-orm==0.19.3",
 
