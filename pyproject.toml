@@ -106,30 +106,65 @@ dev = [
 _black = "black src tests scripts"
 _ruff = "ruff check --fix src tests scripts"
 _mypy = "mypy src tests scripts"
-all = { composite = ["fmt", "lint", "test"] }
-fmt = { composite = ["_black"] }
-lint = { composite = ["_ruff", "_mypy"] }
-test = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests"
-update = { shell = """
-    pdm update
-    pdm export --without-hashes -f requirements --prod -o requirements.txt
-    pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
-""" }
-image = "docker buildx build . --load --progress plain -t dipdup:latest"
-clean = "git clean -xdf --exclude=.venv"
-demos = { shell = """
+
+[tool.pdm.scripts.all]
+help = "Run all checks"
+composite = ["fmt", "lint", "test"]
+
+[tool.pdm.scripts.demos]
+help = "Recreate demo projects from templates"
+shell = """
 	python scripts/update_demos.py
 	python scripts/init_demos.py
     pdm run fmt
     # FIXME: Run isort once to fix import sorting (bug in ruff)
     isort . --force-single-line -l 120
     pdm run lint
-""" }
-docs_build = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs"
-docs_serve = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch --serve"
-docs_watch = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch"
-docs_references = "python scripts/dump_references.py"
-fixme = "grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color"
+"""
+
+[tool.pdm.scripts.docs_build]
+help = "Build docs"
+cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs"
+
+[tool.pdm.scripts.docs_serve]
+help = "Build and serve docs"
+cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --serve"
+
+[tool.pdm.scripts.docs_watch]
+help = "Watch docs"
+cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch"
+
+[tool.pdm.scripts.docs_references]
+help = "Dump references"
+cmd = "python scripts/dump_references.py"
+
+[tool.pdm.scripts.fixme]
+help = "Find FIXME and TODO comments"
+cmd = "grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color"
+
+[tool.pdm.scripts.fmt]
+help = "Format code with black"
+composite = ["_black"]
+
+[tool.pdm.scripts.image]
+help = "Build Docker image"
+cmd = "docker buildx build . --load --progress plain -t dipdup:latest"
+
+[tool.pdm.scripts.lint]
+help = "Check code with ruff and mypy"
+composite = ["_ruff", "_mypy"]
+
+[tool.pdm.scripts.test]
+help = "Run tests"
+cmd = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests"
+
+[tool.pdm.scripts.update]
+help = "Update dependencies and dump requirements.txt"
+shell = """
+    pdm update
+    pdm export --without-hashes -f requirements --prod -o requirements.txt
+    pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
+"""
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]
