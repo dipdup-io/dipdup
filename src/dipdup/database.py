@@ -209,8 +209,6 @@ async def _pg_create_functions(conn: AsyncpgClient) -> None:
     for fn in (
         'dipdup_approve.sql',
         'dipdup_wipe.sql',
-        # TODO: Alias, remove in 8.0
-        'truncate_schema.sql',
     ):
         sql_path = Path(__file__).parent / 'sql' / fn
         await execute_sql(conn, sql_path)
