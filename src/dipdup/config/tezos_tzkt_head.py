@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -8,6 +8,9 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @dataclass

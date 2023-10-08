@@ -1,7 +1,7 @@
 from {{ project.package }} import models
-from {{ project.package }}.types.position_manager.evm_events.collect import Collect
 from {{ project.package }}.models.position import save_position_snapshot
 from {{ project.package }}.models.token import convert_token_amount
+from {{ project.package }}.types.position_manager.evm_events.collect import Collect
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 
@@ -30,4 +30,4 @@ async def collect(
 
     await position.save()
     # position.cache()
-    await save_position_snapshot(position, event.data.level)
+    await save_position_snapshot(position, event.data.level, event.data.timestamp)

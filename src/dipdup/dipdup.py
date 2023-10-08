@@ -8,13 +8,14 @@ from asyncio import create_task
 from asyncio import gather
 from collections import defaultdict
 from collections import deque
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from copy import copy
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
 
 from tortoise.exceptions import OperationalError
 
@@ -23,7 +24,6 @@ from dipdup.codegen import generate_environments
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import SqliteDatabaseConfig
 from dipdup.config import system_hooks
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -39,10 +39,10 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.index import Index
 from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
@@ -65,6 +65,7 @@ from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import MetricsLevel
@@ -74,20 +75,28 @@ from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
 
-METRICS_INTERVAL = 5
-STATUS_INTERVAL = 30
+if TYPE_CHECKING:
+    from dipdup.index import Index
+
+METRICS_INTERVAL = 3
+STATUS_INTERVAL = 10
+
+_logger = logging.getLogger(__name__)
 
 
 class IndexDispatcher:
     def __init__(self, ctx: DipDupContext) -> None:
         self._ctx = ctx
-
-        self._logger = logging.getLogger(__name__)
         self._indexes: dict[str, Index[Any, Any, Any]] = {}
-
+        # FIXME: Tezos-specific
         self._entrypoint_filter: set[str | None] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        # NOTE: Monitoring purposes
+        self._initial_levels: defaultdict[str, int] = defaultdict(int)
+        self._previous_levels: defaultdict[str, int] = defaultdict(int)
+        self._started_at: float = 0.0
+        self._metrics_at: float = 0.0
 
     async def run(
         self,
@@ -95,7 +104,10 @@ class IndexDispatcher:
         start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
-        self._logger.info('Starting index dispatcher')
+        _logger.info('Starting index dispatcher')
+        self._started_at = time.time()
+        metrics.set('started_at', self._started_at)
+
         await self._subscribe_to_datasource_events()
         await self._load_index_state()
 
@@ -106,8 +118,8 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set():
-                if (self._every_index_is(IndexStatus.realtime) or early_realtime) and not self._ctx.config.oneshot:
+            if not spawn_datasources_event.is_set() and not self._ctx.config.oneshot:
+                if self._every_index_is(IndexStatus.realtime) or early_realtime:
                     spawn_datasources_event.set()
 
             if spawn_datasources_event.is_set():
@@ -136,18 +148,19 @@ class IndexDispatcher:
                     await self._apply_filters(index)
 
             if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.disabled)):
-                self._logger.info('No indexes left, exiting')
+                _logger.info('No indexes left, exiting')
                 break
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
                     on_synchronized_fired = True
                     await self._ctx.fire_hook('on_synchronized')
-                    metrics and metrics.set('synchronized_at', time.time())
+                    metrics.set('synchronized_at', time.time())
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
+                metrics.set('synchronized_at', 0)
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
 
@@ -158,74 +171,83 @@ class IndexDispatcher:
     async def _prometheus_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
+            await self._update_prometheus()
 
-            active, synced, realtime = 0, 0, 0
-            for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
-                active += 1
-                if index.synchronized:
-                    synced += 1
-                if index.realtime:
-                    realtime += 1
+    async def _update_prometheus(self) -> None:
+        active, synced, realtime = 0, 0, 0
+        for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
+            active += 1
+            if index.synchronized:
+                synced += 1
+            if index.realtime:
+                realtime += 1
 
-            Metrics.set_indexes_count(active, synced, realtime)
+        Metrics.set_indexes_count(active, synced, realtime)
 
     async def _metrics_loop(self, update_interval: float) -> None:
-        started_at = time.time()
-        initial_levels: defaultdict[str, int] = defaultdict(int)
-        previous_levels: defaultdict[str, int] = defaultdict(int)
-        metrics.set('started_at', started_at)
-
         while True:
             await asyncio.sleep(update_interval)
-            if not self._indexes:
+            await self._update_metrics()
+
+    async def _update_metrics(self) -> None:
+        if not self._indexes:
+            return
+        if not all(i.state.level for i in self._indexes.values()):
+            return
+
+        levels_indexed, levels_total, levels_interval = 0, 0, 0
+        for index in self._indexes.values():
+            initial_level = self._initial_levels[index.name]
+            if not initial_level:
+                self._initial_levels[index.name] |= index.state.level
                 continue
-            if not all(i.state.level for i in self._indexes.values()):
-                continue
 
-            levels_indexed, levels_total, levels_interval = 0, 0, 0
-            for index in self._indexes.values():
-                initial_level = initial_levels[index.name]
-                if not initial_level:
-                    initial_levels[index.name] |= index.state.level
-                    continue
+            levels_interval += index.state.level - self._previous_levels[index.name]
+            levels_indexed += index.state.level - initial_level
+            levels_total += index.get_sync_level() - initial_level
 
-                levels_interval += index.state.level - previous_levels[index.name]
-                levels_indexed += index.state.level - initial_level
-                levels_total += index.get_sync_level() - initial_level
+            self._previous_levels[index.name] = index.state.level
 
-                previous_levels[index.name] = index.state.level
+        update_interval = time.time() - self._metrics_at
+        self._metrics_at = time.time()
 
-            current_speed = levels_interval / update_interval
-            average_speed = levels_indexed / (time.time() - started_at)
-            time_passed = (time.time() - started_at) / 60
-            time_left, progress = 0.0, 0.0
-            if average_speed:
-                time_left = (levels_total - levels_indexed) / average_speed / 60
-            if levels_total:
-                progress = levels_indexed / levels_total
+        current_speed = levels_interval / update_interval
+        average_speed = levels_indexed / (time.time() - self._started_at)
+        time_passed = (time.time() - self._started_at) / 60
+        time_left, progress = 0.0, 0.0
+        if average_speed:
+            time_left = (levels_total - levels_indexed) / average_speed / 60
+        if levels_total:
+            progress = levels_indexed / levels_total
 
-            metrics.set('levels_indexed', levels_indexed)
-            metrics.set('levels_total', levels_total)
-            metrics.set('current_speed', current_speed)
-            metrics.set('average_speed', average_speed)
-            metrics.set('time_passed', time_passed)
-            metrics.set('time_left', time_left)
-            metrics.set('progress', progress)
+        metrics.set('levels_indexed', levels_indexed)
+        metrics.set('levels_total', levels_total)
+        metrics.set('current_speed', current_speed)
+        metrics.set('average_speed', average_speed)
+        metrics.set('time_passed', time_passed)
+        metrics.set('time_left', time_left)
+        metrics.set('progress', progress)
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
-            stats = metrics.stats()
-            progress = stats.get('progress', 0)
-            total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
-            current_speed = stats.get('current_speed', 0)
-            if current_speed:
-                self._logger.info(
-                    'indexing %.2f%%: %s levels left (%s lps)',
-                    progress * 100,
-                    total - indexed,
-                    int(current_speed),
-                )
+            await self._log_status()
+
+    async def _log_status(self) -> None:
+        stats = metrics.stats()
+        progress = stats.get('progress', 0)
+        total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
+        current_speed = stats.get('current_speed', 0)
+        synchronized_at = stats.get('synchronized_at', 0)
+        if synchronized_at:
+            _logger.info('realtime: %s levels and counting', indexed)
+        else:
+            _logger.info(
+                'indexing %.2f%%: %s levels left (%s lps)',
+                progress * 100,
+                total - indexed,
+                int(current_speed),
+            )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -243,7 +265,7 @@ class IndexDispatcher:
     async def _fetch_contracts(self) -> None:
         """Add contracts spawned from context to config"""
         contracts = await Contract.filter().all()
-        self._logger.info('%s contracts fetched from database', len(contracts))
+        _logger.info('%s contracts fetched from database', len(contracts))
 
         for contract in contracts:
             if contract.name in self._ctx.config.contracts:
@@ -275,7 +297,7 @@ class IndexDispatcher:
             raise FrameworkException('Index states are already loaded')
 
         await self._fetch_contracts()
-        self._logger.info('%s indexes found in database', await IndexState.all().count())
+        _logger.info('%s indexes found in database', await IndexState.all().count())
 
         async def _process(index_state: IndexState) -> None:
             name, template, template_values = index_state.name, index_state.template, index_state.template_values
@@ -313,11 +335,10 @@ class IndexDispatcher:
 
             # NOTE: Index config is missing, possibly just commented-out
             else:
-                self._logger.warning('Index `%s` not found in config, ignoring', name)
+                _logger.warning('Index `%s` not found in config, ignoring', name)
 
-        # FIXME: Outdated optimization
-        tasks = (create_task(_process(index_state)) for index_state in await IndexState.all())
-        await gather(*tasks)
+        async for index_state in IndexState.all():
+            await _process(index_state)
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
@@ -327,7 +348,7 @@ class IndexDispatcher:
                 datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
                 datasource.call_on_big_maps(self._on_tzkt_big_maps)
                 datasource.call_on_events(self._on_tzkt_events)
-                datasource.call_on_rollback(self._on_rollback)
+                datasource.call_on_rollback(self._on_tzkt_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
@@ -335,7 +356,7 @@ class IndexDispatcher:
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        asyncio.ensure_future(
+        _ = asyncio.ensure_future(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -353,13 +374,13 @@ class IndexDispatcher:
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        asyncio.ensure_future(
+        _ = asyncio.ensure_future(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
-                    'level': int(head.number, 16),
+                    'level': head.number,
                     'hash': head.hash,
-                    'timestamp': int(head.timestamp, 16),
+                    'timestamp': head.timestamp,
                 },
             ),
         )
@@ -411,9 +432,9 @@ class IndexDispatcher:
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
                 index.push_events(events)
 
-    async def _on_rollback(
+    async def _on_tzkt_rollback(
         self,
-        datasource: IndexDatasource[Any],
+        datasource: TzktDatasource,
         type_: MessageType,
         from_level: int,
         to_level: int,
@@ -423,40 +444,30 @@ class IndexDispatcher:
             raise FrameworkException(f'Attempt to rollback forward: {from_level} -> {to_level}')
 
         channel = f'{datasource.name}:{type_.value}'
-        self._logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
+        _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
         if Metrics.enabled:
             Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
-        affected_indexes: set[str] = set()
-
         for index_name, index in self._indexes.items():
             index_level = index.state.level
 
             if index.message_type != type_:
-                self._logger.debug('%s: different channel, skipping', index_name)
+                _logger.debug('%s: different channel, skipping', index_name)
 
             elif index.datasource != datasource:
-                self._logger.debug('%s: different datasource, skipping', index_name)
+                _logger.debug('%s: different datasource, skipping', index_name)
 
             elif to_level >= index_level:
-                self._logger.debug('%s: level is too low, skipping', index_name)
+                _logger.debug('%s: level is too low, skipping', index_name)
 
             else:
-                self._logger.debug('%s: affected', index_name)
-                affected_indexes.add(index_name)
+                _logger.debug('%s: affected', index_name)
+                index.push_realtime_message(
+                    TzktRollbackMessage(from_level, to_level),
+                )
 
-        hook_name = 'on_index_rollback'
-        for index_name in affected_indexes:
-            self._logger.warning('`%s` index is affected by rollback; firing `%s` hook', index_name, hook_name)
-            await self._ctx.fire_hook(
-                hook_name,
-                index=self._indexes[index_name],
-                from_level=from_level,
-                to_level=to_level,
-            )
-
-        self._logger.info('`%s` rollback complete', channel)
+        _logger.info('`%s` rollback processed', channel)
 
 
 class DipDup:
@@ -465,7 +476,6 @@ class DipDup:
     Spawns datasources, registers indexes, passes handler callbacks to executor"""
 
     def __init__(self, config: DipDupConfig) -> None:
-        self._logger = logging.getLogger(__name__)
         self._config = config
         self._datasources: dict[str, Datasource[Any]] = {}
         self._transactions: TransactionManager = TransactionManager(
@@ -478,6 +488,7 @@ class DipDup:
             datasources=self._datasources,
             transactions=self._transactions,
         )
+        self._index_dispatcher: IndexDispatcher | None = None
         self._schema: Schema | None = None
         self._api: Any | None = None
 
@@ -486,40 +497,6 @@ class DipDup:
         if self._schema is None:
             raise FrameworkException('Schema is not initialized')
         return self._schema
-
-    @classmethod
-    async def create_dummy(
-        cls,
-        config: DipDupConfig,
-        stack: AsyncExitStack,
-        in_memory: bool = False,
-    ) -> 'DipDup':
-        """Create a dummy DipDup instance for testing purposes.
-
-        Only basic initialization is performed:
-
-          - Create datasources without spawning them
-          - Register system hooks
-          - Initialize Tortoise ORM and create schema
-
-        You need to enter `AsyncExitStack` context manager prior to calling this method.
-        """
-        if in_memory:
-            config.database = SqliteDatabaseConfig(
-                kind='sqlite',
-                path=':memory:',
-            )
-        config.advanced.rollback_depth = 2
-        config.initialize()
-
-        dipdup = DipDup(config)
-        await dipdup._create_datasources()
-        await dipdup._set_up_database(stack)
-        await dipdup._set_up_hooks(set())
-        await dipdup._initialize_schema()
-        await dipdup._set_up_transactions(stack)
-
-        return dipdup
 
     async def init(
         self,
@@ -553,6 +530,10 @@ class DipDup:
         # NOTE: Order matters. But usually you can skip some layers if you don't need them.
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
+
+        # verify before start so obvious mistakes can be seen instantly
+        self._ctx.package.verify()
+
         async with AsyncExitStack() as stack:
             await self._set_up_metrics(stack)
 
@@ -578,7 +559,7 @@ class DipDup:
                 spawn_datasources_event = Event()
 
                 if self._config.jobs:
-                    self._logger.warning('Running in oneshot mode; `jobs` are ignored')
+                    _logger.warning('Running in oneshot mode; `jobs` are ignored')
             else:
                 start_scheduler_event = await self._set_up_scheduler(tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
@@ -596,6 +577,8 @@ class DipDup:
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
+                run=True,
+                metrics=not self._config.oneshot,
             )
 
             await gather(*tasks)
@@ -606,7 +589,7 @@ class DipDup:
                 self._datasources[name] = create_datasource(config)
 
     async def _initialize_schema(self) -> None:
-        self._logger.info('Initializing database schema')
+        _logger.info('Initializing database schema')
         schema_name = self._config.schema_name
         conn = get_connection()
 
@@ -653,7 +636,7 @@ class DipDup:
         await stack.enter_async_context(self._transactions.register())
 
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
-        self._logger.info('Setting up database')
+        _logger.info('Setting up database')
         await stack.enter_async_context(
             tortoise_wrapper(
                 url=self._config.database.connection_string,
@@ -730,38 +713,50 @@ class DipDup:
                 continue
             await datasource.initialize()
 
+        await resolve_tzkt_code_hashes(self._config, self._datasources)
+
     async def _set_up_index_dispatcher(
         self,
         tasks: set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
+        run: bool,
+        metrics: bool,
     ) -> None:
         index_dispatcher = IndexDispatcher(self._ctx)
-        tasks.add(
-            create_task(
-                index_dispatcher.run(
-                    spawn_datasources_event,
-                    start_scheduler_event,
-                    early_realtime,
+        self._index_dispatcher = index_dispatcher
+        if run:
+            tasks.add(
+                create_task(
+                    index_dispatcher.run(
+                        spawn_datasources_event,
+                        start_scheduler_event,
+                        early_realtime,
+                    )
                 )
             )
-        )
-        # FIXME: Initialize with metrics
-        if prometheus_config := self._ctx.config.prometheus:
-            tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
-        if not self._ctx.config.oneshot:
-            tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
-            tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+
+        if metrics:
+            if prometheus_config := self._ctx.config.prometheus:
+                tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
+            if not self._ctx.config.oneshot:
+                tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
+                tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+
+    def _get_event_dispatcher(self) -> IndexDispatcher:
+        if self._index_dispatcher is None:
+            raise FrameworkException('Index dispatcher is not initialized')
+        return self._index_dispatcher
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
 
         async def _event_wrapper() -> None:
-            self._logger.info('Waiting for indexes to synchronize before spawning datasources')
+            _logger.info('Waiting for indexes to synchronize before spawning datasources')
             await event.wait()
 
-            self._logger.info('Spawning datasources')
+            _logger.info('Spawning datasources')
             _tasks = [create_task(d.run()) for d in self._datasources.values()]
             await gather(*_tasks)
 

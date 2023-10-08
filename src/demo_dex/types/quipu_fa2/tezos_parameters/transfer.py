@@ -27,5 +27,5 @@ class TransferParameterItem(BaseModel):
     txs: List[Tx]
 
 
-class TransferParameter(RootModel):
+class TransferParameter(RootModel[List[TransferParameterItem]]):
     root: List[TransferParameterItem]

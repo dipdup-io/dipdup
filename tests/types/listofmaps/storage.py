@@ -1,8 +1,7 @@
-from typing import Dict
-from typing import List
+from typing import Any
 
-from pydantic import BaseModel
+from pydantic import RootModel
 
 
-class ListOfMapsStorage(BaseModel):
-    root: List[Dict[str, str]]
+class ListOfMapsStorage(RootModel[Any]):
+    root: list[dict[str, str]]

@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class StoreRecordsKey(RootModel):
+class StoreRecordsKey(RootModel[str]):
     root: str

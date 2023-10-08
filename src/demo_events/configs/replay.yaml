@@ -9,6 +9,7 @@ replay:
   license: MIT
   name: John Doe
   email: john_doe@example.com
-  postgresql_image: postgres:15
-  hasura_image: hasura/graphql-engine:v2.30.1
+  postgres_image: postgres:15
+  postgres_data_path: /var/lib/postgresql/data
+  hasura_image: hasura/graphql-engine:latest
   line_length: 120

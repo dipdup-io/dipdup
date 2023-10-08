@@ -2,6 +2,8 @@
 import logging
 import re
 import time
+from collections.abc import Callable
+from collections.abc import Iterator
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
@@ -9,8 +11,6 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
 from typing import Any
-from typing import Callable
-from typing import Iterator
 
 import click
 from watchdog.events import EVENT_TYPE_CREATED
@@ -23,7 +23,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
-from dipdup.project import DEFAULT_ANSWERS
+from dipdup.project import get_default_answers
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
 _logger = logging.getLogger()
@@ -68,7 +68,7 @@ class DocsBuilder(FileSystemEventHandler):
             dst_file.unlink(True)
             return
 
-        elif event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
+        if event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
             return
 
         src_file = self._source / src_file
@@ -76,7 +76,7 @@ class DocsBuilder(FileSystemEventHandler):
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
-        _logger.info(f'`{src_file}` has been modified; copying')
+        _logger.info('`%s` has been modified; copying', src_file)
 
         try:
             if src_file.suffix in TEXT:
@@ -97,7 +97,7 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
         def replacer(match: re.Match[str]) -> str:
             # FIXME: Slices are not handled yet
             included_file = source / match.group(1).split(':')[0]
-            _logger.info(f'including `{included_file.name}`')
+            _logger.info('including `%s`', included_file.name)
             return included_file.read_text()
 
         return re.sub(INCLUDE_REGEX, replacer, data)
@@ -106,10 +106,12 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
 
 
 def create_project_callback() -> Callable[[str], str]:
+    answers = get_default_answers()
+
     def callback(data: str) -> str:
         for match in re.finditer(PROJECT_REGEX, data):
             key = match.group(1)
-            value = DEFAULT_ANSWERS[key]  # type: ignore[literal-required]
+            value = answers[key]  # type: ignore[literal-required]
             data = data.replace(match.group(0), str(value))
         return data
 

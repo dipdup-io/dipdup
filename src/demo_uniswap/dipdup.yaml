@@ -1,22 +1,11 @@
 spec_version: 2.0
 package: demo_uniswap
 
-database:
-  kind: sqlite
-  path: /tmp/demo_uniswap.sqlite
-  immune_tables:
-    - token
-
 datasources:
   ethscan:
     kind: abi.etherscan
 
-  mainnet_infura_node:
-    kind: evm.node
-    url: https://mainnet.infura.io/v3/${INFURA_KEY:-''}
-    ws_url: wss://mainnet.infura.io/ws/v3/${INFURA_KEY:-''}
-
-  mainnet_alchemy_node:
+  mainnet_node:
     kind: evm.node
     url: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
     ws_url: wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
@@ -25,8 +14,7 @@ datasources:
     kind: evm.subsquid
     url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
     node:
-      - mainnet_infura_node
-      - mainnet_alchemy_node
+      - mainnet_node
 
 contracts:
   factory:

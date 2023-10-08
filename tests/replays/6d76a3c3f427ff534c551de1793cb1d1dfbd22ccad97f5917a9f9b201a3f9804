@@ -1,0 +1,49 @@
+[
+  [
+    1457,
+    {
+      "alias": "QuipuSwap FA1.2 Factory Old 2",
+      "address": "KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD"
+    },
+    "votes",
+    null,
+    true,
+    1434856,
+    1434856,
+    0,
+    0,
+    1,
+    {
+      "schema:key_hash": "key_hash"
+    },
+    {
+      "schema:nat": "nat"
+    }
+  ],
+  [
+    1456,
+    {
+      "alias": "QuipuSwap FA1.2 Factory Old 2",
+      "address": "KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD"
+    },
+    "voters",
+    null,
+    true,
+    1434856,
+    1434856,
+    0,
+    0,
+    1,
+    {
+      "schema:address": "address"
+    },
+    {
+      "schema:object": {
+        "candidate:?key_hash": "key_hash",
+        "last_veto:timestamp": "timestamp",
+        "veto:nat": "nat",
+        "vote:nat": "nat"
+      }
+    }
+  ]
+]

@@ -3,3 +3,5 @@ replay:
   description: Uniswap V3 pools, positions, swaps, ticks, etc.
   package: demo_uniswap
   template: demo_uniswap
+  postgres_image: timescale/timescaledb-ha:pg15-latest
+  postgres_data_path: /home/postgres/pgdata/data

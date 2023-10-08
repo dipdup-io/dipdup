@@ -11,10 +11,8 @@ from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
-from types import ModuleType
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -29,7 +27,6 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -64,7 +61,6 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
-from dipdup.package import DipDupPackage
 from dipdup.performance import _CacheManager
 from dipdup.performance import _MetricManager
 from dipdup.performance import _QueueManager
@@ -72,8 +68,17 @@ from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
 from dipdup.prometheus import Metrics
-from dipdup.transactions import TransactionManager
 from dipdup.utils import FormattedLogger
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from collections.abc import Iterator
+    from types import ModuleType
+
+    from dipdup.config.evm_node import EvmNodeDatasourceConfig
+    from dipdup.package import DipDupPackage
+    from dipdup.transactions import TransactionManager
+
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
@@ -112,6 +117,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (dev only)
     :param logger: Context-aware logger instance
     """
 
@@ -186,14 +192,14 @@ class DipDupContext:
                 await Index.filter().update(config_hash='')
             return
 
-        elif action == ReindexingAction.exception:
+        if action == ReindexingAction.exception:
             schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
                 schema.reindex = reason
                 await schema.save()
             raise ReindexingRequiredError(schema.reindex, context)
 
-        elif action == ReindexingAction.wipe:
+        if action == ReindexingAction.wipe:
             conn = get_connection()
             immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
             await wipe_schema(
@@ -216,27 +222,16 @@ class DipDupContext:
     ) -> None:
         """Adds contract to the inventory.
 
+        :param kind: Either 'tezos' or 'evm' allowed
         :param name: Contract name
         :param address: Contract address
         :param typename: Alias for the contract script
         :param code_hash: Contract code hash
-        :param kind: Either 'tezos' or 'evm' allowed
         """
         self.logger.info('Creating %s contract `%s` with typename `%s`', kind, name, typename)
-        addresses, code_hashes = self.config._contract_addresses, self.config._contract_code_hashes
 
         if name in self.config.contracts:
             raise ContractAlreadyExistsError(name)
-
-        if address:
-            if address in addresses:
-                raise ContractAlreadyExistsError(addresses[address])
-            addresses[address] = name
-
-        if code_hash:
-            if code_hash in self.config._contract_code_hashes:
-                raise ContractAlreadyExistsError(code_hashes[code_hash])
-            code_hashes[code_hash] = name
 
         contract_config: ContractConfigU
         if kind == 'tezos':
@@ -257,8 +252,6 @@ class DipDupContext:
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
-        if isinstance(contract_config, TezosContractConfig):
-            code_hash = contract_config.code_hash
 
         with suppress(OperationalError):
             await Contract(
@@ -283,6 +276,9 @@ class DipDupContext:
         :param name: Index name
         :param template: Index template to use
         :param values: Mapping of values to fill template with
+        :param first_level: First level to start indexing from
+        :param last_level: Last level to index
+        :param state: Initial index state (dev only)
         """
         self.config.add_index(name, template, values, first_level, last_level)
         await self._spawn_index(name, state)
@@ -294,11 +290,9 @@ class DipDupContext:
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
-    async def _spawn_index(self, name: str, state: Index | None = None) -> None:
+    async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
-        from dipdup.config.evm_node import EvmNodeDatasourceConfig
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
-        from dipdup.indexes.evm_subsquid_operations.index import SubsquidOperationsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -306,13 +300,13 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidOperationsIndex | SubsquidEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
-        if isinstance(index_config, (TzktOperationsIndexConfig, TzktOperationsUnfilteredIndexConfig)):
+        if isinstance(index_config, TzktOperationsIndexConfig | TzktOperationsUnfilteredIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktOperationsIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktBigMapsIndexConfig):
@@ -333,8 +327,6 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            raise NotImplementedError
         else:
             raise NotImplementedError
 
@@ -345,7 +337,7 @@ class DipDupContext:
 
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig))
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -354,6 +346,7 @@ class DipDupContext:
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         self._pending_indexes.append(index)
+        return index
 
     # TODO: disable_index(name: str)
 
@@ -478,7 +471,7 @@ class DipDupContext:
             ).order_by('-id')
 
             if updates:
-                self.logger.info(f'Reverting {len(updates)} updates')
+                self.logger.info('Reverting %s updates', len(updates))
             for update in updates:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
@@ -606,6 +599,7 @@ class DipDupContext:
         """Executes SQL query with given name included with the project
 
         :param name: SQL query name within `sql` directory
+        :param values: Values to pass to the query
         """
 
         sql_path = self._get_sql_path(name)
@@ -676,7 +670,7 @@ class HookContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         hook_config: HookConfig,
-    ) -> 'HookContext':
+    ) -> HookContext:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -739,7 +733,7 @@ class HandlerContext(DipDupContext):
         logger: FormattedLogger,
         handler_config: HandlerConfig,
         datasource: IndexDatasource[Any],
-    ) -> 'HandlerContext':
+    ) -> HandlerContext:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,

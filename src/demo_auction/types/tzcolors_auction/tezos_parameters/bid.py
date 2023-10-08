@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class BidParameter(RootModel):
+class BidParameter(RootModel[str]):
     root: str

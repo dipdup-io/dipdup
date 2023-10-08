@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import Union
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -15,29 +13,29 @@ from pydantic import Field
 class MapItem(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    L: Dict[str, str]
+    L: dict[str, str]
 
 
 class MapItem1(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    R: Dict[str, Any]
+    R: dict[str, Any]
 
 
 class OrItem(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    L: Dict[str, str]
+    L: dict[str, str]
 
 
 class OrItem1(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    R: Dict[str, Any]
+    R: dict[str, Any]
 
 
 class RewqStorage(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    map: Dict[str, Union[MapItem, MapItem1]]
-    or_: Union[OrItem, OrItem1] = Field(..., alias='or')
+    map: dict[str, MapItem | MapItem1]
+    or_: OrItem | OrItem1 = Field(..., alias='or')

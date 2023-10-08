@@ -1,3 +1,4 @@
+version: "3.8"
 name: {{ project.package }}
 
 services:
@@ -16,11 +17,11 @@ services:
       - hasura
 
   db:
-    image: {{ project.postgresql_image }}
+    image: {{ project.postgres_image }}
     ports:
       - 5432
     volumes:
-      - db:/var/lib/postgresql/data
+      - db:{{ project.postgres_data_path }}
     restart: always
     env_file: .env
     environment:

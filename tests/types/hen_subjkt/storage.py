@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from pydantic import BaseModel
 from pydantic import ConfigDict
 
@@ -19,10 +17,10 @@ class Invoices(BaseModel):
 class HenSubjktStorage(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    entries: Dict[str, bool]
-    invoices: Dict[str, Invoices]
+    entries: dict[str, bool]
+    invoices: dict[str, Invoices]
     manager: str
-    metadata: Dict[str, str]
-    registries: Dict[str, str]
-    subjkts: Dict[str, bool]
-    subjkts_metadata: Dict[str, str]
+    metadata: dict[str, str]
+    registries: dict[str, str]
+    subjkts: dict[str, bool]
+    subjkts_metadata: dict[str, str]

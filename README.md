@@ -24,36 +24,3 @@ DipDup is a Python framework for building smart contract indexers. It helps deve
 This project is maintained by the [Baking Bad](https://bakingbad.dev/) team.
 <br>
 Development is supported by [Tezos Foundation](https://tezos.foundation/) and [OnlyDust](https://www.onlydust.xyz).
-
-## Thanks
-
-### Sponsors
-
-Decentralized web requires decentralized funding. The following people and organizations help the project to be sustainable.
-
-- [@dansan566](https://github.com/dansan566)
-- [@royscheeren](https://github.com/royscheeren)
-
-Want your project to be listed here? We have nice perks for sponsors! Visit our [GitHub Sponsors page](https://github.com/sponsors/dipdup-io).
-
-### Contributors
-
-We are grateful to all the people who help us with the project.
-
-- [@852Kerfunkle](https://github.com/852Kerfunkle)
-- [@Anshit01](https://github.com/Anshit01)
-- [@arrijabba](https://github.com/arrijabba)
-- [@Fitblip](https://github.com/Fitblip)
-- [@gdsoumya](https://github.com/gdsoumya)
-- [@herohthd](https://github.com/herohthd)
-- [@Karantezsure](https://github.com/Karantezsure)
-- [@mystdeim](https://github.com/mystdeim)
-- [@nikos-kalomoiris](https://github.com/nikos-kalomoiris)
-- [@pravind](https://github.com/pravind)
-- [@sbihel](https://github.com/sbihel)
-- [@tezosmiami](https://github.com/tezosmiami)
-- [@tomsib2001](https://github.com/tomsib2001)
-- [@veqtor](https://github.com/veqtor)
-- [@xflpt](https://github.com/xflpt)
-
-If we forgot to mention you, or you want to update your record, please, open an issue or pull request.

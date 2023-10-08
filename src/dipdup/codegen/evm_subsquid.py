@@ -9,7 +9,6 @@ import orjson
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -108,8 +107,6 @@ class SubsquidCodeGenerator(CodeGenerator):
         for index_config in self._config.indexes.values():
             if isinstance(index_config, SubsquidEventsIndexConfig):
                 await self._fetch_abi(index_config)
-            elif isinstance(index_config, SubsquidOperationsIndexConfig):
-                raise NotImplementedError
 
     async def generate_schemas(self, force: bool = False) -> None:
         if force:
@@ -122,8 +119,6 @@ class SubsquidCodeGenerator(CodeGenerator):
             if isinstance(index_config, SubsquidEventsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
-            elif isinstance(index_config, SubsquidOperationsIndexConfig):
-                raise NotImplementedError
 
         convert_abi(self._package, events, functions)
 
@@ -174,7 +169,7 @@ class SubsquidCodeGenerator(CodeGenerator):
             abi_path.write_bytes(json_dumps(abi_json))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
-        module_name = schema_path.stem
+        return schema_path.stem
         # FIXME: Do we need prefixes or postfixes there?
         # if schema_path.parent.name == 'evm_events':
         #     class_name = f'{module_name}_event'
@@ -182,7 +177,6 @@ class SubsquidCodeGenerator(CodeGenerator):
         #     class_name = f'{module_name}_function'
         # else:
         #     class_name = module_name
-        return module_name
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         if 'evm_events' not in schema_path.parts:

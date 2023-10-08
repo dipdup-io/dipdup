@@ -24,5 +24,5 @@ class TzcolorsAuctionStorage1(BaseModel):
     bidder: str
 
 
-class TzcolorsAuctionStorage(RootModel):
+class TzcolorsAuctionStorage(RootModel[Optional[Dict[str, TzcolorsAuctionStorage1]]]):
     root: Optional[Dict[str, TzcolorsAuctionStorage1]] = None

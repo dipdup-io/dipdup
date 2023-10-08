@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from collections import deque
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
 
 from pydantic.dataclasses import dataclass
 
@@ -22,6 +22,9 @@ from dipdup.models.tezos_tzkt import TzktOrigination
 from dipdup.models.tezos_tzkt import TzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _logger = logging.getLogger('dipdup.matcher')
 
@@ -47,7 +50,7 @@ def prepare_operation_handler_args(
 ) -> deque[OperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[OperationsHandlerArgumentU] = deque()
-    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations):
+    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=True):
         if operation_data is None:
             args.append(None)
 
@@ -56,8 +59,6 @@ def prepare_operation_handler_args(
                 args.append(operation_data)
                 continue
 
-            if operation_data.parameter_json is None:
-                raise FrameworkException('Processing typed transaction, but parameter_json is None')
             typename = pattern_config.typed_contract.module_name
             type_ = get_parameter_type(package, typename, pattern_config.entrypoint)
             parameter = parse_object(type_, operation_data.parameter_json) if type_ else None
@@ -104,12 +105,12 @@ def match_transaction(
     if destination := pattern_config.destination:
         if destination.address not in (operation.target_address, None):
             return False
-        if destination.code_hash not in (operation.target_code_hash, None):
+        if destination.resolved_code_hash not in (operation.target_code_hash, None):
             return False
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
             return False
-        if source.code_hash not in (operation.sender_code_hash, None):
+        if source.resolved_code_hash not in (operation.sender_code_hash, None):
             return False
 
     return True
@@ -217,7 +218,7 @@ def match_operation_subgroup(
         else:
             raise FrameworkException('Type of the first handler argument is unknown')
 
-    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list))]
+    sorted_index_list = [x for _, x in sorted(zip(id_list, index_list, strict=True))]
     if index_list == sorted_index_list:
         return matched_handlers
 

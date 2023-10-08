@@ -13,6 +13,9 @@ async def on_transfer(
     event: SubsquidEvent[Transfer],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
+    if not amount:
+        return
+
     await on_balance_update(
         address=event.payload.from_,
         balance_update=-amount,

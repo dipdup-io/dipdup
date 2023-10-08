@@ -3,12 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class Key(BaseModel):
@@ -21,8 +20,8 @@ class Key(BaseModel):
 class Value(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    sw: Optional[str]
-    mr: Optional[Dict[str, bool]]
+    sw: str | None
+    mr: dict[str, bool] | None
 
 
 class HjklStorageItem(BaseModel):
@@ -32,5 +31,5 @@ class HjklStorageItem(BaseModel):
     value: Value
 
 
-class HjklStorage(BaseModel):
-    root: List[HjklStorageItem]
+class HjklStorage(RootModel[Any]):
+    root: list[HjklStorageItem]

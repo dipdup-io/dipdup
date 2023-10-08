@@ -24,11 +24,10 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
-from pathlib import Path
 from pydoc import locate
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
-from typing import Iterator
 from typing import Literal
 from typing import TypeVar
 from typing import cast
@@ -49,9 +48,14 @@ from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
 from dipdup.performance import MetricsLevel
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from dipdup.subscriptions import Subscription
 
 DEFAULT_POSTGRES_SCHEMA = 'public'
 DEFAULT_POSTGRES_DATABASE = 'postgres'
@@ -70,6 +74,7 @@ class SqliteDatabaseConfig:
 
     :param kind: always 'sqlite'
     :param path: Path to .sqlite3 file, leave default for in-memory database (`:memory:`)
+    :param immune_tables: List of tables to preserve during reindexing
     """
 
     kind: Literal['sqlite']
@@ -196,7 +201,7 @@ class ResolvedHttpConfig:
         cls,
         default: HttpConfig,
         user: HttpConfig | None,
-    ) -> 'ResolvedHttpConfig':
+    ) -> ResolvedHttpConfig:
         config = cls()
         # NOTE: Apply datasource defaults first
         for merge_config in (default, user):
@@ -429,10 +434,10 @@ class JobConfig(NameMixin):
     """Job schedule config
 
     :param hook: Name of hook to run
+    :param args: Arguments to pass to the hook
     :param crontab: Schedule with crontab syntax (`* * * * *`)
     :param interval: Schedule with interval in seconds
     :param daemon: Run hook as a daemon (never stops)
-    :param args: Arguments to pass to the hook
     """
 
     hook: HookConfig = field()
@@ -445,7 +450,7 @@ class JobConfig(NameMixin):
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
-        elif not schedules_enabled:
+        if not schedules_enabled:
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
         NameMixin.__post_init__(self)
@@ -489,9 +494,9 @@ class PrometheusConfig:
 class HookConfig(CallbackMixin):
     """Hook config
 
+    :param callback: Callback name
     :param args: Mapping of argument names and annotations (checked lazily when possible)
     :param atomic: Wrap hook in a single database transaction
-    :param callback: Callback name
     """
 
     args: dict[str, str] = field(default_factory=dict)
@@ -564,7 +569,7 @@ class AdvancedConfig:
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param api: Monitoring API config
     :param metrics: off/basic/advanced based on how much performance metrics you want to collect
-    :param alt_operation_matcher: Use different algorithm to match operations (undocumented)
+    :param alt_operation_matcher: Use different algorithm to match operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -629,17 +634,6 @@ class DipDupConfig:
         self._paths: list[Path] = []
         self._environment: dict[str, str] = {}
         self._json = DipDupYAMLConfig()
-        # FIXME: Tezos-specific config validation
-        self._contract_addresses = {
-            v.address: k
-            for k, v in self.contracts.items()
-            if isinstance(v, TezosContractConfig) and v.address is not None
-        }
-        self._contract_code_hashes = {
-            v.code_hash: k
-            for k, v in self.contracts.items()
-            if isinstance(v, TezosContractConfig) and v.code_hash is not None
-        }
 
     @property
     def schema_name(self) -> str:
@@ -905,7 +899,7 @@ class DipDupConfig:
                     raise ConfigurationError('`HookConfig.atomic` and `JobConfig.daemon` flags are mutually exclusive')
                 job_config.hook = hook_config
 
-    def _resolve_index_links(self, index_config: 'ResolvedIndexConfigU') -> None:
+    def _resolve_index_links(self, index_config: ResolvedIndexConfigU) -> None:
         """Resolve contract and datasource configs by aliases.
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
@@ -987,9 +981,6 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
-        elif isinstance(index_config, SubsquidOperationsIndexConfig):
-            raise NotImplementedError
-
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1023,7 +1014,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_operations import SubsquidOperationsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -1052,7 +1042,6 @@ DatasourceConfigU = (
 )
 ResolvedIndexConfigU = (
     SubsquidEventsIndexConfig
-    | SubsquidOperationsIndexConfig
     | TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig

@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class StoreExpiryMapKey(RootModel):
+class StoreExpiryMapKey(RootModel[str]):
     root: str

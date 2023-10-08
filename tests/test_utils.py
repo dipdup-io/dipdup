@@ -1,14 +1,21 @@
 from contextlib import suppress
 
+from pytest import raises
 from tortoise import Tortoise
 
 from dipdup.database import iter_models
 from dipdup.database import tortoise_wrapper
+from dipdup.exceptions import FrameworkException
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
+from dipdup.utils import import_submodules
+from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from tests.types.kolibri_ovens.set_delegate import SetDelegateParameter
+from tests.types.qwer.storage import QwerStorage
+from tests.types.qwer.storage import QwerStorageItem1
 
 
 class SomeException(Exception):
@@ -70,3 +77,24 @@ async def test_iter_models() -> None:
     assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
+
+
+async def test_import_submodules() -> None:
+    with raises(FrameworkException):
+        import_submodules('demo_token')
+
+    submodules = import_submodules('demo_token.handlers')
+    assert len(submodules) == 3
+
+
+async def test_parse_object() -> None:
+    # empty
+    empty = parse_object(SetDelegateParameter, None)
+    assert empty.root is None
+    # string only
+    str_ = parse_object(SetDelegateParameter, 'some')
+    assert str_.root == 'some'
+    # map
+    map_ = parse_object(QwerStorage, [[{'R': {'a': 'b'}}, {'R': {}}], [{'L': 'test'}]])
+    assert isinstance(map_.root[0][0], QwerStorageItem1)
+    assert map_.root[0][0].R['a'] == 'b'

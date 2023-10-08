@@ -32,6 +32,7 @@ from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DipDupPackage
@@ -66,20 +67,19 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
                 prop: preprocess_storage_jsonschema(sub_schema) for prop, sub_schema in schema['properties'].items()
             },
         }
-    elif 'items' in schema:
+    if 'items' in schema:
         return {
             **schema,
             'items': preprocess_storage_jsonschema(schema['items']),
         }
-    elif 'additionalProperties' in schema:
+    if 'additionalProperties' in schema:
         return {
             **schema,
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
-    elif schema.get('$comment') == 'big_map':
+    if schema.get('$comment') == 'big_map':
         return cast(dict[str, Any], schema['oneOf'][1])
-    else:
-        return schema
+    return schema
 
 
 class TzktCodeGenerator(CodeGenerator):
@@ -104,6 +104,8 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
+        await resolve_tzkt_code_hashes(self._config, self._datasources)
+
         if force:
             self._cleanup_schemas()
 
@@ -156,7 +158,7 @@ class TzktCodeGenerator(CodeGenerator):
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             # NOTE: Always single handler
-            if isinstance(index_config, (TzktOperationsUnfilteredIndexConfig, TzktHeadIndexConfig)):
+            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
@@ -204,12 +206,10 @@ class TzktCodeGenerator(CodeGenerator):
         if not isinstance(datasource, TzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
-        if isinstance(contract_config.address, str):
+        if contract_config.address:
             address = contract_config.address
-        elif isinstance(contract_config.code_hash, str):
-            address = contract_config.code_hash
-        elif isinstance(contract_config.code_hash, int):
-            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        elif contract_config.resolved_code_hash:
+            address = await datasource.get_contract_address(contract_config.resolved_code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 
@@ -232,7 +232,7 @@ class TzktCodeGenerator(CodeGenerator):
             return
 
         # NOTE: A very special case; unresolved `operation` template to spawn from factory indexes.
-        elif isinstance(contract_config, str) and contract_config in self._config.contracts:
+        if isinstance(contract_config, str) and contract_config in self._config.contracts:
             contract_config = self._config.get_tezos_contract(contract_config)
 
         elif isinstance(contract_config, str):
@@ -359,12 +359,10 @@ class TzktCodeGenerator(CodeGenerator):
         """Get contract JSONSchema from TzKT or from cache"""
         schemas: dict[str, Any] = {}
 
-        if isinstance(contract_config.address, str):
+        if contract_config.address:
             address = contract_config.address
-        elif isinstance(contract_config.code_hash, str):
-            address = contract_config.code_hash
-        elif isinstance(contract_config.code_hash, int):
-            address = await datasource.get_contract_address(contract_config.code_hash, 0)
+        elif contract_config.resolved_code_hash:
+            address = await datasource.get_contract_address(contract_config.resolved_code_hash, 0)
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 

@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class InvestLiquidityParameter(RootModel):
+class InvestLiquidityParameter(RootModel[str]):
     root: str

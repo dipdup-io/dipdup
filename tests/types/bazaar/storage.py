@@ -1,7 +1,8 @@
-from typing import List
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class SaleToken(BaseModel):
@@ -25,5 +26,5 @@ class BazaarMarketPlaceStorageItem(BaseModel):
     value: str
 
 
-class BazaarMarketPlaceStorage(BaseModel):
-    root: List[BazaarMarketPlaceStorageItem]
+class BazaarMarketPlaceStorage(RootModel[Any]):
+    root: list[BazaarMarketPlaceStorageItem]

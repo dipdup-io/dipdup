@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 from {{ project.package }} import models
-from {{ project.package }}.types.pool.evm_events.initialize import Initialize
 from {{ project.package }}.models.token import token_derive_eth
+from {{ project.package }}.types.pool.evm_events.initialize import Initialize
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
 

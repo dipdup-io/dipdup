@@ -13,10 +13,7 @@ import sys
 from pathlib import Path
 from shutil import which
 from typing import Any
-from typing import Dict
 from typing import NoReturn
-from typing import Optional
-from typing import Set
 from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
@@ -79,8 +76,8 @@ class DipDupEnvironment:
     def __init__(self) -> None:
         self._os = os.uname().sysname
         self._arch = os.uname().machine
-        self._commands: Dict[str, Optional[str]] = {}
-        self._pipx_packages: Set[str] = set()
+        self._commands: dict[str, str | None] = {}
+        self._pipx_packages: set[str] = set()
 
     def refresh(self) -> None:
         for command in WHICH_CMDS:
@@ -125,7 +122,7 @@ class DipDupEnvironment:
         """Run command safely (relatively lol)"""
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')
-        args = (found_cmd,) + tuple(a for a in args if a)
+        args = (found_cmd, *tuple(a for a in args if a))
         try:
             return subprocess.run(
                 args,
@@ -165,10 +162,6 @@ def install(
     if ref and path:
         fail('Specify either ref or path, not both')
 
-    if not any((version, ref, path)):
-        # FIXME: Temporary, remove when 7.0.0 is released
-        version = '7.0.0rc3'
-
     env = DipDupEnvironment()
     env.prepare()
     if not quiet:
@@ -183,7 +176,11 @@ def install(
     python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
-            subprocess.run(['pyenv', 'which', 'python3.11'], capture_output=True, text=True)
+            subprocess.run(
+                ['pyenv', 'which', 'python3.11'],
+                capture_output=True,
+                text=True,
+            )
             .stdout.strip()
             .split('\n')[0]
         )
@@ -230,7 +227,10 @@ def ask(question: str, default: bool) -> bool:
         answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
         if not answer:
             return default
-        return answer in ('n', 'no') if default else answer in ('y', 'yes')
+        if answer in ('n', 'no'):
+            return False
+        if answer in ('y', 'yes'):
+            return True
 
 
 def uninstall(quiet: bool) -> NoReturn:
@@ -268,6 +268,9 @@ def cli() -> None:
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
     args = parser.parse_args()
+
+    if not args.quiet:
+        sys.stdin = open('/dev/tty')  # noqa: PTH123
 
     if args.uninstall:
         uninstall(args.quiet)

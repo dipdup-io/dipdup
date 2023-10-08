@@ -1,9 +1,8 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-
-from pydantic import BaseModel
 
 from dipdup.codegen.tezos_tzkt import get_big_map_key_type
 from dipdup.codegen.tezos_tzkt import get_big_map_value_type
@@ -12,6 +11,9 @@ from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
+
+if TYPE_CHECKING:
+    from pydantic import BaseModel
 
 _logger = logging.getLogger('dipdup.matcher')
 

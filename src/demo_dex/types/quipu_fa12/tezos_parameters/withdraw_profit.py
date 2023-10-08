@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class WithdrawProfitParameter(RootModel):
+class WithdrawProfitParameter(RootModel[str]):
     root: str

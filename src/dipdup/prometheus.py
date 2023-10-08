@@ -1,6 +1,6 @@
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 from typing import NoReturn
 
 from prometheus_client import Counter

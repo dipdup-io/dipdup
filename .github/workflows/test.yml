@@ -1,5 +1,5 @@
 name: Test
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
@@ -48,3 +48,5 @@ jobs:
 
       - name: Run tests
         run: pdm run test
+        env:
+          ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}

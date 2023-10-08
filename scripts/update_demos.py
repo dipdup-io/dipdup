@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import subprocess
 from pathlib import Path
 from shutil import rmtree
 
@@ -38,4 +37,4 @@ for path in _get_projects():
 
     render_project(answers, force=True)
 
-    subprocess.run(['mv', package, 'src'], check=True)
+    Path(package).replace(f'src/{package}')

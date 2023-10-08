@@ -9,10 +9,11 @@ from dipdup.index import Index
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
 from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.prometheus import Metrics
 
-TokenTransferQueueItem = tuple[TzktTokenTransferData, ...]
+TokenTransferQueueItem = tuple[TzktTokenTransferData, ...] | TzktRollbackMessage
 
 
 class TzktTokenTransfersIndex(
@@ -115,8 +116,12 @@ class TzktTokenTransfersIndex(
         if self._queue:
             self._logger.debug('Processing websocket queue')
         while self._queue:
-            token_transfers = self._queue.popleft()
-            message_level = token_transfers[0].level
+            message = self._queue.popleft()
+            if isinstance(message, TzktRollbackMessage):
+                await self._tzkt_rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
             if message_level <= self.state.level:
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
@@ -124,4 +129,4 @@ class TzktTokenTransfersIndex(
             with ExitStack() as stack:
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_token_transfers(token_transfers, message_level)
+                await self._process_level_token_transfers(message, message_level)

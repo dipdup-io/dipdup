@@ -1,10 +1,9 @@
 import logging
 from collections import deque
+from collections.abc import Iterable
 from contextlib import suppress
 from copy import copy
 from typing import Any
-from typing import Iterable
-from typing import Union
 
 from dipdup.codegen.tezos_tzkt import get_event_payload_type
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
@@ -21,10 +20,9 @@ from dipdup.utils import parse_object
 _logger = logging.getLogger('dipdup.matcher')
 
 
-MatchedEventsT = Union[
-    tuple[TzktEventsHandlerConfig, TzktEvent[Any]],
-    tuple[TzktEventsUnknownEventHandlerConfig, TzktUnknownEvent],
-]
+MatchedEventsT = (
+    tuple[TzktEventsHandlerConfig, TzktEvent[Any]] | tuple[TzktEventsUnknownEventHandlerConfig, TzktUnknownEvent]
+)
 
 
 def prepare_event_handler_args(

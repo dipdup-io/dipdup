@@ -3,11 +3,11 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class Key(BaseModel):
@@ -24,5 +24,5 @@ class AsdfStorageItem(BaseModel):
     value: str
 
 
-class AsdfStorage(BaseModel):
-    root: List[Dict[str, List[AsdfStorageItem]]]
+class AsdfStorage(RootModel[Any]):
+    root: list[dict[str, list[AsdfStorageItem]]]

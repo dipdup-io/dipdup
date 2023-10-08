@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import RootModel
 
 
-class AdminUpdateParameter(RootModel):
+class AdminUpdateParameter(RootModel[str]):
     root: str

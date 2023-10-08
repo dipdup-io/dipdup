@@ -35,4 +35,4 @@ async def increase_liquidity(
     position.deposited_token1 += amount1
 
     await position.save()
-    await save_position_snapshot(position, event.data.level)
+    await save_position_snapshot(position, event.data.level, event.data.timestamp)

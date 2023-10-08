@@ -1,6 +1,5 @@
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator
-from typing import Tuple
 from typing import TypeVar
 from unittest.mock import AsyncMock
 
@@ -19,8 +18,8 @@ from tests import tzkt_replay
 T = TypeVar('T')
 
 
-async def take_two(iterable: AsyncIterator[Tuple[T, ...]]) -> Tuple[T, ...]:
-    result: Tuple[T, ...] = ()
+async def take_two(iterable: AsyncIterator[tuple[T, ...]]) -> tuple[T, ...]:
+    result: tuple[T, ...] = ()
     left = 2
     async for batch in iterable:
         result = result + batch
@@ -213,6 +212,7 @@ async def test_on_operation_message_data() -> None:
         assert isinstance(emit_mock.await_args_list[0][0][1][0], TzktOperationData)
 
 
+# FIXME: Hangs without internet
 async def test_no_content() -> None:
     async with tzkt_replay('https://api.ghostnet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):

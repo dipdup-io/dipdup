@@ -3,39 +3,44 @@ import asyncio
 import atexit
 import logging
 import sys
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import suppress
-from copy import copy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import TypeVar
 from typing import cast
 
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
 from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
+from dipdup.report import get_reports
 from dipdup.report import save_report
 from dipdup.sys import set_up_process
+
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
+
 
 _click_wrap_text = click.formatting.wrap_text
 
 
 def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
     # NOTE: WELCOME_ASCII and EPILOG
-    if text.startswith(('    ')):
+    if text.startswith('    '):
         return text
-    if text.startswith(('\0\n')):
+    if text.startswith('\0\n'):
         return text[2:]
     return _click_wrap_text(text, *a, **kw)
 
@@ -60,15 +65,25 @@ NO_SIGNALS_CMDS = {
     'wipe',
 }
 
-if TYPE_CHECKING:
-    from dipdup.config import DipDupConfig
 
 _logger = logging.getLogger(__name__)
 
 
-def echo(message: str, err: bool = False) -> None:
+def echo(message: str, err: bool = False, **styles: Any) -> None:
     with suppress(BrokenPipeError):
-        click.echo(message, err=err)
+        click.secho(message, err=err, **styles)
+
+
+def big_yellow_echo(message: str) -> None:
+    echo(f'\n{message}\n', fg='yellow')
+
+
+def green_echo(message: str) -> None:
+    echo(message, fg='green')
+
+
+def red_echo(message: str) -> None:
+    echo(message, err=True, fg='red')
 
 
 def _print_help(error: Exception, report_id: str) -> None:
@@ -143,6 +158,26 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
+def _skip_cli_group() -> bool:
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    is_help = '--help' in args
+    is_empty_group = args in (
+        ['config'],
+        ['hasura'],
+        ['schema'],
+    )
+    # NOTE: Simple helpers that don't use any of our cli boilerplate
+    is_script = args[0] in (
+        'self',
+        'report',
+    )
+    if not (is_help or is_empty_group or is_script):
+        _logger.debug('Skipping cli group')
+        return False
+    return True
+
+
 @click.group(
     context_settings={'max_content_width': 120},
     help=WELCOME_ASCII,
@@ -170,9 +205,7 @@ async def _check_version() -> None:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] in ('self', 'report'):
+    if _skip_cli_group():
         return
 
     # NOTE: https://github.com/python/cpython/issues/95778
@@ -184,6 +217,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.sys import set_up_logging
 
     set_up_logging()
+    if env.DEBUG:
+        logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]
@@ -200,7 +235,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dipdup import env
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
@@ -218,7 +252,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        asyncio.ensure_future(_check_version())
+        _ = asyncio.ensure_future(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
@@ -242,7 +276,6 @@ async def run(ctx: click.Context) -> None:
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -388,7 +421,6 @@ async def schema(ctx: click.Context) -> None:
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
 
-    from dipdup.config import DipDupConfig
     from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
     from dipdup.models import Schema
@@ -435,14 +467,17 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     models = f'{config.package}.models'
 
     # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-    immune_tables = set() if immune else config.database.immune_tables | {'dipdup_meta'}
+    immune_tables = set() if immune else config.database.immune_tables
 
-    if isinstance(config.database, SqliteDatabaseConfig) and immune_tables:
+    if isinstance(config.database, SqliteDatabaseConfig):
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
+            immune_tables.add('dipdup_meta')
             _logger.warning(message)
-        else:
+        elif immune_tables:
             raise ConfigurationError(message)
+    else:
+        immune_tables.add('dipdup_meta')
 
     if not force:
         try:
@@ -572,22 +607,37 @@ async def new(
     replay: Path | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import DEFAULT_ANSWERS
+    import os
+
+    from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
+    from dipdup.project import get_default_answers
     from dipdup.project import render_project
 
     if quiet:
-        answers = copy(DEFAULT_ANSWERS)
+        answers = get_default_answers()
     elif replay:
         answers = answers_from_replay(replay)
     else:
         answers = answers_from_terminal()
+
+    _logger.info('Rendering project')
     render_project(answers, force)
 
-    package = answers['package']
-    click.secho('Project created successfully!', fg='green')
-    click.secho(f'Enter `{package}` directory and see README.md for the next steps.', fg='green')
+    _logger.info('Initializing project')
+    config = DipDupConfig.load([Path(answers['package'])])
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
+        config=config,
+    )
+    # NOTE: datamodel-codegen fails otherwise
+    os.chdir(answers['package'])
+    await ctx.invoke(init, base=True, force=force)
+
+    green_echo('Project created successfully!')
+    green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
 
 
 @cli.group()
@@ -669,7 +719,7 @@ async def report_ls(ctx: click.Context) -> None:
     yaml = YAML(typ='base')
     header = tuple(ReportHeader.__annotations__.keys())
     rows = []
-    for path in REPORTS_PATH.iterdir():
+    for path in get_reports():
         event = yaml.load(path)
         row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
@@ -688,7 +738,7 @@ async def report_show(ctx: click.Context, id: str) -> None:
     if not path.exists():
         echo('No such report')
         return
-    print(path.read_text())
+    echo(path.read_text())
 
 
 @report.command(name='rm')

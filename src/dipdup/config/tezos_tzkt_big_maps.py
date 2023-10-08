@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterator
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -13,9 +13,13 @@ from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import BigMapSubscription
-from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from dipdup.subscriptions import Subscription
 
 
 @dataclass

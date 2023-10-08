@@ -3,23 +3,18 @@ import logging
 import pkgutil
 import types
 from collections import defaultdict
+from collections.abc import Callable
+from collections.abc import Iterator
+from collections.abc import Mapping
+from collections.abc import Sequence
 from decimal import Decimal
 from functools import reduce
 from logging import Logger
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Callable
-from typing import DefaultDict
-from typing import Dict
-from typing import Iterator
-from typing import List
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
 from typing import TextIO
 from typing import TypeVar
-from typing import Union
 
 import orjson
 from humps import main as humps
@@ -58,7 +53,7 @@ def touch(path: Path) -> None:
         path.touch()
 
 
-def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bool:
+def write(path: Path, content: str | bytes, overwrite: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
     if not path.parent.exists():
         _logger.info('Creating directory `%s`', path.parent)
@@ -74,20 +69,14 @@ def write(path: Path, content: Union[str, bytes], overwrite: bool = False) -> bo
     return True
 
 
-def import_submodules(package: str) -> Dict[str, types.ModuleType]:
+def import_submodules(package: str) -> dict[str, types.ModuleType]:
     """Recursively import all submodules of a package"""
     module = importlib.import_module(package)
     results = {}
 
     # NOTE: The first level; walk_packages falls into recursion with root symlink.
     if '.' not in package:
-        for attr in dir(module):
-            member = getattr(module, attr)
-            if not isinstance(member, types.ModuleType):
-                continue
-            full_name = package + '.' + attr
-            results[full_name] = importlib.import_module(full_name)
-        return results
+        raise FrameworkException("Don't use `import_submodules` for top-level package")
 
     for subpackage in pkgutil.walk_packages(module.__path__):
         name = subpackage.name
@@ -118,7 +107,7 @@ def pascal_to_snake(value: str, strip_dots: bool = True) -> str:
     return humps.depascalize(value).replace('__', '_')
 
 
-def split_by_chunks(input_: List[Any], size: int) -> Iterator[List[Any]]:
+def split_by_chunks(input_: list[Any], size: int) -> Iterator[list[Any]]:
     i = 0
     while i < len(input_):
         yield input_[i : i + size]
@@ -129,7 +118,7 @@ _T = TypeVar('_T')
 _TT = TypeVar('_TT')
 
 
-def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, List[_T]]:
+def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> defaultdict[_TT, list[_T]]:
     """Group by key into defaultdict"""
     return reduce(
         lambda grp, val: grp[key(val)].append(val) or grp,  # type: ignore[func-returns-value]
@@ -141,7 +130,7 @@ def groupby(seq: Sequence[_T], key: Callable[[Any], _TT]) -> DefaultDict[_TT, Li
 class FormattedLogger(Logger):
     """Logger wrapper with additional formatting"""
 
-    def __init__(self, name: str, fmt: Optional[str] = None) -> None:
+    def __init__(self, name: str, fmt: str | None = None) -> None:
         self.logger = logging.getLogger(name)
         self.fmt = fmt
 
@@ -155,16 +144,12 @@ class FormattedLogger(Logger):
         level: int,
         msg: object,
         args: Any,
-        exc_info: Optional[
-            Union[
-                None,
-                bool,
-                Union[
-                    tuple[type[BaseException], BaseException, Optional[types.TracebackType]], tuple[None, None, None]
-                ],
-                BaseException,
-            ]
-        ] = None,
+        exc_info: None
+        | bool
+        | tuple[type[BaseException], BaseException, types.TracebackType | None]
+        | tuple[None, None, None]
+        | BaseException
+        | None = None,
         extra: Mapping[str, Any] | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
@@ -174,7 +159,7 @@ class FormattedLogger(Logger):
         self.logger._log(level, msg, args, exc_info, extra, stack_info, stacklevel)
 
 
-def iter_files(path: Path, ext: Optional[str] = None) -> Iterator[TextIO]:
+def iter_files(path: Path, ext: str | None = None) -> Iterator[TextIO]:
     """Iterate over files in a directory. Or a single file. Sort alphabetically, filter by extension, skip empty files."""
     if not path.exists() and ext:
         path = Path(f'{path}{ext}')
@@ -208,16 +193,15 @@ def import_from(module: str, obj: str) -> Any:
 
 def parse_object(
     type_: type[ObjectT],
-    data: Mapping[str, Any] | Sequence[Any],
+    data: Mapping[str, Any] | Sequence[Any] | None,
     plain: bool = False,
 ) -> ObjectT:
     try:
-        if plain is False:
+        if plain is False or data is None:
             return type_.model_validate(data)
 
         model_keys = tuple(field.alias or key for key, field in type_.model_fields.items())
-        return type_(**dict(zip(model_keys, data)))
-
+        return type_(**dict(zip(model_keys, data, strict=True)))
     except ValidationError as e:
         raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e
 

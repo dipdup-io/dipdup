@@ -1,25 +1,25 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
-from typing import List
-
-from tortoise.expressions import F
 
 import demo_domains.models as domains_models
 import demo_nft_marketplace.models as hen_models
+from tortoise.expressions import F
+
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
-from dipdup.dipdup import DipDup
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
+from dipdup.test import create_dummy_dipdup
 
 
 async def test_model_updates() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
@@ -129,9 +129,10 @@ async def test_model_updates() -> None:
 
 async def test_cleanup_and_filtering() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: Filter less than `rollback_depth` (which is 2 by default)
@@ -160,9 +161,10 @@ async def test_cleanup_and_filtering() -> None:
 
 async def test_optionals() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_domains')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT and DELETE model with optionals
@@ -200,12 +202,13 @@ async def test_optionals() -> None:
 
 async def test_bulk_create_update() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_domains')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
-        tlds: List[domains_models.TLD] = []
+        tlds: list[domains_models.TLD] = []
         for i in range(3):
             tld = domains_models.TLD(
                 id=str(i),
@@ -216,7 +219,7 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.TLD.bulk_create(tlds)
 
-        domains: List[domains_models.Domain] = []
+        domains: list[domains_models.Domain] = []
         for tld in tlds:
             domain = domains_models.Domain(
                 id=tld.id,
@@ -231,7 +234,7 @@ async def test_bulk_create_update() -> None:
         async with in_transaction(level=1000, index='test'):
             await domains_models.Domain.bulk_create(domains)
 
-        for tld, domain in zip(tlds, domains):
+        for tld, domain in zip(tlds, domains, strict=True):
             tld.owner = tld.id
             domain.token_id = int(domain.id)
 
@@ -282,13 +285,14 @@ async def test_bulk_create_update() -> None:
 
 async def test_update_prefetch() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_domains')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
-        tlds: List[domains_models.TLD] = []
+        tlds: list[domains_models.TLD] = []
         for i in range(3):
             tld = domains_models.TLD(
                 id=str(i),
@@ -332,9 +336,10 @@ async def test_update_prefetch() -> None:
 
 async def test_update_arithmetics() -> None:
     config = DipDupConfig(spec_version='2.0', package='demo_nft_marketplace')
+    config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
-        dipdup = await DipDup.create_dummy(config, stack, in_memory=True)
+        dipdup = await create_dummy_dipdup(config, stack)
         in_transaction = dipdup._transactions.in_transaction
 
         # NOTE: INSERT
