@@ -1,5 +1,5 @@
 -- source of inspiration: https://stackoverflow.com/a/11462481
-CREATE OR REPLACE FUNCTION truncate_schema(schema_name VARCHAR) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION dipdup_wipe(schema_name VARCHAR) RETURNS void AS $$
 DECLARE
     rec RECORD;
 BEGIN
@@ -63,14 +63,6 @@ BEGIN
             WHEN others THEN END;
     END LOOP;
 
-    -- BEGIN
-    --     CREATE EXTENSION IF NOT EXISTS pgcrypto;
-    --     CREATE EXTENSION IF NOT EXISTS timescaledb;
-    -- EXCEPTION
-    --     WHEN OTHERS THEN
-    --         NULL;
-    -- END;
-    
     RETURN;
 END;
 $$ LANGUAGE plpgsql;
