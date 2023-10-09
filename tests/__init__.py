@@ -11,8 +11,6 @@ env.set_test()
 
 
 CONFIGS_PATH = Path(__file__).parent / 'configs'
-REPLAYS_PATH = Path(__file__).parent / 'replays'
-SRC_PATH = Path(__file__).parent.parent / 'src'
 
 
 @asynccontextmanager

@@ -1,10 +1,30 @@
 import asyncio
+import atexit
+import os
+import subprocess
+import tempfile
+from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
+from contextlib import asynccontextmanager
+from pathlib import Path
+from shutil import which
+from typing import TYPE_CHECKING
 from typing import Any
 
+import pytest
+
 from dipdup.config import DipDupConfig
+from dipdup.config import HasuraConfig
+from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
+from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
+from dipdup.project import get_default_answers
+
+SRC_PATH = Path(__file__).parent.parent
+
+if TYPE_CHECKING:
+    from docker.client import DockerClient  # type: ignore[import]
 
 
 async def create_dummy_dipdup(
@@ -47,3 +67,124 @@ async def spawn_index(dipdup: DipDup, name: str) -> Index[Any, Any, Any]:
     index: Index[Any, Any, Any] = await dispatcher._ctx._spawn_index(name)
     dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.pop()
     return index
+
+
+def get_docker_client() -> 'DockerClient':
+    from docker.client import DockerClient
+
+    docker_socks = (
+        Path('/var/run/docker.sock'),
+        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'vms' / '0' / 'docker.sock',
+        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'docker.sock',
+    )
+    for path in docker_socks:
+        if path.exists():
+            return DockerClient(base_url=f'unix://{path}')
+    else:
+        pytest.skip('Docker socket not found', allow_module_level=True)  # pragma: no cover
+
+
+async def run_postgres_container() -> PostgresDatabaseConfig:
+    docker = get_docker_client()
+    postgres_container = docker.containers.run(
+        image=get_default_answers()['postgres_image'],
+        environment={
+            'POSTGRES_USER': 'test',
+            'POSTGRES_PASSWORD': 'test',
+            'POSTGRES_DB': 'test',
+        },
+        detach=True,
+        remove=True,
+    )
+    atexit.register(postgres_container.stop)
+    postgres_container.reload()
+    postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
+
+    while not postgres_container.exec_run('pg_isready').exit_code == 0:
+        await asyncio.sleep(0.1)
+
+    return PostgresDatabaseConfig(
+        kind='postgres',
+        host=postgres_ip,
+        port=5432,
+        user='test',
+        database='test',
+        password='test',
+    )
+
+
+async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
+    docker = get_docker_client()
+    hasura_container = docker.containers.run(
+        image=get_default_answers()['hasura_image'],
+        environment={
+            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
+        },
+        detach=True,
+        remove=True,
+    )
+    atexit.register(hasura_container.stop)
+    hasura_container.reload()
+    hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
+
+    return HasuraConfig(
+        url=f'http://{hasura_ip}:8080',
+        source='new_source',
+        create_source=True,
+    )
+
+
+@asynccontextmanager
+async def tmp_project(config_path: Path, package: str, exists: bool) -> AsyncIterator[tuple[Path, dict[str, str]]]:
+    with tempfile.TemporaryDirectory() as tmp_package_path:
+        # NOTE: Symlink configs, packages and executables
+        tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
+        os.symlink(config_path, tmp_config_path)
+
+        tmp_bin_path = Path(tmp_package_path) / 'bin'
+        tmp_bin_path.mkdir()
+        for executable in ('dipdup', 'datamodel-codegen'):
+            if (executable_path := which(executable)) is None:
+                raise FrameworkException(f'Executable `{executable}` not found')  # pragma: no cover
+            os.symlink(executable_path, tmp_bin_path / executable)
+
+        os.symlink(
+            SRC_PATH / 'dipdup',
+            Path(tmp_package_path) / 'dipdup',
+        )
+
+        # NOTE: Ensure that `run` uses existing package and `init` creates a new one
+        if exists:
+            os.symlink(
+                SRC_PATH / package,
+                Path(tmp_package_path) / package,
+            )
+
+        # NOTE: Prepare environment
+        env = {
+            **os.environ,
+            'PATH': str(tmp_bin_path),
+            'PYTHONPATH': str(tmp_package_path),
+            'DIPDUP_TEST': '1',
+        }
+
+        yield Path(tmp_package_path), env
+
+
+async def run_in_tmp(
+    tmp_path: Path,
+    env: dict[str, str],
+    *cmd: str,
+) -> None:
+    # FIXME: dev-only
+    sqlite_config_path = Path(__file__).parent.parent.parent / 'tests' / 'configs' / 'sqlite.yaml'
+    tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
+
+    subprocess.run(
+        f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {" ".join(cmd)}',
+        cwd=tmp_path,
+        check=True,
+        shell=True,
+        env=env,
+        capture_output=True,
+    )
