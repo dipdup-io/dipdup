@@ -11,8 +11,6 @@ from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
 
-import pytest
-
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
@@ -70,6 +68,7 @@ async def spawn_index(dipdup: DipDup, name: str) -> Index[Any, Any, Any]:
 
 
 def get_docker_client() -> 'DockerClient':
+    import pytest
     from docker.client import DockerClient
 
     docker_socks = (
@@ -80,8 +79,12 @@ def get_docker_client() -> 'DockerClient':
     for path in docker_socks:
         if path.exists():
             return DockerClient(base_url=f'unix://{path}')
-    else:
-        pytest.skip('Docker socket not found', allow_module_level=True)  # pragma: no cover
+
+    pytest.skip(
+        'Docker socket not found',
+        allow_module_level=True,
+    )
+    return None
 
 
 async def run_postgres_container() -> PostgresDatabaseConfig:
@@ -135,12 +138,18 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
 
 
 @asynccontextmanager
-async def tmp_project(config_path: Path, package: str, exists: bool) -> AsyncIterator[tuple[Path, dict[str, str]]]:
+async def tmp_project(
+    config_paths: list[Path],
+    package: str,
+    exists: bool,
+) -> AsyncIterator[tuple[Path, dict[str, str]]]:
     with tempfile.TemporaryDirectory() as tmp_package_path:
-        # NOTE: Symlink configs, packages and executables
+        # NOTE: Dump config
+        config = DipDupConfig.load(config_paths, environment=True)
         tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
-        os.symlink(config_path, tmp_config_path)
+        tmp_config_path.write_text(config.dump())
 
+        # NOTE: Symlink packages and executables
         tmp_bin_path = Path(tmp_package_path) / 'bin'
         tmp_bin_path.mkdir()
         for executable in ('dipdup', 'datamodel-codegen'):
@@ -176,12 +185,10 @@ async def run_in_tmp(
     env: dict[str, str],
     *cmd: str,
 ) -> None:
-    # FIXME: dev-only
-    sqlite_config_path = Path(__file__).parent.parent.parent / 'tests' / 'configs' / 'sqlite.yaml'
     tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
 
     subprocess.run(
-        f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {" ".join(cmd)}',
+        f'dipdup -c {tmp_config_path} {" ".join(cmd)}',
         cwd=tmp_path,
         check=True,
         shell=True,

@@ -12,7 +12,7 @@ from dipdup.database import tortoise_wrapper
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import tmp_project
-from tests import CONFIGS_PATH
+from tests import TEST_CONFIGS
 
 
 async def assert_run_token() -> None:
@@ -200,11 +200,13 @@ async def test_run_init(
     cmd: str,
     assert_fn: Callable[[], Awaitable[None]],
 ) -> None:
-    config_path = CONFIGS_PATH / config
+    config_path = TEST_CONFIGS / config
+    sqlite_config_path = TEST_CONFIGS / 'sqlite.yaml'
+
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                config_path,
+                [config_path, sqlite_config_path],
                 package,
                 exists=cmd != 'init',
             ),
@@ -228,12 +230,13 @@ async def _count_tables() -> int:
 
 async def test_schema() -> None:
     package = 'demo_token'
-    config_path = CONFIGS_PATH / f'{package}.yml'
+    config_path = TEST_CONFIGS / f'{package}.yml'
+    sqlite_config_path = TEST_CONFIGS / 'sqlite.yaml'
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                config_path,
+                [config_path, sqlite_config_path],
                 package,
                 exists=True,
             ),
