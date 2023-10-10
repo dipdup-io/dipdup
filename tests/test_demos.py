@@ -314,3 +314,19 @@ async def test_schema_postgres() -> None:
         async with tortoise():
             conn = get_connection()
             assert await get_tables() == {'dipdup_meta'}
+
+
+async def test_package_tree() -> None:
+    package = 'demo_token'
+    config_path = TEST_CONFIGS / f'{package}.yml'
+    env_config_path = TEST_CONFIGS / 'sqlite.yaml'
+
+    async with AsyncExitStack() as stack:
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                [config_path, env_config_path],
+                package,
+                exists=True,
+            ),
+        )
+        await run_in_tmp(tmp_package_path, env, 'package', 'tree')

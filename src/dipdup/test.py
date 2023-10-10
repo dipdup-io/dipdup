@@ -1,7 +1,6 @@
 import asyncio
 import atexit
 import os
-import subprocess
 import tempfile
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
@@ -189,11 +188,12 @@ async def run_in_tmp(
 ) -> None:
     tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
 
-    subprocess.run(
+    proc = await asyncio.subprocess.create_subprocess_shell(
         f'dipdup -c {tmp_config_path} {" ".join(cmd)}',
         cwd=tmp_path,
-        check=True,
         shell=True,
         env=env,
-        capture_output=True,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
+    await proc.communicate()
