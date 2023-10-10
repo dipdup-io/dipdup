@@ -6,11 +6,14 @@ from decimal import Decimal
 from functools import partial
 
 import pytest
+from tortoise.backends.sqlite.client import SqliteClient
 
+from dipdup.database import AsyncpgClient
 from dipdup.database import get_connection
 from dipdup.database import tortoise_wrapper
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.test import run_in_tmp
+from dipdup.test import run_postgres_container
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
 
@@ -201,12 +204,12 @@ async def test_run_init(
     assert_fn: Callable[[], Awaitable[None]],
 ) -> None:
     config_path = TEST_CONFIGS / config
-    sqlite_config_path = TEST_CONFIGS / 'sqlite.yaml'
+    env_config_path = TEST_CONFIGS / 'sqlite.yaml'
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                [config_path, sqlite_config_path],
+                [config_path, env_config_path],
                 package,
                 exists=cmd != 'init',
             ),
@@ -224,19 +227,27 @@ async def test_run_init(
 
 async def _count_tables() -> int:
     conn = get_connection()
-    _, res = await conn.execute_query('SELECT count(name) FROM sqlite_master WHERE type = "table";')
-    return int(res[0][0])
+    if isinstance(conn, SqliteClient):
+        _, sqlite_res = await conn.execute_query('SELECT count(name) FROM sqlite_master WHERE type = "table";')
+        return int(sqlite_res[0][0])
+    if isinstance(conn, AsyncpgClient):
+        _, postgres_res = await conn.execute_query(
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';"
+        )
+        return int(postgres_res[0][0])
+
+    raise NotImplementedError
 
 
-async def test_schema() -> None:
+async def test_schema_sqlite() -> None:
     package = 'demo_token'
     config_path = TEST_CONFIGS / f'{package}.yml'
-    sqlite_config_path = TEST_CONFIGS / 'sqlite.yaml'
+    env_config_path = TEST_CONFIGS / 'sqlite.yaml'
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                [config_path, sqlite_config_path],
+                [config_path, env_config_path],
                 package,
                 exists=True,
             ),
@@ -265,3 +276,46 @@ async def test_schema() -> None:
         async with tortoise():
             conn = get_connection()
             assert (await _count_tables()) == 0
+
+
+async def test_schema_postgres() -> None:
+    package = 'demo_token'
+    config_path = TEST_CONFIGS / f'{package}.yml'
+    env_config_path = TEST_CONFIGS / 'test_postgres.yaml'
+
+    async with AsyncExitStack() as stack:
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                [config_path, env_config_path],
+                package,
+                exists=True,
+            ),
+        )
+
+        database_config = await run_postgres_container()
+        env['POSTGRES_HOST'] = database_config.host
+
+        def tortoise() -> AbstractAsyncContextManager[None]:
+            return tortoise_wrapper(
+                database_config.connection_string,
+                f'{package}.models',
+            )
+
+        async with tortoise():
+            conn = get_connection()
+            assert (await _count_tables()) == 0
+
+        await run_in_tmp(tmp_package_path, env, 'schema', 'init')
+
+        async with tortoise():
+            conn = get_connection()
+            assert (await _count_tables()) == 10
+            await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
+            assert (await _count_tables()) == 11
+
+        await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
+
+        async with tortoise():
+            conn = get_connection()
+            # NOTE: Immune `dipdup_meta`
+            assert (await _count_tables()) == 1

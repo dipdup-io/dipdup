@@ -18,6 +18,7 @@ from dipdup.dipdup import DipDup
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.project import get_default_answers
+from dipdup.yaml import DipDupYAMLConfig
 
 SRC_PATH = Path(__file__).parent.parent
 
@@ -80,7 +81,7 @@ def get_docker_client() -> 'DockerClient':
         if path.exists():
             return DockerClient(base_url=f'unix://{path}')
 
-    pytest.skip(
+    pytest.skip(  # pragma: no cover
         'Docker socket not found',
         allow_module_level=True,
     )
@@ -142,10 +143,11 @@ async def tmp_project(
     config_paths: list[Path],
     package: str,
     exists: bool,
+    env: dict[str, str] | None = None,
 ) -> AsyncIterator[tuple[Path, dict[str, str]]]:
     with tempfile.TemporaryDirectory() as tmp_package_path:
         # NOTE: Dump config
-        config = DipDupConfig.load(config_paths, environment=True)
+        config, _ = DipDupYAMLConfig.load(config_paths, environment=False)
         tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
         tmp_config_path.write_text(config.dump())
 
@@ -172,6 +174,7 @@ async def tmp_project(
         # NOTE: Prepare environment
         env = {
             **os.environ,
+            **(env or {}),
             'PATH': str(tmp_bin_path),
             'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
