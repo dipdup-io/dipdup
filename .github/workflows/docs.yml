@@ -17,7 +17,7 @@ on:
 
 env:
   FRONTEND_BRANCH: master
-  GH_TOKEN: ${{ secrets.API_TOKEN_EXT }}
+  GITHUB_TOKEN: ${{ secrets.API_TOKEN_EXT }}
 
 jobs:
   docs:
@@ -52,7 +52,7 @@ jobs:
       - name: Clone frontend
         run: |
           gh auth setup-git
-          gh repo clone git@github.com:dipdup-io/interface.git ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
+          gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
 
       - name: Build docs
         run: pdm run docs_build
