@@ -713,15 +713,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(
             first_level=first_level,
             last_level=last_level,
+            # NOTE: This is intentional
+            offset=None,
             limit=limit,
             select=TRANSACTION_OPERATION_FIELDS,
             values=True,
             sort='level',
             status='applied',
         )
-
+        # TODO: TzKT doesn't support sort+cr currently
         if offset is not None:
-            params['id.ge'] = offset
+            params['id.gt'] = offset
 
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
