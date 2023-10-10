@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Any
 from typing import cast
 
-from lru import LRU  # type: ignore[import]
+from lru import LRU  # type: ignore[import-untyped]
 
 import {{ project.package }}.models as models
 from dipdup.config.evm import EvmContractConfig

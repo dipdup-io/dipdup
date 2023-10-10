@@ -7,7 +7,7 @@ from copy import copy
 from io import BytesIO
 from typing import Any
 
-import pyarrow.ipc  # type: ignore[import]
+import pyarrow.ipc  # type: ignore[import-untyped]
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig

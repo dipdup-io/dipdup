@@ -9,7 +9,7 @@ import orjson as json
 import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
-from docker.client import DockerClient  # type: ignore[import]
+from docker.client import DockerClient  # type: ignore[import-untyped]
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
