@@ -17,7 +17,7 @@ on:
 
 env:
   FRONTEND_BRANCH: master
-  GH_TOKEN: ${{ secrets.API_TOKEN_EXT }}
+  GITHUB_TOKEN: ${{ secrets.DOCS_GITHUB_TOKEN }}
 
 jobs:
   docs:
