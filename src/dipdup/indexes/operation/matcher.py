@@ -204,6 +204,8 @@ def match_operation_subgroup(
         transaction = handler[2][-1]
         if isinstance(transaction, OperationData):
             id_list.append(transaction.id)
+        elif isinstance(transaction, Origination):
+            id_list.append(transaction.data.id)
         elif isinstance(transaction, Transaction):
             id_list.append(transaction.data.id)
         else:
