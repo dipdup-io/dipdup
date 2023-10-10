@@ -8,7 +8,7 @@ import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
 from aiohttp.test_utils import TestClient
-from docker.client import DockerClient  # type: ignore[import]
+from docker.client import DockerClient  # type: ignore[import-untyped]
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig

@@ -15,8 +15,8 @@ from typing import Optional
 from typing import Set
 from typing import Type
 
-import sqlparse  # type: ignore[import]
-from asyncpg import CannotConnectNowError  # type: ignore[import]
+import sqlparse  # type: ignore[import-untyped]
+from asyncpg import CannotConnectNowError  # type: ignore[import-untyped]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
