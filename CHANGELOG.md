@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - cli: Fixed `schema wipe` command for SQLite databases.
+- tezos.tzkt: Fixed regression in `get_transactions` method pagination.
 
 ## [7.0.1] - 2023-09-30
 
