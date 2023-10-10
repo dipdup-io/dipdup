@@ -69,7 +69,7 @@ async def spawn_index(dipdup: DipDup, name: str) -> Index[Any, Any, Any]:
 
 
 def get_docker_client() -> 'DockerClient':
-    import pytest
+    import _pytest.outcomes
     from docker.client import DockerClient
 
     docker_socks = (
@@ -81,11 +81,10 @@ def get_docker_client() -> 'DockerClient':
         if path.exists():
             return DockerClient(base_url=f'unix://{path}')
 
-    pytest.skip(  # pragma: no cover
+    raise _pytest.outcomes.Skipped(  # pragma: no cover
         'Docker socket not found',
         allow_module_level=True,
     )
-    return None
 
 
 async def run_postgres_container() -> PostgresDatabaseConfig:

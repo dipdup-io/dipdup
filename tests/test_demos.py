@@ -6,16 +6,26 @@ from decimal import Decimal
 from functools import partial
 
 import pytest
-from tortoise.backends.sqlite.client import SqliteClient
 
-from dipdup.database import AsyncpgClient
 from dipdup.database import get_connection
+from dipdup.database import get_tables
 from dipdup.database import tortoise_wrapper
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import run_postgres_container
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
+
+_dipdup_tables = {
+    'dipdup_contract_metadata',
+    'dipdup_model_update',
+    'dipdup_schema',
+    'dipdup_contract',
+    'dipdup_token_metadata',
+    'dipdup_head',
+    'dipdup_index',
+    'dipdup_meta',
+}
 
 
 async def assert_run_token() -> None:
@@ -225,20 +235,6 @@ async def test_run_init(
         await assert_fn()
 
 
-async def _count_tables() -> int:
-    conn = get_connection()
-    if isinstance(conn, SqliteClient):
-        _, sqlite_res = await conn.execute_query('SELECT count(name) FROM sqlite_master WHERE type = "table";')
-        return int(sqlite_res[0][0])
-    if isinstance(conn, AsyncpgClient):
-        _, postgres_res = await conn.execute_query(
-            "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';"
-        )
-        return int(postgres_res[0][0])
-
-    raise NotImplementedError
-
-
 async def test_schema_sqlite() -> None:
     package = 'demo_token'
     config_path = TEST_CONFIGS / f'{package}.yml'
@@ -261,21 +257,21 @@ async def test_schema_sqlite() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert (await _count_tables()) == 0
+            assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
         async with tortoise():
             conn = get_connection()
-            assert (await _count_tables()) == 10
+            assert await get_tables() == _dipdup_tables | {'holder', 'sqlite_sequence'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
-            assert (await _count_tables()) == 11
+            assert await get_tables() == _dipdup_tables | {'holder', 'sqlite_sequence', 'test'}
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
         async with tortoise():
             conn = get_connection()
-            assert (await _count_tables()) == 0
+            assert await get_tables() == set()
 
 
 async def test_schema_postgres() -> None:
@@ -303,19 +299,18 @@ async def test_schema_postgres() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert (await _count_tables()) == 0
+            assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
         async with tortoise():
             conn = get_connection()
-            assert (await _count_tables()) == 10
+            assert await get_tables() == _dipdup_tables | {'holder'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
-            assert (await _count_tables()) == 11
+            assert await get_tables() == _dipdup_tables | {'holder', 'test'}
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
         async with tortoise():
             conn = get_connection()
-            # NOTE: Immune `dipdup_meta`
-            assert (await _count_tables()) == 1
+            assert await get_tables() == {'dipdup_meta'}
