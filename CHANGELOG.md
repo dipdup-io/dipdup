@@ -15,6 +15,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed `schema wipe` command for SQLite databases.
 - tezos.tzkt: Fixed regression in `get_transactions` method pagination.
 
+## [6.5.13] - 2023-10-10
+
+### Fixed
+
+- tzkt: Fixed regression in `get_transactions` method pagination.
+
 ## [7.0.1] - 2023-09-30
 
 ### Added
