@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tzkt: Fixed regression in `get_transactions` method pagination.
+
 ## [6.5.12] - 2023-09-15
 
 ### Fixed
