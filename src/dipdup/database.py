@@ -285,8 +285,11 @@ async def _sqlite_wipe_schema(
     # NOTE: Copy immune tables to the new database.
     master_query = 'SELECT name FROM sqlite_master WHERE type = "table"'
     result = await conn.execute_query(master_query)
-    for name in result[1]:
-        if name not in immune_tables:  # type: ignore[comparison-overlap]
+    for row in result[1]:
+        name = row[0]
+        if name == 'sqlite_sequence':
+            continue
+        if name not in immune_tables:
             continue
 
         expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'

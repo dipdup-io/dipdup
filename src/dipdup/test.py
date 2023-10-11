@@ -182,6 +182,7 @@ async def tmp_project(
             'PATH': str(tmp_bin_path),
             'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
+            'DIPDUP_DEBUG': '1',
         }
 
         yield Path(tmp_package_path), env
@@ -204,3 +205,4 @@ async def run_in_tmp(
         stderr=asyncio.subprocess.PIPE,
     )
     await proc.communicate()
+    assert proc.returncode == 0
