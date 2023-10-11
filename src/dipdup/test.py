@@ -24,7 +24,7 @@ from dipdup.project import get_default_answers
 from dipdup.yaml import DipDupYAMLConfig
 
 if TYPE_CHECKING:
-    from docker.client import DockerClient  # type: ignore[import]
+    from docker.client import DockerClient  # type: ignore[import-untyped]
 
 
 async def create_dummy_dipdup(
