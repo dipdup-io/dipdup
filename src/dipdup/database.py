@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-import asyncpg.exceptions  # type: ignore[import]
-import sqlparse  # type: ignore[import]
+import asyncpg.exceptions  # type: ignore[import-untyped]
+import sqlparse  # type: ignore[import-untyped]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -286,7 +286,7 @@ async def _sqlite_wipe_schema(
     master_query = 'SELECT name FROM sqlite_master WHERE type = "table"'
     result = await conn.execute_query(master_query)
     for name in result[1]:
-        if name not in immune_tables:
+        if name not in immune_tables:  # type: ignore[comparison-overlap]
             continue
 
         expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'
