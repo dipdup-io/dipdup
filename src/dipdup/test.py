@@ -196,7 +196,7 @@ async def run_in_tmp(
     tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
 
     proc = await asyncio.subprocess.create_subprocess_shell(
-        f'dipdup -c {tmp_config_path} {" ".join(*args)}',
+        f'dipdup -c {tmp_config_path} {" ".join(args)}',
         cwd=tmp_path,
         shell=True,
         env=env,
