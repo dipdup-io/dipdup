@@ -33,7 +33,7 @@ from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Head
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
-from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import HeadSubscription, TzktTokenBalanceData
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
 from dipdup.models.tezos_tzkt import TzktEventData
@@ -110,6 +110,18 @@ TOKEN_TRANSFER_FIELDS = (
     'transactionId',
     'originationId',
     'migrationId',
+)
+TOKEN_BALANCE_FIELDS = (
+    'id',
+    'transfersCount',
+    'firstLevel',
+    'firstTime',
+    'lastLevel',
+    'lastTime',
+    'account',
+    'token',
+    'balance',
+    'balanceValue',
 )
 EVENT_FIELDS = (
     'id',
@@ -887,6 +899,48 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             token_ids,
             from_addresses,
             to_addresses,
+            first_level,
+            last_level,
+            cursor=True,
+        ):
+            yield batch
+
+    async def get_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int,
+        last_level: int,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TzktTokenBalanceData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=TOKEN_BALANCE_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'token.contract.in': ','.join(token_addresses),
+                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
+            },
+        )
+        raw_token_balances = await self._request_values_dict('get', url='v1/tokens/balances', params=params)
+        return tuple(TzktTokenBalanceData.from_json(item) for item in raw_token_balances)
+
+    async def iter_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TzktTokenBalanceData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_token_balances,
+            token_addresses,
+            token_ids,
             first_level,
             last_level,
             cursor=True,

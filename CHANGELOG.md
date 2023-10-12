@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- tezos.tzkt: Added new index token_balances
 - env: Added `DIPDUP_DEBUG` environment variable to enable debug logging.
 
 ### Fixed

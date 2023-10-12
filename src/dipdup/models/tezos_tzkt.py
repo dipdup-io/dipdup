@@ -535,6 +535,63 @@ class TzktTokenTransferData(HasLevel):
             tzkt_origination_id=token_transfer_json.get('originationId'),
             tzkt_migration_id=token_transfer_json.get('migrationId'),
         )
+    
+
+@dataclass(frozen=True)
+class TzktTokenBalanceData:
+    """Basic structure for token transver received from TzKT SignalR API"""
+
+    id: int
+    transfers_count: int
+    first_level: int
+    first_time: datetime
+    last_level: int
+    last_time: datetime
+    # owner account
+    account_address: str | None = None
+    account_alias: str | None = None
+    # token object
+    tzkt_token_id: int | None = None
+    contract_address: str | None = None
+    contract_alias: str | None = None
+    token_id: int | None = None
+    standard: TzktTokenStandard | None = None
+    metadata: dict[str, Any] | None = None
+
+    balance: str | None = None
+    balance_value: float | None = None
+
+
+    @classmethod
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenBalanceData':
+        """Convert raw token transfer message from REST or WS into dataclass"""
+        token_json = token_transfer_json.get('token') or {}
+        standard = token_json.get('standard')
+        metadata = token_json.get('metadata')
+        contract_json = token_json.get('contract') or {}
+        
+
+        return TzktTokenBalanceData(
+            id=token_transfer_json['id'],
+            transfers_count=token_transfer_json['transfersCount'],
+            first_level=token_transfer_json['firstLevel'],
+            first_time=_parse_timestamp(token_transfer_json['firstTime']),
+            last_level=token_transfer_json['lastLevel'],
+            last_time=_parse_timestamp(token_transfer_json['lastTime']),
+
+            account_address=token_transfer_json.get('account', {}).get('address'),
+            account_alias=token_transfer_json.get('account', {}).get('alias'),
+
+            tzkt_token_id=token_json['id'],
+            contract_address=contract_json.get('address'),
+            contract_alias=contract_json.get('alias'),
+            token_id=token_json.get('tokenId'),
+            standard=TzktTokenStandard(standard) if standard else None,
+            metadata=metadata if isinstance(metadata, dict) else {},
+
+            balance=token_transfer_json.get('balance'),
+            balance_value=token_transfer_json.get('balanceValue'),
+        )
 
 
 @dataclass(frozen=True)
