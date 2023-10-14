@@ -90,11 +90,13 @@ class TzktCodeGenerator(CodeGenerator):
         config: DipDupConfig,
         package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
+        include: set[str] | None = None,
     ) -> None:
         super().__init__(
             config=config,
             package=package,
             datasources=datasources,
+            include=include,
         )
         self._schemas: dict[str, dict[str, dict[str, Any]]] = {}
 

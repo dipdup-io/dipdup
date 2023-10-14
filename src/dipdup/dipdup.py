@@ -20,6 +20,7 @@ from typing import Any
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.codegen import CodeGenerator
 from dipdup.codegen import generate_environments
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
@@ -502,6 +503,7 @@ class DipDup:
         self,
         force: bool = False,
         base: bool = False,
+        include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
         from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
@@ -515,8 +517,17 @@ class DipDup:
 
             package = DipDupPackage(self._config.package_path)
 
-            for codegen_cls in (TzktCodeGenerator, SubsquidCodeGenerator):
-                codegen = codegen_cls(self._config, package, self._datasources)
+            codegen_classes: tuple[type[CodeGenerator], ...] = (
+                TzktCodeGenerator,
+                SubsquidCodeGenerator,
+            )
+            for codegen_cls in codegen_classes:
+                codegen = codegen_cls(
+                    config=self._config,
+                    package=package,
+                    datasources=self._datasources,
+                    include=include,
+                )
                 await codegen.init(
                     force=force,
                     base=base,
