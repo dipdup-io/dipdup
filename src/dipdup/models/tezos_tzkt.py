@@ -48,6 +48,7 @@ class TzktMessageType(MessageType, Enum):
     big_map = 'big_map'
     head = 'head'
     token_transfer = 'token_transfer'
+    token_balance = 'token_balance'
     event = 'event'
 
 
@@ -119,13 +120,29 @@ class TokenTransferSubscription(TzktSubscription):
     def get_request(self) -> list[dict[str, Any]]:
         request: dict[str, Any] = {}
         if self.token_id:
-            request['token_id'] = self.token_id
+            request['tokenId'] = self.token_id
         if self.contract:
             request['contract'] = self.contract
         if self.from_:
             request['from'] = self.from_
         if self.to:
             request['to'] = self.to
+        return [request]
+
+
+@dataclass(frozen=True)
+class TokenBalanceSubscription(TzktSubscription):
+    type: Literal['token_balance'] = 'token_balance'
+    method: Literal['SubscribeToTokenBalances'] = 'SubscribeToTokenBalances'
+    contract: str | None = None
+    token_id: int | None = None
+
+    def get_request(self) -> list[dict[str, Any]]:
+        request: dict[str, Any] = {}
+        if self.token_id:
+            request['tokenId'] = self.token_id
+        if self.contract:
+            request['contract'] = self.contract
         return [request]
 
 
@@ -535,17 +552,19 @@ class TzktTokenTransferData(HasLevel):
             tzkt_origination_id=token_transfer_json.get('originationId'),
             tzkt_migration_id=token_transfer_json.get('migrationId'),
         )
-    
+
 
 @dataclass(frozen=True)
-class TzktTokenBalanceData:
+class TzktTokenBalanceData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
     transfers_count: int
     first_level: int
     first_time: datetime
-    last_level: int
+    # level is not defined in tzkt balances data, so it is
+    # Level of the block where the token balance was last changed.
+    level: int
     last_time: datetime
     # owner account
     account_address: str | None = None
@@ -561,7 +580,6 @@ class TzktTokenBalanceData:
     balance: str | None = None
     balance_value: float | None = None
 
-
     @classmethod
     def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenBalanceData':
         """Convert raw token transfer message from REST or WS into dataclass"""
@@ -569,26 +587,22 @@ class TzktTokenBalanceData:
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
         contract_json = token_json.get('contract') or {}
-        
 
         return TzktTokenBalanceData(
             id=token_transfer_json['id'],
             transfers_count=token_transfer_json['transfersCount'],
             first_level=token_transfer_json['firstLevel'],
             first_time=_parse_timestamp(token_transfer_json['firstTime']),
-            last_level=token_transfer_json['lastLevel'],
+            level=token_transfer_json['lastLevel'],
             last_time=_parse_timestamp(token_transfer_json['lastTime']),
-
             account_address=token_transfer_json.get('account', {}).get('address'),
             account_alias=token_transfer_json.get('account', {}).get('alias'),
-
             tzkt_token_id=token_json['id'],
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
             standard=TzktTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
-
             balance=token_transfer_json.get('balance'),
             balance_value=token_transfer_json.get('balanceValue'),
         )
