@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- Fixed `DIPDUP_DEBUG` not being applied to the package logger.
+- cli: Fixed `DIPDUP_DEBUG` not being applied to the package logger.
 
 ## [7.0.2] - 2023-10-10
 
