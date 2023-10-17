@@ -217,8 +217,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.sys import set_up_logging
 
     set_up_logging()
-    if env.DEBUG:
-        logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]

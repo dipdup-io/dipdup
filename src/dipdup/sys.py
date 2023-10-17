@@ -38,6 +38,8 @@ def set_up_logging() -> None:
     # NOTE: Nothing useful there
     logging.getLogger('tortoise').setLevel(logging.WARNING)
 
+    if env.DEBUG:
+        logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
 def set_up_process(signals: bool) -> None:
     """Set up interpreter process-wide state"""
