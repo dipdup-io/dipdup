@@ -27,7 +27,7 @@ IntrospectionError = (KeyError, IndexError, AttributeError)
 T = TypeVar('T', Hashable, type[BaseModel])
 
 
-def extract_root_outer_type(storage_type: type[BaseModel]) -> T:
+def extract_root_outer_type(storage_type: type[BaseModel]) -> T:  # type: ignore[type-var]
     """Extract Pydantic root type"""
     root_field = storage_type.model_fields['root']
     if not root_field.is_required():
