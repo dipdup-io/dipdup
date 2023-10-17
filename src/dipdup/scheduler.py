@@ -4,13 +4,13 @@ from contextlib import suppress
 from functools import partial
 from typing import Any
 
-from apscheduler.events import EVENT_JOB_ERROR  # type: ignore[import]
+from apscheduler.events import EVENT_JOB_ERROR  # type: ignore[import-untyped]
 from apscheduler.events import EVENT_JOB_EXECUTED
 from apscheduler.events import JobEvent
-from apscheduler.job import Job  # type: ignore[import]
-from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import]
-from apscheduler.triggers.cron import CronTrigger  # type: ignore[import]
-from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import]
+from apscheduler.job import Job  # type: ignore[import-untyped]
+from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
+from apscheduler.triggers.cron import CronTrigger  # type: ignore[import-untyped]
+from apscheduler.triggers.interval import IntervalTrigger  # type: ignore[import-untyped]
 
 from dipdup.config import JobConfig
 from dipdup.context import DipDupContext

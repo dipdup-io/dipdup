@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-import asyncpg.exceptions  # type: ignore[import]
-import sqlparse  # type: ignore[import]
+import asyncpg.exceptions  # type: ignore[import-untyped]
+import sqlparse  # type: ignore[import-untyped]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import BaseDBAsyncClient
@@ -194,44 +194,54 @@ async def generate_schema(
     conn: SupportedClient,
     name: str,
 ) -> None:
-    if isinstance(conn, AsyncpgClient):
-        await pg_create_schema(conn, name)
+    if isinstance(conn, SqliteClient):
+        await Tortoise.generate_schemas()
+    elif isinstance(conn, AsyncpgClient):
+        await _pg_create_schema(conn, name)
+        await Tortoise.generate_schemas()
+        await _pg_create_functions(conn)
+        await _pg_create_views(conn)
+    else:
+        raise NotImplementedError
 
-    await Tortoise.generate_schemas()
 
-    if isinstance(conn, AsyncpgClient):
-        # NOTE: Create a view for monitoring head status
-        sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
-        # TODO: Configurable interval
-        await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
+async def _pg_create_functions(conn: AsyncpgClient) -> None:
+    for fn in (
+        'dipdup_approve.sql',
+        'dipdup_wipe.sql',
+    ):
+        sql_path = Path(__file__).parent / 'sql' / fn
+        await execute_sql(conn, sql_path)
 
 
-async def _wipe_schema_postgres(
+async def _pg_create_views(conn: AsyncpgClient) -> None:
+    sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
+    # TODO: Configurable interval
+    await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
+
+
+async def _pg_wipe_schema(
     conn: AsyncpgClient,
     schema_name: str,
     immune_tables: set[str],
 ) -> None:
     immune_schema_name = f'{schema_name}_immune'
 
-    # NOTE: Create a truncate_schema function to trigger cascade deletion
-    sql_path = Path(__file__).parent / 'sql' / 'truncate_schema.sql'
-    await execute_sql(conn, sql_path, schema_name, immune_schema_name)
-
     # NOTE: Move immune tables to a separate schema - it's free!
     if immune_tables:
-        await pg_create_schema(conn, immune_schema_name)
+        await _pg_create_schema(conn, immune_schema_name)
         for table in immune_tables:
-            await pg_move_table(conn, table, schema_name, immune_schema_name)
+            await _pg_move_table(conn, table, schema_name, immune_schema_name)
 
-    await conn.execute_script(f"SELECT truncate_schema('{schema_name}')")
+    await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
 
     if immune_tables:
         for table in immune_tables:
-            await pg_move_table(conn, table, immune_schema_name, schema_name)
-        await pg_drop_schema(conn, immune_schema_name)
+            await _pg_move_table(conn, table, immune_schema_name, schema_name)
+        await _pg_drop_schema(conn, immune_schema_name)
 
 
-async def _wipe_schema_sqlite(
+async def _sqlite_wipe_schema(
     conn: SqliteClient,
     path: str,
     immune_tables: set[str],
@@ -245,10 +255,10 @@ async def _wipe_schema_sqlite(
     await conn.execute_script(f'ATTACH DATABASE "{immune_path}" AS {namespace}')
 
     # NOTE: Copy immune tables to the new database.
-    master_query = 'SELECT name, type FROM sqlite_master'
+    master_query = 'SELECT name FROM sqlite_master WHERE type = "table"'
     result = await conn.execute_query(master_query)
-    for name, type_ in result[1]:
-        if type_ != 'table' or name not in immune_tables:
+    for name in result[1]:
+        if name not in immune_tables:  # type: ignore[comparison-overlap]
             continue
 
         expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'
@@ -271,23 +281,23 @@ async def wipe_schema(
     """Truncate schema preserving immune tables. Executes in a transaction"""
     async with conn._in_transaction() as conn:
         if isinstance(conn, SqliteClient):
-            await _wipe_schema_sqlite(conn, schema_name, immune_tables)
+            await _sqlite_wipe_schema(conn, schema_name, immune_tables)
         elif isinstance(conn, AsyncpgClient):
-            await _wipe_schema_postgres(conn, schema_name, immune_tables)
+            await _pg_wipe_schema(conn, schema_name, immune_tables)
         else:
             raise NotImplementedError
 
 
-async def pg_create_schema(conn: AsyncpgClient, name: str) -> None:
+async def _pg_create_schema(conn: AsyncpgClient, name: str) -> None:
     """Create PostgreSQL schema if not exists"""
     await conn.execute_script(f'CREATE SCHEMA IF NOT EXISTS {name}')
 
 
-async def pg_drop_schema(conn: AsyncpgClient, name: str) -> None:
+async def _pg_drop_schema(conn: AsyncpgClient, name: str) -> None:
     await conn.execute_script(f'DROP SCHEMA IF EXISTS {name}')
 
 
-async def pg_move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: str) -> None:
+async def _pg_move_table(conn: AsyncpgClient, name: str, schema: str, new_schema: str) -> None:
     """Move table from one schema to another"""
     await conn.execute_script(f'ALTER TABLE {schema}.{name} SET SCHEMA {new_schema}')
 
