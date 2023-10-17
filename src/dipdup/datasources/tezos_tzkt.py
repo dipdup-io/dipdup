@@ -916,8 +916,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self,
         token_addresses: set[str],
         token_ids: set[int],
-        first_level: int,
-        last_level: int,
+        first_level: int | None = None,
+        last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[TzktTokenBalanceData, ...]:
@@ -941,8 +941,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self,
         token_addresses: set[str],
         token_ids: set[int],
-        first_level: int,
-        last_level: int,
+        first_level: int | None = None,
+        last_level: int | None = None,
     ) -> AsyncIterator[tuple[TzktTokenBalanceData, ...]]:
         async for batch in self._iter_batches(
             self.get_token_balances,

@@ -41,23 +41,29 @@ class TzktTokenBalancesIndex(
         )
 
     async def _synchronize(self, sync_level: int) -> None:
-        """Fetch token balances via Fetcher and pass to message callback"""
-        index_level = await self._enter_sync_state(sync_level)
-        if index_level is None:
-            return
-
-        first_level = index_level + 1
-        self._logger.info('Fetching token balances from level %s to %s', first_level, sync_level)
-        fetcher = self._create_fetcher(first_level, sync_level)
-
-        async for level, token_balances in fetcher.fetch_by_level():
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                    stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_token_balances(token_balances, sync_level)
-
+        await self._synchronize_actual(sync_level)
         await self._exit_sync_state(sync_level)
+
+    async def _synchronize_actual(self, head_level: int) -> None:
+        """Retrieve data for last level"""
+        # TODO: think about logging and metrics
+        addresses, token_ids = set(), set()
+        for handler in self._config.handlers:
+            if handler.contract and handler.contract.address is not None:
+                addresses.add(handler.contract.address)
+            if handler.token_id is not None:
+                token_ids.add(handler.token_id)
+
+        async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
+            # NOTE: in case of desynchronization filter balances for head_level
+            async for balances_batch in self._datasource.iter_token_balances(
+                addresses, token_ids, last_level=head_level
+            ):
+                matched_handlers = match_token_balances(self._config.handlers, balances_batch)
+                for handler_config, matched_balance_data in matched_handlers:
+                    await self._call_matched_handler(handler_config, matched_balance_data)
+
+            await self._update_state(level=head_level)
 
     async def _process_level_token_balances(
         self,
