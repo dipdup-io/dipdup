@@ -6,7 +6,6 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
-from dipdup.indexes.tezos_tzkt_token_balances.fetcher import TokenBalanceFetcher
 from dipdup.indexes.tezos_tzkt_token_balances.matcher import match_token_balances
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
@@ -22,23 +21,6 @@ class TzktTokenBalancesIndex(
 ):
     def push_token_balances(self, token_balances: TokenBalanceQueueItem) -> None:
         self.push_realtime_message(token_balances)
-
-    def _create_fetcher(self, first_level: int, last_level: int) -> TokenBalanceFetcher:
-        token_addresses: set[str] = set()
-        token_ids: set[int] = set()
-        for handler_config in self._config.handlers:
-            if handler_config.contract:
-                token_addresses.add(handler_config.contract.get_address())
-            if handler_config.token_id is not None:
-                token_ids.add(handler_config.token_id)
-
-        return TokenBalanceFetcher(
-            datasource=self._datasource,
-            token_addresses=token_addresses,
-            token_ids=token_ids,
-            first_level=first_level,
-            last_level=last_level,
-        )
 
     async def _synchronize(self, sync_level: int) -> None:
         await self._synchronize_actual(sync_level)

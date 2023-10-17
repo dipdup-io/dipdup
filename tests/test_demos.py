@@ -127,7 +127,7 @@ async def assert_run_balances() -> None:
     assert holder
     random_balance = holder.balance
 
-    assert holders == 0
+    assert holders == 1
     assert random_balance == 0
 
 
