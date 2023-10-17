@@ -41,6 +41,7 @@ def set_up_logging() -> None:
     if env.DEBUG:
         logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
+
 def set_up_process(signals: bool) -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
