@@ -40,7 +40,7 @@ jobs:
           cache: 'pip'
 
       - name: Run install
-        run: pdm install
+        run: pdm sync
 
       - name: Run lint
         run: pdm run lint
