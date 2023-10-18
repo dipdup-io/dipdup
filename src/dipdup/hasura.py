@@ -210,9 +210,16 @@ class HasuraGateway(HTTPGateway):
         else:
             return None
 
-    async def _hasura_request(self, endpoint: str, json: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def _hasura_request(
+        self,
+        endpoint: str,
+        json: dict[str, Any] | None = None,
+        retry_count: int | None = None,
+    ) -> dict[str, Any]:
         self._logger.debug('Sending `%s` request: %s', endpoint, orjson.dumps(json))
         try:
+            if retry_count is not None:
+                self._http_config.retry_count, retry_count = retry_count, self._http_config.retry_count
             result = await self.request(
                 method='get' if json is None else 'post',
                 url=f'v1/{endpoint}',
@@ -221,6 +228,9 @@ class HasuraGateway(HTTPGateway):
             )
         except ClientResponseError as e:
             raise HasuraError(f'{e.status} {e.message}') from e
+        finally:
+            if retry_count is not None:
+                self._http_config.retry_count, retry_count = retry_count, self._http_config.retry_count
 
         self._logger.debug('Response: %s', result)
         if errors := result.get('error') or result.get('errors'):
@@ -230,7 +240,7 @@ class HasuraGateway(HTTPGateway):
 
     async def _healthcheck(self) -> None:
         self._logger.info('Connecting to Hasura instance')
-        version_json = await self._hasura_request('version')
+        version_json = await self._hasura_request('version', retry_count=20)
         version = version_json['version']
         if version.startswith('v1'):
             raise UnsupportedAPIError(

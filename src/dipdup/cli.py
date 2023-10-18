@@ -18,6 +18,7 @@ from typing import cast
 import asyncclick as click
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
 from dipdup.performance import metrics
@@ -216,6 +217,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.sys import set_up_logging
 
     set_up_logging()
+    if env.DEBUG:
+        logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]
@@ -232,7 +235,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dipdup import env
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
@@ -519,7 +521,9 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         conn = get_connection()
         await wipe_schema(
             conn=conn,
-            schema_name=config.database.schema_name,
+            schema_name=config.database.path
+            if isinstance(config.database, SqliteDatabaseConfig)
+            else config.database.schema_name,
             immune_tables=immune_tables,
         )
 

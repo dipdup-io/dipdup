@@ -99,13 +99,6 @@ class SubsquidEventsIndex(
                 break
 
         for message_level, level_logs in logs_by_level.items():
-            # NOTE: If it's not a next block - resync with Subsquid
-            if message_level != self.state.level + 1:
-                self._logger.info('Not enough messages in queue; resyncing to %s', message_level)
-                self._queue.clear()
-                self.datasource.set_sync_level(None, message_level)
-                return
-
             await self._process_level_events(tuple(level_logs), self.topics, message_level)
 
     def get_sync_level(self) -> int:
@@ -147,21 +140,25 @@ class SubsquidEventsIndex(
             self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
             if subsquid_available < NODE_SYNC_LIMIT:
                 use_node = True
+            elif self._config.node_only:
+                self._logger.debug('Using node anyway')
+                use_node = True
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
         if use_node and self.node_datasources:
-            sync_level = node_sync_level
+            sync_level = min(sync_level, node_sync_level)
+            self._logger.debug('Using node datasource; sync level: %s', sync_level)
             topics = set()
             for handler in self._config.handlers:
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
-            for level in range(first_level, sync_level):
+            # FIXME: This is terribly inefficient (but okay for the last mile); see advanced example in web3.py docs.
+            for level in range(first_level, sync_level + 1):
                 # NOTE: Get random one every time
                 level_logs = await self.random_node.get_logs(
                     {
                         'fromBlock': hex(level),
                         'toBlock': hex(level),
-                        'topics': tuple(topics),
                     }
                 )
                 block = await self.random_node.get_block_by_level(level)

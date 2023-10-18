@@ -267,7 +267,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 if subscription_id not in self._subscription_ids:
                     raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
-                self._logger.debug('Received subscription for channel %s', subscription_id)
+                self._logger.info('Received a message from channel %s', subscription_id)
                 await self._handle_subscription(subscription, data['params']['result'])
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)

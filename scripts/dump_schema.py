@@ -2,7 +2,7 @@
 from pathlib import Path
 
 import orjson
-from dc_schema import get_schema  # type: ignore[import]
+from dc_schema import get_schema  # type: ignore[import-not-found]
 
 from dipdup.config import DipDupConfig
 

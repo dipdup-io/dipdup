@@ -15,8 +15,8 @@ def test_list_simple_args() -> None:
     assert get_list_elt_type(list[str]) == str
     assert get_list_elt_type(list[int]) == int
     assert get_list_elt_type(list[bool]) == bool
-    assert get_list_elt_type(list[str | None]) == str | None  # type: ignore[comparison-overlap]
-    assert get_list_elt_type(list[str | int]) == str | int  # type: ignore[comparison-overlap]
+    assert get_list_elt_type(list[str | None]) == str | None
+    assert get_list_elt_type(list[str | int]) == str | int
     assert get_list_elt_type(list[tuple[str]]) == tuple[str]
     assert get_list_elt_type(list[list[str]]) == list[str]
     assert get_list_elt_type(list[dict[str, str]]) == dict[str, str]
@@ -27,8 +27,8 @@ def test_list_complex_arg() -> None:
         ...
 
     assert get_list_elt_type(list[Class]) == Class
-    assert get_list_elt_type(list[Class | None]) == Class | None  # type: ignore[comparison-overlap]
-    assert get_list_elt_type(list[Class | int]) == Class | int  # type: ignore[comparison-overlap]
+    assert get_list_elt_type(list[Class | None]) == Class | None
+    assert get_list_elt_type(list[Class | int]) == Class | int
     assert get_list_elt_type(list[tuple[Class]]) == tuple[Class]
     assert get_list_elt_type(list[list[Class]]) == list[Class]
     assert get_list_elt_type(list[dict[str, Class]]) == dict[str, Class]
@@ -44,7 +44,7 @@ def test_pydantic_list_arg() -> None:
     class OptionalList(BaseModel):
         __root__: list[str] | None
 
-    assert get_list_elt_type(ListOfMapsStorage) == int | dict[str, str]  # type: ignore[comparison-overlap]
+    assert get_list_elt_type(ListOfMapsStorage) == int | dict[str, str]
 
     with pytest.raises(IntrospectionError):
         get_list_elt_type(OptionalList)
@@ -57,8 +57,8 @@ def test_dict_simple_args() -> None:
     assert get_dict_value_type(dict[str, str]) == str
     assert get_dict_value_type(dict[str, int]) == int
     assert get_dict_value_type(dict[str, bool]) == bool
-    assert get_dict_value_type(dict[str, str | None]) == str | None  # type: ignore[comparison-overlap]
-    assert get_dict_value_type(dict[str, str | int]) == str | int  # type: ignore[comparison-overlap]
+    assert get_dict_value_type(dict[str, str | None]) == str | None
+    assert get_dict_value_type(dict[str, str | int]) == str | int
     assert get_dict_value_type(dict[str, tuple[str]]) == tuple[str]
     assert get_dict_value_type(dict[str, list[str]]) == list[str]
     assert get_dict_value_type(dict[str, dict[str, str]]) == dict[str, str]
@@ -69,8 +69,8 @@ def test_dict_complex_arg() -> None:
         ...
 
     assert get_dict_value_type(dict[str, Class]) == Class
-    assert get_dict_value_type(dict[str, Class | None]) == Class | None  # type: ignore[comparison-overlap]
-    assert get_dict_value_type(dict[str, Class | int]) == Class | int  # type: ignore[comparison-overlap]
+    assert get_dict_value_type(dict[str, Class | None]) == Class | None
+    assert get_dict_value_type(dict[str, Class | int]) == Class | int
     assert get_dict_value_type(dict[str, tuple[Class]]) == tuple[Class]
     assert get_dict_value_type(dict[str, list[Class]]) == list[Class]
     assert get_dict_value_type(dict[str, dict[str, Class]]) == dict[str, Class]
@@ -86,7 +86,7 @@ def test_pydantic_dict_arg() -> None:
     class OptionalDict(BaseModel):
         __root__: dict[str, str] | None
 
-    assert get_dict_value_type(DictOfMapsStorage) == int | dict[str, str]  # type: ignore[comparison-overlap]
+    assert get_dict_value_type(DictOfMapsStorage) == int | dict[str, str]
     with pytest.raises(IntrospectionError):
         get_dict_value_type(OptionalDict)
 
@@ -105,8 +105,8 @@ def test_pydantic_object_key() -> None:
     assert get_dict_value_type(Storage, 'plain_str') == str
     assert get_dict_value_type(Storage, 'list_str') == list[str]
     assert get_dict_value_type(Storage, 'dict_of_lists') == dict[str, list[str]]
-    assert get_dict_value_type(Storage, 'optional_str') == str | None  # type: ignore[comparison-overlap]
-    assert get_dict_value_type(Storage, 'union_arg') == str | int  # type: ignore[comparison-overlap]
+    assert get_dict_value_type(Storage, 'optional_str') == str | None
+    assert get_dict_value_type(Storage, 'union_arg') == str | int
 
 
 def test_is_array() -> None:
@@ -144,6 +144,6 @@ def test_root_type_extraction() -> None:
     class ListOfMapsStorage(BaseModel):
         __root__: list[int | dict[str, str]]
 
-    assert extract_root_outer_type(OptionalStr) == str | None  # type: ignore[comparison-overlap]
+    assert extract_root_outer_type(OptionalStr) == str | None
     # FIXME: left operand type: "Type[BaseModel]", right operand type: "Type[List[Any]]"
     assert extract_root_outer_type(ListOfMapsStorage) == list[int | dict[str, str]]  # type: ignore[comparison-overlap]

@@ -97,7 +97,7 @@ def prompt_anyof(
     default: int,
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
-    import survey  # type: ignore[import]
+    import survey  # type: ignore[import-untyped]
 
     table = tabulate(
         zip(options, comments, strict=True),
@@ -214,8 +214,12 @@ def answers_from_terminal() -> Answers:
         ),
         default=0,
     )
-    if 'timescale-ha' in answers['postgres_image']:
+    if 'timescaledb-ha' in answers['postgres_image']:
         answers['postgres_data_path'] = '/home/postgres/pgdata/data'
+        echo(
+            '`timescaledb-ha` Docker image uses `/home/postgres/pgdata/data` as a data path; generated files were updated accordingly.',
+            fg='yellow',
+        )
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 
