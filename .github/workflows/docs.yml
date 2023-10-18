@@ -35,10 +35,10 @@ jobs:
       #     && sudo apt install gh -y
 
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@main
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
