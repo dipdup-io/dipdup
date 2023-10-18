@@ -23,12 +23,14 @@ class TzktTokenBalancesIndex(
         self.push_realtime_message(token_balances)
 
     async def _synchronize(self, sync_level: int) -> None:
+        await self._enter_sync_state(sync_level)
         await self._synchronize_actual(sync_level)
         await self._exit_sync_state(sync_level)
 
     async def _synchronize_actual(self, head_level: int) -> None:
-        """Retrieve data for last level"""
+        """Retrieve data for the current level"""
         # TODO: think about logging and metrics
+
         addresses, token_ids = set(), set()
         for handler in self._config.handlers:
             if handler.contract and handler.contract.address is not None:
@@ -37,7 +39,7 @@ class TzktTokenBalancesIndex(
                 token_ids.add(handler.token_id)
 
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
-            # NOTE: in case of desynchronization filter balances for head_level
+            # NOTE: If index is out of date fetch balances as of the current head.
             async for balances_batch in self._datasource.iter_token_balances(
                 addresses, token_ids, last_level=head_level
             ):

@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class TzktTokenBalancesHandlerConfig(HandlerConfig):
-    """Token transfer handler config
+    """Token balance handler config
 
     :param callback: Callback name
     :param contract: Filter by contract

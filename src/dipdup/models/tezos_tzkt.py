@@ -564,7 +564,7 @@ class TzktTokenBalanceData(HasLevel):
     first_time: datetime
     # level is not defined in tzkt balances data, so it is
     # Level of the block where the token balance was last changed.
-    level: int
+    last_level: int
     last_time: datetime
     # owner account
     account_address: str | None = None
@@ -580,6 +580,10 @@ class TzktTokenBalanceData(HasLevel):
     balance: str | None = None
     balance_value: float | None = None
 
+    @property
+    def level(self) -> int:
+        return self.last_level
+
     @classmethod
     def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenBalanceData':
         """Convert raw token transfer message from REST or WS into dataclass"""
@@ -593,7 +597,7 @@ class TzktTokenBalanceData(HasLevel):
             transfers_count=token_transfer_json['transfersCount'],
             first_level=token_transfer_json['firstLevel'],
             first_time=_parse_timestamp(token_transfer_json['firstTime']),
-            level=token_transfer_json['lastLevel'],
+            last_level=token_transfer_json['lastLevel'],
             last_time=_parse_timestamp(token_transfer_json['lastTime']),
             account_address=token_transfer_json.get('account', {}).get('address'),
             account_alias=token_transfer_json.get('account', {}).get('alias'),

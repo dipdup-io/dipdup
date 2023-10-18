@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- tezos.tzkt: Added new index token_balances
+- tezos.tzkt.token_balances: Added new index.
 - env: Added `DIPDUP_DEBUG` environment variable to enable debug logging.
 
 ### Fixed
@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.node: Fixed incorrect log request parameters.
 - evm.subsquid.events: Fixed issue with determining the last level when syncing with node.
 - hasura: Increated retry count for initial connection (healthcheck).
+- tezos.tzkt: Fixed token_id handler in token transfers index.
 
 ## [7.0.0] - 2023-09-25
 
