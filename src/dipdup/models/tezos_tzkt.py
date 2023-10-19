@@ -581,7 +581,7 @@ class TzktTokenBalanceData(HasLevel):
     balance_value: float | None = None
 
     @property
-    def level(self) -> int:
+    def level(self) -> int:  # type: ignore[override]
         return self.last_level
 
     @classmethod

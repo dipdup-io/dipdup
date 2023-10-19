@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.node: Fixed incorrect log request parameters.
 - evm.subsquid.events: Fixed issue with determining the last level when syncing with node.
 - hasura: Increated retry count for initial connection (healthcheck).
-- tezos.tzkt: Fixed token_id handler in token transfers index.
+- tezos.tzkt.token_transfers: Fixed token_id handler in token transfers index.
 
 ## [7.0.0] - 2023-09-25
 
