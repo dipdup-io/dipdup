@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.0.2] - 2023-10-10
+
+### Added
+
+- database: Added `dipdup_wipe` and `dipdup_approve` SQL functions to the schema.
+
+### Fixed
+
+- cli: Fixed `schema wipe` command for SQLite databases.
+- tezos.tzkt: Fixed regression in `get_transactions` method pagination.
+
+## [6.5.13] - 2023-10-10
+
+### Fixed
+
+- tzkt: Fixed regression in `get_transactions` method pagination.
+
 ## [7.0.1] - 2023-09-30
 
 ### Added
