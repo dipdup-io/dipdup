@@ -960,13 +960,20 @@ class DipDupConfig:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
                 if isinstance(handler_config.from_, str):
-                    handler_config.from_ = self.get_contract(handler_config.from_)
+                    handler_config.from_ = self.get_tezos_contract(handler_config.from_)
 
                 if isinstance(handler_config.to, str):
-                    handler_config.to = self.get_contract(handler_config.to)
+                    handler_config.to = self.get_tezos_contract(handler_config.to)
+
+        elif isinstance(index_config, TzktTokenBalancesIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
@@ -1029,6 +1036,7 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
@@ -1052,6 +1060,7 @@ ResolvedIndexConfigU = (
     | TzktOperationsIndexConfig
     | TzktOperationsUnfilteredIndexConfig
     | TzktTokenTransfersIndexConfig
+    | TzktTokenBalancesIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 

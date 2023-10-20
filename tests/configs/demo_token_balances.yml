@@ -1,0 +1,23 @@
+spec_version: 2.0
+package: demo_token_balances
+
+contracts:
+  tzbtc_mainnet:
+    kind: tezos
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: tezos.tzkt.token_balances
+    datasource: tzkt
+    first_level: 1366824
+    last_level: 1366999
+    handlers:
+      - callback: on_balance_update
+        contract: tzbtc_mainnet

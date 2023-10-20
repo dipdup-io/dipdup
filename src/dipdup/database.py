@@ -214,10 +214,38 @@ async def _pg_create_functions(conn: AsyncpgClient) -> None:
         await execute_sql(conn, sql_path)
 
 
+async def get_tables() -> set[str]:
+    conn = get_connection()
+    if isinstance(conn, SqliteClient):
+        _, sqlite_res = await conn.execute_query('SELECT name FROM sqlite_master WHERE type = "table";')
+        return {row[0] for row in sqlite_res}
+    if isinstance(conn, AsyncpgClient):
+        _, postgres_res = await conn.execute_query(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
+        )
+        return {row[0] for row in postgres_res}
+
+    raise NotImplementedError
+
+
 async def _pg_create_views(conn: AsyncpgClient) -> None:
     sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
     # TODO: Configurable interval
     await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
+
+
+# FIXME: Private but used in dipdup.hasura
+async def _pg_get_views(conn: AsyncpgClient, schema_name: str) -> list[str]:
+    return [
+        row[0]
+        for row in (
+            await conn.execute_query(
+                "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                f" '{schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
+                f" WHERE schemaname = '{schema_name}'"
+            )
+        )[1]
+    ]
 
 
 async def _pg_wipe_schema(
@@ -257,8 +285,11 @@ async def _sqlite_wipe_schema(
     # NOTE: Copy immune tables to the new database.
     master_query = 'SELECT name FROM sqlite_master WHERE type = "table"'
     result = await conn.execute_query(master_query)
-    for name in result[1]:
-        if name not in immune_tables:  # type: ignore[comparison-overlap]
+    for row in result[1]:
+        name = row[0]
+        if name == 'sqlite_sequence':
+            continue
+        if name not in immune_tables:
             continue
 
         expr = f'CREATE TABLE {namespace}.{name} AS SELECT * FROM {name}'

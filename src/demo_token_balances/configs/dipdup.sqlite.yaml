@@ -1,0 +1,5 @@
+database:
+  kind: sqlite
+  path: ${SQLITE_PATH:-/tmp/demo_token_balances.sqlite}
+
+logging: ${LOGLEVEL:-INFO}
