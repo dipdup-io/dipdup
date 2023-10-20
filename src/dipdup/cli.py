@@ -288,9 +288,20 @@ async def run(ctx: click.Context) -> None:
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
 @click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.argument(
+    'include',
+    type=str,
+    nargs=-1,
+    metavar='PATH',
+)
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, force: bool, base: bool) -> None:
+async def init(
+    ctx: click.Context,
+    force: bool,
+    base: bool,
+    include: list[str],
+) -> None:
     """Generate project tree, typeclasses and callback stubs.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -299,7 +310,12 @@ async def init(ctx: click.Context, force: bool, base: bool) -> None:
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(force, base)
+
+    await dipdup.init(
+        force=force,
+        base=base or bool(include),
+        include=set(include),
+    )
 
 
 @cli.command()
@@ -517,6 +533,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        unsafe_sqlite=config.advanced.unsafe_sqlite,
     ):
         conn = get_connection()
         await wipe_schema(
