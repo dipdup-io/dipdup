@@ -65,6 +65,18 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
     assert f'{random_balance:f}' == expected_balance
 
 
+async def assert_run_balances() -> None:
+    import demo_token_balances.models
+
+    holders = await demo_token_balances.models.Holder.filter().count()
+    holder = await demo_token_balances.models.Holder.first()
+    assert holder
+    random_balance = holder.balance
+
+    assert holders == 1
+    assert random_balance == 0
+
+
 async def assert_run_big_maps() -> None:
     import demo_big_maps.models
 
@@ -171,6 +183,8 @@ test_params = (
         'run',
         partial(assert_run_token_transfers, 2, '-0.02302128'),
     ),
+    ('demo_token_balances.yml', 'demo_token_balances', 'run', assert_run_balances),
+    ('demo_token_balances.yml', 'demo_token_balances', 'init', partial(assert_init, 'demo_token_balances')),
     ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
     ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
     ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## Unreleased
+
+### Added
+
+- tezos.tzkt.token_balances: Added new index.
+
+### Fixed
+
+- tezos.tzkt.token_transfers: Fixed token_id handler in token transfers index.
+
 ## [7.0.2] - 2023-10-10
 
 ### Added
