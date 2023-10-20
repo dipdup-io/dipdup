@@ -1,3 +1,4 @@
+from collections import deque
 from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
@@ -153,7 +154,7 @@ class TzktBigMapsIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktBigMapsHandlerConfig, big_map_diff: TzktBigMapDiff[Any, Any]
+        self, handler_config: TzktBigMapsHandlerConfig, level_data: TzktBigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -164,5 +165,8 @@ class TzktBigMapsIndex(
             self.datasource,
             # NOTE: missing `operation_id` field in API to identify operation
             None,
-            big_map_diff,
+            level_data,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        return match_big_maps(self._ctx.package, handlers, level_data)

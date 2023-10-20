@@ -1,3 +1,6 @@
+from collections import deque
+from typing import Any
+
 from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.exceptions import ConfigInitializationException
@@ -46,7 +49,7 @@ class TzktHeadIndex(
                 await self._call_matched_handler(self._config.handler_config, message)
                 await self._update_state(level=batch_level)
 
-    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: TzktHeadBlockData) -> None:
+    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, level_data: TzktHeadBlockData) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -54,6 +57,9 @@ class TzktHeadIndex(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
-            head.hash,
-            head,
+            level_data.hash,
+            level_data,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        raise NotImplementedError

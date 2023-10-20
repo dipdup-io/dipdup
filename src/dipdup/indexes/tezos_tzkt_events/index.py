@@ -1,3 +1,4 @@
+from collections import deque
 from contextlib import ExitStack
 from typing import Any
 
@@ -106,10 +107,10 @@ class TzktEventsIndex(
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktEventsHandlerConfigU, event: TzktEvent[Any] | TzktUnknownEvent
+        self, handler_config: TzktEventsHandlerConfigU, level_data: TzktEvent[Any] | TzktUnknownEvent
     ) -> None:
-        if isinstance(handler_config, TzktEventsHandlerConfig) != isinstance(event, TzktEvent):
-            raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
+        if isinstance(handler_config, TzktEventsHandlerConfig) != isinstance(level_data, TzktEvent):
+            raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {level_data}')
 
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -118,8 +119,8 @@ class TzktEventsIndex(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
-            str(event.data.transaction_id),
-            event,
+            str(level_data.data.transaction_id),
+            level_data,
         )
 
     def _get_event_addresses(self) -> set[str]:
@@ -136,3 +137,6 @@ class TzktEventsIndex(
             if isinstance(handler_config, TzktEventsHandlerConfig):
                 paths.add(handler_config.tag)
         return paths
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        return match_events(self._ctx.package, handlers, level_data)

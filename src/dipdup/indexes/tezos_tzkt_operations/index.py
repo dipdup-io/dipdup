@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from contextlib import ExitStack
+from typing import Any
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -300,15 +301,15 @@ class TzktOperationsIndex(
 
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
-                await self._call_matched_handler(handler_config, operation_subgroup, args)
+                await self._call_matched_handler(handler_config, (operation_subgroup, args))
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
         self,
         handler_config: TzktOperationsHandlerConfigU,
-        operation_subgroup: OperationSubgroup,
-        args: Sequence[OperationsHandlerArgumentU],
+        level_data: tuple[OperationSubgroup, Sequence[OperationsHandlerArgumentU]],
     ) -> None:
+        operation_subgroup, args = level_data
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -319,3 +320,6 @@ class TzktOperationsIndex(
             operation_subgroup.hash + ': {}',
             *args,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        raise NotImplementedError

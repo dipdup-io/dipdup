@@ -1,4 +1,6 @@
+from collections import deque
 from contextlib import ExitStack
+from typing import Any
 
 from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesHandlerConfig
 from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
@@ -111,3 +113,6 @@ class TzktTokenBalancesIndex(
                 if Metrics.enabled:
                     stack.enter_context(Metrics.measure_level_realtime_duration())
                 await self._process_level_token_balances(message, message_level)
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        return match_token_balances(handlers, level_data)
