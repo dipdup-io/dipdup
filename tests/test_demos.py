@@ -1,80 +1,16 @@
-import os
-import subprocess
-import tempfile
-from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
 from contextlib import AsyncExitStack
-from contextlib import asynccontextmanager
 from decimal import Decimal
 from functools import partial
-from pathlib import Path
-from shutil import which
 
 import pytest
 
-from dipdup.database import get_connection
 from dipdup.database import tortoise_wrapper
-from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
-from tests import CONFIGS_PATH
-from tests import SRC_PATH
-
-
-@asynccontextmanager
-async def tmp_project(config_path: Path, package: str, exists: bool) -> AsyncIterator[tuple[Path, dict[str, str]]]:
-    with tempfile.TemporaryDirectory() as tmp_package_path:
-        # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
-        os.symlink(config_path, tmp_config_path)
-
-        tmp_bin_path = Path(tmp_package_path) / 'bin'
-        tmp_bin_path.mkdir()
-        for executable in ('dipdup', 'datamodel-codegen'):
-            if (executable_path := which(executable)) is None:
-                raise FrameworkException(f'Executable `{executable}` not found')
-            os.symlink(executable_path, tmp_bin_path / executable)
-
-        os.symlink(
-            SRC_PATH / 'dipdup',
-            Path(tmp_package_path) / 'dipdup',
-        )
-
-        # NOTE: Ensure that `run` uses existing package and `init` creates a new one
-        if exists:
-            os.symlink(
-                SRC_PATH / package,
-                Path(tmp_package_path) / package,
-            )
-
-        # NOTE: Prepare environment
-        env = {
-            **os.environ,
-            'PATH': str(tmp_bin_path),
-            'PYTHONPATH': str(tmp_package_path),
-            'DIPDUP_TEST': '1',
-        }
-
-        yield Path(tmp_package_path), env
-
-
-async def run_in_tmp(
-    tmp_path: Path,
-    env: dict[str, str],
-    *cmd: str,
-) -> None:
-    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
-    tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
-
-    subprocess.run(
-        f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {" ".join(cmd)}',
-        cwd=tmp_path,
-        check=True,
-        shell=True,
-        env=env,
-        capture_output=True,
-    )
+from dipdup.test import run_in_tmp
+from dipdup.test import tmp_project
+from tests import TEST_CONFIGS
 
 
 async def assert_run_token() -> None:
@@ -127,6 +63,18 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
 
     assert holders == expected_holders
     assert f'{random_balance:f}' == expected_balance
+
+
+async def assert_run_balances() -> None:
+    import demo_token_balances.models
+
+    holders = await demo_token_balances.models.Holder.filter().count()
+    holder = await demo_token_balances.models.Holder.first()
+    assert holder
+    random_balance = holder.balance
+
+    assert holders == 1
+    assert random_balance == 0
 
 
 async def assert_run_big_maps() -> None:
@@ -235,6 +183,8 @@ test_params = (
         'run',
         partial(assert_run_token_transfers, 2, '-0.02302128'),
     ),
+    ('demo_token_balances.yml', 'demo_token_balances', 'run', assert_run_balances),
+    ('demo_token_balances.yml', 'demo_token_balances', 'init', partial(assert_init, 'demo_token_balances')),
     ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
     ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
     ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),
@@ -262,11 +212,13 @@ async def test_run_init(
     cmd: str,
     assert_fn: Callable[[], Awaitable[None]],
 ) -> None:
-    config_path = CONFIGS_PATH / config
+    config_path = TEST_CONFIGS / config
+    env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
+
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                config_path,
+                [config_path, env_config_path],
                 package,
                 exists=cmd != 'init',
             ),
@@ -280,47 +232,3 @@ async def test_run_init(
         )
 
         await assert_fn()
-
-
-async def _count_tables() -> int:
-    conn = get_connection()
-    _, res = await conn.execute_query('SELECT count(name) FROM sqlite_master WHERE type = "table";')
-    return int(res[0][0])
-
-
-async def test_schema() -> None:
-    package = 'demo_token'
-    config_path = CONFIGS_PATH / f'{package}.yml'
-
-    async with AsyncExitStack() as stack:
-        tmp_package_path, env = await stack.enter_async_context(
-            tmp_project(
-                config_path,
-                package,
-                exists=True,
-            ),
-        )
-
-        def tortoise() -> AbstractAsyncContextManager[None]:
-            return tortoise_wrapper(
-                f'sqlite://{tmp_package_path}/db.sqlite3',
-                f'{package}.models',
-            )
-
-        async with tortoise():
-            conn = get_connection()
-            assert (await _count_tables()) == 0
-
-        await run_in_tmp(tmp_package_path, env, 'schema', 'init')
-
-        async with tortoise():
-            conn = get_connection()
-            assert (await _count_tables()) == 10
-            await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
-            assert (await _count_tables()) == 11
-
-        await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
-
-        async with tortoise():
-            conn = get_connection()
-            assert (await _count_tables()) == 0

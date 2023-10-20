@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- cli: Added `--unsafe` and `--compose` flags to `config env` command.
+- cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
+- tezos.tzkt.token_balances: Added new index.
+
+### Fixed
+
+- cli: Fixed `DIPDUP_DEBUG` not being applied to the package logger.
+- tezos.tzkt.token_transfers: Fixed filtering transfers by token_id.
+
 ## [7.0.2] - 2023-10-10
 
 ### Added

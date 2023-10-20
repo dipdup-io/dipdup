@@ -53,6 +53,7 @@ class IndexType(Enum):
     tezos_tzkt_big_maps = 'tezos.tzkt.big_maps'
     tezos_tzkt_head = 'tezos.tzkt.head'
     tezos_tzkt_token_transfers = 'tezos.tzkt.token_transfers'
+    tezos_tzkt_token_balances = 'tezos.tzkt.token_balances'
     tezos_tzkt_events = 'tezos.tzkt.events'
     evm_subsquid_events = 'evm.subsquid.events'
 
