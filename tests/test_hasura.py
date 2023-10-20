@@ -1,5 +1,3 @@
-import asyncio
-import atexit
 import os
 from contextlib import AsyncExitStack
 from pathlib import Path
@@ -9,7 +7,6 @@ import orjson as json
 import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
-from docker.client import DockerClient  # type: ignore[import-untyped]
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
@@ -20,74 +17,12 @@ from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
-from dipdup.project import get_default_answers
 from dipdup.test import create_dummy_dipdup
+from dipdup.test import run_hasura_container
+from dipdup.test import run_postgres_container
 
 if TYPE_CHECKING:
     from aiohttp.test_utils import TestClient
-
-
-def get_docker_client() -> DockerClient:
-    docker_socks = (
-        Path('/var/run/docker.sock'),
-        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'vms' / '0' / 'docker.sock',
-        Path.home() / 'Library' / 'Containers' / 'com.docker.docker' / 'Data' / 'docker.sock',
-    )
-    for path in docker_socks:
-        if path.exists():
-            return DockerClient(base_url=f'unix://{path}')
-    else:
-        pytest.skip('Docker socket not found', allow_module_level=True)
-
-
-async def run_postgres_container() -> PostgresDatabaseConfig:
-    docker = get_docker_client()
-    postgres_container = docker.containers.run(
-        image=get_default_answers()['postgres_image'],
-        environment={
-            'POSTGRES_USER': 'test',
-            'POSTGRES_PASSWORD': 'test',
-            'POSTGRES_DB': 'test',
-        },
-        detach=True,
-        remove=True,
-    )
-    atexit.register(postgres_container.stop)
-    postgres_container.reload()
-    postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
-
-    while not postgres_container.exec_run('pg_isready').exit_code == 0:
-        await asyncio.sleep(0.1)
-
-    return PostgresDatabaseConfig(
-        kind='postgres',
-        host=postgres_ip,
-        port=5432,
-        user='test',
-        database='test',
-        password='test',
-    )
-
-
-async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
-    docker = get_docker_client()
-    hasura_container = docker.containers.run(
-        image=get_default_answers()['hasura_image'],
-        environment={
-            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
-        },
-        detach=True,
-        remove=True,
-    )
-    atexit.register(hasura_container.stop)
-    hasura_container.reload()
-    hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
-
-    return HasuraConfig(
-        url=f'http://{hasura_ip}:8080',
-        source='new_source',
-        create_source=True,
-    )
 
 
 async def test_configure_hasura() -> None:

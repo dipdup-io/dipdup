@@ -10,9 +10,7 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 env.set_test()
 
 
-CONFIGS_PATH = Path(__file__).parent / 'configs'
-REPLAYS_PATH = Path(__file__).parent / 'replays'
-SRC_PATH = Path(__file__).parent.parent / 'src'
+TEST_CONFIGS = Path(__file__).parent / 'configs'
 
 
 @asynccontextmanager
