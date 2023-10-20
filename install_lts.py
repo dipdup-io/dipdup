@@ -43,7 +43,7 @@ Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
 Discord:               https://discord.gg/aG8XKuwsQd
 """
-DIPDUP_LTS_VERSION = '6.5.12'
+DIPDUP_LTS_VERSION = '6.5.14'
 
 
 class Colors:
