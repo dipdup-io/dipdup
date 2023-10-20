@@ -1,0 +1,16 @@
+from typing import Any
+from typing import Generic
+
+from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.index import Index
+from dipdup.index import IndexConfigT
+from dipdup.index import IndexQueueItemT
+from dipdup.models.tezos_tzkt import TzktMessageType
+
+
+class TzktIndex(
+    Generic[IndexConfigT, IndexQueueItemT],
+    Index[Any, Any, TzktDatasource],
+    message_type=TzktMessageType,
+):
+    ...

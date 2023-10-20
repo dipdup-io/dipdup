@@ -2,10 +2,9 @@ from contextlib import ExitStack
 
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
 from dipdup.models.tezos_tzkt import TzktMessageType
@@ -17,7 +16,7 @@ TokenTransferQueueItem = tuple[TzktTokenTransferData, ...] | TzktRollbackMessage
 
 
 class TzktTokenTransfersIndex(
-    Index[TzktTokenTransfersIndexConfig, TokenTransferQueueItem, TzktDatasource],
+    TzktIndex[TzktTokenTransfersIndexConfig, TokenTransferQueueItem],
     message_type=TzktMessageType.token_transfer,
 ):
     def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:

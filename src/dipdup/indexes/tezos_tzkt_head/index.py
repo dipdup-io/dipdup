@@ -1,9 +1,8 @@
 from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.models import IndexStatus
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
@@ -13,7 +12,7 @@ HeadQueueItem = TzktHeadBlockData | TzktRollbackMessage
 
 
 class TzktHeadIndex(
-    Index[TzktHeadIndexConfig, HeadQueueItem, TzktDatasource],
+    TzktIndex[TzktHeadIndexConfig, HeadQueueItem],
     message_type=TzktMessageType.head,
 ):
     def push_head(self, events: HeadQueueItem) -> None:

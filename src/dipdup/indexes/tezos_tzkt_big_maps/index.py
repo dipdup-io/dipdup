@@ -4,11 +4,10 @@ from typing import Any
 
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
@@ -24,7 +23,7 @@ BigMapQueueItem = tuple[TzktBigMapData, ...] | TzktRollbackMessage
 
 
 class TzktBigMapsIndex(
-    Index[TzktBigMapsIndexConfig, BigMapQueueItem, TzktDatasource],
+    TzktIndex[TzktBigMapsIndexConfig, BigMapQueueItem],
     message_type=TzktMessageType.big_map,
 ):
     def push_big_maps(self, big_maps: BigMapQueueItem) -> None:

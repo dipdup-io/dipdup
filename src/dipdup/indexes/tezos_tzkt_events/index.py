@@ -4,10 +4,9 @@ from typing import Any
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfigU
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
 from dipdup.models.tezos_tzkt import TzktEvent
@@ -21,7 +20,7 @@ EventQueueItem = tuple[TzktEventData, ...] | TzktRollbackMessage
 
 
 class TzktEventsIndex(
-    Index[TzktEventsIndexConfig, EventQueueItem, TzktDatasource],
+    TzktIndex[TzktEventsIndexConfig, EventQueueItem],
     message_type=TzktMessageType.event,
 ):
     def push_events(self, events: EventQueueItem) -> None:

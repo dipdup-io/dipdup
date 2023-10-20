@@ -2,10 +2,9 @@ from contextlib import ExitStack
 
 from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesHandlerConfig
 from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_token_balances.matcher import match_token_balances
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
@@ -16,7 +15,7 @@ TokenBalanceQueueItem = tuple[TzktTokenBalanceData, ...] | TzktRollbackMessage
 
 
 class TzktTokenBalancesIndex(
-    Index[TzktTokenBalancesIndexConfig, TokenBalanceQueueItem, TzktDatasource],
+    TzktIndex[TzktTokenBalancesIndexConfig, TokenBalanceQueueItem],
     message_type=TzktMessageType.token_balance,
 ):
     def push_token_balances(self, token_balances: TokenBalanceQueueItem) -> None:

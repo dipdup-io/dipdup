@@ -17,7 +17,7 @@ from dipdup.context import DipDupContext
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationFetcher
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationUnfilteredFetcher
 from dipdup.indexes.tezos_tzkt_operations.matcher import MatchedOperationsT
@@ -143,7 +143,7 @@ def extract_operation_subgroups(
 
 
 class TzktOperationsIndex(
-    Index[TzktOperationsIndexConfigU, OperationQueueItem, TzktDatasource],
+    TzktIndex[TzktOperationsIndexConfigU, OperationQueueItem],
     message_type=TzktMessageType.operation,
 ):
     def __init__(
