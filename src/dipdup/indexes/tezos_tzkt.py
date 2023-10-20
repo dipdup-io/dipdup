@@ -52,7 +52,7 @@ class TzktIndex(
         if batch_level <= index_level:
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
-        self._logger.debug('Processing token transfers of level %s', batch_level)
+        self._logger.debug('Processing data of level %s', batch_level)
         matched_handlers = self._match_level_data(self._config.handlers, level_data)
 
         if Metrics.enabled:
@@ -64,8 +64,8 @@ class TzktIndex(
             return
 
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, token_transfer in matched_handlers:
-                await self._call_matched_handler(handler_config, token_transfer)
+            for handler_config, data in matched_handlers:
+                await self._call_matched_handler(handler_config, data)
             await self._update_state(level=batch_level)
 
     @abstractmethod
