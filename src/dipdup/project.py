@@ -317,5 +317,8 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
-    content = template.render(project=answers)
+    content = template.render(
+        project=answers,
+        __version__=__version__,
+    )
     write(output_path, content, overwrite=force)
