@@ -27,26 +27,6 @@ class TzktEventsIndex(
     def push_events(self, events: EventQueueItem) -> None:
         self.push_realtime_message(events)
 
-    async def _process_queue(self) -> None:
-        """Process WebSocket queue"""
-        if self._queue:
-            self._logger.debug('Processing websocket queue')
-        while self._queue:
-            message = self._queue.popleft()
-            if isinstance(message, TzktRollbackMessage):
-                await self._tzkt_rollback(message.from_level, message.to_level)
-                continue
-
-            message_level = message[0].level
-            if message_level <= self.state.level:
-                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
-                continue
-
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_events(message, message_level)
-
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()
@@ -73,38 +53,9 @@ class TzktEventsIndex(
                 if Metrics.enabled:
                     Metrics.set_levels_to_sync(self._config.name, sync_level - level)
                     stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_events(events, sync_level)
+                await self._process_level_data(events, sync_level)
 
         await self._exit_sync_state(sync_level)
-
-    async def _process_level_events(
-        self,
-        events: tuple[TzktEventData, ...],
-        sync_level: int,
-    ) -> None:
-        if not events:
-            return
-
-        batch_level = events[0].level
-        index_level = self.state.level
-        if batch_level <= index_level:
-            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
-
-        self._logger.debug('Processing contract events of level %s', batch_level)
-        matched_handlers = match_events(self._ctx.package, self._config.handlers, events)
-
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
-        if not matched_handlers:
-            await self._update_state(level=batch_level)
-            return
-
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, event in matched_handlers:
-                await self._call_matched_handler(handler_config, event)
-            await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
         self, handler_config: TzktEventsHandlerConfigU, level_data: TzktEvent[Any] | TzktUnknownEvent

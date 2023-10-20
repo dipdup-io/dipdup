@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 from collections import deque
+from collections.abc import Coroutine
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -176,6 +177,7 @@ class TzktOperationsIndex(
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
+    # FIXME: Use method from TzktIndex
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
@@ -254,6 +256,7 @@ class TzktOperationsIndex(
 
         await self._exit_sync_state(sync_level)
 
+    # FIXME: Use method from TzktIndex
     async def _process_level_operations(
         self,
         operation_subgroups: tuple[OperationSubgroup, ...],
@@ -322,4 +325,7 @@ class TzktOperationsIndex(
         )
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        raise NotImplementedError
+
+    def _process_level_data(self, level_data: OperationQueueItem, sync_level: int) -> Coroutine[Any, Any, None]:
         raise NotImplementedError
