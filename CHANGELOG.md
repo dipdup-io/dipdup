@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [6.5.14] - 2023-10-20
+
+### Fixed
+
+- token_transfer: Fixed filtering transfers by token_id.
+
 ## [6.5.13] - 2023-10-10
 
 ### Fixed
@@ -1062,7 +1068,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.12...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.14...HEAD
+[6.5.14]: https://github.com/dipdup-io/dipdup/compare/6.5.13...6.5.14
+[6.5.13]: https://github.com/dipdup-io/dipdup/compare/6.5.12...6.5.13
 [6.5.12]: https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [6.5.10]: https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10

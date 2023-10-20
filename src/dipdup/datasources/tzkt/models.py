@@ -90,7 +90,7 @@ class TokenTransferSubscription(Subscription):
     def get_request(self) -> list[dict[str, Any]]:
         request: dict[str, Any] = {}
         if self.token_id:
-            request['token_id'] = self.token_id
+            request['tokenId'] = self.token_id
         if self.contract:
             request['contract'] = self.contract
         if self.from_:
