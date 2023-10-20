@@ -19,7 +19,7 @@ from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
-from tests import CONFIGS_PATH
+from tests import TEST_CONFIGS
 from tests import tzkt_replay
 
 
@@ -31,7 +31,7 @@ async def tzkt() -> AsyncIterator[TzktDatasource]:
 
 @pytest.fixture
 def index_config() -> TzktOperationsIndexConfig:
-    config = DipDupConfig.load([CONFIGS_PATH / 'operation_filters.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yml'], True)
     config.initialize()
     return cast(TzktOperationsIndexConfig, config.indexes['test'])
 
@@ -124,7 +124,7 @@ async def test_get_transaction_filters(tzkt: TzktDatasource, index_config: TzktO
 
 
 async def test_get_sync_level() -> None:
-    config = DipDupConfig.load([CONFIGS_PATH / 'demo_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_token.yml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         index = await spawn_index(dipdup, 'tzbtc_holders_mainnet')
@@ -149,7 +149,7 @@ async def test_get_sync_level() -> None:
 async def test_realtime() -> None:
     from demo_token import models
 
-    config = DipDupConfig.load([CONFIGS_PATH / 'demo_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_token.yml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         await dipdup._set_up_datasources(stack)

@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
+- tezos.tzkt.token_balances: Added new index.
+
+### Fixed
+
+- tezos.tzkt.token_transfers: Fixed filtering transfers by token_id.
 
 ## [7.0.2] - 2023-10-10
 

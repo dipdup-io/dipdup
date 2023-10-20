@@ -1,0 +1,5 @@
+spec_version: 2.0
+replay:
+  description: TzBTC FA1.2 token balances
+  package: demo_token_balances
+  template: demo_token_balances

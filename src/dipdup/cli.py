@@ -519,6 +519,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        unsafe_sqlite=config.advanced.unsafe_sqlite,
     ):
         conn = get_connection()
         await wipe_schema(
