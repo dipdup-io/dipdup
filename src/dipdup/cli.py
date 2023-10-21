@@ -731,6 +731,17 @@ async def self_update(
     dipdup.install.install(quiet, force, None, None, None)
 
 
+@self.command(name='env', hidden=True)
+@click.pass_context
+@_cli_wrapper
+async def self_env(ctx: click.Context) -> None:
+    import dipdup.install
+
+    env = dipdup.install.DipDupEnvironment()
+    env.refresh()
+    env.print()
+
+
 @cli.group()
 @click.pass_context
 @_cli_wrapper

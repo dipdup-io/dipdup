@@ -18,7 +18,6 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'bash',
     'python3.11',
     'pipx',
     'dipdup',
@@ -26,6 +25,12 @@ WHICH_CMDS = (
     'pdm',
     'pyvenv',
     'pyenv',
+)
+ENV_VARS = (
+    'SHELL',
+    'VIRTUAL_ENV',
+    'PATH',
+    'PYTHONPATH',
 )
 
 WELCOME_ASCII = """\0
@@ -68,7 +73,8 @@ def done(msg: str) -> NoReturn:
 
 
 # NOTE: DipDup has `tabulate` dep, don't use this one elsewhere
-def _tab(text: str, indent: int = 20) -> str:
+# NOTE: Weird default is to match indentation in `EPILOG`.
+def _tab(text: str, indent: int = 23) -> str:
     return text + ' ' * (indent - len(text))
 
 
@@ -91,14 +97,20 @@ class DipDupEnvironment:
         print(WELCOME_ASCII)
         print(EPILOG)
         print()
+
         print(_tab('OS:') + f'{self._os} ({self._arch})')
         print(_tab('Python:') + sys.version)
-        print(_tab('PATH:') + os.environ['PATH'])
-        print(_tab('PYTHONPATH:') + os.environ.get('PYTHONPATH', ''))
         print()
+
+        for var in ENV_VARS:
+            if var in os.environ:
+                print(_tab(var + ':') + os.environ[var])
+        print()
+
         for command, path in self._commands.items():
             print(_tab(f'{command}:') + (path or ''))
-        print(_tab('pipx packages:') + ', '.join(self._pipx_packages) + '\n')
+        print(_tab('pipx packages:') + ', '.join(self._pipx_packages))
+        print()
 
     def refresh_pipx(self) -> None:
         """Get installed pipx packages"""
