@@ -8,7 +8,7 @@ This project is based on [DipDup](https://dipdup.io), a framework for building f
 
 You need a Linux/macOS system with Python 3.11 installed. Use our installer for easy setup:
 
-```bash
+```shell
 curl -Lsf https://dipdup.io/install.py | python3
 ```
 
@@ -18,36 +18,37 @@ See the [Installation](https://dipdup.io/docs/installation) page for all options
 
 Run the indexer in-memory:
 
-```bash
+```shell
 dipdup run
 ```
 
 Store data in SQLite database:
 
-```bash
+```shell
 dipdup -c . -c configs/dipdup.sqlite.yml run
 ```
 
-Or spawn a docker-compose stack:
+Or spawn a Compose stack:
 
-```bash
-cp deploy/.env.default deploy/.env
-# Edit .env before running
-docker-compose -f deploy/compose.yaml up
+```shell
+cd deploy
+cp .env.default .env
+# Edit .env file before running
+docker-compose up
 ```
 
 ## Development setup
 
 We recommend [PDM](https://pdm.fming.dev/latest/) for managing Python projects. To set up the development environment:
 
-```bash
+```shell
 pdm install
 $(pdm venv activate)
 ```
 
-Some tools are included to help you keep the code quality high: black, ruff and mypy.
+Some tools are included to help you keep the code quality high: black, ruff and mypy. Use scripts from the `pyproject.toml` to run checks manually or in CI:
 
-```bash
+```shell
 # Format code
 pdm fmt
 
@@ -56,6 +57,7 @@ pdm lint
 
 # Build Docker image
 pdm image
-```
 
-Inspect the `pyproject.toml` file. It contains all the dependencies and tools used in the project.
+# Show all available scripts
+pdm run --list
+```
