@@ -202,6 +202,8 @@ test_params = (
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    # NOTE: Test at least some parts of installer.
+    ('demo_token.yml', 'demo_token', ('self', 'env'), None),
 )
 
 
@@ -209,8 +211,8 @@ test_params = (
 async def test_run_init(
     config: str,
     package: str,
-    cmd: str,
-    assert_fn: Callable[[], Awaitable[None]],
+    cmd: str | tuple[str, ...],
+    assert_fn: Callable[[], Awaitable[None]] | None,
 ) -> None:
     config_path = TEST_CONFIGS / config
     env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
@@ -223,7 +225,7 @@ async def test_run_init(
                 exists=cmd != 'init',
             ),
         )
-        await run_in_tmp(tmp_package_path, env, cmd)
+        await run_in_tmp(tmp_package_path, env, *((cmd,) if isinstance(cmd, str) else cmd))
         await stack.enter_async_context(
             tortoise_wrapper(
                 f'sqlite://{tmp_package_path}/db.sqlite3',
@@ -231,4 +233,5 @@ async def test_run_init(
             )
         )
 
-        await assert_fn()
+        if assert_fn:
+            await assert_fn()
