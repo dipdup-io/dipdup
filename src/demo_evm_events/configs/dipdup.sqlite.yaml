@@ -1,5 +1,3 @@
 database:
   kind: sqlite
   path: ${SQLITE_PATH:-/tmp/demo_evm_events.sqlite}
-
-logging: ${LOGLEVEL:-INFO}
