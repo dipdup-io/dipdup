@@ -50,7 +50,7 @@ Some tools are included to help you keep the code quality high: black, ruff and 
 
 ```shell
 # Format code
-pdm fmt
+pdm format
 
 # Lint code
 pdm lint

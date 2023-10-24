@@ -29,9 +29,9 @@ _mypy = "mypy --no-incremental --exclude demo_token_balances ."
 
 [tool.pdm.scripts.all]
 help = "Run all checks"
-composite = ["fmt", "lint"]
+composite = ["format", "lint"]
 
-[tool.pdm.scripts.fmt]
+[tool.pdm.scripts.format]
 help = "Format code with isort and black"
 composite = ["_isort", "_black"]
 
