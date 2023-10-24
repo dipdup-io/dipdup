@@ -73,6 +73,17 @@ REPLAY_PATH: Path | None
 TEST: bool
 
 
+def dump() -> dict[str, str]:
+    return {
+        'DIPDUP_CI': get('DIPDUP_CI') or '',
+        'DIPDUP_DEBUG': get('DIPDUP_DEBUG') or '',
+        'DIPDUP_DOCKER': get('DIPDUP_DOCKER') or '',
+        'DIPDUP_NEXT': get('DIPDUP_NEXT') or '',
+        'DIPDUP_REPLAY_PATH': get('DIPDUP_REPLAY_PATH') or '',
+        'DIPDUP_TEST': get('DIPDUP_TEST') or '',
+    }
+
+
 def read() -> None:
     global CI, DEBUG, DOCKER, NEXT, REPLAY_PATH, TEST
     CI = get_bool('DIPDUP_CI')
