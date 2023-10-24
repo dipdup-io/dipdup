@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- cli: Added `--unsafe` and `--compose` flags to `config env` command.
+- cli: Added `--unsafe`, `--compose`, `--internal` flags to `config env` command.
+- cli: Added missing short equivalents for options in some commands.
 - cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
 - tezos.tzkt.token_balances: Added new index.
 
