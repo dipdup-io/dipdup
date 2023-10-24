@@ -1,9 +1,9 @@
 CREATE MATERIALIZED VIEW
-    candlestick_1m
+    candlestick_1d
 WITH (timescaledb.continuous) AS
 
 SELECT
-    time_bucket('1 minute'::INTERVAL, timestamp) AS bucket,
+    time_bucket('1 day'::INTERVAL, timestamp) AS bucket,
     token0_id as token_id,
     candlestick_agg(
         timestamp,
@@ -24,13 +24,13 @@ ORDER BY
     token0_id
 WITH NO DATA;
 
-CREATE INDEX candlestick_1m_bucket ON candlestick_1m(bucket);
-CREATE INDEX candlestick_1m_token_id ON candlestick_1m(token_id);
+CREATE INDEX candlestick_1d_bucket ON candlestick_1d(bucket);
+CREATE INDEX candlestick_1d_token_id ON candlestick_1d(token_id);
 
 SELECT add_continuous_aggregate_policy(
-    'candlestick_1m',
-    start_offset => INTERVAL '1 hour',
+    'candlestick_1d',
+    start_offset => INTERVAL '2 days',
     end_offset => INTERVAL '0 minutes',
-    schedule_interval => INTERVAL '1 minute',
+    schedule_interval => INTERVAL '1 hour',
     initial_start := '2018-07-01'
 );
