@@ -50,7 +50,7 @@ mypy-extensions==1.0.0
 numpy==1.25.2
 openapi-schema-validator==0.4.4
 openapi-spec-validator==0.5.7
-orjson==3.9.9
+orjson==3.9.10
 packaging==23.1
 parsimonious==0.9.0
 pathable==0.4.3

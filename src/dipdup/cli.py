@@ -137,6 +137,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
 
 async def _check_version() -> None:
+    if '+editable' in __version__:
+        return
     if '-rc' in __version__:
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
