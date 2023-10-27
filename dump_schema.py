@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# NOTE: Run `pdm add -G dev -e ../dc_schema` first.
 from pathlib import Path
 
 import orjson
