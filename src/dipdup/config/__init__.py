@@ -831,22 +831,22 @@ class DipDupConfig:
             )
         self.advanced.rollback_depth = rollback_depth
 
-        # NOTE: Bigmap indexes with `skip_history` require early realtime
+        if self.advanced.early_realtime:
+            return
+
+        # NOTE: Indexes that process only the current state imply early realtime.
         from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+        from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 
         for name, index_config in self.indexes.items():
-            if isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never:
-                _logger.warning('`%s` index is configured to skip history; enabling early realtime', name)
+            is_big_maps = (
+                isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never
+            )
+            is_token_balances = isinstance(index_config, TzktTokenBalancesIndexConfig)
+            if is_big_maps or is_token_balances:
+                _logger.info('`%s` index is configured to skip history; implying `early_realtime` flag', name)
                 self.advanced.early_realtime = True
                 break
-
-        # NOTE: Optional checks
-        for flag in (
-            'crash_reporting',
-            'metadata_interface',
-        ):
-            if getattr(self.advanced, flag, None):
-                _logger.warning('`%s flag was removed and has no effect', flag)
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)

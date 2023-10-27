@@ -5,12 +5,12 @@ version = "{{ project.version }}"
 description = "{{ project.description }}"
 license = { text = "{{ project.license }}" }
 authors = [
-    { name = "{{ project.name }}", email = "{{ project.email }}" }
+    { name = "{{ project.name }}", email = "{{ project.email }}" },
 ]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "dipdup>={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}"
+    "dipdup>={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}",
 ]
 
 [tool.pdm.dev-dependencies]
@@ -29,9 +29,9 @@ _mypy = "mypy --no-incremental --exclude {{ project.package }} ."
 
 [tool.pdm.scripts.all]
 help = "Run all checks"
-composite = ["fmt", "lint"]
+composite = ["format", "lint"]
 
-[tool.pdm.scripts.fmt]
+[tool.pdm.scripts.format]
 help = "Format code with isort and black"
 composite = ["_isort", "_black"]
 
@@ -55,6 +55,7 @@ skip-string-normalization = true
 [tool.ruff]
 line-length = {{ project.line_length }}
 target-version = 'py311'
+extend-select = ["B", "C4", "FA", "G", "PTH", "RET", "RUF", "TCH", "UP"]
 
 [tool.mypy]
 python_version = "3.11"

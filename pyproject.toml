@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.0.2"
+version = "7.1.0"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -109,14 +109,14 @@ _mypy = "mypy src tests scripts"
 
 [tool.pdm.scripts.all]
 help = "Run all checks"
-composite = ["fmt", "lint", "test"]
+composite = ["format", "lint", "test"]
 
 [tool.pdm.scripts.demos]
 help = "Recreate demo projects from templates"
 shell = """
 	python scripts/update_demos.py
 	python scripts/init_demos.py
-    pdm run fmt
+    pdm run format
     pdm run lint
 """
 
@@ -140,7 +140,7 @@ cmd = "python scripts/dump_references.py"
 help = "Find FIXME and TODO comments"
 cmd = "grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color"
 
-[tool.pdm.scripts.fmt]
+[tool.pdm.scripts.format]
 help = "Format code with black"
 composite = ["_black"]
 
