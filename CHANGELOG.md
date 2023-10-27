@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Fixed crash on early Python 3.11 releases.
+
 ## [7.1.0] - 2023-10-27
 
 ### Added
