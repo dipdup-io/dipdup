@@ -24,6 +24,7 @@ from dipdup.performance import metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
+NODE_BATCH_SIZE = 100
 
 
 class SubsquidEventsIndex(
@@ -152,20 +153,31 @@ class SubsquidEventsIndex(
             for handler in self._config.handlers:
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
-            # FIXME: This is terribly inefficient (but okay for the last mile); see advanced example in web3.py docs.
-            for level in range(first_level, sync_level + 1):
+
+            # Requesting blocks info by batch
+            windows = [(i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1)]
+            for start_level, end_level in windows:
                 # NOTE: Get random one every time
+                # NOTE: Data for blocks start_level and end_level will be included
                 level_logs = await self.random_node.get_logs(
                     {
-                        'fromBlock': hex(level),
-                        'toBlock': hex(level),
+                        'fromBlock': hex(start_level),
+                        'toBlock': hex(end_level),
                     }
                 )
-                block = await self.random_node.get_block_by_level(level)
-                if block is None:
-                    raise FrameworkException(f'Block {level} not found')
-                timestamp = int(block['timestamp'], 16)
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
+
+                # get timestamps for levels
+                timestamps = {}
+                for level in range(start_level, end_level + 1):
+                    block = await self.random_node.get_block_by_level(level)
+                    try:
+                        timestamps[hex(level)] = int(block['timestamp'], 16)
+                    except TypeError as e:
+                        raise FrameworkException(f'Block {level} not found') from e
+
+                # match timestamps with logs
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamps[log['blockNumber']])
+                                          for log in level_logs)
                 await self._process_level_events(parsed_level_logs, self.topics, sync_level)
 
         else:

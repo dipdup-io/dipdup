@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Added `--unsafe` and `--compose` flags to `config env` command.
 - cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
 - tezos.tzkt.token_balances: Added new index.
+- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
 
 ### Fixed
 
