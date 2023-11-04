@@ -67,6 +67,20 @@ _callback_duration = Histogram(
     ['callback'],
 )
 
+_sqd_processor_last_block = Gauge(
+    'sqd_processor_last_block',
+    'The last processed block',
+)
+_sqd_processor_chain_height = Gauge(
+    'sqd_processor_chain_height',
+    'Current chain height as reported by the archive',
+)
+_sqd_processor_archive_http_errors_in_row = Gauge(
+    'sqd_processor_archive_http_errors_in_row',
+    """The number of consecutive failed Archive requests"""
+    """Inspect the metrics endpoint for a full list""",
+)
+
 
 class Metrics:
     enabled = False
@@ -133,3 +147,11 @@ class Metrics:
     @classmethod
     def set_levels_to_realtime(cls, index: str, levels: int) -> None:
         _index_levels_to_realtime.labels(index=index).observe(levels)
+
+    @classmethod
+    def set_sqd_processor_last_block(cls, last_block: int) -> None:
+        _sqd_processor_last_block.set(last_block)
+    
+    @classmethod
+    def set_sqd_processor_chain_height(cls, chain_height: int) -> None:
+        _sqd_processor_chain_height.set(chain_height)
