@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## Unreleased
+
+### Added
+
+- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
+
 ## [7.1.0] - 2023-10-27
 
 ### Added
@@ -12,7 +18,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Added missing short equivalents for options in some commands.
 - cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
 - tezos.tzkt.token_balances: Added new index.
-- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
 
 ### Fixed
 
