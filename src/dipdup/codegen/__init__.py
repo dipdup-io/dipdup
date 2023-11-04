@@ -54,7 +54,7 @@ class CodeGenerator(ABC):
         self._package.create()
 
         replay = self._package.replay
-        if base:
+        if base or self._include:
             if not replay:
                 raise FrameworkException('`--base` option passed but `configs/replay.yaml` file is missing')
             _logger.info('Recreating base template with replay.yaml')

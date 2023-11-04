@@ -1,5 +1,3 @@
 database:
   kind: sqlite
   path: ${SQLITE_PATH:-/tmp/demo_big_maps.sqlite}
-
-logging: ${LOGLEVEL:-INFO}

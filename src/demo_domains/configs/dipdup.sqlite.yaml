@@ -1,5 +1,3 @@
 database:
   kind: sqlite
   path: ${SQLITE_PATH:-/tmp/demo_domains.sqlite}
-
-logging: ${LOGLEVEL:-INFO}

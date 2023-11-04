@@ -162,14 +162,14 @@ async def assert_run_dao() -> None:
 test_args = ('config', 'package', 'cmd', 'assert_fn')
 test_params = (
     ('demo_token.yml', 'demo_token', 'run', assert_run_token),
-    ('demo_token.yml', 'demo_token', 'init', partial(assert_init, 'demo_token')),
+    ('demo_token.yml', 'demo_token', 'init', None),
     ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'run', assert_run_nft_marketplace),
-    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', partial(assert_init, 'demo_nft_marketplace')),
+    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', None),
     ('demo_auction.yml', 'demo_auction', 'run', assert_run_auction),
-    ('demo_auction.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
+    ('demo_auction.yml', 'demo_auction', 'init', None),
     ('demo_token_transfers.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 4, '-0.01912431')),
     # FIXME: Why so many token transfer tests?
-    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', partial(assert_init, 'demo_token_transfers')),
+    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', None),
     (
         'demo_token_transfers_2.yml',
         'demo_token_transfers',
@@ -184,24 +184,31 @@ test_params = (
         partial(assert_run_token_transfers, 2, '-0.02302128'),
     ),
     ('demo_token_balances.yml', 'demo_token_balances', 'run', assert_run_balances),
-    ('demo_token_balances.yml', 'demo_token_balances', 'init', partial(assert_init, 'demo_token_balances')),
+    ('demo_token_balances.yml', 'demo_token_balances', 'init', None),
     ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
-    ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
+    ('demo_big_maps.yml', 'demo_big_maps', 'init', None),
     ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),
-    ('demo_domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
+    ('demo_domains.yml', 'demo_domains', 'init', None),
     ('demo_dex.yml', 'demo_dex', 'run', assert_run_dex),
-    ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
+    ('demo_dex.yml', 'demo_dex', 'init', None),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
-    ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    ('demo_dao.yml', 'demo_dao', 'init', None),
     ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
-    ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_factories.yml', 'demo_factories', 'init', None),
     ('demo_events.yml', 'demo_events', 'run', assert_run_events),
-    ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
+    ('demo_events.yml', 'demo_events', 'init', None),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
-    ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
+    ('demo_raw.yml', 'demo_raw', 'init', None),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
-    ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
+    ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    # NOTE: Smoke tests for small tools.
+    ('demo_dex.yml', 'demo_dex', ('config', 'env', '--compose', '--internal'), None),
+    ('demo_dex.yml', 'demo_dex', ('config', 'export', '--full'), None),
+    ('demo_dex.yml', 'demo_dex', ('package', 'tree'), None),
+    ('demo_dex.yml', 'demo_dex', ('report', 'ls'), None),
+    ('demo_dex.yml', 'demo_dex', ('self', 'env'), None),
+    ('demo_dex.yml', 'demo_dex', ('schema', 'export'), None),
 )
 
 
@@ -209,8 +216,8 @@ test_params = (
 async def test_run_init(
     config: str,
     package: str,
-    cmd: str,
-    assert_fn: Callable[[], Awaitable[None]],
+    cmd: str | tuple[str, ...],
+    assert_fn: Callable[[], Awaitable[None]] | None,
 ) -> None:
     config_path = TEST_CONFIGS / config
     env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
@@ -223,12 +230,14 @@ async def test_run_init(
                 exists=cmd != 'init',
             ),
         )
-        await run_in_tmp(tmp_package_path, env, cmd)
+        await run_in_tmp(tmp_package_path, env, *((cmd,) if isinstance(cmd, str) else cmd))
+        if not assert_fn:
+            return
+
         await stack.enter_async_context(
             tortoise_wrapper(
                 f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )
         )
-
         await assert_fn()

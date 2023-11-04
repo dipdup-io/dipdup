@@ -16,7 +16,7 @@ asyncpg==0.28.0
 attrs==23.1.0
 babel==2.12.1
 bitarray==2.8.1
-black==23.10.0
+black==23.10.1
 certifi==2023.7.22
 chardet==5.2.0
 charset-normalizer==3.2.0
@@ -54,12 +54,12 @@ lru-dict==1.2.0
 MarkupSafe==2.1.3
 msgpack==1.0.5
 multidict==6.0.4
-mypy==1.6.0
+mypy==1.6.1
 mypy-extensions==1.0.0
 numpy==1.25.2
 openapi-schema-validator==0.4.4
 openapi-spec-validator==0.5.7
-orjson==3.9.9
+orjson==3.9.10
 packaging==23.1
 parsimonious==0.9.0
 pathable==0.4.3
@@ -79,7 +79,7 @@ pypika-tortoise==0.1.6
 pyrsistent==0.19.3
 pysignalr==0.2.0
 PySnooper==1.2.0
-pytest==7.4.2
+pytest==7.4.3
 pytest-aiohttp==1.0.5
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
@@ -92,9 +92,9 @@ regex==2023.8.8
 requests==2.31.0
 rfc3339-validator==0.1.4
 rlp==3.0.0
-ruamel-yaml==0.17.35
+ruamel-yaml==0.18.2
 ruamel-yaml-clib==0.2.7
-ruff==0.1.0
+ruff==0.1.3
 sentry-sdk==1.32.0
 setuptools==68.2.2
 six==1.16.0
@@ -121,7 +121,7 @@ typing-extensions==4.7.1
 tzlocal==5.0.1
 urllib3==2.0.6
 watchdog==3.0.0
-web3==6.11.0
+web3==6.11.1
 websocket-client==1.6.1
 websockets==10.4
 yarl==1.9.2

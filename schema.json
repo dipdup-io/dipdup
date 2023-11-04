@@ -132,13 +132,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidOperationsIndexConfig"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/TzktBigMapsIndexConfig"
               }
             ]
@@ -175,6 +168,13 @@
             "allOf": [
               {
                 "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
               }
             ]
           },
@@ -202,13 +202,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidOperationsIndexConfig"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/TzktBigMapsIndexConfig"
               }
             ]
@@ -245,6 +238,13 @@
             "allOf": [
               {
                 "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
               }
             ]
           }
@@ -287,11 +287,19 @@
       "default": null
     },
     "sentry": {
-      "allOf": [
+      "anyOf": [
         {
-          "$ref": "#/$defs/SentryConfig"
+          "allOf": [
+            {
+              "$ref": "#/$defs/SentryConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
         }
-      ]
+      ],
+      "default": null
     },
     "prometheus": {
       "anyOf": [
@@ -1116,6 +1124,10 @@
           ],
           "default": null
         },
+        "node_only": {
+          "type": "boolean",
+          "default": false
+        },
         "first_level": {
           "type": "integer",
           "default": 0
@@ -1129,126 +1141,6 @@
         "kind",
         "datasource",
         "handlers"
-      ]
-    },
-    "SubsquidOperationsHandlerConfig": {
-      "type": "object",
-      "title": "SubsquidOperationsHandlerConfig",
-      "properties": {
-        "callback": {
-          "type": "string"
-        },
-        "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/EvmContractConfig"
-                }
-              ]
-            }
-          ]
-        },
-        "method": {
-          "type": "string"
-        },
-        "events": {
-          "type": "array",
-          "items": {}
-        }
-      },
-      "required": [
-        "callback",
-        "contract",
-        "method",
-        "events"
-      ]
-    },
-    "SubsquidOperationsIndexConfig": {
-      "type": "object",
-      "title": "SubsquidOperationsIndexConfig",
-      "properties": {
-        "kind": {
-          "enum": [
-            "evm.subsquid.operations"
-          ]
-        },
-        "datasource": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/SubsquidDatasourceConfig"
-                }
-              ]
-            }
-          ]
-        },
-        "handlers": {
-          "type": "array",
-          "items": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/SubsquidOperationsHandlerConfig"
-              }
-            ]
-          }
-        },
-        "contracts": {
-          "type": "array",
-          "items": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/EvmContractConfig"
-              }
-            ]
-          }
-        },
-        "abi": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/AbiDatasourceConfig"
-                }
-              ]
-            },
-            {
-              "type": "array",
-              "items": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/AbiDatasourceConfig"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "first_level": {
-          "type": "integer",
-          "default": 0
-        },
-        "last_level": {
-          "type": "integer",
-          "default": 0
-        }
-      },
-      "required": [
-        "kind",
-        "datasource",
-        "handlers",
-        "contracts"
       ]
     },
     "TzktBigMapsHandlerConfig": {
@@ -1936,6 +1828,94 @@
         "datasource"
       ]
     },
+    "TzktTokenBalancesHandlerConfig": {
+      "type": "object",
+      "title": "TzktTokenBalancesHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "token_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "callback"
+      ]
+    },
+    "TzktTokenBalancesIndexConfig": {
+      "type": "object",
+      "title": "TzktTokenBalancesIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.token_balances"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesHandlerConfig"
+              }
+            ]
+          }
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource"
+      ]
+    },
     "IndexTemplateConfig": {
       "type": "object",
       "title": "IndexTemplateConfig",
@@ -2110,8 +2090,7 @@
       "title": "SentryConfig",
       "properties": {
         "dsn": {
-          "type": "string",
-          "default": ""
+          "type": "string"
         },
         "environment": {
           "anyOf": [
@@ -2161,7 +2140,10 @@
           "type": "boolean",
           "default": false
         }
-      }
+      },
+      "required": [
+        "dsn"
+      ]
     },
     "PrometheusConfig": {
       "type": "object",
@@ -2274,11 +2256,19 @@
           "default": false
         },
         "api": {
-          "allOf": [
+          "anyOf": [
             {
-              "$ref": "#/$defs/ApiConfig"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/ApiConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
             }
-          ]
+          ],
+          "default": null
         },
         "metrics": {
           "allOf": [
