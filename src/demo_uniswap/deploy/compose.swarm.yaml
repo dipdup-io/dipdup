@@ -29,7 +29,7 @@ services:
         tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
-    image: timescale/timescaledb-ha:pg15-latest
+    image: timescale/timescaledb-ha:pg15
     volumes:
       - db:/home/postgres/pgdata/data
     env_file: .env
