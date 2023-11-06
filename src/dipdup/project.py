@@ -205,7 +205,7 @@ def answers_from_terminal() -> Answers:
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
-            'timescale/timescaledb-ha:pg15-latest',
+            'timescale/timescaledb-ha:pg15',
         ),
         comments=(
             'PostgreSQL',
