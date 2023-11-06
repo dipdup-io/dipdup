@@ -155,3 +155,7 @@ class Metrics:
     @classmethod
     def set_sqd_processor_chain_height(cls, chain_height: int) -> None:
         _sqd_processor_chain_height.set(chain_height)
+
+    @classmethod
+    def set_sqd_processor_archive_http_errors_in_row(cls, errors_count: int) -> None:
+        _sqd_processor_archive_http_errors_in_row.set(errors_count)

@@ -42,6 +42,9 @@ class SubsquidEventsIndex(
         self._realtime_node: EvmNodeDatasource | None = None
         self._topics: dict[str, dict[str, str]] | None = None
 
+        if self._config.expose_metrics:
+            Metrics.set_sqd_processor_archive_http_errors_in_row(0)
+
     @property
     def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
         if self._node_datasources is not None:
