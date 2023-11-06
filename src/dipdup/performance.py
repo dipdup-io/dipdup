@@ -27,7 +27,7 @@ from typing import Any
 from typing import cast
 
 from async_lru import alru_cache
-from lru import LRU  # type: ignore[import-not-found]
+from lru import LRU
 
 from dipdup.exceptions import FrameworkException
 
@@ -115,7 +115,7 @@ class _CacheManager:
 
         try:
             maxsize = cls.Meta.maxsize  # type: ignore[attr-defined]
-            self._model[cls.__name__] = LRU(maxsize)
+            self._model[cls.__name__] = LRU(maxsize)  # type: ignore[assignment]
         except AttributeError:
             self._model[cls.__name__] = {}
 

@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.1.1] - 2023-11-07
 
 ### Fixed
 
@@ -1231,7 +1231,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.1...HEAD
+[7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
 [7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2
 [7.0.1]: https://github.com/dipdup-io/dipdup/compare/7.0.0...7.0.1
