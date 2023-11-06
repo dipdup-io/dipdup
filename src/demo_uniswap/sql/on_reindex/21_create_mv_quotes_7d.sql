@@ -1,6 +1,6 @@
 CREATE MATERIALIZED VIEW
     candlestick_7d
-WITH (timescaledb.continuous) AS
+AS
 
 SELECT
     time_bucket('7 days'::INTERVAL, timestamp) AS bucket,
