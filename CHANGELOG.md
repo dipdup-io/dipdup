@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Fixed
+
+- cli: Fixed crash on early Python 3.11 releases.
 - project: Update default Docker tag for TimescaleDB HA.
 
 ## [7.1.0] - 2023-10-27
