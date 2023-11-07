@@ -61,6 +61,10 @@ _http_errors = Counter(
     'Number of http errors',
     ['url', 'status'],
 )
+_http_errors_in_row = Histogram(
+    'sqd_processor_archive_http_errors_in_row',
+    """The number of consecutive failed requests"""
+)
 _callback_duration = Histogram(
     'dipdup_callback_duration_seconds',
     'Duration of callback execution',
@@ -75,10 +79,9 @@ _sqd_processor_chain_height = Gauge(
     'sqd_processor_chain_height',
     'Current chain height as reported by the archive',
 )
-_sqd_processor_archive_http_errors_in_row = Gauge(
+_sqd_processor_archive_http_errors_in_row = Histogram(
     'sqd_processor_archive_http_errors_in_row',
     """The number of consecutive failed Archive requests"""
-    """Inspect the metrics endpoint for a full list""",
 )
 
 
@@ -157,5 +160,7 @@ class Metrics:
         _sqd_processor_chain_height.set(chain_height)
 
     @classmethod
-    def set_sqd_processor_archive_http_errors_in_row(cls, errors_count: int) -> None:
-        _sqd_processor_archive_http_errors_in_row.set(errors_count)
+    def set_http_errors_in_row(cls, url: str, errors_count: int) -> None:
+        _http_errors_in_row.observe(errors_count)
+        if 'subsquid' in url:
+            _sqd_processor_archive_http_errors_in_row.observe(errors_count)

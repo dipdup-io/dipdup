@@ -177,6 +177,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
+
+                if Metrics.enabled:
+                    Metrics.set_http_errors_in_row(self._url, attempt)
+
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1
                 if not ratelimit_sleep:
