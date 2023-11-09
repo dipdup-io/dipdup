@@ -11,4 +11,9 @@ async def on_rollup_call(
     controller_default: TzktTransaction[ControllerDefaultParameter, ControllerStorage],
     rollup_default: TzktTransaction[RollupDefaultParameter, RollupStorage],
 ) -> None:
-    ...
+    ctx.logger.info(
+        'Smart rollup %s has been called by contract %s with parameter %s',
+        rollup_default.data.target_address,
+        controller_default.data.target_address,
+        rollup_default.parameter.__root__,
+    )
