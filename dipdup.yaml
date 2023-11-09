@@ -29,6 +29,8 @@ indexes:
           - type: transaction
             destination: controller
             entrypoint: default
+            alias: controller_default
           - type: transaction
             destination: rollup
             entrypoint: default
+            alias: rollup_default
