@@ -8,13 +8,10 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 
 TEZOS_ADDRESS_PREFIXES = (
+    # NOTE: A regular smart contract
     'KT1',
-    # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
-    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
-    # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
-    'tz1',
-    'tz2',
-    'tz3',
+    # NOTE: Smart rollup contract
+    'sr1',
 )
 TEZOS_ADDRESS_LENGTH = 36
 
