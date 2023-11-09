@@ -62,7 +62,7 @@ _http_errors = Counter(
     ['url', 'status'],
 )
 _http_errors_in_row = Histogram(
-    'sqd_processor_archive_http_errors_in_row',
+    'dipdup_http_errors_in_row',
     """The number of consecutive failed requests"""
 )
 _callback_duration = Histogram(
