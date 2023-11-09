@@ -244,7 +244,7 @@ class InvalidDataError(Error):
 
 @dataclass(repr=False)
 class CallbackError(Error):
-    """An error occured during callback execution"""
+    """An error occurred during callback execution"""
 
     module: str
     exc: Exception
@@ -261,7 +261,7 @@ class CallbackError(Error):
 
 @dataclass(repr=False)
 class CallbackTypeError(Error):
-    """Agrument of invalid type was passed to a callback"""
+    """Argument of invalid type was passed to a callback"""
 
     kind: str
     name: str
