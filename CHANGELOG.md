@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- tezos.tzkt: Added support for Etherlink smart rollups (`sr1…` addresses).
+
 ## [7.1.1] - 2023-11-07
 
 ### Fixed
