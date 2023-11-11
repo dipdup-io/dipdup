@@ -42,7 +42,7 @@ EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
 LogsCallback = Callable[['EvmNodeDatasource', EvmNodeLogData], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
-RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
+RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
 @dataclass
