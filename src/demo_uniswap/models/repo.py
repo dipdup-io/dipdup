@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Any
 from typing import cast
 
-from lru import LRU  # type: ignore[import-not-found]
+from lru import LRU
 
 import demo_uniswap.models as models
 from dipdup.config.evm import EvmContractConfig
@@ -32,7 +32,7 @@ class ModelsRepo:
         self._pending_positions[idx] = position
 
     def get_pending_position(self, idx: str) -> dict[str, Any] | None:
-        return self._pending_positions.get(idx, None)  # type: ignore[no-any-return]
+        return self._pending_positions.get(idx, None)
 
 
 async def get_ctx_factory(ctx: HandlerContext) -> models.Factory:
