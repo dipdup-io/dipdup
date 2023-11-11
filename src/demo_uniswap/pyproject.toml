@@ -21,28 +21,6 @@ dev = [
     "mypy",
 ]
 
-[tool.pdm.scripts]
-_isort = "isort ."
-_black = "black ."
-_ruff = "ruff check --fix ."
-_mypy = "mypy --no-incremental --exclude demo_uniswap ."
-
-[tool.pdm.scripts.all]
-help = "Run all checks"
-composite = ["format", "lint"]
-
-[tool.pdm.scripts.format]
-help = "Format code with isort and black"
-composite = ["_isort", "_black"]
-
-[tool.pdm.scripts.image]
-help = "Build Docker image"
-cmd = "docker buildx build . --load --progress plain -f deploy/Dockerfile -t demo_uniswap:latest"
-
-[tool.pdm.scripts.lint]
-help = "Check code with ruff and mypy"
-composite = ["_ruff", "_mypy"]
-
 [tool.isort]
 line_length = 120
 force_single_line = true
