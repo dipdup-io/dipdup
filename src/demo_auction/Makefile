@@ -15,12 +15,15 @@ all:            ## Run a whole CI pipeline: formatters, linters and tests
 	make format lint
 
 format:         ## Format with all tools
-	make black
+	make isort black
 
 lint:           ## Lint with all tools
-	make format ruff mypy
+	make ruff mypy
 
 ##
+
+isort:          ## Format with isort
+	isort .
 
 black:          ## Format with black
 	black .

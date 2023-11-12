@@ -19,7 +19,7 @@ format:         ## Format with all tools
 	make black
 
 lint:           ## Lint with all tools
-	make format ruff mypy
+	make ruff mypy
 
 ##
 
