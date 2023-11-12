@@ -14,6 +14,7 @@ from dipdup import __version__
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.env import get_package_path
+from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -84,6 +85,19 @@ def get_default_answers() -> Answers:
         line_length='120',
         package_manager='pdm',
     )
+
+
+def get_package_answers(package: str | None = None) -> Answers | None:
+    if not package:
+        package = get_pyproject_name()
+    if not package:
+        return None
+
+    replay_path = get_package_path(package) / 'configs' / 'replay.yaml'
+    if not replay_path.is_file():
+        return None
+
+    return answers_from_replay(replay_path)
 
 
 @dataclass
