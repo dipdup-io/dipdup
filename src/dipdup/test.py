@@ -204,5 +204,6 @@ async def run_in_tmp(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    await proc.communicate()
-    assert proc.returncode == 0
+    res = await proc.communicate()
+    if proc.returncode != 0:
+        raise Exception(f'`dipdup` failed: {res[0].decode()}\n{res[1].decode()}')

@@ -205,7 +205,7 @@ def answers_from_terminal() -> Answers:
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
-            'timescale/timescaledb-ha:pg15-latest',
+            'timescale/timescaledb-ha:pg15',
         ),
         comments=(
             'PostgreSQL',
@@ -297,8 +297,9 @@ def _render_templates(
 
     for path in project_paths:
         template_path = path.relative_to(Path(__file__).parent)
+        relative_path = str(Path(*template_path.parts[2:]))[:-3]
 
-        if include and not any(str(path).startswith(i) for i in include):
+        if include and not any(relative_path.startswith(i) for i in include):
             continue
 
         output_base = get_package_path(answers['package']) if exists else Path(answers['package'])

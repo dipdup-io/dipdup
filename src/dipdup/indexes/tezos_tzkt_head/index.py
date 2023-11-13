@@ -1,9 +1,11 @@
+from collections import deque
+from typing import Any
+
 from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.models import IndexStatus
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
@@ -13,7 +15,7 @@ HeadQueueItem = TzktHeadBlockData | TzktRollbackMessage
 
 
 class TzktHeadIndex(
-    Index[TzktHeadIndexConfig, HeadQueueItem, TzktDatasource],
+    TzktIndex[TzktHeadIndexConfig, HeadQueueItem],
     message_type=TzktMessageType.head,
 ):
     def push_head(self, events: HeadQueueItem) -> None:
@@ -23,6 +25,7 @@ class TzktHeadIndex(
         self._logger.info('Setting index level to %s and moving on', sync_level)
         await self._update_state(status=IndexStatus.realtime, level=sync_level)
 
+    # FIXME: Use method from TzktIndex
     async def _process_queue(self) -> None:
         while self._queue:
             message = self._queue.popleft()
@@ -47,7 +50,7 @@ class TzktHeadIndex(
                 await self._call_matched_handler(self._config.handler_config, message)
                 await self._update_state(level=batch_level)
 
-    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, head: TzktHeadBlockData) -> None:
+    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, level_data: TzktHeadBlockData) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -55,6 +58,9 @@ class TzktHeadIndex(
             handler_config.callback,
             handler_config.parent.name,
             self.datasource,
-            head.hash,
-            head,
+            level_data.hash,
+            level_data,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        raise NotImplementedError
