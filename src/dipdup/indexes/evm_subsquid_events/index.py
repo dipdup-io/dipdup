@@ -160,34 +160,35 @@ class SubsquidEventsIndex(
                 topics.add(self.topics[typename][handler.name])
 
             # Requesting blocks info by batch
-            windows = ((i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1))
-            for start_level, end_level in windows:
-                # NOTE: Get random one every time
-                # NOTE: Data for blocks start_level and end_level will be included
+            batch_first_level = first_level
+            while batch_first_level <= sync_level:
+                batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
                 level_logs = await self.random_node.get_logs(
                     {
-                        'fromBlock': hex(start_level),
-                        'toBlock': hex(end_level),
+                        'fromBlock': hex(batch_first_level),
+                        'toBlock': hex(batch_last_level),
                     }
                 )
 
-                # get timestamps for levels
-                timestamps = {}
-                for level in range(start_level, end_level + 1):
+                # NOTE: We need block timestamps for each level, so fetch them separately and match with logs.
+                timestamps: dict[int, int] = {}
+                for level in range(batch_first_level, batch_last_level + 1):
                     block = await self.random_node.get_block_by_level(level)
-                    try:
-                        timestamps[hex(level)] = int(block['timestamp'], 16)
-                    except TypeError as e:
-                        raise FrameworkException(f'Block {level} not found') from e
+                    timestamps[level] = int(block['timestamp'], 16)
 
-                # match timestamps with logs
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamps[log['blockNumber']])
-                                          for log in level_logs)
-                await self._process_level_events(parsed_level_logs, self.topics, sync_level)
+                parsed_level_logs = tuple(
+                    EvmNodeLogData.from_json(
+                        log,
+                        timestamps[int(log['blockNumber'], 16)],
+                    )
+                    for log in level_logs
+                )
 
                 await self._process_level_events(parsed_level_logs, sync_level)
                 if self._config.expose_metrics:
                     Metrics.set_sqd_processor_last_block(level)
+                
+                batch_first_level = batch_last_level + 1
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)

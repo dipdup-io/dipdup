@@ -63,7 +63,7 @@ _http_errors = Counter(
 )
 _http_errors_in_row = Histogram(
     'dipdup_http_errors_in_row',
-    """The number of consecutive failed requests"""
+    'Number of consecutive failed requests',
 )
 _callback_duration = Histogram(
     'dipdup_callback_duration_seconds',
@@ -73,15 +73,15 @@ _callback_duration = Histogram(
 
 _sqd_processor_last_block = Gauge(
     'sqd_processor_last_block',
-    'The last processed block',
+    'Level of the last processed block from Subsquid Archives',
 )
 _sqd_processor_chain_height = Gauge(
     'sqd_processor_chain_height',
-    'Current chain height as reported by the archive',
+    'Current chain height as reported by Subsquid Archives',
 )
 _sqd_processor_archive_http_errors_in_row = Histogram(
     'sqd_processor_archive_http_errors_in_row',
-    """The number of consecutive failed Archive requests"""
+    'Number of consecutive failed requests to Subsquid Archives',
 )
 
 
@@ -154,7 +154,7 @@ class Metrics:
     @classmethod
     def set_sqd_processor_last_block(cls, last_block: int) -> None:
         _sqd_processor_last_block.set(last_block)
-    
+
     @classmethod
     def set_sqd_processor_chain_height(cls, chain_height: int) -> None:
         _sqd_processor_chain_height.set(chain_height)
