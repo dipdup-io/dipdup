@@ -155,7 +155,7 @@ class SubsquidEventsIndex(
                 topics.add(self.topics[typename][handler.name])
 
             # Requesting blocks info by batch
-            windows = [(i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1)]
+            windows = ((i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1))
             for start_level, end_level in windows:
                 # NOTE: Get random one every time
                 # NOTE: Data for blocks start_level and end_level will be included
