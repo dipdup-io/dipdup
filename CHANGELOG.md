@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- evm.subsquid.events: Added metrics for subsquid cloud deploy
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
 
 ## [7.1.1] - 2023-11-07
 
