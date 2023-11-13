@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+# NOTE: Run `pdm add -G dev -e ../dc_schema` first.
 from pathlib import Path
 
 import orjson
-from dc_schema import get_schema  # type: ignore[import]
+from dc_schema import get_schema  # type: ignore[import-not-found]
 
 from dipdup.config import DipDupConfig
 

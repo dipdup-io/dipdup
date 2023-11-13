@@ -1,7 +1,7 @@
 import time
 from pathlib import Path
 
-import pprofile  # type: ignore[import]
+import pprofile  # type: ignore[import-untyped]
 
 from dipdup.indexes.evm_subsquid_events.matcher import decode_event_data
 from dipdup.package import EventAbiExtra

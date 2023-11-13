@@ -19,6 +19,8 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.database import AsyncpgClient
+from dipdup.database import _pg_get_views
 from dipdup.database import get_connection
 from dipdup.database import iter_models
 from dipdup.exceptions import ConfigurationError
@@ -58,7 +60,7 @@ vulnerable_versions = {
     'v1.3.0': 'v1.3.4',
 }
 
-RelationalFieldT = fields.relational.ForeignKeyFieldInstance | fields.relational.ManyToManyFieldInstance
+RelationalFieldT = fields.relational.ForeignKeyFieldInstance[Any] | fields.relational.ManyToManyFieldInstance[Any]
 
 _get_fields_query = """
 query introspectionQuery($name: String!) {
@@ -328,18 +330,9 @@ class HasuraGateway(HTTPGateway):
 
     async def _get_views(self) -> list[str]:
         conn = get_connection()
-        views = [
-            row[0]
-            for row in (
-                await conn.execute_query(
-                    "SELECT table_name FROM information_schema.views WHERE table_schema ="
-                    f" '{self._database_config.schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
-                    f" WHERE schemaname = '{self._database_config.schema_name}'"
-                )
-            )[1]
-        ]
-        self._logger.info('Found %s regular and materialized views', len(views))
-        return views
+        if not isinstance(conn, AsyncpgClient):
+            raise HasuraError('Hasura integration requires `postgres` database client')
+        return await _pg_get_views(conn, self._database_config.schema_name)
 
     def _iterate_graphql_queries(self) -> Iterator[tuple[str, str]]:
         graphql_path = env.get_package_path(self._package) / 'graphql'

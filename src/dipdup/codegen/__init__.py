@@ -38,10 +38,12 @@ class CodeGenerator(ABC):
         config: DipDupConfig,
         package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
+        include: set[str] | None = None,
     ) -> None:
         self._config = config
         self._package = package
         self._datasources = datasources
+        self._include = include or set()
         self._logger = _logger
 
     async def init(
@@ -52,9 +54,14 @@ class CodeGenerator(ABC):
         self._package.create()
 
         replay = self._package.replay
-        if base and replay:
+        if base or self._include:
+            if not replay:
+                raise FrameworkException('`--base` option passed but `configs/replay.yaml` file is missing')
             _logger.info('Recreating base template with replay.yaml')
-            render_base(replay, force)
+            render_base(replay, force, self._include)
+
+        if self._include:
+            force = any(str(path).startswith('types') for path in self._include)
 
         await self.generate_abi()
         await self.generate_schemas(force)

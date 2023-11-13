@@ -1,70 +1,16 @@
-import os
-import subprocess
-import tempfile
-from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
 from contextlib import AsyncExitStack
-from contextlib import asynccontextmanager
 from decimal import Decimal
 from functools import partial
-from pathlib import Path
-from shutil import which
 
 import pytest
 
 from dipdup.database import tortoise_wrapper
-from dipdup.exceptions import FrameworkException
 from dipdup.models.tezos_tzkt import TzktOperationType
-from tests import CONFIGS_PATH
-from tests import SRC_PATH
-
-
-@asynccontextmanager
-async def run_dipdup_demo(config: str, package: str, cmd: str = 'run') -> AsyncIterator[Path]:
-    config_path = CONFIGS_PATH / config
-    dipdup_pkg_path = SRC_PATH / 'dipdup'
-    demo_pkg_path = SRC_PATH / package
-    sqlite_config_path = Path(__file__).parent / 'configs' / 'sqlite.yaml'
-
-    with tempfile.TemporaryDirectory() as tmp_root_path:
-        # NOTE: Symlink configs, packages and executables
-        tmp_config_path = Path(tmp_root_path) / 'dipdup.yaml'
-        os.symlink(config_path, tmp_config_path)
-
-        tmp_bin_path = Path(tmp_root_path) / 'bin'
-        tmp_bin_path.mkdir()
-        for executable in ('dipdup', 'datamodel-codegen'):
-            if (executable_path := which(executable)) is None:
-                raise FrameworkException(f'Executable `{executable}` not found')
-            os.symlink(executable_path, tmp_bin_path / executable)
-
-        tmp_dipdup_pkg_path = Path(tmp_root_path) / 'dipdup'
-        os.symlink(dipdup_pkg_path, tmp_dipdup_pkg_path)
-
-        # NOTE: Ensure that `run` uses existing package and `init` creates a new one
-        if cmd == 'run':
-            tmp_demo_pkg_path = Path(tmp_root_path) / package
-            os.symlink(demo_pkg_path, tmp_demo_pkg_path)
-
-        # NOTE: Prepare environment
-        env = {
-            **os.environ,
-            'PATH': str(tmp_bin_path),
-            'PYTHONPATH': str(tmp_root_path),
-            'DIPDUP_TEST': '1',
-        }
-
-        subprocess.run(
-            f'dipdup -c {tmp_config_path} -c {sqlite_config_path} {cmd}',
-            cwd=tmp_root_path,
-            check=True,
-            shell=True,
-            env=env,
-            capture_output=True,
-        )
-
-        yield Path(tmp_root_path)
+from dipdup.test import run_in_tmp
+from dipdup.test import tmp_project
+from tests import TEST_CONFIGS
 
 
 async def assert_run_token() -> None:
@@ -117,6 +63,18 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
 
     assert holders == expected_holders
     assert f'{random_balance:f}' == expected_balance
+
+
+async def assert_run_balances() -> None:
+    import demo_token_balances.models
+
+    holders = await demo_token_balances.models.Holder.filter().count()
+    holder = await demo_token_balances.models.Holder.first()
+    assert holder
+    random_balance = holder.balance
+
+    assert holders == 1
+    assert random_balance == 0
 
 
 async def assert_run_big_maps() -> None:
@@ -204,14 +162,14 @@ async def assert_run_dao() -> None:
 test_args = ('config', 'package', 'cmd', 'assert_fn')
 test_params = (
     ('demo_token.yml', 'demo_token', 'run', assert_run_token),
-    ('demo_token.yml', 'demo_token', 'init', partial(assert_init, 'demo_token')),
+    ('demo_token.yml', 'demo_token', 'init', None),
     ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'run', assert_run_nft_marketplace),
-    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', partial(assert_init, 'demo_nft_marketplace')),
+    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', None),
     ('demo_auction.yml', 'demo_auction', 'run', assert_run_auction),
-    ('demo_auction.yml', 'demo_auction', 'init', partial(assert_init, 'demo_auction')),
+    ('demo_auction.yml', 'demo_auction', 'init', None),
     ('demo_token_transfers.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 4, '-0.01912431')),
     # FIXME: Why so many token transfer tests?
-    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', partial(assert_init, 'demo_token_transfers')),
+    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', None),
     (
         'demo_token_transfers_2.yml',
         'demo_token_transfers',
@@ -225,42 +183,61 @@ test_params = (
         'run',
         partial(assert_run_token_transfers, 2, '-0.02302128'),
     ),
+    ('demo_token_balances.yml', 'demo_token_balances', 'run', assert_run_balances),
+    ('demo_token_balances.yml', 'demo_token_balances', 'init', None),
     ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
-    ('demo_big_maps.yml', 'demo_big_maps', 'init', partial(assert_init, 'demo_big_maps')),
+    ('demo_big_maps.yml', 'demo_big_maps', 'init', None),
     ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),
-    ('demo_domains.yml', 'demo_domains', 'init', partial(assert_init, 'demo_domains')),
+    ('demo_domains.yml', 'demo_domains', 'init', None),
     ('demo_dex.yml', 'demo_dex', 'run', assert_run_dex),
-    ('demo_dex.yml', 'demo_dex', 'init', partial(assert_init, 'demo_dex')),
+    ('demo_dex.yml', 'demo_dex', 'init', None),
     ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
-    ('demo_dao.yml', 'demo_dao', 'init', partial(assert_init, 'demo_dao')),
+    ('demo_dao.yml', 'demo_dao', 'init', None),
     ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
-    ('demo_factories.yml', 'demo_factories', 'init', partial(assert_init, 'demo_factories')),
+    ('demo_factories.yml', 'demo_factories', 'init', None),
     ('demo_events.yml', 'demo_events', 'run', assert_run_events),
-    ('demo_events.yml', 'demo_events', 'init', partial(assert_init, 'demo_events')),
+    ('demo_events.yml', 'demo_events', 'init', None),
     ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
-    ('demo_raw.yml', 'demo_raw', 'init', partial(assert_init, 'demo_raw')),
+    ('demo_raw.yml', 'demo_raw', 'init', None),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
-    ('demo_evm_events.yml', 'demo_evm_events', 'init', partial(assert_init, 'demo_evm_events')),
+    ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    # NOTE: Smoke tests for small tools.
+    ('demo_dex.yml', 'demo_dex', ('config', 'env', '--compose', '--internal'), None),
+    ('demo_dex.yml', 'demo_dex', ('config', 'export', '--full'), None),
+    ('demo_dex.yml', 'demo_dex', ('package', 'tree'), None),
+    ('demo_dex.yml', 'demo_dex', ('report', 'ls'), None),
+    ('demo_dex.yml', 'demo_dex', ('self', 'env'), None),
+    ('demo_dex.yml', 'demo_dex', ('schema', 'export'), None),
 )
 
 
 @pytest.mark.parametrize(test_args, test_params)
-async def test_demos(
+async def test_run_init(
     config: str,
     package: str,
-    cmd: str,
-    assert_fn: Callable[[], Awaitable[None]],
+    cmd: str | tuple[str, ...],
+    assert_fn: Callable[[], Awaitable[None]] | None,
 ) -> None:
+    config_path = TEST_CONFIGS / config
+    env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
+
     async with AsyncExitStack() as stack:
-        tmp_root_path = await stack.enter_async_context(
-            run_dipdup_demo(config, package, cmd),
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                [config_path, env_config_path],
+                package,
+                exists=cmd != 'init',
+            ),
         )
+        await run_in_tmp(tmp_package_path, env, *((cmd,) if isinstance(cmd, str) else cmd))
+        if not assert_fn:
+            return
+
         await stack.enter_async_context(
             tortoise_wrapper(
-                f'sqlite://{tmp_root_path}/db.sqlite3',
+                f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )
         )
-
         await assert_fn()

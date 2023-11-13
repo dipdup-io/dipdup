@@ -1,14 +1,13 @@
+from collections import deque
 from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
@@ -24,32 +23,12 @@ BigMapQueueItem = tuple[TzktBigMapData, ...] | TzktRollbackMessage
 
 
 class TzktBigMapsIndex(
-    Index[TzktBigMapsIndexConfig, BigMapQueueItem, TzktDatasource],
+    TzktIndex[TzktBigMapsIndexConfig, BigMapQueueItem],
     message_type=TzktMessageType.big_map,
 ):
     def push_big_maps(self, big_maps: BigMapQueueItem) -> None:
         """Push big map diffs to queue"""
         self.push_realtime_message(big_maps)
-
-    async def _process_queue(self) -> None:
-        """Process WebSocket queue"""
-        if self._queue:
-            self._logger.debug('Processing websocket queue')
-        while self._queue:
-            message = self._queue.popleft()
-            if isinstance(message, TzktRollbackMessage):
-                await self._tzkt_rollback(message.from_level, message.to_level)
-                continue
-
-            message_level = message[0].level
-            if message_level <= self.state.level:
-                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
-                continue
-
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_big_maps(message, message_level)
 
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -82,7 +61,7 @@ class TzktBigMapsIndex(
                 if Metrics.enabled:
                     Metrics.set_levels_to_sync(self._config.name, sync_level - level)
                     stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_big_maps(big_maps, sync_level)
+                await self._process_level_data(big_maps, sync_level)
 
     async def _synchronize_level(self, head_level: int) -> None:
         # NOTE: Checking late because feature flags could be modified after loading config
@@ -98,7 +77,7 @@ class TzktBigMapsIndex(
                     if contract_big_map['path'] == path:
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
 
-        # NOTE: Do not use `_process_level_big_maps` here; we want to maintain transaction manually.
+        # NOTE: Do not use `_process_level_data` here; we want to maintain transaction manually.
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
@@ -124,37 +103,8 @@ class TzktBigMapsIndex(
 
             await self._update_state(level=head_level)
 
-    async def _process_level_big_maps(
-        self,
-        big_maps: tuple[TzktBigMapData, ...],
-        sync_level: int,
-    ) -> None:
-        if not big_maps:
-            return
-
-        batch_level = big_maps[0].level
-        index_level = self.state.level
-        if batch_level <= index_level:
-            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
-
-        self._logger.debug('Processing big map diffs of level %s', batch_level)
-        matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_maps)
-
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
-        if not matched_handlers:
-            await self._update_state(level=batch_level)
-            return
-
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, big_map_diff in matched_handlers:
-                await self._call_matched_handler(handler_config, big_map_diff)
-            await self._update_state(level=batch_level)
-
     async def _call_matched_handler(
-        self, handler_config: TzktBigMapsHandlerConfig, big_map_diff: TzktBigMapDiff[Any, Any]
+        self, handler_config: TzktBigMapsHandlerConfig, level_data: TzktBigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -165,5 +115,8 @@ class TzktBigMapsIndex(
             self.datasource,
             # NOTE: missing `operation_id` field in API to identify operation
             None,
-            big_map_diff,
+            level_data,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        return match_big_maps(self._ctx.package, handlers, level_data)

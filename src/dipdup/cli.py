@@ -137,7 +137,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
 
 async def _check_version() -> None:
-    if 'rc' in __version__ or 'b' in __version__:
+    if '+editable' in __version__:
+        return
+    if '-rc' in __version__:
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
@@ -209,7 +211,11 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         return
 
     # NOTE: https://github.com/python/cpython/issues/95778
-    sys.set_int_max_str_digits(0)
+    # NOTE: Method is not available in early Python 3.11
+    try:
+        sys.set_int_max_str_digits(0)
+    except AttributeError:
+        _logger.warning("You're running an outdated Python 3.11 release; consider upgrading")
 
     from dotenv import load_dotenv
 
@@ -217,8 +223,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.sys import set_up_logging
 
     set_up_logging()
-    if env.DEBUG:
-        logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]
@@ -288,9 +292,20 @@ async def run(ctx: click.Context) -> None:
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
 @click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.argument(
+    'include',
+    type=str,
+    nargs=-1,
+    metavar='PATH',
+)
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, force: bool, base: bool) -> None:
+async def init(
+    ctx: click.Context,
+    force: bool,
+    base: bool,
+    include: list[str],
+) -> None:
     """Generate project tree, typeclasses and callback stubs.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
@@ -299,7 +314,12 @@ async def init(ctx: click.Context, force: bool, base: bool) -> None:
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(force, base)
+
+    await dipdup.init(
+        force=force,
+        base=base or bool(include),
+        include=set(include),
+    )
 
 
 @cli.command()
@@ -324,7 +344,7 @@ async def config(ctx: click.Context) -> None:
 
 @config.command(name='export')
 @click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
-@click.option('--full', is_flag=True, help='Resolve index templates.')
+@click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
 @click.pass_context
 @_cli_wrapper
 async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
@@ -346,20 +366,43 @@ async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
 
 @config.command(name='env')
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
+@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
+@click.option('--compose', '-c', is_flag=True, help='Output in docker-compose format.')
+@click.option('--internal', '-i', is_flag=True, help='Include internal variables.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, output: str | None) -> None:
+async def config_env(
+    ctx: click.Context,
+    output: str | None,
+    unsafe: bool,
+    compose: bool,
+    internal: bool,
+) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
     """
-    from dipdup.config import DipDupConfig
+    from dipdup.yaml import DipDupYAMLConfig
 
-    config = DipDupConfig.load(
+    _, environment = DipDupYAMLConfig.load(
         paths=ctx.obj.config._paths,
-        environment=True,
+        environment=unsafe,
     )
-    content = '\n'.join(f'{k}={v}' for k, v in sorted(config._environment.items()))
+    if internal:
+        environment.update(env.dump())
+    if compose:
+        content = 'services:\n  dipdup:\n    environment:\n'
+        _tab = ' ' * 6
+        for k, v in sorted(environment.items()):
+            line = f'{_tab}- {k}=' + '${' + k
+            if v is not None:
+                line += ':-' + v + '}'
+            else:
+                line += '}'
+
+            content += line + '\n'
+    else:
+        content = '\n'.join(f'{k}={v}' for k, v in sorted(environment.items()))
     if output:
         Path(output).write_text(content)
     else:
@@ -374,7 +417,7 @@ async def hasura(ctx: click.Context) -> None:
 
 
 @hasura.command(name='configure')
-@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
+@click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @_cli_wrapper
 async def hasura_configure(ctx: click.Context, force: bool) -> None:
@@ -449,8 +492,8 @@ async def schema_approve(ctx: click.Context) -> None:
 
 
 @schema.command(name='wipe')
-@click.option('--immune', is_flag=True, help='Drop immune tables too.')
-@click.option('--force', is_flag=True, help='Skip confirmation prompt.')
+@click.option('--immune', '-i', is_flag=True, help='Drop immune tables too.')
+@click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
 @_cli_wrapper
 async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
@@ -503,11 +546,14 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        unsafe_sqlite=config.advanced.unsafe_sqlite,
     ):
         conn = get_connection()
         await wipe_schema(
             conn=conn,
-            schema_name=config.database.schema_name,
+            schema_name=config.database.path
+            if isinstance(config.database, SqliteDatabaseConfig)
+            else config.database.schema_name,
             immune_tables=immune_tables,
         )
 
@@ -698,6 +744,17 @@ async def self_update(
     import dipdup.install
 
     dipdup.install.install(quiet, force, None, None, None)
+
+
+@self.command(name='env', hidden=True)
+@click.pass_context
+@_cli_wrapper
+async def self_env(ctx: click.Context) -> None:
+    import dipdup.install
+
+    env = dipdup.install.DipDupEnvironment()
+    env.refresh()
+    env.print()
 
 
 @cli.group()

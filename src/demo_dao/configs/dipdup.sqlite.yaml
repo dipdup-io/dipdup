@@ -1,5 +1,3 @@
 database:
   kind: sqlite
   path: ${SQLITE_PATH:-/tmp/demo_dao.sqlite}
-
-logging: ${LOGLEVEL:-INFO}

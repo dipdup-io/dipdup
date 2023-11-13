@@ -33,6 +33,7 @@ from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.database import execute_sql
 from dipdup.database import execute_sql_query
@@ -297,10 +298,11 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
         from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
+        from dipdup.indexes.tezos_tzkt_token_balances.index import TzktTokenBalancesIndex
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenBalancesIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
@@ -315,6 +317,9 @@ class DipDupContext:
         elif isinstance(index_config, TzktHeadIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktHeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TzktTokenBalancesIndexConfig):
+            datasource = self.get_tzkt_datasource(datasource_name)
+            index = TzktTokenBalancesIndex(self, index_config, datasource)
         elif isinstance(index_config, TzktTokenTransfersIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
             index = TzktTokenTransfersIndex(self, index_config, datasource)

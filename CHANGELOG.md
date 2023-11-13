@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+
+### Security
+
+- deps: Updated PyArrow to 14.0.1 to fix [CVE-2023-47248](https://github.com/advisories/GHSA-5wvp-7f3h-6wmm)
+
+## [7.1.1] - 2023-11-07
+
+### Fixed
+
+- cli: Fixed crash on early Python 3.11 releases.
+- project: Update default Docker tag for TimescaleDB HA.
+
+## [7.1.0] - 2023-10-27
+
+### Added
+
+- cli: Added `--unsafe`, `--compose`, `--internal` flags to `config env` command.
+- cli: Added missing short equivalents for options in some commands.
+- cli: Relative paths to be initialized now can be passed to the `init` command as arguments.
+- tezos.tzkt.token_balances: Added new index.
+
+### Fixed
+
+- cli: Fixed `DIPDUP_DEBUG` not being applied to the package logger.
+- tezos.tzkt.token_transfers: Fixed filtering transfers by token_id.
+
+## [7.0.2] - 2023-10-10
+
+### Added
+
+- database: Added `dipdup_wipe` and `dipdup_approve` SQL functions to the schema.
+
+### Fixed
+
+- cli: Fixed `schema wipe` command for SQLite databases.
+- tezos.tzkt: Fixed regression in `get_transactions` method pagination.
+
+## [6.5.13] - 2023-10-10
+
+### Fixed
+
+- tzkt: Fixed regression in `get_transactions` method pagination.
+
 ## [7.0.1] - 2023-09-30
 
 ### Added
@@ -1193,7 +1242,10 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.0.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.1...HEAD
+[7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
+[7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
+[7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2
 [7.0.1]: https://github.com/dipdup-io/dipdup/compare/7.0.0...7.0.1
 [7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...7.0.0
 [7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5

@@ -34,7 +34,7 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationsHandlerArgumentU = TzktTransaction | TzktOrigination | TzktOperationData | None
+OperationsHandlerArgumentU = TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktOperationData | None
 MatchedOperationsT = tuple[OperationSubgroup, TzktOperationsHandlerConfigU, deque[OperationsHandlerArgumentU]]
 
 
@@ -208,6 +208,8 @@ def match_operation_subgroup(
         transaction = handler[2][-1]
         if isinstance(transaction, TzktOperationData):
             id_list.append(transaction.id)
+        elif isinstance(transaction, TzktOrigination):
+            id_list.append(transaction.data.id)
         elif isinstance(transaction, TzktTransaction):
             id_list.append(transaction.data.id)
         else:

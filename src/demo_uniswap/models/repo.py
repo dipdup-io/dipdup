@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import Any
 from typing import cast
 
-from lru import LRU  # type: ignore[import]
+from lru import LRU
 
 import demo_uniswap.models as models
 from dipdup.config.evm import EvmContractConfig
@@ -14,7 +14,7 @@ USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 class ModelsRepo:
     def __init__(self) -> None:
         self._eth_usd: Decimal | None = None
-        self._pending_positions: dict[str, Any] = LRU(4096)
+        self._pending_positions: LRU[str, Any] = LRU(4096)
 
     async def get_eth_usd_rate(self) -> Decimal:
         if self._eth_usd is None:

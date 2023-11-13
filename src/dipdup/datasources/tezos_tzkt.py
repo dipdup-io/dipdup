@@ -43,6 +43,7 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktSubscription
+from dipdup.models.tezos_tzkt import TzktTokenBalanceData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.utils import split_by_chunks
 
@@ -111,6 +112,18 @@ TOKEN_TRANSFER_FIELDS = (
     'originationId',
     'migrationId',
 )
+TOKEN_BALANCE_FIELDS = (
+    'id',
+    'transfersCount',
+    'firstLevel',
+    'firstTime',
+    'lastLevel',
+    'lastTime',
+    'account',
+    'token',
+    'balance',
+    'balanceValue',
+)
 EVENT_FIELDS = (
     'id',
     'level',
@@ -127,6 +140,7 @@ EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['TzktDatasource', TzktHeadBlockData], Awaitable[None]]
 OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]], Awaitable[None]]
 TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
+TokenBalancesCallback = Callable[['TzktDatasource', tuple[TzktTokenBalanceData, ...]], Awaitable[None]]
 BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
 EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
 RollbackCallback = Callable[['TzktDatasource', MessageType, int, int], Awaitable[None]]
@@ -236,6 +250,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_operations_callbacks: set[OperationsCallback] = set()
         self._on_token_transfers_callbacks: set[TokenTransfersCallback] = set()
+        self._on_token_balances_callbacks: set[TokenBalancesCallback] = set()
         self._on_big_maps_callbacks: set[BigMapsCallback] = set()
         self._on_events_callbacks: set[EventsCallback] = set()
         self._on_rollback_callbacks: set[RollbackCallback] = set()
@@ -340,6 +355,10 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     async def emit_token_transfers(self, token_transfers: tuple[TzktTokenTransferData, ...]) -> None:
         for fn in self._on_token_transfers_callbacks:
             await fn(self, token_transfers)
+
+    async def emit_token_balances(self, token_balances: tuple[TzktTokenBalanceData, ...]) -> None:
+        for fn in self._on_token_balances_callbacks:
+            await fn(self, token_balances)
 
     async def emit_big_maps(self, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for fn in self._on_big_maps_callbacks:
@@ -713,14 +732,18 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         params = self._get_request_params(
             first_level=first_level,
             last_level=last_level,
-            offset=offset,
+            # NOTE: This is intentional
+            offset=None,
             limit=limit,
             select=TRANSACTION_OPERATION_FIELDS,
             values=True,
-            cursor=True,
             sort='level',
             status='applied',
         )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
@@ -887,6 +910,48 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             token_ids,
             from_addresses,
             to_addresses,
+            first_level,
+            last_level,
+            cursor=True,
+        ):
+            yield batch
+
+    async def get_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TzktTokenBalanceData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=TOKEN_BALANCE_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'token.contract.in': ','.join(token_addresses),
+                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
+            },
+        )
+        raw_token_balances = await self._request_values_dict('get', url='v1/tokens/balances', params=params)
+        return tuple(TzktTokenBalanceData.from_json(item) for item in raw_token_balances)
+
+    async def iter_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int | None = None,
+        last_level: int | None = None,
+    ) -> AsyncIterator[tuple[TzktTokenBalanceData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_token_balances,
+            token_addresses,
+            token_ids,
             first_level,
             last_level,
             cursor=True,
@@ -1069,6 +1134,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         self._signalr_client.on('operations', partial(self._on_message, TzktMessageType.operation))
         self._signalr_client.on('transfers', partial(self._on_message, TzktMessageType.token_transfer))
+        self._signalr_client.on('balances', partial(self._on_message, TzktMessageType.token_balance))
         self._signalr_client.on('bigmaps', partial(self._on_message, TzktMessageType.big_map))
         self._signalr_client.on('head', partial(self._on_message, TzktMessageType.head))
         self._signalr_client.on('events', partial(self._on_message, TzktMessageType.event))
@@ -1142,6 +1208,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 await self._process_operations_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == TzktMessageType.token_transfer:
                 await self._process_token_transfers_data(cast(list[dict[str, Any]], buffered_message.data))
+            elif buffered_message.type == TzktMessageType.token_balance:
+                await self._process_token_balances_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == TzktMessageType.big_map:
                 await self._process_big_maps_data(cast(list[dict[str, Any]], buffered_message.data))
             elif buffered_message.type == TzktMessageType.head:
@@ -1177,6 +1245,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         for _level, token_transfers in level_token_transfers.items():
             await self.emit_token_transfers(tuple(token_transfers))
+
+    async def _process_token_balances_data(self, data: list[dict[str, Any]]) -> None:
+        """Parse and emit raw token balances from WS"""
+        level_token_balances: defaultdict[int, deque[TzktTokenBalanceData]] = defaultdict(deque)
+
+        for token_balance_json in data:
+            token_balance = TzktTokenBalanceData.from_json(token_balance_json)
+            level_token_balances[token_balance.level].append(token_balance)
+
+        for _level, token_balances in level_token_balances.items():
+            await self.emit_token_balances(tuple(token_balances))
 
     async def _process_big_maps_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""

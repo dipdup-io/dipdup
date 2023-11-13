@@ -737,6 +737,10 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
+        if env.DEBUG:
+            logging.getLogger('dipdup').setLevel(logging.DEBUG)
+            logging.getLogger(self.package).setLevel(logging.DEBUG)
+
         loglevels = self.logging
         if not isinstance(loglevels, dict):
             loglevels = {
@@ -827,22 +831,22 @@ class DipDupConfig:
             )
         self.advanced.rollback_depth = rollback_depth
 
-        # NOTE: Bigmap indexes with `skip_history` require early realtime
+        if self.advanced.early_realtime:
+            return
+
+        # NOTE: Indexes that process only the current state imply early realtime.
         from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+        from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 
         for name, index_config in self.indexes.items():
-            if isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never:
-                _logger.warning('`%s` index is configured to skip history; enabling early realtime', name)
+            is_big_maps = (
+                isinstance(index_config, TzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never
+            )
+            is_token_balances = isinstance(index_config, TzktTokenBalancesIndexConfig)
+            if is_big_maps or is_token_balances:
+                _logger.info('`%s` index is configured to skip history; implying `early_realtime` flag', name)
                 self.advanced.early_realtime = True
                 break
-
-        # NOTE: Optional checks
-        for flag in (
-            'crash_reporting',
-            'metadata_interface',
-        ):
-            if getattr(self.advanced, flag, None):
-                _logger.warning('`%s flag was removed and has no effect', flag)
 
     def _resolve_template(self, template_config: IndexTemplateConfig) -> None:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
@@ -956,13 +960,20 @@ class DipDupConfig:
                 handler_config.parent = index_config
 
                 if isinstance(handler_config.contract, str):
-                    handler_config.contract = self.get_contract(handler_config.contract)
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
                 if isinstance(handler_config.from_, str):
-                    handler_config.from_ = self.get_contract(handler_config.from_)
+                    handler_config.from_ = self.get_tezos_contract(handler_config.from_)
 
                 if isinstance(handler_config.to, str):
-                    handler_config.to = self.get_contract(handler_config.to)
+                    handler_config.to = self.get_tezos_contract(handler_config.to)
+
+        elif isinstance(index_config, TzktTokenBalancesIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TzktOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
@@ -1025,6 +1036,7 @@ from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatt
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
@@ -1048,6 +1060,7 @@ ResolvedIndexConfigU = (
     | TzktOperationsIndexConfig
     | TzktOperationsUnfilteredIndexConfig
     | TzktTokenTransfersIndexConfig
+    | TzktTokenBalancesIndexConfig
 )
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 

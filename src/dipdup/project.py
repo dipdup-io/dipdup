@@ -97,7 +97,7 @@ def prompt_anyof(
     default: int,
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
-    import survey  # type: ignore[import]
+    import survey  # type: ignore[import-untyped]
 
     table = tabulate(
         zip(options, comments, strict=True),
@@ -205,7 +205,7 @@ def answers_from_terminal() -> Answers:
         options=(
             'postgres:15',
             'timescale/timescaledb:latest-pg15',
-            'timescale/timescaledb-ha:pg15-latest',
+            'timescale/timescaledb-ha:pg15',
         ),
         comments=(
             'PostgreSQL',
@@ -263,10 +263,17 @@ def render_project(
 def render_base(
     answers: Answers,
     force: bool = False,
+    include: set[str] | None = None,
 ) -> None:
     """Render base from template"""
     # NOTE: Common base
-    _render_templates(answers, Path('base'), force, refresh=True)
+    _render_templates(
+        answers=answers,
+        path=Path('base'),
+        force=force,
+        include=include,
+        exists=True,
+    )
 
     _render(
         answers,
@@ -276,7 +283,13 @@ def render_base(
     )
 
 
-def _render_templates(answers: Answers, path: Path, force: bool = False, refresh: bool = False) -> None:
+def _render_templates(
+    answers: Answers,
+    path: Path,
+    force: bool = False,
+    include: set[str] | None = None,
+    exists: bool = False,
+) -> None:
     from jinja2 import Template
 
     project_path = Path(__file__).parent / 'projects' / path
@@ -284,7 +297,12 @@ def _render_templates(answers: Answers, path: Path, force: bool = False, refresh
 
     for path in project_paths:
         template_path = path.relative_to(Path(__file__).parent)
-        output_base = get_package_path(answers['package']) if refresh else Path(answers['package'])
+        relative_path = str(Path(*template_path.parts[2:]))[:-3]
+
+        if include and not any(relative_path.startswith(i) for i in include):
+            continue
+
+        output_base = get_package_path(answers['package']) if exists else Path(answers['package'])
         output_path = Path(
             output_base,
             *path.relative_to(project_path).parts,
@@ -300,5 +318,8 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
-    content = template.render(project=answers)
+    content = template.render(
+        project=answers,
+        __version__=__version__,
+    )
     write(output_path, content, overwrite=force)

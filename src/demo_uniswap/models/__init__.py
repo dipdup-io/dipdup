@@ -46,7 +46,7 @@ class Token(CachedModel):
     # volume in token units
     volume = fields.DecimalField(decimal_places=18, max_digits=96, default=0)
     # volume in derived USD
-    volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0)
+    volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0, index=True)
     # volume in USD even on pools with less reliable USD values
     untracked_volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0)
     # fees in USD
@@ -336,7 +336,7 @@ class Swap(Model):
     # pointer to transaction
     transaction_hash = fields.TextField()
     # timestamp of transaction
-    timestamp = fields.BigIntField()
+    timestamp = fields.DatetimeField(index=True)
     # pool swap occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='swaps')
     # allow indexing by tokens
