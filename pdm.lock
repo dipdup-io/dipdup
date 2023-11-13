@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:79e43edc4841bf338b3af0721798a11b21748d9ad00f6e6bfcc98136e83dfc25"
+content_hash = "sha256:c4e4800ad2f55f648835dcaa98e63ecaa7bae10653c1ee05dddf6d7a788998ea"
 
 [[package]]
 name = "aiohttp"
@@ -968,14 +968,6 @@ summary = "plugin and hook calling mechanisms for python"
 files = [
     {file = "pluggy-1.3.0-py3-none-any.whl", hash = "sha256:d89c696a773f8bd377d18e5ecda92b7a3793cbe66c87060a6fb58c7b6e1061f7"},
     {file = "pluggy-1.3.0.tar.gz", hash = "sha256:cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12"},
-]
-
-[[package]]
-name = "pprofile"
-version = "2.1.0"
-summary = ""
-files = [
-    {file = "pprofile-2.1.0.tar.gz", hash = "sha256:b2bb56603dadf40c0bc0f61621f22c20e41638425f729945d9b7f8e4ae8cdd4a"},
 ]
 
 [[package]]

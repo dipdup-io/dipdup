@@ -87,7 +87,6 @@ dev = [
     "black",
     "docker",
     "mypy",
-    "pprofile",
     "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
