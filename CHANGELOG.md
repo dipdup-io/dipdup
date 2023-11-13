@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## Unreleased
+
+### Added
+
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+
 ## [7.1.1] - 2023-11-07
 
 ### Fixed

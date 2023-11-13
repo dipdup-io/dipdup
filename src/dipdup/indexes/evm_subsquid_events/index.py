@@ -21,6 +21,7 @@ from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import metrics
+from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
@@ -100,6 +101,8 @@ class SubsquidEventsIndex(
 
         for message_level, level_logs in logs_by_level.items():
             await self._process_level_events(tuple(level_logs), message_level)
+            if self._config.expose_metrics:
+                Metrics.set_sqd_processor_last_block(message_level)
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -131,6 +134,8 @@ class SubsquidEventsIndex(
             return
 
         subsquid_sync_level = await self.datasource.get_head_level()
+        if self._config.expose_metrics:
+            Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
 
         use_node = False
         if self.node_datasources:
@@ -166,14 +171,18 @@ class SubsquidEventsIndex(
                     raise FrameworkException(f'Block {level} not found')
                 timestamp = int(block['timestamp'], 16)
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
-                await self._process_level_events(parsed_level_logs, sync_level)
 
+                await self._process_level_events(parsed_level_logs, sync_level)
+                if self._config.expose_metrics:
+                    Metrics.set_sqd_processor_last_block(level)
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
 
             async for _level, events in fetcher.fetch_by_level():
                 await self._process_level_events(events, sync_level)
+                if self._config.expose_metrics:
+                    Metrics.set_sqd_processor_last_block(_level)
 
         await self._exit_sync_state(sync_level)
 
