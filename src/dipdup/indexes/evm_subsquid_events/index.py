@@ -21,9 +21,11 @@ from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import metrics
+from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
+NODE_BATCH_SIZE = 100
 
 
 class SubsquidEventsIndex(
@@ -100,6 +102,8 @@ class SubsquidEventsIndex(
 
         for message_level, level_logs in logs_by_level.items():
             await self._process_level_events(tuple(level_logs), message_level)
+            if self._config.expose_metrics:
+                Metrics.set_sqd_processor_last_block(message_level)
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -131,6 +135,8 @@ class SubsquidEventsIndex(
             return
 
         subsquid_sync_level = await self.datasource.get_head_level()
+        if self._config.expose_metrics:
+            Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
 
         use_node = False
         if self.node_datasources:
@@ -152,28 +158,44 @@ class SubsquidEventsIndex(
             for handler in self._config.handlers:
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
-            # FIXME: This is terribly inefficient (but okay for the last mile); see advanced example in web3.py docs.
-            for level in range(first_level, sync_level + 1):
+
+            # Requesting blocks info by batch
+            windows = ((i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1))
+            for start_level, end_level in windows:
                 # NOTE: Get random one every time
+                # NOTE: Data for blocks start_level and end_level will be included
                 level_logs = await self.random_node.get_logs(
                     {
-                        'fromBlock': hex(level),
-                        'toBlock': hex(level),
+                        'fromBlock': hex(start_level),
+                        'toBlock': hex(end_level),
                     }
                 )
-                block = await self.random_node.get_block_by_level(level)
-                if block is None:
-                    raise FrameworkException(f'Block {level} not found')
-                timestamp = int(block['timestamp'], 16)
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
-                await self._process_level_events(parsed_level_logs, sync_level)
 
+                # get timestamps for levels
+                timestamps = {}
+                for level in range(start_level, end_level + 1):
+                    block = await self.random_node.get_block_by_level(level)
+                    try:
+                        timestamps[hex(level)] = int(block['timestamp'], 16)
+                    except TypeError as e:
+                        raise FrameworkException(f'Block {level} not found') from e
+
+                # match timestamps with logs
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamps[log['blockNumber']])
+                                          for log in level_logs)
+                await self._process_level_events(parsed_level_logs, self.topics, sync_level)
+
+                await self._process_level_events(parsed_level_logs, sync_level)
+                if self._config.expose_metrics:
+                    Metrics.set_sqd_processor_last_block(level)
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
 
             async for _level, events in fetcher.fetch_by_level():
                 await self._process_level_events(events, sync_level)
+                if self._config.expose_metrics:
+                    Metrics.set_sqd_processor_last_block(_level)
 
         await self._exit_sync_state(sync_level)
 
