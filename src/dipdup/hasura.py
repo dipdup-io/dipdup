@@ -60,7 +60,7 @@ vulnerable_versions = {
     'v1.3.0': 'v1.3.4',
 }
 
-RelationalFieldT = fields.relational.ForeignKeyFieldInstance | fields.relational.ManyToManyFieldInstance
+RelationalFieldT = fields.relational.ForeignKeyFieldInstance[Any] | fields.relational.ManyToManyFieldInstance[Any]
 
 _get_fields_query = """
 query introspectionQuery($name: String!) {
