@@ -68,6 +68,7 @@ class SubsquidEventsIndexConfig(IndexConfig):
     handlers: tuple[SubsquidEventsHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
+    expose_metrics: bool = False
 
     first_level: int = 0
     last_level: int = 0

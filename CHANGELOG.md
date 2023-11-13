@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
 - project: Added optional `package_manager` field to replay config.
 - project: Added Makefile to the default project template (only for new projects).
 
@@ -16,6 +18,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - codegen: Use datamodel-code-generator from the project's virtualenv.
 - install: Don't install datamodel-code-generator as a CLI tool.
 - install: Respect package manager if specified in pyproject.toml.
+
+### Security
+
+- deps: Updated PyArrow to 14.0.1 to fix [CVE-2023-47248](https://github.com/advisories/GHSA-5wvp-7f3h-6wmm)
 
 ## [7.1.1] - 2023-11-07
 
