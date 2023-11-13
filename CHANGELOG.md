@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+
+## [7.1.1] - 2023-11-07
+
+### Fixed
+
+- cli: Fixed crash on early Python 3.11 releases.
+- project: Update default Docker tag for TimescaleDB HA.
 
 ## [7.1.0] - 2023-10-27
 
@@ -1230,7 +1238,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.1...HEAD
+[7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
 [7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2
 [7.0.1]: https://github.com/dipdup-io/dipdup/compare/7.0.0...7.0.1

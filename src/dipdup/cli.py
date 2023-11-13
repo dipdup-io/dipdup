@@ -211,7 +211,11 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         return
 
     # NOTE: https://github.com/python/cpython/issues/95778
-    sys.set_int_max_str_digits(0)
+    # NOTE: Method is not available in early Python 3.11
+    try:
+        sys.set_int_max_str_digits(0)
+    except AttributeError:
+        _logger.warning("You're running an outdated Python 3.11 release; consider upgrading")
 
     from dotenv import load_dotenv
 
