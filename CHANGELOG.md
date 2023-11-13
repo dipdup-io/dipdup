@@ -8,8 +8,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
-- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+- evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
+
+### Fixed
+
+- cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
+
+### Performance
+
+- evm.subsquid.events: Request logs in batches to speed up the last mile indexing.
 
 ### Security
 
