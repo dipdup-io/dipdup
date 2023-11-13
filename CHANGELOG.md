@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
+- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+
 ### Security
 
 - deps: Updated PyArrow to 14.0.1 to fix [CVE-2023-47248](https://github.com/advisories/GHSA-5wvp-7f3h-6wmm)
