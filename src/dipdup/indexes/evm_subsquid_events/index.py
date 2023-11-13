@@ -100,7 +100,7 @@ class SubsquidEventsIndex(
                 break
 
         for message_level, level_logs in logs_by_level.items():
-            await self._process_level_events(tuple(level_logs), self.topics, message_level)
+            await self._process_level_events(tuple(level_logs), message_level)
             if self._config.expose_metrics:
                 Metrics.set_sqd_processor_last_block(message_level)
 
@@ -171,16 +171,16 @@ class SubsquidEventsIndex(
                     raise FrameworkException(f'Block {level} not found')
                 timestamp = int(block['timestamp'], 16)
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
-                await self._process_level_events(parsed_level_logs, self.topics, sync_level)
+
+                await self._process_level_events(parsed_level_logs, sync_level)
                 if self._config.expose_metrics:
                     Metrics.set_sqd_processor_last_block(level)
-
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
 
             async for _level, events in fetcher.fetch_by_level():
-                await self._process_level_events(events, self.topics, sync_level)
+                await self._process_level_events(events, sync_level)
                 if self._config.expose_metrics:
                     Metrics.set_sqd_processor_last_block(_level)
 
@@ -210,7 +210,6 @@ class SubsquidEventsIndex(
     async def _process_level_events(
         self,
         events: tuple[SubsquidEventData | EvmNodeLogData, ...],
-        topics: dict[str, dict[str, str]],
         sync_level: int,
     ) -> None:
         if not events:

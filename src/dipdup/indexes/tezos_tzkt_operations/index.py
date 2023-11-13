@@ -1,10 +1,12 @@
 import logging
 from collections import defaultdict
 from collections import deque
+from collections.abc import Coroutine
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
 from contextlib import ExitStack
+from typing import Any
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -17,7 +19,7 @@ from dipdup.context import DipDupContext
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationFetcher
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationUnfilteredFetcher
 from dipdup.indexes.tezos_tzkt_operations.matcher import MatchedOperationsT
@@ -143,7 +145,7 @@ def extract_operation_subgroups(
 
 
 class TzktOperationsIndex(
-    Index[TzktOperationsIndexConfigU, OperationQueueItem, TzktDatasource],
+    TzktIndex[TzktOperationsIndexConfigU, OperationQueueItem],
     message_type=TzktMessageType.operation,
 ):
     def __init__(
@@ -175,6 +177,7 @@ class TzktOperationsIndex(
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
+    # FIXME: Use method from TzktIndex
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
@@ -253,6 +256,7 @@ class TzktOperationsIndex(
 
         await self._exit_sync_state(sync_level)
 
+    # FIXME: Use method from TzktIndex
     async def _process_level_operations(
         self,
         operation_subgroups: tuple[OperationSubgroup, ...],
@@ -300,15 +304,15 @@ class TzktOperationsIndex(
 
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
-                await self._call_matched_handler(handler_config, operation_subgroup, args)
+                await self._call_matched_handler(handler_config, (operation_subgroup, args))
             await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
         self,
         handler_config: TzktOperationsHandlerConfigU,
-        operation_subgroup: OperationSubgroup,
-        args: Sequence[OperationsHandlerArgumentU],
+        level_data: tuple[OperationSubgroup, Sequence[OperationsHandlerArgumentU]],
     ) -> None:
+        operation_subgroup, args = level_data
         if not handler_config.parent:
             raise ConfigInitializationException
 
@@ -319,3 +323,9 @@ class TzktOperationsIndex(
             operation_subgroup.hash + ': {}',
             *args,
         )
+
+    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
+        raise NotImplementedError
+
+    def _process_level_data(self, level_data: OperationQueueItem, sync_level: int) -> Coroutine[Any, Any, None]:
+        raise NotImplementedError
