@@ -159,7 +159,7 @@ class SubsquidEventsIndex(
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
 
-            # Requesting blocks info by batch
+            # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
             batch_first_level = first_level
             while batch_first_level <= sync_level:
                 batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
@@ -187,7 +187,7 @@ class SubsquidEventsIndex(
                 await self._process_level_events(parsed_level_logs, sync_level)
                 if self._config.expose_metrics:
                     Metrics.set_sqd_processor_last_block(level)
-                
+
                 batch_first_level = batch_last_level + 1
         else:
             sync_level = min(sync_level, subsquid_sync_level)
