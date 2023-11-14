@@ -239,6 +239,21 @@ def answers_from_terminal() -> Answers:
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
 
+    _, answers['package_manager'] = prompt_anyof(
+        question='Choose package manager',
+        options=(
+            'pdm',
+            'poetry',
+            'none',
+        ),
+        comments=(
+            'PDM',
+            'Poetry',
+            '[none]',
+        ),
+        default=0,
+    )
+
     answers['line_length'] = survey.routines.input(
         'Enter maximum line length for linters: ',
         value=answers['line_length'],
