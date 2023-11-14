@@ -46,6 +46,4 @@ pdm install
 $(pdm venv activate)
 ```
 
-This project uses several tools to keep the code quality high: isort, black, ruff and mypy.
-
-Run `make all` to perform full CI check or `make help` to see other available commands.
+Run `make all` to perform an entire CI check or `make help` to see other available commands.

@@ -11,7 +11,7 @@ COMPOSE=deploy/compose.yaml
 help:           ## Show this help (default)
 	@grep -Fh "##" $(MAKEFILE_LIST) | grep -Fv grep -F | sed -e 's/\\$$//' | sed -e 's/##//'
 
-all:            ## Run a whole CI pipeline: formatters, linters and tests
+all:            ## Run an entire CI pipeline: formatters, linters and tests
 	make format lint
 
 format:         ## Format with all tools
