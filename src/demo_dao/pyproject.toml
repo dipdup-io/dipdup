@@ -30,7 +30,7 @@ isort = {cmd = "make isort", help = "Format with isort"}
 black = {cmd = "make black", help = "Format with black"}
 ruff = {cmd = "make ruff", help = "Lint with ruff"}
 mypy = {cmd = "make mypy", help = "Lint with mypy"}
-image = {cmd = "make image", help = "Build docker image"}
+image = {cmd = "make image", help = "Build Docker image"}
 up = {cmd = "make up", help = "Run Compose stack"}
 down = {cmd = "make down", help = "Stop Compose stack"}
 
