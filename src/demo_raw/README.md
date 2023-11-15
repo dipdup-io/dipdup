@@ -16,7 +16,7 @@ See the [Installation](https://dipdup.io/docs/installation) page for all options
 
 ## Usage
 
-Run the indexer in-memory:
+Run the indexer in memory:
 
 ```shell
 dipdup run
@@ -28,7 +28,7 @@ Store data in SQLite database:
 dipdup -c . -c configs/dipdup.sqlite.yml run
 ```
 
-Or spawn a Compose stack:
+Or spawn a Compose stack with PostgreSQL and Hasura:
 
 ```shell
 cd deploy
