@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 from collections import defaultdict
+from collections import deque
 from typing import Any
 from typing import cast
 
@@ -25,7 +26,7 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-NODE_BATCH_SIZE = 100
+NODE_BATCH_SIZE = 10
 
 
 class SubsquidEventsIndex(
@@ -101,6 +102,7 @@ class SubsquidEventsIndex(
                 break
 
         for message_level, level_logs in logs_by_level.items():
+            self._logger.info('Processing %s event logs of level %s', len(level_logs), message_level)
             await self._process_level_events(tuple(level_logs), message_level)
             if self._config.expose_metrics:
                 Metrics.set_sqd_processor_last_block(message_level)
@@ -159,35 +161,43 @@ class SubsquidEventsIndex(
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
 
-            # Requesting blocks info by batch
-            windows = ((i, min(i + NODE_BATCH_SIZE, sync_level)) for i in range(first_level, sync_level + 1, NODE_BATCH_SIZE + 1))
-            for start_level, end_level in windows:
-                # NOTE: Get random one every time
-                # NOTE: Data for blocks start_level and end_level will be included
+            # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
+            batch_first_level = first_level
+            while batch_first_level <= sync_level:
+                batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
                 level_logs = await self.random_node.get_logs(
                     {
-                        'fromBlock': hex(start_level),
-                        'toBlock': hex(end_level),
+                        'fromBlock': hex(batch_first_level),
+                        'toBlock': hex(batch_last_level),
                     }
                 )
 
-                # get timestamps for levels
-                timestamps = {}
-                for level in range(start_level, end_level + 1):
-                    block = await self.random_node.get_block_by_level(level)
-                    try:
-                        timestamps[hex(level)] = int(block['timestamp'], 16)
-                    except TypeError as e:
-                        raise FrameworkException(f'Block {level} not found') from e
+                # NOTE: We need block timestamps for each level, so fetch them separately and match with logs.
+                timestamps: dict[int, int] = {}
+                tasks: deque[asyncio.Task[None]] = deque()
 
-                # match timestamps with logs
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamps[log['blockNumber']])
-                                          for log in level_logs)
-                await self._process_level_events(parsed_level_logs, self.topics, sync_level)
+                async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
+                    block = await self.random_node.get_block_by_level(level)
+                    timestamps[level] = int(block['timestamp'], 16)
+
+                for level in range(batch_first_level, batch_last_level + 1):
+                    tasks.append(asyncio.create_task(_fetch_timestamp(level, timestamps)))
+
+                await asyncio.gather(*tasks)
+
+                parsed_level_logs = tuple(
+                    EvmNodeLogData.from_json(
+                        log,
+                        timestamps[int(log['blockNumber'], 16)],
+                    )
+                    for log in level_logs
+                )
 
                 await self._process_level_events(parsed_level_logs, sync_level)
                 if self._config.expose_metrics:
                     Metrics.set_sqd_processor_last_block(level)
+
+                batch_first_level = batch_last_level + 1
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)

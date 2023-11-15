@@ -26,8 +26,6 @@ LOG_FIELDS: LogFieldSelection = {
     'address': True,
     'data': True,
     'topics': True,
-    # 'blockNumber': True,
-    # 'blockHash': True,
 }
 
 
@@ -68,7 +66,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
         current_level = first_level
 
-        # TODO: smarter query optimizator
+        # TODO: Smarter query optimizator
         topics_by_address = defaultdict(list)
         for address, topic in topics:
             topics_by_address[address].append(topic)
