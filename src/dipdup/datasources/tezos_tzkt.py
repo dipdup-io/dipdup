@@ -1065,7 +1065,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
-        values: bool = False,  # return only list of chosen values instead of dict
+        values: bool = False,
         cursor: bool = False,
         sort: str | None = None,
         **kwargs: Any,
@@ -1082,8 +1082,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 params['offset.cr'] = offset
             else:
                 params['offset'] = offset
+        # NOTE: If `values` is set request will return list of lists instead of list of dicts.
         if select:
-            #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
         if sort:
             if sort.startswith('-'):
