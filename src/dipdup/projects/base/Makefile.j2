@@ -15,7 +15,7 @@ all:            ## Run an entire CI pipeline: formatters, linters and tests
 	make format lint
 
 format:         ## Format with all tools
-	make isort
+	make black
 
 lint:           ## Lint with all tools
 	make ruff mypy
