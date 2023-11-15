@@ -2,6 +2,7 @@ import asyncio
 import random
 import time
 from collections import defaultdict
+from collections import deque
 from typing import Any
 from typing import cast
 
@@ -25,7 +26,7 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-NODE_BATCH_SIZE = 100
+NODE_BATCH_SIZE = 10
 
 
 class SubsquidEventsIndex(
@@ -101,6 +102,7 @@ class SubsquidEventsIndex(
                 break
 
         for message_level, level_logs in logs_by_level.items():
+            self._logger.info('Processing %s event logs of level %s', len(level_logs), message_level)
             await self._process_level_events(tuple(level_logs), message_level)
             if self._config.expose_metrics:
                 Metrics.set_sqd_processor_last_block(message_level)
@@ -172,9 +174,16 @@ class SubsquidEventsIndex(
 
                 # NOTE: We need block timestamps for each level, so fetch them separately and match with logs.
                 timestamps: dict[int, int] = {}
-                for level in range(batch_first_level, batch_last_level + 1):
+                tasks: deque[asyncio.Task[None]] = deque()
+
+                async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
                     block = await self.random_node.get_block_by_level(level)
                     timestamps[level] = int(block['timestamp'], 16)
+
+                for level in range(batch_first_level, batch_last_level + 1):
+                    tasks.append(asyncio.create_task(_fetch_timestamp(level, timestamps)))
+
+                await asyncio.gather(*tasks)
 
                 parsed_level_logs = tuple(
                     EvmNodeLogData.from_json(
