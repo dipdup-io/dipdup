@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## Ureleased
+
+### Added
+
+- api: Added an HTTP API to add indexes and contracts to a running indexer
+
 ## [7.1.1] - 2023-11-07
 
 ### Fixed

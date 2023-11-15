@@ -685,7 +685,7 @@ class DipDup:
 
         from dipdup.api import create_api
 
-        api = await create_api()
+        api = await create_api(self._ctx)
         runner = web.AppRunner(api)
         await runner.setup()
         site = web.TCPSite(runner, api_config.host, api_config.port)
