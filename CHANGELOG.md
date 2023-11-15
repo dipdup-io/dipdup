@@ -8,16 +8,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
-- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+- evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
 - project: Added optional `package_manager` field to replay config.
 - project: Added Makefile to the default project template (only for new projects).
 
 ### Fixed
 
+- cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
 - codegen: Use datamodel-code-generator from the project's virtualenv.
 - install: Don't install datamodel-code-generator as a CLI tool.
 - install: Respect package manager if specified in pyproject.toml.
+
+### Performance
+
+- evm.subsquid.events: Request logs in batches to speed up the last mile indexing.
 
 ### Security
 

@@ -542,7 +542,7 @@ class DipDup:
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
 
-        # verify before start so obvious mistakes can be seen instantly
+        # NOTE: Verify package before indexing to ensure that all modules are importable
         self._ctx.package.verify()
 
         async with AsyncExitStack() as stack:
