@@ -17,6 +17,7 @@ async def _performance(request: web.Request) -> web.Response:
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
+
 def _get_add_index(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[web.Response]]:
     async def _add_index(request: web.Request) -> web.Response:
         try:
@@ -29,6 +30,7 @@ def _get_add_index(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[web.
 
     return _add_index
 
+
 def _get_add_contract(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[web.Response]]:
     async def _add_contract(request: web.Request) -> web.Response:
         try:
@@ -38,8 +40,9 @@ def _get_add_contract(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[w
         except TypeError as e:
             return web.Response(body=f'Bad arguments: {e!r}', status=400)
         return web.Response()
-        
+
     return _add_contract
+
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()
