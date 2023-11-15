@@ -3,9 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -14,10 +11,10 @@ class StoreRecordsValue(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    address: Optional[str]
-    data: Dict[str, str]
-    expiry_key: Optional[str]
-    internal_data: Dict[str, str]
+    address: str | None
+    data: dict[str, str]
+    expiry_key: str | None
+    internal_data: dict[str, str]
     level: str
     owner: str
-    tzip12_token_id: Optional[str]
+    tzip12_token_id: str | None

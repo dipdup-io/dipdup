@@ -129,6 +129,7 @@ class CodeGenerator(ABC):
             disable_timestamp=True,
             input_file_type=dmcg.InputFileType.JsonSchema,
             target_python_version=dmcg.PythonVersion.PY_311,
+            use_union_operator=True,
         )
 
     async def _generate_callback(self, callback_config: CallbackMixin, kind: str, sql: bool = False) -> None:

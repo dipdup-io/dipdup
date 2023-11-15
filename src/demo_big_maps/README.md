@@ -46,4 +46,4 @@ pdm install
 $(pdm venv activate)
 ```
 
-Run `make all` to perform an entire CI check or `make help` to see other available commands.
+Run `make all` to run full CI check or `make help` to see other available commands.

@@ -21,7 +21,6 @@ from dipdup import __version__
 from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
