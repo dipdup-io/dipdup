@@ -21,6 +21,7 @@ from dipdup.yaml import DipDupYAMLConfig
 _logger = logging.getLogger(__name__)
 
 
+# NOTE: All templates are stored in src/dipdup/projects
 TEMPLATES: dict[str, tuple[str, ...]] = {
     'evm': (
         'demo_evm_events',
@@ -147,8 +148,6 @@ def answers_from_terminal() -> Answers:
         options.append(_answers['template'])
         comments.append(_answers['description'])
 
-    # list of options can contain folder name of template or folder name of template with description
-    # all project templates are in src/dipdup/projects
     _, template = prompt_anyof(
         'Choose a project template:',
         options=tuple(options),
@@ -183,7 +182,6 @@ def answers_from_terminal() -> Answers:
         value=answers['description'],
     )
 
-    # define author and license for new indexer
     answers['license'] = survey.routines.input(
         'Enter project license (DipDup itself is MIT-licensed.): ',
         value=answers['license'],
@@ -266,7 +264,7 @@ def render_base(
     include: set[str] | None = None,
 ) -> None:
     """Render base from template"""
-    # NOTE: Common base
+    # NOTE: Render common base
     _render_templates(
         answers=answers,
         path=Path('base'),
@@ -274,9 +272,9 @@ def render_base(
         include=include,
         exists=True,
     )
-
+    # NOTE: Don't forget to update replay.yaml with new values
     _render(
-        answers,
+        answers=answers,
         template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
         output_path=Path('configs') / 'replay.yaml',
         force=force,
