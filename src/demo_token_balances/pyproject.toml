@@ -22,7 +22,7 @@ dev = [
 
 [tool.pdm.scripts]
 help = {cmd = "make help", help = "Show this help (default)"}
-all = {cmd = "make all", help = "Run an entire CI pipeline: formatters, linters and tests"}
+all = {cmd = "make all", help = "Run an entire CI pipeline"}
 format = {cmd = "make format", help = "Format with all tools"}
 lint = {cmd = "make lint", help = "Lint with all tools"}
 black = {cmd = "make black", help = "Format with black"}
