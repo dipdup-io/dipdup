@@ -86,7 +86,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
     from dipdup.exceptions import Error
 
@@ -123,12 +123,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
-            _print_help(e, report_id)
+            _print_help_atexit(e, report_id)
+            raise e
 
-            if metrics:
-                raise e
-            sys.exit(1)
-
+        # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run':
             package = ctx.obj.config.package
             save_report(package, None)
