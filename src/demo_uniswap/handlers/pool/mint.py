@@ -1,5 +1,3 @@
-from eth_utils.address import to_normalized_address
-
 from demo_uniswap import models
 from demo_uniswap.models.pool import PoolUpdateSign
 from demo_uniswap.models.pool import pool_update
@@ -7,6 +5,7 @@ from demo_uniswap.models.repo import models_repo
 from demo_uniswap.types.pool.evm_events.mint import Mint
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
+from eth_utils.address import to_normalized_address
 
 BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 

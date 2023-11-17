@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -15,7 +11,7 @@ class Ledger(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    allowances: List[str]
+    allowances: list[str]
     balance: str
     frozen_balance: str
 
@@ -56,7 +52,7 @@ class Voters(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    candidate: Optional[str]
+    candidate: str | None
     last_veto: str
     veto: str
     vote: str
@@ -68,13 +64,13 @@ class FactoryStorage(BaseModel):
 
     baker_validator: str
     counter: str
-    dex_lambdas: Dict[str, str]
-    ledger: Dict[str, Ledger]
-    metadata: Dict[str, str]
-    token_lambdas: Dict[str, str]
-    token_list: Dict[str, TokenList]
-    token_to_exchange: List[TokenToExchangeItem]
-    user_rewards: Dict[str, UserRewards]
-    vetos: Dict[str, str]
-    voters: Dict[str, Voters]
-    votes: Dict[str, str]
+    dex_lambdas: dict[str, str]
+    ledger: dict[str, Ledger]
+    metadata: dict[str, str]
+    token_lambdas: dict[str, str]
+    token_list: dict[str, TokenList]
+    token_to_exchange: list[TokenToExchangeItem]
+    user_rewards: dict[str, UserRewards]
+    vetos: dict[str, str]
+    voters: dict[str, Voters]
+    votes: dict[str, str]

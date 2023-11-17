@@ -4,7 +4,7 @@
 # Add metadata and build files
 !demo_domains
 !pyproject.toml
-!pdm.lock
+!*.lock
 !README.md
 
 # Add Python code

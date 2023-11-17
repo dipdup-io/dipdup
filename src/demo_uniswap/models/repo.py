@@ -2,11 +2,11 @@ from decimal import Decimal
 from typing import Any
 from typing import cast
 
+from dipdup.config.evm import EvmContractConfig
+from dipdup.context import HandlerContext
 from lru import LRU
 
 import demo_uniswap.models as models
-from dipdup.config.evm import EvmContractConfig
-from dipdup.context import HandlerContext
 
 USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 

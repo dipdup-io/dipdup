@@ -1,11 +1,10 @@
-from eth_utils.address import to_normalized_address
-
 import demo_uniswap.models as models
 from demo_uniswap.models.position import save_position_snapshot
 from demo_uniswap.models.repo import models_repo
 from demo_uniswap.types.position_manager.evm_events.transfer import Transfer
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
+from eth_utils.address import to_normalized_address
 
 
 async def transfer(
