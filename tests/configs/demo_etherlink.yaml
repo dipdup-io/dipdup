@@ -1,0 +1,38 @@
+spec_version: 2.0
+package: demo_etherlink
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+contracts:
+  controller:
+    kind: tezos
+    address: KT1Ax1oGGjooakyYJvtrX3q5zxRwYv6EAeC2
+    typename: controller
+  rollup:
+    kind: tezos
+    address: sr1SW7VtD6xbSAEoRk8LXewr3igfWjBx7FPB
+    typename: rollup
+
+indexes:
+  rollup_operations:
+    kind: tezos.tzkt.operations
+    datasource: tzkt
+    contracts:
+      - controller
+      - rollup
+    handlers:
+      - callback: on_rollup_call
+        pattern:
+          - type: transaction
+            destination: controller
+            entrypoint: default
+            alias: controller_default
+          - type: transaction
+            destination: rollup
+            entrypoint: default
+            alias: rollup_default
+    first_level: 3507389
+    last_level: 3507389

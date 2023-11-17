@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
 - project: Added optional `package_manager` field to replay config.
 - project: Added Makefile to the default project template (only for new projects).
+- tezos.tzkt: Added support for Etherlink smart rollups (`sr1…` addresses).
 
 ### Fixed
 
