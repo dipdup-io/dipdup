@@ -1,11 +1,10 @@
 from decimal import Decimal
 
-from tortoise.exceptions import DoesNotExist
-
 from demo_evm_events import models as models
 from demo_evm_events.types.eth_usdt.evm_events.transfer import Transfer
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
+from tortoise.exceptions import DoesNotExist
 
 
 async def on_transfer(

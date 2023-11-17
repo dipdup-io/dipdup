@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -36,10 +34,10 @@ class HenMinterStorage(BaseModel):
     hdao: str
     locked: bool
     manager: str
-    metadata: Dict[str, str]
+    metadata: dict[str, str]
     objkt: str
     objkt_id: str
-    royalties: Dict[str, Royalties]
+    royalties: dict[str, Royalties]
     size: str
     swap_id: str
-    swaps: Dict[str, Swaps]
+    swaps: dict[str, Swaps]
