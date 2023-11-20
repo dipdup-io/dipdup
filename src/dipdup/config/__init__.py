@@ -646,6 +646,8 @@ class DipDupConfig:
     @property
     def oneshot(self) -> bool:
         """Whether all indexes have `last_level` field set"""
+        if self.advanced.api is not None:
+            return False
         syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, TzktHeadIndexConfig))
         oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
         if len(oneshot_indexes) == len(syncable_indexes) > 0:
