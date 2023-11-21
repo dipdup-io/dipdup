@@ -8,7 +8,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- api: Added an HTTP API to add indexes and contracts to a running indexer
+- api: Added an HTTP API to add indexes and contracts to a running indexer.
+- docs: Added HTTP API reference.
+
+### Fixed
+
+- index: Realtime subscriptions weren't connecting in some cases.
 
 ## [7.1.1] - 2023-11-07
 
