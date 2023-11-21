@@ -33,13 +33,13 @@ description: "Context reference"
 
 """
 
-api_path, api_html = 'docs/7.references/3.context.md', 'context-reference.html'
+api_path, api_html = 'docs/7.references/5.api.md', 'api-reference.html'
 api_header = """---
-title: "Context (ctx)"
-description: "Context reference"
+title: "HTTP API"
+description: "API reference"
 ---
 
-# Context reference
+# API reference
 
 """
 

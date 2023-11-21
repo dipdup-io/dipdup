@@ -33,12 +33,6 @@ async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
     """
     Handle the HTTP API request to add an index.
 
-    :param ctx: The DipDupContext object.
-    :type ctx: dipdup.context.DipDupContext
-
-    :param request: The aiohttp web request object.
-    :type request: aiohttp.web.Request
-
     HTTP Request:
         - Method: POST
         - URL: /add_index
@@ -53,9 +47,6 @@ async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
     HTTP Response:
         - Status: 200 OK - Index added successfully
         - Status: 400 Bad Request - Index already exists
-
-    :return: The aiohttp web response.
-    :rtype: aiohttp.web.Response
     """
     try:
         await ctx.add_index(**(await request.json()))
@@ -66,12 +57,6 @@ async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
 async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Response:
     """
     Handle the HTTP API request to add a contract.
-
-    :param ctx: The DipDupContext object.
-    :type ctx: dipdup.context.DipDupContext
-
-    :param request: The aiohttp web request object.
-    :type request: aiohttp.web.Request
 
     HTTP Request:
         - Method: POST
@@ -86,9 +71,6 @@ async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Respons
     HTTP Response:
         - Status: 200 OK - Contract added successfully
         - Status: 400 Bad Request - Contract already exists or invalid parameters
-
-    :return: The aiohttp web response.
-    :rtype: aiohttp.web.Response
     """
     try:
         await ctx.add_contract(**(await request.json()))
