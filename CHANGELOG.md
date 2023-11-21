@@ -4,16 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## Ureleased
+## [Unreleased]
 
 ### Added
 
+- evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
+- project: Added optional `package_manager` field to replay config.
+- project: Added Makefile to the default project template (only for new projects).
+- tezos.tzkt: Added support for Etherlink smart rollups (`sr1…` addresses).
 - api: Added an HTTP API to add indexes and contracts to a running indexer.
 - docs: Added HTTP API reference.
 
 ### Fixed
 
+- cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
+- codegen: Use datamodel-code-generator from the project's virtualenv.
+- install: Don't install datamodel-code-generator as a CLI tool.
+- install: Respect package manager if specified in pyproject.toml.
 - index: Realtime subscriptions weren't connecting in some cases.
+
+### Performance
+
+- evm.subsquid.events: Request logs in batches to speed up the last mile indexing.
+
+### Security
+
+- deps: Updated PyArrow to 14.0.1 to fix [CVE-2023-47248](https://github.com/advisories/GHSA-5wvp-7f3h-6wmm)
 
 ## [7.1.1] - 2023-11-07
 

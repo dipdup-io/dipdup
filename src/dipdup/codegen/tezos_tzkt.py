@@ -20,6 +20,8 @@ from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import is_contract_address
+from dipdup.config.tezos import is_rollup_address
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -98,7 +100,8 @@ class TzktCodeGenerator(CodeGenerator):
             datasources=datasources,
             include=include,
         )
-        self._schemas: dict[str, dict[str, dict[str, Any]]] = {}
+        self._contract_schemas: dict[str, dict[str, dict[str, Any]]] = {}
+        self._rollup_schemas: dict[str, dict[str, Any]] = {}
 
     async def generate_abi(self) -> None:
         pass
@@ -215,14 +218,21 @@ class TzktCodeGenerator(CodeGenerator):
         else:
             raise FrameworkException('No address or code hash provided, check earlier')
 
+        if is_contract_address(address):
+            schemas = self._contract_schemas
+        elif is_rollup_address(address):
+            schemas = self._rollup_schemas
+        else:
+            raise NotImplementedError
+
         name = datasource_config.name
-        if name not in self._schemas:
-            self._schemas[name] = {}
-        if address not in self._schemas[name]:
+        if name not in schemas:
+            schemas[name] = {}
+        if address not in schemas[name]:
             self._logger.info('Fetching schemas for contract `%s`', address)
             address_schemas_json = await datasource.get_jsonschemas(address)
-            self._schemas[name][address] = address_schemas_json
-        return self._schemas[name][address]
+            schemas[name][address] = address_schemas_json
+        return schemas[name][address]
 
     async def _fetch_operation_pattern_schema(
         self,
@@ -262,6 +272,17 @@ class TzktCodeGenerator(CodeGenerator):
         contract_schemas = await self._get_schema(datasource_config, contract_config)
         contract_schemas_path = self._package.schemas / contract_config.module_name
 
+        # NOTE: It's a rollup: entrypoint is always 'default', no storage
+        if 'storageSchema' not in contract_schemas:
+            contract_schemas = {
+                'storageSchema': {'type': 'null'},
+                'entrypoints': [
+                    {
+                        'parameterSchema': {**contract_schemas},
+                    }
+                ],
+            }
+
         storage_schema_path = contract_schemas_path / 'tezos_storage.json'
         storage_schema = preprocess_storage_jsonschema(contract_schemas['storageSchema'])
 
@@ -280,7 +301,6 @@ class TzktCodeGenerator(CodeGenerator):
             )
         except StopIteration as e:
             raise ConfigurationError(f'Contract `{contract_config.address}` has no entrypoint `{entrypoint}`') from e
-
         entrypoint = entrypoint.replace('.', '_').lstrip('_')
         entrypoint_schema_path = parameter_schemas_path / f'{entrypoint}.json'
         written = write(entrypoint_schema_path, json_dumps(entrypoint_schema))

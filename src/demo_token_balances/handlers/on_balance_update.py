@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from demo_token_balances import models as models
 from dipdup.context import HandlerContext
 from dipdup.models.tezos_tzkt import TzktTokenBalanceData

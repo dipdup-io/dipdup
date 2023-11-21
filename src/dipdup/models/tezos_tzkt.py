@@ -562,14 +562,11 @@ class TzktTokenBalanceData(HasLevel):
     transfers_count: int
     first_level: int
     first_time: datetime
-    # level is not defined in tzkt balances data, so it is
-    # Level of the block where the token balance was last changed.
+    # NOTE: Level of the block where the token balance has been changed for the last time.
     last_level: int
     last_time: datetime
-    # owner account
     account_address: str | None = None
     account_alias: str | None = None
-    # token object
     tzkt_token_id: int | None = None
     contract_address: str | None = None
     contract_alias: str | None = None

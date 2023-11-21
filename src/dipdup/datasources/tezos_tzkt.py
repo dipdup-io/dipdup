@@ -22,6 +22,8 @@ from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HttpConfig
+from dipdup.config.tezos import SMART_CONTRACT_PREFIX
+from dipdup.config.tezos import SMART_ROLLUP_PREFIX
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
@@ -522,11 +524,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s`', address)
+        if address.startswith(SMART_CONTRACT_PREFIX):
+            endpoint = 'contracts'
+        elif address.startswith(SMART_ROLLUP_PREFIX):
+            endpoint = 'smart_rollups'
+        else:
+            raise NotImplementedError
         return cast(
             dict[str, Any],
             await self.request(
                 'get',
-                url=f'v1/contracts/{address}/interface',
+                url=f'v1/{endpoint}/{address}/interface',
             ),
         )
 
@@ -1057,7 +1065,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
-        values: bool = False,  # return only list of chosen values instead of dict
+        values: bool = False,
         cursor: bool = False,
         sort: str | None = None,
         **kwargs: Any,
@@ -1074,8 +1082,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 params['offset.cr'] = offset
             else:
                 params['offset'] = offset
+        # NOTE: If `values` is set request will return list of lists instead of list of dicts.
         if select:
-            #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
         if sort:
             if sort.startswith('-'):

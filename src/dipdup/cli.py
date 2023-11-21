@@ -21,7 +21,6 @@ from dipdup import __version__
 from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
@@ -86,7 +85,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
     from dipdup.exceptions import Error
 
@@ -123,12 +122,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
-            _print_help(e, report_id)
+            _print_help_atexit(e, report_id)
+            raise e
 
-            if metrics:
-                raise e
-            sys.exit(1)
-
+        # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run':
             package = ctx.obj.config.package
             save_report(package, None)
@@ -712,8 +709,18 @@ async def self_install(
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, version, ref, path)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=version,
+        ref=ref,
+        path=path,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
 
 
 @self.command(name='uninstall')
@@ -742,8 +749,18 @@ async def self_update(
 ) -> None:
     """Update DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, None, None, None)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=None,
+        ref=None,
+        path=None,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
 
 
 @self.command(name='env', hidden=True)

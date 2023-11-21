@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -15,21 +11,21 @@ class Records(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    address: Optional[str]
-    data: Dict[str, str]
-    expiry_key: Optional[str]
-    internal_data: Dict[str, str]
+    address: str | None
+    data: dict[str, str]
+    expiry_key: str | None
+    internal_data: dict[str, str]
     level: str
     owner: str
-    tzip12_token_id: Optional[str]
+    tzip12_token_id: str | None
 
 
 class ReverseRecords(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    internal_data: Dict[str, str]
-    name: Optional[str]
+    internal_data: dict[str, str]
+    name: str | None
     owner: str
 
 
@@ -37,20 +33,20 @@ class Store(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    data: Dict[str, str]
-    expiry_map: Dict[str, str]
-    metadata: Dict[str, str]
+    data: dict[str, str]
+    expiry_map: dict[str, str]
+    metadata: dict[str, str]
     next_tzip12_token_id: str
     owner: str
-    records: Dict[str, Records]
-    reverse_records: Dict[str, ReverseRecords]
-    tzip12_tokens: Dict[str, str]
+    records: dict[str, Records]
+    reverse_records: dict[str, ReverseRecords]
+    tzip12_tokens: dict[str, str]
 
 
 class NameRegistryStorage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    actions: Dict[str, str]
+    actions: dict[str, str]
     store: Store
-    trusted_senders: List[str]
+    trusted_senders: list[str]
