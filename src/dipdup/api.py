@@ -1,5 +1,6 @@
 from collections.abc import Awaitable
 from collections.abc import Callable
+from json import JSONDecodeError
 
 import orjson
 from aiohttp import web
@@ -17,38 +18,89 @@ async def _performance(request: web.Request) -> web.Response:
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
-
-def _get_add_index(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[web.Response]]:
-    async def _add_index(request: web.Request) -> web.Response:
+def _get_ctx_api_post_method(ctx: DipDupContext, method: Callable[[DipDupContext, web.Request], Awaitable[web.Response]]) -> Callable[[web.Request], Awaitable[web.Response]]:
+    async def resolved_method(request: web.Request) -> web.Response:
         try:
-            await ctx.add_index(**(await request.json()))
-        except IndexAlreadyExistsError:
-            return web.Response(body='Index already exists', status=400)
+            return await method(ctx, request)
         except TypeError as e:
             return web.Response(body=f'Bad arguments: {e!r}', status=400)
-        return web.Response()
+        except JSONDecodeError:
+            return web.Response(body='Request is not a JSON', status=400)
+    
+    return resolved_method
 
-    return _add_index
+async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
+    """
+    Handle the HTTP API request to add an index.
 
+    :param ctx: The DipDupContext object.
+    :type ctx: dipdup.context.DipDupContext
 
-def _get_add_contract(ctx: DipDupContext) -> Callable[[web.Request], Awaitable[web.Response]]:
-    async def _add_contract(request: web.Request) -> web.Response:
-        try:
-            await ctx.add_contract(**(await request.json()))
-        except ContractAlreadyExistsError:
-            return web.Response(body='Contract already exists', status=400)
-        except TypeError as e:
-            return web.Response(body=f'Bad arguments: {e!r}', status=400)
-        return web.Response()
+    :param request: The aiohttp web request object.
+    :type request: aiohttp.web.Request
 
-    return _add_contract
+    HTTP Request:
+        - Method: POST
+        - URL: /add_index
+        - Body: JSON data with parameters
+            - name (str): Index name.
+            - template (str): Index template to use.
+            - values (dict[str, Any]): Mapping of values to fill the template with.
+            - first_level (int): First level to start indexing from. Default is 0.
+            - last_level (int): Last level to index. Default is 0.
+            - state (Index | None): Initial index state (for development only).
 
+    HTTP Response:
+        - Status: 200 OK - Index added successfully
+        - Status: 400 Bad Request - Index already exists
+
+    :return: The aiohttp web response.
+    :rtype: aiohttp.web.Response
+    """
+    try:
+        await ctx.add_index(**(await request.json()))
+    except IndexAlreadyExistsError:
+        return web.Response(body='Index already exists', status=400)
+    return web.Response()
+    
+async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Response:
+    """
+    Handle the HTTP API request to add a contract.
+
+    :param ctx: The DipDupContext object.
+    :type ctx: dipdup.context.DipDupContext
+
+    :param request: The aiohttp web request object.
+    :type request: aiohttp.web.Request
+
+    HTTP Request:
+        - Method: POST
+        - URL: /add_contract
+        - Body: JSON data with parameters
+            - kind (Literal['tezos'] | Literal['evm']): Blockchain kind. Either 'tezos' or 'evm' allowed.
+            - name (str): Contract name.
+            - address (str | None): Contract address. Optional, default is None.
+            - typename (str | None): Alias for the contract script. Optional, default is None.
+            - code_hash (str | int | None): Contract code hash. Optional, default is None.
+
+    HTTP Response:
+        - Status: 200 OK - Contract added successfully
+        - Status: 400 Bad Request - Contract already exists or invalid parameters
+
+    :return: The aiohttp web response.
+    :rtype: aiohttp.web.Response
+    """
+    try:
+        await ctx.add_contract(**(await request.json()))
+    except ContractAlreadyExistsError:
+        return web.Response(body='Contract already exists', status=400)
+    return web.Response()
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()
     routes.get('/performance')(_performance)
-    routes.post('/add_index')(_get_add_index(ctx))
-    routes.post('/add_contract')(_get_add_contract(ctx))
+    routes.post('/add_index')(_get_ctx_api_post_method(ctx, _add_index))
+    routes.post('/add_contract')(_get_ctx_api_post_method(ctx, _add_contract))
 
     app = web.Application()
     app.add_routes(routes)
