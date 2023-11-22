@@ -132,7 +132,7 @@ def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
 
 @contextmanager
 def frontend(path: Path) -> Iterator[Popen[Any]]:
-    process = Popen(['npm', 'run', 'dev'], cwd=path)
+    process = Popen(['pnpm', 'run', 'dev'], cwd=path)
     time.sleep(3)
     click.launch('http://localhost:3000/docs')
 
