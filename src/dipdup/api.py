@@ -18,7 +18,11 @@ async def _performance(request: web.Request) -> web.Response:
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
-def _get_ctx_api_post_method(ctx: DipDupContext, method: Callable[[DipDupContext, web.Request], Awaitable[web.Response]]) -> Callable[[web.Request], Awaitable[web.Response]]:
+
+def _get_ctx_api_post_method(
+    ctx: DipDupContext,
+    method: Callable[[DipDupContext, web.Request], Awaitable[web.Response]],
+) -> Callable[[web.Request], Awaitable[web.Response]]:
     async def resolved_method(request: web.Request) -> web.Response:
         try:
             return await method(ctx, request)
@@ -26,8 +30,9 @@ def _get_ctx_api_post_method(ctx: DipDupContext, method: Callable[[DipDupContext
             return web.Response(body=f'Bad arguments: {e!r}', status=400)
         except JSONDecodeError:
             return web.Response(body='Request is not a JSON', status=400)
-    
+
     return resolved_method
+
 
 async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
     """
@@ -53,7 +58,8 @@ async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
     except IndexAlreadyExistsError:
         return web.Response(body='Index already exists', status=400)
     return web.Response()
-    
+
+
 async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Response:
     """
     Handle the HTTP API request to add a contract.
@@ -77,6 +83,7 @@ async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Respons
     except ContractAlreadyExistsError:
         return web.Response(body='Contract already exists', status=400)
     return web.Response()
+
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()
