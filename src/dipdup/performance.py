@@ -81,7 +81,7 @@ class _CacheManager:
     def add_lru(
         self,
         fn: Callable[..., Any],
-        maxsize: int,
+        maxsize: int | None,
         name: str | None = None,
     ) -> Callable[..., Any]:
         if name is None:

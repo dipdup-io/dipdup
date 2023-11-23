@@ -1,6 +1,7 @@
 from collections.abc import Hashable
 from collections.abc import Iterable
 from contextlib import suppress
+from functools import lru_cache
 from itertools import groupby
 from types import UnionType
 from typing import Any
@@ -15,7 +16,6 @@ from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.performance import caches
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -197,7 +197,8 @@ def deserialize_storage(
         raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e
 
 
-is_array_type = caches.add_lru(is_array_type, 2**10, 'is_array_type')
-get_list_elt_type = caches.add_lru(get_list_elt_type, 2**10, 'get_list_elt_type')
-get_dict_value_type = caches.add_lru(get_dict_value_type, 2**10, 'get_dict_value_type')
-unwrap_union_type = caches.add_lru(unwrap_union_type, 2**10, 'unwrap_union_type')
+# NOTE: Very smol; no need to track in performance stats
+is_array_type = lru_cache(None)(is_array_type)  # type: ignore[assignment]
+get_list_elt_type = lru_cache(None)(get_list_elt_type)  # type: ignore[assignment]
+get_dict_value_type = lru_cache(None)(get_dict_value_type)  # type: ignore[assignment]
+unwrap_union_type = lru_cache(None)(unwrap_union_type)  # type: ignore[assignment]
