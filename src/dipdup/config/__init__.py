@@ -644,15 +644,6 @@ class DipDupConfig:
         return env.get_package_path(self.package)
 
     @property
-    def oneshot(self) -> bool:
-        """Whether all indexes have `last_level` field set"""
-        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, TzktHeadIndexConfig))
-        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
-        if len(oneshot_indexes) == len(syncable_indexes) > 0:
-            return True
-        return False
-
-    @property
     def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
         return tuple(c for c in self.datasources.values() if isinstance(c, AbiDatasourceConfig))
 

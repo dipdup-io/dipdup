@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - project: Added optional `package_manager` field to replay config.
 - project: Added Makefile to the default project template (only for new projects).
 - tezos.tzkt: Added support for Etherlink smart rollups (`sr1…` addresses).
+- api: Added an HTTP API to add indexes and contracts to a running indexer.
+- docs: Added HTTP API reference.
 
 ### Fixed
 
@@ -19,6 +21,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - codegen: Use datamodel-code-generator from the project's virtualenv.
 - install: Don't install datamodel-code-generator as a CLI tool.
 - install: Respect package manager if specified in pyproject.toml.
+- index: Realtime subscriptions weren't connecting in some cases.
 
 ### Performance
 

@@ -60,7 +60,7 @@ class IndexStateTest:
             await _create_index(self.new_hash)
 
             # Act
-            await dipdup._get_event_dispatcher()._load_index_state()
+            await dipdup._index_dispatcher._load_index_state()
 
             # Assert
             index = await Index.filter().get()
@@ -75,13 +75,13 @@ class IndexStateTest:
 
             # Act, Assert
             with pytest.raises(ReindexingRequiredError):
-                await dipdup._get_event_dispatcher()._load_index_state()
+                await dipdup._index_dispatcher._load_index_state()
 
     async def test_metrics(self) -> None:
         async with AsyncExitStack() as stack:
             # Arrange
             dipdup = await create_dummy_dipdup(self.config, stack)
-            dispatcher = dipdup._get_event_dispatcher()
+            dispatcher = dipdup._index_dispatcher
 
             # Act
             await dispatcher._update_metrics()
