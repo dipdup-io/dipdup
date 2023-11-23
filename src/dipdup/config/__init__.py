@@ -225,10 +225,10 @@ class NameMixin:
         return self._name
 
 
-@dataclass
-class ContractConfig(NameMixin):
+class ContractConfig(ABC, NameMixin):
     """Contract config
 
+    :param kind: Defined by child class
     :param typename: Alias for the contract script
     """
 
@@ -557,7 +557,7 @@ class ApiConfig:
 
 @dataclass
 class AdvancedConfig:
-    """Feature flags and other advanced config.
+    """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
