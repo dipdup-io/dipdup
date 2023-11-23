@@ -33,6 +33,7 @@ description: "Context reference"
 
 """
 
+
 def main() -> None:
     subprocess.run(
         args=('sphinx-build', '-M', 'html', '.', '_build'),
@@ -53,6 +54,7 @@ def main() -> None:
             out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
         to.write_text(header + MARKDOWNLINT_HINT + out)
+
 
 if __name__ == '__main__':
     main()
