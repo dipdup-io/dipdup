@@ -33,22 +33,26 @@ description: "Context reference"
 
 """
 
-subprocess.run(
-    args=('sphinx-build', '-M', 'html', '.', '_build'),
-    cwd='docs',
-    check=True,
-)
+def main() -> None:
+    subprocess.run(
+        args=('sphinx-build', '-M', 'html', '.', '_build'),
+        cwd='docs',
+        check=True,
+    )
 
-for path, html, header in (
-    (cli_path, cli_html, cli_header),
-    (config_path, config_html, config_header),
-    (context_path, context_html, context_header),
-):
-    to = Path(path)
-    from_ = Path(f'docs/_build/html/{html}')
+    for path, html, header in (
+        (cli_path, cli_html, cli_header),
+        (config_path, config_html, config_header),
+        (context_path, context_html, context_header),
+    ):
+        to = Path(path)
+        from_ = Path(f'docs/_build/html/{html}')
 
-    out = '\n'.join(from_.read_text().split('\n')[32:-63])
-    if 'config' in str(from_):
-        out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
+        out = '\n'.join(from_.read_text().split('\n')[32:-63])
+        if 'config' in str(from_):
+            out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
-    to.write_text(header + MARKDOWNLINT_HINT + out)
+        to.write_text(header + MARKDOWNLINT_HINT + out)
+
+if __name__ == '__main__':
+    main()

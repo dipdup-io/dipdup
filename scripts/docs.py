@@ -59,6 +59,10 @@ class DocsBuilder(FileSystemEventHandler):
         if src_file.is_dir():
             return
 
+        if src_file.name.endswith('.rst'):
+            Popen(['python3', 'scripts/dump_references.py']).wait()
+            return
+
         # FIXME: front dies otherwise
         if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
             return
@@ -76,7 +80,7 @@ class DocsBuilder(FileSystemEventHandler):
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
-        _logger.info('`%s` has been modified; copying', src_file)
+        _logger.info('`%s` has been %s; copying', src_file, event.event_type)
 
         try:
             if src_file.suffix in TEXT:
