@@ -272,7 +272,7 @@ class DipDupContext:
         last_level: int = 0,
         state: Index | None = None,
     ) -> None:
-        """Adds a new contract to the inventory.
+        """Adds a new index from template.
 
         :param name: Index name
         :param template: Index template to use

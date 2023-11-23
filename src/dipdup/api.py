@@ -35,24 +35,6 @@ def _get_ctx_api_post_method(
 
 
 async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
-    """
-    Handle the HTTP API request to add an index.
-
-    HTTP Request:
-        - Method: POST
-        - URL: /add_index
-        - Body: JSON data with parameters
-            - name (str): Index name.
-            - template (str): Index template to use.
-            - values (dict[str, Any]): Mapping of values to fill the template with.
-            - first_level (int): First level to start indexing from. Default is 0.
-            - last_level (int): Last level to index. Default is 0.
-            - state (Index | None): Initial index state (for development only).
-
-    HTTP Response:
-        - Status: 200 OK - Index added successfully
-        - Status: 400 Bad Request - Index already exists
-    """
     try:
         await ctx.add_index(**(await request.json()))
     except IndexAlreadyExistsError:
@@ -61,23 +43,6 @@ async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
 
 
 async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Response:
-    """
-    Handle the HTTP API request to add a contract.
-
-    HTTP Request:
-        - Method: POST
-        - URL: /add_contract
-        - Body: JSON data with parameters
-            - kind (Literal['tezos'] | Literal['evm']): Blockchain kind. Either 'tezos' or 'evm' allowed.
-            - name (str): Contract name.
-            - address (str | None): Contract address. Optional, default is None.
-            - typename (str | None): Alias for the contract script. Optional, default is None.
-            - code_hash (str | int | None): Contract code hash. Optional, default is None.
-
-    HTTP Response:
-        - Status: 200 OK - Contract added successfully
-        - Status: 400 Bad Request - Contract already exists or invalid parameters
-    """
     try:
         await ctx.add_contract(**(await request.json()))
     except ContractAlreadyExistsError:

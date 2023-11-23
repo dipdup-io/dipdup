@@ -17,10 +17,7 @@
 .. autoclass:: dipdup.config.EvmNodeDatasourceConfig
 .. autoclass:: dipdup.config.EvmContractConfig
 .. autoclass:: dipdup.config.SubsquidEventsIndexConfig
-.. autoclass:: dipdup.config.SubsquidOperationsIndexConfig
 .. autoclass:: dipdup.config.SubsquidDatasourceConfig
-   :members:
-   :undoc-members:
 .. autoclass:: dipdup.config.TzipMetadataDatasourceConfig
 .. autoclass:: dipdup.config.OperationsHandlerOriginationPatternConfig
 .. autoclass:: dipdup.config.OperationsHandlerTransactionPatternConfig
