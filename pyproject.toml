@@ -45,10 +45,11 @@ classifiers = [
 
 dependencies = [
     # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
-    "asyncpg~=0.28.0",
-    "datamodel-code-generator~=0.22.0",
+    "asyncpg~=0.29.0",
+    "datamodel-code-generator~=0.24.0",
     "pydantic~=1.10.11",
     "tortoise-orm==0.19.3",
+
     "aiohttp~=3.8",
     "aiolimiter~=1.0",
     "anyio~=3.3",
