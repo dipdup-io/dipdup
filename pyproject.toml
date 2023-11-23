@@ -125,7 +125,7 @@ cmd = "python scripts/docs.py --source docs --destination {args:../interface}/co
 
 [tool.pdm.scripts.docs_serve]
 help = "Build and serve docs"
-cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --serve"
+cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch --serve"
 
 [tool.pdm.scripts.docs_watch]
 help = "Watch docs"
