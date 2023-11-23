@@ -119,7 +119,7 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set() and not self._ctx.config.oneshot:
+            if not spawn_datasources_event.is_set() and not self.is_oneshot():
                 if self._every_index_is(IndexStatus.realtime) or early_realtime:
                     spawn_datasources_event.set()
 
@@ -148,9 +148,9 @@ class IndexDispatcher:
                 if isinstance(index, TzktOperationsIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.disabled)):
+            if not indexes_spawned and self.is_oneshot():
                 _logger.info('No indexes left, exiting')
-                break
+                [t.cancel() for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
@@ -167,6 +167,25 @@ class IndexDispatcher:
 
             # TODO: Replace with asyncio.Event
             await asyncio.sleep(1)
+
+    def is_oneshot(self) -> bool:
+        from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+
+        # NOTE: Empty config means indexes will be spawned later via API.
+        if not self._indexes:
+            return False
+
+        if self._ctx._pending_indexes:
+            return False
+
+        # NOTE: Run forever if at least one index has no upper bound.
+        for index in self._indexes.values():
+            if isinstance(index._config, TzktHeadIndexConfig):
+                continue
+            if not index._config.last_level:
+                return False
+
+        return True
 
     # TODO: Use ctx.metrics
     async def _prometheus_loop(self, update_interval: float) -> None:
@@ -489,7 +508,7 @@ class DipDup:
             datasources=self._datasources,
             transactions=self._transactions,
         )
-        self._index_dispatcher: IndexDispatcher | None = None
+        self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
         self._api: Any | None = None
 
@@ -552,7 +571,7 @@ class DipDup:
             await self._set_up_database(stack)
             await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks(tasks, run=not self._config.oneshot)
+            await self._set_up_hooks()
             await self._set_up_prometheus()
             await self._set_up_api(stack)
 
@@ -565,12 +584,12 @@ class DipDup:
 
             await MetadataCursor.initialize()
 
-            if self._config.oneshot:
+            for name in self._config.indexes:
+                await self._ctx._spawn_index(name)
+
+            if self._index_dispatcher.is_oneshot():
                 start_scheduler_event = Event()
                 spawn_datasources_event = Event()
-
-                if self._config.jobs:
-                    _logger.warning('Running in oneshot mode; `jobs` are ignored')
             else:
                 start_scheduler_event = await self._set_up_scheduler(tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
@@ -578,21 +597,15 @@ class DipDup:
                 if not advanced.postpone_jobs:
                     start_scheduler_event.set()
 
-                tasks.add(create_task(self._transactions.cleanup_loop()))
-
-            for name in self._config.indexes:
-                await self._ctx._spawn_index(name)
-
-            await self._set_up_index_dispatcher(
+            await self._set_up_background_tasks(
                 tasks=tasks,
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
-                run=True,
-                metrics=not self._config.oneshot,
             )
 
-            await gather(*tasks)
+            if tasks:
+                await gather(*tasks)
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():
@@ -659,15 +672,12 @@ class DipDup:
         )
         await preload_cached_models(self._config.package)
 
-    async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
+    async def _set_up_hooks(self) -> None:
         for system_hook_config in system_hooks.values():
             self._ctx.register_hook(system_hook_config)
 
         for hook_config in self._config.hooks.values():
             self._ctx.register_hook(hook_config)
-
-        if run:
-            tasks.add(create_task(self._ctx._hooks_loop()))
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
@@ -685,7 +695,7 @@ class DipDup:
 
         from dipdup.api import create_api
 
-        api = await create_api()
+        api = await create_api(self._ctx)
         runner = web.AppRunner(api)
         await runner.setup()
         site = web.TCPSite(runner, api_config.host, api_config.port)
@@ -726,39 +736,34 @@ class DipDup:
 
         await resolve_tzkt_code_hashes(self._config, self._datasources)
 
-    async def _set_up_index_dispatcher(
+    async def _set_up_background_tasks(
         self,
         tasks: set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
-        run: bool,
-        metrics: bool,
     ) -> None:
-        index_dispatcher = IndexDispatcher(self._ctx)
-        self._index_dispatcher = index_dispatcher
-        if run:
-            tasks.add(
-                create_task(
-                    index_dispatcher.run(
-                        spawn_datasources_event,
-                        start_scheduler_event,
-                        early_realtime,
-                    )
+        index_dispatcher = self._index_dispatcher
+        if index_dispatcher.is_oneshot():
+            return
+
+        tasks.add(
+            create_task(
+                index_dispatcher.run(
+                    spawn_datasources_event,
+                    start_scheduler_event,
+                    early_realtime,
                 )
             )
+        )
+        tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
+        tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+        if prometheus_config := self._ctx.config.prometheus:
+            tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
 
-        if metrics:
-            if prometheus_config := self._ctx.config.prometheus:
-                tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
-            if not self._ctx.config.oneshot:
-                tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
-                tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+        tasks.add(create_task(self._transactions.cleanup_loop()))
 
-    def _get_event_dispatcher(self) -> IndexDispatcher:
-        if self._index_dispatcher is None:
-            raise FrameworkException('Index dispatcher is not initialized')
-        return self._index_dispatcher
+        tasks.add(create_task(self._ctx._hooks_loop()))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
