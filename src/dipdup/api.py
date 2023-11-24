@@ -27,7 +27,7 @@ def _method_wrapper(
             return web.Response(body='Request is not a JSON', status=400)
         except Error as e:
             return web.Response(body=str(e), status=400)
-        except FrameworkException as e:
+        except Exception as e:
             return web.Response(body=str(e), status=500)
 
     return resolved_method
