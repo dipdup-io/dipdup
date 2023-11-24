@@ -6,7 +6,6 @@ import os
 import sys
 from collections import deque
 from contextlib import AsyncExitStack
-from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
@@ -68,7 +67,6 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
-from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
@@ -613,16 +611,13 @@ class DipDupContext:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        with ExitStack() as stack:
-            try:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_callback_duration(module))
-                yield
-            # NOTE: Do not wrap known errors like ProjectImportError
-            except FrameworkException:
-                raise
-            except Exception as e:
-                raise CallbackError(module, e) from e
+        try:
+            yield
+        # NOTE: Do not wrap known errors like ProjectImportError
+        except FrameworkException:
+            raise
+        except Exception as e:
+            raise CallbackError(module, e) from e
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:

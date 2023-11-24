@@ -1,5 +1,4 @@
 from collections import deque
-from contextlib import ExitStack
 from typing import Any
 
 from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig
@@ -11,7 +10,6 @@ from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transf
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.prometheus import Metrics
 
 TokenTransferQueueItem = tuple[TzktTokenTransferData, ...] | TzktRollbackMessage
 
@@ -58,12 +56,8 @@ class TzktTokenTransfersIndex(
         self._logger.info('Fetching token transfers from level %s to %s', first_level, sync_level)
         fetcher = self._create_fetcher(first_level, sync_level)
 
-        async for level, token_transfers in fetcher.fetch_by_level():
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                    stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_data(token_transfers, sync_level)
+        async for _, token_transfers in fetcher.fetch_by_level():
+            await self._process_level_data(token_transfers, sync_level)
 
         await self._exit_sync_state(sync_level)
 

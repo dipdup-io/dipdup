@@ -147,8 +147,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         retry_count = 0 if env.TEST else self._config.retry_count
         retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
 
-        if Metrics.enabled:
-            Metrics.set_http_errors_in_row(self._url, 0)
+        Metrics.set_http_errors_in_row(self._url, 0)
 
         while True:
             self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
@@ -165,8 +164,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                 ratelimit_sleep: float | None = None
                 if isinstance(e, aiohttp.ClientResponseError):
-                    if Metrics.enabled:
-                        Metrics.set_http_error(self._url, e.status)
+                    Metrics.set_http_error(self._url, e.status)
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         ratelimit_sleep = self._config.ratelimit_sleep
@@ -175,14 +173,12 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                             e.headers = cast(Mapping[str, Any], e.headers)
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))
                 else:
-                    if Metrics.enabled:
-                        Metrics.set_http_error(self._url, 0)
+                    Metrics.set_http_error(self._url, 0)
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
 
-                if Metrics.enabled:
-                    Metrics.set_http_errors_in_row(self._url, attempt)
+                Metrics.set_http_errors_in_row(self._url, attempt)
 
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
                 attempt += 1

@@ -13,14 +13,6 @@ _indexes_total = Gauge(
     ('status',),
 )
 
-_index_level_sync_duration = Histogram(
-    'dipdup_index_level_sync_duration_seconds',
-    'Duration of indexing a single level',
-)
-_index_level_realtime_duration = Histogram(
-    'dipdup_index_level_realtime_duration_seconds',
-    'Duration of last index syncronization',
-)
 _index_total_sync_duration = Histogram(
     'dipdup_index_total_sync_duration_seconds',
     'Duration of the last index syncronization',
@@ -65,11 +57,6 @@ _http_errors_in_row = Histogram(
     'dipdup_http_errors_in_row',
     'Number of consecutive failed requests',
 )
-_callback_duration = Histogram(
-    'dipdup_callback_duration_seconds',
-    'Duration of callback execution',
-    ['callback'],
-)
 
 _sqd_processor_last_block = Gauge(
     'sqd_processor_last_block',
@@ -93,18 +80,6 @@ class Metrics:
 
     @classmethod
     @contextmanager
-    def measure_level_sync_duration(cls) -> Generator[None, None, None]:
-        with _index_level_sync_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
-    def measure_level_realtime_duration(cls) -> Generator[None, None, None]:
-        with _index_level_realtime_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
     def measure_total_sync_duration(cls) -> Generator[None, None, None]:
         with _index_total_sync_duration.time():
             yield
@@ -113,12 +88,6 @@ class Metrics:
     @contextmanager
     def measure_total_realtime_duration(cls) -> Generator[None, None, None]:
         with _index_total_realtime_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
-    def measure_callback_duration(cls, name: str) -> Generator[None, None, None]:
-        with _callback_duration.labels(callback=name).time():
             yield
 
     @classmethod

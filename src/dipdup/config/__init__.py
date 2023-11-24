@@ -47,7 +47,6 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
-from dipdup.performance import MetricsLevel
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -579,7 +578,7 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    metrics: MetricsLevel = MetricsLevel.basic
+    prometheus: PrometheusConfig | None = None
     alt_operation_matcher: bool = False
 
     class Config:
@@ -621,7 +620,6 @@ class DipDupConfig:
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
-    prometheus: PrometheusConfig | None = None
     api: ApiConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
