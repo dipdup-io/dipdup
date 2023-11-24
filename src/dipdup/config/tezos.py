@@ -27,7 +27,7 @@ def is_wallet_address(address: str) -> bool:
 
 @dataclass
 class TezosContractConfig(ContractConfig):
-    """Contract config
+    """Tezos contract config.
 
     :param kind: Always `tezos`
     :param address: Contract address

@@ -225,10 +225,10 @@ class NameMixin:
         return self._name
 
 
-@dataclass
-class ContractConfig(NameMixin):
+class ContractConfig(ABC, NameMixin):
     """Contract config
 
+    :param kind: Defined by child class
     :param typename: Alias for the contract script
     """
 
@@ -557,7 +557,7 @@ class ApiConfig:
 
 @dataclass
 class AdvancedConfig:
-    """Feature flags and other advanced config.
+    """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
@@ -567,7 +567,6 @@ class AdvancedConfig:
     :param rollback_depth: A number of levels to keep for rollback
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
-    :param api: Monitoring API config
     :param metrics: off/basic/advanced based on how much performance metrics you want to collect
     :param alt_operation_matcher: Use different algorithm to match operations (dev only)
     """
@@ -580,7 +579,6 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    api: ApiConfig | None = None
     metrics: MetricsLevel = MetricsLevel.basic
     alt_operation_matcher: bool = False
 
@@ -604,6 +602,7 @@ class DipDupConfig:
     :param hasura: Hasura integration config
     :param sentry: Sentry integration config
     :param prometheus: Prometheus integration config
+    :param api: Management API config
     :param advanced: Advanced config
     :param custom: User-defined configuration to use in callbacks
     :param logging: Modify logging verbosity
@@ -623,6 +622,7 @@ class DipDupConfig:
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
+    api: ApiConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
