@@ -9,7 +9,6 @@ from aiohttp import web
 import dipdup.performance
 from dipdup.context import DipDupContext
 from dipdup.exceptions import Error
-from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps
 
 
