@@ -49,6 +49,7 @@ def main() -> None:
         to = Path(path)
         from_ = Path(f'docs/_build/html/{html}')
 
+        # NOTE: Strip HTML boilerplate
         out = '\n'.join(from_.read_text().split('\n')[32:-63])
         if 'config' in str(from_):
             out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')

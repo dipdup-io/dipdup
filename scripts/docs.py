@@ -59,6 +59,7 @@ class DocsBuilder(FileSystemEventHandler):
         if src_file.is_dir():
             return
 
+        # NOTE: Sphinx autodoc reference
         if src_file.name.endswith('.rst'):
             Popen(['python3', 'scripts/dump_references.py']).wait()
             return
@@ -136,6 +137,7 @@ def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
 
 @contextmanager
 def frontend(path: Path) -> Iterator[Popen[Any]]:
+    # NOTE: pnpm is important! Regular npm fails to resolve deps.
     process = Popen(['pnpm', 'run', 'dev'], cwd=path)
     time.sleep(3)
     click.launch('http://localhost:3000/docs')
