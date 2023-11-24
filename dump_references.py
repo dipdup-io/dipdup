@@ -33,33 +33,29 @@ description: "Context reference"
 
 """
 
-api_path, api_html = 'docs/7.references/5.api.md', 'api-reference.html'
-api_header = """---
-title: "HTTP API"
-description: "API reference"
----
 
-# API reference
+def main() -> None:
+    subprocess.run(
+        args=('sphinx-build', '-M', 'html', '.', '_build'),
+        cwd='docs',
+        check=True,
+    )
 
-"""
+    for path, html, header in (
+        (cli_path, cli_html, cli_header),
+        (config_path, config_html, config_header),
+        (context_path, context_html, context_header),
+    ):
+        to = Path(path)
+        from_ = Path(f'docs/_build/html/{html}')
 
-subprocess.run(
-    args=('sphinx-build', '-M', 'html', '.', '_build'),
-    cwd='docs',
-    check=True,
-)
+        # NOTE: Strip HTML boilerplate
+        out = '\n'.join(from_.read_text().split('\n')[32:-63])
+        if 'config' in str(from_):
+            out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
-for path, html, header in (
-    (cli_path, cli_html, cli_header),
-    (config_path, config_html, config_header),
-    (context_path, context_html, context_header),
-    (api_path, api_html, api_header),
-):
-    to = Path(path)
-    from_ = Path(f'docs/_build/html/{html}')
+        to.write_text(header + MARKDOWNLINT_HINT + out)
 
-    out = '\n'.join(from_.read_text().split('\n')[32:-63])
-    if 'config' in str(from_):
-        out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
-    to.write_text(header + MARKDOWNLINT_HINT + out)
+if __name__ == '__main__':
+    main()
