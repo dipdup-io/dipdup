@@ -1,7 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
-from contextlib import ExitStack
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -133,8 +132,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         last_level = self._config.last_level
         if last_level:
-            with ExitStack() as stack:
-                stack.enter_context(Metrics.measure_total_sync_duration())
+            with Metrics.measure_total_sync_duration():
                 await self._synchronize(last_level)
                 await self._enter_disabled_state(last_level)
                 return True
@@ -146,14 +144,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
             self._queue.clear()
 
-            with ExitStack() as stack:
-                stack.enter_context(Metrics.measure_total_sync_duration())
+            with Metrics.measure_total_sync_duration():
                 await self._synchronize(sync_level)
                 return True
 
         if self._queue:
-            with ExitStack() as stack:
-                stack.enter_context(Metrics.measure_total_realtime_duration())
+            with Metrics.measure_total_realtime_duration():
                 await self._process_queue()
                 return True
 
