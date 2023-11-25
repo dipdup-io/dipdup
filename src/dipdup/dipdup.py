@@ -673,11 +673,11 @@ class DipDup:
             self._ctx.register_hook(hook_config)
 
     async def _set_up_prometheus(self) -> None:
-        if self._config.advanced.prometheus:
+        if self._config.prometheus:
             from prometheus_client import start_http_server
 
             Metrics.enabled = True
-            start_http_server(self._config.advanced.prometheus.port, self._config.advanced.prometheus.host)
+            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
@@ -751,7 +751,7 @@ class DipDup:
         )
         tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
         tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
-        if prometheus_config := self._ctx.config.advanced.prometheus:
+        if prometheus_config := self._ctx.config.prometheus:
             tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
 
         tasks.add(create_task(self._transactions.cleanup_loop()))

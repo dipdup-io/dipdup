@@ -578,7 +578,6 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    prometheus: PrometheusConfig | None = None
     alt_operation_matcher: bool = False
 
     class Config:
@@ -620,6 +619,7 @@ class DipDupConfig:
     hooks: dict[str, HookConfig] = field(default_factory=dict)
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
+    prometheus: PrometheusConfig | None = None
     api: ApiConfig | None = None
     advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = field(default_factory=dict)
