@@ -69,9 +69,7 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
-from dipdup.performance import MetricsLevel
 from dipdup.performance import metrics
-from dipdup.performance import with_pprofile
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.transactions import TransactionManager
@@ -386,8 +384,7 @@ class IndexDispatcher:
                 },
             ),
         )
-        if Metrics.enabled:
-            Metrics.set_datasource_head_updated(datasource.name)
+        Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
@@ -404,8 +401,7 @@ class IndexDispatcher:
                 },
             ),
         )
-        if Metrics.enabled:
-            Metrics.set_datasource_head_updated(datasource.name)
+        Metrics.set_datasource_head_updated(datasource.name)
 
     async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
         for index in self._indexes.values():
@@ -465,8 +461,7 @@ class IndexDispatcher:
 
         channel = f'{datasource.name}:{type_.value}'
         _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
-        if Metrics.enabled:
-            Metrics.set_datasource_rollback(datasource.name)
+        Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
@@ -565,8 +560,6 @@ class DipDup:
         self._ctx.package.verify()
 
         async with AsyncExitStack() as stack:
-            await self._set_up_metrics(stack)
-
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_transactions(stack)
@@ -794,9 +787,3 @@ class DipDup:
         tasks.add(run_task)
 
         return event
-
-    async def _set_up_metrics(self, stack: AsyncExitStack) -> None:
-        level = self._config.advanced.metrics
-        metrics.set_level(level)
-        if level == MetricsLevel.full:
-            await stack.enter_async_context(with_pprofile(self._config.package))

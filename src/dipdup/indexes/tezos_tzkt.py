@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from collections import deque
-from contextlib import ExitStack
 from typing import Any
 from typing import Generic
 
@@ -34,10 +33,7 @@ class TzktIndex(
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_data(message, message_level)
+            await self._process_level_data(message, message_level)
 
     async def _process_level_data(
         self,
@@ -55,8 +51,7 @@ class TzktIndex(
         self._logger.debug('Processing data of level %s', batch_level)
         matched_handlers = self._match_level_data(self._config.handlers, level_data)
 
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
+        Metrics.set_index_handlers_matched(len(matched_handlers))
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
