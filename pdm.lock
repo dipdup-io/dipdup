@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:72ace3c97551ae69c69154cc0a94705f3d15628d0d6e15ce9d25f8a9675932c3"
+content_hash = "sha256:4e65d3f8142f1f9c5d3fa1af73dff4c98049109525b6863818d45de1c68cbb9e"
 
 [[package]]
 name = "aiohttp"
@@ -82,20 +82,6 @@ summary = "A configurable sidebar-enabled Sphinx theme"
 files = [
     {file = "alabaster-0.7.13-py3-none-any.whl", hash = "sha256:1ee19aca801bbabb5ba3f5f258e4422dfa86f82f3e9cefb0859b283cdd7f62a3"},
     {file = "alabaster-0.7.13.tar.gz", hash = "sha256:a27a4a084d5e690e16e01e03ad2b2e552c61a65469419b907243193de1a84ae2"},
-]
-
-[[package]]
-name = "anyio"
-version = "3.7.1"
-requires_python = ">=3.7"
-summary = "High level compatibility layer for multiple asynchronous event loop implementations"
-dependencies = [
-    "idna>=2.8",
-    "sniffio>=1.1",
-]
-files = [
-    {file = "anyio-3.7.1-py3-none-any.whl", hash = "sha256:91dee416e570e92c64041bd18b900d1d6fa78dff7048769ce5ac5ddad004fbb5"},
-    {file = "anyio-3.7.1.tar.gz", hash = "sha256:44a3c9aba0f5defa43261a8b3efb97891f2bd7d804e0e1f56419befa1adfc780"},
 ]
 
 [[package]]
@@ -395,7 +381,7 @@ files = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.24.2"
+version = "0.25.0"
 requires_python = ">=3.7,<4.0"
 summary = "Datamodel Code Generator"
 dependencies = [
@@ -410,8 +396,8 @@ dependencies = [
     "pyyaml>=6.0.1",
 ]
 files = [
-    {file = "datamodel_code_generator-0.24.2-py3-none-any.whl", hash = "sha256:582c30466def12600d7165c5f624bb63a7e944eeaf8320f282518daf9ccb566c"},
-    {file = "datamodel_code_generator-0.24.2.tar.gz", hash = "sha256:d278c751038c8911efc82856ec549ac1e3e13134567387a4bb5ab7ddc6543162"},
+    {file = "datamodel_code_generator-0.25.0-py3-none-any.whl", hash = "sha256:6541ed54edff325a2f1586125772194c08260a9ae7015a24e9050a534372a5a2"},
+    {file = "datamodel_code_generator-0.25.0.tar.gz", hash = "sha256:a90148758aab31c08c9abb2eb9c9c7b42c60f5750a00da84c155b9682b135413"},
 ]
 
 [[package]]
@@ -1363,15 +1349,15 @@ files = [
 
 [[package]]
 name = "sentry-sdk"
-version = "1.36.0"
+version = "1.37.1"
 summary = "Python client for Sentry (https://sentry.io)"
 dependencies = [
     "certifi",
     "urllib3>=1.26.11; python_version >= \"3.6\"",
 ]
 files = [
-    {file = "sentry-sdk-1.36.0.tar.gz", hash = "sha256:f32dd16547f2f45e1c71a96fd4a48925e629541f7ddfe3d5d25ef7d5e94eb3c8"},
-    {file = "sentry_sdk-1.36.0-py2.py3-none-any.whl", hash = "sha256:25d574f94fdf72199e331c2401fdac60d01b5be8f32822174c51c3ff0fc2f8cb"},
+    {file = "sentry-sdk-1.37.1.tar.gz", hash = "sha256:7cd324dd2877fdc861f75cba4242bce23a58272a6fea581fcb218bb718bd9cc5"},
+    {file = "sentry_sdk-1.37.1-py2.py3-none-any.whl", hash = "sha256:a249c7364827ee89daaa078bb8b56ece0b3d52d9130961bef2302b79bdf7fe70"},
 ]
 
 [[package]]
@@ -1392,16 +1378,6 @@ summary = "Python 2 and 3 compatibility utilities"
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
-
-[[package]]
-name = "sniffio"
-version = "1.3.0"
-requires_python = ">=3.7"
-summary = "Sniff out which async library your code is running under"
-files = [
-    {file = "sniffio-1.3.0-py3-none-any.whl", hash = "sha256:eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384"},
-    {file = "sniffio-1.3.0.tar.gz", hash = "sha256:e60305c5e5d314f5389259b7f22aaa33d8f7dee49763119234af3755c55b9101"},
 ]
 
 [[package]]
