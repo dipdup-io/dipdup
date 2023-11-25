@@ -52,6 +52,8 @@ dependencies = [
 
     "aiohttp~=3.8",
     "aiolimiter~=1.0",
+    # NOTE: Used as backend by asyncclick
+    "anyio>=4.1.0",
     "APScheduler~=3.8",
     "async-lru~=2.0",
     "asyncclick~=8.0",
