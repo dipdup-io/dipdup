@@ -161,6 +161,7 @@ class HttpConfig:
     :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
+    :param request_timeout: Request timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request
     :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
     :param alias: Alias for this HTTP client (dev only)
@@ -174,6 +175,7 @@ class HttpConfig:
     ratelimit_sleep: float | None = None
     connection_limit: int | None = None
     connection_timeout: int | None = None
+    request_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
     alias: str | None = None
@@ -191,6 +193,7 @@ class ResolvedHttpConfig:
     ratelimit_sleep: float = 0.0
     connection_limit: int = 100
     connection_timeout: int = 60
+    request_timeout: int = 60
     batch_size: int = 10_000
     replay_path: str | None = None
     alias: str | None = None
