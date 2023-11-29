@@ -1,6 +1,7 @@
 import asyncio
 import time
 from collections import defaultdict
+from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -63,6 +64,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
+        self._subscription_tasks: deque[asyncio.Task[None]] = deque()
         self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
@@ -104,7 +106,19 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def run(self) -> None:
         await self._realtime.wait()
+        await asyncio.gather(
+            self._ws_loop(),
+            self._tasks_loop(),
+        )
 
+    async def _tasks_loop(self) -> None:
+        while True:
+            while self._subscription_tasks:
+                task = self._subscription_tasks.popleft()
+                await task
+            await asyncio.sleep(1)
+
+    async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
@@ -274,7 +288,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
                 self._logger.debug('Received a message from channel %s', subscription_id)
-                await self._handle_subscription(subscription, data['params']['result'])
+                self._subscription_tasks.append(
+                    asyncio.create_task(self._handle_subscription(subscription, data['params']['result']))
+                )
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)
         else:
@@ -341,6 +357,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             protocol=WebsocketProtocol(),
             callback=self._on_message,
             skip_negotiation=True,
+            connection_timeout=self._http_config.connection_timeout,
         )
 
         self._ws_client.on_open(self._on_connected)
