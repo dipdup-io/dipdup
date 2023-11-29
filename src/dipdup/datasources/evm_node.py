@@ -1,6 +1,5 @@
 import asyncio
 import time
-from collections import defaultdict
 from collections.abc import Awaitable
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -63,7 +62,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
-        self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
+        self._heads: dict[int, EvmNodeHeadData] = {}
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
@@ -222,9 +221,15 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
             message = WebsocketMessage(request)
             client = self._get_ws_client()
-            await client.send(message)
 
-            await event.wait()
+            async def _request() -> None:
+                await client.send(message)
+                await event.wait()
+
+            await asyncio.wait_for(
+                _request(),
+                timeout=self._http_config.request_timeout,
+            )
             data = self._requests[request_id][1]
             del self._requests[request_id]
 
@@ -279,25 +284,22 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             head = EvmNodeHeadData.from_json(data)
             level = head.number
 
-            known_hash = self._heads[level].hash
-            if known_hash not in (head.hash, None):
-                await self.emit_rollback(
-                    MessageType(),
-                    from_level=max(self._heads.keys() or (level,)),
-                    to_level=level - 1,
-                )
+            if level in self._heads:
+                known_hash = self._heads[level].hash
+                if known_hash != head.hash:
+                    await self.emit_rollback(
+                        MessageType(),
+                        from_level=max(self._heads.keys() or (level,)),
+                        to_level=level - 1,
+                    )
 
-            self._heads[level].hash = head.hash
-            self._heads[level].timestamp = head.timestamp
+            self._heads[level] = head
             await self.emit_head(head)
-            self._heads[level].event.set()
 
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level = int(data['blockNumber'], 16)
-            await self._heads[level].event.wait()
+            # NOTE: We expect head to arrive before other data. Is it true for all kinds of nodes/subscriptions?
             timestamp = self._heads[level].timestamp
-            if timestamp is None:
-                raise FrameworkException('Head cached but timestamp is None')
             logs = EvmNodeLogData.from_json(data, timestamp)
             await self.emit_logs(logs)
 
