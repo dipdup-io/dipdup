@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
 - codegen: Use datamodel-code-generator from the project's virtualenv.
-- index: Fixed an issue with realtime subscriptions which led to indexing being stuck in some cases.
+- evm.node: Fixed an issue with realtime subscriptions which led to indexing being stuck in some cases.
 - install: Don't install datamodel-code-generator as a CLI tool.
 - install: Respect package manager if specified in pyproject.toml.
 
