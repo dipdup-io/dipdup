@@ -60,8 +60,8 @@ vulnerable_versions = {
 }
 
 RelationalFieldT = Union[
-    fields.relational.ForeignKeyFieldInstance,
-    fields.relational.ManyToManyFieldInstance,
+    fields.relational.ForeignKeyFieldInstance[Any],
+    fields.relational.ManyToManyFieldInstance[Any],
 ]
 _get_fields_query = """
 query introspectionQuery($name: String!) {
