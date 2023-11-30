@@ -31,7 +31,7 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationHandlerArgumentU = Transaction | Origination | OperationData | None
+OperationHandlerArgumentU = Transaction[Any, Any] | Origination[Any] | OperationData | None
 MatchedOperationsT = tuple[OperationSubgroup, OperationHandlerConfigU, deque[OperationHandlerArgumentU]]
 
 
