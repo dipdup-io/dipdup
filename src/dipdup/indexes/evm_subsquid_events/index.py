@@ -69,7 +69,7 @@ class SubsquidEventsIndex(
     def realtime_node(self) -> EvmNodeDatasource:
         if self._realtime_node is None:
             self._realtime_node = self.random_node
-            self._realtime_node.realtime()
+            self._realtime_node.use_realtime()
         return self._realtime_node
 
     @property
