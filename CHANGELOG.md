@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - api: Added HTTP API to manage a running indexer.
+- config: Added `http.request_timeout` option to set the total timeout for HTTP requests.
 - evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
 - project: Added optional `package_manager` field to replay config.
 - project: Added Makefile to the default project template (only for new projects).
@@ -18,7 +19,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
 - codegen: Use datamodel-code-generator from the project's virtualenv.
-- index: Fixed an issue with realtime subscriptions which led to indexing being stuck in some cases.
+- evm.node: Fixed an issue with realtime subscriptions which led to indexing being stuck in some cases.
+- http: Use `request_timeout` instead of `connection_timeout` for total timeout.
 - install: Don't install datamodel-code-generator as a CLI tool.
 - install: Respect package manager if specified in pyproject.toml.
 

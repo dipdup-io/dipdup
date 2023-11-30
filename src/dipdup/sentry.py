@@ -69,7 +69,7 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
     if dsn:
         _logger.info('Sentry is enabled: %s', dsn)
 
-    if config.debug:
+    if config.debug or env.DEBUG:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
