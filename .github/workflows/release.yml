@@ -146,6 +146,7 @@ jobs:
         uses: getsentry/action-release@v1
         with:
           version: ${{ steps.changelog.outputs.version }}
+          ignore_missing: true
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: sentry
