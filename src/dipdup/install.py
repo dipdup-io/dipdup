@@ -218,7 +218,7 @@ def install(
         if pm in pipx_packages:
             echo(f'Updating `{pm}`')
             env.run_cmd('pipx', 'upgrade', pm, force_str)
-        elif with_pm or force or quiet or ask('Install `{pm}`?', False):
+        elif with_pm or force or quiet or ask(f'Install `{pm}`?', False):
             echo(f'Installing `{pm}`')
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pm, force_str)
             env._commands[pm] = which(pm)
