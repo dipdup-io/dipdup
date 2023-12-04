@@ -76,3 +76,14 @@ indexes:
 
 advanced:
   decimal_precision: 128
+  postpone_jobs: False
+
+jobs:
+  update_views:
+    hook: on_daily_update
+    crontab: "0 0 * * *"
+
+hooks:
+  on_daily_update:
+    callback: on_daily_update
+    atomic: false
