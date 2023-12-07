@@ -292,6 +292,8 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+        from dipdup.indexes.evm_subsquid_traces.index import SubsquidTracesIndex
+        from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -300,7 +302,7 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenBalancesIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
+        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenBalancesIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex | SubsquidTracesIndex | SubsquidTransactionsIndex
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource

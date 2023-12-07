@@ -12,5 +12,5 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 class SubsquidTransactionsIndexConfig(IndexConfig):
     kind: Literal['evm.subsquid.transactions']
     datasource: SubsquidDatasourceConfig
-    
+
     ...
