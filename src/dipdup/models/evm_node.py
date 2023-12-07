@@ -33,6 +33,16 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
 
 
 @dataclass(frozen=True)
+class EvmNodeTracesSubscription(EvmNodeSubscription):
+    ...
+
+
+@dataclass(frozen=True)
+class EvmNodeTransactionsSubscription(EvmNodeSubscription):
+    ...
+
+
+@dataclass(frozen=True)
 class EvmNodeSyncingSubscription(EvmNodeSubscription):
     name: Literal['syncing'] = 'syncing'
 
@@ -115,6 +125,16 @@ class EvmNodeLogData:
     @property
     def level(self) -> int:
         return self.block_number
+
+
+@dataclass(frozen=True)
+class EvmNodeTraceData:
+    ...
+
+
+@dataclass(frozen=True)
+class EvmNodeTransactionData:
+    ...
 
 
 @dataclass(frozen=True)

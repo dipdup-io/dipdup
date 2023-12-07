@@ -29,6 +29,8 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.models.evm_node import EvmNodeTraceData
+from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
@@ -42,6 +44,8 @@ WEB3_CACHE_SIZE = 256
 EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
 LogsCallback = Callable[['EvmNodeDatasource', EvmNodeLogData], Awaitable[None]]
+TracesCallback = Callable[['EvmNodeDatasource', EvmNodeTraceData], Awaitable[None]]
+TransactionsCallback = Callable[['EvmNodeDatasource', EvmNodeTransactionData], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
@@ -72,6 +76,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._on_rollback_callbacks: set[RollbackCallback] = set()
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_logs_callbacks: set[LogsCallback] = set()
+        self._on_traces_callbacks: set[TracesCallback] = set()
+        self._on_transactions_callbacks: set[TransactionsCallback] = set()
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
     @property
@@ -179,11 +185,25 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_syncing_callbacks:
             await fn(self, syncing)
 
+    async def emit_traces(self, traces: EvmNodeTraceData) -> None:
+        for fn in self._on_traces_callbacks:
+            await fn(self, traces)
+
+    async def emit_transactions(self, transactions: EvmNodeTransactionData) -> None:
+        for fn in self._on_transactions_callbacks:
+            await fn(self, transactions)
+
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
 
     def call_on_logs(self, fn: LogsCallback) -> None:
         self._on_logs_callbacks.add(fn)
+
+    def call_on_traces(self, fn: TracesCallback) -> None:
+        self._on_traces_callbacks.add(fn)
+
+    def call_on_transactions(self, fn: TransactionsCallback) -> None:
+        self._on_transactions_callbacks.add(fn)
 
     def call_on_syncing(self, fn: SyncingCallback) -> None:
         self._on_syncing_callbacks.add(fn)

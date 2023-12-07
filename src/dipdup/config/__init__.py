@@ -1017,6 +1017,8 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -1046,6 +1048,8 @@ DatasourceConfigU = (
 )
 ResolvedIndexConfigU = (
     SubsquidEventsIndexConfig
+    | SubsquidTracesIndexConfig
+    | SubsquidTransactionsIndexConfig
     | TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig

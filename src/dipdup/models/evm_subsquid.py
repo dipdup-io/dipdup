@@ -36,8 +36,8 @@ class BlockFieldSelection(TypedDict, total=False):
     baseFeePerGas: bool
 
 
-TxFieldSelection = TypedDict(
-    'TxFieldSelection',
+TransactionFieldSelection = TypedDict(
+    'TransactionFieldSelection',
     {
         'transactionIndex': bool,
         'hash': bool,
@@ -115,7 +115,7 @@ class StateDiffFieldSelection(TypedDict, total=False):
 
 class FieldSelection(TypedDict, total=False):
     block: BlockFieldSelection
-    transaction: TxFieldSelection
+    transaction: TransactionFieldSelection
     log: LogFieldSelection
     trace: TraceFieldSelection
     stateDiff: StateDiffFieldSelection
@@ -127,8 +127,8 @@ class LogRequest(TypedDict, total=False):
     transaction: bool
 
 
-TxRequest = TypedDict(
-    'TxRequest',
+TransactionRequest = TypedDict(
+    'TransactionRequest',
     {
         'from': list[str],
         'to': list[str],
@@ -166,13 +166,15 @@ class Query(TypedDict):
     includeAllBlocks: NotRequired[bool]
     fields: NotRequired[FieldSelection]
     logs: NotRequired[list[LogRequest]]
-    transactions: NotRequired[list[TxRequest]]
+    transactions: NotRequired[list[TransactionRequest]]
     traces: NotRequired[list[TraceRequest]]
     stateDiffs: NotRequired[list[StateDiffRequest]]
 
 
 class SubsquidMessageType(Enum):
     logs = 'logs'
+    transactions = 'transactions'
+    traces = 'traces'
 
 
 @dataclass(frozen=True)
@@ -210,6 +212,26 @@ class SubsquidEventData(HasLevel):
 
 
 @dataclass(frozen=True)
+class SubsquidTraceData(HasLevel):
+    ...
+
+
+@dataclass(frozen=True)
+class SubsquidTransactionData(HasLevel):
+    ...
+
+
+@dataclass(frozen=True)
 class SubsquidEvent(Generic[PayloadT]):
     data: SubsquidEventData | EvmNodeLogData
     payload: PayloadT
+
+
+@dataclass(frozen=True)
+class SubsquidTrace(Generic[PayloadT]):
+    ...
+
+
+@dataclass(frozen=True)
+class SubsquidTransaction(Generic[PayloadT]):
+    ...
