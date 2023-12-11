@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- cli: Added `DIPDUP_CONFIG` and `DIPDUP_ENV_FILE` environment variables corresponding to `--config` and `--env-file` options.
+
+### Fixed
+
+- evm.node: Fixed crash on anonymous event logs during the last mile indexing.
+- evm.node: Raise an exception when no realtime messages have been received in `http.connection_timeout` seconds.
+
 ## [7.2.0] - 2023-11-30
 
 ### Added
