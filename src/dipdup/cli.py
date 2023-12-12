@@ -191,6 +191,7 @@ def _skip_cli_group() -> bool:
     help='A path to DipDup project config.',
     default=[ROOT_CONFIG],
     metavar='PATH',
+    envvar='DIPDUP_CONFIG',
 )
 @click.option(
     '--env-file',
@@ -200,6 +201,7 @@ def _skip_cli_group() -> bool:
     help='A path to .env file containing `KEY=value` strings.',
     default=[],
     metavar='PATH',
+    envvar='DIPDUP_ENV_FILE',
 )
 @click.pass_context
 @_cli_wrapper

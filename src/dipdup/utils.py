@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import logging
 import pkgutil
@@ -228,3 +229,25 @@ def json_dumps(obj: Any | str, option: int | None = orjson.OPT_INDENT_2) -> byte
         default=_default_for_decimals,
         option=option,
     )
+
+
+class Watchdog:
+    def __init__(self, timeout: int) -> None:
+        self._watchdog = asyncio.Event()
+        self._timeout = timeout
+
+    def reset(self) -> None:
+        self._watchdog.set()
+        self._watchdog.clear()
+
+    async def run(self) -> None:
+        while True:
+            await asyncio.sleep(self._timeout)
+            try:
+                await asyncio.wait_for(
+                    self._watchdog.wait(),
+                    timeout=self._timeout,
+                )
+            except asyncio.TimeoutError as e:
+                msg = f'Watchdog timeout; no messages received in {self._timeout} seconds'
+                raise FrameworkException(msg) from e
