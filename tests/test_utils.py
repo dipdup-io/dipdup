@@ -18,8 +18,7 @@ from tests.types.qwer.storage import QwerStorage
 from tests.types.qwer.storage import QwerStorageItem1
 
 
-class SomeException(Exception):
-    ...
+class SomeException(Exception): ...
 
 
 async def test_in_global_transaction() -> None:

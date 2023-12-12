@@ -6,6 +6,7 @@ And no 3.11-only code too. Just to print nice colored "not supported" message in
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
 """
+
 import argparse
 import os
 import subprocess

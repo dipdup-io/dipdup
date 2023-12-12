@@ -145,12 +145,14 @@ class FormattedLogger(Logger):
         level: int,
         msg: object,
         args: Any,
-        exc_info: None
-        | bool
-        | tuple[type[BaseException], BaseException, types.TracebackType | None]
-        | tuple[None, None, None]
-        | BaseException
-        | None = None,
+        exc_info: (
+            None
+            | bool
+            | tuple[type[BaseException], BaseException, types.TracebackType | None]
+            | tuple[None, None, None]
+            | BaseException
+            | None
+        ) = None,
         extra: Mapping[str, Any] | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
