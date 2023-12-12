@@ -302,7 +302,17 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenBalancesIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex | SubsquidTracesIndex | SubsquidTransactionsIndex
+        index: (
+            TzktOperationsIndex
+            | TzktBigMapsIndex
+            | TzktHeadIndex
+            | TzktTokenBalancesIndex
+            | TzktTokenTransfersIndex
+            | TzktEventsIndex
+            | SubsquidEventsIndex
+            | SubsquidTracesIndex
+            | SubsquidTransactionsIndex
+        )
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource

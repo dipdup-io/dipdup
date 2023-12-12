@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.2.1] - 2023-12-12
+
+### Added
+
+- cli: Added `DIPDUP_CONFIG` and `DIPDUP_ENV_FILE` environment variables corresponding to `--config` and `--env-file` options.
+
+### Fixed
+
+- evm.node: Fixed crash on anonymous event logs during the last mile indexing.
+- evm.node: Raise an exception when no realtime messages have been received in `http.connection_timeout` seconds.
+
 ## [7.2.0] - 2023-11-30
 
 ### Added
@@ -1259,7 +1270,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.2.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.2.1...HEAD
+[7.2.1]: https://github.com/dipdup-io/dipdup/compare/7.2.0...7.2.1
 [7.2.0]: https://github.com/dipdup-io/dipdup/compare/7.1.1...7.2.0
 [7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0

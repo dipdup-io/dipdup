@@ -8,5 +8,4 @@ from dipdup.models.evm_subsquid import SubsquidMessageType
 class SubsquidTransactionsIndex(
     Index[SubsquidTransactionsIndexConfig, EvmNodeTransactionData, SubsquidDatasource],
     message_type=SubsquidMessageType.transactions,
-):
-    ...
+): ...

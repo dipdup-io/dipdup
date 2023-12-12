@@ -191,6 +191,7 @@ def _skip_cli_group() -> bool:
     help='A path to DipDup project config.',
     default=[ROOT_CONFIG],
     metavar='PATH',
+    envvar='DIPDUP_CONFIG',
 )
 @click.option(
     '--env-file',
@@ -200,6 +201,7 @@ def _skip_cli_group() -> bool:
     help='A path to .env file containing `KEY=value` strings.',
     default=[],
     metavar='PATH',
+    envvar='DIPDUP_ENV_FILE',
 )
 @click.pass_context
 @_cli_wrapper
@@ -548,9 +550,11 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         conn = get_connection()
         await wipe_schema(
             conn=conn,
-            schema_name=config.database.path
-            if isinstance(config.database, SqliteDatabaseConfig)
-            else config.database.schema_name,
+            schema_name=(
+                config.database.path
+                if isinstance(config.database, SqliteDatabaseConfig)
+                else config.database.schema_name
+            ),
             immune_tables=immune_tables,
         )
 

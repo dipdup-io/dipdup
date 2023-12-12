@@ -212,13 +212,11 @@ class SubsquidEventData(HasLevel):
 
 
 @dataclass(frozen=True)
-class SubsquidTraceData(HasLevel):
-    ...
+class SubsquidTraceData(HasLevel): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransactionData(HasLevel):
-    ...
+class SubsquidTransactionData(HasLevel): ...
 
 
 @dataclass(frozen=True)
@@ -228,10 +226,8 @@ class SubsquidEvent(Generic[PayloadT]):
 
 
 @dataclass(frozen=True)
-class SubsquidTrace(Generic[PayloadT]):
-    ...
+class SubsquidTrace(Generic[PayloadT]): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransaction(Generic[PayloadT]):
-    ...
+class SubsquidTransaction(Generic[PayloadT]): ...

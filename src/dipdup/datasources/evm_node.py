@@ -37,6 +37,7 @@ from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
+from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
 
@@ -70,6 +71,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
         self._logs_queue: Queue[dict[str, Any]] = Queue()
         self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
+        self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
@@ -115,6 +117,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         await asyncio.gather(
             self._ws_loop(),
             self._log_processor_loop(),
+            self._watchdog.run(),
         )
 
     async def _log_processor_loop(self) -> None:
@@ -122,7 +125,14 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             log_json = await self._logs_queue.get()
             level = int(log_json['blockNumber'], 16)
 
-            await self._heads[level].event.wait()
+            try:
+                await asyncio.wait_for(
+                    self._heads[level].event.wait(),
+                    timeout=self._http_config.connection_timeout,
+                )
+            except asyncio.TimeoutError as e:
+                msg = f'Head for level {level} not received in {self._http_config.connection_timeout} seconds'
+                raise FrameworkException(msg) from e
             timestamp = self._heads[level].timestamp
             if timestamp is None:
                 raise FrameworkException('Head received but timestamp is None')
@@ -295,6 +305,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             raise FrameworkException(f'Unknown message type: {type(message)}')
 
         data = message.data
+        self._watchdog.reset()
 
         if 'id' in data:
             request_id = data['id']

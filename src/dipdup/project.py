@@ -2,6 +2,7 @@
 
 Ask user some question with Click; render Jinja2 templates with answers.
 """
+
 import logging
 import re
 from pathlib import Path

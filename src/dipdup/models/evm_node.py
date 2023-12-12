@@ -33,13 +33,11 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeTracesSubscription(EvmNodeSubscription):
-    ...
+class EvmNodeTracesSubscription(EvmNodeSubscription): ...
 
 
 @dataclass(frozen=True)
-class EvmNodeTransactionsSubscription(EvmNodeSubscription):
-    ...
+class EvmNodeTransactionsSubscription(EvmNodeSubscription): ...
 
 
 @dataclass(frozen=True)
@@ -128,13 +126,11 @@ class EvmNodeLogData:
 
 
 @dataclass(frozen=True)
-class EvmNodeTraceData:
-    ...
+class EvmNodeTraceData: ...
 
 
 @dataclass(frozen=True)
-class EvmNodeTransactionData:
-    ...
+class EvmNodeTransactionData: ...
 
 
 @dataclass(frozen=True)
