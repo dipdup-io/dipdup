@@ -68,13 +68,11 @@ class TzktIndex(
         self,
         handlers: Any,
         level_data: Any,
-    ) -> deque[Any]:
-        ...
+    ) -> deque[Any]: ...
 
     @abstractmethod
     async def _call_matched_handler(
         self,
         handler_config: Any,
         level_data: Any,
-    ) -> None:
-        ...
+    ) -> None: ...

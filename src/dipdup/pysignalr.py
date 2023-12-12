@@ -3,6 +3,7 @@ Turning pysignalr back into a basic websocket client usable for JSONRPC nodes, b
 
 Eventually this code will be moved to the upstream library.
 """
+
 import asyncio
 from collections.abc import Iterable
 from typing import Any

@@ -8,6 +8,7 @@ There are three module-level singletons, one for each type of resource:
 
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
+
 import logging
 from collections import defaultdict
 from collections import deque

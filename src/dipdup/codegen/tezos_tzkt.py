@@ -8,6 +8,7 @@ For `dipdup new` templates processing see `dipdup.project` module.
 
 Please, keep imports lazy to speed up startup.
 """
+
 from pathlib import Path
 from typing import Any
 from typing import cast

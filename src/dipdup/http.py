@@ -197,8 +197,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int,
         raw: Literal[True],
         **kwargs: Any,
-    ) -> aiohttp.ClientResponse:
-        ...
+    ) -> aiohttp.ClientResponse: ...
 
     @overload
     async def _request(
@@ -208,8 +207,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int,
         raw: Literal[False],
         **kwargs: Any,
-    ) -> Any:
-        ...
+    ) -> Any: ...
 
     async def _request(
         self,
