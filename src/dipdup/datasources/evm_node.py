@@ -122,10 +122,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             try:
                 await asyncio.wait_for(
                     self._heads[level].event.wait(),
-                    timeout=self._http_config.request_timeout,
+                    timeout=self._http_config.connection_timeout,
                 )
             except asyncio.TimeoutError as e:
-                msg = f'Head for level {level} not received in {self._http_config.request_timeout} seconds'
+                msg = f'Head for level {level} not received in {self._http_config.connection_timeout} seconds'
                 raise FrameworkException(msg) from e
             timestamp = self._heads[level].timestamp
             if timestamp is None:
