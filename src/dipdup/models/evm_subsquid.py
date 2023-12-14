@@ -231,3 +231,67 @@ class SubsquidTrace(Generic[PayloadT]): ...
 
 @dataclass(frozen=True)
 class SubsquidTransaction(Generic[PayloadT]): ...
+
+
+LOG_FIELDS: LogFieldSelection = {
+    'logIndex': True,
+    'transactionIndex': True,
+    'transactionHash': True,
+    'address': True,
+    'data': True,
+    'topics': True,
+}
+# TODO: Less fields
+TRANSACTION_FIELDS: TransactionFieldSelection = {
+    'transactionIndex': True,
+    'hash': True,
+    'nonce': True,
+    'from': True,
+    'to': True,
+    'input': True,
+    'value': True,
+    'gas': True,
+    'gasPrice': True,
+    'maxFeePerGas': True,
+    'maxPriorityFeePerGas': True,
+    'v': True,
+    'r': True,
+    's': True,
+    'yParity': True,
+    'chainId': True,
+    'sighash': True,
+    'gasUsed': True,
+    'cumulativeGasUsed': True,
+    'effectiveGasUsed': True,
+    'type': True,
+    'status': True,
+}
+# TODO: Less fields
+TRACE_FIELDS: TraceFieldSelection = {
+    'traceAddress': True,
+    'subtraces': True,
+    'transactionIndex': True,
+    'type': True,
+    'error': True,
+    'createFrom': True,
+    'createValue': True,
+    'createGas': True,
+    'createInit': True,
+    'createResultGasUsed': True,
+    'createResultCode': True,
+    'createResultAddress': True,
+    'callFrom': True,
+    'callTo': True,
+    'callValue': True,
+    'callGas': True,
+    'callInput': True,
+    'callType': True,
+    'callResultGasUsed': True,
+    'callResultOutput': True,
+    'suicideAddress': True,
+    'suicideRefundAddress': True,
+    'suicideBalance': True,
+    'rewardAuthor': True,
+    'rewardValue': True,
+    'rewardType': True,
+}

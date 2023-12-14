@@ -14,19 +14,10 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import LogFieldSelection
+from dipdup.models.evm_subsquid import LOG_FIELDS
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
-
-LOG_FIELDS: LogFieldSelection = {
-    'logIndex': True,
-    'transactionIndex': True,
-    'transactionHash': True,
-    'address': True,
-    'data': True,
-    'topics': True,
-}
 
 
 def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:

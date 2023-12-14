@@ -378,7 +378,7 @@ class IndexDispatcher:
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        asyncio.ensure_future(  # noqa: RUF006
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -395,7 +395,7 @@ class IndexDispatcher:
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        asyncio.ensure_future(  # noqa: RUF006
             Head.update_or_create(
                 name=datasource.name,
                 defaults={

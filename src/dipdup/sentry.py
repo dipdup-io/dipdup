@@ -137,4 +137,4 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
-    _ = asyncio.ensure_future(_heartbeat())
+    asyncio.ensure_future(_heartbeat())  # noqa: RUF006
