@@ -94,25 +94,28 @@ class EvmNodeHeadData:
 @dataclass(frozen=True)
 class EvmNodeLogData:
     address: str
-    topics: tuple[str, ...]
-    data: str
+    block_hash: str
     block_number: int
+    data: str
+    log_index: int
+    topics: tuple[str, ...]
     transaction_hash: str
     transaction_index: int
-    log_index: int
     removed: bool
+
     timestamp: int
 
     @classmethod
     def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
         return cls(
             address=log_json['address'],
-            topics=tuple(log_json['topics']),
-            data=log_json['data'],
+            block_hash=log_json['blockHash'],
             block_number=int(log_json['blockNumber'], 16),
+            data=log_json['data'],
+            log_index=int(log_json['logIndex'], 16),
+            topics=log_json['topics'],
             transaction_hash=log_json['transactionHash'],
             transaction_index=int(log_json['transactionIndex'], 16),
-            log_index=int(log_json['logIndex'], 16),
             removed=log_json['removed'],
             timestamp=timestamp,
         )
@@ -127,7 +130,56 @@ class EvmNodeTraceData: ...
 
 
 @dataclass(frozen=True)
-class EvmNodeTransactionData: ...
+class EvmNodeTransactionData:
+    access_list: tuple[dict[str, Any], ...]
+    block_hash: str
+    block_number: int
+    chain_id: int
+    data: str
+    from_: str
+    gas: int
+    gas_price: int
+    max_fee_per_gas: int
+    max_priority_fee_per_gas: int
+    hash: str
+    input: str
+    nonce: int
+    r: str
+    s: str
+    to: str
+    transaction_index: int
+    type: int
+    v: int
+    value: int
+
+    @classmethod
+    def from_json(cls, transaction_json: dict[str, Any]) -> 'EvmNodeTransactionData':
+        return cls(
+            access_list=tuple(transaction_json['accessList']),
+            block_hash=transaction_json['blockHash'],
+            block_number=int(transaction_json['blockNumber'], 16),
+            chain_id=int(transaction_json['chainId'], 16),
+            data=transaction_json['data'],
+            from_=transaction_json['from'],
+            gas=int(transaction_json['gas'], 16),
+            gas_price=int(transaction_json['gasPrice'], 16),
+            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16),
+            max_priority_fee_per_gas=int(transaction_json['maxPriorityFeePerGas'], 16),
+            hash=transaction_json['hash'],
+            input=transaction_json['input'],
+            nonce=int(transaction_json['nonce'], 16),
+            r=transaction_json['r'],
+            s=transaction_json['s'],
+            to=transaction_json['to'],
+            transaction_index=int(transaction_json['transactionIndex'], 16),
+            type=transaction_json['type'],
+            v=int(transaction_json['v'], 16),
+            value=int(transaction_json['value'], 16),
+        )
+
+    @property
+    def level(self) -> int:
+        return self.block_number
 
 
 @dataclass(frozen=True)
