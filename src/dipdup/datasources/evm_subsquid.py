@@ -19,6 +19,7 @@ from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
+API_POLL_INTERVAL = 1
 LOGS_FIELDS: FieldSelection = {
     'log': {
         'logIndex': True,
@@ -35,10 +36,10 @@ LOGS_FIELDS: FieldSelection = {
 
 
 def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
-    """Extract bytes from Subsquid zip+pyarrow archives"""
+    """Extract data from Subsquid zip+pyarrow archives"""
     data = {}
     with zipfile.ZipFile(BytesIO(content), 'r') as arch:
-        for item in arch.filelist:  # The set of files depends on requested data
+        for item in arch.filelist:
             with arch.open(item) as f, pyarrow.ipc.open_stream(f) as reader:
                 table: pyarrow.Table = reader.read_all()
                 data[item.filename] = table.to_pylist()
@@ -54,10 +55,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     async def run(self) -> None:
         if self._config.node:
             return
-        # NOTE: If node datasource is missing, just poll archive in reasonable intervals
-        # NOTE: Subsquid archives are expected to get real-time support in the future
+        # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(API_POLL_INTERVAL)
             await self.initialize()
 
     async def subscribe(self) -> None:
@@ -124,7 +124,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         level = await self.get_head_level()
 
         if not level:
-            raise DatasourceError('Archive is not ready yet', self.name)
+            raise DatasourceError('Subsquid API is not ready yet', self.name)
 
         self.set_sync_level(None, level)
 
