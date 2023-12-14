@@ -15,7 +15,7 @@ class EvmNodeSubscription(ABC, Subscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeNewHeadsSubscription(EvmNodeSubscription):
+class EvmNodeHeadsSubscription(EvmNodeSubscription):
     name: Literal['newHeads'] = 'newHeads'
 
 
@@ -33,11 +33,8 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeTracesSubscription(EvmNodeSubscription): ...
-
-
-@dataclass(frozen=True)
-class EvmNodeTransactionsSubscription(EvmNodeSubscription): ...
+class EvmNodeTransactionsSubscription(EvmNodeSubscription):
+    name: Literal['newPendingTransactions'] = 'newPendingTransactions'
 
 
 @dataclass(frozen=True)

@@ -14,10 +14,24 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import LOG_FIELDS
+from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
+
+LOGS_FIELDS: FieldSelection = {
+    'log': {
+        'logIndex': True,
+        'transactionIndex': True,
+        'transactionHash': True,
+        'address': True,
+        'data': True,
+        'topics': True,
+    },
+    'block': {
+        'timestamp': True,
+    },
+}
 
 
 def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
@@ -82,12 +96,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             query: Query = {
                 'logs': log_request,
-                'fields': {
-                    'block': {
-                        'timestamp': True,
-                    },
-                    'log': LOG_FIELDS,
-                },
+                'fields': LOGS_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
