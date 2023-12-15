@@ -28,7 +28,7 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
     :param callback: Callback name
     :param contract: EVM contract
-    :param name: Method name
+    :param name: Event name
     """
 
     contract: EvmContractConfig

@@ -3,6 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
+prefix = 'demo_evm_transactions'
 projects_path = Path(__file__).parent.parent / 'projects'
 
 
@@ -12,7 +13,7 @@ def _get_projects() -> list[Path]:
 
 for path in _get_projects():
     package = path.name
-    if not package.startswith('demo_'):
+    if not package.startswith(prefix):
         continue
     print(f'=> Initializing `{package}`')
     package_path = Path(__file__).parent.parent / 'src' / package

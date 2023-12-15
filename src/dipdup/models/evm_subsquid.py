@@ -172,9 +172,10 @@ class Query(TypedDict):
 
 
 class SubsquidMessageType(Enum):
+    blocks = 'blocks'
     logs = 'logs'
-    transactions = 'transactions'
     traces = 'traces'
+    transactions = 'transactions'
 
 
 @dataclass(frozen=True)
@@ -216,7 +217,62 @@ class SubsquidTraceData(HasLevel): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransactionData(HasLevel): ...
+class SubsquidTransactionData(HasLevel):
+    transaction_index: int
+    hash: str
+    nonce: int
+    from_: str
+    to: str
+    input: str
+    value: int
+    gas: int
+    gas_price: int
+    max_fee_per_gas: int
+    max_priority_fee_per_gas: int
+    v: int
+    r: str
+    s: str
+    y_parity: bool
+    chain_id: int
+    sighash: str
+    gas_used: int
+    cumulative_gas_used: int
+    effective_gas_used: int
+    type: int
+    status: int
+    level: int
+
+    @classmethod
+    def from_json(
+        cls,
+        transaction_json: dict[str, Any],
+        level: int,
+    ) -> 'SubsquidTransactionData':
+        return SubsquidTransactionData(
+            transaction_index=transaction_json['transactionIndex'],
+            hash=transaction_json['hash'],
+            nonce=transaction_json['nonce'],
+            from_=transaction_json['from'],
+            to=transaction_json['to'],
+            input=transaction_json['input'],
+            value=transaction_json['value'],
+            gas=transaction_json['gas'],
+            gas_price=transaction_json['gasPrice'],
+            max_fee_per_gas=transaction_json['maxFeePerGas'],
+            max_priority_fee_per_gas=transaction_json['maxPriorityFeePerGas'],
+            v=transaction_json['v'],
+            r=transaction_json['r'],
+            s=transaction_json['s'],
+            y_parity=transaction_json['yParity'],
+            chain_id=transaction_json['chainId'],
+            sighash=transaction_json['sighash'],
+            gas_used=transaction_json['gasUsed'],
+            cumulative_gas_used=transaction_json['cumulativeGasUsed'],
+            effective_gas_used=transaction_json['effectiveGasUsed'],
+            type=transaction_json['type'],
+            status=transaction_json['status'],
+            level=level,
+        )
 
 
 @dataclass(frozen=True)

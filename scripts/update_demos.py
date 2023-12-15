@@ -7,6 +7,7 @@ from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
 demos_path = Path(__file__).parent.parent / 'src'
+prefix = 'demo_evm_transactions'
 
 
 def _get_demos() -> list[Path]:
@@ -18,7 +19,7 @@ def _get_projects() -> list[Path]:
 
 
 for path in _get_demos():
-    if not path.name.startswith('demo_'):
+    if not path.name.startswith(prefix):
         continue
     if path.is_dir():
         print(f'=> Removing `{path.name}`')
@@ -27,7 +28,7 @@ for path in _get_demos():
 
 for path in _get_projects():
     package = path.name
-    if not package.startswith('demo_'):
+    if not package.startswith(prefix):
         continue
 
     print(f'=> Rendering {path}')

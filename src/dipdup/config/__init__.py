@@ -980,6 +980,29 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.to, str):
+                    handler_config.to = self.get_evm_contract(handler_config.to)
+                elif isinstance(handler_config.to, tuple):
+                    to = []
+                    for contract in handler_config.to:
+                        to.append(self.get_evm_contract(contract) if isinstance(contract, str) else contract)
+                    handler_config.to = tuple(to)
+
+                if isinstance(handler_config.from_, str):
+                    handler_config.from_ = self.get_evm_contract(handler_config.from_)
+                elif isinstance(handler_config.from_, tuple):
+                    from_ = []
+                    for contract in handler_config.from_:
+                        from_.append(self.get_evm_contract(contract) if isinstance(contract, str) else contract)
+                    handler_config.from_ = tuple(from_)
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1103,6 +1126,9 @@ _original_to_aliased = {
     'TezosContractConfig | None': 'str | TezosContractConfig | None',
     'EvmContractConfig': 'str | EvmContractConfig',
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
+    'EvmContractConfig | tuple[EvmContractConfig, ...] | None': (
+        'str | EvmContractConfig | tuple[EvmContractConfig, ...] | None'
+    ),
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
     'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
