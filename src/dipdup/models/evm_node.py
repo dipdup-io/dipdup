@@ -44,46 +44,46 @@ class EvmNodeSyncingSubscription(EvmNodeSubscription):
 
 @dataclass(frozen=True)
 class EvmNodeHeadData:
-    number: int
-    hash: str
-    parent_hash: str
-    sha3_uncles: str
-    logs_bloom: str
-    transactions_root: str
-    state_root: str
-    receipts_root: str
-    miner: str
+    base_fee_per_gas: int
     difficulty: int
     extra_data: str
     gas_limit: int
     gas_used: int
-    timestamp: int
-    base_fee_per_gas: int
-    withdrawals_root: str
-    nonce: str
+    hash: str
+    logs_bloom: str
+    miner: str
     mix_hash: str
+    nonce: str
+    number: int
+    parent_hash: str
+    receipts_root: str
+    sha3_uncles: str
+    state_root: str
+    timestamp: int
+    transactions_root: str
+    withdrawals_root: str
 
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
         return cls(
-            number=int(block_json['number'], 16),
-            hash=block_json['hash'],
-            parent_hash=block_json['parentHash'],
-            sha3_uncles=block_json['sha3Uncles'],
-            logs_bloom=block_json['logsBloom'],
-            transactions_root=block_json['transactionsRoot'],
-            state_root=block_json['stateRoot'],
-            receipts_root=block_json['receiptsRoot'],
-            miner=block_json['miner'],
+            base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
             difficulty=int(block_json['difficulty'], 16),
             extra_data=block_json['extraData'],
             gas_limit=int(block_json['gasLimit'], 16),
             gas_used=int(block_json['gasUsed'], 16),
-            timestamp=int(block_json['timestamp'], 16),
-            base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
-            withdrawals_root=block_json['withdrawalsRoot'],
-            nonce=block_json['nonce'],
+            hash=block_json['hash'],
+            logs_bloom=block_json['logsBloom'],
+            miner=block_json['miner'],
             mix_hash=block_json['mixHash'],
+            nonce=block_json['nonce'],
+            number=int(block_json['number'], 16),
+            parent_hash=block_json['parentHash'],
+            receipts_root=block_json['receiptsRoot'],
+            sha3_uncles=block_json['sha3Uncles'],
+            state_root=block_json['stateRoot'],
+            timestamp=int(block_json['timestamp'], 16),
+            transactions_root=block_json['transactionsRoot'],
+            withdrawals_root=block_json['withdrawalsRoot'],
         )
 
     @property
@@ -139,18 +139,18 @@ class EvmNodeTransactionData:
     from_: str
     gas: int
     gas_price: int
-    max_fee_per_gas: int
-    max_priority_fee_per_gas: int
     hash: str
     input: str
+    max_fee_per_gas: int
+    max_priority_fee_per_gas: int
     nonce: int
     r: str
     s: str
     to: str
     transaction_index: int
     type: int
-    v: int
     value: int
+    v: int
 
     @classmethod
     def from_json(cls, transaction_json: dict[str, Any]) -> 'EvmNodeTransactionData':
@@ -163,18 +163,18 @@ class EvmNodeTransactionData:
             from_=transaction_json['from'],
             gas=int(transaction_json['gas'], 16),
             gas_price=int(transaction_json['gasPrice'], 16),
-            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16),
-            max_priority_fee_per_gas=int(transaction_json['maxPriorityFeePerGas'], 16),
             hash=transaction_json['hash'],
             input=transaction_json['input'],
+            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16),
+            max_priority_fee_per_gas=int(transaction_json['maxPriorityFeePerGas'], 16),
             nonce=int(transaction_json['nonce'], 16),
             r=transaction_json['r'],
             s=transaction_json['s'],
             to=transaction_json['to'],
             transaction_index=int(transaction_json['transactionIndex'], 16),
             type=transaction_json['type'],
-            v=int(transaction_json['v'], 16),
             value=int(transaction_json['value'], 16),
+            v=int(transaction_json['v'], 16),
         )
 
     @property
@@ -184,14 +184,14 @@ class EvmNodeTransactionData:
 
 @dataclass(frozen=True)
 class EvmNodeSyncingData:
-    starting_block: int
     current_block: int
     highest_block: int
+    starting_block: int
 
     @classmethod
     def from_json(cls, syncing_json: dict[str, Any]) -> 'EvmNodeSyncingData':
         return cls(
-            starting_block=int(syncing_json['startingBlock'], 16),
             current_block=int(syncing_json['currentBlock'], 16),
             highest_block=int(syncing_json['highestBlock'], 16),
+            starting_block=int(syncing_json['startingBlock'], 16),
         )

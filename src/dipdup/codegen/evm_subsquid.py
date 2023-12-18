@@ -144,11 +144,10 @@ class SubsquidCodeGenerator(CodeGenerator):
             if abi_path.exists():
                 continue
 
+            # TODO: Ability to specify path/url to ABI .json if necessary
             if handler_config.contract.abi:
-                # TODO: Ability to specify path/url to ABI .json if necessary
-                # abi_json = await resolve(handler_config.contract.abi)
-                address = handler_config.contract.abi
-            elif handler_config.contract.address:
+                raise NotImplementedError
+            elif handler_config.contract.address:  # noqa: RET506
                 address = handler_config.contract.address
             else:
                 raise NotImplementedError

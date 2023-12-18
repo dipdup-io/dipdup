@@ -78,8 +78,6 @@ class SubsquidEventsIndexConfig(IndexConfig):
         for handler in self.handlers:
             if address := handler.contract.address:
                 subs.add(EvmNodeLogsSubscription(address=address))
-            elif abi := handler.contract.abi:
-                subs.add(EvmNodeLogsSubscription(topics=((abi,),)))
             else:
                 raise NotImplementedError
         return subs

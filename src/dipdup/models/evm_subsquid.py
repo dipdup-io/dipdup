@@ -218,29 +218,29 @@ class SubsquidTraceData(HasLevel): ...
 
 @dataclass(frozen=True)
 class SubsquidTransactionData(HasLevel):
-    transaction_index: int
-    hash: str
-    nonce: int
-    from_: str
-    to: str
-    input: str
-    value: int
-    gas: int
-    gas_price: int
-    max_fee_per_gas: int
-    max_priority_fee_per_gas: int
-    v: int
-    r: str
-    s: str
-    y_parity: bool
     chain_id: int
-    sighash: str
-    gas_used: int
     cumulative_gas_used: int
     effective_gas_used: int
-    type: int
-    status: int
+    from_: str
+    gas: int
+    gas_price: int
+    gas_used: int
+    hash: str
+    input: str
     level: int
+    max_fee_per_gas: int
+    max_priority_fee_per_gas: int
+    nonce: int
+    r: str
+    sighash: str
+    s: str
+    status: int
+    to: str
+    transaction_index: int
+    type: int
+    value: int
+    v: int
+    y_parity: bool
 
     @classmethod
     def from_json(
@@ -249,29 +249,29 @@ class SubsquidTransactionData(HasLevel):
         level: int,
     ) -> 'SubsquidTransactionData':
         return SubsquidTransactionData(
-            transaction_index=transaction_json['transactionIndex'],
-            hash=transaction_json['hash'],
-            nonce=transaction_json['nonce'],
-            from_=transaction_json['from'],
-            to=transaction_json['to'],
-            input=transaction_json['input'],
-            value=transaction_json['value'],
-            gas=transaction_json['gas'],
-            gas_price=transaction_json['gasPrice'],
-            max_fee_per_gas=transaction_json['maxFeePerGas'],
-            max_priority_fee_per_gas=transaction_json['maxPriorityFeePerGas'],
-            v=transaction_json['v'],
-            r=transaction_json['r'],
-            s=transaction_json['s'],
-            y_parity=transaction_json['yParity'],
             chain_id=transaction_json['chainId'],
-            sighash=transaction_json['sighash'],
-            gas_used=transaction_json['gasUsed'],
             cumulative_gas_used=transaction_json['cumulativeGasUsed'],
             effective_gas_used=transaction_json['effectiveGasUsed'],
-            type=transaction_json['type'],
-            status=transaction_json['status'],
+            from_=transaction_json['from'],
+            gas_price=transaction_json['gasPrice'],
+            gas=transaction_json['gas'],
+            gas_used=transaction_json['gasUsed'],
+            hash=transaction_json['hash'],
+            input=transaction_json['input'],
             level=level,
+            max_fee_per_gas=transaction_json['maxFeePerGas'],
+            max_priority_fee_per_gas=transaction_json['maxPriorityFeePerGas'],
+            nonce=transaction_json['nonce'],
+            r=transaction_json['r'],
+            sighash=transaction_json['sighash'],
+            status=transaction_json['status'],
+            s=transaction_json['s'],
+            to=transaction_json['to'],
+            transaction_index=transaction_json['transactionIndex'],
+            type=transaction_json['type'],
+            value=transaction_json['value'],
+            v=transaction_json['v'],
+            y_parity=transaction_json['yParity'],
         )
 
 

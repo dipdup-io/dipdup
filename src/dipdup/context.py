@@ -26,6 +26,8 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -342,6 +344,14 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            datasource = self.get_subsquid_datasource(datasource_name)
+            node_field = index_config.datasource.node
+            if node_field:
+                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
+            index = SubsquidTransactionsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
