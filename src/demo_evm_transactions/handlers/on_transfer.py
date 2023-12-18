@@ -1,5 +1,5 @@
 from demo_evm_transactions import models as models
-from demo_evm_transactions.types.eth_usdt.evm_transactions.eth_usdt import Transfer
+from demo_evm_transactions.types.eth_usdt.evm_transactions.transfer import Transfer
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidTransaction
 
