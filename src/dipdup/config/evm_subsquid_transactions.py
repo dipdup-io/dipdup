@@ -9,9 +9,9 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeTransactionsSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
@@ -66,7 +66,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
 
 
 @dataclass
-class SubsquidTransactionsIndexConfig(IndexConfig):
+class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     kind: Literal['evm.subsquid.transactions']
 
     datasource: SubsquidDatasourceConfig

@@ -8,9 +8,9 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadsSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
@@ -51,7 +51,7 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class SubsquidEventsIndexConfig(IndexConfig):
+class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     """Subsquid datasource config
 
     :param kind: Always 'evm.subsquid.events'

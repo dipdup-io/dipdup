@@ -1065,11 +1065,8 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TzktDatasourceConfig
 )
-ResolvedIndexConfigU = (
-    SubsquidEventsIndexConfig
-    | SubsquidTracesIndexConfig
-    | SubsquidTransactionsIndexConfig
-    | TzktBigMapsIndexConfig
+TzktIndexConfigU = (
+    TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig
     | TzktOperationsIndexConfig
@@ -1077,6 +1074,9 @@ ResolvedIndexConfigU = (
     | TzktTokenTransfersIndexConfig
     | TzktTokenBalancesIndexConfig
 )
+SubsquidIndexConfigU = SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
+
+ResolvedIndexConfigU = TzktIndexConfigU | SubsquidIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

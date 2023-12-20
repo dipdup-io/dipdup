@@ -1,20 +1,17 @@
 import asyncio
-import random
 import time
 from collections import defaultdict
 from collections import deque
 from typing import Any
 from typing import cast
 
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.index import Index
+from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid_events.fetcher import EventLogFetcher
 from dipdup.indexes.evm_subsquid_events.matcher import match_events
 from dipdup.models.evm_node import EvmNodeLogData
@@ -30,7 +27,7 @@ NODE_BATCH_SIZE = 10
 
 
 class SubsquidEventsIndex(
-    Index[SubsquidEventsIndexConfig, EvmNodeLogData, SubsquidDatasource],
+    SubsquidIndex[SubsquidEventsIndexConfig, EvmNodeLogData, SubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
@@ -40,37 +37,7 @@ class SubsquidEventsIndex(
         datasource: SubsquidDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self._node_datasources: tuple[EvmNodeDatasource, ...] | None = None
-        self._realtime_node: EvmNodeDatasource | None = None
         self._topics: dict[str, dict[str, str]] | None = None
-
-    @property
-    def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
-        if self._node_datasources is not None:
-            return self._node_datasources
-
-        node_field = self._config.datasource.node
-        if node_field is None:
-            node_field = ()
-        elif isinstance(node_field, EvmNodeDatasourceConfig):
-            node_field = (node_field,)
-        self._node_datasources = tuple(
-            self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
-        )
-        return self._node_datasources
-
-    @property
-    def random_node(self) -> EvmNodeDatasource:
-        if not self.node_datasources:
-            raise FrameworkException('A node datasource requested, but none attached to this index')
-        return random.choice(self.node_datasources)
-
-    @property
-    def realtime_node(self) -> EvmNodeDatasource:
-        if self._realtime_node is None:
-            self._realtime_node = self.random_node
-            self._realtime_node.use_realtime()
-        return self._realtime_node
 
     @property
     def topics(self) -> dict[str, dict[str, str]]:
@@ -140,7 +107,7 @@ class SubsquidEventsIndex(
 
         use_node = False
         if self.node_datasources:
-            node_sync_level = await self.realtime_node.get_head_level()
+            node_sync_level = await self.get_realtime_node().get_head_level()
             subsquid_lag = abs(node_sync_level - subsquid_sync_level)
             subsquid_available = subsquid_sync_level - index_level
             self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
@@ -163,7 +130,7 @@ class SubsquidEventsIndex(
             batch_first_level = first_level
             while batch_first_level <= sync_level:
                 batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
-                level_logs = await self.random_node.get_logs(
+                level_logs = await self.get_random_node().get_logs(
                     {
                         'fromBlock': hex(batch_first_level),
                         'toBlock': hex(batch_last_level),
@@ -175,7 +142,7 @@ class SubsquidEventsIndex(
                 tasks: deque[asyncio.Task[None]] = deque()
 
                 async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
-                    block = await self.random_node.get_block_by_level(level)
+                    block = await self.get_random_node().get_block_by_level(level)
                     timestamps[level] = int(block['timestamp'], 16)
 
                 for level in range(batch_first_level, batch_last_level + 1):

@@ -7,8 +7,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidIndexConfig
 
 
 @dataclass
@@ -16,7 +16,7 @@ class SubsquidTracesHandlerConfig(HandlerConfig): ...
 
 
 @dataclass
-class SubsquidTracesIndexConfig(IndexConfig):
+class SubsquidTracesIndexConfig(SubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 
     datasource: SubsquidDatasourceConfig
