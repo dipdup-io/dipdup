@@ -207,7 +207,7 @@ class SubsquidEventsIndex(
 
     def _create_fetcher(self, first_level: int, last_level: int) -> EventLogFetcher:
         addresses = set()
-        topics = []
+        topics: deque[tuple[str | None, str]] = deque()
 
         for handler_config in self._config.handlers:
             address = handler_config.contract.address
@@ -223,7 +223,7 @@ class SubsquidEventsIndex(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
-            topics=topics,
+            topics=tuple(topics),
         )
 
     async def _process_level_events(
