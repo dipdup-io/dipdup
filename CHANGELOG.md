@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tezos.tzkt: Fixed incorrect handling of chain rollbacks.
+
 ## [7.2.1] - 2023-12-12
 
 ### Added
