@@ -199,8 +199,8 @@ class SubsquidCodeGenerator(CodeGenerator):
 
             # TODO: Ability to specify path/url to ABI .json if necessary
             if contract.abi:
-                raise NotImplementedError
-            elif contract.address:  # noqa: RET506
+                address = contract.abi
+            elif contract.address:
                 address = contract.address
             else:
                 raise NotImplementedError

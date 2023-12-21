@@ -3,7 +3,7 @@ import os
 import subprocess
 from pathlib import Path
 
-prefix = 'demo_evm_transactions'
+prefix = 'demo_'
 projects_path = Path(__file__).parent.parent / 'projects'
 
 

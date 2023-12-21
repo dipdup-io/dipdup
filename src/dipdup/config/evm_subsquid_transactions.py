@@ -44,7 +44,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
             transaction_module = pascal_to_snake(self.method)
             transaction_cls = snake_to_pascal(self.method)
             module_name = self.typed_contract.module_name
-            yield f'{package}.types.{module_name}.evm_transactions.{transaction_module}', transaction_cls
+            yield f'{package}.types.{module_name}.evm_methods.{transaction_module}', transaction_cls
         else:
             yield 'dipdup.models.evm_subsquid', 'SubsquidTransactionData'
             yield 'dipdup.models.evm_node', 'EvmNodeTransactionData'

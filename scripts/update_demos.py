@@ -7,7 +7,7 @@ from dipdup.project import render_project
 
 projects_path = Path(__file__).parent.parent / 'projects'
 demos_path = Path(__file__).parent.parent / 'src'
-prefix = 'demo_evm_transactions'
+prefix = 'demo_'
 
 
 def _get_demos() -> list[Path]:
