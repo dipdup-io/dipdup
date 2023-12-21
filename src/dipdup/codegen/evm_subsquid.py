@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 from typing import cast
@@ -19,8 +18,10 @@ from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexCon
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.package import ConvertedAbi
+from dipdup.package import ConvertedEventAbi
+from dipdup.package import ConvertedMethodAbi
 from dipdup.package import DipDupPackage
-from dipdup.package import EventAbiExtra
 from dipdup.utils import json_dumps
 from dipdup.utils import touch
 
@@ -62,10 +63,46 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def convert_abi(package: DipDupPackage, events: set[str], methods: set[str]) -> None:
+def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
+    abi_by_typename: dict[str, ConvertedAbi] = {}
+
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
-        event_extras: defaultdict[str, EventAbiExtra] = defaultdict(EventAbiExtra)  # type: ignore[arg-type]
+        converted_abi: ConvertedAbi = {
+            'events': {},
+            'methods': {},
+        }
+
+        for abi_item in abi:
+            if abi_item['type'] == 'function':
+                name = abi_item['name']
+                if name in converted_abi['methods']:
+                    raise NotImplementedError('Multiple methods with the same name are not supported')
+                sighash = eth_utils.crypto.keccak(text=f'{name}({",".join([i["type"] for i in abi_item["inputs"]])})')
+                converted_abi['methods'][name] = ConvertedMethodAbi(
+                    name=name,
+                    sighash=sighash.hex(),
+                    inputs=abi_item['inputs'],
+                    outputs=abi_item['outputs'],
+                )
+            elif abi_item['type'] == 'event':
+                name = abi_item['name']
+                if name in converted_abi['events']:
+                    raise NotImplementedError('Multiple events with the same name are not supported')
+                inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
+                converted_abi['events'][name] = ConvertedEventAbi(
+                    name=name,
+                    topic0=topic_from_abi(abi_item),
+                    inputs=inputs,
+                )
+        abi_by_typename[abi_path.parent.stem] = converted_abi
+
+    return abi_by_typename
+
+
+def abi_to_jsonschemas(package: DipDupPackage, events: set[str], methods: set[str]) -> None:
+    for abi_path in package.abi.glob('**/abi.json'):
+        abi = orjson.loads(abi_path.read_bytes())
 
         for abi_item in abi:
             if abi_item['type'] == 'function':
@@ -73,32 +110,18 @@ def convert_abi(package: DipDupPackage, events: set[str], methods: set[str]) -> 
                 if name not in methods:
                     continue
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_transactions' / f'{abi_item["name"]}.json'
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_methods' / f'{name}.json'
             elif abi_item['type'] == 'event':
                 name = abi_item['name']
-                if name in event_extras:
-                    raise NotImplementedError('wow much overload many signatures')
-                inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
-                event_extras[name] = EventAbiExtra(
-                    name=name,
-                    topic0=topic_from_abi(abi_item),
-                    inputs=inputs,
-                )
                 if name not in events:
                     continue
-
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_events' / f'{abi_item["name"]}.json'
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_events' / f'{name}.json'
             else:
                 continue
 
             touch(schema_path)
             schema_path.write_bytes(json_dumps(schema))
-
-        if event_extras:
-            event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
-            touch(event_extras_path)
-            event_extras_path.write_bytes(json_dumps(event_extras))
 
 
 def topic_from_abi(event: dict[str, Any]) -> str:
@@ -136,7 +159,7 @@ class SubsquidCodeGenerator(CodeGenerator):
                     if handler_config.method:
                         methods.add(handler_config.method)
 
-        convert_abi(self._package, events, methods)
+        abi_to_jsonschemas(self._package, events, methods)
 
     async def generate_hooks(self) -> None:
         pass

@@ -5,12 +5,13 @@ from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
+from typing import TypedDict
 from typing import cast
 
 import orjson
 from pydantic import BaseModel
-from pydantic.dataclasses import dataclass
 
+from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ProjectImportError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -24,8 +25,7 @@ PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 DEFAULT_ENV = '.env.default'
 
-EVM_ABI = 'abi.json'
-EVM_EVENTS = 'events.json'
+EVM_ABI_JSON = 'abi.json'
 
 _branch = '│   '
 _tee = '├── '
@@ -50,11 +50,22 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
     return tuple(lines)
 
 
-@dataclass(frozen=True)
-class EventAbiExtra:
+class ConvertedEventAbi(TypedDict):
     name: str
     topic0: str
     inputs: tuple[tuple[str, bool], ...]
+
+
+class ConvertedMethodAbi(TypedDict):
+    name: str
+    sighash: str
+    inputs: tuple[tuple[str, bool], ...]
+    outputs: tuple[tuple[str, bool], ...]
+
+
+class ConvertedAbi(TypedDict):
+    events: dict[str, ConvertedEventAbi]
+    methods: dict[str, ConvertedMethodAbi]
 
 
 class DipDupPackage:
@@ -83,8 +94,7 @@ class DipDupPackage:
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
-        self._evm_events: dict[str, dict[str, EventAbiExtra]] = {}
-        self._evm_topics: dict[str, dict[str, str]] = {}
+        self._converted_abis: dict[str, ConvertedAbi] = {}
 
     @property
     def replay(self) -> Answers | None:
@@ -176,26 +186,16 @@ class DipDupPackage:
         return cast(Callable[..., Awaitable[None]], callback)
 
     def get_evm_abi(self, typename: str) -> dict[str, Any]:
-        if (abi := self._evm_abis.get(typename)) is None:
-            path = self.abi / typename / EVM_ABI
+        if typename not in self._evm_abis:
+            path = self.abi / typename / EVM_ABI_JSON
             if not path.exists():
-                raise ProjectImportError(f'`{path}` does not exist')
-            abi = cast(dict[str, Any], orjson.loads(path.read_text()))
-            self._evm_abis[typename] = abi
-        return abi
+                raise InitializationRequiredError(f'`{path}` does not exist')
+            self._evm_abis[typename] = orjson.loads(path.read_bytes())
+        return self._evm_abis[typename]
 
-    def get_evm_events(self, typename: str) -> dict[str, EventAbiExtra]:
-        if (events := self._evm_events.get(typename)) is None:
-            path = self.abi / typename / EVM_EVENTS
-            if not path.exists():
-                raise ProjectImportError(f'`{path}` does not exist')
-            extra_json = orjson.loads(path.read_text())
-            events = {k: EventAbiExtra(**v) for k, v in extra_json.items()}
-            self._evm_events[typename] = events
-        return events
+    def get_converted_abi(self, typename: str) -> ConvertedAbi:
+        if not self._converted_abis:
+            from dipdup.codegen.evm_subsquid import convert_abi
 
-    def get_evm_topics(self, typename: str) -> dict[str, str]:
-        if (topics := self._evm_topics.get(typename)) is None:
-            topics = {k: v.topic0 for k, v in self.get_evm_events(typename).items()}
-            self._evm_topics[typename] = topics
-        return topics
+            self._converted_abis = convert_abi(self)
+        return self._converted_abis[typename]

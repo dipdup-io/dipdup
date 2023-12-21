@@ -3,7 +3,6 @@ import time
 from collections import defaultdict
 from collections import deque
 from typing import Any
-from typing import cast
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
@@ -45,7 +44,8 @@ class SubsquidEventsIndex(
             self._topics = {}
             for handler_config in self._config.handlers:
                 typename = handler_config.contract.module_name
-                self._topics[typename] = self._ctx.package.get_evm_topics(typename)
+                event_abi = self._ctx.package.get_converted_abi(typename)['events']
+                self._topics[typename] = {k: v['topic0'] for k, v in event_abi.items()}
 
         return self._topics
 
@@ -72,23 +72,6 @@ class SubsquidEventsIndex(
             self._logger.info('Processing %s event logs of level %s', len(level_logs), message_level)
             await self._process_level_events(tuple(level_logs), message_level)
             Metrics.set_sqd_processor_last_block(message_level)
-
-    def get_sync_level(self) -> int:
-        """Get level index needs to be synchronized to depending on its subscription status"""
-        sync_levels = set()
-        for sub in self._config.get_subscriptions():
-            sync_levels.add(self.datasource.get_sync_level(sub))
-            for datasource in self.node_datasources or ():
-                sync_levels.add(datasource.get_sync_level(sub))
-
-        if None in sync_levels:
-            sync_levels.remove(None)
-        if not sync_levels:
-            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
-
-        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
-        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        return max(cast(set[int], sync_levels))
 
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch event logs via Fetcher and pass to message callback"""
@@ -183,8 +166,10 @@ class SubsquidEventsIndex(
             elif handler_config.contract.abi is None:
                 raise NotImplementedError('Either contract address or ABI must be specified')
 
-            event_abi = self._ctx.package.get_evm_events(handler_config.contract.module_name)[handler_config.name]
-            topics.append((address, event_abi.topic0))
+            event_abi = self._ctx.package.get_converted_abi(handler_config.contract.module_name)['events'][
+                handler_config.name
+            ]
+            topics.append((address, event_abi['topic0']))
 
         return EventLogFetcher(
             datasource=self._datasource,

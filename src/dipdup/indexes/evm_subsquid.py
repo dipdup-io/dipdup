@@ -2,6 +2,7 @@ import random
 from abc import ABC
 from typing import Generic
 from typing import TypeVar
+from typing import cast
 
 from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -55,3 +56,20 @@ class SubsquidIndex(
             self._realtime_node = self.get_random_node()
             self._realtime_node.use_realtime()
         return self._realtime_node
+
+    def get_sync_level(self) -> int:
+        """Get level index needs to be synchronized to depending on its subscription status"""
+        sync_levels = set()
+        for sub in self._config.get_subscriptions():
+            sync_levels.add(self.datasource.get_sync_level(sub))
+            for datasource in self.node_datasources or ():
+                sync_levels.add(datasource.get_sync_level(sub))
+
+        if None in sync_levels:
+            sync_levels.remove(None)
+        if not sync_levels:
+            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
+
+        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
+        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
+        return max(cast(set[int], sync_levels))
