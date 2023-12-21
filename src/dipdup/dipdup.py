@@ -40,7 +40,7 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
-from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
+from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
@@ -72,6 +72,7 @@ from dipdup.package import DipDupPackage
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
+from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
 
 if TYPE_CHECKING:
@@ -374,7 +375,7 @@ class IndexDispatcher:
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        fire_and_forget(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -391,7 +392,7 @@ class IndexDispatcher:
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        fire_and_forget(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -722,12 +723,20 @@ class DipDup:
             await stack.enter_async_context(datasource)
 
     async def _initialize_datasources(self) -> None:
+        init_tzkt = False
         for datasource in self._datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
             await datasource.initialize()
+            if isinstance(datasource, TzktDatasource):
+                init_tzkt = True
 
-        await resolve_tzkt_code_hashes(self._config, self._datasources)
+        if init_tzkt:
+            await late_tzkt_initialization(
+                config=self._config,
+                datasources=self._datasources,
+                reindex_fn=self._ctx.reindex,
+            )
 
     async def _set_up_background_tasks(
         self,

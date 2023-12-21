@@ -31,7 +31,6 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Head
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
@@ -304,23 +303,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             subscription=None,
             level=head_block.level,
         )
-
-        db_head = await Head.filter(name=self.name).first()
-        if not db_head:
-            return
-
-        # NOTE: Ensure that no reorgs happened while we were offline
-        actual_head = await self.get_block(db_head.level)
-        if db_head.hash != actual_head.hash:
-            raise ReindexingRequiredError(
-                ReindexingReason.rollback,
-                context={
-                    'datasource': self,
-                    'level': db_head.level,
-                    'stored_block_hash': db_head.hash,
-                    'actual_block_hash': actual_head.hash,
-                },
-            )
 
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
@@ -1295,14 +1277,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             await self.emit_events(tuple(events))
 
 
-async def resolve_tzkt_code_hashes(
+async def late_tzkt_initialization(
     config: DipDupConfig,
     datasources: dict[str, Datasource[Any]],
+    reindex_fn: Callable[..., Awaitable[None]] | None,
 ) -> None:
-    """Late config initialization. We can resolve code hashes only after all datasources are initialized."""
+    """Tasks to perform after all datasources are initialized."""
     tzkt_datasources = tuple(d for d in datasources.values() if isinstance(d, TzktDatasource))
     tezos_contracts = tuple(c for c in config.contracts.values() if isinstance(c, TezosContractConfig))
 
+    # NOTE: Late config initialization: resolve contract code hashes.
     for contract in tezos_contracts:
         code_hash = contract.code_hash
         if not isinstance(code_hash, str):
@@ -1314,3 +1298,23 @@ async def resolve_tzkt_code_hashes(
                 break
         else:
             raise FrameworkException(f'Failed to resolve code hash for contract `{contract.code_hash}`')
+
+    if not reindex_fn:
+        return
+
+    # NOTE: Ensure that no reorgs happened while we were offline
+    for datasource in tzkt_datasources:
+        db_head = await Head.filter(name=datasource.name).first()
+        if not db_head or not db_head.hash:
+            continue
+
+        actual_head = await datasource.get_block(db_head.level)
+        if db_head.hash != actual_head.hash:
+            # FIXME: Datasources can't trigger reindexing without context, thus `reindex_fn`
+            await reindex_fn(
+                ReindexingReason.rollback,
+                datasource=datasource.name,
+                level=db_head.level,
+                stored_block_hash=db_head.hash,
+                actual_block_hash=actual_head.hash,
+            )

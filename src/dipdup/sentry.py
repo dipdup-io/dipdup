@@ -15,6 +15,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
 from dipdup import env
+from dipdup.sys import fire_and_forget
 from dipdup.sys import is_shutting_down
 
 if TYPE_CHECKING:
@@ -137,4 +138,4 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
-    _ = asyncio.ensure_future(_heartbeat())
+    fire_and_forget(_heartbeat())
