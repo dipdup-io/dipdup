@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:b2c4b29b2119a23ea90a4b73ea834737e8ca12a6c004f60554da27838e87e1ce"
+content_hash = "sha256:9ce91629331f884ae360b736ace86d81e40cbd604034e3ec5c1b2fb66cba29fc"
 
 [[package]]
 name = "aiohttp"
@@ -1636,6 +1636,14 @@ summary = "A non-validating SQL parser."
 files = [
     {file = "sqlparse-0.4.4-py3-none-any.whl", hash = "sha256:5430a4fe2ac7d0f93e66f1efc6e1338a41884b7ddf2a350cedd20ccc4d9d28f3"},
     {file = "sqlparse-0.4.4.tar.gz", hash = "sha256:d446183e84b8349fa3061f0fe7f06ca94ba65b426946ffebe6e3e8295332420c"},
+]
+
+[[package]]
+name = "strict-rfc3339"
+version = "0.7"
+summary = "Strict, simple, lightweight RFC3339 functions"
+files = [
+    {file = "strict-rfc3339-0.7.tar.gz", hash = "sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277"},
 ]
 
 [[package]]
