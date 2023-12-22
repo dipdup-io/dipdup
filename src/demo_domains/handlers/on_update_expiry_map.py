@@ -3,13 +3,12 @@ from typing import Any
 from typing import cast
 
 import strict_rfc3339  # type: ignore[import-untyped]
+from demo_domains import models as models
+from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
+from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
 from dipdup.context import HandlerContext
 from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
-
-from {{ project.package }} import models as models
-from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
-from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
 
 
 async def on_update_expiry_map(
