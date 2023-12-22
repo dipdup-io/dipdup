@@ -1,4 +1,5 @@
 import asyncio
+from copy import copy
 import logging
 import signal
 import sys
@@ -50,7 +51,7 @@ def fire_and_forget(aw: Awaitable[Any]) -> None:
     """Fire and forget coroutine"""
     _futures.append(asyncio.ensure_future(aw))
 
-    for future in _futures:
+    for future in copy(_futures):
         if future.done():
             _futures.remove(future)
 
