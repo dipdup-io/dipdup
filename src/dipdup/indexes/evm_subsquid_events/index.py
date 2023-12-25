@@ -179,7 +179,12 @@ class SubsquidEventsIndex(
                     timestamps[level] = int(block['timestamp'], 16)
 
                 for level in range(batch_first_level, batch_last_level + 1):
-                    tasks.append(asyncio.create_task(_fetch_timestamp(level, timestamps)))
+                    tasks.append(
+                        asyncio.create_task(
+                            _fetch_timestamp(level, timestamps),
+                            name=f'fetch_timestamp:{level}',
+                        ),
+                    )
 
                 await asyncio.gather(*tasks)
 

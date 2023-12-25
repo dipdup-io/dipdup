@@ -17,6 +17,8 @@ from pysignalr.protocol.abstract import Protocol
 from pysignalr.transport.websocket import WebsocketTransport as SignalRWebsocketTransport
 from websockets.client import WebSocketClientProtocol
 
+KEEPALIVE_INTERVAL = 5
+
 
 class WebsocketMessage(Message, type_=MessageType.invocation):
     def __init__(self, data: dict[str, Any]) -> None:
@@ -30,7 +32,7 @@ class WebsocketTransport(SignalRWebsocketTransport):
     async def _keepalive(self, conn: WebSocketClientProtocol) -> None:
         while True:
             await conn.ensure_open()
-            await asyncio.sleep(5)
+            await asyncio.sleep(KEEPALIVE_INTERVAL)
 
     async def _handshake(self, conn: WebSocketClientProtocol) -> None:
         return

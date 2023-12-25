@@ -10,6 +10,7 @@ from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
+from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
@@ -80,6 +81,8 @@ if TYPE_CHECKING:
 
 METRICS_INTERVAL = 3
 STATUS_INTERVAL = 10
+CLEANUP_INTERVAL = 60 * 5
+INDEX_DISPATCHER_INTERVAL = 1
 
 _logger = logging.getLogger(__name__)
 
@@ -164,8 +167,7 @@ class IndexDispatcher:
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
 
-            # TODO: Replace with asyncio.Event
-            await asyncio.sleep(1)
+            await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
 
     def is_oneshot(self) -> bool:
         from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
@@ -194,7 +196,7 @@ class IndexDispatcher:
 
     async def _update_prometheus(self) -> None:
         active, synced, realtime = 0, 0, 0
-        for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
+        for index in copy(self._indexes).values():
             active += 1
             if index.synchronized:
                 synced += 1
@@ -207,6 +209,11 @@ class IndexDispatcher:
         while True:
             await asyncio.sleep(update_interval)
             await self._update_metrics()
+
+    async def _cleanup_loop(self, interval: int) -> None:
+        while True:
+            await asyncio.sleep(interval)
+            await self._ctx.transactions.cleanup()
 
     async def _update_metrics(self) -> None:
         if not self._indexes:
@@ -747,25 +754,32 @@ class DipDup:
     ) -> None:
         index_dispatcher = self._index_dispatcher
         if index_dispatcher.is_oneshot():
+            _logger.info('Running in oneshot mode; no background tasks will be spawned')
             return
 
-        tasks.add(
-            create_task(
-                index_dispatcher.run(
-                    spawn_datasources_event,
-                    start_scheduler_event,
-                    early_realtime,
-                )
+        def _add_task(aw: Coroutine[Any, Any, None]) -> None:
+            tasks.add(create_task(aw, name=aw.__name__))
+
+        # NOTE: The main loop
+        _add_task(
+            index_dispatcher.run(
+                spawn_datasources_event,
+                start_scheduler_event,
+                early_realtime,
             )
         )
-        tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
-        tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+
+        # NOTE: Monitoring tasks
+        _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
+        _add_task(index_dispatcher._status_loop(STATUS_INTERVAL))
         if prometheus_config := self._ctx.config.prometheus:
-            tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
+            _add_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval))
 
-        tasks.add(create_task(self._transactions.cleanup_loop()))
+        # NOTE: Outdated model updates cleanup
+        _add_task(index_dispatcher._cleanup_loop(CLEANUP_INTERVAL))
 
-        tasks.add(create_task(self._ctx._hooks_loop()))
+        # NOTE: Hooks called with `wait=False`
+        _add_task(self._ctx._hooks_loop(INDEX_DISPATCHER_INTERVAL))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
@@ -775,7 +789,7 @@ class DipDup:
             await event.wait()
 
             _logger.info('Spawning datasources')
-            _tasks = [create_task(d.run()) for d in self._datasources.values()]
+            _tasks = [create_task(d.run(), name=d.name) for d in self._datasources.values()]
             await gather(*_tasks)
 
         tasks.add(create_task(_event_wrapper()))

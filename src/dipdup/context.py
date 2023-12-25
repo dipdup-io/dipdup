@@ -490,14 +490,11 @@ class DipDupContext:
         await Index.filter(name=index).update(level=to_level)
         self._rolled_back_indexes.add(index)
 
-    # TODO: Use DipDupPackage for some parts below
-    async def _hooks_loop(self) -> None:
-        self.logger.debug('Starting CallbackManager loop')
+    async def _hooks_loop(self, interval: int) -> None:
         while True:
             while self._pending_hooks:
                 await self._pending_hooks.popleft()
-            # TODO: Replace with asyncio.Event
-            await asyncio.sleep(1)
+            await asyncio.sleep(interval)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
