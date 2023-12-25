@@ -186,9 +186,9 @@ class DipDupContext:
         if action == ReindexingAction.ignore:
             # NOTE: Recalculate hashes on the next _hooks_loop
             if reason == ReindexingReason.schema_modified:
-                await Schema.filter(name=self.config.schema_name).update(hash='')
+                await Schema.filter(name=self.config.schema_name).update(hash=None)
             elif reason == ReindexingReason.config_modified:
-                await Index.filter().update(config_hash='')
+                await Index.filter().update(config_hash=None)
             return
 
         if action == ReindexingAction.exception:
@@ -196,7 +196,7 @@ class DipDupContext:
             if not schema.reindex:
                 schema.reindex = reason
                 await schema.save()
-            raise ReindexingRequiredError(schema.reindex, context)
+            raise ReindexingRequiredError(schema.reindex, **context)
 
         if action == ReindexingAction.wipe:
             conn = get_connection()
