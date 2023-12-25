@@ -753,14 +753,11 @@ class DipDup:
         early_realtime: bool,
     ) -> None:
         index_dispatcher = self._index_dispatcher
-        if index_dispatcher.is_oneshot():
-            _logger.info('Running in oneshot mode; no background tasks will be spawned')
-            return
 
         def _add_task(aw: Coroutine[Any, Any, None]) -> None:
             tasks.add(create_task(aw, name=aw.__name__))
 
-        # NOTE: The main loop
+        # NOTE: The main loop; cancels other tasks on exit.
         _add_task(
             index_dispatcher.run(
                 spawn_datasources_event,
