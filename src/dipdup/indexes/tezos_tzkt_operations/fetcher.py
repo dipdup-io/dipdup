@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import logging
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Generic
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
+from dipdup.fetcher import FetcherFilterT
 from dipdup.fetcher import readahead_by_level
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
@@ -123,6 +127,37 @@ async def get_origination_filters(
     return addresses, hashes
 
 
+async def get_sr_execute_filters(
+    config: TzktOperationsIndexConfig,
+) -> set[str]:
+    """Get addresses to fetch smart rollup executions from during initial synchronization"""
+    if TzktOperationType.sr_execute not in config.types:
+        return set()
+
+    addresses: set[str] = set()
+
+    if config.contracts:
+        for contract in config.contracts:
+            if contract.address:
+                addresses.add(contract.address)
+
+    for handler_config in config.handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, SmartRollupExecutePatternConfig):
+                continue
+
+            if pattern_config.source:
+                if address := pattern_config.source.address:
+                    addresses.add(address)
+
+            if pattern_config.destination:
+                if address := pattern_config.destination.address:
+                    addresses.add(address)
+
+    _logger.info('Fetching smart rollup executions from %s addresses', len(addresses))
+    return addresses
+
+
 class OriginationAddressFetcherChannel(FetcherChannel[TzktOperationData, str]):
     _datasource: TzktDatasource
 
@@ -204,7 +239,68 @@ class MigrationOriginationFetcherChannel(FetcherChannel[TzktOperationData, None]
             self._head = get_operations_head(originations)
 
 
-class TransactionAddressFetcherChannel(FetcherChannel[TzktOperationData, str]):
+class TransactionBaseFetcherChannel(FetcherChannel[TzktOperationData, FetcherFilterT], Generic[FetcherFilterT]):
+    _datasource: TzktDatasource
+
+    def __init__(
+        self,
+        buffer: defaultdict[int, deque[TzktOperationData]],
+        filter: set[FetcherFilterT],
+        first_level: int,
+        last_level: int,
+        datasource: TzktDatasource,
+        field: str,
+    ) -> None:
+        super().__init__(buffer, filter, first_level, last_level, datasource)
+        self._field = field
+
+    @abstractmethod
+    async def _get_transactions(self) -> tuple[TzktOperationData, ...]:
+        raise NotImplementedError
+
+    async def fetch(self) -> None:
+        if not self._filter:
+            self._head = self._last_level
+            self._offset = self._last_level
+            return
+
+        transactions = await self._get_transactions()
+
+        for op in transactions:
+            self._buffer[op.level].append(op)
+
+        if len(transactions) < self._datasource.request_limit:
+            self._head = self._last_level
+        else:
+            self._offset = transactions[-1].id
+            self._head = get_operations_head(transactions)
+
+
+class TransactionAddressFetcherChannel(TransactionBaseFetcherChannel[str]):
+    async def _get_transactions(self) -> tuple[TzktOperationData, ...]:
+        return await self._datasource.get_transactions(
+            field=self._field,
+            addresses=self._filter,
+            code_hashes=None,
+            offset=self._offset,
+            first_level=self._first_level,
+            last_level=self._last_level,
+        )
+
+
+class TransactionHashFetcherChannel(TransactionBaseFetcherChannel[int]):
+    async def _get_transactions(self) -> tuple[TzktOperationData, ...]:
+        return await self._datasource.get_transactions(
+            field=self._field,
+            addresses=None,
+            code_hashes=self._filter,
+            offset=self._offset,
+            first_level=self._first_level,
+            last_level=self._last_level,
+        )
+
+
+class SmartRollupExecuteAddressFetcherChannel(FetcherChannel[TzktOperationData, str]):
     _datasource: TzktDatasource
 
     def __init__(
@@ -225,64 +321,22 @@ class TransactionAddressFetcherChannel(FetcherChannel[TzktOperationData, str]):
             self._offset = self._last_level
             return
 
-        transactions = await self._datasource.get_transactions(
+        operations = await self._datasource.get_sr_execute(
             field=self._field,
             addresses=self._filter,
-            code_hashes=None,
             offset=self._offset,
             first_level=self._first_level,
             last_level=self._last_level,
         )
 
-        for op in transactions:
-            level = op.level
-            self._buffer[level].append(op)
-
-        if len(transactions) < self._datasource.request_limit:
-            self._head = self._last_level
-        else:
-            self._offset = transactions[-1].id
-            self._head = get_operations_head(transactions)
-
-
-class TransactionHashFetcherChannel(FetcherChannel[TzktOperationData, int]):
-    _datasource: TzktDatasource
-
-    def __init__(
-        self,
-        buffer: defaultdict[int, deque[TzktOperationData]],
-        filter: set[int],
-        first_level: int,
-        last_level: int,
-        datasource: TzktDatasource,
-        field: str,
-    ) -> None:
-        super().__init__(buffer, filter, first_level, last_level, datasource)
-        self._field = field
-
-    async def fetch(self) -> None:
-        if not self._filter:
-            self._head = self._last_level
-            self._offset = self._last_level
-            return
-
-        transactions = await self._datasource.get_transactions(
-            field=self._field,
-            addresses=None,
-            code_hashes=self._filter,
-            offset=self._offset,
-            first_level=self._first_level,
-            last_level=self._last_level,
-        )
-
-        for op in transactions:
+        for op in operations:
             self._buffer[op.level].append(op)
 
-        if len(transactions) < self._datasource.request_limit:
+        if len(operations) < self._datasource.request_limit:
             self._head = self._last_level
         else:
-            self._offset = transactions[-1].id
-            self._head = get_operations_head(transactions)
+            self._offset = operations[-1].id
+            self._head = get_operations_head(operations)
 
 
 class OperationUnfilteredFetcherChannel(FetcherChannel[TzktOperationData, None]):
@@ -300,25 +354,34 @@ class OperationUnfilteredFetcherChannel(FetcherChannel[TzktOperationData, None])
         self._type = type
 
     async def fetch(self) -> None:
-        if self._type == TzktOperationType.origination:
-            operations = await self._datasource.get_originations(
-                addresses=None,
-                code_hashes=None,
-                first_level=self._first_level,
-                last_level=self._last_level,
-                offset=self._offset,
-            )
-        elif self._type == TzktOperationType.transaction:
-            operations = await self._datasource.get_transactions(
-                field='',
-                addresses=None,
-                code_hashes=None,
-                first_level=self._first_level,
-                last_level=self._last_level,
-                offset=self._offset,
-            )
-        else:
-            raise FrameworkException('Unsupported operation type')
+        match self._type:
+            case TzktOperationType.origination:
+                operations = await self._datasource.get_originations(
+                    addresses=None,
+                    code_hashes=None,
+                    first_level=self._first_level,
+                    last_level=self._last_level,
+                    offset=self._offset,
+                )
+            case TzktOperationType.transaction:
+                operations = await self._datasource.get_transactions(
+                    field='',
+                    addresses=None,
+                    code_hashes=None,
+                    first_level=self._first_level,
+                    last_level=self._last_level,
+                    offset=self._offset,
+                )
+            case TzktOperationType.sr_execute:
+                operations = await self._datasource.get_sr_execute(
+                    field='',
+                    addresses=None,
+                    first_level=self._first_level,
+                    last_level=self._last_level,
+                    offset=self._offset,
+                )
+            case _:
+                raise FrameworkException('Unsupported operation type')
 
         for op in operations:
             self._buffer[op.level].append(op)
@@ -345,6 +408,7 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
         transaction_hashes: set[int],
         origination_addresses: set[str],
         origination_hashes: set[int],
+        sr_execute_addresses: set[str],
         migration_originations: bool = False,
     ) -> None:
         super().__init__(datasource, first_level, last_level)
@@ -352,6 +416,7 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
         self._transaction_hashes = transaction_hashes
         self._origination_addresses = origination_addresses
         self._origination_hashes = origination_hashes
+        self._sr_execute_addresses = sr_execute_addresses
         self._migration_originations = migration_originations
 
     @classmethod
@@ -364,6 +429,7 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
     ) -> OperationFetcher:
         transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
         origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
+        sr_execute_addresses = await get_sr_execute_filters(config)
 
         return OperationFetcher(
             datasource=datasource,
@@ -373,13 +439,14 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
             transaction_hashes=transaction_hashes,
             origination_addresses=origination_addresses,
             origination_hashes=origination_hashes,
+            sr_execute_addresses=sr_execute_addresses,
             migration_originations=TzktOperationType.migration in config.types,
         )
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TzktOperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktOperationsIndex.
+        Resulting data is split by level, deduped, sorted and ready to be processed by TzktOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,
@@ -416,26 +483,43 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
                 filter=self._origination_hashes,
                 **channel_kwargs,  # type: ignore[arg-type]
             ),
+            SmartRollupExecuteAddressFetcherChannel(
+                filter=self._sr_execute_addresses,
+                field='sender',
+                **channel_kwargs,  # type: ignore[arg-type]
+            ),
+            SmartRollupExecuteAddressFetcherChannel(
+                filter=self._sr_execute_addresses,
+                field='rollup',
+                **channel_kwargs,  # type: ignore[arg-type]
+            ),
         )
 
         async def _merged_iter(
-            channels: tuple[FetcherChannel[TzktOperationData, Any], ...]
+            merging_channels: tuple[FetcherChannel[TzktOperationData, Any], ...]
         ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
             while True:
-                min_channel = sorted(channels, key=lambda x: x.head)[0]
+                min_channel = sorted(merging_channels, key=lambda x: x.head)[0]
                 await min_channel.fetch()
 
                 # NOTE: It's a different channel now, but with greater head level
-                min_channel = sorted(channels, key=lambda x: x.head)[0]
-                min_head = min_channel.head
+                next_min_channel = sorted(merging_channels, key=lambda x: x.head)[0]
+                next_min_head = next_min_channel.head
 
-                while self._head <= min_head:
-                    if self._head in self._buffer:
-                        operations = self._buffer.pop(self._head)
-                        yield dedup_operations(tuple(operations))
+                if self._head <= next_min_head:
+                    buffer_keys = sorted(self._buffer.keys())
+                    for key in buffer_keys:
+                        if key < self._head:
+                            continue
+                        if key > next_min_head:
+                            break
+
+                        self._head = key
+                        channel_operations = self._buffer.pop(self._head)
+                        yield dedup_operations(tuple(channel_operations))
                     self._head += 1
 
-                if all(c.fetched for c in channels):
+                if all(c.fetched for c in merging_channels):
                     break
 
             if self._buffer:
@@ -481,7 +565,7 @@ class OperationUnfilteredFetcher(DataFetcher[TzktOperationData]):
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TzktOperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktOperationsIndex.
+        Resulting data is split by level, deduped, sorted and ready to be processed by TzktOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,
