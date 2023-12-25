@@ -196,7 +196,7 @@ class DipDupContext:
             if not schema.reindex:
                 schema.reindex = reason
                 await schema.save()
-            raise ReindexingRequiredError(schema.reindex, **context)
+            raise ReindexingRequiredError(schema.reindex, context)
 
         if action == ReindexingAction.wipe:
             conn = get_connection()
