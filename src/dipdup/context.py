@@ -470,8 +470,13 @@ class DipDupContext:
         if rollback_depth is None:
             raise FrameworkException('`rollback_depth` is not set')
         if from_level - to_level > rollback_depth:
-            # TODO: Need more context
-            await self.reindex(ReindexingReason.rollback)
+            await self.reindex(
+                ReindexingReason.rollback,
+                message='Rollback depth exceeded',
+                from_level=from_level,
+                to_level=to_level,
+                rollback_depth=rollback_depth,
+            )
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self.transactions.in_transaction():

@@ -340,6 +340,8 @@ class IndexDispatcher:
                 elif new_hash != index_state.config_hash:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
+                        message='Config hash mismatch',
+                        index_name=index_state.name,
                         old_hash=index_state.config_hash,
                         new_hash=new_hash,
                     )
@@ -349,6 +351,7 @@ class IndexDispatcher:
                 if template not in self._ctx.config.templates:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
+                        message='Template not found',
                         index_name=index_state.name,
                         template=template,
                     )
@@ -628,8 +631,12 @@ class DipDup:
                 conn,
                 schema_name,
             )
-        except OperationalError:
-            await self._ctx.reindex(ReindexingReason.schema_modified)
+        except OperationalError as e:
+            await self._ctx.reindex(
+                ReindexingReason.schema_modified,
+                message='Schema initialization failed',
+                exception=str(e),
+            )
 
         schema_hash = get_schema_hash(conn)
 
@@ -642,15 +649,24 @@ class DipDup:
             )
             try:
                 await self._schema.save()
-            except OperationalError:
-                await self._ctx.reindex(ReindexingReason.schema_modified)
+            except OperationalError as e:
+                await self._ctx.reindex(
+                    ReindexingReason.schema_modified,
+                    message='Schema initialization failed',
+                    exception=str(e),
+                )
 
         elif not self._schema.hash:
             self._schema.hash = schema_hash
             await self._schema.save()
 
         elif self._schema.hash != schema_hash:
-            await self._ctx.reindex(ReindexingReason.schema_modified)
+            await self._ctx.reindex(
+                ReindexingReason.schema_modified,
+                message='Schema hash mismatch',
+                old_hash=self._schema.hash,
+                new_hash=schema_hash,
+            )
 
         elif self._schema.reindex:
             await self._ctx.reindex(self._schema.reindex)
