@@ -80,7 +80,7 @@ async def readahead_by_level(
 
     task = asyncio.create_task(
         _readahead(),
-        name=f'readahead:{id(fetcher_iter)}',
+        name=f'fetcher:{id(fetcher_iter)}',
     )
 
     while True:

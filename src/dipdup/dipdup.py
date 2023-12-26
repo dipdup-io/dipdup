@@ -770,17 +770,11 @@ class DipDup:
     ) -> None:
         index_dispatcher = self._index_dispatcher
 
-        def _add_task(aw: Coroutine[Any, Any, None]) -> None:
-            tasks.add(create_task(aw, name=aw.__name__))
+        def _add_task(coro: Coroutine[Any, Any, None]) -> None:
+            tasks.add(create_task(coro, name=f'loop:{coro.__name__.strip("_")}'))
 
         # NOTE: The main loop; cancels other tasks on exit.
-        _add_task(
-            index_dispatcher.run(
-                spawn_datasources_event,
-                start_scheduler_event,
-                early_realtime,
-            )
-        )
+        _add_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event, early_realtime))
 
         # NOTE: Monitoring tasks
         _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
@@ -802,10 +796,22 @@ class DipDup:
             await event.wait()
 
             _logger.info('Spawning datasources')
-            _tasks = [create_task(d.run(), name=d.name) for d in self._datasources.values()]
-            await gather(*_tasks)
+            _run_tasks: deque[Task[None]] = deque()
+            for datasource in self._datasources.values():
+                _run_tasks.append(
+                    create_task(
+                        datasource.run(),
+                        name=f'datasource:{datasource.name}',
+                    )
+                )
+            await gather(*_run_tasks)
 
-        tasks.add(create_task(_event_wrapper()))
+        tasks.add(
+            create_task(
+                _event_wrapper(),
+                name='loop:datasources',
+            )
+        )
         return event
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
@@ -819,6 +825,7 @@ class DipDup:
                 ctx=self._ctx,
                 event=event,
             ),
+            name='loop:scheduler',
         )
         tasks.add(run_task)
 

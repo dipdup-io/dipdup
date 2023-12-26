@@ -1313,6 +1313,7 @@ async def late_tzkt_initialization(
             # FIXME: Datasources can't trigger reindexing without context, thus `reindex_fn`
             await reindex_fn(
                 ReindexingReason.rollback,
+                message='Block hash mismatch after restart',
                 datasource=datasource.name,
                 level=db_head.level,
                 stored_block_hash=db_head.hash,
