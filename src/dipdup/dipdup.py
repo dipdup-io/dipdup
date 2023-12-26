@@ -223,6 +223,11 @@ class IndexDispatcher:
 
         levels_indexed, levels_total, levels_interval = 0, 0, 0
         for index in self._indexes.values():
+            try:
+                sync_level = index.get_sync_level()
+            except FrameworkException:
+                return
+
             initial_level = self._initial_levels[index.name]
             if not initial_level:
                 self._initial_levels[index.name] |= index.state.level
@@ -230,7 +235,7 @@ class IndexDispatcher:
 
             levels_interval += index.state.level - self._previous_levels[index.name]
             levels_indexed += index.state.level - initial_level
-            levels_total += index.get_sync_level() - initial_level
+            levels_total += sync_level - initial_level
 
             self._previous_levels[index.name] = index.state.level
 
