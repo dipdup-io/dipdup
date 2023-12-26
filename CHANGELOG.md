@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- env: Use safer parsing of boolean values.
 - tezos.tzkt: Fixed an issue with approving schema after reindexing triggered by rollback.
 
 ## [7.2.1] - 2023-12-12
