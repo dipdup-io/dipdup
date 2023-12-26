@@ -26,7 +26,8 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-NODE_BATCH_SIZE = 10
+# NOTE: This value was chosen empirically and likely is not optimal.
+NODE_BATCH_SIZE = 32
 
 
 class SubsquidEventsIndex(

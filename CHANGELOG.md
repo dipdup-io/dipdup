@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - tezos.tzkt: Fixed an issue with approving schema after reindexing triggered by rollback.
+- evm.subsquid: Last mile indexing is significantly faster now.
 
 ## [7.2.1] - 2023-12-12
 
