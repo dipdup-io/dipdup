@@ -132,6 +132,7 @@ class InvalidModelsError(Error):
         """
 
 
+# NOTE: Do not raise this exception directly; call `ctx.reindex` instead!
 @dataclass(repr=False)
 class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""

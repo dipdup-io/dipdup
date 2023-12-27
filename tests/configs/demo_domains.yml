@@ -2,43 +2,43 @@ spec_version: 2.0
 package: demo_domains
 
 contracts:
-  name_registry:
+  mainnet_name_registry:
     kind: tezos
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
 
 datasources:
-  tzkt:
+  mainnet:
     kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
-    http:
-      replay_path: ${DIPDUP_REPLAY_PATH:-}
 
 templates:
-  domains:
-    kind: tezos.tzkt.operations
+  tezos_domains_big_map:
+    kind: tezos.tzkt.big_maps
     datasource: <datasource>
-    contracts:
-      - <name_registry>
     handlers:
-      - callback: on_admin_update
-        pattern:
-          - type: transaction
-            destination: <name_registry>
-            entrypoint: admin_update
-      - callback: on_execute
-        pattern:
-          - type: transaction
-            destination: <name_registry>
-            entrypoint: execute
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  tezos_domains_big_map_mainnet:
+    template: tezos_domains_big_map
+    values:
+      datasource: mainnet
+      name_registry: mainnet_name_registry
     first_level: 1417329
     last_level: 1417729
 
-indexes:
-  domains:
-    template: domains
-    values:
-      datasource: tzkt
-      name_registry: name_registry
+hooks:
+  check_expiration:
+    callback: check_expiration
+    atomic: False
 
-logging: WARN
+jobs:
+  check_expiration_hourly:
+    hook: check_expiration
+    crontab: "0 * * * *"

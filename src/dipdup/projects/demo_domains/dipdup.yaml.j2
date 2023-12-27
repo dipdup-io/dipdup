@@ -8,31 +8,35 @@ contracts:
     typename: name_registry
 
 datasources:
-  tzkt_mainnet:
+  mainnet:
     kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
-  domains:
-    kind: tezos.tzkt.operations
+  tezos_domains_big_map:
+    kind: tezos.tzkt.big_maps
     datasource: <datasource>
-    contracts:
-      - <name_registry>
     handlers:
-      - callback: on_admin_update
-        pattern:
-          - type: transaction
-            destination: <name_registry>
-            entrypoint: admin_update
-      - callback: on_execute
-        pattern:
-          - type: transaction
-            destination: <name_registry>
-            entrypoint: execute
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
 
 indexes:
-  domains_mainnet:
-    template: domains
+  tezos_domains_big_map_mainnet:
+    template: tezos_domains_big_map
     values:
-      datasource: tzkt_mainnet
+      datasource: mainnet
       name_registry: mainnet_name_registry
+
+hooks:
+  check_expiration:
+    callback: check_expiration
+    atomic: False
+
+jobs:
+  check_expiration_hourly:
+    hook: check_expiration
+    crontab: "0 * * * *"

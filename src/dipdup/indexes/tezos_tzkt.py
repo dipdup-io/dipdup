@@ -63,6 +63,20 @@ class TzktIndex(
                 await self._call_matched_handler(handler_config, data)
             await self._update_state(level=batch_level)
 
+    async def _tzkt_rollback(
+        self,
+        from_level: int,
+        to_level: int,
+    ) -> None:
+        hook_name = 'on_index_rollback'
+        self._logger.warning('Affected by rollback; firing `%s` hook', self.name, hook_name)
+        await self._ctx.fire_hook(
+            name=hook_name,
+            index=self,
+            from_level=from_level,
+            to_level=to_level,
+        )
+
     @abstractmethod
     def _match_level_data(
         self,

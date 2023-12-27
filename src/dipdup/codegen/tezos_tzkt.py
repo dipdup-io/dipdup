@@ -35,7 +35,7 @@ from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
-from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
+from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DipDupPackage
@@ -110,7 +110,11 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_schemas(self, force: bool = False) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
         self._logger.info('Fetching contract schemas')
-        await resolve_tzkt_code_hashes(self._config, self._datasources)
+        await late_tzkt_initialization(
+            config=self._config,
+            datasources=self._datasources,
+            reindex_fn=None,
+        )
 
         if force:
             self._cleanup_schemas()

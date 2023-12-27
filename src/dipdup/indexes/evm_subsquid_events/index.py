@@ -26,7 +26,8 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-NODE_BATCH_SIZE = 10
+# NOTE: This value was chosen empirically and likely is not optimal.
+NODE_BATCH_SIZE = 32
 
 
 class SubsquidEventsIndex(
@@ -162,27 +163,36 @@ class SubsquidEventsIndex(
             # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
             batch_first_level = first_level
             while batch_first_level <= sync_level:
-                batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
-                level_logs = await self.random_node.get_logs(
-                    {
-                        'fromBlock': hex(batch_first_level),
-                        'toBlock': hex(batch_last_level),
-                    }
-                )
-
                 # NOTE: We need block timestamps for each level, so fetch them separately and match with logs.
                 timestamps: dict[int, int] = {}
-                tasks: deque[asyncio.Task[None]] = deque()
+                tasks: deque[asyncio.Task[Any]] = deque()
+
+                batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
+                level_logs_task = asyncio.create_task(
+                    self.random_node.get_logs(
+                        {
+                            'fromBlock': hex(batch_first_level),
+                            'toBlock': hex(batch_last_level),
+                        }
+                    )
+                )
+                tasks.append(level_logs_task)
 
                 async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
                     block = await self.random_node.get_block_by_level(level)
                     timestamps[level] = int(block['timestamp'], 16)
 
                 for level in range(batch_first_level, batch_last_level + 1):
-                    tasks.append(asyncio.create_task(_fetch_timestamp(level, timestamps)))
+                    tasks.append(
+                        asyncio.create_task(
+                            _fetch_timestamp(level, timestamps),
+                            name=f'last_mile:{level}',
+                        ),
+                    )
 
                 await asyncio.gather(*tasks)
 
+                level_logs = await level_logs_task
                 parsed_level_logs = tuple(
                     EvmNodeLogData.from_json(
                         log,

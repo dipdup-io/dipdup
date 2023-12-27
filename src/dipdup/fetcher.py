@@ -78,7 +78,10 @@ async def readahead_by_level(
                 need_more.clear()
                 await need_more.wait()
 
-    task = asyncio.create_task(_readahead())
+    task = asyncio.create_task(
+        _readahead(),
+        name=f'fetcher:{id(fetcher_iter)}',
+    )
 
     while True:
         while queue:

@@ -19,6 +19,7 @@ from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
+POLL_INTERVAL = 1
 LOG_FIELDS: LogFieldSelection = {
     'logIndex': True,
     'transactionIndex': True,
@@ -52,7 +53,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         # NOTE: If node datasource is missing, just poll archive in reasonable intervals
         # NOTE: Subsquid archives are expected to get real-time support in the future
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(POLL_INTERVAL)
             await self.initialize()
 
     async def subscribe(self) -> None:
