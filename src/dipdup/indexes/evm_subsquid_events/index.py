@@ -119,7 +119,7 @@ class SubsquidEventsIndex(
 
                 batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
                 level_logs_task = asyncio.create_task(
-                    self.random_node.get_logs(
+                    self.get_random_node().get_logs(
                         {
                             'fromBlock': hex(batch_first_level),
                             'toBlock': hex(batch_last_level),

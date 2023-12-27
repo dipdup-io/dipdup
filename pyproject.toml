@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.2.1"
+version = "7.2.2"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -70,6 +70,7 @@ dependencies = [
     "sentry-sdk~=1.29",
     "setuptools>=68.1.2",
     "sqlparse~=0.4",
+    "strict-rfc3339~=0.7",
     "survey~=4.4",
     "tabulate~=0.9",
     "web3~=6.2",

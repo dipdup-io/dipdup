@@ -14,13 +14,12 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import FieldSelection, LogFieldSelection
+from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
-
 
 POLL_INTERVAL = 1
 LOG_FIELDS: FieldSelection = {
