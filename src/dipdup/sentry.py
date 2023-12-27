@@ -15,7 +15,10 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
 from dipdup import env
+from dipdup.sys import fire_and_forget
 from dipdup.sys import is_shutting_down
+
+HEARTBEAT_INTERVAL = 60 * 60 * 24
 
 if TYPE_CHECKING:
     from dipdup.config import SentryConfig
@@ -27,7 +30,7 @@ async def _heartbeat() -> None:
     """Restart Sentry session every 24 hours"""
     with suppress(asyncio.CancelledError):
         while True:
-            await asyncio.sleep(60 * 60 * 24)
+            await asyncio.sleep(HEARTBEAT_INTERVAL)
             _logger.info('Reopening Sentry session')
             sentry_sdk.Hub.current.end_session()
             sentry_sdk.Hub.current.flush()
@@ -137,4 +140,4 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
 
     sentry_sdk.set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
-    asyncio.ensure_future(_heartbeat())  # noqa: RUF006
+    fire_and_forget(_heartbeat())

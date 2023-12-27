@@ -14,15 +14,16 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import FieldSelection
+from dipdup.models.evm_subsquid import FieldSelection, LogFieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
-API_POLL_INTERVAL = 1
-LOGS_FIELDS: FieldSelection = {
+
+POLL_INTERVAL = 1
+LOG_FIELDS: FieldSelection = {
     'log': {
         'logIndex': True,
         'transactionIndex': True,
@@ -75,7 +76,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             return
         # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
-            await asyncio.sleep(API_POLL_INTERVAL)
+            await asyncio.sleep(POLL_INTERVAL)
             await self.initialize()
 
     async def subscribe(self) -> None:
@@ -114,7 +115,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             query: Query = {
                 'logs': log_request,
-                'fields': LOGS_FIELDS,
+                'fields': LOG_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }

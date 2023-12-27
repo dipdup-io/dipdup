@@ -26,6 +26,7 @@ from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
 from dipdup.report import get_reports
 from dipdup.report import save_report
+from dipdup.sys import fire_and_forget
 from dipdup.sys import set_up_process
 
 if TYPE_CHECKING:
@@ -255,7 +256,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        asyncio.ensure_future(_check_version())  # noqa: RUF006
+        fire_and_forget(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.

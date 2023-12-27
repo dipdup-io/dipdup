@@ -48,8 +48,8 @@ def get(key: str, default: str | None = None) -> str | None:
     return env.get(key, default)
 
 
-def get_bool(key: str, default: bool = False) -> bool:
-    return get(key) in ('1', 'true', 'True')
+def get_bool(key: str) -> bool:
+    return (get(key) or '').lower() in ('1', 'y', 'yes', 't', 'true', 'on')
 
 
 def get_int(key: str, default: int) -> int:
