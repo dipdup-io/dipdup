@@ -59,8 +59,8 @@ class ConvertedEventAbi(TypedDict):
 class ConvertedMethodAbi(TypedDict):
     name: str
     sighash: str
-    inputs: tuple[tuple[str, bool], ...]
-    outputs: tuple[tuple[str, bool], ...]
+    inputs: tuple[dict[str, str], ...]
+    outputs: tuple[dict[str, str], ...]
 
 
 class ConvertedAbi(TypedDict):

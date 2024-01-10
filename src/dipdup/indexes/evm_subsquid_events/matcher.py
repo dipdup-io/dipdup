@@ -15,6 +15,7 @@ from dipdup.package import DipDupPackage
 from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 _logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def prepare_event_handler_args(
     type_ = package.get_type(
         typename=typename,
         module=f'evm_events.{pascal_to_snake(handler_config.name)}',
-        name=handler_config.name,
+        name=snake_to_pascal(handler_config.name),
     )
 
     data = decode_event_data(

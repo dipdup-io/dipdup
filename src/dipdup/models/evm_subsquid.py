@@ -10,8 +10,10 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.fetcher import HasLevel
 from dipdup.models.evm_node import EvmNodeLogData
+from dipdup.models.evm_node import EvmNodeTransactionData
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
+InputT = TypeVar('InputT', bound=BaseModel)
 
 
 class BlockFieldSelection(TypedDict, total=False):
@@ -220,7 +222,7 @@ class SubsquidTraceData(HasLevel): ...
 @dataclass(frozen=True)
 class SubsquidTransactionData(HasLevel):
     # FIXME: Do we need all these fields?
-    chain_id: int
+    chain_id: int | None
     cumulative_gas_used: int | None
     contract_address: str | None
     effective_gas_price: int | None
@@ -302,4 +304,6 @@ class SubsquidTrace(Generic[PayloadT]): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransaction(Generic[PayloadT]): ...
+class SubsquidTransaction(Generic[InputT]):
+    data: SubsquidTransactionData | EvmNodeTransactionData
+    input: InputT
