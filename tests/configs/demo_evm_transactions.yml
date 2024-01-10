@@ -1,5 +1,5 @@
 spec_version: 2.0
-package: {{ project.package }}
+package: demo_evm_transactions
 
 datasources:
   ethscan:
@@ -29,4 +29,5 @@ indexes:
       - callback: on_transfer
         to: eth_usdt
         method: transfer
-    first_level: 4634748
+    first_level: 18077421
+    last_level: 18077421
