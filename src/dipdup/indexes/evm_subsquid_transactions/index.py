@@ -7,7 +7,6 @@ from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid_transactions.fetcher import TransactionFetcher
 from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.evm_subsquid import SubsquidMessageType
-from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 from dipdup.prometheus import Metrics
 
@@ -17,13 +16,6 @@ class SubsquidTransactionsIndex(
     message_type=SubsquidMessageType.transactions,
 ):
     async def _process_queue(self) -> None:
-        raise NotImplementedError
-
-    async def _process_level_data(
-        self,
-        level_data: tuple[EvmNodeTransactionData | SubsquidTransactionData, ...],
-        sync_level: int,
-    ) -> None:
         raise NotImplementedError
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:

@@ -79,11 +79,9 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
                 name = abi_item['name']
                 if name in converted_abi['methods']:
                     raise NotImplementedError('Multiple methods with the same name are not supported')
-                signature = f'{name}({",".join([i["type"] for i in abi_item["inputs"]])})'
-                sighash = Web3.keccak(text=signature).hex()[:10]
                 converted_abi['methods'][name] = ConvertedMethodAbi(
                     name=name,
-                    sighash=sighash,
+                    sighash=sighash_from_abi(abi_item),
                     inputs=abi_item['inputs'],
                     outputs=abi_item['outputs'],
                 )
@@ -124,6 +122,14 @@ def abi_to_jsonschemas(package: DipDupPackage, events: set[str], methods: set[st
 
             touch(schema_path)
             schema_path.write_bytes(json_dumps(schema))
+
+
+def sighash_from_abi(abi_item: dict[str, Any]) -> str:
+    if abi_item.get('type') != 'function':
+        raise FrameworkException(f'`{abi_item["name"]}` is not a function; can\'t get sighash')
+
+    signature = f'{abi_item["name"]}({",".join([i["type"] for i in abi_item["inputs"]])})'
+    return Web3.keccak(text=signature).hex()[:10]
 
 
 def topic_from_abi(event: dict[str, Any]) -> str:
