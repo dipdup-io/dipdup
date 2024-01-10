@@ -267,18 +267,16 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
-        progress = metrics.get('progress', 0)
-        total, indexed = metrics.get('levels_total', 0), metrics.get('levels_indexed', 0)
-        current_speed = metrics.get('current_speed', 0)
-        synchronized_at = metrics.get('synchronized_at', 0)
-        if synchronized_at:
+        total, indexed = metrics['levels_total'], metrics['levels_indexed']
+        current_speed = int(metrics['current_speed'])
+        if metrics['synchronized_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
                 'indexing %.2f%%: %s levels left (%s lps)',
-                progress * 100,
+                metrics['progress'] * 100,
                 total - indexed,
-                int(current_speed),
+                current_speed,
             )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
