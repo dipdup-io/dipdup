@@ -29,3 +29,4 @@ indexes:
       - callback: on_transfer
         to: eth_usdt
         method: transfer
+    first_level: 4638700

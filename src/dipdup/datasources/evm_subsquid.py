@@ -21,8 +21,11 @@ from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
-POLL_INTERVAL = 1
+POLL_INTERVAL = 1.0
 LOG_FIELDS: FieldSelection = {
+    'block': {
+        'timestamp': True,
+    },
     'log': {
         'logIndex': True,
         'transactionIndex': True,
@@ -31,24 +34,36 @@ LOG_FIELDS: FieldSelection = {
         'data': True,
         'topics': True,
     },
-    'block': {
-        'timestamp': True,
-    },
 }
 TRANSACTION_FIELDS: FieldSelection = {
-    # FIXME: random ones, not enough for deserialization
-    'transaction': {
-        'hash': True,
-        'from': True,
-        'to': True,
-        'value': True,
-        'gas': True,
-        'gasPrice': True,
-        'input': True,
-        'nonce': True,
-    },
     'block': {
         'timestamp': True,
+    },
+    # FIXME: All available, likely not needed
+    'transaction': {
+        'chainId': True,
+        'contractAddress': True,
+        'cumulativeGasUsed': True,
+        'effectiveGasPrice': True,
+        'from': True,
+        'gasPrice': True,
+        'gas': True,
+        'gasUsed': True,
+        'hash': True,
+        'input': True,
+        'maxFeePerGas': True,
+        'maxPriorityFeePerGas': True,
+        'nonce': True,
+        'r': True,
+        'sighash': True,
+        'status': True,
+        's': True,
+        'to': True,
+        'transactionIndex': True,
+        'type': True,
+        'value': True,
+        'v': True,
+        'yParity': True,
     },
 }
 

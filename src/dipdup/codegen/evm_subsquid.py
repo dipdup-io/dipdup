@@ -4,6 +4,7 @@ from typing import cast
 
 import eth_utils
 import orjson
+from web3 import Web3
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
@@ -78,10 +79,11 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
                 name = abi_item['name']
                 if name in converted_abi['methods']:
                     raise NotImplementedError('Multiple methods with the same name are not supported')
-                sighash = eth_utils.crypto.keccak(text=f'{name}({",".join([i["type"] for i in abi_item["inputs"]])})')
+                signature = f'{name}({",".join([i["type"] for i in abi_item["inputs"]])})'
+                sighash = Web3.keccak(text=signature).hex()[:10]
                 converted_abi['methods'][name] = ConvertedMethodAbi(
                     name=name,
-                    sighash=sighash.hex(),
+                    sighash=sighash,
                     inputs=abi_item['inputs'],
                     outputs=abi_item['outputs'],
                 )
