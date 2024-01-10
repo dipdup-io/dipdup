@@ -1,7 +1,7 @@
 import asyncio
-import time
 from collections import defaultdict
 from collections import deque
+from collections.abc import Iterable
 from typing import Any
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
@@ -10,6 +10,8 @@ from dipdup.context import DipDupContext
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
+from dipdup.indexes.evm_subsquid import NODE_BATCH_SIZE
+from dipdup.indexes.evm_subsquid import NODE_LEVEL_TIMEOUT
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid_events.fetcher import EventLogFetcher
 from dipdup.indexes.evm_subsquid_events.matcher import match_events
@@ -17,12 +19,7 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
-from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
-
-LEVEL_BATCH_TIMEOUT = 1
-# NOTE: This value was chosen empirically and likely is not optimal.
-NODE_BATCH_SIZE = 32
 
 
 class SubsquidEventsIndex(
@@ -64,13 +61,13 @@ class SubsquidEventsIndex(
                 logs_by_level[message_level].append(logs)
 
             # NOTE: Wait for more messages a bit more - node doesn't notify us about the level boundaries.
-            await asyncio.sleep(LEVEL_BATCH_TIMEOUT)
+            await asyncio.sleep(NODE_LEVEL_TIMEOUT)
             if not self._queue:
                 break
 
         for message_level, level_logs in logs_by_level.items():
             self._logger.info('Processing %s event logs of level %s', len(level_logs), message_level)
-            await self._process_level_events(tuple(level_logs), message_level)
+            await self._process_level_data(tuple(level_logs), message_level)
             Metrics.set_sqd_processor_last_block(message_level)
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
@@ -78,7 +75,7 @@ class SubsquidEventsIndex(
         fetcher = self._create_fetcher(first_level, sync_level)
 
         async for _level, events in fetcher.fetch_by_level():
-            await self._process_level_events(events, sync_level)
+            await self._process_level_data(events, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
@@ -128,7 +125,7 @@ class SubsquidEventsIndex(
                 for log in level_logs
             )
 
-            await self._process_level_events(parsed_level_logs, sync_level)
+            await self._process_level_data(parsed_level_logs, sync_level)
             Metrics.set_sqd_processor_last_block(level)
 
             batch_first_level = batch_last_level + 1
@@ -156,41 +153,12 @@ class SubsquidEventsIndex(
             topics=tuple(topics),
         )
 
-    async def _process_level_events(
+    def _match_level_data(
         self,
-        events: tuple[SubsquidEventData | EvmNodeLogData, ...],
-        sync_level: int,
-    ) -> None:
-        if not events:
-            return
-
-        batch_level = events[0].level
-        metrics and metrics.inc(f'{self.name}:events_total', len(events))
-        index_level = self.state.level
-        if batch_level <= index_level:
-            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
-
-        self._logger.debug('Processing contract events of level %s', batch_level)
-        started_at = time.time()
-        matched_handlers = match_events(self._ctx.package, self._config.handlers, events, self.topics)
-        metrics and metrics.inc(f'{self.name}:events_matched', len(matched_handlers))
-        metrics and metrics.inc(f'{self.name}:time_in_matcher', (time.time() - started_at) / 60)
-
-        if not matched_handlers:
-            await self._update_state(level=batch_level)
-            return
-
-        started_at = time.time()
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, event in matched_handlers:
-                handler_started_at = time.time()
-                await self._call_matched_handler(handler_config, event)
-                metrics and metrics.inc(
-                    f'{self.name}:time_in_callbacks:{handler_config.name}',
-                    (time.time() - handler_started_at) / 60,
-                )
-            await self._update_state(level=batch_level)
-        metrics and metrics.inc(f'{self.name}:time_in_callbacks', (time.time() - started_at) / 60)
+        handlers: tuple[SubsquidEventsHandlerConfig, ...],
+        level_data: Iterable[SubsquidEventData | EvmNodeLogData],
+    ) -> deque[Any]:
+        return match_events(self._ctx.package, handlers, level_data, self.topics)
 
     async def _call_matched_handler(
         self,

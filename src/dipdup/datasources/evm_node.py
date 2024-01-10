@@ -283,8 +283,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             data = self._requests[request_id][1]
             del self._requests[request_id]
 
-            metrics and metrics.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
-            metrics and metrics.inc(f'{namespace}:requests_total', 1.0)
+            metrics.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
+            metrics.inc(f'{namespace}:requests_total', 1.0)
         else:
             data = await self.request(
                 method='post',

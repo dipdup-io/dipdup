@@ -162,27 +162,21 @@ class _QueueManager:
         return stats
 
 
-class _MetricManager:
+class _MetricManager(defaultdict[str, float]):
     """Usage:
 
-    metrics and metrics.increase('metric', 0.1)
-    metrics.full and metrics.set('verbose_metric', 0.2)
-    stack.enter_context(metrics.enter_context('package'))
+    metrics.inc('metric', 0.1)
+    metrics.set('metric', 0.1)
     """
 
     def __init__(self) -> None:
-        self._stats: defaultdict[str, float] = defaultdict(float)
+        super().__init__(float)
 
-    def set(self, name: str, value: float) -> bool:
-        self._stats[name] = value
-        return True
+    def set(self, name: str, value: float) -> None:
+        self[name] = value
 
-    def inc(self, name: str, value: float) -> bool:
-        self._stats[name] += value
-        return True
-
-    def stats(self) -> dict[str, float]:
-        return self._stats
+    def inc(self, name: str, value: float) -> None:
+        self[name] += value
 
 
 caches = _CacheManager()
@@ -194,5 +188,5 @@ def get_stats() -> dict[str, Any]:
     return {
         'caches': caches.stats(),
         'queues': queues.stats(),
-        'metrics': metrics.stats(),
+        'metrics': metrics,
     }

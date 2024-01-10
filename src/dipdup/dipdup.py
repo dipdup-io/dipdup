@@ -267,11 +267,10 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
-        stats = metrics.stats()
-        progress = stats.get('progress', 0)
-        total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
-        current_speed = stats.get('current_speed', 0)
-        synchronized_at = stats.get('synchronized_at', 0)
+        progress = metrics.get('progress', 0)
+        total, indexed = metrics.get('levels_total', 0), metrics.get('levels_indexed', 0)
+        current_speed = metrics.get('current_speed', 0)
+        synchronized_at = metrics.get('synchronized_at', 0)
         if synchronized_at:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
