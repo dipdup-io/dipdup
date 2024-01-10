@@ -16,7 +16,10 @@ class SubsquidTransactionsIndex(
     async def _process_queue(self) -> None:
         raise NotImplementedError
 
-    async def _synchronize(self, sync_level: int) -> None:
+    async def _synchronize_subsquid(self, sync_level: int) -> None:
+        raise NotImplementedError
+
+    async def _synchronize_node(self, sync_level: int) -> None:
         raise NotImplementedError
 
     def _create_fetcher(self, first_level: int, last_level: int) -> TransactionFetcher:

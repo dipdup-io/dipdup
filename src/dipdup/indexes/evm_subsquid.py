@@ -1,5 +1,6 @@
 import random
 from abc import ABC
+from abc import abstractmethod
 from typing import Generic
 from typing import TypeVar
 from typing import cast
@@ -13,6 +14,10 @@ from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
 from dipdup.models.evm_subsquid import SubsquidMessageType
+from dipdup.prometheus import Metrics
+
+NODE_SYNC_LIMIT = 128
+
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
@@ -73,3 +78,50 @@ class SubsquidIndex(
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(set[int], sync_levels))
+
+    async def _get_node_sync_level(self, subsquid_level: int, index_level: int) -> int | None:
+        if not self.node_datasources:
+            return None
+
+        node_sync_level = await self.get_realtime_node().get_head_level()
+        subsquid_lag = abs(node_sync_level - subsquid_level)
+        subsquid_available = subsquid_level - index_level
+        self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
+        if subsquid_available < NODE_SYNC_LIMIT:
+            return node_sync_level
+        if self._config.node_only:
+            self._logger.debug('Using node anyway')
+            return node_sync_level
+        return None
+
+    async def _synchronize(self, sync_level: int) -> None:
+        """Fetch event logs via Fetcher and pass to message callback"""
+        index_level = await self._enter_sync_state(sync_level)
+        if index_level is None:
+            return
+
+        levels_left = sync_level - index_level
+
+        if levels_left <= 0:
+            return
+
+        subsquid_sync_level = await self.datasource.get_head_level()
+        Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
+        node_sync_level = await self._get_node_sync_level(subsquid_sync_level, index_level)
+
+        # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue
+        if node_sync_level:
+            sync_level = min(sync_level, node_sync_level)
+            self._logger.debug('Using node datasource; sync level: %s', sync_level)
+            await self._synchronize_node(sync_level)
+        else:
+            sync_level = min(sync_level, subsquid_sync_level)
+            await self._synchronize_subsquid(sync_level)
+
+        await self._exit_sync_state(sync_level)
+
+    @abstractmethod
+    async def _synchronize_subsquid(self, sync_level: int) -> None: ...
+
+    @abstractmethod
+    async def _synchronize_node(self, sync_level: int) -> None: ...
