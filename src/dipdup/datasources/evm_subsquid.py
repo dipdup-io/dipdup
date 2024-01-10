@@ -191,9 +191,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 transactions: deque[SubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
                     # FIXME: timestamp
-                    transactions.append(
-                        SubsquidTransactionData.from_json(raw_transaction, level),
-                    )
+                    transaction = SubsquidTransactionData.from_json(raw_transaction, level)
+                    if transaction.status is not False:
+                        transactions.append(transaction)
                 yield tuple(transactions)
 
     async def initialize(self) -> None:
