@@ -209,11 +209,13 @@ test_params = (
     ('demo_raw.yml', 'demo_raw', 'init', None),
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
-    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
     ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
     ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
+    # NOTE: EVM indexes with `node_only`
+    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Smoke tests for small tools.
     ('demo_dex.yml', 'demo_dex', ('config', 'env', '--compose', '--internal'), None),
     ('demo_dex.yml', 'demo_dex', ('config', 'export', '--full'), None),

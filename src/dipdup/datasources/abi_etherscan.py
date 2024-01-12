@@ -6,6 +6,7 @@ import orjson
 from dipdup.config import HttpConfig
 from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
 from dipdup.datasources import AbiDatasource
+from dipdup.exceptions import DatasourceError
 
 
 class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
@@ -32,4 +33,6 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
             url='',
             params=params,
         )
+        if message := response.get('message'):
+            raise DatasourceError(message, self.name)
         return cast(dict[str, Any], orjson.loads(response['result']))
