@@ -146,6 +146,7 @@ class EvmNodeTransactionData:
     nonce: int
     r: str
     s: str
+    timestamp: int
     to: str
     transaction_index: int
     type: int
@@ -157,7 +158,7 @@ class EvmNodeTransactionData:
         return self.hash[:10]
 
     @classmethod
-    def from_json(cls, transaction_json: dict[str, Any]) -> 'EvmNodeTransactionData':
+    def from_json(cls, transaction_json: dict[str, Any], timestamp: int) -> 'EvmNodeTransactionData':
         return cls(
             access_list=tuple(transaction_json['accessList']),
             block_hash=transaction_json['blockHash'],
@@ -174,6 +175,7 @@ class EvmNodeTransactionData:
             nonce=int(transaction_json['nonce'], 16),
             r=transaction_json['r'],
             s=transaction_json['s'],
+            timestamp=timestamp,
             to=transaction_json['to'],
             transaction_index=int(transaction_json['transactionIndex'], 16),
             type=transaction_json['type'],

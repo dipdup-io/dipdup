@@ -2,6 +2,7 @@ import asyncio
 import time
 from asyncio import Queue
 from collections import defaultdict
+from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -29,8 +30,10 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
+from dipdup.models.evm_node import EvmNodeTransactionsSubscription
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
@@ -40,22 +43,39 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
-
+NODE_LEVEL_TIMEOUT = 1.0
+# NOTE: This value was chosen empirically and likely is not optimal.
+NODE_BATCH_SIZE = 32
+NODE_LAST_MILE = 128
 
 EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
-LogsCallback = Callable[['EvmNodeDatasource', EvmNodeLogData], Awaitable[None]]
-TracesCallback = Callable[['EvmNodeDatasource', EvmNodeTraceData], Awaitable[None]]
-TransactionsCallback = Callable[['EvmNodeDatasource', EvmNodeTransactionData], Awaitable[None]]
+LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeLogData, ...]], Awaitable[None]]
+TracesCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTraceData, ...]], Awaitable[None]]
+TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
 @dataclass
-class NodeHead:
-    event: asyncio.Event = field(default_factory=asyncio.Event)
-    hash: str | None = None
-    timestamp: int | None = None
+class LevelData:
+    head: dict[str, Any] | None = None
+    logs: deque[dict[str, Any]] = field(default_factory=deque)
+    transactions: deque[dict[str, Any]] = field(default_factory=deque)
+    traces: deque[dict[str, Any]] = field(default_factory=deque)
+
+    created_at: float = field(default_factory=time.time)
+
+    async def get_head(self) -> dict[str, Any]:
+        await self.wait_level()
+        if not self.head:
+            raise FrameworkException('LevelData event is set, but head is None')
+        return self.head
+
+    async def wait_level(self) -> None:
+        to_wait = NODE_LEVEL_TIMEOUT - (time.time() - self.created_at)
+        if to_wait > 0:
+            await asyncio.sleep(to_wait)
 
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
@@ -69,8 +89,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._use_realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
-        self._logs_queue: Queue[dict[str, Any]] = Queue()
-        self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
+        self._emitter_queue: Queue[LevelData] = Queue()
+        self._level_data: defaultdict[int, LevelData] = defaultdict(LevelData)
         self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
@@ -116,28 +136,28 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         await self._use_realtime.wait()
         await asyncio.gather(
             self._ws_loop(),
-            self._log_processor_loop(),
+            self._emitter_loop(),
             self._watchdog.run(),
         )
 
-    async def _log_processor_loop(self) -> None:
+    async def _emitter_loop(self) -> None:
         while True:
-            log_json = await self._logs_queue.get()
-            level = int(log_json['blockNumber'], 16)
+            level_data = await self._emitter_queue.get()
 
-            try:
-                await asyncio.wait_for(
-                    self._heads[level].event.wait(),
-                    timeout=self._http_config.connection_timeout,
+            head = EvmNodeHeadData.from_json(
+                await level_data.get_head(),
+            )
+
+            if raw_logs := level_data.logs:
+                logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs)
+                await self.emit_logs(logs)
+            if raw_transactions := level_data.transactions:
+                transactions = tuple(
+                    EvmNodeTransactionData.from_json(transaction, head.timestamp) for transaction in raw_transactions
                 )
-            except asyncio.TimeoutError as e:
-                msg = f'Head for level {level} not received in {self._http_config.connection_timeout} seconds'
-                raise FrameworkException(msg) from e
-            timestamp = self._heads[level].timestamp
-            if timestamp is None:
-                raise FrameworkException('Head received but timestamp is None')
-            log = EvmNodeLogData.from_json(log_json, timestamp)
-            await self.emit_logs(log)
+                await self.emit_transactions(transactions)
+            if level_data.traces:
+                raise NotImplementedError
 
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
@@ -187,7 +207,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_head_callbacks:
             await fn(self, head)
 
-    async def emit_logs(self, logs: EvmNodeLogData) -> None:
+    async def emit_logs(self, logs: tuple[EvmNodeLogData, ...]) -> None:
         for fn in self._on_logs_callbacks:
             await fn(self, logs)
 
@@ -195,11 +215,11 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_syncing_callbacks:
             await fn(self, syncing)
 
-    async def emit_traces(self, traces: EvmNodeTraceData) -> None:
+    async def emit_traces(self, traces: tuple[EvmNodeTraceData, ...]) -> None:
         for fn in self._on_traces_callbacks:
             await fn(self, traces)
 
-    async def emit_transactions(self, transactions: EvmNodeTransactionData) -> None:
+    async def emit_transactions(self, transactions: tuple[EvmNodeTransactionData, ...]) -> None:
         for fn in self._on_transactions_callbacks:
             await fn(self, transactions)
 
@@ -332,27 +352,26 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeHeadsSubscription):
+            known_level = max(self._level_data or (0,))
             head = EvmNodeHeadData.from_json(data)
-            level = head.number
+            level_data = self._level_data[head.level]
+            level_data.head = data
 
-            known_hash = self._heads[level].hash
-            if known_hash not in (head.hash, None):
+            if head.level <= known_level:
                 await self.emit_rollback(
                     MessageType(),
-                    from_level=max(self._heads.keys() or (level,)),
-                    to_level=level - 1,
+                    from_level=known_level,
+                    to_level=head.level - 1,
                 )
-
-            self._heads[level].hash = head.hash
-            self._heads[level].timestamp = head.timestamp
-            await self.emit_head(head)
-            self._heads[level].event.set()
-
+            else:
+                self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
-            # NOTE: Processed in _log_processor_loop to avoid blocking WebSocket while waiting for head
-            await self._logs_queue.put(data)
-
-        elif isinstance(subscription, EvmNodeSyncingData):
+            level_data = self._level_data[int(data['blockNumber'], 16)]
+            level_data.logs.append(data)
+        elif isinstance(subscription, EvmNodeTransactionsSubscription):
+            level_data = self._level_data[int(data['blockNumber'], 16)]
+            level_data.transactions.append(data)
+        elif isinstance(subscription, EvmNodeSyncingSubscription):
             syncing = EvmNodeSyncingData.from_json(data)
             await self.emit_syncing(syncing)
         else:

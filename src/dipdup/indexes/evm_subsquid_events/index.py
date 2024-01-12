@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 from collections import deque
 from collections.abc import Iterable
 from typing import Any
@@ -7,11 +6,10 @@ from typing import Any
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_subsquid import NODE_BATCH_SIZE
-from dipdup.indexes.evm_subsquid import NODE_LEVEL_TIMEOUT
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid_events.fetcher import EventLogFetcher
 from dipdup.indexes.evm_subsquid_events.matcher import match_events
@@ -23,7 +21,7 @@ from dipdup.prometheus import Metrics
 
 
 class SubsquidEventsIndex(
-    SubsquidIndex[SubsquidEventsIndexConfig, EvmNodeLogData, SubsquidDatasource],
+    SubsquidIndex[SubsquidEventsIndexConfig, tuple[EvmNodeLogData, ...], SubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
@@ -47,28 +45,12 @@ class SubsquidEventsIndex(
         return self._topics
 
     async def _process_queue(self) -> None:
-        logs_by_level = defaultdict(list)
-
-        # NOTE: Drain queue and group messages by level.
-        while True:
-            while self._queue:
-                logs = self._queue.popleft()
-                message_level = logs.level
-                if message_level <= self.state.level:
-                    self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
-                    continue
-
-                logs_by_level[message_level].append(logs)
-
-            # NOTE: Wait for more messages a bit more - node doesn't notify us about the level boundaries.
-            await asyncio.sleep(NODE_LEVEL_TIMEOUT)
-            if not self._queue:
-                break
-
-        for message_level, level_logs in logs_by_level.items():
-            self._logger.info('Processing %s event logs of level %s', len(level_logs), message_level)
-            await self._process_level_data(tuple(level_logs), message_level)
-            Metrics.set_sqd_processor_last_block(message_level)
+        while self._queue:
+            logs = self._queue.popleft()
+            level = logs[0].level
+            self._logger.info('Processing %s event logs of level %s', len(logs), level)
+            await self._process_level_data(logs, level)
+            Metrics.set_sqd_processor_last_block(level)
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1

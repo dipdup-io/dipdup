@@ -16,11 +16,16 @@ from dipdup.prometheus import Metrics
 
 
 class SubsquidTransactionsIndex(
-    SubsquidIndex[SubsquidTransactionsIndexConfig, EvmNodeTransactionData, SubsquidDatasource],
+    SubsquidIndex[SubsquidTransactionsIndexConfig, tuple[EvmNodeTransactionData, ...], SubsquidDatasource],
     message_type=SubsquidMessageType.transactions,
 ):
     async def _process_queue(self) -> None:
-        raise NotImplementedError
+        while self._queue:
+            transactions = self._queue.popleft()
+            level = transactions[0].level
+            self._logger.info('Processing %s event logs of level %s', len(transactions), level)
+            await self._process_level_data(transactions, level)
+            Metrics.set_sqd_processor_last_block(level)
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_transactions(self._ctx.package, handlers, level_data)

@@ -420,7 +420,11 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
 
-    async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
+    async def _on_evm_node_logs(
+        self,
+        datasource: EvmNodeDatasource,
+        logs: tuple[EvmNodeLogData, ...],
+    ) -> None:
         for index in self._indexes.values():
             if not isinstance(index, SubsquidEventsIndex):
                 continue
@@ -428,10 +432,16 @@ class IndexDispatcher:
                 continue
             index.push_realtime_message(logs)
 
-    async def _on_evm_node_traces(self, datasource: EvmNodeDatasource, traces: EvmNodeTraceData) -> None: ...
+    async def _on_evm_node_traces(
+        self,
+        datasource: EvmNodeDatasource,
+        traces: tuple[EvmNodeTraceData, ...],
+    ) -> None: ...
 
     async def _on_evm_node_transactions(
-        self, datasource: EvmNodeDatasource, transactions: EvmNodeTransactionData
+        self,
+        datasource: EvmNodeDatasource,
+        transactions: tuple[EvmNodeTransactionData, ...],
     ) -> None: ...
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:

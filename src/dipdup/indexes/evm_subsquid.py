@@ -11,6 +11,7 @@ from typing import cast
 from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import FrameworkException
@@ -19,13 +20,6 @@ from dipdup.index import IndexQueueItemT
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
-
-NODE_LEVEL_TIMEOUT = 1.0
-# NOTE: This value was chosen empirically and likely is not optimal.
-NODE_BATCH_SIZE = 32
-
-NODE_SYNC_LIMIT = 128
-
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
@@ -115,7 +109,7 @@ class SubsquidIndex(
         subsquid_lag = abs(node_sync_level - subsquid_level)
         subsquid_available = subsquid_level - index_level
         self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
-        if subsquid_available < NODE_SYNC_LIMIT:
+        if subsquid_available < NODE_LAST_MILE:
             return node_sync_level
         if self._config.node_only:
             self._logger.debug('Using node anyway')
