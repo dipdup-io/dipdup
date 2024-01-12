@@ -1,7 +1,9 @@
+import asyncio
 import random
 import time
 from abc import ABC
 from abc import abstractmethod
+from collections import defaultdict
 from collections import deque
 from typing import Any
 from typing import Generic
@@ -100,6 +102,36 @@ class SubsquidIndex(
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(set[int], sync_levels))
+
+    async def get_blocks_batch(self, first_level: int, last_level: int) -> dict[int, dict[str, Any]]:
+        tasks: deque[asyncio.Task[Any]] = deque()
+        blocks: dict[int, Any] = {}
+
+        async def _fetch(level: int) -> None:
+            blocks[level] = await self.get_random_node().get_block_by_level(level)
+
+        for level in range(first_level, last_level + 1):
+            tasks.append(
+                asyncio.create_task(
+                    _fetch(level),
+                    name=f'get_block_range:{level}',
+                ),
+            )
+
+        await asyncio.gather(*tasks)
+        return blocks
+
+    async def get_logs_batch(self, first_level: int, last_level: int) -> dict[int, list[dict[str, Any]]]:
+        grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
+        logs = await self.get_random_node().get_logs(
+            {
+                'fromBlock': hex(first_level),
+                'toBlock': hex(last_level),
+            },
+        )
+        for log in logs:
+            grouped_logs[int(log['blockNumber'], 16)].append(log)
+        return grouped_logs
 
     async def _get_node_sync_level(self, subsquid_level: int, index_level: int) -> int | None:
         if not self.node_datasources:

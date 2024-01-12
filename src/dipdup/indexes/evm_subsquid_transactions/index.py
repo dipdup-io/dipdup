@@ -3,6 +3,7 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
+from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
@@ -23,7 +24,7 @@ class SubsquidTransactionsIndex(
         while self._queue:
             transactions = self._queue.popleft()
             level = transactions[0].level
-            self._logger.info('Processing %s event logs of level %s', len(transactions), level)
+            self._logger.info('Processing %s transactions of level %s', len(transactions), level)
             await self._process_level_data(transactions, level)
             Metrics.set_sqd_processor_last_block(level)
 
@@ -55,7 +56,23 @@ class SubsquidTransactionsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
-        raise NotImplementedError
+        # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
+        batch_first_level = self.state.level + 1
+        while batch_first_level <= sync_level:
+            batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
+
+            blocks_batch = await self.get_blocks_batch(batch_first_level, batch_last_level)
+
+            for level, block in sorted(blocks_batch.items()):
+                timestamp = int(block['timestamp'], 16)
+                parsed_transactions = tuple(
+                    EvmNodeTransactionData.from_json(transaction, timestamp) for transaction in block['transactions']
+                )
+
+                await self._process_level_data(parsed_transactions, sync_level)
+                Metrics.set_sqd_processor_last_block(level)
+
+            batch_first_level = batch_last_level + 1
 
     def _create_fetcher(self, first_level: int, last_level: int) -> TransactionFetcher:
 

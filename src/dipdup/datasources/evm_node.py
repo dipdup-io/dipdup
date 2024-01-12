@@ -33,7 +33,6 @@ from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_node import EvmNodeTransactionsSubscription
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
@@ -61,8 +60,7 @@ RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awa
 class LevelData:
     head: dict[str, Any] | None = None
     logs: deque[dict[str, Any]] = field(default_factory=deque)
-    transactions: deque[dict[str, Any]] = field(default_factory=deque)
-    traces: deque[dict[str, Any]] = field(default_factory=deque)
+    fetch_transactions: bool = False
 
     created_at: float = field(default_factory=time.time)
 
@@ -151,13 +149,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             if raw_logs := level_data.logs:
                 logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs)
                 await self.emit_logs(logs)
-            if raw_transactions := level_data.transactions:
+            if level_data.fetch_transactions:
+                full_block = await self.get_block_by_level(head.level)
                 transactions = tuple(
-                    EvmNodeTransactionData.from_json(transaction, head.timestamp) for transaction in raw_transactions
+                    EvmNodeTransactionData.from_json(transaction, head.timestamp)
+                    for transaction in full_block['transactions']
                 )
                 await self.emit_transactions(transactions)
-            if level_data.traces:
-                raise NotImplementedError
 
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
@@ -364,13 +362,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     to_level=head.level - 1,
                 )
             else:
+                if subscription.transactions:
+                    level_data.fetch_transactions = True
                 self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level_data = self._level_data[int(data['blockNumber'], 16)]
             level_data.logs.append(data)
-        elif isinstance(subscription, EvmNodeTransactionsSubscription):
-            level_data = self._level_data[int(data['blockNumber'], 16)]
-            level_data.transactions.append(data)
         elif isinstance(subscription, EvmNodeSyncingSubscription):
             syncing = EvmNodeSyncingData.from_json(data)
             await self.emit_syncing(syncing)

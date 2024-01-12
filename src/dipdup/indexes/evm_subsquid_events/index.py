@@ -61,54 +61,22 @@ class SubsquidEventsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
-        topics = set()
-        for handler in self._config.handlers:
-            typename = handler.contract.module_name
-            topics.add(self.topics[typename][handler.name])
-
         # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
         batch_first_level = self.state.level + 1
         while batch_first_level <= sync_level:
-            # NOTE: We need block timestamps for each level, so fetch them separately and match with logs.
-            timestamps: dict[int, int] = {}
-            tasks: deque[asyncio.Task[Any]] = deque()
-
             batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
-            level_logs_task = asyncio.create_task(
-                self.get_random_node().get_logs(
-                    {
-                        'fromBlock': hex(batch_first_level),
-                        'toBlock': hex(batch_last_level),
-                    }
-                )
-            )
-            tasks.append(level_logs_task)
 
-            async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
-                block = await self.get_random_node().get_block_by_level(level)
-                timestamps[level] = int(block['timestamp'], 16)
-
-            for level in range(batch_first_level, batch_last_level + 1):
-                tasks.append(
-                    asyncio.create_task(
-                        _fetch_timestamp(level, timestamps),
-                        name=f'last_mile:{level}',
-                    ),
-                )
-
-            await asyncio.gather(*tasks)
-
-            level_logs = await level_logs_task
-            parsed_level_logs = tuple(
-                EvmNodeLogData.from_json(
-                    log,
-                    timestamps[int(log['blockNumber'], 16)],
-                )
-                for log in level_logs
+            logs_batch, blocks_batch = await asyncio.gather(
+                self.get_logs_batch(batch_first_level, batch_last_level),
+                self.get_blocks_batch(batch_first_level, batch_last_level),
             )
 
-            await self._process_level_data(parsed_level_logs, sync_level)
-            Metrics.set_sqd_processor_last_block(level)
+            for level_logs, level_block in zip(logs_batch.values(), blocks_batch.values(), strict=True):
+                timestamp = int(level_block['timestamp'], 16)
+                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
+
+                await self._process_level_data(parsed_level_logs, sync_level)
+                Metrics.set_sqd_processor_last_block(parsed_level_logs[0].level)
 
             batch_first_level = batch_last_level + 1
 

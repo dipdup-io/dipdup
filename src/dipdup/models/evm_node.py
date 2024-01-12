@@ -17,6 +17,7 @@ class EvmNodeSubscription(ABC, Subscription):
 @dataclass(frozen=True)
 class EvmNodeHeadsSubscription(EvmNodeSubscription):
     name: Literal['newHeads'] = 'newHeads'
+    transactions: bool = False
 
 
 @dataclass(frozen=True)
@@ -30,11 +31,6 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
             *super().get_params(),
             {'address': self.address, 'topics': self.topics},
         ]
-
-
-@dataclass(frozen=True)
-class EvmNodeTransactionsSubscription(EvmNodeSubscription):
-    name: Literal['newPendingTransactions'] = 'newPendingTransactions'
 
 
 @dataclass(frozen=True)
@@ -131,27 +127,27 @@ class EvmNodeTraceData: ...
 
 @dataclass(frozen=True)
 class EvmNodeTransactionData:
-    access_list: tuple[dict[str, Any], ...]
+    access_list: tuple[dict[str, Any], ...] | None
     block_hash: str
     block_number: int
-    chain_id: int
-    data: str
+    chain_id: int | None
+    data: str | None
     from_: str
     gas: int
     gas_price: int
     hash: str
     input: str
-    max_fee_per_gas: int
-    max_priority_fee_per_gas: int
+    max_fee_per_gas: int | None
+    max_priority_fee_per_gas: int | None
     nonce: int
-    r: str
-    s: str
+    r: str | None
+    s: str | None
     timestamp: int
-    to: str
-    transaction_index: int
-    type: int
-    value: int
-    v: int
+    to: str | None
+    transaction_index: int | None
+    type: int | None
+    value: int | None
+    v: int | None
 
     @property
     def sighash(self) -> str:
@@ -160,27 +156,33 @@ class EvmNodeTransactionData:
     @classmethod
     def from_json(cls, transaction_json: dict[str, Any], timestamp: int) -> 'EvmNodeTransactionData':
         return cls(
-            access_list=tuple(transaction_json['accessList']),
+            access_list=tuple(transaction_json['accessList']) if 'accessList' in transaction_json else None,
             block_hash=transaction_json['blockHash'],
             block_number=int(transaction_json['blockNumber'], 16),
-            chain_id=int(transaction_json['chainId'], 16),
-            data=transaction_json['data'],
+            chain_id=int(transaction_json['chainId'], 16) if 'chainId' in transaction_json else None,
+            data=transaction_json.get('data'),
             from_=transaction_json['from'],
             gas=int(transaction_json['gas'], 16),
             gas_price=int(transaction_json['gasPrice'], 16),
             hash=transaction_json['hash'],
             input=transaction_json['input'],
-            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16),
-            max_priority_fee_per_gas=int(transaction_json['maxPriorityFeePerGas'], 16),
+            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16) if 'maxFeePerGas' in transaction_json else None,
+            max_priority_fee_per_gas=(
+                int(transaction_json['maxPriorityFeePerGas'], 16)
+                if 'maxPriorityFeePerGas' in transaction_json
+                else None
+            ),
             nonce=int(transaction_json['nonce'], 16),
-            r=transaction_json['r'],
-            s=transaction_json['s'],
+            r=transaction_json.get('r'),
+            s=transaction_json.get('s'),
             timestamp=timestamp,
-            to=transaction_json['to'],
-            transaction_index=int(transaction_json['transactionIndex'], 16),
-            type=transaction_json['type'],
-            value=int(transaction_json['value'], 16),
-            v=int(transaction_json['v'], 16),
+            to=transaction_json.get('to'),
+            transaction_index=(
+                int(transaction_json['transactionIndex'], 16) if 'transactionIndex' in transaction_json else None
+            ),
+            type=int(transaction_json['type'], 16) if 'type' in transaction_json else None,
+            value=int(transaction_json['value'], 16) if 'value' in transaction_json else None,
+            v=int(transaction_json['v'], 16) if 'v' in transaction_json else None,
         )
 
     @property

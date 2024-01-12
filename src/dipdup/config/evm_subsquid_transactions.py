@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidIndexConfig
-from dipdup.models.evm_node import EvmNodeTransactionsSubscription
+from dipdup.models.evm_node import EvmNodeHeadsSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -78,4 +78,4 @@ class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
-        return {EvmNodeTransactionsSubscription()}
+        return {EvmNodeHeadsSubscription(transactions=True)}

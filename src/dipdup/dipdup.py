@@ -46,6 +46,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -436,13 +437,20 @@ class IndexDispatcher:
         self,
         datasource: EvmNodeDatasource,
         traces: tuple[EvmNodeTraceData, ...],
-    ) -> None: ...
+    ) -> None:
+        raise NotImplementedError
 
     async def _on_evm_node_transactions(
         self,
         datasource: EvmNodeDatasource,
         transactions: tuple[EvmNodeTransactionData, ...],
-    ) -> None: ...
+    ) -> None:
+        for index in self._indexes.values():
+            if not isinstance(index, SubsquidTransactionsIndex):
+                continue
+            if datasource not in index.node_datasources:
+                continue
+            index.push_realtime_message(transactions)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
         raise NotImplementedError
