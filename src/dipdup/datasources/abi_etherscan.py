@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from typing import cast
 
@@ -13,7 +14,7 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=1,
         ratelimit_period=5,
-        ratelimit_sleep=5,
+        ratelimit_sleep=15,
     )
 
     async def run(self) -> None:
@@ -28,11 +29,19 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
         if self._config.api_key:
             params['apikey'] = self._config.api_key
 
-        response = await self.request(
-            'get',
-            url='',
-            params=params,
-        )
-        if message := response.get('message'):
-            raise DatasourceError(message, self.name)
-        return cast(dict[str, Any], orjson.loads(response['result']))
+        for _ in range(self._http_config.retry_count):
+            response = await self.request(
+                'get',
+                url='',
+                params=params,
+            )
+            if result := response.get('result'):
+                return cast(dict[str, Any], orjson.loads(result))
+
+            if message := response.get('message'):
+                if 'NOTOK' not in message:
+                    break
+                self._logger.warning('Ratelimited; sleeping %s seconds', self._http_config.ratelimit_sleep)
+                await asyncio.sleep(self._http_config.retry_sleep)
+
+        raise DatasourceError(message, self.name)
