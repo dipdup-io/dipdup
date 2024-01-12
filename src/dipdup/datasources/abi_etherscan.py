@@ -35,13 +35,15 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
                 url='',
                 params=params,
             )
-            if result := response.get('result'):
-                return cast(dict[str, Any], orjson.loads(result))
-
             if message := response.get('message'):
-                if 'NOTOK' not in message:
-                    break
-                self._logger.warning('Ratelimited; sleeping %s seconds', self._http_config.ratelimit_sleep)
-                await asyncio.sleep(self._http_config.retry_sleep)
+                self._logger.info(message)
+
+            if result := response.get('result'):
+                if isinstance(result, str) and 'rate limit reached' in result:
+                    self._logger.warning('Ratelimited; sleeping %s seconds', self._http_config.ratelimit_sleep)
+                    await asyncio.sleep(self._http_config.retry_sleep)
+                    continue
+
+                return cast(dict[str, Any], orjson.loads(result))
 
         raise DatasourceError(message, self.name)
