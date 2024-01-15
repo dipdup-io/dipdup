@@ -9,7 +9,9 @@ from web3 import Web3
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
+from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_subsquid import SubsquidIndexConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_traces import SubsquidTracesHandlerConfig
@@ -100,7 +102,11 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
     return abi_by_typename
 
 
-def abi_to_jsonschemas(package: DipDupPackage, events: set[str], methods: set[str]) -> None:
+def abi_to_jsonschemas(
+    package: DipDupPackage,
+    events: set[str],
+    methods: set[str],
+) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
 
@@ -143,9 +149,7 @@ def topic_from_abi(event: dict[str, Any]) -> str:
 class SubsquidCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         for index_config in self._config.indexes.values():
-            if isinstance(
-                index_config, SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
-            ):
+            if isinstance(index_config, SubsquidIndexConfig):
                 await self._fetch_abi(index_config)
 
     async def generate_schemas(self, force: bool = False) -> None:
@@ -178,9 +182,7 @@ class SubsquidCodeGenerator(CodeGenerator):
     async def generate_handlers(self) -> None:
         pass
 
-    async def _fetch_abi(
-        self, index_config: SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
-    ) -> None:
+    async def _fetch_abi(self, index_config: SubsquidIndexConfigU) -> None:
         if isinstance(index_config.abi, tuple):
             datasource_configs = index_config.abi
         elif index_config.abi:
@@ -205,13 +207,7 @@ class SubsquidCodeGenerator(CodeGenerator):
             if abi_path.exists():
                 continue
 
-            # TODO: Ability to specify path/url to ABI .json if necessary
-            if contract.abi:
-                address = contract.abi
-            elif contract.address:
-                address = contract.address
-            else:
-                raise NotImplementedError
+            address = contract.address
 
             for datasource_config in datasource_configs:
                 # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
@@ -230,16 +226,8 @@ class SubsquidCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         return schema_path.stem
-        # FIXME: Do we need prefixes or postfixes there?
-        # if schema_path.parent.name == 'evm_events':
-        #     class_name = f'{module_name}_event'
-        # elif schema_path.parent.name == 'evm_functions':
-        #     class_name = f'{module_name}_function'
-        # else:
-        #     class_name = module_name
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        # FIXME: Not very reliable
-        if not any('evm_' in part for part in schema_path.parts):
+        if not {'evm_events', 'evm_methods'} & set(schema_path.parts):
             return
         await super()._generate_type(schema_path, force)

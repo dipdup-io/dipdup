@@ -245,6 +245,8 @@ class DipDupContext:
                 typename=typename,
             )
         elif kind == 'evm':
+            if address is None:
+                raise ConfigurationError('EVM contract address is required')
             contract_config = EvmContractConfig(
                 kind=kind,
                 address=address,

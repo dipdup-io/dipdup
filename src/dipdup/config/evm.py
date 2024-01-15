@@ -18,14 +18,11 @@ class EvmContractConfig(ContractConfig):
 
     :param kind: Always `evm`
     :param address: Contract address
-    :param abi: ABI or topic0
     :param typename: Alias for the contract script
     """
 
     kind: Literal['evm']
-    address: str | None = None
-    # FIXME: Or topic0?
-    abi: str | None = None
+    address: str
     typename: str | None = None
 
     @validator('address', allow_reuse=True)

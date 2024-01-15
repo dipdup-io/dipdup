@@ -1126,9 +1126,6 @@ _original_to_aliased = {
     'TezosContractConfig | None': 'str | TezosContractConfig | None',
     'EvmContractConfig': 'str | EvmContractConfig',
     'EvmContractConfig | None': 'str | EvmContractConfig | None',
-    'EvmContractConfig | tuple[EvmContractConfig, ...] | None': (
-        'str | EvmContractConfig | tuple[EvmContractConfig, ...] | None'
-    ),
     'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
     'HookConfig': 'str | HookConfig',
     'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
