@@ -153,7 +153,7 @@ async def assert_run_evm_transactions() -> None:
     import demo_evm_transactions.models
 
     holders = await demo_evm_transactions.models.Holder.filter().count()
-    # FIXME: Why not 26?
+    # NOTE: Another 4 holders covered by `demo_evm_events` index are from non-`Transfer` calls. 
     assert holders == 22
 
 

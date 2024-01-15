@@ -190,8 +190,10 @@ class SubsquidIndex(
         self._logger.debug('Processing data of level %s', batch_level)
         started_at = time.time()
         matched_handlers = self._match_level_data(self._config.handlers, level_data)
-        Metrics.set_index_handlers_matched(len(matched_handlers))
-        metrics[f'{self.name}:handlers_matched'] += len(matched_handlers)
+
+        total_matched = len(matched_handlers)
+        Metrics.set_index_handlers_matched(total_matched)
+        metrics[f'{self.name}:handlers_matched'] += total_matched
         metrics[f'{self.name}:time_in_matcher'] += (time.time() - started_at) / 60
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
