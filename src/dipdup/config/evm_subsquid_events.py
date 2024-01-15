@@ -58,7 +58,7 @@ class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     :param datasource: Subsquid datasource
     :param handlers: Event handlers
     :param abi: One or more `evm.abi` datasource(s) for the same network
-    :param node_only: Don't use Subsquid Archives API (dev only)
+    :param node_only: Don't use Subsquid Network (dev only)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing and disable this index
     """

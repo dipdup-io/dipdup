@@ -19,7 +19,7 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'
-    :param url: URL of Subsquid Archives API
+    :param url: URL of Subsquid Network
     :param node: One or more `evm.node` datasource(s) for the same network
     :param http: HTTP client configuration
     """
@@ -46,7 +46,7 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     @validator('url')
     def _valid_url(cls, v: str) -> str:
         if not v.startswith(('http', 'https')):
-            raise ConfigurationError('Subsquid API URL must start with http(s)')
+            raise ConfigurationError('Subsquid Network URL must start with http(s)')
         return v
 
 
