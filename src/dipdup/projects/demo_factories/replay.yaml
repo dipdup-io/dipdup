@@ -1,5 +1,5 @@
 spec_version: 2.0
 replay:
-  description: A very basic indexer for USDt transfers
+  description: Example of spawning indexes in runtime
   package: demo_factories
   template: demo_factories

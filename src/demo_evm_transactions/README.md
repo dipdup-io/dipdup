@@ -1,6 +1,6 @@
 # demo_evm_transactions
 
-A very basic indexer for USDt transfers (transactions)
+Basic indexer for USDt token transfers (transactions)
 
 ## Installation
 

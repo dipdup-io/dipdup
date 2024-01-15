@@ -27,6 +27,7 @@ _logger = logging.getLogger(__name__)
 TEMPLATES: dict[str, tuple[str, ...]] = {
     'evm': (
         'demo_evm_events',
+        'demo_evm_transactions',
         'demo_uniswap',
     ),
     'tezos': (
