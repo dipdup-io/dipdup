@@ -25,7 +25,6 @@ def prepare_big_map_handler_args(
     handler_config: TzktBigMapsHandlerConfig,
     matched_big_map: TzktBigMapData,
 ) -> TzktBigMapDiff[Any, Any]:
-    """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.debug('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
     key: BaseModel | None = None

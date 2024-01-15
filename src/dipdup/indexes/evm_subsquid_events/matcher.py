@@ -61,8 +61,6 @@ def prepare_event_handler_args(
     handler_config: SubsquidEventsHandlerConfig,
     matched_event: SubsquidEventData | EvmNodeLogData,
 ) -> SubsquidEvent[Any]:
-    """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-
     typename = handler_config.contract.module_name
     inputs = package.get_converted_abi(typename)['events'][handler_config.name]['inputs']
 

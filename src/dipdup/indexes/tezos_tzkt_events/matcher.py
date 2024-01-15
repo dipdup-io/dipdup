@@ -30,7 +30,6 @@ def prepare_event_handler_args(
     handler_config: TzktEventsHandlerConfigU,
     matched_event: TzktEventData,
 ) -> TzktEvent[Any] | TzktUnknownEvent | None:
-    """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     _logger.debug('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     if isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):

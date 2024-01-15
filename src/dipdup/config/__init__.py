@@ -989,20 +989,9 @@ class DipDupConfig:
 
                 if isinstance(handler_config.to, str):
                     handler_config.to = self.get_evm_contract(handler_config.to)
-                elif isinstance(handler_config.to, tuple):
-                    to = []
-                    for contract in handler_config.to:
-                        to.append(self.get_evm_contract(contract) if isinstance(contract, str) else contract)
-                    handler_config.to = tuple(to)
 
                 if isinstance(handler_config.from_, str):
                     handler_config.from_ = self.get_evm_contract(handler_config.from_)
-                elif isinstance(handler_config.from_, tuple):
-                    from_ = []
-                    for contract in handler_config.from_:
-                        from_.append(self.get_evm_contract(contract) if isinstance(contract, str) else contract)
-                    handler_config.from_ = tuple(from_)
-
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 

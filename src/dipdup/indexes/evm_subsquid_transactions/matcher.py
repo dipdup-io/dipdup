@@ -7,12 +7,10 @@ from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 from web3 import Web3
 
-from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidTransaction
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.package import DipDupPackage
@@ -26,17 +24,12 @@ MatchedTransactionsT = tuple[
     SubsquidTransactionsHandlerConfig, SubsquidTransaction[Any] | SubsquidTransactionData | EvmNodeTransactionData
 ]
 
-_logger = logging.getLogger(__name__)
-
-MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
-
 
 def prepare_transaction_handler_args(
     package: DipDupPackage,
     handler_config: SubsquidTransactionsHandlerConfig,
     matched_transaction: SubsquidTransactionData | EvmNodeTransactionData,
 ) -> SubsquidTransaction[Any]:
-    """Prepare handler arguments, parse key and value. Schedule callback in executor."""
     method, contract = handler_config.method, handler_config.to
     if not method or not contract:
         raise FrameworkException('`method` and `to` are required for typed transaction handler')
@@ -74,9 +67,9 @@ def match_transactions(
 
     for transaction in transactions:
         for handler_config in handlers:
-            if (from_ := handler_config.from_) and from_.address not in (transaction.from_, None):
+            if (from_ := handler_config.from_) and from_.address != transaction.from_:
                 continue
-            if (to := handler_config.to) and to.address not in (transaction.to, None):
+            if (to := handler_config.to) and to.address != transaction.to:
                 continue
             if handler_config.method:
                 if to:

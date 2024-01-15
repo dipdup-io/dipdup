@@ -154,7 +154,10 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 yield tuple(logs)
 
     async def iter_transactions(
-        self, first_level: int, last_level: int, filters: tuple[TransactionRequest, ...]
+        self,
+        first_level: int,
+        last_level: int,
+        filters: tuple[TransactionRequest, ...],
     ) -> AsyncIterator[tuple[SubsquidTransactionData, ...]]:
         current_level = first_level
 

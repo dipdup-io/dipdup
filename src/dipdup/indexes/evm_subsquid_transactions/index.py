@@ -80,12 +80,8 @@ class SubsquidTransactionsIndex(
         for handler_config in self._config.handlers:
             query: TransactionRequest = {}
             if from_ := handler_config.from_:
-                if not from_.address:
-                    raise NotImplementedError
                 query['from'] = [from_.address]
             if to_ := handler_config.to:
-                if not to_.address:
-                    raise NotImplementedError
                 query['to'] = [to_.address]
             if handler_config.to and handler_config.method:
                 method_abi = self._ctx.package.get_converted_abi(handler_config.to.module_name)['methods'][

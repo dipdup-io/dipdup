@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
+
+### Fixed
+
+- abi.etherscan: Fixed handling "rate limit reached" errors.
+- codegen: Don't create intermediate file `events.json` in ABI directory.
+
 ## [7.2.2] - 2023-12-27
 
 ### Fixed

@@ -75,8 +75,5 @@ class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     def get_subscriptions(self) -> set[Subscription]:
         subs: set[Subscription] = {EvmNodeHeadsSubscription()}
         for handler in self.handlers:
-            if address := handler.contract.address:
-                subs.add(EvmNodeLogsSubscription(address=address))
-            else:
-                raise NotImplementedError
+            subs.add(EvmNodeLogsSubscription(address=handler.contract.address))
         return subs
