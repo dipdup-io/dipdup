@@ -725,16 +725,14 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        if env.DEBUG:
-            logging.getLogger('dipdup').setLevel(logging.DEBUG)
-            logging.getLogger(self.package).setLevel(logging.DEBUG)
+        loglevels = {}
+        if not isinstance(self.logging, dict):
+            loglevels['dipdup'] = self.logging
+            loglevels[self.package] = self.logging
 
-        loglevels = self.logging
-        if not isinstance(loglevels, dict):
-            loglevels = {
-                'dipdup': loglevels,
-                self.package: loglevels,
-            }
+        if env.DEBUG:
+            loglevels['dipdup'] = 'DEBUG'
+            loglevels[self.package] = 'DEBUG'
 
         for name, level in loglevels.items():
             try:
