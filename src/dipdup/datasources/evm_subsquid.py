@@ -6,6 +6,7 @@ from collections.abc import AsyncIterator
 from copy import copy
 from io import BytesIO
 from typing import Any
+from typing import cast
 
 import pyarrow.ipc  # type: ignore[import-untyped]
 
@@ -14,6 +15,7 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
+from dipdup.exceptions import FrameworkException
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
@@ -79,6 +81,21 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
+class _SubsquidWorker(Datasource[Any]):
+    async def run(self) -> None:
+        raise FrameworkException('Subsquid worker datasource should not be run')
+
+    async def query(self, query: Query) -> list[dict[str, Any]]:
+        async with self:
+            self._logger.debug('Worker query: %s', query)
+            response = await self.request(
+                'post',
+                url='',
+                json=query,
+            )
+            return cast(list[dict[str, Any]], response)
+
+
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     _default_http_config = HttpConfig()
 
@@ -117,30 +134,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 log_request.append(LogRequest(topic0=topic_list))
 
         while current_level <= last_level:
-            worker_url = (
-                await self._http.request(
-                    'get',
-                    f'{self._config.url}/{current_level}/worker',
-                )
-            ).decode()
-            worker_config = copy(self._config)
-            worker_config.url = worker_url
-            worker_datasource: _SubsquidWorker = _SubsquidWorker(worker_config)
-
             query: Query = {
                 'logs': log_request,
                 'fields': LOG_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
-            self._logger.debug('Worker query: %s', query)
-
-            async with worker_datasource:
-                response: list[dict[str, Any]] = await worker_datasource.request(
-                    'post',
-                    url=worker_url,
-                    json=query,
-                )
+            worker_datasource = await self._get_worker(current_level)
+            response = await worker_datasource.query(query)
 
             for level_item in response:
                 level = level_item['header']['number']
@@ -162,30 +163,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         current_level = first_level
 
         while current_level <= last_level:
-            worker_url = (
-                await self._http.request(
-                    'get',
-                    f'{self._config.url}/{current_level}/worker',
-                )
-            ).decode()
-            worker_config = copy(self._config)
-            worker_config.url = worker_url
-            worker_datasource: _SubsquidWorker = _SubsquidWorker(worker_config)
-
             query: Query = {
                 'fields': TRANSACTION_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'transactions': list(filters),
             }
-            self._logger.debug('Worker query: %s', query)
-
-            async with worker_datasource:
-                response: list[dict[str, Any]] = await worker_datasource.request(
-                    'post',
-                    url=worker_url,
-                    json=query,
-                )
+            worker_datasource = await self._get_worker(current_level)
+            response = await worker_datasource.query(query)
 
             for level_item in response:
                 level = level_item['header']['number']
@@ -211,7 +196,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         response = await self.request('get', 'height')
         return int(response)
 
-
-class _SubsquidWorker(Datasource[Any]):
-    async def run(self) -> None:
-        pass
+    async def _get_worker(self, level: int) -> _SubsquidWorker:
+        worker_url = (
+            await self._http.request(
+                'get',
+                f'{self._config.url}/{level}/worker',
+            )
+        ).decode()
+        worker_config = copy(self._config)
+        worker_config.url = worker_url
+        return _SubsquidWorker(worker_config)

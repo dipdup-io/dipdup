@@ -201,6 +201,7 @@ exclude_lines = [
     "pragma: no cover",
     "def __repr__",
     "raise NotImplementedError",
+    "raise FrameworkException",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
