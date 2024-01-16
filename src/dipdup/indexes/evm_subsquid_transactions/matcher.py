@@ -39,6 +39,7 @@ def prepare_transaction_handler_args(
     data = decode_abi(
         types=tuple(input['type'] for input in inputs),
         data=decode_hex(matched_transaction.input[10:]),
+        strict=False,
     )
 
     type_ = package.get_type(

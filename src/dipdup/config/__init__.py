@@ -560,13 +560,12 @@ class AdvancedConfig:
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Establish realtime connection immediately after startup
+    :param early_realtime: Spawn realtime datasources immediately after startup
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
-    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
-    :param alt_operation_matcher: Use different algorithm to match operations (dev only)
+    :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
