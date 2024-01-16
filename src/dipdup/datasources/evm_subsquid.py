@@ -174,13 +174,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             for level_item in response:
                 level = level_item['header']['number']
-                # timestamp = level_item['header']['timestamp']
+                timestamp = level_item['header']['timestamp']
                 current_level = level + 1
                 transactions: deque[SubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
-                    # FIXME: timestamp
-                    transaction = SubsquidTransactionData.from_json(raw_transaction, level)
-                    if transaction.status is not False:
+                    transaction = SubsquidTransactionData.from_json(raw_transaction, level, timestamp)
+                    # NOTE: `None` for chains and block ranges not compliant with the post-Byzantinum hard fork EVM specification (e.g. 0-4,369,999 on Ethereum).
+                    if transaction.status != 0:
                         transactions.append(transaction)
                 yield tuple(transactions)
 

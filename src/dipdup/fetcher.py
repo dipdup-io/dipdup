@@ -24,6 +24,10 @@ if TYPE_CHECKING:
 class HasLevel(Protocol):
     level: int
 
+    @property
+    def block_number(self) -> int:
+        return self.level
+
 
 Level = int
 FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)

@@ -184,8 +184,8 @@ class SubsquidMessageType(Enum):
 @dataclass(frozen=True)
 class SubsquidEventData(HasLevel):
     address: str
-    block_number: int
     data: str
+    level: int
     log_index: int
     timestamp: int
     topics: tuple[str, ...]
@@ -201,18 +201,14 @@ class SubsquidEventData(HasLevel):
     ) -> 'SubsquidEventData':
         return SubsquidEventData(
             address=event_json['address'],
-            block_number=level,
             data=event_json['data'],
+            level=level,
             log_index=event_json['logIndex'],
             timestamp=timestamp,
             topics=tuple(event_json['topics']),
             transaction_hash=event_json['transactionHash'],
             transaction_index=event_json['transactionIndex'],
         )
-
-    @property
-    def level(self) -> int:  # type: ignore[override]
-        return self.block_number
 
 
 @dataclass(frozen=True)
@@ -221,7 +217,6 @@ class SubsquidTraceData(HasLevel): ...
 
 @dataclass(frozen=True)
 class SubsquidTransactionData(HasLevel):
-    # FIXME: Do we need all these fields?
     chain_id: int | None
     cumulative_gas_used: int | None
     contract_address: str | None
@@ -240,6 +235,7 @@ class SubsquidTransactionData(HasLevel):
     s: str | None
     sighash: str
     status: int | None
+    timestamp: int
     to: str
     transaction_index: int
     type: int | None
@@ -252,6 +248,7 @@ class SubsquidTransactionData(HasLevel):
         cls,
         transaction_json: dict[str, Any],
         level: int,
+        timestamp: int,
     ) -> 'SubsquidTransactionData':
         cumulative_gas_used = (
             int(transaction_json['cumulativeGasUsed'], 16) if transaction_json['cumulativeGasUsed'] else None
@@ -284,6 +281,7 @@ class SubsquidTransactionData(HasLevel):
             s=transaction_json['s'],
             sighash=transaction_json['sighash'],
             status=transaction_json['status'],
+            timestamp=timestamp,
             to=transaction_json['to'],
             transaction_index=transaction_json['transactionIndex'],
             type=transaction_json['type'],
