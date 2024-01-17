@@ -146,7 +146,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep
-        retry_count = 0 if env.TEST else self._config.retry_count
+        retry_count = self._config.retry_count
         last_attempt = retry_count + 1
 
         Metrics.set_http_errors_in_row(self._url, 0)
