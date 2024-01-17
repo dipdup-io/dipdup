@@ -16,6 +16,7 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
+from dipdup.http import safe_exceptions
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
@@ -124,7 +125,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 worker_datasource = await self._get_worker(current_level)
                 async with worker_datasource:
                     return await worker_datasource.query(query)
-            except DatasourceError as e:
+            except safe_exceptions as e:
                 self._logger.warning('Worker query attempt %s/%s failed: %s', attempt, last_attempt, e)
                 if attempt == last_attempt:
                     raise e
