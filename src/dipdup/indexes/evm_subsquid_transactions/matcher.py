@@ -26,13 +26,12 @@ MatchedTransactionsT = tuple[
 ]
 
 
-# NOTE: Completely disable padding validation. Too many false positives.
+# NOTE: Completely disable padding validation. If data is in Subsquid, node was ok with it.
 eth_abi.decoding.ByteStringDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
 eth_abi.decoding.FixedByteSizeDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
 eth_abi.decoding.SignedFixedDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
 eth_abi.decoding.SignedIntegerDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
 eth_abi.decoding.SingleDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
-
 
 
 def prepare_transaction_handler_args(

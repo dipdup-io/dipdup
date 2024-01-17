@@ -13,7 +13,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - abi.etherscan: Fixed handling "rate limit reached" errors.
+- cli: Fixed setting logger levels based on config and env variables.
 - codegen: Don't create intermediate file `events.json` in ABI directory.
+- evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
+- http: Fixed incorrect number of retries performed on failed requests.
 
 ## [7.2.2] - 2023-12-27
 

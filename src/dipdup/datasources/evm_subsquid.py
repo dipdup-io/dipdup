@@ -86,14 +86,13 @@ class _SubsquidWorker(Datasource[Any]):
         raise FrameworkException('Subsquid worker datasource should not be run')
 
     async def query(self, query: Query) -> list[dict[str, Any]]:
-        async with self:
-            self._logger.debug('Worker query: %s', query)
-            response = await self.request(
-                'post',
-                url='',
-                json=query,
-            )
-            return cast(list[dict[str, Any]], response)
+        self._logger.debug('Worker query: %s', query)
+        response = await self.request(
+            'post',
+            url='',
+            json=query,
+        )
+        return cast(list[dict[str, Any]], response)
 
 
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
@@ -112,6 +111,29 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
     async def subscribe(self) -> None:
         pass
+
+    # FIXME: Heavily copy-pasted from `HTTPGateway._retry_request`
+    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
+        retry_sleep = self._http_config.retry_sleep
+        attempt = 1
+        last_attempt = self._http_config.retry_count + 1
+
+        while True:
+            try:
+                # NOTE: Request a fresh worker after each failed attempt
+                worker_datasource = await self._get_worker(current_level)
+                async with worker_datasource:
+                    return await worker_datasource.query(query)
+            except DatasourceError as e:
+                self._logger.warning('Worker query attempt %s/%s failed: %s', attempt, last_attempt, e)
+                if attempt == last_attempt:
+                    raise e
+
+                self._logger.info('Waiting %s seconds before retry', retry_sleep)
+                await asyncio.sleep(retry_sleep)
+
+                attempt += 1
+                retry_sleep *= self._http_config.retry_multiplier
 
     async def iter_event_logs(
         self,
@@ -140,8 +162,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
-            worker_datasource = await self._get_worker(current_level)
-            response = await worker_datasource.query(query)
+            response = await self.query_worker(query, current_level)
 
             for level_item in response:
                 level = level_item['header']['number']
@@ -169,8 +190,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 'toBlock': last_level,
                 'transactions': list(filters),
             }
-            worker_datasource = await self._get_worker(current_level)
-            response = await worker_datasource.query(query)
+            response = await self.query_worker(query, current_level)
 
             for level_item in response:
                 level = level_item['header']['number']
@@ -203,6 +223,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 f'{self._config.url}/{level}/worker',
             )
         ).decode()
+
         worker_config = copy(self._config)
         worker_config.url = worker_url
+        if not worker_config.http:
+            worker_config.http = self._default_http_config
+
+        # NOTE: Fail immediately; retries are handled one level up
+        worker_config.http.retry_count = 0
+
         return _SubsquidWorker(worker_config)
