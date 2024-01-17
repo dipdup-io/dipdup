@@ -3,6 +3,7 @@ from collections import deque
 from collections.abc import Iterable
 from typing import Any
 
+import eth_abi.decoding
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 from web3 import Web3
@@ -23,6 +24,15 @@ _logger = logging.getLogger(__name__)
 MatchedTransactionsT = tuple[
     SubsquidTransactionsHandlerConfig, SubsquidTransaction[Any] | SubsquidTransactionData | EvmNodeTransactionData
 ]
+
+
+# NOTE: Completely disable padding validation. Too many false positives.
+eth_abi.decoding.ByteStringDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
+eth_abi.decoding.FixedByteSizeDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
+eth_abi.decoding.SignedFixedDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
+eth_abi.decoding.SignedIntegerDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
+eth_abi.decoding.SingleDecoder.validate_padding_bytes = lambda *a, **kw: None  # type: ignore[method-assign]
+
 
 
 def prepare_transaction_handler_args(
