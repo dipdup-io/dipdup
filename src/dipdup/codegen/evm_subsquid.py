@@ -207,7 +207,9 @@ class SubsquidCodeGenerator(CodeGenerator):
             if abi_path.exists():
                 continue
 
-            address = contract.address
+            address = contract.address or contract.abi
+            if not address:
+                raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
 
             for datasource_config in datasource_configs:
                 # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.

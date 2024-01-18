@@ -6,11 +6,10 @@ from typing import Any
 import eth_abi.decoding
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
-from web3 import Web3
 
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
-from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.evm_subsquid import SubsquidTransaction
 from dipdup.models.evm_subsquid import SubsquidTransactionData
@@ -77,21 +76,15 @@ def match_transactions(
 
     for transaction in transactions:
         for handler_config in handlers:
-            if (from_ := handler_config.from_) and from_.address != transaction.from_:
+            # NOTE: Don't match by `abi` contract field, it's only for codegen
+            if (from_ := handler_config.from_) and from_.address not in (transaction.from_, None):
                 continue
-            if (to := handler_config.to) and to.address != transaction.to:
+            if (to := handler_config.to) and to.address not in (transaction.to, None):
                 continue
-            if handler_config.method:
-                if to:
-                    sighash = package.get_converted_abi(to.module_name)['methods'][handler_config.method]['sighash']
-                    if sighash != transaction.sighash:
-                        continue
-                else:
-                    if not {'(', ')'} <= set(handler_config.method):
-                        raise ConfigurationError('`to` field is missing, but `method` is not a full signature')
-                    sighash = Web3.keccak(text=handler_config.method).hex()[:10]
-                    if sighash != transaction.sighash:
-                        continue
+            if method := handler_config.method:
+                sighash = get_sighash(package, method, to)
+                if sighash != transaction.sighash:
+                    continue
 
             arg = (
                 prepare_transaction_handler_args(package, handler_config, transaction)

@@ -10,21 +10,40 @@ from typing import Generic
 from typing import TypeVar
 from typing import cast
 
+from web3 import Web3
+
 from dipdup.config import SubsquidIndexConfigU
+from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
 from dipdup.models.evm_subsquid import SubsquidMessageType
+from dipdup.package import DipDupPackage
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
+
+_sighashes: dict[str, str] = {}
+
+
+def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | None = None) -> str:
+    """Method in config is either a full signature or a method name. We need to convert it to a sighash first."""
+    if method not in _sighashes:
+        if to:
+            _sighashes[method] = package.get_converted_abi(to.module_name)['methods'][method]['sighash']
+        else:
+            if not {'(', ')'} <= set(method):
+                raise ConfigurationError('`to` field is missing; `method` is expected to be a full signature')
+            _sighashes[method] = Web3.keccak(text=method).hex()[:10]
+    return _sighashes[method]
 
 
 class SubsquidIndex(

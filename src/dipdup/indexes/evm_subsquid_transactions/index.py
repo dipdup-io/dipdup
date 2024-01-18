@@ -7,6 +7,7 @@ from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
+from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.indexes.evm_subsquid_transactions.fetcher import TransactionFetcher
 from dipdup.indexes.evm_subsquid_transactions.matcher import match_transactions
 from dipdup.models.evm_node import EvmNodeTransactionData
@@ -79,15 +80,12 @@ class SubsquidTransactionsIndex(
         filters: deque[TransactionRequest] = deque()
         for handler_config in self._config.handlers:
             query: TransactionRequest = {}
-            if from_ := handler_config.from_:
+            if (from_ := handler_config.from_) and from_.address:
                 query['from'] = [from_.address]
-            if to_ := handler_config.to:
+            if (to_ := handler_config.to) and to_.address:
                 query['to'] = [to_.address]
-            if handler_config.to and handler_config.method:
-                method_abi = self._ctx.package.get_converted_abi(handler_config.to.module_name)['methods'][
-                    handler_config.method
-                ]
-                query['sighash'] = [method_abi['sighash']]
+            if method := handler_config.method:
+                query['sighash'] = [get_sighash(self._ctx.package, method, to_)]
             if not query:
                 raise NotImplementedError
             filters.append(query)
