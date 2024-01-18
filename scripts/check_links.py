@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import logging
-from pathlib import Path
 import re
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
 
@@ -44,3 +44,5 @@ for path in Path('docs').rglob('*.md'):
 logging.info('_' * 80)
 logging.info('checked %d files and %d links:', files, links)
 logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
+if bad_links or bad_anchors:
+    exit(1)
