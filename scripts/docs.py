@@ -30,6 +30,8 @@ _logger = logging.getLogger()
 
 INCLUDE_REGEX = r'{{ #include (.*) }}'
 PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
+MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
+ANCHOR_REGEX = r'\#\#* [\w ]*'
 
 TEXT = (
     '.md',
@@ -147,7 +149,11 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     process.terminate()
 
 
-@click.command()
+@click.group()
+def main() -> None:
+    pass
+
+@main.command('build')
 @click.option(
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
@@ -168,7 +174,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     is_flag=True,
     help='Start frontend.',
 )
-def main(source: Path, destination: Path, watch: bool, serve: bool) -> None:
+def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     # TODO: ask before rm -rf, include relative to file not folder, check all relative links are valid
     rmtree(destination, ignore_errors=True)
 
@@ -195,6 +201,53 @@ def main(source: Path, destination: Path, watch: bool, serve: bool) -> None:
         stack.enter_context(suppress(KeyboardInterrupt))
         while True:
             time.sleep(1)
+
+
+@main.command('check')
+@click.option(
+    '--source',
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
+    help='docs/ directory path to check.',
+)
+def check(source: Path) -> None:
+    files, links, http_links, bad_links, bad_anchors = 0, 0, 0, 0, 0
+
+    for path in source.rglob('*.md'):
+        logging.info('checking file `%s`', path)
+        files += 1
+        data = path.read_text()
+        for match in re.finditer(MD_LINK_REGEX, data):
+            links += 1
+            link = match.group(1)
+            if link.startswith('http'):
+                http_links += 1
+                continue
+
+            link, anchor = link.split('#') if '#' in link else (link, None)
+
+            full_path = path.parent.joinpath(link)
+            if not full_path.exists():
+                logging.error('broken link: `%s`', full_path)
+                bad_links += 1
+                continue
+
+            if anchor:
+                target = full_path.read_text() if link else data
+
+                for match in re.finditer(ANCHOR_REGEX, target):
+                    header = match.group(0).lower().replace(' ', '-').strip('#-')
+                    if header == anchor.lower():
+                        break
+                else:
+                    logging.error('broken anchor: `%s#%s`', link, anchor)
+                    bad_anchors += 1
+                    continue
+
+    logging.info('_' * 80)
+    logging.info('checked %d files and %d links:', files, links)
+    logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
+    if bad_links or bad_anchors:
+        exit(1)
 
 
 if __name__ == '__main__':

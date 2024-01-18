@@ -123,19 +123,19 @@ shell = """
 
 [tool.pdm.scripts.docs_build]
 help = "Build docs"
-cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs"
+shell = """
+    python scripts/dump_references.py
+    python scripts/docs.py check --source docs
+    python scripts/docs.py build --source docs --destination {args:../interface}/content/docs
+"""
 
 [tool.pdm.scripts.docs_serve]
 help = "Build and serve docs"
-cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch --serve"
+cmd = "python scripts/docs.py build --source docs --destination {args:../interface}/content/docs --watch --serve"
 
 [tool.pdm.scripts.docs_watch]
 help = "Watch docs"
-cmd = "python scripts/docs.py --source docs --destination {args:../interface}/content/docs --watch"
-
-[tool.pdm.scripts.docs_references]
-help = "Dump references"
-cmd = "python scripts/dump_references.py"
+cmd = "python scripts/docs.py build --source docs --destination {args:../interface}/content/docs --watch"
 
 [tool.pdm.scripts.fixme]
 help = "Find FIXME and TODO comments"
