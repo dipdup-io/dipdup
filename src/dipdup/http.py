@@ -23,7 +23,6 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
-from dipdup import env
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError

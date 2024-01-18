@@ -126,13 +126,6 @@ class PatternConfig(CodegenMixin):
             return arg_name, 'TzktOperationData | None'
         return arg_name, 'TzktOperationData'
 
-    @classmethod
-    def format_sr_execute_argument(
-        cls,
-    ) -> tuple[str, str]:
-        arg_name = 'execute'
-        return pascal_to_snake(arg_name), 'TzktSmartRollupExecute'
-
 
 @dataclass
 class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixin):
@@ -143,7 +136,7 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
     :param destination: Match operations by destination contract alias
     :param entrypoint: Match operations by contract entrypoint
     :param optional: Whether can operation be missing in operation group
-    :param alias: Alias for transaction (helps to avoid duplicates)
+    :param alias: Alias for operation (helps to avoid duplicates)
     """
 
     type: Literal['transaction'] = 'transaction'
@@ -203,7 +196,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
     :param originated_contract: Match origination of exact contract
     :param optional: Whether can operation be missing in operation group
     :param strict: Match operations by storage only or by the whole code
-    :param alias: Alias for transaction (helps to avoid duplicates)
+    :param alias: Alias for operation (helps to avoid duplicates)
     """
 
     type: Literal['origination'] = 'origination'
@@ -251,12 +244,14 @@ class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIn
     :param source: Match operations by source contract alias
     :param destination: Match operations by destination contract alias
     :param optional: Whether can operation be missing in operation group
+    :param alias: Alias for operation (helps to avoid duplicates)
     """
 
     type: Literal['sr_execute'] = 'sr_execute'
     source: TezosContractConfig | None = None
     destination: TezosContractConfig | None = None
     optional: bool = False
+    alias: str | None = None
 
     def __post_init_post_parse__(self) -> None:
         SubgroupIndexMixin.__post_init_post_parse__(self)
@@ -265,13 +260,18 @@ class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIn
         yield 'dipdup.models.tezos_tzkt', 'TzktSmartRollupExecute'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        yield self.format_sr_execute_argument()
+        arg_name = pascal_to_snake(self.alias or f'sr_execute_{self.subgroup_index}')
+        if self.optional:
+            yield arg_name, 'TzktSmartRollupExecute | None'
+        else:
+            yield arg_name, 'TzktSmartRollupExecute'
 
     @property
     def typed_contract(self) -> TezosContractConfig | None:
         if self.destination:
             return self.destination
         return None
+
 
 @dataclass
 class TzktOperationsIndexConfig(TzktIndexConfig):
@@ -317,8 +317,11 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
                 item.pop('alias', None)
 
 
-# FIXME: Reversed for new Pydantic. Why?
-OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig | OperationsHandlerSmartRollupExecutePatternConfig
+OperationsHandlerPatternConfigU = (
+    OperationsHandlerTransactionPatternConfig
+    | OperationsHandlerOriginationPatternConfig
+    | OperationsHandlerSmartRollupExecutePatternConfig
+)
 
 
 @dataclass

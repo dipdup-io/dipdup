@@ -7,7 +7,9 @@ from typing import Any
 from typing import Generic
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig
+from dipdup.config.tezos_tzkt_operations import (
+    OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+)
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig

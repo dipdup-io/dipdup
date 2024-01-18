@@ -38,7 +38,9 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationsHandlerArgumentU = TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktSmartRollupExecute | TzktOperationData | None
+OperationsHandlerArgumentU = (
+    TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktSmartRollupExecute | TzktOperationData | None
+)
 MatchedOperationsT = tuple[OperationSubgroup, TzktOperationsHandlerConfigU, deque[OperationsHandlerArgumentU]]
 
 
