@@ -126,6 +126,13 @@ class TezosPatternConfig(CodegenMixin):
             return arg_name, 'TzktOperationData | None'
         return arg_name, 'TzktOperationData'
 
+    @classmethod
+    def format_sr_execute_argument(
+        cls,
+    ) -> tuple[str, str]:
+        arg_name = 'execute'
+        return pascal_to_snake(arg_name), 'TzktSmartRollupExecute'
+
 
 @dataclass
 class OperationsHandlerTransactionPatternConfig(TezosPatternConfig, SubgroupIndexMixin):
@@ -237,6 +244,36 @@ class OperationsHandlerOriginationPatternConfig(TezosPatternConfig, SubgroupInde
 
 
 @dataclass
+class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIndexMixin):
+    """Operation handler pattern config
+
+    :param type: always 'sr_execute'
+    :param source: Match operations by source contract alias
+    :param destination: Match operations by destination contract alias
+    :param optional: Whether can operation be missing in operation group
+    """
+
+    type: Literal['sr_execute'] = 'sr_execute'
+    source: TezosContractConfig | None = None
+    destination: TezosContractConfig | None = None
+    optional: bool = False
+
+    def __post_init_post_parse__(self) -> None:
+        SubgroupIndexMixin.__post_init_post_parse__(self)
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'dipdup.models.tezos_tzkt', 'TzktSmartRollupExecute'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        yield self.format_sr_execute_argument()
+
+    @property
+    def typed_contract(self) -> TezosContractConfig | None:
+        if self.destination:
+            return self.destination
+        return None
+
+@dataclass
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
@@ -281,7 +318,7 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
 
 
 # FIXME: Reversed for new Pydantic. Why?
-OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig
+OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig | OperationsHandlerSmartRollupExecutePatternConfig
 
 
 @dataclass
