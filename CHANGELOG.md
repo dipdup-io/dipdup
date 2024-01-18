@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
+- tezos.tzkt.operations: Added new operation type `sr_execute` for Etherlink smart rollups.
 
 ### Fixed
 
