@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- tezos.tzkt.operations: Added new operation type `sr_execute` for Etherlink smart rollups.
+
+### Fixed
+
+- abi.etherscan: Fixed handling "rate limit reached" errors.
+- cli: Fixed setting logger levels based on config and env variables.
+- http: Fixed incorrect number of retries performed on failed requests.
+
 ## [7.2.2] - 2023-12-27
 
 ### Fixed
