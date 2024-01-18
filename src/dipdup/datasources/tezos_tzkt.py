@@ -87,6 +87,12 @@ TRANSACTION_OPERATION_FIELDS = (
     'parameter',
     'hasInternals',
 )
+SR_EXECUTE_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    'rollup',
+    'commitment',
+    'ticketTransfersCount',
+)
 BIGMAP_FIELDS = (
     'ptr',
     'contract',
@@ -759,6 +765,57 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_transactions,
+            field,
+            addresses,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
+    async def get_sr_execute(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TzktOperationData, ...]:
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=None,
+            limit=limit,
+            select=SR_EXECUTE_OPERATION_FIELDS,
+            values=True,
+            sort='level',
+            status='applied',
+        )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
+        if addresses:
+            params[f'{field}.in'] = ','.join(addresses)
+
+        raw_transactions = await self._request_values_dict(
+            'get',
+            url='v1/operations/sr_execute',
+            params=params,
+        )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(TzktOperationData.from_json(op, type_='sr_execute') for op in raw_transactions)
+
+    async def iter_sr_execute(
+        self,
+        field: str,
+        addresses: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_sr_execute,
             field,
             addresses,
             first_level,

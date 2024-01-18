@@ -8,6 +8,9 @@ from pydantic.dataclasses import dataclass
 from dipdup.codegen.tezos_tzkt import get_parameter_type
 from dipdup.codegen.tezos_tzkt import get_storage_type
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import (
+    OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+)
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfigU
@@ -17,6 +20,7 @@ from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.models.tezos_tzkt import TzktOrigination
+from dipdup.models.tezos_tzkt import TzktSmartRollupExecute
 from dipdup.models.tezos_tzkt import TzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
@@ -34,7 +38,7 @@ class OperationSubgroup:
     entrypoints: set[str | None]
 
 
-OperationsHandlerArgumentU = TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktOperationData | None
+OperationsHandlerArgumentU = TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktSmartRollupExecute | TzktOperationData | None
 MatchedOperationsT = tuple[OperationSubgroup, TzktOperationsHandlerConfigU, deque[OperationsHandlerArgumentU]]
 
 
@@ -83,6 +87,10 @@ def prepare_operation_handler_args(
             )
             args.append(typed_origination)
 
+        elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
+            sr_execute: TzktSmartRollupExecute = TzktSmartRollupExecute.create(operation_data)
+            args.append(sr_execute)
+
         else:
             raise NotImplementedError
 
@@ -130,6 +138,20 @@ def match_origination(
     return True
 
 
+def match_sr_execute(
+    pattern_config: SmartRollupExecutePatternConfig,
+    operation: TzktOperationData,
+) -> bool:
+    if source := pattern_config.source:
+        if source.address not in (operation.sender_address, None):
+            return False
+    if destination := pattern_config.destination:
+        if destination.address not in (operation.target_address, None):
+            return False
+
+    return True
+
+
 def match_operation_unfiltered_subgroup(
     index: TzktOperationsUnfilteredIndexConfig,
     operation_subgroup: OperationSubgroup,
@@ -170,6 +192,9 @@ def match_operation_subgroup(
             elif isinstance(pattern_config, OriginationPatternConfig):
                 if operation.type == 'origination':
                     matched = match_origination(pattern_config, operation)
+            elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
+                if operation.type == 'sr_execute':
+                    matched = match_sr_execute(pattern_config, operation)
             else:
                 raise FrameworkException('Unsupported pattern type')
 
@@ -205,13 +230,15 @@ def match_operation_subgroup(
     index_list = list(range(len(matched_handlers)))
     id_list = []
     for handler in matched_handlers:
-        transaction = handler[2][-1]
-        if isinstance(transaction, TzktOperationData):
-            id_list.append(transaction.id)
-        elif isinstance(transaction, TzktOrigination):
-            id_list.append(transaction.data.id)
-        elif isinstance(transaction, TzktTransaction):
-            id_list.append(transaction.data.id)
+        last_operation = handler[2][-1]
+        if isinstance(last_operation, TzktOperationData):
+            id_list.append(last_operation.id)
+        elif isinstance(last_operation, TzktOrigination):
+            id_list.append(last_operation.data.id)
+        elif isinstance(last_operation, TzktTransaction):
+            id_list.append(last_operation.data.id)
+        elif isinstance(last_operation, TzktSmartRollupExecute):
+            id_list.append(last_operation.data.id)
         else:
             raise FrameworkException('Type of the first handler argument is unknown')
 

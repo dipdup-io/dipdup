@@ -8,6 +8,9 @@ from collections.abc import Sequence
 from typing import Any
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import (
+    OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+)
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfigU
@@ -63,6 +66,10 @@ def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str
             elif isinstance(pattern_config, OriginationPatternConfig):
                 if pattern_config.originated_contract:
                     if address := pattern_config.originated_contract.address:
+                        addresses.add(address)
+            elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
+                if pattern_config.destination:
+                    if address := pattern_config.destination.address:
                         addresses.add(address)
 
     return addresses
