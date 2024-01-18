@@ -56,7 +56,7 @@ multidict==6.0.4
 mypy==1.8.0
 mypy-extensions==1.0.0
 numpy==1.26.2
-orjson==3.9.10
+orjson==3.9.12
 packaging==23.2
 parsimonious==0.9.0
 pathspec==0.12.1

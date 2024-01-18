@@ -1003,6 +1003,17 @@
             }
           ]
         },
+        "abi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "typename": {
           "anyOf": [
             {
@@ -1016,8 +1027,7 @@
         }
       },
       "required": [
-        "kind",
-        "address"
+        "kind"
       ]
     },
     "TezosContractConfig": {
@@ -1456,6 +1466,69 @@
         }
       }
     },
+    "OperationsHandlerSmartRollupExecutePatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerSmartRollupExecutePatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "sr_execute"
+          ],
+          "default": "sr_execute"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      }
+    },
     "TzktOperationsHandlerConfig": {
       "type": "object",
       "title": "TzktOperationsHandlerConfig",
@@ -1480,6 +1553,13 @@
                     "$ref": "#/$defs/OperationsHandlerOriginationPatternConfig"
                   }
                 ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerSmartRollupExecutePatternConfig"
+                  }
+                ]
               }
             ]
           }
@@ -1495,7 +1575,8 @@
       "enum": [
         "transaction",
         "origination",
-        "migration"
+        "migration",
+        "sr_execute"
       ]
     },
     "TzktOperationsIndexConfig": {
