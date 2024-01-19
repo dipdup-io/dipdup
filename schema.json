@@ -972,8 +972,12 @@
             },
             {
               "type": "string"
+            },
+            {
+              "type": "null"
             }
-          ]
+          ],
+          "default": null
         },
         "abi": {
           "anyOf": [

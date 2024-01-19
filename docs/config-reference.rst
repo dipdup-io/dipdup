@@ -16,10 +16,12 @@
 .. autoclass:: dipdup.config.EtherscanDatasourceConfig
 .. autoclass:: dipdup.config.EvmNodeDatasourceConfig
 .. autoclass:: dipdup.config.EvmContractConfig
+.. autoclass:: dipdup.config.TezosContractConfig
 .. autoclass:: dipdup.config.SubsquidEventsIndexConfig
 .. autoclass:: dipdup.config.SubsquidDatasourceConfig
 .. autoclass:: dipdup.config.TzipMetadataDatasourceConfig
 .. autoclass:: dipdup.config.OperationsHandlerOriginationPatternConfig
+.. autoclass:: dipdup.config.OperationsHandlerSmartRollupExecutePatternConfig
 .. autoclass:: dipdup.config.OperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.models.tezos_tzkt.TzktOperationType
    :members:
