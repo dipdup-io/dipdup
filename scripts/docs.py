@@ -48,30 +48,7 @@ IMAGES = (
     '.jpg',
 )
 
-
-def dump_jsonschema() -> None:
-    subprocess.run(
-        ['pdm', 'add', '-G', 'git+https://github.com/droserasprout/dc_schema.git'],
-        check=True,
-    )
-
-    dc_schema = importlib.import_module('dc_schema')
-    schema_dict = dc_schema.get_schema(DipDupConfig)
-
-    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
-    schema_dict['$defs']['EvmContractConfig']['properties']['address'] = {
-        'anyOf': [
-            {'type': 'integer'},
-            {'type': 'string'},
-        ]
-    }
-
-    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
-    schema_dict['required'] = []
-
-    # NOTE: Dump to the project root
-    schema_path = Path(__file__).parent.parent / 'schema.json'
-    schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
+PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
 
 
 class DocsBuilder(FileSystemEventHandler):
@@ -182,6 +159,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
 def main() -> None:
     pass
 
+
 @main.command('build')
 @click.option(
     '--source',
@@ -232,13 +210,13 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
             time.sleep(1)
 
 
-@main.command('check')
+@main.command('check-links')
 @click.option(
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to check.',
 )
-def check(source: Path) -> None:
+def check_links(source: Path) -> None:
     files, links, http_links, bad_links, bad_anchors = 0, 0, 0, 0, 0
 
     for path in source.rglob('*.md'):
@@ -277,6 +255,37 @@ def check(source: Path) -> None:
     logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
     if bad_links or bad_anchors:
         exit(1)
+
+
+@main.command('dump-jsonschema')
+def dump_jsonschema() -> None:
+    subprocess.run(
+        ['pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL],
+        check=True,
+    )
+
+    dc_schema = importlib.import_module('dc_schema')
+    schema_dict = dc_schema.get_schema(DipDupConfig)
+
+    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
+    schema_dict['$defs']['EvmContractConfig']['properties']['address'] = {
+        'anyOf': [
+            {'type': 'integer'},
+            {'type': 'string'},
+        ]
+    }
+
+    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
+    schema_dict['required'] = []
+
+    # NOTE: Dump to the project root
+    schema_path = Path(__file__).parent.parent / 'schema.json'
+    schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
+
+    subprocess.run(
+        ['pdm', 'remove', '-G', 'dev', 'dc_schema'],
+        check=True,
+    )
 
 
 if __name__ == '__main__':

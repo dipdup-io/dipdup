@@ -367,10 +367,7 @@
       "default": "INFO"
     }
   },
-  "required": [
-    "spec_version",
-    "package"
-  ],
+  "required": [],
   "$defs": {
     "HttpConfig": {
       "type": "object",
@@ -971,13 +968,12 @@
         "address": {
           "anyOf": [
             {
-              "type": "string"
+              "type": "integer"
             },
             {
-              "type": "null"
+              "type": "string"
             }
-          ],
-          "default": null
+          ]
         },
         "abi": {
           "anyOf": [
