@@ -96,6 +96,13 @@ IMAGE_EXTENSIONS = (
 
 PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
 
+MARKDOWNLINT_IGNORE = (
+    'single-title',
+    'line-length',
+    'single-h1',
+)
+"""Global markdownlint ignore list"""
+
 
 class DocsBuilder(FileSystemEventHandler):
     def __init__(
@@ -353,6 +360,17 @@ def dump_references() -> None:
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
+
+
+@main.command('markdownlint', help='Lint Markdown files')
+def markdownlint() -> None:
+    try:
+        subprocess.run(
+            ['markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'],
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        exit(1)
 
 
 if __name__ == '__main__':

@@ -124,9 +124,10 @@ shell = """
 [tool.pdm.scripts.docs_build]
 help = "Build docs"
 shell = """
-    python scripts/docs.py check-links --source docs
-    python scripts/docs.py dump-references
-    python scripts/docs.py dump-jsonschema
+    python scripts/docs.py check-links --source docs && \
+    python scripts/docs.py markdownlint && \
+    python scripts/docs.py dump-references && \
+    python scripts/docs.py dump-jsonschema && \
     python scripts/docs.py build --source docs --destination {args:../interface}/content/docs
 """
 
@@ -161,8 +162,8 @@ cmd = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s
 [tool.pdm.scripts.update]
 help = "Update dependencies and dump requirements.txt"
 shell = """
-    pdm update
-    pdm export --without-hashes -f requirements --prod -o requirements.txt
+    pdm update && \
+    pdm export --without-hashes -f requirements --prod -o requirements.txt && \
     pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
 """
 
