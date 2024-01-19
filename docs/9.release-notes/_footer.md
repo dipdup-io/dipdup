@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD033,MD041 -->
+<!-- markdownlint-disable no-inline-html first-line-heading no-emphasis-as-heading -->
 <br><br>
 ___
 

@@ -42,7 +42,7 @@ class ReferencePage(TypedDict):
     html_path: str
 
 
-REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->\n'
+REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks -->\n'
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
 REFERENCE_HEADER_TEMPLATE = """---
