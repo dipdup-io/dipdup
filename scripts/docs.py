@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+#
+# 🧙 Greetings, traveler!
+#
+# Why are you here?.. Wait, let me guess! You're a DipDup maintainer, something has broken in CI, and you have no idea how the docs are
+# built, right? Good news: everything related to building, formatting and linting documentation is in this file. Bad news: we do everything
+# with custom scripts, and it's DOOM on Nightmare. There are comments where possible tho. Read them carefully and you'll be fine.
+#
+# To run `build --serve` command you need to clone and install frontend from private `dipdup-io/interface` repo first.
+#
 import importlib
 import logging
 import re
@@ -42,7 +51,9 @@ class ReferencePage(TypedDict):
     html_path: str
 
 
-REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks -->\n'
+REFERENCE_MARKDOWNLINT_HINT = (
+    '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks -->\n'
+)
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
 REFERENCE_HEADER_TEMPLATE = """---
@@ -78,9 +89,16 @@ REFERENCES: tuple[ReferencePage, ...] = (
 )
 
 
+# {{ #include ../LICENSE }}
 INCLUDE_REGEX = r'{{ #include (.*) }}'
+
+# {{ project.package }}
 PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
+
+# [DipDup](https://dipdup.io)
 MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
+
+# ## Title
 ANCHOR_REGEX = r'\#\#* [\w ]*'
 
 TEXT_EXTENSIONS = (
@@ -94,14 +112,15 @@ IMAGE_EXTENSIONS = (
     '.jpg',
 )
 
+# A fork of `dc_schema` with a patch to support nested Pydantic dataclasses
 PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
 
+# Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
 MARKDOWNLINT_IGNORE = (
-    'single-title',
     'line-length',
+    'single-title',
     'single-h1',
 )
-"""Global markdownlint ignore list"""
 
 
 class DocsBuilder(FileSystemEventHandler):
@@ -120,12 +139,12 @@ class DocsBuilder(FileSystemEventHandler):
         if src_file.is_dir():
             return
 
-        # NOTE: Sphinx autodoc reference
+        # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            Popen(['python3', 'scripts/dump_references.py']).wait()
+            subprocess.run(['python3', 'scripts/docs.py', 'dump-references'], check=True)
             return
 
-        # FIXME: front dies otherwise
+        # FIXME: Frontend dies otherwise
         if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
             return
 
@@ -208,7 +227,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     process.terminate()
 
 
-@click.group(help='Various tools to build and maintain DipDup documentation')
+@click.group(help='Various tools to build and maintain DipDup documentation. Read the script source!')
 def main() -> None:
     pass
 
@@ -235,7 +254,6 @@ def main() -> None:
     help='Start frontend.',
 )
 def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
-    # TODO: ask before rm -rf, include relative to file not folder, check all relative links are valid
     rmtree(destination, ignore_errors=True)
 
     event_handler = DocsBuilder(
@@ -313,7 +331,7 @@ def check_links(source: Path) -> None:
 @main.command('dump-jsonschema', help='Dump config JSON schema to schema.json')
 def dump_jsonschema() -> None:
     subprocess.run(
-        ['pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL],
+        ('pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL),
         check=True,
     )
 
@@ -321,12 +339,11 @@ def dump_jsonschema() -> None:
     schema_dict = dc_schema.get_schema(DipDupConfig)
 
     # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
-    schema_dict['$defs']['EvmContractConfig']['properties']['address'] = {
-        'anyOf': [
-            {'type': 'integer'},
-            {'type': 'string'},
-        ]
-    }
+    schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = [
+        {'type': 'integer'},
+        {'type': 'string'},
+        {'type': 'null'},
+    ]
 
     # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
     schema_dict['required'] = []
@@ -336,7 +353,7 @@ def dump_jsonschema() -> None:
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
     subprocess.run(
-        ['pdm', 'remove', '-G', 'dev', 'dc_schema'],
+        ('pdm', 'remove', '-G', 'dev', 'dc_schema'),
         check=True,
     )
 
@@ -366,7 +383,7 @@ def dump_references() -> None:
 def markdownlint() -> None:
     try:
         subprocess.run(
-            ['markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'],
+            ('markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
             check=True,
         )
     except subprocess.CalledProcessError:
