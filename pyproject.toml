@@ -124,8 +124,9 @@ shell = """
 [tool.pdm.scripts.docs_build]
 help = "Build docs"
 shell = """
-    python scripts/dump_references.py
     python scripts/docs.py check-links --source docs
+    python scripts/docs.py dump-references
+    python scripts/docs.py dump-jsonschema
     python scripts/docs.py build --source docs --destination {args:../interface}/content/docs
 """
 

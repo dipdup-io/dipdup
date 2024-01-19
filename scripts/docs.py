@@ -13,6 +13,7 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
 from typing import Any
+from typing import TypedDict
 
 import click
 import orjson
@@ -32,17 +33,61 @@ from dipdup.project import get_default_answers
 logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
 _logger = logging.getLogger()
 
+
+class ReferencePage(TypedDict):
+    title: str
+    description: str
+    h1: str
+    md_path: str
+    html_path: str
+
+REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->\n'
+REFERENCE_STRIP_HEAD_LINES = 32
+REFERENCE_STRIP_TAIL_LINES = 63
+REFERENCE_HEADER_TEMPLATE = """---
+title: "{title}"
+description: "{description}"
+---
+
+# {h1}
+
+"""
+REFERENCES: tuple[ReferencePage, ...] = (
+    ReferencePage(
+        title='CLI',
+        description='Command-line interface reference',
+        h1='CLI reference',
+        md_path='docs/7.references/1.cli.md',
+        html_path='cli-reference.html',
+    ),
+    ReferencePage(
+        title='Config',
+        description='Config file reference',
+        h1='Config reference',
+        md_path='docs/7.references/2.config.md',
+        html_path='config-reference.html',
+    ),
+    ReferencePage(
+        title='Context (ctx)',
+        description='Context reference',
+        h1='Context reference',
+        md_path='docs/7.references/3.context.md',
+        html_path='context-reference.html',
+    ),
+)
+
+
 INCLUDE_REGEX = r'{{ #include (.*) }}'
 PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
 MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
 ANCHOR_REGEX = r'\#\#* [\w ]*'
 
-TEXT = (
+TEXT_EXTENSIONS = (
     '.md',
     '.yml',
     '.yaml',
 )
-IMAGES = (
+IMAGE_EXTENSIONS = (
     '.svg',
     '.png',
     '.jpg',
@@ -92,12 +137,12 @@ class DocsBuilder(FileSystemEventHandler):
         _logger.info('`%s` has been %s; copying', src_file, event.event_type)
 
         try:
-            if src_file.suffix in TEXT:
+            if src_file.suffix in TEXT_EXTENSIONS:
                 data = src_file.read_text()
                 for callback in self._callbacks:
                     data = callback(data)
                 dst_file.write_text(data)
-            elif src_file.suffix in IMAGES:
+            elif src_file.suffix in IMAGE_EXTENSIONS:
                 dst_file.write_bytes(src_file.read_bytes())
             else:
                 pass
@@ -286,6 +331,29 @@ def dump_jsonschema() -> None:
         ['pdm', 'remove', '-G', 'dev', 'dc_schema'],
         check=True,
     )
+
+
+
+@main.command('dump-references')
+def dump_references() -> None:
+    subprocess.run(
+        args=('sphinx-build', '-M', 'html', '.', '_build'),
+        cwd='docs',
+        check=True,
+    )
+
+    for page in REFERENCES:
+        to = Path(page['md_path'])
+        from_ = Path(f"docs/_build/html/{page['html_path']}")
+
+        # NOTE: Strip HTML boilerplate
+        out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES])
+        if 'config' in str(from_):
+            out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
+
+        header = REFERENCE_HEADER_TEMPLATE.format(**page)
+        to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
+
 
 
 if __name__ == '__main__':
