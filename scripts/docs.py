@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import importlib
 import logging
 import re
+import subprocess
 import time
 from collections.abc import Callable
 from collections.abc import Iterator
@@ -13,6 +15,7 @@ from subprocess import Popen
 from typing import Any
 
 import click
+import orjson
 from watchdog.events import EVENT_TYPE_CREATED
 from watchdog.events import EVENT_TYPE_DELETED
 from watchdog.events import EVENT_TYPE_MODIFIED
@@ -23,6 +26,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
+from dipdup.config import DipDupConfig
 from dipdup.project import get_default_answers
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
@@ -43,6 +47,31 @@ IMAGES = (
     '.png',
     '.jpg',
 )
+
+
+def dump_jsonschema() -> None:
+    subprocess.run(
+        ['pdm', 'add', '-G', 'git+https://github.com/droserasprout/dc_schema.git'],
+        check=True,
+    )
+
+    dc_schema = importlib.import_module('dc_schema')
+    schema_dict = dc_schema.get_schema(DipDupConfig)
+
+    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
+    schema_dict['$defs']['EvmContractConfig']['properties']['address'] = {
+        'anyOf': [
+            {'type': 'integer'},
+            {'type': 'string'},
+        ]
+    }
+
+    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
+    schema_dict['required'] = []
+
+    # NOTE: Dump to the project root
+    schema_path = Path(__file__).parent.parent / 'schema.json'
+    schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
 
 class DocsBuilder(FileSystemEventHandler):
