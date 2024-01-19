@@ -41,6 +41,7 @@ class ReferencePage(TypedDict):
     md_path: str
     html_path: str
 
+
 REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->\n'
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
@@ -200,12 +201,12 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
     process.terminate()
 
 
-@click.group()
+@click.group(help='Various tools to build and maintain DipDup documentation')
 def main() -> None:
     pass
 
 
-@main.command('build')
+@main.command('build', help='Build and optionally serve docs')
 @click.option(
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
@@ -255,7 +256,7 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
             time.sleep(1)
 
 
-@main.command('check-links')
+@main.command('check-links', help='Check relative links in docs')
 @click.option(
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
@@ -302,7 +303,7 @@ def check_links(source: Path) -> None:
         exit(1)
 
 
-@main.command('dump-jsonschema')
+@main.command('dump-jsonschema', help='Dump config JSON schema to schema.json')
 def dump_jsonschema() -> None:
     subprocess.run(
         ['pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL],
@@ -333,8 +334,7 @@ def dump_jsonschema() -> None:
     )
 
 
-
-@main.command('dump-references')
+@main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     subprocess.run(
         args=('sphinx-build', '-M', 'html', '.', '_build'),
@@ -353,7 +353,6 @@ def dump_references() -> None:
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
-
 
 
 if __name__ == '__main__':
