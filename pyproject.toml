@@ -49,6 +49,7 @@ dependencies = [
     "datamodel-code-generator~=0.25.0",
     "pydantic~=1.10.11",
     "tortoise-orm==0.19.3",
+    #
     "aiohttp~=3.8",
     "aiolimiter~=1.0",
     # NOTE: Used as backend by asyncclick
@@ -115,9 +116,9 @@ composite = ["format", "lint", "test"]
 [tool.pdm.scripts.demos]
 help = "Recreate demo projects from templates"
 shell = """
-	python scripts/update_demos.py
-	python scripts/init_demos.py
-    pdm run format
+	python scripts/demos.py render {args:} && \
+	python scripts/demos.py init {args:} && \
+    pdm run format && \
     pdm run lint
 """
 
