@@ -364,11 +364,7 @@ def dump_jsonschema() -> None:
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     config_rst = Path('docs/config-reference.rst').read_text().splitlines()
-    classes_in_rst = {
-        line.split('.')[-1]
-        for line in config_rst
-        if line.startswith('.. autoclass::')
-    }
+    classes_in_rst = {line.split('.')[-1] for line in config_rst if line.startswith('.. autoclass::')}
     classes_in_config = set()
     for file in Path('src/dipdup/config').glob('*.py'):
         for match in re.finditer(CONFIG_CLASS_REGEX, file.read_text()):
