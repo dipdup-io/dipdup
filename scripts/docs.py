@@ -101,6 +101,9 @@ MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
 # ## Title
 ANCHOR_REGEX = r'\#\#* [\w ]*'
 
+# class AbiDatasourceConfig(DatasourceConfig):
+CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
+
 TEXT_EXTENSIONS = (
     '.md',
     '.yml',
@@ -360,6 +363,24 @@ def dump_jsonschema() -> None:
 
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
+    config_rst = Path('docs/config-reference.rst').read_text().splitlines()
+    classes_in_rst = {
+        line.split('.')[-1]
+        for line in config_rst
+        if line.startswith('.. autoclass::')
+    }
+    classes_in_config = set()
+    for file in Path('src/dipdup/config').glob('*.py'):
+        for match in re.finditer(CONFIG_CLASS_REGEX, file.read_text()):
+            classes_in_config.add(match.group(1))
+
+    diff = classes_in_config - classes_in_rst
+    diff -= {'Config'}
+    if diff:
+        print('Config reference is outdated! Update `docs/config-reference.rst` and try again.')
+        print('Missing classes:', diff)
+        exit(1)
+
     subprocess.run(
         args=('sphinx-build', '-M', 'html', '.', '_build'),
         cwd='docs',
