@@ -393,8 +393,6 @@ def dump_references() -> None:
 
         # NOTE: Strip HTML boilerplate
         out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES])
-        if 'config' in str(from_):
-            out = out.replace('dipdup.config.', '').replace('dipdup.enums.', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
