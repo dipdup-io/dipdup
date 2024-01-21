@@ -10,27 +10,23 @@ from dipdup.cli import green_echo
 from dipdup.project import answers_from_replay
 from dipdup.project import render_project
 
-projects_path = Path(__file__).parent.parent / 'projects'
-
-
-projects_path = Path(__file__).parent.parent / 'projects'
-demos_path = Path(__file__).parent.parent / 'src'
+DEMO_PREFIX = 'demo_'
+PROJECTS_PATH = Path(__file__).parent.parent / 'projects'
+SRC_PATH = Path(__file__).parent.parent / 'src'
+DEFAULT_ENV = {
+    **dict(os.environ),
+    'STACK': '',
+    'POSTGRES_PASSWORD': '',
+    'HASURA_SECRET': '',
+}
 
 
 def _get_demos() -> dict[str, Path]:
-    paths = {}
-    for path in demos_path.iterdir():
-        if path.is_dir() and path.name.startswith('demo_'):
-            paths[path.name] = path
-    return paths
+    return {p.name: p for p in SRC_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
 
 
 def _get_projects() -> dict[str, Path]:
-    paths = {}
-    for path in projects_path.iterdir():
-        if path.is_dir() and path.name.startswith('demo_'):
-            paths[path.name] = path
-    return paths
+    return {p.name: p for p in PROJECTS_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
 
 
 def _render_demo(path: Path) -> None:
@@ -51,17 +47,14 @@ def _init_demo(path: Path) -> None:
         [
             'dipdup',
             'init',
-            # '--force',
+            '--force',
         ],
         cwd=package_path,
         check=True,
-        env={
-            **dict(os.environ),
-            'STACK': '',
-            'POSTGRES_PASSWORD': '',
-            'HASURA_SECRET': '',
-        },
+        env=DEFAULT_ENV,
     )
+
+    # NOTE: We don't need magic symlinks in demo projects.
     Path(package_path).joinpath(package).unlink()
 
 
@@ -78,10 +71,7 @@ def main() -> None:
 @main.command(help='Initialize rendered demo projects')
 @click.argument('package', required=False)
 def init(package: str | None) -> None:
-    if package:
-        projects = {package: projects_path / package}
-    else:
-        projects = _get_projects()
+    projects = {package: PROJECTS_PATH / package} if package else _get_projects()
 
     for package, path in projects.items():
         green_echo(f'=> Initializing `{package}`')
@@ -91,12 +81,8 @@ def init(package: str | None) -> None:
 @main.command(help='Render demo projects from templates')
 @click.argument('package', required=False)
 def render(package: str | None) -> None:
-    if package:
-        demos = {package: demos_path / package}
-        projects = {package: projects_path / package}
-    else:
-        demos = _get_demos()
-        projects = _get_projects()
+    demos = {package: SRC_PATH / package} if package else _get_demos()
+    projects = {package: PROJECTS_PATH / package} if package else _get_projects()
 
     for package, path in demos.items():
         green_echo(f'=> Removing `{package}`')
