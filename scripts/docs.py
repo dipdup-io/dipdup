@@ -36,11 +36,13 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
+from dipdup.cli import green_echo
+from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
 from dipdup.project import get_default_answers
+from dipdup.sys import set_up_logging
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)-8s %(message)s')
-_logger = logging.getLogger()
+_logger = logging.getLogger(__name__)
 
 
 class ReferencePage(TypedDict):
@@ -144,7 +146,10 @@ class DocsBuilder(FileSystemEventHandler):
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            subprocess.run(['python3', 'scripts/docs.py', 'dump-references'], check=True)
+            subprocess.run(
+                ('python3', 'scripts/docs.py', 'dump-references'),
+                check=True,
+            )
             return
 
         # FIXME: Frontend dies otherwise
@@ -232,7 +237,7 @@ def frontend(path: Path) -> Iterator[Popen[Any]]:
 
 @click.group(help='Various tools to build and maintain DipDup documentation. Read the script source!')
 def main() -> None:
-    pass
+    set_up_logging()
 
 
 @main.command('build', help='Build and optionally serve docs')
@@ -257,6 +262,7 @@ def main() -> None:
     help='Start frontend.',
 )
 def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
+    green_echo('=> Building docs')
     rmtree(destination, ignore_errors=True)
 
     event_handler = DocsBuilder(
@@ -275,8 +281,10 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
 
     with ExitStack() as stack:
         if watch:
+            green_echo('=> Watching for changes')
             stack.enter_context(observer(source, event_handler))
         if serve:
+            green_echo('=> Starting frontend')
             stack.enter_context(frontend(destination.parent.parent))
 
         stack.enter_context(suppress(KeyboardInterrupt))
@@ -291,6 +299,7 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     help='docs/ directory path to check.',
 )
 def check_links(source: Path) -> None:
+    green_echo('=> Checking relative links')
     files, links, http_links, bad_links, bad_anchors = 0, 0, 0, 0, 0
 
     for path in source.rglob('*.md'):
@@ -328,16 +337,21 @@ def check_links(source: Path) -> None:
     logging.info('checked %d files and %d links:', files, links)
     logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
     if bad_links or bad_anchors:
+        red_echo('=> Fix broken links and try again')
         exit(1)
 
 
 @main.command('dump-jsonschema', help='Dump config JSON schema to schema.json')
 def dump_jsonschema() -> None:
+    green_echo('=> Dumping JSON schema')
+
+    green_echo('=> Installing patched dc_schema')
     subprocess.run(
         ('pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL),
         check=True,
     )
 
+    green_echo('=> Dumping schema')
     dc_schema = importlib.import_module('dc_schema')
     schema_dict = dc_schema.get_schema(DipDupConfig)
 
@@ -355,6 +369,7 @@ def dump_jsonschema() -> None:
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
+    green_echo('=> Removing patched dc_schema')
     subprocess.run(
         ('pdm', 'remove', '-G', 'dev', 'dc_schema'),
         check=True,
@@ -363,6 +378,7 @@ def dump_jsonschema() -> None:
 
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
+    green_echo('=> Dumping Sphinx references')
     config_rst = Path('docs/config-reference.rst').read_text().splitlines()
     classes_in_rst = {line.split('.')[-1] for line in config_rst if line.startswith('.. autoclass::')}
     classes_in_config = set()
@@ -370,19 +386,22 @@ def dump_references() -> None:
         for match in re.finditer(CONFIG_CLASS_REGEX, file.read_text()):
             classes_in_config.add(match.group(1))
 
+    green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
     diff -= {'Config'}
     if diff:
-        print('Config reference is outdated! Update `docs/config-reference.rst` and try again.')
-        print('Missing classes:', diff)
+        red_echo('=> Config reference is outdated! Update `docs/config-reference.rst` and try again.')
+        red_echo(f'=> Missing classes: {diff}')
         exit(1)
 
+    green_echo('=> Building Sphinx docs')
     subprocess.run(
         args=('sphinx-build', '-M', 'html', '.', '_build'),
         cwd='docs',
         check=True,
     )
 
+    green_echo('=> Converting to ugly Markdown files')
     for page in REFERENCES:
         to = Path(page['md_path'])
         from_ = Path(f"docs/_build/html/{page['html_path']}")
@@ -396,12 +415,14 @@ def dump_references() -> None:
 
 @main.command('markdownlint', help='Lint Markdown files')
 def markdownlint() -> None:
+    green_echo('=> Running markdownlint')
     try:
         subprocess.run(
             ('markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
             check=True,
         )
     except subprocess.CalledProcessError:
+        red_echo('=> Fix markdownlint errors and try again')
         exit(1)
 
 
