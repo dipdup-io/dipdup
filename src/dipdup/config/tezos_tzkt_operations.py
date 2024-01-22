@@ -9,7 +9,6 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
@@ -17,6 +16,7 @@ from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
@@ -297,16 +297,28 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
+
         if TzktOperationType.transaction in self.types:
             if self.datasource.merge_subscriptions:
                 subs.add(TransactionSubscription())
             else:
                 for contract_config in self.contracts:
-                    if not isinstance(contract_config, ContractConfig):
+                    if not isinstance(contract_config, TezosContractConfig):
                         raise ConfigInitializationException
                     subs.add(TransactionSubscription(address=contract_config.address))
+
         if TzktOperationType.origination in self.types:
             subs.add(OriginationSubscription())
+
+        if TzktOperationType.sr_execute in self.types:
+            if self.datasource.merge_subscriptions:
+                subs.add(SmartRollupExecuteSubscription())
+            else:
+                for contract_config in self.contracts:
+                    if not isinstance(contract_config, TezosContractConfig):
+                        raise ConfigInitializationException
+                    subs.add(SmartRollupExecuteSubscription(address=contract_config.address))
+
         return subs
 
     @classmethod
