@@ -1,4 +1,3 @@
-.ONESHELL:
 .PHONY: $(MAKECMDGOALS)
 MAKEFLAGS += --no-print-directory
 ##
@@ -6,7 +5,6 @@ MAKEFLAGS += --no-print-directory
 ##
 PACKAGE=dipdup
 TAG=latest
-COMPOSE=deploy/compose.yaml
 SOURCE=src tests scripts
 DEMO=''
 FRONTEND_PATH=../interface
