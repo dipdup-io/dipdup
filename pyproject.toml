@@ -120,6 +120,7 @@ docs_serve = { cmd = "make docs_serve", help = "Build docs and start frontend se
 docs_watch = { cmd = "make docs_watch", help = "Build docs and watch for changes" }
 fixme = { cmd = "make fixme", help = "Find FIXME and TODO comments" }
 update = { cmd = "make update", help = "Update dependencies and dump requirements.txt" }
+before_release = { cmd = "make before_release", help = "Prepare for a new release after updating version in pyproject.toml" }
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]

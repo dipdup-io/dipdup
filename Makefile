@@ -72,4 +72,12 @@ update:         ## Update dependencies and dump requirements.txt
 	pdm export --without-hashes -f requirements --prod -o requirements.txt
 	pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
 
+before_release: ## Prepare for a new release after updating version in pyproject.toml
+	make format
+	make lint
+	make update
+	make demos
+	make test
+	make docs_build
+	echo "🎉 Commit changes, merge `aux/X.Y.Z`, run 'git checkout next && git pull && git tag X.Y.Z && git push origin X.Y.Z'" 
 ##
