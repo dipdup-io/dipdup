@@ -44,11 +44,7 @@ def _init_demo(path: Path) -> None:
     package = path.name
     package_path = Path(__file__).parent.parent / 'src' / package
     subprocess.run(
-        [
-            'dipdup',
-            'init',
-            '--force',
-        ],
+        ('dipdup', 'init', '--force'),
         cwd=package_path,
         check=True,
         env=DEFAULT_ENV,

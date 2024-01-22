@@ -139,17 +139,21 @@ class DocsBuilder(FileSystemEventHandler):
         self._destination = destination
         self._callbacks = callbacks or []
 
-    def on_modified(self, event: FileSystemEvent) -> None:
+    def on_rst_modified(self) -> None:
+        subprocess.run(
+            ('python3', 'scripts/docs.py', 'dump-references'),
+            check=True,
+        )
+
+    def on_modified(self, event: FileSystemEvent, with_rst: bool = True) -> None:
         src_file = Path(event.src_path).relative_to(self._source)
         if src_file.is_dir():
             return
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            subprocess.run(
-                ('python3', 'scripts/docs.py', 'dump-references'),
-                check=True,
-            )
+            if with_rst:
+                self.on_rst_modified()
             return
 
         # FIXME: Frontend dies otherwise
@@ -273,8 +277,9 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
             create_project_callback(),
         ],
     )
+    event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(path))  # type: ignore[no-untyped-call]
+        event_handler.on_modified(FileModifiedEvent(path), with_rst=False)  # type: ignore[no-untyped-call]
 
     if not (watch or serve):
         return
