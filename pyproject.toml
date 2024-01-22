@@ -105,68 +105,21 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-_black = "black src tests scripts"
-_ruff = "ruff check --fix src tests scripts"
-_mypy = "mypy src tests scripts"
-
-[tool.pdm.scripts.all]
-help = "Run all checks"
-composite = ["format", "lint", "test"]
-
-[tool.pdm.scripts.demos]
-help = "Recreate demo projects from templates"
-shell = """
-	python scripts/demos.py render {args:} && \
-	python scripts/demos.py init {args:} && \
-    pdm run format && \
-    pdm run lint
-"""
-
-[tool.pdm.scripts.docs_build]
-help = "Build docs"
-shell = """
-    python scripts/docs.py check-links --source docs && \
-    python scripts/docs.py markdownlint && \
-    python scripts/docs.py dump-references && \
-    python scripts/docs.py dump-jsonschema && \
-    python scripts/docs.py build --source docs --destination {args:../interface}/content/docs
-"""
-
-[tool.pdm.scripts.docs_serve]
-help = "Build and serve docs"
-cmd = "python scripts/docs.py build --source docs --destination {args:../interface}/content/docs --watch --serve"
-
-[tool.pdm.scripts.docs_watch]
-help = "Watch docs"
-cmd = "python scripts/docs.py build --source docs --destination {args:../interface}/content/docs --watch"
-
-[tool.pdm.scripts.fixme]
-help = "Find FIXME and TODO comments"
-cmd = "grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color"
-
-[tool.pdm.scripts.format]
-help = "Format code with black"
-composite = ["_black"]
-
-[tool.pdm.scripts.image]
-help = "Build Docker image"
-cmd = "docker buildx build . --load --progress plain -t dipdup:latest"
-
-[tool.pdm.scripts.lint]
-help = "Check code with ruff and mypy"
-composite = ["_ruff", "_mypy"]
-
-[tool.pdm.scripts.test]
-help = "Run tests"
-cmd = "pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests"
-
-[tool.pdm.scripts.update]
-help = "Update dependencies and dump requirements.txt"
-shell = """
-    pdm update && \
-    pdm export --without-hashes -f requirements --prod -o requirements.txt && \
-    pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
-"""
+help = { cmd = "make", help = "Show this help (default)" }
+all = { cmd = "make all", help = "Run an entire CI pipeline" }
+format = { cmd = "make format", help = "Format with all tools" }
+lint = { cmd = "make lint", help = "Lint with all tools" }
+test = { cmd = "make test", help = "Run tests" }
+black = { cmd = "make black", help = "Format with black" }
+ruff = { cmd = "make ruff", help = "Lint with ruff" }
+mypy = { cmd = "make mypy", help = "Lint with mypy" }
+image = { cmd = "make image", help = "Build Docker image" }
+demos = { cmd = "make demos", help = "Recreate demo projects from templates" }
+docs_build = { cmd = "make docs_build", help = "Build docs" }
+docs_serve = { cmd = "make docs_serve", help = "Build docs and start frontend server" }
+docs_watch = { cmd = "make docs_watch", help = "Build docs and watch for changes" }
+fixme = { cmd = "make fixme", help = "Find FIXME and TODO comments" }
+update = { cmd = "make update", help = "Update dependencies and dump requirements.txt" }
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]
@@ -179,8 +132,8 @@ skip-string-normalization = true
 [tool.ruff]
 line-length = 120
 ignore = [
-    "E402",  # module level import not at top of file
-    "E501",  # line too long
+    "E402",   # module level import not at top of file
+    "E501",   # line too long
     "TCH001", # breaks our runtime Pydantic magic
 ]
 target-version = "py311"
@@ -203,6 +156,7 @@ exclude_lines = [
     "pragma: no cover",
     "def __repr__",
     "raise NotImplementedError",
+    "raise FrameworkError",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
