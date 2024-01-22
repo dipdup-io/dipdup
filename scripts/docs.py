@@ -101,7 +101,7 @@ PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
 MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
 
 # ## Title
-ANCHOR_REGEX = r'\#\#* [\w ]*'
+MD_HEADING_REGEX = r'\#\#* [\w ]*'
 
 # class AbiDatasourceConfig(DatasourceConfig):
 CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
@@ -309,6 +309,7 @@ def check_links(source: Path) -> None:
         for match in re.finditer(MD_LINK_REGEX, data):
             links += 1
             link = match.group(1)
+            # TODO: Check them too?
             if link.startswith('http'):
                 http_links += 1
                 continue
@@ -324,7 +325,7 @@ def check_links(source: Path) -> None:
             if anchor:
                 target = full_path.read_text() if link else data
 
-                for match in re.finditer(ANCHOR_REGEX, target):
+                for match in re.finditer(MD_HEADING_REGEX, target):
                     header = match.group(0).lower().replace(' ', '-').strip('#-')
                     if header == anchor.lower():
                         break
