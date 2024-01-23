@@ -7,14 +7,6 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 
-class Content(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    nat: str
-    bytes: str | None
-
-
 class Token(BaseModel):
     class Config:
         extra = Extra.forbid
@@ -37,10 +29,19 @@ class Token1(BaseModel):
     fa2: Fa2
 
 
-class TicketerStorage(BaseModel):
+class Context(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    content: Content
-    metadata: dict[str, str]
+    routing_info: str
+    rollup: str
+
+
+class TicketHelperStorage(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
     token: Token | Token1
+    ticketer: str
+    context: Context | None
+    metadata: dict[str, str]

@@ -3,13 +3,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 
 class DepositParameter(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    rollup: str
-    routing_info: str
-    amount: str
+    __root__: str
