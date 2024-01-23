@@ -121,7 +121,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Import package submodules before starting indexing to fail early on import errors.
 - cli: Fixed ordering of crash reports in `report` group commands.
 - evm.node: Fixed parsing topics and integers in datasource models.
-- evm.subsquid.events: Fixed incorrrect log request parameters.
+- evm.subsquid.events: Fixed incorrect log request parameters.
 - install: Fixed issue with interpreting user answers in some cases.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
