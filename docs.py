@@ -101,7 +101,7 @@ PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
 MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
 
 # ## Title
-ANCHOR_REGEX = r'\#\#* [\w ]*'
+MD_HEADING_REGEX = r'\#\#* [\w ]*'
 
 # class AbiDatasourceConfig(DatasourceConfig):
 CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
@@ -139,17 +139,21 @@ class DocsBuilder(FileSystemEventHandler):
         self._destination = destination
         self._callbacks = callbacks or []
 
-    def on_modified(self, event: FileSystemEvent) -> None:
+    def on_rst_modified(self) -> None:
+        subprocess.run(
+            ('python3', 'scripts/docs.py', 'dump-references'),
+            check=True,
+        )
+
+    def on_modified(self, event: FileSystemEvent, with_rst: bool = True) -> None:
         src_file = Path(event.src_path).relative_to(self._source)
         if src_file.is_dir():
             return
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            subprocess.run(
-                ('python3', 'scripts/docs.py', 'dump-references'),
-                check=True,
-            )
+            if with_rst:
+                self.on_rst_modified()
             return
 
         # FIXME: Frontend dies otherwise
@@ -273,8 +277,9 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
             create_project_callback(),
         ],
     )
+    event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(path))  # type: ignore[no-untyped-call]
+        event_handler.on_modified(FileModifiedEvent(path), with_rst=False)  # type: ignore[no-untyped-call]
 
     if not (watch or serve):
         return
@@ -309,6 +314,7 @@ def check_links(source: Path) -> None:
         for match in re.finditer(MD_LINK_REGEX, data):
             links += 1
             link = match.group(1)
+            # TODO: Check them too?
             if link.startswith('http'):
                 http_links += 1
                 continue
@@ -324,7 +330,7 @@ def check_links(source: Path) -> None:
             if anchor:
                 target = full_path.read_text() if link else data
 
-                for match in re.finditer(ANCHOR_REGEX, target):
+                for match in re.finditer(MD_HEADING_REGEX, target):
                     header = match.group(0).lower().replace(' ', '-').strip('#-')
                     if header == anchor.lower():
                         break
