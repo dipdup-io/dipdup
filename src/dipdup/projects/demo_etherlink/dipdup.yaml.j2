@@ -9,20 +9,16 @@ datasources:
 contracts:
   ticketer:
     kind: tezos
-    address: KT1TL2U9XFhDEuN1mR2iMPSBNWe769jDx5s9
+    address: KT1PmYUomF3HDxsGWYQUCbLi2X8WvT7ZHv8o
     typename: ticketer
   ticket_helper:
     kind: tezos
-    address: KT1NxrHQFJ7YEgHp4jXYgfEWXHpqnbZ5F2Tn
+    address: KT1TZg9EwGHKbfWvsHGsqBjm3J5NhJBtHPKX
     typename: ticket_helper
   rollup:
     kind: tezos
-    address: sr1Fw3QghZkhxHvjAHsxfoRsTffTgAfzCbj6
+    address: sr1QgYF6ARMSLcWyAX4wFDrWFaZTyy4twbqe
     typename: rollup
-  rollup_too:
-    kind: tezos
-    address: sr1BQvjNrvPLjPTHTTKLFNY6cNHrWFxc9wjB
-    typename: rollup_too
 
 indexes:
   rollup_operations:
@@ -30,9 +26,8 @@ indexes:
     datasource: tzkt
     contracts:
       - ticketer
-      - rollup
-      - rollup_too
       - ticket_helper
+      - rollup
     types:
       - transaction
       - sr_execute
@@ -46,13 +41,13 @@ indexes:
             destination: ticket_helper
             entrypoint: default
           - type: transaction
-            destination: rollup_too
+            destination: rollup
             entrypoint: default
             alias: rollup_default
       - callback: on_withdraw
         pattern:
           - type: sr_execute
-            destination: rollup_too
+            destination: rollup
           - type: transaction
             destination: ticketer
             entrypoint: withdraw

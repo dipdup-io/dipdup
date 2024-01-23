@@ -498,11 +498,6 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
             ),
             SmartRollupExecuteAddressFetcherChannel(
                 filter=self._sr_execute_addresses,
-                field='target',
-                **channel_kwargs,  # type: ignore[arg-type]
-            ),
-            SmartRollupExecuteAddressFetcherChannel(
-                filter=self._sr_execute_addresses,
                 field='rollup',
                 **channel_kwargs,  # type: ignore[arg-type]
             ),

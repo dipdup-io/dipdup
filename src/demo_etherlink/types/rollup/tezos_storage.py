@@ -6,5 +6,5 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 
-class RollupTooStorage(BaseModel):
+class RollupStorage(BaseModel):
     __root__: None

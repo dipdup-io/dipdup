@@ -177,9 +177,6 @@ def match_operation_subgroup(
     matched_handlers: deque[MatchedOperationsT] = deque()
     operations = operation_subgroup.operations
 
-    for op in operations:
-        print(op.hash, op.sender_address, '->', op.target_address, '|', op.entrypoint)
-
     for handler_config in handlers:
         subgroup_index = 0
         pattern_index = 0
