@@ -158,9 +158,10 @@ async def get_sr_execute_filters(
             if pattern_config.destination:
                 if address := pattern_config.destination.address:
                     addresses.add(address)
-                if pattern_config.source.resolved_code_hash:
+                if pattern_config.destination.resolved_code_hash:
                     raise ConfigurationError('Invalid `sr_execute` filter: `destination.code_hash`')
 
+    addresses = {a for a in addresses if a.startswith('sr1')}
     _logger.info('Fetching smart rollup executions from %s addresses', len(addresses))
     return addresses
 
@@ -493,6 +494,11 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
             SmartRollupExecuteAddressFetcherChannel(
                 filter=self._sr_execute_addresses,
                 field='sender',
+                **channel_kwargs,  # type: ignore[arg-type]
+            ),
+            SmartRollupExecuteAddressFetcherChannel(
+                filter=self._sr_execute_addresses,
+                field='target',
                 **channel_kwargs,  # type: ignore[arg-type]
             ),
             SmartRollupExecuteAddressFetcherChannel(

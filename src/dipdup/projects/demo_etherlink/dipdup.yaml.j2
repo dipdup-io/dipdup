@@ -1,19 +1,23 @@
 spec_version: 2.0
-package: {{ project.package }}
+package: demo_etherlink
 
 datasources:
   tzkt:
     kind: tezos.tzkt
-    url: ${TZKT_URL:-https://api.tzkt.io}
+    url: ${TZKT_URL:-https://api.nairobinet.tzkt.io}
 
 contracts:
   controller:
     kind: tezos
-    address: KT1Ax1oGGjooakyYJvtrX3q5zxRwYv6EAeC2
+    address: KT1TL2U9XFhDEuN1mR2iMPSBNWe769jDx5s9
     typename: controller
+  ticketer:
+    kind: tezos
+    address: KT1NxrHQFJ7YEgHp4jXYgfEWXHpqnbZ5F2Tn
+    typename: ticketer
   rollup:
     kind: tezos
-    address: sr1SW7VtD6xbSAEoRk8LXewr3igfWjBx7FPB
+    address: sr1Fw3QghZkhxHvjAHsxfoRsTffTgAfzCbj6
     typename: rollup
 
 indexes:
@@ -23,14 +27,26 @@ indexes:
     contracts:
       - controller
       - rollup
+      - ticketer
+    types:
+      - transaction
+      - sr_execute
     handlers:
-      - callback: on_rollup_call
+      # - callback: on_deposit
+      #   pattern:
+      #     - type: transaction
+      #       destination: ticketer
+      #       entrypoint: deposit
+      #     - type: transaction
+      #       destination: rollup
+      #       entrypoint: default
+      - callback: on_withdraw
         pattern:
+          - type: sr_execute
+            destination: rollup
           - type: transaction
             destination: controller
-            entrypoint: default
-            alias: controller_default
+            entrypoint: withdraw
           - type: transaction
-            destination: rollup
-            entrypoint: default
-            alias: rollup_default
+            source: controller
+            entrypoint: transfer

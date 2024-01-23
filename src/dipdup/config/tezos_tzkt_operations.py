@@ -317,7 +317,8 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
                 for contract_config in self.contracts:
                     if not isinstance(contract_config, TezosContractConfig):
                         raise ConfigInitializationException
-                    subs.add(SmartRollupExecuteSubscription(address=contract_config.address))
+                    if contract_config.address and contract_config.address.startswith('sr1'):
+                        subs.add(SmartRollupExecuteSubscription(address=contract_config.address))
 
         return subs
 
