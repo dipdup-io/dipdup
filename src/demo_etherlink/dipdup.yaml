@@ -17,7 +17,8 @@ contracts:
     typename: ticketer
   rollup:
     kind: tezos
-    address: sr1Fw3QghZkhxHvjAHsxfoRsTffTgAfzCbj6
+    # sr1Fw3QghZkhxHvjAHsxfoRsTffTgAfzCbj6
+    address: sr1BQvjNrvPLjPTHTTKLFNY6cNHrWFxc9wjB
     typename: rollup
 
 indexes:

@@ -12,4 +12,4 @@ async def on_withdraw(
     withdraw: TzktTransaction[WithdrawParameter, ControllerStorage],
     transaction_2: TzktOperationData,
 ) -> None:
-    ...
+    raise Exception("🥳 it's a match!")

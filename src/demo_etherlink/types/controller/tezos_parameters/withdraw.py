@@ -3,8 +3,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import BaseModel, Extra
 
 
 class Data(BaseModel):

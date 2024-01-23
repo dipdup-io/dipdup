@@ -4,43 +4,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
-
-
-class Content(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    nat: str
-    bytes: str | None
-
-
-class Token(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    fa12: str
-
-
-class Fa2(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    address: str
-    nat: str
-
-
-class Token1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    fa2: Fa2
 
 
 class ControllerStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    content: Content
-    metadata: dict[str, str]
-    token: Token | Token1
+    __root__: str
