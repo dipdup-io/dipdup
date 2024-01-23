@@ -77,7 +77,7 @@ pytest-aiohttp==1.0.5
 pytest-asyncio==0.23.3
 pytest-cov==4.1.0
 pytest-xdist==3.5.0
-python-dotenv==1.0.0
+python-dotenv==1.0.1
 pytz==2023.3.post1
 pyunormalize==15.1.0
 pywin32==306; platform_system == "Windows" or sys_platform == "win32"
