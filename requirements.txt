@@ -60,7 +60,7 @@ pydantic==1.10.14
 pyhumps==3.8.0
 pypika-tortoise==0.1.6
 pysignalr==0.2.0
-python-dotenv==1.0.0
+python-dotenv==1.0.1
 pytz==2023.3.post1
 pyunormalize==15.1.0
 pywin32==306; platform_system == "Windows"
