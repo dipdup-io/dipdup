@@ -1,4 +1,3 @@
-.ONESHELL:
 .PHONY: $(MAKECMDGOALS)
 MAKEFLAGS += --no-print-directory
 ##
