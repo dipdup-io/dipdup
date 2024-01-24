@@ -3,9 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import ConfigDict
 
@@ -14,7 +11,7 @@ class Ledger(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    allowances: Dict[str, str]
+    allowances: dict[str, str]
     balance: str
     frozen_balance: str
 
@@ -31,7 +28,7 @@ class Voters(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    candidate: Optional[str] = None
+    candidate: str | None = None
     last_veto: str
     veto: str
     vote: str
@@ -42,11 +39,11 @@ class Storage(BaseModel):
         extra='forbid',
     )
     baker_validator: str
-    current_candidate: Optional[str] = None
-    current_delegated: Optional[str] = None
+    current_candidate: str | None = None
+    current_delegated: str | None = None
     last_update_time: str
     last_veto: str
-    ledger: Dict[str, Ledger]
+    ledger: dict[str, Ledger]
     period_finish: str
     reward: str
     reward_paid: str
@@ -58,18 +55,18 @@ class Storage(BaseModel):
     total_reward: str
     total_supply: str
     total_votes: str
-    user_rewards: Dict[str, UserRewards]
+    user_rewards: dict[str, UserRewards]
     veto: str
-    vetos: Dict[str, str]
-    voters: Dict[str, Voters]
-    votes: Dict[str, str]
+    vetos: dict[str, str]
+    voters: dict[str, Voters]
+    votes: dict[str, str]
 
 
 class QuipuFa12Storage(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    dex_lambdas: Dict[str, str]
-    metadata: Dict[str, str]
+    dex_lambdas: dict[str, str]
+    metadata: dict[str, str]
     storage: Storage
-    token_lambdas: Dict[str, str]
+    token_lambdas: dict[str, str]

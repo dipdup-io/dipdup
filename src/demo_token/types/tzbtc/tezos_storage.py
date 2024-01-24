@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
@@ -14,7 +12,7 @@ class TzbtcStorage(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    big_map: Dict[str, str]
+    big_map: dict[str, str]
     lambda_: str = Field(..., alias='lambda')
     nat: str
     bool: bool

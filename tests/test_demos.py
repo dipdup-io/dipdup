@@ -202,6 +202,8 @@ test_params = (
     ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
+    ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
     # NOTE: Smoke tests for small tools.
     ('demo_dex.yml', 'demo_dex', ('config', 'env', '--compose', '--internal'), None),
     ('demo_dex.yml', 'demo_dex', ('config', 'export', '--full'), None),

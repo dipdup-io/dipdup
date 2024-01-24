@@ -3,11 +3,15 @@ import logging
 import signal
 import sys
 import warnings
+from collections import deque
+from collections.abc import Awaitable
 from pathlib import Path
+from typing import Any
 
 from dipdup import env
 
 _is_shutting_down = False
+_futures: deque[asyncio.Future[None]] = deque()
 
 
 async def _shutdown() -> None:  # pragma: no cover
@@ -40,6 +44,13 @@ def set_up_logging() -> None:
 
     if env.DEBUG:
         logging.getLogger('dipdup').setLevel(logging.DEBUG)
+
+
+def fire_and_forget(aw: Awaitable[Any]) -> None:
+    """Fire and forget coroutine"""
+    future = asyncio.ensure_future(aw)
+    _futures.append(future)
+    future.add_done_callback(lambda _: _futures.remove(future))
 
 
 def set_up_process(signals: bool) -> None:

@@ -1,5 +1,4 @@
 from collections import deque
-from contextlib import ExitStack
 from typing import Any
 
 from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
@@ -15,7 +14,6 @@ from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktUnknownEvent
-from dipdup.prometheus import Metrics
 
 EventQueueItem = tuple[TzktEventData, ...] | TzktRollbackMessage
 
@@ -48,12 +46,8 @@ class TzktEventsIndex(
         self._logger.info('Fetching contract events from level %s to %s', first_level, sync_level)
         fetcher = self._create_fetcher(first_level, sync_level)
 
-        async for level, events in fetcher.fetch_by_level():
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                    stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_data(events, sync_level)
+        async for _, events in fetcher.fetch_by_level():
+            await self._process_level_data(events, sync_level)
 
         await self._exit_sync_state(sync_level)
 

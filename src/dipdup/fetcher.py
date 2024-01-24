@@ -78,7 +78,10 @@ async def readahead_by_level(
                 need_more.clear()
                 await need_more.wait()
 
-    task = asyncio.create_task(_readahead())
+    task = asyncio.create_task(
+        _readahead(),
+        name=f'fetcher:{id(fetcher_iter)}',
+    )
 
     while True:
         while queue:
@@ -142,5 +145,4 @@ class DataFetcher(ABC, Generic[FetcherBufferT]):
         self._head = 0
 
     @abstractmethod
-    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
-        ...
+    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]: ...

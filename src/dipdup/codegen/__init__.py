@@ -1,12 +1,10 @@
 import logging
-import subprocess
 from abc import ABC
 from abc import abstractmethod
 from collections.abc import Awaitable
 from collections.abc import Callable
 from pathlib import Path
 from shutil import rmtree
-from shutil import which
 from typing import Any
 
 from pydantic import BaseModel
@@ -72,31 +70,23 @@ class CodeGenerator(ABC):
         await self.generate_system_hooks()
         await self.generate_handlers()
 
-        # self._package.verify()
+    @abstractmethod
+    async def generate_abi(self) -> None: ...
 
     @abstractmethod
-    async def generate_abi(self) -> None:
-        ...
+    async def generate_schemas(self, force: bool = False) -> None: ...
 
     @abstractmethod
-    async def generate_schemas(self, force: bool = False) -> None:
-        ...
+    async def generate_hooks(self) -> None: ...
 
     @abstractmethod
-    async def generate_hooks(self) -> None:
-        ...
+    async def generate_system_hooks(self) -> None: ...
 
     @abstractmethod
-    async def generate_system_hooks(self) -> None:
-        ...
+    async def generate_handlers(self) -> None: ...
 
     @abstractmethod
-    async def generate_handlers(self) -> None:
-        ...
-
-    @abstractmethod
-    def get_typeclass_name(self, schema_path: Path) -> str:
-        ...
+    def get_typeclass_name(self, schema_path: Path) -> str: ...
 
     async def _generate_types(self, force: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
@@ -121,32 +111,21 @@ class CodeGenerator(ABC):
             self._logger.debug('Skipping `%s`: type already exists', schema_path)
             return
 
-        datamodel_codegen = which('datamodel-codegen')
-        if not datamodel_codegen:
-            raise FrameworkException('datamodel-codegen is not installed')
+        import datamodel_code_generator as dmcg
 
         class_name = self.get_typeclass_name(schema_path)
-
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        args = [
-            datamodel_codegen,
-            '--input',
-            str(schema_path),
-            '--output',
-            str(output_path),
-            '--class-name',
-            class_name,
-            '--disable-timestamp',
-            '--input-file-type',
-            'jsonschema',
-            '--target-python-version',
-            '3.11',
-            '--output-model-type',
-            'pydantic_v2.BaseModel',
-        ]
-        self._logger.debug(' '.join(args))
-        subprocess.run(args, check=True)
+        dmcg.generate(
+            input_=schema_path,
+            output=output_path,
+            class_name=class_name,
+            disable_timestamp=True,
+            input_file_type=dmcg.InputFileType.JsonSchema,
+            target_python_version=dmcg.PythonVersion.PY_311,
+            use_union_operator=True,
+            output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
+        )
 
     async def _generate_callback(self, callback_config: CallbackMixin, kind: str, sql: bool = False) -> None:
         original_callback = callback_config.callback

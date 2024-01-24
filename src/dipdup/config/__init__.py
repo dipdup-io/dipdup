@@ -12,6 +12,7 @@ As you can see from the amount of code below, lots of things are going on here:
 Dataclasses are used in this module instead of BaseModel for historical reasons, thus "...Mixin" classes to workaround the lack of proper
 inheritance.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -23,7 +24,6 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
-from dataclasses import field
 from pydoc import locate
 from typing import TYPE_CHECKING
 from typing import Any
@@ -35,6 +35,7 @@ from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 import orjson
+from pydantic import Field
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
@@ -47,7 +48,6 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
-from dipdup.performance import MetricsLevel
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -79,7 +79,7 @@ class SqliteDatabaseConfig:
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
-    immune_tables: set[str] = field(default_factory=set)
+    immune_tables: set[str] = Field(default_factory=set)
 
     @property
     def schema_name(self) -> str:
@@ -117,8 +117,8 @@ class PostgresDatabaseConfig:
     database: str = DEFAULT_POSTGRES_DATABASE
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
-    password: str = field(default='', repr=False)
-    immune_tables: set[str] = field(default_factory=set)
+    password: str = Field(default='', repr=False)
+    immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
 
     @property
@@ -162,6 +162,7 @@ class HttpConfig:
     :param ratelimit_sleep: Sleep time between requests when rate limit is reached
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
+    :param request_timeout: Request timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request
     :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
     :param alias: Alias for this HTTP client (dev only)
@@ -175,6 +176,7 @@ class HttpConfig:
     ratelimit_sleep: float | None = None
     connection_limit: int | None = None
     connection_timeout: int | None = None
+    request_timeout: int | None = None
     batch_size: int | None = None
     replay_path: str | None = None
     alias: str | None = None
@@ -192,6 +194,7 @@ class ResolvedHttpConfig:
     ratelimit_sleep: float = 0.0
     connection_limit: int = 100
     connection_timeout: int = 60
+    request_timeout: int = 60
     batch_size: int = 10_000
     replay_path: str | None = None
     alias: str | None = None
@@ -225,10 +228,10 @@ class NameMixin:
         return self._name
 
 
-@dataclass
-class ContractConfig(NameMixin):
+class ContractConfig(ABC, NameMixin):
     """Contract config
 
+    :param kind: Defined by child class
     :param typename: Alias for the contract script
     """
 
@@ -246,12 +249,10 @@ class DatasourceConfig(ABC, NameMixin):
     http: HttpConfig | None
 
 
-class AbiDatasourceConfig(DatasourceConfig):
-    ...
+class AbiDatasourceConfig(DatasourceConfig): ...
 
 
-class IndexDatasourceConfig(DatasourceConfig):
-    ...
+class IndexDatasourceConfig(DatasourceConfig): ...
 
 
 @dataclass
@@ -259,12 +260,10 @@ class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        ...
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]: ...
 
     @abstractmethod
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        ...
+    def iter_arguments(self) -> Iterator[tuple[str, str]]: ...
 
     def format_imports(self, package: str) -> Iterator[str]:
         for package_name, cls in self.iter_imports(package):
@@ -366,8 +365,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         self.template_values: dict[str, str] = {}
 
     @abstractmethod
-    def get_subscriptions(self) -> set[Subscription]:
-        ...
+    def get_subscriptions(self) -> set[Subscription]: ...
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
@@ -404,7 +402,7 @@ class HasuraConfig:
     """
 
     url: str
-    admin_secret: str | None = field(default=None, repr=False)
+    admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 100
@@ -440,8 +438,8 @@ class JobConfig(NameMixin):
     :param daemon: Run hook as a daemon (never stops)
     """
 
-    hook: HookConfig = field()
-    args: dict[str, Any] = field(default_factory=dict)
+    hook: HookConfig
+    args: dict[str, Any] = Field(default_factory=dict)
     crontab: str | None = None
     interval: int | None = None
     daemon: bool = False
@@ -499,7 +497,7 @@ class HookConfig(CallbackMixin):
     :param atomic: Wrap hook in a single database transaction
     """
 
-    args: dict[str, str] = field(default_factory=dict)
+    args: dict[str, str] = Field(default_factory=dict)
     atomic: bool = False
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -557,22 +555,20 @@ class ApiConfig:
 
 @dataclass
 class AdvancedConfig:
-    """Feature flags and other advanced config.
+    """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Establish realtime connection immediately after startup
+    :param early_realtime: Spawn realtime datasources immediately after startup
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
-    :param api: Monitoring API config
-    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
-    :param alt_operation_matcher: Use different algorithm to match operations (dev only)
+    :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
-    reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
+    reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
@@ -580,8 +576,6 @@ class AdvancedConfig:
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
-    api: ApiConfig | None = None
-    metrics: MetricsLevel = MetricsLevel.basic
     alt_operation_matcher: bool = False
 
     class Config:
@@ -604,6 +598,7 @@ class DipDupConfig:
     :param hasura: Hasura integration config
     :param sentry: Sentry integration config
     :param prometheus: Prometheus integration config
+    :param api: Management API config
     :param advanced: Advanced config
     :param custom: User-defined configuration to use in callbacks
     :param logging: Modify logging verbosity
@@ -611,20 +606,21 @@ class DipDupConfig:
 
     spec_version: str | float
     package: str
-    datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
+    datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
         default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
     )
-    contracts: dict[str, ContractConfigU] = field(default_factory=dict)
-    indexes: dict[str, IndexConfigU] = field(default_factory=dict)
-    templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
-    jobs: dict[str, JobConfig] = field(default_factory=dict)
-    hooks: dict[str, HookConfig] = field(default_factory=dict)
+    contracts: dict[str, ContractConfigU] = Field(default_factory=dict)
+    indexes: dict[str, IndexConfigU] = Field(default_factory=dict)
+    templates: dict[str, ResolvedIndexConfigU] = Field(default_factory=dict)
+    jobs: dict[str, JobConfig] = Field(default_factory=dict)
+    hooks: dict[str, HookConfig] = Field(default_factory=dict)
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
-    advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
-    custom: dict[str, Any] = field(default_factory=dict)
+    api: ApiConfig | None = None
+    advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
+    custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
 
     def __post_init__(self) -> None:
@@ -642,15 +638,6 @@ class DipDupConfig:
     @property
     def package_path(self) -> Path:
         return env.get_package_path(self.package)
-
-    @property
-    def oneshot(self) -> bool:
-        """Whether all indexes have `last_level` field set"""
-        syncable_indexes = tuple(c for c in self.indexes.values() if not isinstance(c, TzktHeadIndexConfig))
-        oneshot_indexes = tuple(c for c in syncable_indexes if c.last_level)
-        if len(oneshot_indexes) == len(syncable_indexes) > 0:
-            return True
-        return False
 
     @property
     def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
@@ -737,16 +724,14 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        if env.DEBUG:
-            logging.getLogger('dipdup').setLevel(logging.DEBUG)
-            logging.getLogger(self.package).setLevel(logging.DEBUG)
+        loglevels = {}
+        if not isinstance(self.logging, dict):
+            loglevels['dipdup'] = self.logging
+            loglevels[self.package] = self.logging
 
-        loglevels = self.logging
-        if not isinstance(loglevels, dict):
-            loglevels = {
-                'dipdup': loglevels,
-                self.package: loglevels,
-            }
+        if env.DEBUG:
+            loglevels['dipdup'] = 'DEBUG'
+            loglevels[self.package] = 'DEBUG'
 
         for name, level in loglevels.items():
             try:
@@ -946,6 +931,10 @@ class DipDupConfig:
                                 pattern_config.originated_contract
                             )
 
+                    elif isinstance(pattern_config, OperationsHandlerSmartRollupExecutePatternConfig):
+                        if isinstance(pattern_config.destination, str):
+                            pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
+
         elif isinstance(index_config, TzktBigMapsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -1033,6 +1022,7 @@ from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerSmartRollupExecutePatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
@@ -1101,7 +1091,10 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
             # NOTE: Wrap dataclass again to recreate magic methods.
             # NOTE: We need to trick Pydantic that it's a native dataclass.
             delattr(value, '__pydantic_validator__')
-            value = dataclass(value)
+            try:
+                value = dataclass(value)
+            except RuntimeError:
+                value = dataclass(value)
             setattr(submodule, attr, value)
 
 

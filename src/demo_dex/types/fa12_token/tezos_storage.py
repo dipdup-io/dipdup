@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-
 from pydantic import BaseModel
 from pydantic import ConfigDict
 
@@ -13,7 +11,7 @@ class Balances(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    approvals: Dict[str, str]
+    approvals: dict[str, str]
     balance: str
 
 
@@ -22,7 +20,7 @@ class TokenMetadata(BaseModel):
         extra='forbid',
     )
     nat: str
-    map: Dict[str, str]
+    map: dict[str, str]
 
 
 class Fa12TokenStorage(BaseModel):
@@ -30,10 +28,10 @@ class Fa12TokenStorage(BaseModel):
         extra='forbid',
     )
     administrator: str
-    balances: Dict[str, Balances]
+    balances: dict[str, Balances]
     debtCeiling: str
     governorContractAddress: str
-    metadata: Dict[str, str]
+    metadata: dict[str, str]
     paused: bool
-    token_metadata: Dict[str, TokenMetadata]
+    token_metadata: dict[str, TokenMetadata]
     totalSupply: str

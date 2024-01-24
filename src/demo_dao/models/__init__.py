@@ -1,6 +1,5 @@
 
 from dipdup import fields
-
 from dipdup.models import Model
 
 

@@ -1,9 +1,9 @@
+from dipdup.context import HandlerContext
 from eth_utils.address import to_checksum_address
 from eth_utils.address import to_normalized_address
 
 import demo_uniswap.models as models
 from demo_uniswap.models.abi import get_abi
-from dipdup.context import HandlerContext
 
 
 async def position_validate(

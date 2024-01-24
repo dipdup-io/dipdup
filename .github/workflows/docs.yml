@@ -46,6 +46,9 @@ jobs:
       - name: Install PDM
         run: pip install pdm
 
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+
       - name: Install project
         run: pdm sync
 
@@ -58,7 +61,7 @@ jobs:
         run: pdm run docs_build
 
       - name: Commit and push frontend
-        if: github.ref == 'refs/heads/next'
+        if: github.ref_type == 'tag'
         run: |
           cd ../interface
           git config --local user.email "action@github.com"

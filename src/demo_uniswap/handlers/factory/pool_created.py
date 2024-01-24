@@ -1,8 +1,6 @@
 from contextlib import suppress
 from typing import cast
 
-from tortoise.exceptions import OperationalError
-
 from demo_uniswap import models as models
 from demo_uniswap.models.token import WHITELIST_TOKENS
 from demo_uniswap.models.token import ERC20Token
@@ -10,6 +8,7 @@ from demo_uniswap.types.factory.evm_events.pool_created import PoolCreated
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm_subsquid import SubsquidEvent
+from tortoise.exceptions import OperationalError
 
 POOL_BLACKLIST = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
@@ -18,7 +17,7 @@ WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
     with suppress(Exception):
         await models.Token.cached_get(address)
-        return None
+        return
 
     web3 = ctx.get_evm_node_datasource('mainnet_subsquid').web3
     erc20_iface = ERC20Token.from_address(web3, address)

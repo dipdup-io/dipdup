@@ -9,6 +9,19 @@ from pathlib import Path
 from dipdup.exceptions import FrameworkException
 
 
+def get_pyproject_name() -> str | None:
+    pyproject_path = Path('pyproject.toml')
+    if not pyproject_path.exists():
+        return None
+
+    content = tomllib.loads(pyproject_path.read_text())
+    if 'project' in content:
+        return str(content['project']['name'])
+    if 'tool' in content and 'poetry' in content['tool']:
+        return str(content['tool']['poetry']['name'])
+    raise FrameworkException('`pyproject.toml` found, but has neither `project` nor `tool.poetry` section')
+
+
 def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
 
@@ -17,17 +30,8 @@ def get_package_path(package: str) -> Path:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
-    pyproject_path = Path('pyproject.toml')
-    if pyproject_path.exists():
-        content = tomllib.loads(pyproject_path.read_text())
-        if 'project' in content:
-            pyproject_package = content['project']['name']
-        elif 'tool' in content and 'poetry' in content['tool']:
-            pyproject_package = content['tool']['poetry']['name']
-        else:
-            raise FrameworkException('`pyproject.toml` found, but has neither `project` nor `tool.poetry` section')
-        if pyproject_package == package:
-            return Path.cwd()
+    if get_pyproject_name() == package:
+        return Path.cwd()
 
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):
@@ -44,8 +48,8 @@ def get(key: str, default: str | None = None) -> str | None:
     return env.get(key, default)
 
 
-def get_bool(key: str, default: bool = False) -> bool:
-    return get(key) in ('1', 'true', 'True')
+def get_bool(key: str) -> bool:
+    return (get(key) or '').lower() in ('1', 'y', 'yes', 't', 'true', 'on')
 
 
 def get_int(key: str, default: int) -> int:

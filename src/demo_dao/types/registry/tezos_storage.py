@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import List
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -24,7 +22,7 @@ class Delegate(BaseModel):
         extra='forbid',
     )
     key: Key
-    value: Dict[str, Any]
+    value: dict[str, Any]
 
 
 class FreezeHistory(BaseModel):
@@ -80,7 +78,7 @@ class Proposals(BaseModel):
     quorum_threshold: str
     start_level: str
     upvotes: str
-    voters: List[Voter]
+    voters: list[Voter]
     voting_stage_num: str
 
 
@@ -98,21 +96,21 @@ class RegistryStorage(BaseModel):
         extra='forbid',
     )
     admin: str
-    delegates: List[Delegate]
-    extra: Dict[str, str]
-    freeze_history: Dict[str, FreezeHistory]
+    delegates: list[Delegate]
+    extra: dict[str, str]
+    freeze_history: dict[str, FreezeHistory]
     frozen_token_id: str
     frozen_total_supply: str
     governance_token: GovernanceToken
     guardian: str
-    metadata: Dict[str, str]
+    metadata: dict[str, str]
     pending_owner: str
     permits_counter: str
-    proposal_key_list_sort_by_level: List[ProposalKeyListSortByLevelItem]
-    proposals: Dict[str, Proposals]
+    proposal_key_list_sort_by_level: list[ProposalKeyListSortByLevelItem]
+    proposals: dict[str, Proposals]
     quorum_threshold_at_cycle: QuorumThresholdAtCycle
     start_level: str
-    custom_entrypoints: Dict[str, str]
+    custom_entrypoints: dict[str, str]
     decision_lambda: str
     fixed_proposal_fee_in_token: str
     governance_total_supply: str

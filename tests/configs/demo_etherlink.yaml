@@ -1,0 +1,58 @@
+spec_version: 2.0
+package: demo_etherlink
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.nairobinet.tzkt.io}
+
+contracts:
+  ticketer:
+    kind: tezos
+    address: KT1PmYUomF3HDxsGWYQUCbLi2X8WvT7ZHv8o
+    typename: ticketer
+  ticket_helper:
+    kind: tezos
+    address: KT1TZg9EwGHKbfWvsHGsqBjm3J5NhJBtHPKX
+    typename: ticket_helper
+  rollup:
+    kind: tezos
+    address: sr1QgYF6ARMSLcWyAX4wFDrWFaZTyy4twbqe
+    typename: rollup
+
+indexes:
+  rollup_operations:
+    kind: tezos.tzkt.operations
+    datasource: tzkt
+    contracts:
+      - ticketer
+      - ticket_helper
+      - rollup
+    types:
+      - transaction
+      - sr_execute
+    handlers:
+      - callback: on_deposit
+        pattern:
+          - type: transaction
+            destination: ticketer
+            entrypoint: deposit
+          - type: transaction
+            destination: ticket_helper
+            entrypoint: default
+          - type: transaction
+            destination: rollup
+            entrypoint: default
+            alias: rollup_default
+      - callback: on_withdraw
+        pattern:
+          - type: sr_execute
+            destination: rollup
+          - type: transaction
+            destination: ticketer
+            entrypoint: withdraw
+          - type: transaction
+            source: ticketer
+            entrypoint: transfer
+    first_level: 2838138
+    last_level: 2838138

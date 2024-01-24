@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import List
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -41,7 +39,7 @@ class Operator(BaseModel):
         extra='forbid',
     )
     key: Key1
-    value: Dict[str, Any]
+    value: dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
@@ -49,7 +47,7 @@ class TokenMetadata(BaseModel):
         extra='forbid',
     )
     token_id: str
-    token_info: Dict[str, str]
+    token_info: dict[str, str]
 
 
 class Fa2TokenStorage(BaseModel):
@@ -58,8 +56,8 @@ class Fa2TokenStorage(BaseModel):
     )
     administrator: str
     all_tokens: str
-    ledger: List[LedgerItem]
-    metadata: Dict[str, str]
-    operators: List[Operator]
+    ledger: list[LedgerItem]
+    metadata: dict[str, str]
+    operators: list[Operator]
     paused: bool
-    token_metadata: Dict[str, TokenMetadata]
+    token_metadata: dict[str, TokenMetadata]

@@ -1,3 +1,4 @@
+import asyncio
 import importlib
 import logging
 import pkgutil
@@ -144,12 +145,14 @@ class FormattedLogger(Logger):
         level: int,
         msg: object,
         args: Any,
-        exc_info: None
-        | bool
-        | tuple[type[BaseException], BaseException, types.TracebackType | None]
-        | tuple[None, None, None]
-        | BaseException
-        | None = None,
+        exc_info: (
+            None
+            | bool
+            | tuple[type[BaseException], BaseException, types.TracebackType | None]
+            | tuple[None, None, None]
+            | BaseException
+            | None
+        ) = None,
         extra: Mapping[str, Any] | None = None,
         stack_info: bool = False,
         stacklevel: int = 1,
@@ -227,3 +230,25 @@ def json_dumps(obj: Any | str, option: int | None = orjson.OPT_INDENT_2) -> byte
         default=_default_for_decimals,
         option=option,
     )
+
+
+class Watchdog:
+    def __init__(self, timeout: int) -> None:
+        self._watchdog = asyncio.Event()
+        self._timeout = timeout
+
+    def reset(self) -> None:
+        self._watchdog.set()
+        self._watchdog.clear()
+
+    async def run(self) -> None:
+        while True:
+            await asyncio.sleep(self._timeout)
+            try:
+                await asyncio.wait_for(
+                    self._watchdog.wait(),
+                    timeout=self._timeout,
+                )
+            except asyncio.TimeoutError as e:
+                msg = f'Watchdog timeout; no messages received in {self._timeout} seconds'
+                raise FrameworkException(msg) from e

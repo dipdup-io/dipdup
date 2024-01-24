@@ -1,5 +1,4 @@
 from collections import deque
-from contextlib import ExitStack
 from datetime import datetime
 from typing import Any
 
@@ -17,7 +16,6 @@ from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
-from dipdup.prometheus import Metrics
 
 BigMapQueueItem = tuple[TzktBigMapData, ...] | TzktRollbackMessage
 
@@ -56,12 +54,8 @@ class TzktBigMapsIndex(
             sync_level,
         )
 
-        async for level, big_maps in fetcher.fetch_by_level():
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    Metrics.set_levels_to_sync(self._config.name, sync_level - level)
-                    stack.enter_context(Metrics.measure_level_sync_duration())
-                await self._process_level_data(big_maps, sync_level)
+        async for _, big_maps in fetcher.fetch_by_level():
+            await self._process_level_data(big_maps, sync_level)
 
     async def _synchronize_level(self, head_level: int) -> None:
         # NOTE: Checking late because feature flags could be modified after loading config

@@ -1,7 +1,6 @@
 from dipdup import fields
-
-from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.models import Model
+from dipdup.models.tezos_tzkt import TzktOperationType
 
 
 class Operation(Model):

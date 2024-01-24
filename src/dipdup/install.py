@@ -6,6 +6,7 @@ And no 3.11-only code too. Just to print nice colored "not supported" message in
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
 """
+
 import argparse
 import os
 import subprocess
@@ -21,8 +22,8 @@ WHICH_CMDS = (
     'python3.11',
     'pipx',
     'dipdup',
-    'datamodel-codegen',
     'pdm',
+    'poetry',
     'pyvenv',
     'pyenv',
 )
@@ -169,6 +170,8 @@ def install(
     version: str | None,
     ref: str | None,
     path: str | None,
+    with_pdm: bool = False,
+    with_poetry: bool = False,
 ) -> None:
     """Install DipDup and its dependencies with pipx"""
     if ref and path:
@@ -181,9 +184,6 @@ def install(
 
     force_str = '--force' if force else ''
     pipx_packages = env._pipx_packages
-    pipx_dipdup = 'dipdup' in pipx_packages
-    pipx_datamodel_codegen = 'datamodel-code-generator' in pipx_packages
-    pipx_pdm = 'pdm' in pipx_packages
 
     python_inter_pipx = cast(str, which('python3.11'))
     if 'pyenv' in python_inter_pipx:
@@ -197,35 +197,32 @@ def install(
             .split('\n')[0]
         )
 
-    if pipx_dipdup and not force:
+    if 'dipdup' in pipx_packages and not force:
         echo('Updating DipDup')
         env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
+    elif path:
+        echo(f'Installing DipDup from `{path}`')
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
+    elif ref:
+        url = f'git+{GITHUB}@{ref}'
+        echo(f'Installing DipDup from `{url}`')
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
     else:
-        if path:
-            echo(f'Installing DipDup from `{path}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
-        elif ref:
-            url = f'git+{GITHUB}@{ref}'
-            echo(f'Installing DipDup from `{url}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
-        else:
-            echo('Installing DipDup from PyPI')
-            pkg = 'dipdup' if not version else f'dipdup=={version}'
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
+        echo('Installing DipDup from PyPI')
+        pkg = 'dipdup' if not version else f'dipdup=={version}'
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
 
-    if pipx_datamodel_codegen:
-        env.run_cmd('pipx', 'upgrade', 'datamodel-code-generator', force_str)
-    else:
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'datamodel-code-generator', force_str)
-
-    if pipx_pdm:
-        echo('Updating PDM')
-        env.run_cmd('pipx', 'upgrade', 'pdm', force_str)
-    elif quiet or ask('Install PDM? (recommended)', True):
-        echo('Installing PDM')
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, 'pdm', force_str)
-        env._commands['pdm'] = which('pdm')
-        pipx_pdm = True
+    for pm, with_pm in (
+        ('pdm', with_pdm),
+        ('poetry', with_poetry),
+    ):
+        if pm in pipx_packages:
+            echo(f'Updating `{pm}`')
+            env.run_cmd('pipx', 'upgrade', pm, force_str)
+        elif with_pm or force or quiet or ask(f'Install `{pm}`?', False):
+            echo(f'Installing `{pm}`')
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pm, force_str)
+            env._commands[pm] = which(pm)
 
     done(
         'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'
@@ -252,17 +249,8 @@ def uninstall(quiet: bool) -> NoReturn:
     if not quiet:
         env.print()
 
-    packages = (
-        ('dipdup', True),
-        ('datamodel-code-generator', False),
-        ('pdm', False),
-    )
-    for package, default in packages:
-        if package not in env._pipx_packages:
-            continue
-        if not quiet and not ask(f'Uninstall {package}?', default):
-            continue
-
+    package = 'dipdup'
+    if package in env._pipx_packages:
         echo(f'Uninstalling {package}')
         env.run_cmd('pipx', 'uninstall', package)
 
@@ -279,6 +267,8 @@ def cli() -> None:
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
+    parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
+    parser.add_argument('--with-poetry', action='store_true', help='Install Poetry')
     args = parser.parse_args()
 
     if not args.quiet:
@@ -293,6 +283,8 @@ def cli() -> None:
             version=args.version.strip() if args.version else None,
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
+            with_pdm=args.with_pdm,
+            with_poetry=args.with_poetry,
         )
 
 

@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import orjson as json
-from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
 
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TzktOperationData
@@ -41,83 +40,6 @@ def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> TzktO
         status='',
         has_internals=False,
     )
-
-
-def test_deserialize_storage_dict() -> None:
-    # Arrange
-    storage = {
-        'store': {
-            'data': 15023,
-            'owner': 'tz1VBLpuDKMoJuHRLZ4HrCgRuiLpEr7zZx2E',
-            'records': 15026,
-            'metadata': 15025,
-            'expiry_map': 15024,
-            'tzip12_tokens': 15028,
-            'reverse_records': 15027,
-            'next_tzip12_token_id': '18',
-        },
-        'actions': 15022,
-        'trusted_senders': [
-            'KT19fHFeGecCBRePPMoRjMthJ9YZCJkB5MsN',
-            'KT1A84aNsVCG7EsZyKHSyqZacVVSN1zcQzS7',
-            'KT1AQmVzLnNWtCmksbCGg7np9dmAU5CKYH72',
-            'KT1EeRLdEPJPFx96tDM1VgRka2V6ZyKV4vRg',
-            'KT1FpHyP8vUd7p2aq7DLRccUVPixoGVB4fJE',
-            'KT1HKtJxcr8dMTJMUiiFhttA6rk4v6xqTkmH',
-            'KT1KP2Yy6MNkYKkHqroGBZ7KFN5NdNfnUHHv',
-            'KT1LE3iTYfJNWkmPoa3KzN45y1QFKF6GA42Q',
-            'KT1Mq1zd986PxK4C2y9S7UaJkhTBbY15AU32',
-        ],
-    }
-    diffs = (
-        {
-            'bigmap': 15028,
-            'path': 'store.tzip12_tokens',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruh5diuJb6Vu4B127cxWhiJ3927mvmG9oZ1pYKSNERPpefM4KBg',
-                'key': '17',
-                'value': '6672657175656e742d616e616c7973742e65646f',
-            },
-        },
-        {
-            'bigmap': 15026,
-            'path': 'store.records',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruDKynBfQW5KFzPfKyRxNTfFzTJGrHUU4FpzBZcoRYXjyhdPPrM',
-                'key': '6672657175656e742d616e616c7973742e65646f',
-                'value': {
-                    'data': {},
-                    'level': '2',
-                    'owner': 'tz1SUrXU6cxioeyURSxTgaxmpSWgQq4PMSov',
-                    'address': 'tz1SUrXU6cxioeyURSxTgaxmpSWgQq4PMSov',
-                    'expiry_key': '6672657175656e742d616e616c7973742e65646f',
-                    'internal_data': {},
-                    'tzip12_token_id': '17',
-                },
-            },
-        },
-        {
-            'bigmap': 15024,
-            'path': 'store.expiry_map',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruDKynBfQW5KFzPfKyRxNTfFzTJGrHUU4FpzBZcoRYXjyhdPPrM',
-                'key': '6672657175656e742d616e616c7973742e65646f',
-                'value': '2024-02-29T15:45:49Z',
-            },
-        },
-    )
-    operation_data = get_operation_data(storage, diffs)
-
-    # Act
-    _, storage_obj = deserialize_storage(operation_data, NameRegistryStorage)
-
-    # Assert
-    assert isinstance(storage_obj, NameRegistryStorage)
-    assert isinstance(storage_obj.store.records, dict)
-    assert '6672657175656e742d616e616c7973742e65646f' in storage_obj.store.records
 
 
 def test_deserialize_storage_nested_dicts() -> None:

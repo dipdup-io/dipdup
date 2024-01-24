@@ -39,6 +39,7 @@ class TzktOperationType(Enum):
     transaction = 'transaction'
     origination = 'origination'
     migration = 'migration'
+    sr_execute = 'sr_execute'
 
 
 class TzktMessageType(MessageType, Enum):
@@ -57,8 +58,7 @@ class TzktSubscription(Subscription):
     method: str
 
     @abstractmethod
-    def get_request(self) -> Any:
-        ...
+    def get_request(self) -> Any: ...
 
 
 @dataclass(frozen=True)
@@ -87,6 +87,19 @@ class TransactionSubscription(TzktSubscription):
 
     def get_request(self) -> list[dict[str, Any]]:
         request: dict[str, Any] = {'types': 'transaction'}
+        if self.address:
+            request['address'] = self.address
+        return [request]
+
+
+@dataclass(frozen=True)
+class SmartRollupExecuteSubscription(TzktSubscription):
+    type: Literal['sr_execute'] = 'sr_execute'
+    method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
+    address: str | None = None
+
+    def get_request(self) -> list[dict[str, Any]]:
+        request: dict[str, Any] = {'types': 'sr_execute'}
         if self.address:
             request['address'] = self.address
         return [request]
@@ -193,6 +206,7 @@ class TzktOperationData(HasLevel):
     delegate_alias: str | None = None
     target_code_hash: int | None = None
     sender_code_hash: int | None = None
+    commitment_json: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
     def from_json(
@@ -211,6 +225,11 @@ class TzktOperationData(HasLevel):
 
         if (amount := operation_json.get('contractBalance')) is None:
             amount = operation_json.get('amount')
+
+        commitment_json = operation_json.get('commitment') or {}
+        if type_ == 'sr_execute':
+            target_json = operation_json.get('rollup') or {}
+            initiator_json = commitment_json.get('initiator') or {}
 
         entrypoint, parameter = parameter_json.get('entrypoint'), parameter_json.get('value')
         if target_json.get('address', '').startswith('KT1'):
@@ -253,6 +272,7 @@ class TzktOperationData(HasLevel):
             diffs=operation_json.get('diffs') or (),
             delegate_address=delegate_json.get('address'),
             delegate_alias=delegate_json.get('alias'),
+            commitment_json=commitment_json,
         )
 
     @classmethod
@@ -299,6 +319,51 @@ class TzktOrigination(Generic[StorageType]):
 
     data: TzktOperationData
     storage: StorageType
+
+
+@dataclass(frozen=True)
+class TzktSmartRollupCommitment:
+    id: int
+    initiator_address: str
+    initiator_alias: str | None
+    inbox_level: int
+    state: str
+    hash: str | None
+    ticks: int
+    first_level: int
+    first_time: datetime
+
+    @classmethod
+    def create(cls, operation_data: TzktOperationData) -> 'TzktSmartRollupCommitment':
+        commitment_data = operation_data.commitment_json
+        initiator_data = commitment_data.get('initiator') or {}
+        return cls(
+            id=commitment_data['id'],
+            initiator_address=initiator_data['address'],
+            initiator_alias=initiator_data.get('alias'),
+            inbox_level=commitment_data['inboxLevel'],
+            state=commitment_data['state'],
+            hash=commitment_data.get('hash'),
+            ticks=commitment_data['ticks'],
+            first_level=commitment_data['firstLevel'],
+            first_time=commitment_data['firstTime'],
+        )
+
+
+@dataclass(frozen=True)
+class TzktSmartRollupExecute:
+    """Wrapper for matched smart rollup execute to the handler"""
+
+    data: TzktOperationData
+    commitment: TzktSmartRollupCommitment
+
+    @classmethod
+    def create(cls, operation_data: TzktOperationData) -> 'TzktSmartRollupExecute':
+        commitment = TzktSmartRollupCommitment.create(operation_data)
+        return cls(
+            data=operation_data,
+            commitment=commitment,
+        )
 
 
 class TzktBigMapAction(Enum):
@@ -562,14 +627,11 @@ class TzktTokenBalanceData(HasLevel):
     transfers_count: int
     first_level: int
     first_time: datetime
-    # level is not defined in tzkt balances data, so it is
-    # Level of the block where the token balance was last changed.
+    # NOTE: Level of the block where the token balance has been changed for the last time.
     last_level: int
     last_time: datetime
-    # owner account
     account_address: str | None = None
     account_alias: str | None = None
-    # token object
     tzkt_token_id: int | None = None
     contract_address: str | None = None
     contract_alias: str | None = None

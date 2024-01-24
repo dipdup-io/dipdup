@@ -43,15 +43,15 @@ jobs:
 
       - name: dipdup new
         run: dipdup new --quiet
-
-      - name: Replace DipDup in project with current HEAD (until 7.0)
-        run: cd dipdup_indexer; pdm remove dipdup; pdm add ..
         
       - name: dipdup init
         run: cd dipdup_indexer; dipdup init
 
-      - name: pdm all
-        run: cd dipdup_indexer; pdm all
+      - name: Install dev dependencies
+        run: cd dipdup_indexer; pdm venv create; pdm install
+
+      - name: make all
+        run: cd dipdup_indexer; $(pdm venv activate); make all
 
       - name: Copy installer to scripts
         if: contains(github.ref, 'next')

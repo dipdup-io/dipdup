@@ -6,7 +6,6 @@ import os
 import sys
 from collections import deque
 from contextlib import AsyncExitStack
-from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
@@ -56,6 +55,7 @@ from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
+from dipdup.models import Head
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
 from dipdup.models import ReindexingAction
@@ -68,7 +68,6 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
-from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
@@ -185,22 +184,23 @@ class DipDupContext:
         action = self.config.advanced.reindex.get(reason, ReindexingAction.exception)
         self.logger.warning('Reindexing requested: reason `%s`, action `%s`', reason.value, action.value)
 
+        # NOTE: Reset saved checksums; they will be recalculated on the next run
         if action == ReindexingAction.ignore:
-            # NOTE: Recalculate hashes on the next _hooks_loop
             if reason == ReindexingReason.schema_modified:
-                await Schema.filter(name=self.config.schema_name).update(hash='')
+                await Schema.filter(name=self.config.schema_name).update(hash=None)
             elif reason == ReindexingReason.config_modified:
-                await Index.filter().update(config_hash='')
-            return
+                await Index.filter().update(config_hash=None)
+            elif reason == ReindexingReason.rollback:
+                await Head.filter().update(hash=None)
 
-        if action == ReindexingAction.exception:
+        elif action == ReindexingAction.exception:
             schema = await Schema.filter(name=self.config.schema_name).get()
             if not schema.reindex:
                 schema.reindex = reason
                 await schema.save()
             raise ReindexingRequiredError(schema.reindex, context)
 
-        if action == ReindexingAction.wipe:
+        elif action == ReindexingAction.wipe:
             conn = get_connection()
             immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
             await wipe_schema(
@@ -211,7 +211,7 @@ class DipDupContext:
             await self.restart()
 
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Unknown reindexing action', action)
 
     async def add_contract(
         self,
@@ -249,7 +249,7 @@ class DipDupContext:
                 typename=typename,
             )
         else:
-            raise NotImplementedError(kind)
+            raise NotImplementedError('Unknown contract kind', kind)
 
         contract_config._name = name
         self.config.contracts[name] = contract_config
@@ -272,7 +272,7 @@ class DipDupContext:
         last_level: int = 0,
         state: Index | None = None,
     ) -> None:
-        """Adds a new contract to the inventory.
+        """Adds a new index from template.
 
         :param name: Index name
         :param template: Index template to use
@@ -302,7 +302,15 @@ class DipDupContext:
         from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: TzktOperationsIndex | TzktBigMapsIndex | TzktHeadIndex | TzktTokenBalancesIndex | TzktTokenTransfersIndex | TzktEventsIndex | SubsquidEventsIndex
+        index: (
+            TzktOperationsIndex
+            | TzktBigMapsIndex
+            | TzktHeadIndex
+            | TzktTokenBalancesIndex
+            | TzktTokenTransfersIndex
+            | TzktEventsIndex
+            | SubsquidEventsIndex
+        )
 
         datasource_name = index_config.datasource.name
         datasource: TzktDatasource | SubsquidDatasource
@@ -464,8 +472,13 @@ class DipDupContext:
         if rollback_depth is None:
             raise FrameworkException('`rollback_depth` is not set')
         if from_level - to_level > rollback_depth:
-            # TODO: Need more context
-            await self.reindex(ReindexingReason.rollback)
+            await self.reindex(
+                ReindexingReason.rollback,
+                message='Rollback depth exceeded',
+                from_level=from_level,
+                to_level=to_level,
+                rollback_depth=rollback_depth,
+            )
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self.transactions.in_transaction():
@@ -484,14 +497,11 @@ class DipDupContext:
         await Index.filter(name=index).update(level=to_level)
         self._rolled_back_indexes.add(index)
 
-    # TODO: Use DipDupPackage for some parts below
-    async def _hooks_loop(self) -> None:
-        self.logger.debug('Starting CallbackManager loop')
+    async def _hooks_loop(self, interval: int) -> None:
         while True:
             while self._pending_hooks:
                 await self._pending_hooks.popleft()
-            # TODO: Replace with asyncio.Event
-            await asyncio.sleep(1)
+            await asyncio.sleep(interval)
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
@@ -613,16 +623,13 @@ class DipDupContext:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        with ExitStack() as stack:
-            try:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_callback_duration(module))
-                yield
-            # NOTE: Do not wrap known errors like ProjectImportError
-            except FrameworkException:
-                raise
-            except Exception as e:
-                raise CallbackError(module, e) from e
+        try:
+            yield
+        # NOTE: Do not wrap known errors like ProjectImportError
+        except FrameworkException:
+            raise
+        except Exception as e:
+            raise CallbackError(module, e) from e
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:
