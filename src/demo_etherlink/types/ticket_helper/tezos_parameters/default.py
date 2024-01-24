@@ -7,10 +7,18 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 
+class Data(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    nat: str
+    bytes: str | None
+
+
 class DefaultParameter(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    dictator_signature: str
-    payload_hash: str
-    target: str
+    address: str
+    data: Data
+    amount: str

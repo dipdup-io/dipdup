@@ -560,13 +560,12 @@ class AdvancedConfig:
     :param reindex: Mapping of reindexing reasons and actions DipDup performs
     :param scheduler: `apscheduler` scheduler config
     :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Establish realtime connection immediately after startup
+    :param early_realtime: Spawn realtime datasources immediately after startup
     :param skip_version_check: Do not check for new DipDup versions on startup
     :param rollback_depth: A number of levels to keep for rollback
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
-    :param metrics: off/basic/advanced based on how much performance metrics you want to collect
-    :param alt_operation_matcher: Use different algorithm to match operations (dev only)
+    :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
@@ -725,16 +724,14 @@ class DipDupConfig:
         return datasource
 
     def set_up_logging(self) -> None:
-        if env.DEBUG:
-            logging.getLogger('dipdup').setLevel(logging.DEBUG)
-            logging.getLogger(self.package).setLevel(logging.DEBUG)
+        loglevels = {}
+        if not isinstance(self.logging, dict):
+            loglevels['dipdup'] = self.logging
+            loglevels[self.package] = self.logging
 
-        loglevels = self.logging
-        if not isinstance(loglevels, dict):
-            loglevels = {
-                'dipdup': loglevels,
-                self.package: loglevels,
-            }
+        if env.DEBUG:
+            loglevels['dipdup'] = 'DEBUG'
+            loglevels[self.package] = 'DEBUG'
 
         for name, level in loglevels.items():
             try:
@@ -934,6 +931,10 @@ class DipDupConfig:
                                 pattern_config.originated_contract
                             )
 
+                    elif isinstance(pattern_config, OperationsHandlerSmartRollupExecutePatternConfig):
+                        if isinstance(pattern_config.destination, str):
+                            pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
+
         elif isinstance(index_config, TzktBigMapsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -1021,6 +1022,7 @@ from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
 from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import OperationsHandlerSmartRollupExecutePatternConfig
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig

@@ -9,7 +9,6 @@ from typing import cast
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import CodegenMixin
-from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
@@ -17,6 +16,7 @@ from dipdup.config.tezos_tzkt import TzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
 from dipdup.utils import pascal_to_snake
@@ -136,7 +136,7 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
     :param destination: Match operations by destination contract alias
     :param entrypoint: Match operations by contract entrypoint
     :param optional: Whether can operation be missing in operation group
-    :param alias: Alias for transaction (helps to avoid duplicates)
+    :param alias: Alias for operation (helps to avoid duplicates)
     """
 
     type: Literal['transaction'] = 'transaction'
@@ -196,7 +196,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
     :param originated_contract: Match origination of exact contract
     :param optional: Whether can operation be missing in operation group
     :param strict: Match operations by storage only or by the whole code
-    :param alias: Alias for transaction (helps to avoid duplicates)
+    :param alias: Alias for operation (helps to avoid duplicates)
     """
 
     type: Literal['origination'] = 'origination'
@@ -237,6 +237,43 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
 
 
 @dataclass
+class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIndexMixin):
+    """Operation handler pattern config
+
+    :param type: always 'sr_execute'
+    :param source: Match operations by source contract alias
+    :param destination: Match operations by destination contract alias
+    :param optional: Whether can operation be missing in operation group
+    :param alias: Alias for operation (helps to avoid duplicates)
+    """
+
+    type: Literal['sr_execute'] = 'sr_execute'
+    source: TezosContractConfig | None = None
+    destination: TezosContractConfig | None = None
+    optional: bool = False
+    alias: str | None = None
+
+    def __post_init_post_parse__(self) -> None:
+        SubgroupIndexMixin.__post_init_post_parse__(self)
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'dipdup.models.tezos_tzkt', 'TzktSmartRollupExecute'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        arg_name = pascal_to_snake(self.alias or f'sr_execute_{self.subgroup_index}')
+        if self.optional:
+            yield arg_name, 'TzktSmartRollupExecute | None'
+        else:
+            yield arg_name, 'TzktSmartRollupExecute'
+
+    @property
+    def typed_contract(self) -> TezosContractConfig | None:
+        if self.destination:
+            return self.destination
+        return None
+
+
+@dataclass
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
@@ -260,16 +297,29 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
+
         if TzktOperationType.transaction in self.types:
             if self.datasource.merge_subscriptions:
                 subs.add(TransactionSubscription())
             else:
                 for contract_config in self.contracts:
-                    if not isinstance(contract_config, ContractConfig):
+                    if not isinstance(contract_config, TezosContractConfig):
                         raise ConfigInitializationException
                     subs.add(TransactionSubscription(address=contract_config.address))
+
         if TzktOperationType.origination in self.types:
             subs.add(OriginationSubscription())
+
+        if TzktOperationType.sr_execute in self.types:
+            if self.datasource.merge_subscriptions:
+                subs.add(SmartRollupExecuteSubscription())
+            else:
+                for contract_config in self.contracts:
+                    if not isinstance(contract_config, TezosContractConfig):
+                        raise ConfigInitializationException
+                    if contract_config.address and contract_config.address.startswith('sr1'):
+                        subs.add(SmartRollupExecuteSubscription(address=contract_config.address))
+
         return subs
 
     @classmethod
@@ -280,8 +330,11 @@ class TzktOperationsIndexConfig(TzktIndexConfig):
                 item.pop('alias', None)
 
 
-# FIXME: Reversed for new Pydantic. Why?
-OperationsHandlerPatternConfigU = OperationsHandlerTransactionPatternConfig | OperationsHandlerOriginationPatternConfig
+OperationsHandlerPatternConfigU = (
+    OperationsHandlerTransactionPatternConfig
+    | OperationsHandlerOriginationPatternConfig
+    | OperationsHandlerSmartRollupExecutePatternConfig
+)
 
 
 @dataclass
