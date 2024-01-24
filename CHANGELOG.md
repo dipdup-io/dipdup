@@ -4,19 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [7.3.0] - 2024-01-23
+## [Unreleased]
 
 ### Added
 
 - evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
+
+### Fixed
+
+- codegen: Don't create intermediate `events.json` file in ABI directory.
+- evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
+
+## [7.3.0] - 2024-01-23
+
+### Added
+
 - tezos.tzkt.operations: Added new operation type `sr_execute` for Etherlink smart rollups.
 
 ### Fixed
 
 - abi.etherscan: Fixed handling "rate limit reached" errors.
 - cli: Fixed setting logger levels based on config and env variables.
-- codegen: Don't create intermediate file `events.json` in ABI directory.
-- evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
 - http: Fixed incorrect number of retries performed on failed requests.
 
 ## [7.2.2] - 2023-12-27

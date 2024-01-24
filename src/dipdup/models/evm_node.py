@@ -15,7 +15,7 @@ class EvmNodeSubscription(ABC, Subscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeHeadsSubscription(EvmNodeSubscription):
+class EvmNodeHeadSubscription(EvmNodeSubscription):
     name: Literal['newHeads'] = 'newHeads'
     transactions: bool = False
 

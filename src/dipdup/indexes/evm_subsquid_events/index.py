@@ -61,7 +61,6 @@ class SubsquidEventsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
-        # NOTE: Requesting logs by batches of NODE_BATCH_SIZE.
         batch_first_level = self.state.level + 1
         while batch_first_level <= sync_level:
             batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)

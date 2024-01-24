@@ -42,7 +42,6 @@ TRANSACTION_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
     },
-    # FIXME: All available, likely not needed
     'transaction': {
         'chainId': True,
         'contractAddress': True,
@@ -200,7 +199,8 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
                 transactions: deque[SubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
                     transaction = SubsquidTransactionData.from_json(raw_transaction, level, timestamp)
-                    # NOTE: `None` for chains and block ranges not compliant with the post-Byzantinum hard fork EVM specification (e.g. 0-4,369,999 on Ethereum).
+                    # NOTE: `None` falue is for chains and block ranges not compliant with the post-Byzantinum
+                    # hard fork EVM specification (e.g. before 4.370,000 on Ethereum).
                     if transaction.status != 0:
                         transactions.append(transaction)
                 yield tuple(transactions)

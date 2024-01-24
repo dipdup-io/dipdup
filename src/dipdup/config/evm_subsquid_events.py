@@ -11,7 +11,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidIndexConfig
-from dipdup.models.evm_node import EvmNodeHeadsSubscription
+from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -73,7 +73,8 @@ class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
-        subs: set[Subscription] = {EvmNodeHeadsSubscription()}
+        subs: set[Subscription] = {EvmNodeHeadSubscription()}
         for handler in self.handlers:
-            subs.add(EvmNodeLogsSubscription(address=handler.contract.address))
+            if address := handler.contract.address:
+                subs.add(EvmNodeLogsSubscription(address=address))
         return subs

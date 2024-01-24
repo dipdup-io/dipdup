@@ -25,7 +25,7 @@ from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeHeadData
-from dipdup.models.evm_node import EvmNodeHeadsSubscription
+from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
@@ -349,7 +349,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             raise DatasourceError(f'Unknown message: {data}', self.name)
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
-        if isinstance(subscription, EvmNodeHeadsSubscription):
+        if isinstance(subscription, EvmNodeHeadSubscription):
             known_level = max(self._level_data or (0,))
             head = EvmNodeHeadData.from_json(data)
             level_data = self._level_data[head.level]

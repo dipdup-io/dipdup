@@ -163,7 +163,7 @@ class SubsquidIndex(
         if subsquid_available < NODE_LAST_MILE:
             return node_sync_level
         if self._config.node_only:
-            self._logger.debug('Using node anyway')
+            self._logger.debug('`node_only` flag is set; using node anyway')
             return node_sync_level
         return None
 
@@ -174,7 +174,6 @@ class SubsquidIndex(
             return
 
         levels_left = sync_level - index_level
-
         if levels_left <= 0:
             return
 
