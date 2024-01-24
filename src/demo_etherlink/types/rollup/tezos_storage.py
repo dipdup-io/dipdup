@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import RootModel
 
 
-class RollupStorage(BaseModel):
-    __root__: None
+class RollupStorage(RootModel[None]):
+    root: None

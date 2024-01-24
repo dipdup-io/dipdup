@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Initialize(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     sqrtPriceX96: int
     tick: int

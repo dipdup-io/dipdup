@@ -4,20 +4,18 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class ResourceMap(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     id: str
     rate: str
 
 
 class ResourceCollectorStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     administrator: str
     current_user: str | None

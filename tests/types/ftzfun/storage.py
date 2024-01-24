@@ -6,12 +6,11 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address_0: str
     address_1: str
@@ -19,24 +18,21 @@ class Key(BaseModel):
 
 
 class Operator(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     key: Key
     value: dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     token_id: str
     token_info: dict[str, str]
 
 
 class Assets(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     ledger: dict[str, str]
     next_token_id: str
@@ -45,8 +41,7 @@ class Assets(BaseModel):
 
 
 class FtzFunStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     assets: Assets
     metadata: dict[str, str]

@@ -124,6 +124,7 @@ class CodeGenerator(ABC):
             input_file_type=dmcg.InputFileType.JsonSchema,
             target_python_version=dmcg.PythonVersion.PY_311,
             use_union_operator=True,
+            output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
         )
 
     async def _generate_callback(self, callback_config: CallbackMixin, kind: str, sql: bool = False) -> None:

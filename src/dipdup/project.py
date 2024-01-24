@@ -6,10 +6,10 @@ Ask user some question with Click; render Jinja2 templates with answers.
 import logging
 import re
 from pathlib import Path
-from typing import TypedDict
 
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
+from typing_extensions import TypedDict
 
 from dipdup import __version__
 from dipdup.cli import big_yellow_echo

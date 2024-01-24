@@ -4,29 +4,29 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Balances(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     approvals: dict[str, str]
     balance: str
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     nat: str
     map: dict[str, str]
 
 
 class Fa12TokenStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     administrator: str
     balances: dict[str, Balances]
     debtCeiling: str

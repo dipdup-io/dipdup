@@ -10,7 +10,7 @@ async def on_withdraw(
     withdraw: TzktTransaction[WithdrawParameter, TzcolorsAuctionStorage],
 ) -> None:
     auction = await models.Auction.filter(
-        id=withdraw.parameter.__root__,
+        id=withdraw.parameter.root,
     ).get()
 
     token = await auction.token

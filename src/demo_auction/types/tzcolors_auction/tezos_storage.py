@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
+from pydantic import RootModel
 
 
 class TzcolorsAuctionStorage1(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     token_address: str
     token_id: str
     token_amount: str
@@ -20,5 +21,5 @@ class TzcolorsAuctionStorage1(BaseModel):
     bidder: str
 
 
-class TzcolorsAuctionStorage(BaseModel):
-    __root__: dict[str, TzcolorsAuctionStorage1] | None = None
+class TzcolorsAuctionStorage(RootModel[dict[str, TzcolorsAuctionStorage1] | None]):
+    root: dict[str, TzcolorsAuctionStorage1] | None = None
