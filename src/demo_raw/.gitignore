@@ -10,7 +10,7 @@
 !**/Dockerfile
 !**/Makefile
 !**/pyproject.toml
-!**/pdm.lock
+!**/*.lock
 !**/README.md
 !**/.keep
 

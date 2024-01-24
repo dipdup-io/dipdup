@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -23,8 +21,8 @@ class TransferParameterItem(BaseModel):
         extra = Extra.forbid
 
     from_: str
-    txs: List[Tx]
+    txs: list[Tx]
 
 
 class TransferParameter(BaseModel):
-    __root__: List[TransferParameterItem]
+    __root__: list[TransferParameterItem]

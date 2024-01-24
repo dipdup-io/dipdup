@@ -4,7 +4,7 @@
 # Add metadata and build files
 !demo_nft_marketplace
 !pyproject.toml
-!pdm.lock
+!*.lock
 !README.md
 
 # Add Python code

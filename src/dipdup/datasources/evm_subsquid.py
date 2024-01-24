@@ -19,6 +19,7 @@ from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import SubsquidEventData
 
+POLL_INTERVAL = 1
 LOG_FIELDS: LogFieldSelection = {
     'logIndex': True,
     'transactionIndex': True,
@@ -26,8 +27,6 @@ LOG_FIELDS: LogFieldSelection = {
     'address': True,
     'data': True,
     'topics': True,
-    # 'blockNumber': True,
-    # 'blockHash': True,
 }
 
 
@@ -54,7 +53,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         # NOTE: If node datasource is missing, just poll archive in reasonable intervals
         # NOTE: Subsquid archives are expected to get real-time support in the future
         while True:
-            await asyncio.sleep(1)
+            await asyncio.sleep(POLL_INTERVAL)
             await self.initialize()
 
     async def subscribe(self) -> None:
@@ -68,7 +67,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
     ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
         current_level = first_level
 
-        # TODO: smarter query optimizator
+        # TODO: Smarter query optimizator
         topics_by_address = defaultdict(list)
         for address, topic in topics:
             topics_by_address[address].append(topic)

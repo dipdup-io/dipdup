@@ -1,5 +1,6 @@
 import asyncio
 import time
+from asyncio import Queue
 from collections import defaultdict
 from collections.abc import Awaitable
 from collections.abc import Callable
@@ -34,6 +35,7 @@ from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
+from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
 
@@ -60,10 +62,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         super().__init__(config, merge_subscriptions)
         self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
-        self._realtime: asyncio.Event = asyncio.Event()
+        self._use_realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
+        self._logs_queue: Queue[dict[str, Any]] = Queue()
         self._heads: defaultdict[int, NodeHead] = defaultdict(NodeHead)
+        self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
@@ -103,8 +107,33 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self.set_sync_level(None, level)
 
     async def run(self) -> None:
-        await self._realtime.wait()
+        await self._use_realtime.wait()
+        await asyncio.gather(
+            self._ws_loop(),
+            self._log_processor_loop(),
+            self._watchdog.run(),
+        )
 
+    async def _log_processor_loop(self) -> None:
+        while True:
+            log_json = await self._logs_queue.get()
+            level = int(log_json['blockNumber'], 16)
+
+            try:
+                await asyncio.wait_for(
+                    self._heads[level].event.wait(),
+                    timeout=self._http_config.connection_timeout,
+                )
+            except asyncio.TimeoutError as e:
+                msg = f'Head for level {level} not received in {self._http_config.connection_timeout} seconds'
+                raise FrameworkException(msg) from e
+            timestamp = self._heads[level].timestamp
+            if timestamp is None:
+                raise FrameworkException('Head received but timestamp is None')
+            log = EvmNodeLogData.from_json(log_json, timestamp)
+            await self.emit_logs(log)
+
+    async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
@@ -120,11 +149,11 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         raise DatasourceError('Websocket connection failed', self.name)
 
-    def realtime(self) -> None:
-        self._realtime.set()
+    def use_realtime(self) -> None:
+        self._use_realtime.set()
 
     async def subscribe(self) -> None:
-        if not self._realtime.is_set():
+        if not self._use_realtime.is_set():
             return
 
         missing_subscriptions = self._subscriptions.missing_subscriptions
@@ -222,9 +251,15 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
             message = WebsocketMessage(request)
             client = self._get_ws_client()
-            await client.send(message)
 
-            await event.wait()
+            async def _request() -> None:
+                await client.send(message)
+                await event.wait()
+
+            await asyncio.wait_for(
+                _request(),
+                timeout=self._http_config.request_timeout,
+            )
             data = self._requests[request_id][1]
             del self._requests[request_id]
 
@@ -250,6 +285,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             raise FrameworkException(f'Unknown message type: {type(message)}')
 
         data = message.data
+        self._watchdog.reset()
 
         if 'id' in data:
             request_id = data['id']
@@ -267,7 +303,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 if subscription_id not in self._subscription_ids:
                     raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
-                self._logger.info('Received a message from channel %s', subscription_id)
+                self._logger.debug('Received a message from channel %s', subscription_id)
                 await self._handle_subscription(subscription, data['params']['result'])
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)
@@ -293,13 +329,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             self._heads[level].event.set()
 
         elif isinstance(subscription, EvmNodeLogsSubscription):
-            level = int(data['blockNumber'], 16)
-            await self._heads[level].event.wait()
-            timestamp = self._heads[level].timestamp
-            if timestamp is None:
-                raise FrameworkException('Head cached but timestamp is None')
-            logs = EvmNodeLogData.from_json(data, timestamp)
-            await self.emit_logs(logs)
+            # NOTE: Processed in _log_processor_loop to avoid blocking WebSocket while waiting for head
+            await self._logs_queue.put(data)
 
         elif isinstance(subscription, EvmNodeSyncingData):
             syncing = EvmNodeSyncingData.from_json(data)
@@ -332,6 +363,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             protocol=WebsocketProtocol(),
             callback=self._on_message,
             skip_negotiation=True,
+            connection_timeout=self._http_config.connection_timeout,
         )
 
         self._ws_client.on_open(self._on_connected)

@@ -5,10 +5,12 @@ from collections.abc import Coroutine
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
-from contextlib import ExitStack
 from typing import Any
 
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import (
+    OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+)
 from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfigU
@@ -64,6 +66,10 @@ def address_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str
             elif isinstance(pattern_config, OriginationPatternConfig):
                 if pattern_config.originated_contract:
                     if address := pattern_config.originated_contract.address:
+                        addresses.add(address)
+            elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
+                if pattern_config.destination:
+                    if address := pattern_config.destination.address:
                         addresses.add(address)
 
     return addresses
@@ -188,9 +194,8 @@ class TzktOperationsIndex(
                 await self._tzkt_rollback(message.from_level, message.to_level)
                 continue
 
-            if Metrics.enabled:
-                messages_left = len(self._queue)
-                Metrics.set_levels_to_realtime(self._config.name, messages_left)
+            messages_left = len(self._queue)
+            Metrics.set_levels_to_realtime(self._config.name, messages_left)
 
             message_level = message[0].operations[0].level
 
@@ -198,14 +203,10 @@ class TzktOperationsIndex(
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
-            with ExitStack() as stack:
-                if Metrics.enabled:
-                    stack.enter_context(Metrics.measure_level_realtime_duration())
-                await self._process_level_operations(message, message_level)
+            await self._process_level_operations(message, message_level)
 
         else:
-            if Metrics.enabled:
-                Metrics.set_levels_to_realtime(self._config.name, 0)
+            Metrics.set_levels_to_realtime(self._config.name, 0)
 
     async def _create_fetcher(self, first_level: int, sync_level: int) -> OperationFetcher | OperationUnfilteredFetcher:
         if isinstance(self._config, TzktOperationsIndexConfig):
@@ -236,8 +237,7 @@ class TzktOperationsIndex(
         fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, operations in fetcher.fetch_by_level():
-            if Metrics.enabled:
-                Metrics.set_levels_to_sync(self._config.name, sync_level - level)
+            Metrics.set_levels_to_sync(self._config.name, sync_level - level)
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(
@@ -249,10 +249,7 @@ class TzktOperationsIndex(
             )
             if operation_subgroups:
                 self._logger.debug('Processing operations of level %s', level)
-                with ExitStack() as stack:
-                    if Metrics.enabled:
-                        stack.enter_context(Metrics.measure_level_sync_duration())
-                    await self._process_level_operations(operation_subgroups, sync_level)
+                await self._process_level_operations(operation_subgroups, sync_level)
 
         await self._exit_sync_state(sync_level)
 
@@ -294,8 +291,7 @@ class TzktOperationsIndex(
                 )
             matched_handlers += subgroup_handlers
 
-        if Metrics.enabled:
-            Metrics.set_index_handlers_matched(len(matched_handlers))
+        Metrics.set_index_handlers_matched(len(matched_handlers))
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:

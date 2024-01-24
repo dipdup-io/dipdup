@@ -2,6 +2,7 @@
 
 Ask user some question with Click; render Jinja2 templates with answers.
 """
+
 import logging
 import re
 from pathlib import Path
@@ -14,6 +15,7 @@ from dipdup import __version__
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.env import get_package_path
+from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -21,24 +23,26 @@ from dipdup.yaml import DipDupYAMLConfig
 _logger = logging.getLogger(__name__)
 
 
+# NOTE: All templates are stored in src/dipdup/projects
 TEMPLATES: dict[str, tuple[str, ...]] = {
     'evm': (
         'demo_evm_events',
         'demo_uniswap',
     ),
     'tezos': (
-        'demo_domains',
+        'demo_auction',
         'demo_big_maps',
+        'demo_dao',
+        'demo_dex',
+        'demo_domains',
         'demo_events',
+        'demo_etherlink',
+        'demo_factories',
         'demo_head',
         'demo_nft_marketplace',
-        'demo_dex',
-        'demo_factories',
-        'demo_dao',
+        'demo_raw',
         'demo_token',
         'demo_token_transfers',
-        'demo_auction',
-        'demo_raw',
     ),
     'other': ('demo_blank',),
 }
@@ -65,6 +69,7 @@ class Answers(TypedDict):
     postgres_data_path: str
     hasura_image: str
     line_length: str
+    package_manager: str
 
 
 def get_default_answers() -> Answers:
@@ -81,7 +86,21 @@ def get_default_answers() -> Answers:
         postgres_data_path='/var/lib/postgresql/data',
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
+        package_manager='pdm',
     )
+
+
+def get_package_answers(package: str | None = None) -> Answers | None:
+    if not package:
+        package = get_pyproject_name()
+    if not package:
+        return None
+
+    replay_path = get_package_path(package) / 'configs' / 'replay.yaml'
+    if not replay_path.is_file():
+        return None
+
+    return answers_from_replay(replay_path)
 
 
 @dataclass
@@ -147,8 +166,6 @@ def answers_from_terminal() -> Answers:
         options.append(_answers['template'])
         comments.append(_answers['description'])
 
-    # list of options can contain folder name of template or folder name of template with description
-    # all project templates are in src/dipdup/projects
     _, template = prompt_anyof(
         'Choose a project template:',
         options=tuple(options),
@@ -183,7 +200,6 @@ def answers_from_terminal() -> Answers:
         value=answers['description'],
     )
 
-    # define author and license for new indexer
     answers['license'] = survey.routines.input(
         'Enter project license (DipDup itself is MIT-licensed.): ',
         value=answers['license'],
@@ -222,6 +238,21 @@ def answers_from_terminal() -> Answers:
         )
 
     big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
+
+    _, answers['package_manager'] = prompt_anyof(
+        question='Choose package manager',
+        options=(
+            'pdm',
+            'poetry',
+            'none',
+        ),
+        comments=(
+            'PDM',
+            'Poetry',
+            '[none]',
+        ),
+        default=0,
+    )
 
     answers['line_length'] = survey.routines.input(
         'Enter maximum line length for linters: ',
@@ -266,7 +297,7 @@ def render_base(
     include: set[str] | None = None,
 ) -> None:
     """Render base from template"""
-    # NOTE: Common base
+    # NOTE: Render common base
     _render_templates(
         answers=answers,
         path=Path('base'),
@@ -274,9 +305,9 @@ def render_base(
         include=include,
         exists=True,
     )
-
+    # NOTE: Don't forget to update replay.yaml with new values
     _render(
-        answers,
+        answers=answers,
         template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
         output_path=Path('configs') / 'replay.yaml',
         force=force,

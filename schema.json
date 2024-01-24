@@ -316,6 +316,21 @@
       ],
       "default": null
     },
+    "api": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/ApiConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "advanced": {
       "allOf": [
         {
@@ -352,10 +367,7 @@
       "default": "INFO"
     }
   },
-  "required": [
-    "spec_version",
-    "package"
-  ],
+  "required": [],
   "$defs": {
     "HttpConfig": {
       "type": "object",
@@ -439,6 +451,17 @@
           "default": null
         },
         "connection_timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "request_timeout": {
           "anyOf": [
             {
               "type": "integer"
@@ -942,19 +965,11 @@
             "evm"
           ]
         },
-        "typename": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "address": {
           "anyOf": [
+            {
+              "type": "integer"
+            },
             {
               "type": "string"
             },
@@ -965,6 +980,17 @@
           "default": null
         },
         "abi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typename": {
           "anyOf": [
             {
               "type": "string"
@@ -989,17 +1015,6 @@
             "tezos"
           ]
         },
-        "typename": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
         "address": {
           "anyOf": [
             {
@@ -1016,6 +1031,17 @@
             {
               "type": "integer"
             },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "typename": {
+          "anyOf": [
             {
               "type": "string"
             },
@@ -1529,6 +1555,69 @@
         }
       }
     },
+    "OperationsHandlerSmartRollupExecutePatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerSmartRollupExecutePatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "sr_execute"
+          ],
+          "default": "sr_execute"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      }
+    },
     "TzktOperationsHandlerConfig": {
       "type": "object",
       "title": "TzktOperationsHandlerConfig",
@@ -1553,6 +1642,13 @@
                     "$ref": "#/$defs/OperationsHandlerOriginationPatternConfig"
                   }
                 ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerSmartRollupExecutePatternConfig"
+                  }
+                ]
               }
             ]
           }
@@ -1568,7 +1664,8 @@
       "enum": [
         "transaction",
         "origination",
-        "migration"
+        "migration",
+        "sr_execute"
       ]
     },
     "TzktOperationsIndexConfig": {
@@ -2165,14 +2262,6 @@
         "host"
       ]
     },
-    "ReindexingAction": {
-      "title": "ReindexingAction",
-      "enum": [
-        "exception",
-        "wipe",
-        "ignore"
-      ]
-    },
     "ApiConfig": {
       "type": "object",
       "title": "ApiConfig",
@@ -2183,12 +2272,12 @@
         }
       }
     },
-    "MetricsLevel": {
-      "title": "MetricsLevel",
+    "ReindexingAction": {
+      "title": "ReindexingAction",
       "enum": [
-        "off",
-        "basic",
-        "full"
+        "exception",
+        "wipe",
+        "ignore"
       ]
     },
     "AdvancedConfig": {
@@ -2254,29 +2343,6 @@
         "unsafe_sqlite": {
           "type": "boolean",
           "default": false
-        },
-        "api": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/ApiConfig"
-                }
-              ]
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "metrics": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/MetricsLevel"
-            }
-          ],
-          "default": "basic"
         },
         "alt_operation_matcher": {
           "type": "boolean",

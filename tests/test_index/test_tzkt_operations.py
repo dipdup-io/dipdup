@@ -154,7 +154,7 @@ async def test_realtime() -> None:
         dipdup = await create_dummy_dipdup(config, stack)
         await dipdup._set_up_datasources(stack)
 
-        dispatcher = dipdup._get_event_dispatcher()
+        dispatcher = dipdup._index_dispatcher
         index = cast(TzktOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
 
         # NOTE: Start sync and realtime connection simultaneously.

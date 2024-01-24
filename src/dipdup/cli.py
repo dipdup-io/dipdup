@@ -21,12 +21,12 @@ from dipdup import __version__
 from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.performance import metrics
 from dipdup.report import REPORTS_PATH
 from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
 from dipdup.report import get_reports
 from dipdup.report import save_report
+from dipdup.sys import fire_and_forget
 from dipdup.sys import set_up_process
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
     from dipdup.exceptions import Error
 
@@ -123,12 +123,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except Exception as e:
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
-            _print_help(e, report_id)
+            _print_help_atexit(e, report_id)
+            raise e
 
-            if metrics:
-                raise e
-            sys.exit(1)
-
+        # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run':
             package = ctx.obj.config.package
             save_report(package, None)
@@ -194,6 +192,7 @@ def _skip_cli_group() -> bool:
     help='A path to DipDup project config.',
     default=[ROOT_CONFIG],
     metavar='PATH',
+    envvar='DIPDUP_CONFIG',
 )
 @click.option(
     '--env-file',
@@ -203,6 +202,7 @@ def _skip_cli_group() -> bool:
     help='A path to .env file containing `KEY=value` strings.',
     default=[],
     metavar='PATH',
+    envvar='DIPDUP_ENV_FILE',
 )
 @click.pass_context
 @_cli_wrapper
@@ -256,7 +256,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        _ = asyncio.ensure_future(_check_version())
+        fire_and_forget(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
@@ -551,9 +551,11 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         conn = get_connection()
         await wipe_schema(
             conn=conn,
-            schema_name=config.database.path
-            if isinstance(config.database, SqliteDatabaseConfig)
-            else config.database.schema_name,
+            schema_name=(
+                config.database.path
+                if isinstance(config.database, SqliteDatabaseConfig)
+                else config.database.schema_name
+            ),
             immune_tables=immune_tables,
         )
 
@@ -581,7 +583,7 @@ async def schema_init(ctx: click.Context) -> None:
 
     async with AsyncExitStack() as stack:
         await dipdup._set_up_database(stack)
-        await dipdup._set_up_hooks(set())
+        await dipdup._set_up_hooks()
         await dipdup._create_datasources()
         await dipdup._initialize_schema()
 
@@ -712,8 +714,18 @@ async def self_install(
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, version, ref, path)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=version,
+        ref=ref,
+        path=path,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
 
 
 @self.command(name='uninstall')
@@ -742,8 +754,18 @@ async def self_update(
 ) -> None:
     """Update DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, None, None, None)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=None,
+        ref=None,
+        path=None,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
 
 
 @self.command(name='env', hidden=True)

@@ -8,20 +8,16 @@ There are three module-level singletons, one for each type of resource:
 
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
+
 import logging
-import time
 from collections import defaultdict
 from collections import deque
-from collections.abc import AsyncIterator
 from collections.abc import Callable
 from collections.abc import Coroutine
 from collections.abc import Sized
-from contextlib import asynccontextmanager
-from enum import Enum
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
@@ -37,31 +33,6 @@ if TYPE_CHECKING:
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)
-
-
-@asynccontextmanager
-async def with_pprofile(name: str) -> AsyncIterator[None]:
-    try:
-        import pprofile  # type: ignore[import-untyped]
-
-        _logger.warning('Full profiling is enabled, this will affect performance')
-    except ImportError:
-        _logger.error('pprofile not installed, falling back to basic profiling')
-        return
-
-    profiler = pprofile.Profile()
-    with profiler():
-        yield
-
-    dump_path = Path.cwd() / f'cachegrind.out.dipdup.{name}.{round(time.time())}'
-    _logger.info('Dumping profiling data to %s', dump_path)
-    profiler.dump_stats(dump_path)
-
-
-class MetricsLevel(Enum):
-    off = 'off'
-    basic = 'basic'
-    full = 'full'
 
 
 class _CacheManager:
@@ -81,7 +52,7 @@ class _CacheManager:
     def add_lru(
         self,
         fn: Callable[..., Any],
-        maxsize: int,
+        maxsize: int | None,
         name: str | None = None,
     ) -> Callable[..., Any]:
         if name is None:
@@ -200,26 +171,7 @@ class _MetricManager:
     """
 
     def __init__(self) -> None:
-        self._level = MetricsLevel.off
         self._stats: defaultdict[str, float] = defaultdict(float)
-
-    def __bool__(self) -> bool:
-        return self._level != MetricsLevel.off
-
-    @property
-    def basic(self) -> bool:
-        return self._level != MetricsLevel.off
-
-    @property
-    def full(self) -> bool:
-        return self._level == MetricsLevel.full
-
-    @property
-    def level(self) -> MetricsLevel:
-        return self._level
-
-    def set_level(self, level: MetricsLevel) -> None:
-        self._level = level
 
     def set(self, name: str, value: float) -> bool:
         self._stats[name] = value

@@ -3,9 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -24,4 +21,4 @@ class TzcolorsAuctionStorage1(BaseModel):
 
 
 class TzcolorsAuctionStorage(BaseModel):
-    __root__: Optional[Dict[str, TzcolorsAuctionStorage1]] = None
+    __root__: dict[str, TzcolorsAuctionStorage1] | None = None

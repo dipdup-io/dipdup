@@ -2,7 +2,6 @@ import asyncio
 import hashlib
 import logging
 import platform
-import sys
 import time
 from collections.abc import Mapping
 from contextlib import AbstractAsyncContextManager
@@ -23,7 +22,6 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
-from dipdup import env
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
@@ -102,7 +100,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             base_url=self._url,
             json_serialize=lambda *a, **kw: json_dumps(*a, **kw).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit),
-            timeout=aiohttp.ClientTimeout(total=self._config.connection_timeout),
+            timeout=aiohttp.ClientTimeout(
+                total=self._config.request_timeout,
+                connect=self._config.connection_timeout,
+            ),
         )
 
     async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
@@ -144,14 +145,13 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Retry a request in case of failure sleeping according to config"""
         attempt = 1
         retry_sleep = self._config.retry_sleep
-        retry_count = 0 if env.TEST else self._config.retry_count
-        retry_count_str = 'inf' if retry_count is sys.maxsize else str(retry_count)
+        retry_count = self._config.retry_count
+        last_attempt = retry_count + 1
 
-        if Metrics.enabled:
-            Metrics.set_http_errors_in_row(self._url, 0)
+        Metrics.set_http_errors_in_row(self._url, 0)
 
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, retry_count_str)
+            self._logger.debug('HTTP request attempt %s/%s', attempt, last_attempt)
             try:
                 return await self._request(
                     method=method,
@@ -160,13 +160,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                     **kwargs,
                 )
             except safe_exceptions as e:
-                if self._config.retry_count and attempt - 1 == self._config.retry_count:
-                    raise e
-
                 ratelimit_sleep: float | None = None
                 if isinstance(e, aiohttp.ClientResponseError):
-                    if Metrics.enabled:
-                        Metrics.set_http_error(self._url, e.status)
+                    Metrics.set_http_error(self._url, e.status)
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         ratelimit_sleep = self._config.ratelimit_sleep
@@ -175,16 +171,16 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                             e.headers = cast(Mapping[str, Any], e.headers)
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))
                 else:
-                    if Metrics.enabled:
-                        Metrics.set_http_error(self._url, 0)
+                    Metrics.set_http_error(self._url, 0)
 
-                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, retry_count_str, e)
+                self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, last_attempt, e)
+                Metrics.set_http_errors_in_row(self._url, attempt)
+                if attempt == last_attempt:
+                    raise e
+
                 self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
-
-                if Metrics.enabled:
-                    Metrics.set_http_errors_in_row(self._url, attempt)
-
                 await asyncio.sleep(ratelimit_sleep or retry_sleep)
+
                 attempt += 1
                 if not ratelimit_sleep:
                     retry_sleep *= self._config.retry_multiplier
@@ -198,8 +194,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int,
         raw: Literal[True],
         **kwargs: Any,
-    ) -> aiohttp.ClientResponse:
-        ...
+    ) -> aiohttp.ClientResponse: ...
 
     @overload
     async def _request(
@@ -209,8 +204,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int,
         raw: Literal[False],
         **kwargs: Any,
-    ) -> Any:
-        ...
+    ) -> Any: ...
 
     async def _request(
         self,
@@ -221,7 +215,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        metrics and metrics.inc(f'{self._alias}:requests_total', 1.0)
+        metrics.inc(f'{self._alias}:requests_total', 1.0)
         if not url:
             url = self._path
         elif url.startswith('http'):
@@ -250,7 +244,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             await response.read()
-            metrics and metrics.inc(f'{self._alias}:time_in_requests', (time.time() - started_at) / 60)
+            metrics.inc(f'{self._alias}:time_in_requests', (time.time() - started_at) / 60)
             if raw:
                 return response
 

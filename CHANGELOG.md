@@ -4,12 +4,59 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.3.0] - 2024-01-23
 
 ### Added
 
-- evm.node: Requesting logs for multiple blocks at once for EVM nodes to improve performance
-- evm.subsquid: Added metrics for Subsquid Cloud deploy.
+- tezos.tzkt.operations: Added new operation type `sr_execute` for Etherlink smart rollups.
+
+### Fixed
+
+- abi.etherscan: Fixed handling "rate limit reached" errors.
+- cli: Fixed setting logger levels based on config and env variables.
+- http: Fixed incorrect number of retries performed on failed requests.
+
+## [7.2.2] - 2023-12-27
+
+### Fixed
+
+- evm.subsquid: Last mile indexing is significantly faster now.
+- tezos.tzkt: Fixed an issue with approving schema after reindexing triggered by rollback.
+
+## [7.2.1] - 2023-12-12
+
+### Added
+
+- cli: Added `DIPDUP_CONFIG` and `DIPDUP_ENV_FILE` environment variables corresponding to `--config` and `--env-file` options.
+
+### Fixed
+
+- evm.node: Fixed crash on anonymous event logs during the last mile indexing.
+- evm.node: Raise an exception when no realtime messages have been received in `http.connection_timeout` seconds.
+
+## [7.2.0] - 2023-11-30
+
+### Added
+
+- api: Added HTTP API to manage a running indexer.
+- config: Added `http.request_timeout` option to set the total timeout for HTTP requests.
+- evm.subsquid: Added Prometheus metrics required for Subsquid Cloud deployments.
+- project: Added optional `package_manager` field to replay config.
+- project: Added Makefile to the default project template (only for new projects).
+- tezos.tzkt: Added support for Etherlink smart rollups (`sr1…` addresses).
+
+### Fixed
+
+- cli: Don't suppress uncaught exceptions when performance monitoring is disabled.
+- codegen: Use datamodel-code-generator from the project's virtualenv.
+- evm.node: Fixed an issue with realtime subscriptions which led to indexing being stuck in some cases.
+- http: Use `request_timeout` instead of `connection_timeout` for total timeout.
+- install: Don't install datamodel-code-generator as a CLI tool.
+- install: Respect package manager if specified in pyproject.toml.
+
+### Performance
+
+- evm.subsquid.events: Request logs in batches to speed up the last mile indexing.
 
 ### Security
 
@@ -74,7 +121,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Import package submodules before starting indexing to fail early on import errors.
 - cli: Fixed ordering of crash reports in `report` group commands.
 - evm.node: Fixed parsing topics and integers in datasource models.
-- evm.subsquid.events: Fixed incorrrect log request parameters.
+- evm.subsquid.events: Fixed incorrect log request parameters.
 - install: Fixed issue with interpreting user answers in some cases.
 - tezos.tzkt: Fixed operation matching when contract code hash specified as a string.
 - tezos.tzkt: Fixed issue with processing rollbacks while sync is in progress.
@@ -1242,7 +1289,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.1.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.3.0...HEAD
+[7.3.0]: https://github.com/dipdup-io/dipdup/compare/7.2.2...7.3.0
+[7.2.2]: https://github.com/dipdup-io/dipdup/compare/7.2.1...7.2.2
+[7.2.1]: https://github.com/dipdup-io/dipdup/compare/7.2.0...7.2.1
+[7.2.0]: https://github.com/dipdup-io/dipdup/compare/7.1.1...7.2.0
 [7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
 [7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2

@@ -32,8 +32,7 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
         self._logger = FormattedLogger(__name__, config.name + ': {}')
 
     @abstractmethod
-    async def run(self) -> None:
-        ...
+    async def run(self) -> None: ...
 
     @property
     def name(self) -> str:
@@ -42,8 +41,7 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
 
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
     @abstractmethod
-    async def get_abi(self, address: str) -> dict[str, Any]:
-        ...
+    async def get_abi(self, address: str) -> dict[str, Any]: ...
 
 
 class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourceConfigT]):
@@ -56,12 +54,10 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
 
     @abstractmethod
-    async def subscribe(self) -> None:
-        ...
+    async def subscribe(self) -> None: ...
 
     @abstractmethod
-    async def initialize(self) -> None:
-        ...
+    async def initialize(self) -> None: ...
 
     def add_index(self, index_config: IndexConfig) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""

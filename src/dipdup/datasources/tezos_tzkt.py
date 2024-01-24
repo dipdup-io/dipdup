@@ -22,6 +22,8 @@ from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HttpConfig
+from dipdup.config.tezos import SMART_CONTRACT_PREFIX
+from dipdup.config.tezos import SMART_ROLLUP_PREFIX
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
@@ -29,7 +31,6 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.exceptions import ReindexingRequiredError
 from dipdup.models import Head
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
@@ -85,6 +86,12 @@ TRANSACTION_OPERATION_FIELDS = (
     *OPERATION_FIELDS,
     'parameter',
     'hasInternals',
+)
+SR_EXECUTE_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    'rollup',
+    'commitment',
+    'ticketTransfersCount',
 )
 BIGMAP_FIELDS = (
     'ptr',
@@ -303,23 +310,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             level=head_block.level,
         )
 
-        db_head = await Head.filter(name=self.name).first()
-        if not db_head:
-            return
-
-        # NOTE: Ensure that no reorgs happened while we were offline
-        actual_head = await self.get_block(db_head.level)
-        if db_head.hash != actual_head.hash:
-            raise ReindexingRequiredError(
-                ReindexingReason.rollback,
-                context={
-                    'datasource': self,
-                    'level': db_head.level,
-                    'stored_block_hash': db_head.hash,
-                    'actual_block_hash': actual_head.hash,
-                },
-            )
-
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
 
@@ -522,11 +512,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s`', address)
+        if address.startswith(SMART_CONTRACT_PREFIX):
+            endpoint = 'contracts'
+        elif address.startswith(SMART_ROLLUP_PREFIX):
+            endpoint = 'smart_rollups'
+        else:
+            raise NotImplementedError
         return cast(
             dict[str, Any],
             await self.request(
                 'get',
-                url=f'v1/contracts/{address}/interface',
+                url=f'v1/{endpoint}/{address}/interface',
             ),
         )
 
@@ -769,6 +765,57 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_transactions,
+            field,
+            addresses,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
+    async def get_sr_execute(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TzktOperationData, ...]:
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=None,
+            limit=limit,
+            select=SR_EXECUTE_OPERATION_FIELDS,
+            values=True,
+            sort='level',
+            status='applied',
+        )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
+        if addresses:
+            params[f'{field}.in'] = ','.join(addresses)
+
+        raw_transactions = await self._request_values_dict(
+            'get',
+            url='v1/operations/sr_execute',
+            params=params,
+        )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(TzktOperationData.from_json(op, type_='sr_execute') for op in raw_transactions)
+
+    async def iter_sr_execute(
+        self,
+        field: str,
+        addresses: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_sr_execute,
             field,
             addresses,
             first_level,
@@ -1057,7 +1104,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
-        values: bool = False,  # return only list of chosen values instead of dict
+        values: bool = False,
         cursor: bool = False,
         sort: str | None = None,
         **kwargs: Any,
@@ -1074,8 +1121,8 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 params['offset.cr'] = offset
             else:
                 params['offset'] = offset
+        # NOTE: If `values` is set request will return list of lists instead of list of dicts.
         if select:
-            #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
         if sort:
             if sort.startswith('-'):
@@ -1287,14 +1334,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             await self.emit_events(tuple(events))
 
 
-async def resolve_tzkt_code_hashes(
+async def late_tzkt_initialization(
     config: DipDupConfig,
     datasources: dict[str, Datasource[Any]],
+    reindex_fn: Callable[..., Awaitable[None]] | None,
 ) -> None:
-    """Late config initialization. We can resolve code hashes only after all datasources are initialized."""
+    """Tasks to perform after all datasources are initialized."""
     tzkt_datasources = tuple(d for d in datasources.values() if isinstance(d, TzktDatasource))
     tezos_contracts = tuple(c for c in config.contracts.values() if isinstance(c, TezosContractConfig))
 
+    # NOTE: Late config initialization: resolve contract code hashes.
     for contract in tezos_contracts:
         code_hash = contract.code_hash
         if not isinstance(code_hash, str):
@@ -1306,3 +1355,24 @@ async def resolve_tzkt_code_hashes(
                 break
         else:
             raise FrameworkException(f'Failed to resolve code hash for contract `{contract.code_hash}`')
+
+    if not reindex_fn:
+        return
+
+    # NOTE: Ensure that no reorgs happened while we were offline
+    for datasource in tzkt_datasources:
+        db_head = await Head.filter(name=datasource.name).first()
+        if not db_head or not db_head.hash:
+            continue
+
+        actual_head = await datasource.get_block(db_head.level)
+        if db_head.hash != actual_head.hash:
+            # FIXME: Datasources can't trigger reindexing without context, thus `reindex_fn`
+            await reindex_fn(
+                ReindexingReason.rollback,
+                message='Block hash mismatch after restart',
+                datasource=datasource.name,
+                level=db_head.level,
+                stored_block_hash=db_head.hash,
+                actual_block_hash=actual_head.hash,
+            )

@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
-
 from pydantic import BaseModel
 from pydantic import Extra
 
@@ -15,7 +11,7 @@ class Ledger(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    allowances: List[str]
+    allowances: list[str]
     balance: str
     frozen_balance: str
 
@@ -32,7 +28,7 @@ class Voters(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    candidate: Optional[str]
+    candidate: str | None
     last_veto: str
     veto: str
     vote: str
@@ -43,11 +39,11 @@ class Storage(BaseModel):
         extra = Extra.forbid
 
     baker_validator: str
-    current_candidate: Optional[str]
-    current_delegated: Optional[str]
+    current_candidate: str | None
+    current_delegated: str | None
     last_update_time: str
     last_veto: str
-    ledger: Dict[str, Ledger]
+    ledger: dict[str, Ledger]
     period_finish: str
     reward: str
     reward_paid: str
@@ -60,18 +56,18 @@ class Storage(BaseModel):
     total_reward: str
     total_supply: str
     total_votes: str
-    user_rewards: Dict[str, UserRewards]
+    user_rewards: dict[str, UserRewards]
     veto: str
-    vetos: Dict[str, str]
-    voters: Dict[str, Voters]
-    votes: Dict[str, str]
+    vetos: dict[str, str]
+    voters: dict[str, Voters]
+    votes: dict[str, str]
 
 
 class QuipuFa2Storage(BaseModel):
     class Config:
         extra = Extra.forbid
 
-    dex_lambdas: Dict[str, str]
-    metadata: Dict[str, str]
+    dex_lambdas: dict[str, str]
+    metadata: dict[str, str]
     storage: Storage
-    token_lambdas: Dict[str, str]
+    token_lambdas: dict[str, str]

@@ -96,6 +96,9 @@ def match_events(
     matched_handlers: deque[MatchedEventsT] = deque()
 
     for event in events:
+        if not event.topics:
+            continue
+
         for handler_config in handlers:
             typename = handler_config.contract.module_name
             name = handler_config.name

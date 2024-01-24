@@ -10,6 +10,7 @@ from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
+from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
@@ -40,7 +41,7 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TzktDatasource
-from dipdup.datasources.tezos_tzkt import resolve_tzkt_code_hashes
+from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
@@ -69,11 +70,10 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
-from dipdup.performance import MetricsLevel
 from dipdup.performance import metrics
-from dipdup.performance import with_pprofile
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
+from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
 
 if TYPE_CHECKING:
@@ -81,6 +81,8 @@ if TYPE_CHECKING:
 
 METRICS_INTERVAL = 3
 STATUS_INTERVAL = 10
+CLEANUP_INTERVAL = 60 * 5
+INDEX_DISPATCHER_INTERVAL = 1
 
 _logger = logging.getLogger(__name__)
 
@@ -119,7 +121,7 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set() and not self._ctx.config.oneshot:
+            if not spawn_datasources_event.is_set() and not self.is_oneshot():
                 if self._every_index_is(IndexStatus.realtime) or early_realtime:
                     spawn_datasources_event.set()
 
@@ -148,9 +150,9 @@ class IndexDispatcher:
                 if isinstance(index, TzktOperationsIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and (not self._indexes or self._every_index_is(IndexStatus.disabled)):
+            if not indexes_spawned and self.is_oneshot():
                 _logger.info('No indexes left, exiting')
-                break
+                [t.cancel() for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
@@ -165,8 +167,26 @@ class IndexDispatcher:
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
 
-            # TODO: Replace with asyncio.Event
-            await asyncio.sleep(1)
+            await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
+
+    def is_oneshot(self) -> bool:
+        from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+
+        # NOTE: Empty config means indexes will be spawned later via API.
+        if not self._indexes:
+            return False
+
+        if self._ctx._pending_indexes:
+            return False
+
+        # NOTE: Run forever if at least one index has no upper bound.
+        for index in self._indexes.values():
+            if isinstance(index._config, TzktHeadIndexConfig):
+                continue
+            if not index._config.last_level:
+                return False
+
+        return True
 
     # TODO: Use ctx.metrics
     async def _prometheus_loop(self, update_interval: float) -> None:
@@ -176,7 +196,7 @@ class IndexDispatcher:
 
     async def _update_prometheus(self) -> None:
         active, synced, realtime = 0, 0, 0
-        for index in tuple(self._indexes.values()) + tuple(self._ctx._pending_indexes):
+        for index in copy(self._indexes).values():
             active += 1
             if index.synchronized:
                 synced += 1
@@ -190,6 +210,11 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
             await self._update_metrics()
 
+    async def _cleanup_loop(self, interval: int) -> None:
+        while True:
+            await asyncio.sleep(interval)
+            await self._ctx.transactions.cleanup()
+
     async def _update_metrics(self) -> None:
         if not self._indexes:
             return
@@ -198,6 +223,11 @@ class IndexDispatcher:
 
         levels_indexed, levels_total, levels_interval = 0, 0, 0
         for index in self._indexes.values():
+            try:
+                sync_level = index.get_sync_level()
+            except FrameworkException:
+                return
+
             initial_level = self._initial_levels[index.name]
             if not initial_level:
                 self._initial_levels[index.name] |= index.state.level
@@ -205,7 +235,7 @@ class IndexDispatcher:
 
             levels_interval += index.state.level - self._previous_levels[index.name]
             levels_indexed += index.state.level - initial_level
-            levels_total += index.get_sync_level() - initial_level
+            levels_total += sync_level - initial_level
 
             self._previous_levels[index.name] = index.state.level
 
@@ -315,6 +345,8 @@ class IndexDispatcher:
                 elif new_hash != index_state.config_hash:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
+                        message='Config hash mismatch',
+                        index_name=index_state.name,
                         old_hash=index_state.config_hash,
                         new_hash=new_hash,
                     )
@@ -324,6 +356,7 @@ class IndexDispatcher:
                 if template not in self._ctx.config.templates:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
+                        message='Template not found',
                         index_name=index_state.name,
                         template=template,
                     )
@@ -357,7 +390,7 @@ class IndexDispatcher:
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        fire_and_forget(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -367,15 +400,14 @@ class IndexDispatcher:
                 },
             ),
         )
-        if Metrics.enabled:
-            Metrics.set_datasource_head_updated(datasource.name)
+        Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
                 index.push_head(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
-        _ = asyncio.ensure_future(
+        fire_and_forget(
             Head.update_or_create(
                 name=datasource.name,
                 defaults={
@@ -385,8 +417,7 @@ class IndexDispatcher:
                 },
             ),
         )
-        if Metrics.enabled:
-            Metrics.set_datasource_head_updated(datasource.name)
+        Metrics.set_datasource_head_updated(datasource.name)
 
     async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
         for index in self._indexes.values():
@@ -446,8 +477,7 @@ class IndexDispatcher:
 
         channel = f'{datasource.name}:{type_.value}'
         _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
-        if Metrics.enabled:
-            Metrics.set_datasource_rollback(datasource.name)
+        Metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
@@ -489,7 +519,7 @@ class DipDup:
             datasources=self._datasources,
             transactions=self._transactions,
         )
-        self._index_dispatcher: IndexDispatcher | None = None
+        self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
         self._api: Any | None = None
 
@@ -542,17 +572,15 @@ class DipDup:
         advanced = self._config.advanced
         tasks: set[Task[None]] = set()
 
-        # verify before start so obvious mistakes can be seen instantly
+        # NOTE: Verify package before indexing to ensure that all modules are importable
         self._ctx.package.verify()
 
         async with AsyncExitStack() as stack:
-            await self._set_up_metrics(stack)
-
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))
             await self._set_up_database(stack)
             await self._set_up_transactions(stack)
             await self._set_up_datasources(stack)
-            await self._set_up_hooks(tasks, run=not self._config.oneshot)
+            await self._set_up_hooks()
             await self._set_up_prometheus()
             await self._set_up_api(stack)
 
@@ -565,12 +593,12 @@ class DipDup:
 
             await MetadataCursor.initialize()
 
-            if self._config.oneshot:
+            for name in self._config.indexes:
+                await self._ctx._spawn_index(name)
+
+            if self._index_dispatcher.is_oneshot():
                 start_scheduler_event = Event()
                 spawn_datasources_event = Event()
-
-                if self._config.jobs:
-                    _logger.warning('Running in oneshot mode; `jobs` are ignored')
             else:
                 start_scheduler_event = await self._set_up_scheduler(tasks)
                 spawn_datasources_event = await self._spawn_datasources(tasks)
@@ -578,21 +606,15 @@ class DipDup:
                 if not advanced.postpone_jobs:
                     start_scheduler_event.set()
 
-                tasks.add(create_task(self._transactions.cleanup_loop()))
-
-            for name in self._config.indexes:
-                await self._ctx._spawn_index(name)
-
-            await self._set_up_index_dispatcher(
+            await self._set_up_background_tasks(
                 tasks=tasks,
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
-                run=True,
-                metrics=not self._config.oneshot,
             )
 
-            await gather(*tasks)
+            if tasks:
+                await gather(*tasks)
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():
@@ -614,8 +636,12 @@ class DipDup:
                 conn,
                 schema_name,
             )
-        except OperationalError:
-            await self._ctx.reindex(ReindexingReason.schema_modified)
+        except OperationalError as e:
+            await self._ctx.reindex(
+                ReindexingReason.schema_modified,
+                message='Schema initialization failed',
+                exception=str(e),
+            )
 
         schema_hash = get_schema_hash(conn)
 
@@ -628,15 +654,24 @@ class DipDup:
             )
             try:
                 await self._schema.save()
-            except OperationalError:
-                await self._ctx.reindex(ReindexingReason.schema_modified)
+            except OperationalError as e:
+                await self._ctx.reindex(
+                    ReindexingReason.schema_modified,
+                    message='Schema initialization failed',
+                    exception=str(e),
+                )
 
         elif not self._schema.hash:
             self._schema.hash = schema_hash
             await self._schema.save()
 
         elif self._schema.hash != schema_hash:
-            await self._ctx.reindex(ReindexingReason.schema_modified)
+            await self._ctx.reindex(
+                ReindexingReason.schema_modified,
+                message='Schema hash mismatch',
+                old_hash=self._schema.hash,
+                new_hash=schema_hash,
+            )
 
         elif self._schema.reindex:
             await self._ctx.reindex(self._schema.reindex)
@@ -659,15 +694,12 @@ class DipDup:
         )
         await preload_cached_models(self._config.package)
 
-    async def _set_up_hooks(self, tasks: set[Task[None]], run: bool = False) -> None:
+    async def _set_up_hooks(self) -> None:
         for system_hook_config in system_hooks.values():
             self._ctx.register_hook(system_hook_config)
 
         for hook_config in self._config.hooks.values():
             self._ctx.register_hook(hook_config)
-
-        if run:
-            tasks.add(create_task(self._ctx._hooks_loop()))
 
     async def _set_up_prometheus(self) -> None:
         if self._config.prometheus:
@@ -677,7 +709,7 @@ class DipDup:
             start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
-        api_config = self._config.advanced.api
+        api_config = self._config.api
         if not api_config or env.TEST or env.CI:
             return
 
@@ -685,7 +717,7 @@ class DipDup:
 
         from dipdup.api import create_api
 
-        api = await create_api()
+        api = await create_api(self._ctx)
         runner = web.AppRunner(api)
         await runner.setup()
         site = web.TCPSite(runner, api_config.host, api_config.port)
@@ -719,46 +751,47 @@ class DipDup:
             await stack.enter_async_context(datasource)
 
     async def _initialize_datasources(self) -> None:
+        init_tzkt = False
         for datasource in self._datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
             await datasource.initialize()
+            if isinstance(datasource, TzktDatasource):
+                init_tzkt = True
 
-        await resolve_tzkt_code_hashes(self._config, self._datasources)
+        if init_tzkt:
+            await late_tzkt_initialization(
+                config=self._config,
+                datasources=self._datasources,
+                reindex_fn=self._ctx.reindex,
+            )
 
-    async def _set_up_index_dispatcher(
+    async def _set_up_background_tasks(
         self,
         tasks: set[Task[None]],
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
-        run: bool,
-        metrics: bool,
     ) -> None:
-        index_dispatcher = IndexDispatcher(self._ctx)
-        self._index_dispatcher = index_dispatcher
-        if run:
-            tasks.add(
-                create_task(
-                    index_dispatcher.run(
-                        spawn_datasources_event,
-                        start_scheduler_event,
-                        early_realtime,
-                    )
-                )
-            )
+        index_dispatcher = self._index_dispatcher
 
-        if metrics:
-            if prometheus_config := self._ctx.config.prometheus:
-                tasks.add(create_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval)))
-            if not self._ctx.config.oneshot:
-                tasks.add(create_task(index_dispatcher._metrics_loop(METRICS_INTERVAL)))
-                tasks.add(create_task(index_dispatcher._status_loop(STATUS_INTERVAL)))
+        def _add_task(coro: Coroutine[Any, Any, None]) -> None:
+            tasks.add(create_task(coro, name=f'loop:{coro.__name__.strip("_")}'))
 
-    def _get_event_dispatcher(self) -> IndexDispatcher:
-        if self._index_dispatcher is None:
-            raise FrameworkException('Index dispatcher is not initialized')
-        return self._index_dispatcher
+        # NOTE: The main loop; cancels other tasks on exit.
+        _add_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event, early_realtime))
+
+        # NOTE: Monitoring tasks
+        _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
+        _add_task(index_dispatcher._status_loop(STATUS_INTERVAL))
+        if prometheus_config := self._ctx.config.prometheus:
+            _add_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval))
+
+        # NOTE: Outdated model updates cleanup
+        _add_task(index_dispatcher._cleanup_loop(CLEANUP_INTERVAL))
+
+        # NOTE: Hooks called with `wait=False`
+        _add_task(self._ctx._hooks_loop(INDEX_DISPATCHER_INTERVAL))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
@@ -768,10 +801,22 @@ class DipDup:
             await event.wait()
 
             _logger.info('Spawning datasources')
-            _tasks = [create_task(d.run()) for d in self._datasources.values()]
-            await gather(*_tasks)
+            _run_tasks: deque[Task[None]] = deque()
+            for datasource in self._datasources.values():
+                _run_tasks.append(
+                    create_task(
+                        datasource.run(),
+                        name=f'datasource:{datasource.name}',
+                    )
+                )
+            await gather(*_run_tasks)
 
-        tasks.add(create_task(_event_wrapper()))
+        tasks.add(
+            create_task(
+                _event_wrapper(),
+                name='loop:datasources',
+            )
+        )
         return event
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
@@ -785,13 +830,8 @@ class DipDup:
                 ctx=self._ctx,
                 event=event,
             ),
+            name='loop:scheduler',
         )
         tasks.add(run_task)
 
         return event
-
-    async def _set_up_metrics(self, stack: AsyncExitStack) -> None:
-        level = self._config.advanced.metrics
-        metrics.set_level(level)
-        if level == MetricsLevel.full:
-            await stack.enter_async_context(with_pprofile(self._config.package))

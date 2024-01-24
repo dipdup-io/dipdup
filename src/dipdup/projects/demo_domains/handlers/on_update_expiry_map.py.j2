@@ -1,0 +1,52 @@
+from datetime import datetime
+from typing import Any
+from typing import cast
+
+import strict_rfc3339  # type: ignore[import-untyped]
+from dipdup.context import HandlerContext
+from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.models.tezos_tzkt import TzktBigMapDiff
+
+from {{ project.package }} import models as models
+from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
+from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
+
+
+async def on_update_expiry_map(
+    ctx: HandlerContext,
+    store_expiry_map: TzktBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
+) -> None:
+    if not store_expiry_map.action.has_value:
+        return
+    assert store_expiry_map.key
+    assert store_expiry_map.value
+
+    expires_at = datetime.utcfromtimestamp(strict_rfc3339.rfc3339_to_timestamp(store_expiry_map.value.__root__))
+    record_name = bytes.fromhex(store_expiry_map.key.__root__).decode()
+    await models.Expiry.update_or_create(
+        id=record_name,
+        defaults={'expires_at': expires_at},
+    )
+
+    domain = await models.Domain.get_or_none(id=record_name).prefetch_related('records')
+    if domain is None:
+        return
+
+    domain.expires_at = expires_at
+    await domain.save()
+
+    if expires_at < datetime.utcnow():
+        return
+
+    ctx.logger.debug('Updating expiration status for all records associated with domain %s (renewal)', domain.id)
+    for record in domain.records:
+        record.expired = False
+        await record.save()
+        if record.address is not None:
+            metadata = {} if record.metadata is None else cast(dict[str, Any], record.metadata)
+            metadata.update(name=record.id)
+            await ctx.update_contract_metadata(
+                network=cast(TzktDatasource, ctx.datasource).name,
+                address=record.address,
+                metadata=metadata,
+            )

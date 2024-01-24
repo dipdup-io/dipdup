@@ -13,14 +13,6 @@ _indexes_total = Gauge(
     ('status',),
 )
 
-_index_level_sync_duration = Histogram(
-    'dipdup_index_level_sync_duration_seconds',
-    'Duration of indexing a single level',
-)
-_index_level_realtime_duration = Histogram(
-    'dipdup_index_level_realtime_duration_seconds',
-    'Duration of last index syncronization',
-)
 _index_total_sync_duration = Histogram(
     'dipdup_index_total_sync_duration_seconds',
     'Duration of the last index syncronization',
@@ -63,25 +55,20 @@ _http_errors = Counter(
 )
 _http_errors_in_row = Histogram(
     'dipdup_http_errors_in_row',
-    """The number of consecutive failed requests"""
-)
-_callback_duration = Histogram(
-    'dipdup_callback_duration_seconds',
-    'Duration of callback execution',
-    ['callback'],
+    'Number of consecutive failed requests',
 )
 
 _sqd_processor_last_block = Gauge(
     'sqd_processor_last_block',
-    'The last processed block',
+    'Level of the last processed block from Subsquid Archives',
 )
 _sqd_processor_chain_height = Gauge(
     'sqd_processor_chain_height',
-    'Current chain height as reported by the archive',
+    'Current chain height as reported by Subsquid Archives',
 )
 _sqd_processor_archive_http_errors_in_row = Histogram(
     'sqd_processor_archive_http_errors_in_row',
-    """The number of consecutive failed Archive requests"""
+    'Number of consecutive failed requests to Subsquid Archives',
 )
 
 
@@ -93,18 +80,6 @@ class Metrics:
 
     @classmethod
     @contextmanager
-    def measure_level_sync_duration(cls) -> Generator[None, None, None]:
-        with _index_level_sync_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
-    def measure_level_realtime_duration(cls) -> Generator[None, None, None]:
-        with _index_level_realtime_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
     def measure_total_sync_duration(cls) -> Generator[None, None, None]:
         with _index_total_sync_duration.time():
             yield
@@ -113,12 +88,6 @@ class Metrics:
     @contextmanager
     def measure_total_realtime_duration(cls) -> Generator[None, None, None]:
         with _index_total_realtime_duration.time():
-            yield
-
-    @classmethod
-    @contextmanager
-    def measure_callback_duration(cls, name: str) -> Generator[None, None, None]:
-        with _callback_duration.labels(callback=name).time():
             yield
 
     @classmethod
@@ -154,7 +123,7 @@ class Metrics:
     @classmethod
     def set_sqd_processor_last_block(cls, last_block: int) -> None:
         _sqd_processor_last_block.set(last_block)
-    
+
     @classmethod
     def set_sqd_processor_chain_height(cls, chain_height: int) -> None:
         _sqd_processor_chain_height.set(chain_height)

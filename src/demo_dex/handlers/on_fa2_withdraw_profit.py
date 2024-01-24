@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Optional
 
 import demo_dex.models as models
 from demo_dex.types.quipu_fa2.tezos_parameters.withdraw_profit import WithdrawProfitParameter
@@ -12,7 +11,7 @@ from dipdup.models.tezos_tzkt import TzktTransaction
 async def on_fa2_withdraw_profit(
     ctx: HandlerContext,
     withdraw_profit: TzktTransaction[WithdrawProfitParameter, QuipuFa2Storage],
-    transaction_0: Optional[TzktOperationData] = None,
+    transaction_0: TzktOperationData | None = None,
 ) -> None:
     symbol = ctx.template_values['symbol']
     trader = withdraw_profit.data.sender_address
