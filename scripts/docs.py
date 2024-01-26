@@ -351,13 +351,6 @@ def check_links(source: Path) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    green_echo('=> Installing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL),
-        check=True,
-    )
-
-    green_echo('=> Dumping schema')
     dc_schema = importlib.import_module('dc_schema')
     schema_dict = dc_schema.get_schema(DipDupConfig)
 
@@ -374,13 +367,6 @@ def dump_jsonschema() -> None:
     # NOTE: Dump to the project root
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
-
-    green_echo('=> Removing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'remove', '-G', 'dev', 'dc_schema'),
-        check=True,
-    )
-
 
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
