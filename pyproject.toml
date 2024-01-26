@@ -96,11 +96,15 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
     "ruff",
+    "types-pytz",
+    "types-tabulate",
+]
+docs = [
+    # NOTE: Patched to support nested Pydantic dataclasses.
+    "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",
-    "types-pytz",
-    "types-tabulate",
     "watchdog",
 ]
 
