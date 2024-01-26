@@ -117,9 +117,6 @@ IMAGE_EXTENSIONS = (
     '.jpg',
 )
 
-# A fork of `dc_schema` with a patch to support nested Pydantic dataclasses
-PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
-
 # Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
 MARKDOWNLINT_IGNORE = (
     'line-length',
