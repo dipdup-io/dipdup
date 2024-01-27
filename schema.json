@@ -692,7 +692,15 @@
           "type": "string"
         },
         "ws_url": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "http": {
           "anyOf": [
@@ -716,8 +724,7 @@
       },
       "required": [
         "kind",
-        "url",
-        "ws_url"
+        "url"
       ]
     },
     "SubsquidDatasourceConfig": {

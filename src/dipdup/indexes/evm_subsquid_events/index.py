@@ -42,7 +42,6 @@ class SubsquidEventsIndex(
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._node_datasources: tuple[EvmNodeDatasource, ...] | None = None
-        self._realtime_node: EvmNodeDatasource | None = None
         self._topics: dict[str, dict[str, str]] | None = None
 
     @property
@@ -65,13 +64,6 @@ class SubsquidEventsIndex(
         if not self.node_datasources:
             raise FrameworkException('A node datasource requested, but none attached to this index')
         return random.choice(self.node_datasources)
-
-    @property
-    def realtime_node(self) -> EvmNodeDatasource:
-        if self._realtime_node is None:
-            self._realtime_node = self.random_node
-            self._realtime_node.use_realtime()
-        return self._realtime_node
 
     @property
     def topics(self) -> dict[str, dict[str, str]]:
@@ -141,7 +133,7 @@ class SubsquidEventsIndex(
 
         use_node = False
         if self.node_datasources:
-            node_sync_level = await self.realtime_node.get_head_level()
+            node_sync_level = await self.random_node.get_head_level()
             subsquid_lag = abs(node_sync_level - subsquid_sync_level)
             subsquid_available = subsquid_sync_level - index_level
             self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
