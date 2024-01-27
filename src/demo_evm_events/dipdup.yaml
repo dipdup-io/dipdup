@@ -4,7 +4,7 @@ package: demo_evm_events
 datasources:
   etherscan:
     kind: abi.etherscan
-    url: ${ETHERSCAN_API_URL:-https://api.etherscan.io/api}
+    url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
     api_key: ${ETHERSCAN_API_KEY:-''}
 
   evm_node:
