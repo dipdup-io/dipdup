@@ -2,18 +2,18 @@ spec_version: 2.0
 package: demo_evm_events
 
 datasources:
-  ethscan:
+  etherscan:
     kind: abi.etherscan
 
-  mainnet_node:
+  evm_node:
     kind: evm.node
-    url: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
-    ws_url: wss://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY:-''}
+    url: ${NODE_HTTP_URL:-https://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+    ws_url: ${NODE_WS_URL:-wss://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
 
-  mainnet_subsquid:
+  subsquid:
     kind: evm.subsquid
-    url: ${ARCHIVE_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
-    node: mainnet_node
+    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    node: evm_node
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-}
 
@@ -26,7 +26,7 @@ contracts:
 indexes:
   eth_usdt_events:
     kind: evm.subsquid.events
-    datasource: mainnet_subsquid
+    datasource: subsquid
     handlers:
       - callback: on_transfer
         contract: eth_usdt

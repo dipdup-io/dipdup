@@ -81,7 +81,11 @@ query introspectionQuery($name: String!) {
     }
   }
 }
-""".replace('\n', ' ').replace('  ', '')
+""".replace(
+    '\n', ' '
+).replace(
+    '  ', ''
+)
 
 
 @dataclass

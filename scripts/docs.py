@@ -365,6 +365,7 @@ def dump_jsonschema() -> None:
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
+
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     green_echo('=> Dumping Sphinx references')
