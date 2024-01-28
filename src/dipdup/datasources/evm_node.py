@@ -38,6 +38,7 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
+POLL_INTERVAL = 5
 
 
 EmptyCallback = Callable[[], Awaitable[None]]
@@ -106,14 +107,17 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self.set_sync_level(None, level)
 
     async def run(self) -> None:
-        if not self.realtime:
-            return
-
-        await asyncio.gather(
-            self._ws_loop(),
-            self._log_processor_loop(),
-            self._watchdog.run(),
-        )
+        if self.realtime:
+            await asyncio.gather(
+                self._ws_loop(),
+                self._log_processor_loop(),
+                self._watchdog.run(),
+            )
+        else:
+            while True:
+                level = await self.get_head_level()
+                self.set_sync_level(None, level)
+                await asyncio.sleep(POLL_INTERVAL)
 
     async def _log_processor_loop(self) -> None:
         while True:
