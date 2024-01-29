@@ -62,7 +62,7 @@ class CodeGenerator(ABC):
             force = any(str(path).startswith('types') for path in self._include)
 
         await self.generate_abi()
-        await self.generate_schemas(force)
+        await self.generate_schemas()
         await self._generate_types(force)
 
         await self._generate_models()
@@ -74,7 +74,7 @@ class CodeGenerator(ABC):
     async def generate_abi(self) -> None: ...
 
     @abstractmethod
-    async def generate_schemas(self, force: bool = False) -> None: ...
+    async def generate_schemas(self) -> None: ...
 
     @abstractmethod
     async def generate_hooks(self) -> None: ...

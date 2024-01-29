@@ -77,5 +77,5 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make demos
 	make test
 	make docs_build
-	echo "🎉 Commit changes, merge `aux/X.Y.Z`, run 'git checkout next && git pull && git tag X.Y.Z && git push origin X.Y.Z'" 
+	echo "🎉 Commit changes, merge aux/X.Y.Z branch, tag release on next"
 ##
