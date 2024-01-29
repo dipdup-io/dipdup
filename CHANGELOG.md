@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.3.1] - 2024-01-29
+
+### Fixed
+
+- codegen: Always cleanup jsonschemas before generating types.
+- config: Make `ws_url` field optional for `evm.node` datasource.
+
 ## [7.3.0] - 2024-01-23
 
 ### Added

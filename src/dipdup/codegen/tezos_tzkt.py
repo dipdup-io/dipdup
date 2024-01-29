@@ -107,17 +107,16 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         pass
 
-    async def generate_schemas(self, force: bool = False) -> None:
+    async def generate_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
+        self._cleanup_schemas()
+
         self._logger.info('Fetching contract schemas')
         await late_tzkt_initialization(
             config=self._config,
             datasources=self._datasources,
             reindex_fn=None,
         )
-
-        if force:
-            self._cleanup_schemas()
 
         unused_operation_templates = [
             t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
