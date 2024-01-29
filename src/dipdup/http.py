@@ -217,7 +217,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         metrics.inc(f'{self._alias}:requests_total', 1.0)
         if not url:
-            url = self._path
+            url = self._path or '/'
         elif url.startswith('http'):
             url = url.replace(self._url, '').rstrip('/')
         else:

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- evm.node: Make `withdrawals_root` field optional in `EvmNodeHeadData` model.
+- http: Fixed crash on some datasource URLs.
+
 ## [7.3.1] - 2024-01-29
 
 ### Fixed
