@@ -152,9 +152,8 @@ class SubsquidCodeGenerator(CodeGenerator):
             if isinstance(index_config, SubsquidIndexConfig):
                 await self._fetch_abi(index_config)
 
-    async def generate_schemas(self, force: bool = False) -> None:
-        if force:
-            self._cleanup_schemas()
+    async def generate_schemas(self) -> None:
+        self._cleanup_schemas()
 
         handler_config: HandlerConfig
         events: set[str] = set()

@@ -59,7 +59,6 @@ class SubsquidIndex(
         datasource: DatasourceT,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self._realtime_node: EvmNodeDatasource | None = None
 
         node_field = self._config.datasource.node
         if node_field is None:
@@ -98,12 +97,6 @@ class SubsquidIndex(
         if not self._node_datasources:
             raise FrameworkException('A node datasource requested, but none attached to this index')
         return random.choice(self._node_datasources)
-
-    def get_realtime_node(self) -> EvmNodeDatasource:
-        if self._realtime_node is None:
-            self._realtime_node = self.get_random_node()
-            self._realtime_node.use_realtime()
-        return self._realtime_node
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -156,7 +149,7 @@ class SubsquidIndex(
         if not self.node_datasources:
             return None
 
-        node_sync_level = await self.get_realtime_node().get_head_level()
+        node_sync_level = await self.get_random_node().get_head_level()
         subsquid_lag = abs(node_sync_level - subsquid_level)
         subsquid_available = subsquid_level - index_level
         self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)

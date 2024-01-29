@@ -209,7 +209,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         level = await self.get_head_level()
 
         if not level:
-            raise DatasourceError('Subsquid Network is not ready yet', self.name)
+            raise DatasourceError('Subsquid is not ready yet', self.name)
 
         self.set_sync_level(None, level)
 

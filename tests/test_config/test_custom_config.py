@@ -24,14 +24,18 @@ class TestCustomConfig:
 
     @pytest.fixture(
         scope='session',
-        params=(["""
+        params=(
+            [
+                """
 custom:
     foo: bar
     spam:
       - eggs
       - rice
 
-"""]),
+"""
+            ]
+        ),
     )
     def config_with_custom_section_path(
         self, dummy_config_path: str, tmp_path_factory: TempPathFactory, request: Any

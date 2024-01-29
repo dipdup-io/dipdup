@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.3.0"
+version = "7.3.1"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -90,17 +90,21 @@ dev = [
     "docker",
     "mypy",
     "pprofile",
-    "pytest",
+    "pytest~=7.4",
     "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-cov",
     "pytest-xdist",
     "ruff",
+    "types-pytz",
+    "types-tabulate",
+]
+docs = [
+    # NOTE: Patched to support nested Pydantic dataclasses.
+    "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",
-    "types-pytz",
-    "types-tabulate",
     "watchdog",
 ]
 

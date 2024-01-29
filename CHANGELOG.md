@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - codegen: Don't create intermediate `events.json` file in ABI directory.
 - evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
 
+## [7.3.1] - 2024-01-29
+
+### Fixed
+
+- codegen: Always cleanup jsonschemas before generating types.
+- config: Make `ws_url` field optional for `evm.node` datasource.
+
 ## [7.3.0] - 2024-01-23
 
 ### Added

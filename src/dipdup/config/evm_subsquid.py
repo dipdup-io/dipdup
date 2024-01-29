@@ -19,7 +19,7 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'
-    :param url: URL of Subsquid Network
+    :param url: URL of Subsquid Network API
     :param node: One or more `evm.node` datasource(s) for the same network
     :param http: HTTP client configuration
     """

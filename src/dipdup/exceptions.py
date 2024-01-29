@@ -54,11 +54,13 @@ class Error(ABC, FrameworkException):
 
     @classmethod
     def default_help(cls) -> str:
-        return format_help("""
+        return format_help(
+            """
                 An unexpected error has occurred! Most likely it's a framework bug.
 
                 Please, tell us about it: https://github.com/dipdup-io/dipdup/issues
-        """)
+        """
+        )
 
     @abstractmethod
     def _help(self) -> str: ...

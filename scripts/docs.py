@@ -117,9 +117,6 @@ IMAGE_EXTENSIONS = (
     '.jpg',
 )
 
-# A fork of `dc_schema` with a patch to support nested Pydantic dataclasses
-PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
-
 # Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
 MARKDOWNLINT_IGNORE = (
     'line-length',
@@ -302,21 +299,24 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to check.',
+    default='docs',
 )
-def check_links(source: Path) -> None:
+@click.option('--http', is_flag=True, help='Check HTTP links too.')
+def check_links(source: Path, http: bool) -> None:
     green_echo('=> Checking relative links')
-    files, links, http_links, bad_links, bad_anchors = 0, 0, 0, 0, 0
+    files, links, bad_paths, bad_anchors, bad_http = 0, 0, 0, 0, 0
+    http_links: set[str] = set()
 
     for path in source.rglob('*.md'):
-        logging.info('checking file `%s`', path)
+        _logger.info('checking file `%s`', path)
         files += 1
         data = path.read_text()
         for match in re.finditer(MD_LINK_REGEX, data):
             links += 1
             link = match.group(1)
-            # TODO: Check them too?
+
             if link.startswith('http'):
-                http_links += 1
+                http_links.add(link)
                 continue
 
             link, anchor = link.split('#') if '#' in link else (link, None)
@@ -324,7 +324,7 @@ def check_links(source: Path) -> None:
             full_path = path.parent.joinpath(link)
             if not full_path.exists():
                 logging.error('broken link: `%s`', full_path)
-                bad_links += 1
+                bad_paths += 1
                 continue
 
             if anchor:
@@ -339,10 +339,30 @@ def check_links(source: Path) -> None:
                     bad_anchors += 1
                     continue
 
-    logging.info('_' * 80)
-    logging.info('checked %d files and %d links:', files, links)
-    logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
-    if bad_links or bad_anchors:
+    if http:
+        green_echo('=> Checking HTTP links')
+
+        for link in http_links:
+            green_echo(f'checking link `{link}`')
+            try:
+                res = subprocess.run(
+                    ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', link),
+                    check=True,
+                    capture_output=True,
+                )
+                status_code = int(res.stdout.decode().strip())
+                if status_code != 200:
+                    raise subprocess.CalledProcessError(status_code, 'curl')
+            except subprocess.CalledProcessError:
+                red_echo(f'broken http link: `{status_code}`')
+                bad_http += 1
+
+    _logger.info('_' * 80)
+    _logger.info('checked %d files and %d links:', files, links)
+    _logger.info('paths: %d bad links, %d bad anchors', bad_paths, bad_anchors)
+    _logger.info('http: %d bad links', bad_http)
+
+    if bad_paths or bad_anchors or bad_http:
         red_echo('=> Fix broken links and try again')
         exit(1)
 
@@ -351,13 +371,6 @@ def check_links(source: Path) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    green_echo('=> Installing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL),
-        check=True,
-    )
-
-    green_echo('=> Dumping schema')
     dc_schema = importlib.import_module('dc_schema')
     schema_dict = dc_schema.get_schema(DipDupConfig)
 
@@ -374,12 +387,6 @@ def dump_jsonschema() -> None:
     # NOTE: Dump to the project root
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
-
-    green_echo('=> Removing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'remove', '-G', 'dev', 'dc_schema'),
-        check=True,
-    )
 
 
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
