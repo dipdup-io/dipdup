@@ -60,15 +60,15 @@ _http_errors_in_row = Histogram(
 
 _sqd_processor_last_block = Gauge(
     'sqd_processor_last_block',
-    'Level of the last processed block from Subsquid Archives',
+    'Level of the last processed block from Subsquid Network',
 )
 _sqd_processor_chain_height = Gauge(
     'sqd_processor_chain_height',
-    'Current chain height as reported by Subsquid Archives',
+    'Current chain height as reported by Subsquid Network',
 )
 _sqd_processor_archive_http_errors_in_row = Histogram(
     'sqd_processor_archive_http_errors_in_row',
-    'Number of consecutive failed requests to Subsquid Archives',
+    'Number of consecutive failed requests to Subsquid Network',
 )
 
 

@@ -90,7 +90,7 @@ dev = [
     "docker",
     "mypy",
     "pprofile",
-    "pytest",
+    "pytest~=7.4",
     "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-cov",

@@ -38,6 +38,7 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
+POLL_INTERVAL = 5
 
 
 EmptyCallback = Callable[[], Awaitable[None]]
@@ -62,7 +63,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         super().__init__(config, merge_subscriptions)
         self._web3_client: AsyncWeb3 | None = None
         self._ws_client: WebsocketTransport | None = None
-        self._use_realtime: asyncio.Event = asyncio.Event()
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
         self._logs_queue: Queue[dict[str, Any]] = Queue()
@@ -107,12 +107,17 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self.set_sync_level(None, level)
 
     async def run(self) -> None:
-        await self._use_realtime.wait()
-        await asyncio.gather(
-            self._ws_loop(),
-            self._log_processor_loop(),
-            self._watchdog.run(),
-        )
+        if self.realtime:
+            await asyncio.gather(
+                self._ws_loop(),
+                self._log_processor_loop(),
+                self._watchdog.run(),
+            )
+        else:
+            while True:
+                level = await self.get_head_level()
+                self.set_sync_level(None, level)
+                await asyncio.sleep(POLL_INTERVAL)
 
     async def _log_processor_loop(self) -> None:
         while True:
@@ -149,11 +154,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         raise DatasourceError('Websocket connection failed', self.name)
 
-    def use_realtime(self) -> None:
-        self._use_realtime.set()
+    @property
+    def realtime(self) -> bool:
+        return self._config.ws_url is not None
 
     async def subscribe(self) -> None:
-        if not self._use_realtime.is_set():
+        if not self.realtime:
             return
 
         missing_subscriptions = self._subscriptions.missing_subscriptions
@@ -358,6 +364,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._logger.debug('Creating Websocket client')
 
         url = self._config.ws_url
+        if not url:
+            raise FrameworkException('Spawning node datasource, but `ws_url` is not set')
         self._ws_client = WebsocketTransport(
             url=url,
             protocol=WebsocketProtocol(),
