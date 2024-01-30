@@ -151,7 +151,7 @@ class EvmNodeTransactionData:
 
     @property
     def sighash(self) -> str:
-        return self.hash[:10]
+        return self.input[:10]
 
     @classmethod
     def from_json(cls, transaction_json: dict[str, Any], timestamp: int) -> 'EvmNodeTransactionData':
