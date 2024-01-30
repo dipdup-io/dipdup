@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- cli: Fixed crash when running `init` command with a config outside of the project directory.
 - codegen: Don't create intermediate `events.json` file in ABI directory.
 - evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
 
