@@ -13,8 +13,8 @@ hasura:
   camel_case: ${CAMEL_CASE:-true}
 
 sentry:
-  dsn: ${SENTRY_DSN:-""}
-  environment: ${SENTRY_ENVIRONMENT:-""}
+  dsn: ${SENTRY_DSN:-''}
+  environment: ${SENTRY_ENVIRONMENT:-''}
 
 prometheus:
   host: 0.0.0.0
