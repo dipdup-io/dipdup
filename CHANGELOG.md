@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+## Added
+
+- env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
+
 ## [7.3.1] - 2024-01-29
 
 ### Fixed

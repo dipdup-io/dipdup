@@ -11,6 +11,7 @@ import orjson
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
+from dipdup import env
 from dipdup.exceptions import ProjectImportError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -140,7 +141,7 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
-        if self.root != Path.cwd():
+        if self.root != Path.cwd() or env.NO_SYMLINK:
             return
 
         symlink_path = self.root.joinpath(self.name)
