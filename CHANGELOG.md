@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+
 ## [7.3.1] - 2024-01-29
 
 ### Fixed
