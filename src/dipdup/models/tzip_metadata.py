@@ -6,3 +6,4 @@ class TzipMetadataNetwork(Enum):
     ghostnet = 'ghostnet'
     mumbainet = 'mumbainet'
     nairobinet = 'nairobinet'
+    oxfordnet = 'oxfordnet'
