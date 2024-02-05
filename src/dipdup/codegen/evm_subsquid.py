@@ -58,6 +58,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -> None:
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
+        abi_dirname = abi_path.relative_to(package.abi).parent
         event_extras: defaultdict[str, EventAbiExtra] = defaultdict(EventAbiExtra)  # type: ignore[arg-type]
 
         for abi_item in abi:
@@ -66,7 +67,7 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                 if name not in functions:
                     continue
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_functions' / f'{abi_item["name"]}.json'
+                schema_path = package.schemas / abi_dirname / 'evm_functions' / f'{abi_item["name"]}.json'
             elif abi_item['type'] == 'event':
                 name = abi_item['name']
                 if name in event_extras:
@@ -81,7 +82,7 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
                     continue
 
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_events' / f'{abi_item["name"]}.json'
+                schema_path = package.schemas / abi_dirname / 'evm_events' / f'{abi_item["name"]}.json'
             else:
                 continue
 
@@ -89,7 +90,7 @@ def convert_abi(package: DipDupPackage, events: set[str], functions: set[str]) -
             schema_path.write_bytes(json_dumps(schema))
 
         if event_extras:
-            event_extras_path = package.abi / abi_path.parent.stem / 'events.json'
+            event_extras_path = package.abi / abi_dirname / 'events.json'
             touch(event_extras_path)
             event_extras_path.write_bytes(json_dumps(event_extras))
 
@@ -139,7 +140,7 @@ class SubsquidCodeGenerator(CodeGenerator):
             datasource_configs = self._config.abi_datasources
 
         for handler_config in index_config.handlers:
-            abi_path = self._package.abi / handler_config.contract.module_name / 'abi.json'
+            abi_path = self._package.abi / handler_config.contract.module_path / 'abi.json'
             if abi_path.exists():
                 continue
 
