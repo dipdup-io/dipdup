@@ -176,7 +176,7 @@ class SubsquidEventsIndex(
 
                 level = batch_last_level
                 level_logs = await level_logs_task
-                for level in [int(log['blockNumber'], 16) for log in level_logs]:
+                for level in {int(log['blockNumber'], 16) for log in level_logs}:
                     tasks.append(
                         asyncio.create_task(
                             _fetch_timestamp(level, timestamps),
@@ -198,7 +198,6 @@ class SubsquidEventsIndex(
                 Metrics.set_sqd_processor_last_block(level)
 
                 batch_first_level = batch_last_level + 1
-                await asyncio.sleep(evm_node._http_config.ratelimit_sleep)
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
