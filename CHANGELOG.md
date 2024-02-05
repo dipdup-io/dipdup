@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## Added
+
+- env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
+
 ### Fixed
 
 - cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
