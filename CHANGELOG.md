@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Performance
+
+- evm.subsquid.events: EvmNodeDatasource._synchronize() optimisations
+
 ### Fixed
 
-- ci: Fixed falling `test_metadata_networks()`
+- codegen: Added correct support of dots in typenames.
+- ci: Fixed falling `test_metadata_networks()`.
 
 ## [7.3.1] - 2024-01-29
 
