@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Performance
-
-- evm.subsquid.events: EvmNodeDatasource._synchronize() optimisations
-
 ### Fixed
 
-- codegen: Added correct support of dots in typenames.
-- ci: Fixed falling `test_metadata_networks()`.
+- cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+- codegen: Allow dots to be used in typenames indicating nested packages.
+
+### Performance
+
+- evm.subsquid.events: Increase indexing speed when using EVM node.
 
 ## [7.3.1] - 2024-01-29
 
