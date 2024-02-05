@@ -6,10 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## Added
+
+- env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
+
 ### Fixed
 
+- cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+- codegen: Allow dots to be used in typenames indicating nested packages.
 - evm.node: Make `withdrawals_root` field optional in `EvmNodeHeadData` model.
 - http: Fixed crash on some datasource URLs.
+
+### Performance
+
+- evm.subsquid.events: Increase indexing speed when using EVM node.
 
 ## [7.3.1] - 2024-01-29
 
