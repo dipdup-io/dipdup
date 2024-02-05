@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - tzkt: Don't use deprecated `/events` WebSockets endpoint.
 
+### Other
+
+- metadata: Added `oxfordnet` to supported networks.
+
 ## [6.5.15] - 2023-12-01
 
 ### Other
