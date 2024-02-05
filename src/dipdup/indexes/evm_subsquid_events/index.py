@@ -171,7 +171,7 @@ class SubsquidEventsIndex(
                 )
 
                 async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
-                    block = await self.random_node.get_block_by_level(level, full_transactions_data=False)
+                    block = await self.random_node.get_block_by_level(level)
                     timestamps[level] = int(block['timestamp'], 16)
 
                 level = batch_last_level

@@ -215,8 +215,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     async def get_block_by_hash(self, block_hash: str) -> dict[str, Any]:
         return await self._jsonrpc_request('eth_getBlockByHash', [block_hash, True])  # type: ignore[no-any-return]
 
-    async def get_block_by_level(self, block_number: int, full_transactions_data: bool = True) -> dict[str, Any]:
-        return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), full_transactions_data])  # type: ignore[no-any-return]
+    async def get_block_by_level(self, block_number: int, full_transactions: bool = False) -> dict[str, Any]:
+        return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), full_transactions])  # type: ignore[no-any-return]
 
     async def get_logs(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         return await self._jsonrpc_request('eth_getLogs', [params])  # type: ignore[no-any-return]
