@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+- codegen: Allow dots to be used in typenames indicating nested packages.
+
+### Performance
+
+- evm.subsquid.events: Increase indexing speed when using EVM node.
 
 ## [7.3.1] - 2024-01-29
 
