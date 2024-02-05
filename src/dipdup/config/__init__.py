@@ -51,9 +51,9 @@ from dipdup.models import SkipHistory
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
+from pathlib import Path
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
     from dipdup.subscriptions import Subscription
 
@@ -241,6 +241,10 @@ class ContractConfig(ABC, NameMixin):
     @property
     def module_name(self) -> str:
         return self.typename or self.name
+
+    @property
+    def module_path(self) -> Path:
+        return Path(*self.module_name.split('.'))
 
 
 class DatasourceConfig(ABC, NameMixin):
