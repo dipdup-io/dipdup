@@ -54,7 +54,7 @@ class EvmNodeHeadData:
     gas_used: int
     timestamp: int
     base_fee_per_gas: int
-    withdrawals_root: str
+    withdrawals_root: str | None
     nonce: str
     mix_hash: str
 
@@ -76,7 +76,7 @@ class EvmNodeHeadData:
             gas_used=int(block_json['gasUsed'], 16),
             timestamp=int(block_json['timestamp'], 16),
             base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
-            withdrawals_root=block_json['withdrawalsRoot'],
+            withdrawals_root=block_json.get('withdrawalsRoot', None),
             nonce=block_json['nonce'],
             mix_hash=block_json['mixHash'],
         )

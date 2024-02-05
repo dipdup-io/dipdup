@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
 - codegen: Allow dots to be used in typenames indicating nested packages.
+- evm.node: Make `withdrawals_root` field optional in `EvmNodeHeadData` model.
+- http: Fixed crash on some datasource URLs.
 
 ### Performance
 
