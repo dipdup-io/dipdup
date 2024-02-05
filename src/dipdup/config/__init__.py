@@ -25,6 +25,7 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
+from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
 from typing import Any
@@ -51,7 +52,6 @@ from dipdup.models import SkipHistory
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
-from pathlib import Path
 if TYPE_CHECKING:
     from collections.abc import Iterator
 

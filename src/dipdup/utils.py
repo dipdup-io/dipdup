@@ -250,6 +250,6 @@ class Watchdog:
                     self._watchdog.wait(),
                     timeout=self._timeout,
                 )
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 msg = f'Watchdog timeout; no messages received in {self._timeout} seconds'
                 raise FrameworkException(msg) from e
