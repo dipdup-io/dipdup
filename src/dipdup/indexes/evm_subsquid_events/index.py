@@ -26,8 +26,6 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-# NOTE: This value was chosen empirically and likely is not optimal.
-NODE_BATCH_SIZE = 32
 
 
 class SubsquidEventsIndex(
@@ -152,12 +150,9 @@ class SubsquidEventsIndex(
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
 
-            # NOTE: Requesting logs by batches of datasource_config.http.batch_size or NODE_BATCH_SIZE.
+            # NOTE: Requesting logs by batches of `http.batch_size`
             evm_node: EvmNodeDatasource = self.random_node
-            if evm_node._http_config:
-                batch_size = evm_node._http_config.batch_size
-            else:
-                batch_size = NODE_BATCH_SIZE
+            batch_size = evm_node._http_config.batch_size
 
             batch_first_level = first_level
             while batch_first_level <= sync_level:

@@ -56,8 +56,10 @@ class NodeHead:
 
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
-    # TODO: Make dynamic
-    _default_http_config = HttpConfig(ratelimit_sleep=30)
+    _default_http_config = HttpConfig(
+        batch_size=32,
+        ratelimit_sleep=30,
+    )
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
