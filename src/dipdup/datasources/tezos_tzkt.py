@@ -241,7 +241,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
-        batch_size=10_000,
+        batch_size=10000,
     )
 
     def __init__(

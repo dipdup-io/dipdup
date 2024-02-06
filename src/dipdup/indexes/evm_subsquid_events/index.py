@@ -26,8 +26,6 @@ from dipdup.prometheus import Metrics
 
 LEVEL_BATCH_TIMEOUT = 1
 NODE_SYNC_LIMIT = 128
-# NOTE: This value was chosen empirically and likely is not optimal.
-NODE_BATCH_SIZE = 32
 
 
 class SubsquidEventsIndex(
@@ -152,12 +150,9 @@ class SubsquidEventsIndex(
                 typename = handler.contract.module_name
                 topics.add(self.topics[typename][handler.name])
 
-            # NOTE: Requesting logs by batches of datasource_config.http.batch_size or NODE_BATCH_SIZE.
+            # NOTE: Requesting logs by batches of `http.batch_size`
             evm_node: EvmNodeDatasource = self.random_node
-            if evm_node._http_config:
-                batch_size = evm_node._http_config.batch_size
-            else:
-                batch_size = NODE_BATCH_SIZE
+            batch_size = evm_node._http_config.batch_size
 
             batch_first_level = first_level
             while batch_first_level <= sync_level:
@@ -176,12 +171,12 @@ class SubsquidEventsIndex(
                 )
 
                 async def _fetch_timestamp(level: int, timestamps: dict[int, int]) -> None:
-                    block = await self.random_node.get_block_by_level(level, full_transactions_data=False)
+                    block = await self.random_node.get_block_by_level(level)
                     timestamps[level] = int(block['timestamp'], 16)
 
                 level = batch_last_level
                 level_logs = await level_logs_task
-                for level in [int(log['blockNumber'], 16) for log in level_logs]:
+                for level in {int(log['blockNumber'], 16) for log in level_logs}:
                     tasks.append(
                         asyncio.create_task(
                             _fetch_timestamp(level, timestamps),
@@ -203,7 +198,6 @@ class SubsquidEventsIndex(
                 Metrics.set_sqd_processor_last_block(level)
 
                 batch_first_level = batch_last_level + 1
-                await asyncio.sleep(evm_node._http_config.ratelimit_sleep)
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             fetcher = self._create_fetcher(first_level, sync_level)
