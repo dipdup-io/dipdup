@@ -195,7 +195,7 @@ class ResolvedHttpConfig:
     connection_limit: int = 100
     connection_timeout: int = 60
     request_timeout: int = 60
-    batch_size: int = 10_000
+    batch_size: int = 10000
     replay_path: str | None = None
     alias: str | None = None
 
