@@ -8,6 +8,10 @@ authors = [
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
 ]
+maintainers = [
+    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 keywords = [
