@@ -800,7 +800,8 @@
         "mainnet",
         "ghostnet",
         "mumbainet",
-        "nairobinet"
+        "nairobinet",
+        "oxfordnet"
       ]
     },
     "TzipMetadataDatasourceConfig": {

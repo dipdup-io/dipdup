@@ -90,7 +90,7 @@ rlp==4.0.0
 rpds-py==0.17.1
 ruamel-yaml==0.18.5
 ruamel-yaml-clib==0.2.8; platform_python_implementation == "CPython" and python_version < "3.13"
-ruff==0.2.0
+ruff==0.2.1
 sentry-sdk==1.40.0
 setuptools==69.0.3
 six==1.16.0
