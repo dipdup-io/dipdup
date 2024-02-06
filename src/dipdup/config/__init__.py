@@ -409,7 +409,7 @@ class HasuraConfig:
     admin_secret: str | None = field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
-    select_limit: int = 100
+    select_limit: int = 1000
     allow_aggregations: bool = True
     allow_inconsistent_metadata: bool = False
     camel_case: bool = False
