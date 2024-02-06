@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.
+
 ### Fixed
 
 - tzkt: Don't use deprecated `/events` WebSockets endpoint.
+
+### Other
+
+- deps: Updated pytezos to 3.11.0.
 
 ### Other
 
