@@ -64,8 +64,7 @@ class Error(ABC, FrameworkException):
         )
 
     @abstractmethod
-    def _help(self) -> str:
-        ...
+    def _help(self) -> str: ...
 
 
 @dataclass(repr=False)

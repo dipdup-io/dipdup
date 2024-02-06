@@ -325,8 +325,7 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 @cli.group(help='Commands related to Hasura integration.')
 @click.pass_context
 @_cli_wrapper
-async def hasura(ctx: click.Context) -> None:
-    ...
+async def hasura(ctx: click.Context) -> None: ...
 
 
 @hasura.command(name='configure')

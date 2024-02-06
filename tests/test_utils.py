@@ -11,8 +11,7 @@ from dipdup.utils.database import iter_models
 from dipdup.utils.database import tortoise_wrapper
 
 
-class SomeException(Exception):
-    ...
+class SomeException(Exception): ...
 
 
 async def test_in_global_transaction() -> None:

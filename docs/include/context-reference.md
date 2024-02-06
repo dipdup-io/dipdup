@@ -1,4 +1,5 @@
 <!-- markdownlint-disable first-line-h1 -->
+
   <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">DipDupContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dipdup.context.DipDupContext" title="Link to this definition">¶</a></dt>

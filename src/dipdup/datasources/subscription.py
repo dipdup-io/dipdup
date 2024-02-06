@@ -15,8 +15,7 @@ class Subscription:
     method: str
 
     @abstractmethod
-    def get_request(self) -> Any:
-        ...
+    def get_request(self) -> Any: ...
 
 
 class SubscriptionManager:

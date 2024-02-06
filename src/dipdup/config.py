@@ -12,6 +12,7 @@ As you can see from the amount of code below, lots of things are going on here:
 Dataclasses are used in this module instead of BaseModel for historical reasons, thus "...Mixin" classes to workaround the lack of proper
 inheritance.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -288,8 +289,7 @@ class DatasourceConfig(ABC, NameMixin):
 
     # TODO: Pick refactoring from `ref/config-module`
     @abstractmethod
-    def __hash__(self) -> int:
-        ...
+    def __hash__(self) -> int: ...
 
 
 @dataclass
@@ -416,12 +416,10 @@ class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
     @abstractmethod
-    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        ...
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]: ...
 
     @abstractmethod
-    def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        ...
+    def iter_arguments(self) -> Iterator[tuple[str, str]]: ...
 
     def format_imports(self, package: str) -> Iterator[str]:
         for package_name, cls in self.iter_imports(package):
@@ -890,8 +888,7 @@ class IndexConfig(ABC, TemplateValuesMixin, NameMixin, SubscriptionsMixin, Paren
         config_dict['datasource'].pop('buffer_size', None)
 
     @abstractmethod
-    def import_objects(self, package: str) -> None:
-        ...
+    def import_objects(self, package: str) -> None: ...
 
 
 @dataclass

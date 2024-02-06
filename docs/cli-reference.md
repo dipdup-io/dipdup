@@ -1,4 +1,5 @@
 <!-- markdownlint-disable first-line-h1 -->
+
   <section id="dipdup">
 <h1>dipdup<a class="headerlink" href="#dipdup" title="Link to this heading">¶</a></h1>
 <p>Manage and run DipDup indexers.</p>

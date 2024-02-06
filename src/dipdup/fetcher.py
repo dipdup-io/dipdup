@@ -94,5 +94,4 @@ class DataFetcher(ABC, Generic[FetcherBufferT]):
         self._head = 0
 
     @abstractmethod
-    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
-        ...
+    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]: ...

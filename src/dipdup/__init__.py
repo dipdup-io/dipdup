@@ -2,6 +2,7 @@
 
 Contains software versions and other metadata.
 """
+
 import importlib.metadata
 
 # NOTE: Load version from package

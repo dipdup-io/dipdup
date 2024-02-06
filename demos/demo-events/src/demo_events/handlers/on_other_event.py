@@ -6,5 +6,4 @@ from dipdup.models import UnknownEvent
 async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
-) -> None:
-    ...
+) -> None: ...

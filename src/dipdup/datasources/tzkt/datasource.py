@@ -225,8 +225,7 @@ class SignalRDatasource(IndexDatasource, ABC):
         raise DatasourceError(datasource=self.name, msg='Websocket connection failed')
 
     @abstractmethod
-    def _get_signalr_client(self) -> SignalRClient:
-        ...
+    def _get_signalr_client(self) -> SignalRClient: ...
 
 
 class TzktDatasource(SignalRDatasource):
