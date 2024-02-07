@@ -9,8 +9,9 @@ database:
 hasura:
   url: http://${HASURA_HOST:-demo_factories_hasura}:8080
   admin_secret: ${HASURA_SECRET}
-  allow_aggregations: false
-  camel_case: true
+  allow_aggregations: ${HASURA_ALLOW_AGGREGATIONS:-false}
+  select_limit: ${HASURA_SELECT_LIMIT:-100}
+  camel_case: ${HASURA_CAMEL_CASE:-true}
 
 sentry:
   dsn: ${SENTRY_DSN:-''}

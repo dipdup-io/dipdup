@@ -79,8 +79,10 @@ class LevelData:
 
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
-    # TODO: Make dynamic
-    _default_http_config = HttpConfig(ratelimit_sleep=30)
+    _default_http_config = HttpConfig(
+        batch_size=32,
+        ratelimit_sleep=30,
+    )
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
@@ -156,7 +158,10 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs)
                 await self.emit_logs(logs)
             if level_data.fetch_transactions:
-                full_block = await self.get_block_by_level(head.level)
+                full_block = await self.get_block_by_level(
+                    block_number=head.level,
+                    full_transactions=True,
+                )
                 transactions = tuple(
                     EvmNodeTransactionData.from_json(transaction, head.timestamp)
                     for transaction in full_block['transactions']
@@ -252,8 +257,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     async def get_block_by_hash(self, block_hash: str) -> dict[str, Any]:
         return await self._jsonrpc_request('eth_getBlockByHash', [block_hash, True])  # type: ignore[no-any-return]
 
-    async def get_block_by_level(self, block_number: int) -> dict[str, Any]:
-        return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), True])  # type: ignore[no-any-return]
+    async def get_block_by_level(self, block_number: int, full_transactions: bool = False) -> dict[str, Any]:
+        return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), full_transactions])  # type: ignore[no-any-return]
 
     async def get_logs(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         return await self._jsonrpc_request('eth_getLogs', [params])  # type: ignore[no-any-return]

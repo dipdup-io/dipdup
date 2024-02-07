@@ -25,6 +25,7 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
+from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
 from typing import Any
@@ -53,7 +54,6 @@ from dipdup.yaml import DipDupYAMLConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
     from dipdup.subscriptions import Subscription
 
@@ -195,7 +195,7 @@ class ResolvedHttpConfig:
     connection_limit: int = 100
     connection_timeout: int = 60
     request_timeout: int = 60
-    batch_size: int = 10_000
+    batch_size: int = 10000
     replay_path: str | None = None
     alias: str | None = None
 
@@ -241,6 +241,10 @@ class ContractConfig(ABC, NameMixin):
     @property
     def module_name(self) -> str:
         return self.typename or self.name
+
+    @property
+    def module_path(self) -> Path:
+        return Path(*self.module_name.split('.'))
 
 
 class DatasourceConfig(ABC, NameMixin):
@@ -405,7 +409,7 @@ class HasuraConfig:
     admin_secret: str | None = field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
-    select_limit: int = 100
+    select_limit: int = 1000
     allow_aggregations: bool = True
     allow_inconsistent_metadata: bool = False
     camel_case: bool = False

@@ -255,7 +255,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
+    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
         fire_and_forget(_check_version())
 
     try:

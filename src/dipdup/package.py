@@ -11,6 +11,7 @@ from typing import cast
 import orjson
 from pydantic import BaseModel
 
+from dipdup import env
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ProjectImportError
 from dipdup.project import Answers
@@ -150,7 +151,7 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
-        if self.root != Path.cwd():
+        if self.root != Path.cwd() or env.NO_SYMLINK:
             return
 
         symlink_path = self.root.joinpath(self.name)

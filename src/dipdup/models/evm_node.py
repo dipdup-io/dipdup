@@ -57,7 +57,7 @@ class EvmNodeHeadData:
     state_root: str
     timestamp: int
     transactions_root: str
-    withdrawals_root: str
+    withdrawals_root: str | None
 
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
@@ -79,7 +79,7 @@ class EvmNodeHeadData:
             state_root=block_json['stateRoot'],
             timestamp=int(block_json['timestamp'], 16),
             transactions_root=block_json['transactionsRoot'],
-            withdrawals_root=block_json['withdrawalsRoot'],
+            withdrawals_root=block_json.get('withdrawalsRoot', None),
         )
 
     @property

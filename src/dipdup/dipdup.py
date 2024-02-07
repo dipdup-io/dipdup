@@ -185,7 +185,7 @@ class IndexDispatcher:
         # NOTE: Run forever if at least one index has no upper bound.
         for index in self._indexes.values():
             if isinstance(index._config, TzktHeadIndexConfig):
-                continue
+                return False
             if not index._config.last_level:
                 return False
 

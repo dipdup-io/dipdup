@@ -276,7 +276,7 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     )
     event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(path), with_rst=False)  # type: ignore[no-untyped-call]
+        event_handler.on_modified(FileModifiedEvent(str(path)), with_rst=False)
 
     if not (watch or serve):
         return

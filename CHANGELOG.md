@@ -16,6 +16,23 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - codegen: Don't create intermediate `events.json` file in ABI directory.
 - evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
 
+## [7.3.2] - 2024-02-06
+
+## Added
+
+- env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
+
+### Fixed
+
+- cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+- codegen: Allow dots to be used in typenames indicating nested packages.
+- evm.node: Make `withdrawals_root` field optional in `EvmNodeHeadData` model.
+- http: Fixed crash on some datasource URLs.
+
+### Performance
+
+- evm.subsquid.events: Increase indexing speed when using EVM node.
+
 ## [7.3.1] - 2024-01-29
 
 ### Fixed
@@ -1308,7 +1325,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.3.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.3.2...HEAD
+[7.3.2]: https://github.com/dipdup-io/dipdup/compare/7.3.1...7.3.2
+[7.3.1]: https://github.com/dipdup-io/dipdup/compare/7.3.0...7.3.1
 [7.3.0]: https://github.com/dipdup-io/dipdup/compare/7.2.2...7.3.0
 [7.2.2]: https://github.com/dipdup-io/dipdup/compare/7.2.1...7.2.2
 [7.2.1]: https://github.com/dipdup-io/dipdup/compare/7.2.0...7.2.1

@@ -124,7 +124,10 @@ class SubsquidIndex(
         blocks: dict[int, Any] = {}
 
         async def _fetch(level: int) -> None:
-            blocks[level] = await self.get_random_node().get_block_by_level(level)
+            blocks[level] = await self.get_random_node().get_block_by_level(
+                block_number=level,
+                full_transactions=True,
+            )
 
         for level in range(first_level, last_level + 1):
             tasks.append(
