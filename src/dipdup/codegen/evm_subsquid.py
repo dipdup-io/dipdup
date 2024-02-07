@@ -229,6 +229,10 @@ class SubsquidCodeGenerator(CodeGenerator):
         return schema_path.stem
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        if not {'evm_events', 'evm_methods'} & set(schema_path.parts):
+        markers = {
+            'evm_events',
+            'evm_methods',
+        }
+        if not set(schema_path.parts).intersection(markers):
             return
         await super()._generate_type(schema_path, force)
