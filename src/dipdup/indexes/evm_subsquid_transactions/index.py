@@ -61,9 +61,12 @@ class SubsquidTransactionsIndex(
         while batch_first_level <= sync_level:
             batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
 
-            blocks_batch = await self.get_blocks_batch(batch_first_level, batch_last_level)
+            block_batch = await self.get_blocks_batch(
+                levels=set(range(batch_first_level, batch_last_level + 1)),
+                full_transactions=True,
+            )
 
-            for level, block in sorted(blocks_batch.items()):
+            for level, block in sorted(block_batch.items()):
                 timestamp = int(block['timestamp'], 16)
                 parsed_transactions = tuple(
                     EvmNodeTransactionData.from_json(transaction, timestamp) for transaction in block['transactions']

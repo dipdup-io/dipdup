@@ -1,4 +1,3 @@
-import asyncio
 from collections import deque
 from collections.abc import Iterable
 from typing import Any
@@ -65,12 +64,13 @@ class SubsquidEventsIndex(
         while batch_first_level <= sync_level:
             batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
 
-            logs_batch, blocks_batch = await asyncio.gather(
-                self.get_logs_batch(batch_first_level, batch_last_level),
-                self.get_blocks_batch(batch_first_level, batch_last_level),
+            log_batch = await self.get_logs_batch(batch_first_level, batch_last_level)
+            block_batch = await self.get_blocks_batch(
+                levels=set(log_batch.keys()),
+                full_transactions=True,
             )
 
-            for level_logs, level_block in zip(logs_batch.values(), blocks_batch.values(), strict=True):
+            for level_logs, level_block in zip(log_batch.values(), block_batch.values(), strict=True):
                 timestamp = int(level_block['timestamp'], 16)
                 parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamp) for log in level_logs)
 

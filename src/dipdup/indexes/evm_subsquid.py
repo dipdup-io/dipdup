@@ -119,17 +119,21 @@ class SubsquidIndex(
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(set[int], sync_levels))
 
-    async def get_blocks_batch(self, first_level: int, last_level: int) -> dict[int, dict[str, Any]]:
+    async def get_blocks_batch(
+        self,
+        levels: set[int],
+        full_transactions: bool = False,
+    ) -> dict[int, dict[str, Any]]:
         tasks: deque[asyncio.Task[Any]] = deque()
         blocks: dict[int, Any] = {}
 
         async def _fetch(level: int) -> None:
             blocks[level] = await self.get_random_node().get_block_by_level(
                 block_number=level,
-                full_transactions=True,
+                full_transactions=full_transactions,
             )
 
-        for level in range(first_level, last_level + 1):
+        for level in levels:
             tasks.append(
                 asyncio.create_task(
                     _fetch(level),
@@ -140,7 +144,11 @@ class SubsquidIndex(
         await asyncio.gather(*tasks)
         return blocks
 
-    async def get_logs_batch(self, first_level: int, last_level: int) -> dict[int, list[dict[str, Any]]]:
+    async def get_logs_batch(
+        self,
+        first_level: int,
+        last_level: int,
+    ) -> dict[int, list[dict[str, Any]]]:
         grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
         logs = await self.get_random_node().get_logs(
             {
