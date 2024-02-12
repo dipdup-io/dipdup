@@ -561,12 +561,12 @@ class ApiConfig:
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
-    :param reindex: Mapping of reindexing reasons and actions DipDup performs
-    :param scheduler: `apscheduler` scheduler config
-    :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Spawn realtime datasources immediately after startup
-    :param skip_version_check: Do not check for new DipDup versions on startup
-    :param rollback_depth: A number of levels to keep for rollback
+    :param reindex: Mapping of reindexing reasons and actions DipDup performs.
+    :param scheduler: `apscheduler` scheduler config.
+    :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
+    :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
+    :param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.
+    :param rollback_depth: A number of levels to keep for rollback.
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
