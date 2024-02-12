@@ -116,7 +116,7 @@ class ConfigurationError(Error):
 
 @dataclass(repr=False)
 class InvalidModelsError(Error):
-    """Can't initialize database, `models.py` module is invalid"""
+    """Can't initialize the database, `models` package is invalid"""
 
     msg: str
     model: type['Model']
