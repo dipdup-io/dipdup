@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
+
+### Fixed
+
+- cli: Fixed crash when running `init` command with a config outside of the project directory.
+- codegen: Don't create intermediate `events.json` file in ABI directory.
+- evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
+
 ## [7.3.2] - 2024-02-06
 
 ## Added

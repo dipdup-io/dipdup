@@ -26,6 +26,8 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -243,6 +245,8 @@ class DipDupContext:
                 typename=typename,
             )
         elif kind == 'evm':
+            if address is None:
+                raise ConfigurationError('EVM contract address is required')
             contract_config = EvmContractConfig(
                 kind=kind,
                 address=address,
@@ -294,6 +298,8 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+        from dipdup.indexes.evm_subsquid_traces.index import SubsquidTracesIndex
+        from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -310,6 +316,8 @@ class DipDupContext:
             | TzktTokenTransfersIndex
             | TzktEventsIndex
             | SubsquidEventsIndex
+            | SubsquidTracesIndex
+            | SubsquidTransactionsIndex
         )
 
         datasource_name = index_config.datasource.name
@@ -340,6 +348,14 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            datasource = self.get_subsquid_datasource(datasource_name)
+            node_field = index_config.datasource.node
+            if node_field:
+                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
+            index = SubsquidTransactionsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 

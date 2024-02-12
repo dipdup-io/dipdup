@@ -16,6 +16,9 @@ Config
 .. autoclass:: dipdup.config.evm_subsquid_events.SubsquidEventsHandlerConfig
 .. autoclass:: dipdup.config.evm_subsquid_events.SubsquidEventsIndexConfig
 .. autoclass:: dipdup.config.evm_subsquid.SubsquidDatasourceConfig
+.. autoclass:: dipdup.config.evm_subsquid.SubsquidIndexConfig
+.. autoclass:: dipdup.config.evm_subsquid_transactions.SubsquidTransactionsHandlerConfig
+.. autoclass:: dipdup.config.evm_subsquid_transactions.SubsquidTransactionsIndexConfig
 .. autoclass:: dipdup.config.HandlerConfig
 .. autoclass:: dipdup.config.HasuraConfig
 .. autoclass:: dipdup.config.HookConfig
@@ -42,7 +45,7 @@ Config
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerSmartRollupExecutePatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationUnfilteredHandlerConfig
-.. autoclass:: dipdup.config.tezos_tzkt_operations.PatternConfig
+.. autoclass:: dipdup.config.tezos_tzkt_operations.TezosPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsIndexConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.TzktOperationsUnfilteredIndexConfig

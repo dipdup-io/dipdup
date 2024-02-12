@@ -985,6 +985,18 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.to, str):
+                    handler_config.to = self.get_evm_contract(handler_config.to)
+
+                if isinstance(handler_config.from_, str):
+                    handler_config.from_ = self.get_evm_contract(handler_config.from_)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1018,6 +1030,8 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -1046,9 +1060,8 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TzktDatasourceConfig
 )
-ResolvedIndexConfigU = (
-    SubsquidEventsIndexConfig
-    | TzktBigMapsIndexConfig
+TzktIndexConfigU = (
+    TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig
     | TzktOperationsIndexConfig
@@ -1056,6 +1069,9 @@ ResolvedIndexConfigU = (
     | TzktTokenTransfersIndexConfig
     | TzktTokenBalancesIndexConfig
 )
+SubsquidIndexConfigU = SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
+
+ResolvedIndexConfigU = TzktIndexConfigU | SubsquidIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

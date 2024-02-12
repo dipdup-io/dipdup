@@ -1,6 +1,6 @@
 # demo_factories
 
-A very basic indexer for USDt transfers
+Example of spawning indexes in runtime
 
 ## Installation
 

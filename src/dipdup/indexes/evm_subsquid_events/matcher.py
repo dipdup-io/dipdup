@@ -12,10 +12,10 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
-from dipdup.package import EventAbiExtra
 from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 _logger = logging.getLogger(__name__)
 
@@ -30,11 +30,14 @@ def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ..
 decode_indexed_topics = caches.add_lru(decode_indexed_topics, 2**14)
 
 
-def decode_event_data(data: str, topics: tuple[str, ...], event_abi: EventAbiExtra) -> tuple[Any, ...]:
+def decode_event_data(
+    data: str,
+    topics: tuple[str, ...],
+    inputs: tuple[tuple[str, bool], ...],
+) -> tuple[Any, ...]:
     """Decode event data from hex string"""
     # NOTE: Indexed and non-indexed inputs can go in arbitrary order. We need
     # NOTE: to decode them separately and then merge back.
-    inputs = event_abi.inputs
     indexed_values = iter(decode_indexed_topics(tuple(n for n, i in inputs if i), topics))
 
     non_indexed_bytes = decode_hex(data)
@@ -58,21 +61,19 @@ def prepare_event_handler_args(
     handler_config: SubsquidEventsHandlerConfig,
     matched_event: SubsquidEventData | EvmNodeLogData,
 ) -> SubsquidEvent[Any]:
-    """Prepare handler arguments, parse key and value. Schedule callback in executor."""
-
     typename = handler_config.contract.module_name
-    event_abi = package.get_evm_events(typename)[handler_config.name]
+    inputs = package.get_converted_abi(typename)['events'][handler_config.name]['inputs']
 
     type_ = package.get_type(
         typename=typename,
         module=f'evm_events.{pascal_to_snake(handler_config.name)}',
-        name=handler_config.name,
+        name=snake_to_pascal(handler_config.name),
     )
 
     data = decode_event_data(
         data=matched_event.data,
         topics=tuple(matched_event.topics),
-        event_abi=event_abi,
+        inputs=inputs,
     )
 
     typed_payload = parse_object(

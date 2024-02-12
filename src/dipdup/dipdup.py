@@ -46,6 +46,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -63,6 +64,8 @@ from dipdup.models import Schema
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.models.evm_node import EvmNodeTraceData
+from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
@@ -265,19 +268,16 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
-        stats = metrics.stats()
-        progress = stats.get('progress', 0)
-        total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
-        current_speed = stats.get('current_speed', 0)
-        synchronized_at = stats.get('synchronized_at', 0)
-        if synchronized_at:
+        total, indexed = metrics['levels_total'], metrics['levels_indexed']
+        current_speed = int(metrics['current_speed'])
+        if metrics['synchronized_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
                 'indexing %.2f%%: %s levels left (%s lps)',
-                progress * 100,
+                metrics['progress'] * 100,
                 total - indexed,
-                int(current_speed),
+                current_speed,
             )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
@@ -386,6 +386,8 @@ class IndexDispatcher:
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
+                datasource.call_on_traces(self._on_evm_node_traces)
+                datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
@@ -419,13 +421,36 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
 
-    async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
+    async def _on_evm_node_logs(
+        self,
+        datasource: EvmNodeDatasource,
+        logs: tuple[EvmNodeLogData, ...],
+    ) -> None:
         for index in self._indexes.values():
             if not isinstance(index, SubsquidEventsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue
             index.push_realtime_message(logs)
+
+    async def _on_evm_node_traces(
+        self,
+        datasource: EvmNodeDatasource,
+        traces: tuple[EvmNodeTraceData, ...],
+    ) -> None:
+        raise NotImplementedError
+
+    async def _on_evm_node_transactions(
+        self,
+        datasource: EvmNodeDatasource,
+        transactions: tuple[EvmNodeTransactionData, ...],
+    ) -> None:
+        for index in self._indexes.values():
+            if not isinstance(index, SubsquidTransactionsIndex):
+                continue
+            if datasource not in index.node_datasources:
+                continue
+            index.push_realtime_message(transactions)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
         raise NotImplementedError

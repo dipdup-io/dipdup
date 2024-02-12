@@ -276,7 +276,7 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     )
     event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(path), with_rst=False)  # type: ignore[no-untyped-call]
+        event_handler.on_modified(FileModifiedEvent(str(path)), with_rst=False)
 
     if not (watch or serve):
         return
@@ -401,7 +401,8 @@ def dump_references() -> None:
 
     green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
-    diff -= {'Config'}
+    # FIXME: Traces not implemented yet
+    diff -= {'Config', 'SubsquidTracesIndexConfig', 'SubsquidTracesHandlerConfig'}
     if diff:
         red_echo('=> Config reference is outdated! Update `docs/config-reference.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')

@@ -8,11 +8,11 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
-from dipdup.config import IndexConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidIndexConfig
+from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
-from dipdup.models.evm_node import EvmNodeNewHeadsSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -28,7 +28,7 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
     :param callback: Callback name
     :param contract: EVM contract
-    :param name: Method name
+    :param name: Event name
     """
 
     contract: EvmContractConfig
@@ -51,7 +51,7 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class SubsquidEventsIndexConfig(IndexConfig):
+class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     """Subsquid datasource config
 
     :param kind: Always 'evm.subsquid.events'
@@ -73,13 +73,8 @@ class SubsquidEventsIndexConfig(IndexConfig):
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
-        subs: set[Subscription] = set()
-        subs.add(EvmNodeNewHeadsSubscription())
+        subs: set[Subscription] = {EvmNodeHeadSubscription()}
         for handler in self.handlers:
             if address := handler.contract.address:
                 subs.add(EvmNodeLogsSubscription(address=address))
-            elif abi := handler.contract.abi:
-                subs.add(EvmNodeLogsSubscription(topics=((abi,),)))
-            else:
-                raise NotImplementedError
         return subs
