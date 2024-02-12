@@ -2405,7 +2405,7 @@
         },
         "select_limit": {
           "type": "integer",
-          "default": 100
+          "default": 1000
         },
         "allow_aggregations": {
           "type": "boolean",
