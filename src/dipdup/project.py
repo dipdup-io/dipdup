@@ -131,15 +131,7 @@ def prompt_anyof(
     return index, options[index]
 
 
-def answers_from_terminal() -> Answers:
-    """Script running on dipdup new command and will create a new project base from interactive survey"""
-    import survey
-
-    big_yellow_echo(
-        'Welcome to DipDup! This command will help you to create a new project.\n'
-        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
-    )
-
+def template_from_terminal() -> str:
     group_index, _ = prompt_anyof(
         question='What blockchain are you going to index?',
         options=(
@@ -173,6 +165,22 @@ def answers_from_terminal() -> Answers:
         comments=tuple(comments),
         default=0,
     )
+    return template
+
+def answers_from_terminal(template: str | None) -> Answers:
+    """Script running on dipdup new command and will create a new project base from interactive survey"""
+    import survey
+
+    big_yellow_echo(
+        'Welcome to DipDup! This command will help you to create a new project.\n'
+        'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
+    )
+
+    if template:
+        echo(f'Using template `{template}`\n')
+    else:
+        template = template_from_terminal()
+
     answers = get_default_answers()
     answers['template'] = template
 
