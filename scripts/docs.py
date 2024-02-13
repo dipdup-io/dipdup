@@ -423,6 +423,47 @@ def dump_references() -> None:
         # NOTE: Strip HTML boilerplate
         out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES])
 
+        # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
+        # to: ## dipdup.config.DipDupConfig
+        for match_ in re.finditer(r'<dt class="sig sig-object py" id="(.*)">', out):
+            out = out.replace(match_.group(0), f'\n## {match_.group(1)}\n')
+
+        # from: <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
+        # to: # Enums
+        for match_ in re.finditer(
+            r'<h(\d)>(.*)<a class="headerlink" href="#.*" title="Link to this heading">¶</a></h\d>', out
+        ):
+            level = int(match_.group(1))
+            out = out.replace(match_.group(0), f'\n{"#" * level} {match_.group(2)}\n')
+
+        # from: <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
+        # to: none
+        out = re.sub(r'<a class="headerlink" href="#.*" title="Link to this definition">¶</a>', '', out)
+
+        # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        # keep title in tact
+        for match_ in re.finditer(r'<a class="reference internal" href="#(.*)" title="(.*)"', out):
+            anchor = match_.group(2).replace('.', '').lower()
+            fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}"'
+            out = out.replace(match_.group(0), fixed_link)
+
+        # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
+        # to: <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
+        for match_ in re.finditer(r'<dt class="field-even">(.*)<span class="colon">:</span></dt>', out):
+            out = out.replace(
+                match_.group(0),
+                f'<dt class="field-even" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
+            )
+
+        # from: <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+        # to: <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
+        for match_ in re.finditer(r'<dt class="field-odd">(.*)<span class="colon">:</span></dt>', out):
+            out = out.replace(
+                match_.group(0),
+                f'<dt class="field-odd" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
+            )
+
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
 

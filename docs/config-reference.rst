@@ -1,9 +1,5 @@
 .. autoclass:: dipdup.config.DipDupConfig
 
-^^^^^^
-Config
-^^^^^^
-
 .. autoclass:: dipdup.config.AbiDatasourceConfig
 .. autoclass:: dipdup.config.abi_etherscan.EtherscanDatasourceConfig
 .. autoclass:: dipdup.config.AdvancedConfig
@@ -58,10 +54,6 @@ Config
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig
 .. autoclass:: dipdup.config.TzktEventsIndexConfig
 .. autoclass:: dipdup.config.TzktHeadIndexConfig
-
-^^^^^
-Enums
-^^^^^
 
 .. autoclass:: dipdup.models.ReindexingAction
    :members:
