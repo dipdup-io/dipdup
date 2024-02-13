@@ -54,7 +54,7 @@ class ReferencePage(TypedDict):
 
 
 REFERENCE_MARKDOWNLINT_HINT = (
-    '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks -->\n'
+    '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks no-duplicate-heading -->\n'
 )
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
