@@ -10,18 +10,22 @@
 #
 import importlib
 import logging
+import os
 import re
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from collections.abc import Iterator
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
+from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
 from typing import Any
+from typing import NoReturn
 from typing import TypedDict
 
 import click
@@ -42,7 +46,8 @@ from dipdup.config import DipDupConfig
 from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger()
+_logger.setLevel(logging.INFO)
 
 
 class ReferencePage(TypedDict):
@@ -53,9 +58,7 @@ class ReferencePage(TypedDict):
     html_path: str
 
 
-REFERENCE_MARKDOWNLINT_HINT = (
-    '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks no-duplicate-heading -->\n'
-)
+REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks no-duplicate-heading -->\n'
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
 REFERENCE_HEADER_TEMPLATE = """---
@@ -92,7 +95,10 @@ REFERENCES: tuple[ReferencePage, ...] = (
 
 
 # {{ #include ../LICENSE }}
-INCLUDE_REGEX = r'{{ #include (.*) }}'
+INCLUDE_REGEX = r'{{ #include ([^: ]*) }}'
+
+# {{ #include ../LICENSE:5:20 }}
+SLICE_INCLUDE_REGEX = r'{{ #include (.*):(.*):(.*) }}'
 
 # {{ project.package }}
 PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
@@ -123,6 +129,12 @@ MARKDOWNLINT_IGNORE = (
     'single-title',
     'single-h1',
 )
+
+
+class ScriptObserver(FileSystemEventHandler):
+    def on_modified(self, event: FileSystemEvent) -> None:
+        _logger.info('script has been modified; restarting')
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 class DocsBuilder(FileSystemEventHandler):
@@ -188,13 +200,21 @@ class DocsBuilder(FileSystemEventHandler):
 
 def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
-        def replacer(match: re.Match[str]) -> str:
+        def replacer(match: re.Match[str], slice: bool) -> str:
             # FIXME: Slices are not handled yet
-            included_file = source / match.group(1).split(':')[0]
-            _logger.info('including `%s`', included_file.name)
-            return included_file.read_text()
+            included_path = source / match.group(1).split(':')[0]
+            included_file = included_path.read_text()
+            _logger.info('including `%s`', included_path.relative_to(Path.cwd()))
+            if slice:
+                from_, to = match.group(2), match.group(3)
+            else:
+                return included_file
 
-        return re.sub(INCLUDE_REGEX, replacer, data)
+            from_, to = int(from_ or 0), int(to or len(included_file.split('\n')))
+            return '\n'.join(included_file.split('\n')[from_:to])
+
+        data = re.sub(INCLUDE_REGEX, partial(replacer, slice=False), data)
+        return re.sub(SLICE_INCLUDE_REGEX, partial(replacer, slice=True), data)
 
     return callback
 
@@ -210,6 +230,10 @@ def create_project_callback() -> Callable[[str], str]:
         return data
 
     return callback
+
+
+def restart_callback() -> NoReturn:
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 @contextmanager
@@ -246,11 +270,13 @@ def main() -> None:
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to watch.',
+    default='docs',
 )
 @click.option(
     '--destination',
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     help='content/ dirertory path to copy to.',
+    default='../interface/content',
 )
 @click.option(
     '--watch',
@@ -282,6 +308,7 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
         return
 
     with ExitStack() as stack:
+        stack.enter_context(observer(Path(__file__), ScriptObserver()))
         if watch:
             green_echo('=> Watching for changes')
             stack.enter_context(observer(source, event_handler))
@@ -467,7 +494,6 @@ def dump_references() -> None:
         # from: <section id="dipdup-config-env">
         # to: none
         out = re.sub(r'<section id=".*">', '', out)
-        
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
