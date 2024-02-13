@@ -464,6 +464,11 @@ def dump_references() -> None:
                 f'<dt class="field-odd" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
             )
 
+        # from: <section id="dipdup-config-env">
+        # to: none
+        out = re.sub(r'<section id=".*">', '', out)
+        
+
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
 
