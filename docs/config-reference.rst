@@ -7,7 +7,7 @@
 .. autoclass:: dipdup.config.CoinbaseDatasourceConfig
 .. autoclass:: dipdup.config.ContractConfig
 .. autoclass:: dipdup.config.DatasourceConfig
-.. autoclass:: dipdup.config.EvmContractConfig
+.. autoclass:: dipdup.config.evm.EvmContractConfig
 .. autoclass:: dipdup.config.evm_node.EvmNodeDatasourceConfig
 .. autoclass:: dipdup.config.evm_subsquid_events.SubsquidEventsHandlerConfig
 .. autoclass:: dipdup.config.evm_subsquid_events.SubsquidEventsIndexConfig
@@ -31,7 +31,7 @@
 .. autoclass:: dipdup.config.SentryConfig
 .. autoclass:: dipdup.config.SqliteDatabaseConfig
 .. autoclass:: dipdup.config.SystemHookConfig
-.. autoclass:: dipdup.config.TezosContractConfig
+.. autoclass:: dipdup.config.tezos.TezosContractConfig
 .. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsIndexConfig
 .. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsHandlerConfig
