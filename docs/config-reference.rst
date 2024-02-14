@@ -35,7 +35,9 @@
 .. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_big_maps.TzktBigMapsIndexConfig
 .. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsIndexConfig
 .. autoclass:: dipdup.config.tezos_tzkt_events.TzktEventsUnknownEventHandlerConfig
+.. autoclass:: dipdup.config.tezos_tzkt_head.TzktHeadIndexConfig
 .. autoclass:: dipdup.config.tezos_tzkt_head.HeadHandlerConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerOriginationPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt_operations.OperationsHandlerSmartRollupExecutePatternConfig
@@ -52,8 +54,6 @@
 .. autoclass:: dipdup.config.tezos_tzkt.TzktDatasourceConfig
 .. autoclass:: dipdup.config.tezos_tzkt.TzktIndexConfig
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig
-.. autoclass:: dipdup.config.TzktEventsIndexConfig
-.. autoclass:: dipdup.config.TzktHeadIndexConfig
  
 .. autoclass:: dipdup.models.ReindexingAction
 .. autoclass:: dipdup.models.ReindexingReason

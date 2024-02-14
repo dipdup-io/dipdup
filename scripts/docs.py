@@ -25,7 +25,6 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
 from typing import Any
-from typing import NoReturn
 from typing import TypedDict
 
 import click
@@ -48,6 +47,7 @@ from dipdup.sys import set_up_logging
 
 _logger = logging.getLogger()
 _logger.setLevel(logging.INFO)
+_process: subprocess.Popen[Any] | None = None
 
 
 class ReferencePage(TypedDict):
@@ -134,6 +134,8 @@ MARKDOWNLINT_IGNORE = (
 class ScriptObserver(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent) -> None:
         _logger.info('script has been modified; restarting')
+        if _process:
+            _process.terminate()
         os.execl(sys.executable, sys.executable, *sys.argv)
 
 
@@ -246,14 +248,15 @@ def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
 
 @contextmanager
 def frontend(path: Path) -> Iterator[Popen[Any]]:
+    global _process
+
     # NOTE: pnpm is important! Regular npm fails to resolve deps.
-    process = Popen(['pnpm', 'run', 'dev'], cwd=path)
-    time.sleep(3)
-    click.launch('http://localhost:3000/docs')
+    _process = Popen(['pnpm', 'run', 'dev'], cwd=path)
 
-    yield process
+    yield _process
 
-    process.terminate()
+    _process.terminate()
+    _process = None
 
 
 @click.group(help='Various tools to build and maintain DipDup documentation. Read the script source!')
