@@ -1,3 +1,6 @@
 .. toctree::
-   :maxdepth: 2
-   :caption: ''
+   :hidden:
+
+   cli.rst
+   config.rst
+   context.rst
