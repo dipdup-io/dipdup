@@ -232,10 +232,6 @@ def create_project_callback() -> Callable[[str], str]:
     return callback
 
 
-def restart_callback() -> NoReturn:
-    os.execl(sys.executable, sys.executable, *sys.argv)
-
-
 @contextmanager
 def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
     observer = Observer()
@@ -472,7 +468,7 @@ def dump_references() -> None:
         # keep title in tact
         for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
             anchor = match_.group(2).replace('.', '').lower()
-            fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}"'
+            fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
         # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
