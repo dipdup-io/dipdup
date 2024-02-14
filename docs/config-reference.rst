@@ -59,3 +59,4 @@
 .. autoclass:: dipdup.models.ReindexingReason
 .. autoclass:: dipdup.models.SkipHistory
 .. autoclass:: dipdup.models.tezos_tzkt.TzktOperationType
+.. autoclass:: dipdup.models.tzip_metadata.TzipMetadataNetwork
