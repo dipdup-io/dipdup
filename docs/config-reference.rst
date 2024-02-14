@@ -54,16 +54,8 @@
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig
 .. autoclass:: dipdup.config.TzktEventsIndexConfig
 .. autoclass:: dipdup.config.TzktHeadIndexConfig
-
+ 
 .. autoclass:: dipdup.models.ReindexingAction
-   :members:
-   :undoc-members:
 .. autoclass:: dipdup.models.ReindexingReason
-   :members:
-   :undoc-members:
 .. autoclass:: dipdup.models.SkipHistory
-   :members:
-   :undoc-members:
 .. autoclass:: dipdup.models.tezos_tzkt.TzktOperationType
-   :members:
-   :undoc-members:
