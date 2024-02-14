@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- cli: Added `--template` option to `new` command to skip template selection.
 - evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
 
 ### Fixed
