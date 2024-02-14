@@ -15,6 +15,7 @@ class EtherscanDatasourceConfig(AbiDatasourceConfig):
     :param kind: always 'abi.etherscan'
     :param url: API URL
     :param api_key: API key
+    :param http: HTTP client configuration
     """
 
     kind: Literal['abi.etherscan']

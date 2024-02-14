@@ -58,6 +58,11 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
 
 @dataclass
 class TzktIndexConfig(IndexConfig):
+    """TzKT index config
+
+    :param kind: starts with 'tezos.tzkt'
+    :param datasource: `tezos.tzkt` datasource to use
+    """
     datasource: TzktDatasourceConfig
 
     def get_subscriptions(self) -> set[Subscription]:

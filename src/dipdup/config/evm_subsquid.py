@@ -52,5 +52,10 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
 
 @dataclass
 class SubsquidIndexConfig(IndexConfig, ABC):
+    """EVM index that use Subsquid Network as a datasource
+    
+    :param kind: starts with 'evm.subsquid'
+    :param datasource: Subsquid datasource config
+    """
 
     datasource: SubsquidDatasourceConfig

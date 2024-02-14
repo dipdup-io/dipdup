@@ -277,7 +277,7 @@ class OperationsHandlerSmartRollupExecutePatternConfig(TezosPatternConfig, Subgr
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `tezos.tzkt.operations`
+    :param kind: always 'tezos.tzkt.operations'
     :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
@@ -390,7 +390,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig):
 class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `tezos.tzkt.operations_unfiltered`
+    :param kind: always 'tezos.tzkt.operations_unfiltered'
     :param datasource: Alias of index datasource in `datasources` section
     :param callback: Callback name
     :param types: Types of transaction to fetch

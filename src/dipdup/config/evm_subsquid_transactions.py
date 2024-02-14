@@ -26,7 +26,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     """Subsquid transaction handler
 
     :param callback: Callback name
-    :param from: Transaction sender
+    :param from_: Transaction sender
     :param to: Transaction receiver
     :param method: Method name
     """
@@ -67,6 +67,16 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
 
 @dataclass
 class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
+    """Index that uses Subsquid Network as a datasource for transactions
+
+    :param kind: always 'evm.subsquid.transactions'
+    :param datasource: Subsquid datasource config
+    :param handlers: Transaction handlers
+    :param abi: One or many ABI datasource(s)
+    :param node_only: Don't use Subsquid Network, only node RPC
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at
+    """
     kind: Literal['evm.subsquid.transactions']
 
     datasource: SubsquidDatasourceConfig
