@@ -59,7 +59,7 @@ class ReferencePage(TypedDict):
 
 
 REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks no-duplicate-heading -->\n'
-REFERENCE_STRIP_HEAD_LINES = 32
+REFERENCE_STRIP_HEAD_LINES = 33
 REFERENCE_STRIP_TAIL_LINES = 63
 REFERENCE_HEADER_TEMPLATE = """---
 title: "{title}"
@@ -447,7 +447,7 @@ def dump_references() -> None:
         from_ = Path(f"docs/_build/html/{page['html_path']}")
 
         # NOTE: Strip HTML boilerplate
-        out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES])
+        out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
 
         # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
         # to: ## dipdup.config.DipDupConfig
@@ -509,7 +509,7 @@ def markdownlint() -> None:
     green_echo('=> Running markdownlint')
     try:
         subprocess.run(
-            ('markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
+            ('markdownlint', '-f', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
             check=True,
         )
     except subprocess.CalledProcessError:
