@@ -75,21 +75,21 @@ REFERENCES: tuple[ReferencePage, ...] = (
         description='Command-line interface reference',
         h1='CLI reference',
         md_path='docs/7.references/1.cli.md',
-        html_path='cli-reference.html',
+        html_path='cli.html',
     ),
     ReferencePage(
         title='Config',
         description='Config file reference',
         h1='Config reference',
         md_path='docs/7.references/2.config.md',
-        html_path='config-reference.html',
+        html_path='config.html',
     ),
     ReferencePage(
         title='Context (ctx)',
         description='Context reference',
         h1='Context reference',
         md_path='docs/7.references/3.context.md',
-        html_path='context-reference.html',
+        html_path='context.html',
     ),
 )
 
@@ -418,7 +418,7 @@ def dump_jsonschema() -> None:
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     green_echo('=> Dumping Sphinx references')
-    config_rst = Path('docs/config-reference.rst').read_text().splitlines()
+    config_rst = Path('docs/config.rst').read_text().splitlines()
     classes_in_rst = {line.split('.')[-1] for line in config_rst if line.startswith('.. autoclass::')}
     classes_in_config = set()
     for file in Path('src/dipdup/config').glob('*.py'):
@@ -430,7 +430,7 @@ def dump_references() -> None:
     # FIXME: Traces not implemented yet
     diff -= {'Config', 'SubsquidTracesIndexConfig', 'SubsquidTracesHandlerConfig'}
     if diff:
-        red_echo('=> Config reference is outdated! Update `docs/config-reference.rst` and try again.')
+        red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')
         exit(1)
 
@@ -468,10 +468,16 @@ def dump_references() -> None:
 
         # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
         # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
-        # keep title in tact
         for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
             anchor = match_.group(2).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}" target="_self"'
+            out = out.replace(match_.group(0), fixed_link)
+
+        # from: <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # to: <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        for match_ in re.finditer(r'<a class="reference internal" href="([^"]*).html#([^"]*)" title="([^"]*)"', out):
+            anchor = match_.group(3).replace('.', '').lower()
+            fixed_link = f'<a class="reference internal" href="{match_.group(1)}#{anchor}" title="{match_.group(3)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
         # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
