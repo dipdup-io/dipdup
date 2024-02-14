@@ -470,7 +470,7 @@ def dump_references() -> None:
         # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
         # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
         # keep title in tact
-        for match_ in re.finditer(r'<a class="reference internal" href="#(.*)" title="(.*)"', out):
+        for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
             anchor = match_.group(2).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}"'
             out = out.replace(match_.group(0), fixed_link)

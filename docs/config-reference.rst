@@ -23,7 +23,7 @@
 .. autoclass:: dipdup.config.IndexConfig
 .. autoclass:: dipdup.config.IndexDatasourceConfig
 .. autoclass:: dipdup.config.IndexTemplateConfig
-.. autoclass:: dipdup.config.IpfsDatasourceConfig
+.. autoclass:: dipdup.config.ipfs.IpfsDatasourceConfig
 .. autoclass:: dipdup.config.JobConfig
 .. autoclass:: dipdup.config.PostgresDatabaseConfig
 .. autoclass:: dipdup.config.PrometheusConfig
