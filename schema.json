@@ -2527,6 +2527,10 @@
       "type": "object",
       "title": "ApiConfig",
       "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
         "port": {
           "type": "integer",
           "default": 46339
