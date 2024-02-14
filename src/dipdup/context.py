@@ -459,7 +459,7 @@ class DipDupContext:
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name
-        
+
         :param name: Name of the datasource
         """
         return self._get_datasource(name, CoinbaseDatasource)

@@ -167,6 +167,7 @@ def template_from_terminal() -> str:
     )
     return template
 
+
 def answers_from_terminal(template: str | None) -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
     import survey

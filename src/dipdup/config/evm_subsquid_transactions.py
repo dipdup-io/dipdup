@@ -77,6 +77,7 @@ class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
     """
+
     kind: Literal['evm.subsquid.transactions']
 
     datasource: SubsquidDatasourceConfig
