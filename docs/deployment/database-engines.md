@@ -5,7 +5,7 @@ DipDup officially supports the following databases: SQLite, PostgreSQL, Timescal
 | | SQLite | PostgreSQL | TimescaleDB |
 | -: | :-: | :-: | :-: |
 | Supported versions | `latest` | `13`, `14` | `pg13`, `pg14` |
-| Best application | development | general usage | working with timeseries
+| Best application | development | general usage | working with timeseries|
 | SQL scripts | ✅ | ✅ | ✅ |
 | Immune tables | ❌ | ✅ | ✅ |
 | Hasura integration | ❌ | ✅ | ✅ |
