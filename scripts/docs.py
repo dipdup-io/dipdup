@@ -447,7 +447,8 @@ def dump_references() -> None:
         from_ = Path(f"docs/_build/html/{page['html_path']}")
 
         # NOTE: Strip HTML boilerplate
-        out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
+        lines = from_.read_text().split('\n')
+        out = '\n'.join(lines[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
 
         # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
         # to: ## dipdup.config.DipDupConfig
