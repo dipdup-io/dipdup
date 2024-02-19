@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- cli: Added `--template` option to `new` command to skip template selection.
 - evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
 
 ### Fixed
@@ -70,6 +71,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.node: Fixed crash on anonymous event logs during the last mile indexing.
 - evm.node: Raise an exception when no realtime messages have been received in `http.connection_timeout` seconds.
 
+## [6.5.15] - 2023-12-01
+
+### Other
+
+- deps: Updated pytezos to 3.10.3.
+
 ## [7.2.0] - 2023-11-30
 
 ### Added
@@ -118,6 +125,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed `DIPDUP_DEBUG` not being applied to the package logger.
 - tezos.tzkt.token_transfers: Fixed filtering transfers by token_id.
+
+## [6.5.14] - 2023-10-20
+
+### Fixed
+
+- token_transfer: Fixed filtering transfers by token_id.
 
 ## [7.0.2] - 2023-10-10
 
@@ -1331,12 +1344,16 @@ This release contains no changes except for the version number.
 [7.3.0]: https://github.com/dipdup-io/dipdup/compare/7.2.2...7.3.0
 [7.2.2]: https://github.com/dipdup-io/dipdup/compare/7.2.1...7.2.2
 [7.2.1]: https://github.com/dipdup-io/dipdup/compare/7.2.0...7.2.1
+[6.5.15]: https://github.com/dipdup-io/dipdup/compare/6.5.14...6.5.15
 [7.2.0]: https://github.com/dipdup-io/dipdup/compare/7.1.1...7.2.0
 [7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
+[6.5.14]: https://github.com/dipdup-io/dipdup/compare/6.5.13...6.5.14
 [7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2
+[6.5.13]: https://github.com/dipdup-io/dipdup/compare/6.5.12...6.5.13
 [7.0.1]: https://github.com/dipdup-io/dipdup/compare/7.0.0...7.0.1
 [7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...7.0.0
+[6.5.12]: https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12
 [7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4

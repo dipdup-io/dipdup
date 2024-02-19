@@ -647,12 +647,14 @@ async def schema_export(ctx: click.Context) -> None:
     default=None,
     help='Use values from a replay file.',
 )
+@click.option('--template', '-t', type=str, default=None, help='Use a specific template.')
 @_cli_wrapper
 async def new(
     ctx: click.Context,
     quiet: bool,
     force: bool,
     replay: Path | None,
+    template: str | None,
 ) -> None:
     """Create a new project interactively."""
     import os
@@ -668,7 +670,7 @@ async def new(
     elif replay:
         answers = answers_from_replay(replay)
     else:
-        answers = answers_from_terminal()
+        answers = answers_from_terminal(template)
 
     _logger.info('Rendering project')
     render_project(answers, force)

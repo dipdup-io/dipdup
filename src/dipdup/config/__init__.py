@@ -184,7 +184,7 @@ class HttpConfig:
 
 @dataclass
 class ResolvedHttpConfig:
-    """HTTP client configuration with defaults"""
+    __doc__ = HttpConfig.__doc__
 
     retry_count: int = 10
     retry_sleep: float = 1.0
@@ -248,15 +248,28 @@ class ContractConfig(ABC, NameMixin):
 
 
 class DatasourceConfig(ABC, NameMixin):
+    """Base class for datasource configs
+
+    :param kind: Defined by child class
+    :param url: URL of the API
+    :param http: HTTP connection tunables
+    """
+
     kind: str
     url: str
     http: HttpConfig | None
 
 
-class AbiDatasourceConfig(DatasourceConfig): ...
+class AbiDatasourceConfig(DatasourceConfig):
+    """Provider of EVM contract ABIs. Datasource kind starts with 'abi.'"""
+
+    ...
 
 
-class IndexDatasourceConfig(DatasourceConfig): ...
+class IndexDatasourceConfig(DatasourceConfig):
+    """Datasource that can be used as a primary source of historical data"""
+
+    ...
 
 
 @dataclass
@@ -328,6 +341,11 @@ class CallbackMixin(CodegenMixin):
 
 @dataclass
 class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
+    """Base class for index handlers
+
+    :param callback: Callback name
+    """
+
     def __post_init_post_parse__(self) -> None:
         CallbackMixin.__post_init_post_parse__(self)
         ParentMixin.__post_init_post_parse__(self)
@@ -337,7 +355,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
 class IndexTemplateConfig(NameMixin):
     """Index template config
 
-    :param kind: always `template`
+    :param kind: always 'template'
     :param values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
@@ -356,6 +374,7 @@ class IndexTemplateConfig(NameMixin):
 class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
+    :param kind: Defined by child class
     :param datasource: Alias of index datasource in `datasources` section
     """
 
@@ -519,7 +538,7 @@ class HookConfig(CallbackMixin):
 
 @dataclass
 class SystemHookConfig(HookConfig):
-    pass
+    __doc__ = HookConfig.__doc__
 
 
 system_hooks = {
@@ -553,7 +572,13 @@ system_hooks = {
 
 @dataclass
 class ApiConfig:
-    host = '127.0.0.1'
+    """Management API config
+
+    :param host: Host to bind to
+    :param port: Port to bind to
+    """
+
+    host: str = '127.0.0.1'
     port: int = 46339  # dial INDEX 😎
 
 
@@ -561,12 +586,12 @@ class ApiConfig:
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
-    :param reindex: Mapping of reindexing reasons and actions DipDup performs
-    :param scheduler: `apscheduler` scheduler config
-    :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Spawn realtime datasources immediately after startup
-    :param skip_version_check: Do not check for new DipDup versions on startup
-    :param rollback_depth: A number of levels to keep for rollback
+    :param reindex: Mapping of reindexing reasons and actions DipDup performs.
+    :param scheduler: `apscheduler` scheduler config.
+    :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
+    :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
+    :param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.
+    :param rollback_depth: A number of levels to keep for rollback.
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)

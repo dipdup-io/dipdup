@@ -74,7 +74,14 @@ class IndexStatus(Enum):
 
 # NOTE: Used as a key in config, must inherit from str
 class ReindexingReason(str, Enum):
-    """Reason that caused reindexing"""
+    """Reason that caused reindexing
+
+    :param manual: Manual reindexing.
+    :param migration: Migration of the database schema.
+    :param rollback: Rollback that couldn't be handled automatically.
+    :param config_modified: Index config was modified.
+    :param schema_modified: Project models or database schema were modified.
+    """
 
     manual = 'manual'
     migration = 'migration'
@@ -84,7 +91,12 @@ class ReindexingReason(str, Enum):
 
 
 class ReindexingAction(Enum):
-    """Action that should be performed on reindexing"""
+    """Action that should be performed on reindexing
+
+    :param exception: Raise `ReindexingRequiredError` exception.
+    :param wipe: Wipe the database and reindex from scratch. (WARNING: This action is irreversible! All indexed data will be lost!)
+    :param ignore: Ignore the reindexing cause and continue.
+    """
 
     exception = 'exception'
     wipe = 'wipe'
@@ -92,7 +104,12 @@ class ReindexingAction(Enum):
 
 
 class SkipHistory(Enum):
-    """Whether to skip indexing operation history and use only current state"""
+    """Whether to skip indexing big map history and use only current state
+
+    :param never: Always index big map historical updates.
+    :param once: Skip history once after reindexing; process updates as usual on the next resync.
+    :param always: Always skip big map history.
+    """
 
     never = 'never'
     once = 'once'

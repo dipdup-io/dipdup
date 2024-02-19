@@ -58,6 +58,19 @@ SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
+class MagicWeb3Provider(AsyncJSONBaseProvider):
+    def __init__(self, datasource: 'EvmNodeDatasource') -> None:
+        self._datasource = datasource
+
+    async def make_request(self, method: str, params: list[Any]) -> Any:
+        return await self._datasource._jsonrpc_request(
+            method,
+            params,
+            raw=True,
+            ws=False,
+        )
+
+
 @dataclass
 class LevelData:
     head: dict[str, Any] | None = None
@@ -113,17 +126,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         web3_cache = SimpleCache(WEB3_CACHE_SIZE)
         caches.add_plain(web3_cache._data, f'{self.name}:web3_cache')
 
-        class MagicWeb3Provider(AsyncJSONBaseProvider):
-            async def make_request(_, method: str, params: list[Any]) -> Any:
-                return await self._jsonrpc_request(
-                    method,
-                    params,
-                    raw=True,
-                    ws=False,
-                )
-
         self._web3_client = AsyncWeb3(
-            provider=MagicWeb3Provider(),
+            provider=MagicWeb3Provider(self),
         )
         self._web3_client.middleware_onion.add(
             await async_construct_simple_cache_middleware(web3_cache),

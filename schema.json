@@ -2405,7 +2405,7 @@
         },
         "select_limit": {
           "type": "integer",
-          "default": 100
+          "default": 1000
         },
         "allow_aggregations": {
           "type": "boolean",
@@ -2527,6 +2527,10 @@
       "type": "object",
       "title": "ApiConfig",
       "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
         "port": {
           "type": "integer",
           "default": 46339

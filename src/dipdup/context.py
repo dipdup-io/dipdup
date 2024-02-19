@@ -119,7 +119,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (dev only)
+    :param transactions: Transaction manager (don't use it directly)
     :param logger: Context-aware logger instance
     """
 
@@ -458,19 +458,31 @@ class DipDupContext:
         raise ConfigurationError(f'`{name}` datasource is neither `evm.node` nor `evm.subsquid`')
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
-        """Get `coinbase` datasource by name"""
+        """Get `coinbase` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, CoinbaseDatasource)
 
     def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
-        """Get `metadata` datasource by name"""
+        """Get `metadata` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
-        """Get `ipfs` datasource by name"""
+        """Get `ipfs` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, IpfsDatasource)
 
     def get_http_datasource(self, name: str) -> HttpDatasource:
-        """Get `http` datasource by name"""
+        """Get `http` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, HttpDatasource)
 
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
@@ -671,6 +683,11 @@ class DipDupContext:
 class HookContext(DipDupContext):
     """Execution context of hook callbacks.
 
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (don't use it directly)
+    :param logger: Context-aware logger instance
     :param hook_config: Configuration of the current hook
     """
 
@@ -726,6 +743,11 @@ class _TemplateValues(dict[str, Any]):
 class HandlerContext(DipDupContext):
     """Execution context of handler callbacks.
 
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (don't use it directly)
+    :param logger: Context-aware logger instance
     :param handler_config: Configuration of the current handler
     :param datasource: Index datasource instance
     """

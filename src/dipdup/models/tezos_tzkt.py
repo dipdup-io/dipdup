@@ -34,7 +34,13 @@ class TzktTokenStandard(Enum):
 
 
 class TzktOperationType(Enum):
-    """Type of blockchain operation"""
+    """Type of blockchain operation
+
+    :param transaction: transaction
+    :param origination: origination
+    :param migration: migration
+    :param sr_execute: sr_execute
+    """
 
     transaction = 'transaction'
     origination = 'origination'
