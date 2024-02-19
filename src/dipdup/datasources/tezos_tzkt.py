@@ -1171,7 +1171,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         self._logger.info('Creating SignalR client')
         self._signalr_client = SignalRClient(
-            url=f'{self._http._url}/v1/events',
+            url=f'{self._http._url}/v1/ws',
             max_size=None,
         )
 
