@@ -435,8 +435,9 @@ def dump_references() -> None:
         exit(1)
 
     green_echo('=> Building Sphinx docs')
+    rmtree('docs/_build', ignore_errors=True)
     subprocess.run(
-        args=('sphinx-build', '.', '_build'),
+        args=('sphinx-build', '-M', 'html', '.', '_build'),
         cwd='docs',
         check=True,
     )
