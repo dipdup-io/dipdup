@@ -1,3 +1,5 @@
+:orphan:
+
 .. autoclass:: dipdup.config.DipDupConfig
 
 .. autoclass:: dipdup.config.AbiDatasourceConfig

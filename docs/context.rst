@@ -1,3 +1,5 @@
+:orphan:
+
 .. autoclass:: dipdup.context.DipDupContext
 .. autoclass:: dipdup.context.HandlerContext
 .. autoclass:: dipdup.context.HookContext
