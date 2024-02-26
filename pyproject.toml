@@ -7,10 +7,12 @@ authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 maintainers = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
