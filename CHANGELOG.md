@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tezos.operations: Fixed `sr_cement` operation index subscription.
+
 ## [8.0.0b4] - 2024-07-20
 
 ### Added
