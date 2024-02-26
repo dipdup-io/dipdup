@@ -546,7 +546,6 @@ class DipDup:
         )
         self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
-        self._api: Any | None = None
 
     @property
     def schema(self) -> Schema:
@@ -727,11 +726,14 @@ class DipDup:
             self._ctx.register_hook(hook_config)
 
     async def _set_up_prometheus(self) -> None:
-        if self._config.prometheus:
-            from prometheus_client import start_http_server
+        if not self._config.prometheus:
+            return
 
-            Metrics.enabled = True
-            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+        from prometheus_client import start_http_server
+
+        _logger.info('Setting up Prometheus')
+        Metrics.enabled = True
+        start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
@@ -742,6 +744,7 @@ class DipDup:
 
         from dipdup.api import create_api
 
+        _logger.info('Setting up API')
         api = await create_api(self._ctx)
         runner = web.AppRunner(api)
         await runner.setup()
