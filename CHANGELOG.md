@@ -8,11 +8,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- performance: Collect hit/miss stats for cached model.
+- performance: Collect hit/miss stats for model cache.
 
 ### Fixed
 
-- dipdup: Fixed indexer status logged in regular intervals.
+- cli: Fixed indexer status logged in regular intervals.
 - models: Fixed memory leak when using `CachedModel` class.
 
 ## [7.4.0] - 2024-02-20
