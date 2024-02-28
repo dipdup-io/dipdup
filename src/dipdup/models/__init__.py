@@ -10,11 +10,13 @@ from decimal import Decimal
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self
 from typing import TypeVar
 from typing import cast
 
 import tortoise
 import tortoise.queryset
+from lru import LRU
 from pydantic.dataclasses import dataclass
 from tortoise.exceptions import OperationalError
 from tortoise.fields import relational
@@ -28,7 +30,6 @@ from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
-from dipdup.performance import caches
 from dipdup.utils import json_dumps_plain
 
 if TYPE_CHECKING:
@@ -522,12 +523,42 @@ class Model(TortoiseModel):
 
 
 class CachedModel(Model):
+    _hits: int
+    _misses: int
+    _maxsize: int
+    _cache: LRU[int | str, CachedModel]
+
+    def __init_subclass__(cls) -> None:
+        cls._maxsize = getattr(cls.Meta, 'maxsize', 0)
+        cls._hits = 0
+        cls._misses = 0
+        cls._cache = LRU(cls._maxsize)
+        super().__init_subclass__()
+
+    @classmethod
+    def clear(cls) -> None:
+        cls._hits = 0
+        cls._misses = 0
+        cls._cache.clear()
+
+    @classmethod
+    def stats(cls) -> dict[str, Any]:
+        total = cls._hits + cls._misses
+
+        return {
+            'hits': cls._hits,
+            'misses': cls._misses,
+            'size': len(cls._cache),
+            'limit': cls._maxsize,
+            'full': (len(cls._cache) / cls._maxsize) if cls._maxsize > 0 else 0,
+            'hit_rate': cls._hits / total if total > 0 else 0,
+        }
+
     @classmethod
     async def preload(cls) -> None:
         _logger.info('Loading `%s` into memory', cls.__name__)
-        query = cls.all()
-        with suppress(AttributeError):
-            query = query.limit(cls.Meta.maxsize)  # type: ignore[attr-defined]
+        limit = getattr(cls.Meta, 'maxsize', 0)
+        query = cls.all() if not limit else cls.all().limit(limit)
 
         # NOTE: Table can be missing
         with suppress(OperationalError):
@@ -536,40 +567,41 @@ class CachedModel(Model):
 
     @classmethod
     async def cached_get(
-        cls: type[ModelT],
+        cls,
         pk: int | str,
-    ) -> ModelT:
-        cls_cache = caches._model[cls.__name__]
-
-        if pk not in cls_cache:
-            cls_cache[pk] = await cls.get(pk=pk)
-        return cls_cache[pk]  # type: ignore[return-value]
+    ) -> Self:
+        if pk not in cls._cache:
+            cls._misses += 1
+            cls._cache[pk] = await cls.get(pk=pk)
+        else:
+            cls._hits += 1
+        return cls._cache[pk]  # type: ignore[return-value]
 
     @classmethod
     async def cached_get_or_none(
-        cls: type[ModelT],
+        cls,
         pk: int | str,
-    ) -> ModelT | None:
-        cls_cache = caches._model[cls.__name__]
-
-        if pk not in cls_cache:
-            cls_cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
-        return cls_cache[pk]  # type: ignore[return-value]
+    ) -> Self | None:
+        if pk not in cls._cache:
+            cls._misses += 1
+            cls._cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
+        else:
+            cls._hits += 1
+        return cls._cache[pk]  # type: ignore[return-value]
 
     def cache(self) -> None:
-        cls_cache = caches._model[self.__class__.__name__]
         if self.pk is None:
             raise FrameworkException('Cannot cache model without PK')
-        if self.pk in cls_cache:
+        if self.pk in self.__class__._cache:
             raise FrameworkException(f'Model {self} is already cached')
-        cls_cache[self.pk] = self
+        self.__class__._cache[self.pk] = self
 
     class Meta:
         abstract = True
+        maxsize: int | None = None
 
 
 ModelT = TypeVar('ModelT', bound=Model)
-
 
 # ===> Built-in Models (not versioned)
 

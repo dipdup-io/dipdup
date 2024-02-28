@@ -12,7 +12,6 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.package import DipDupPackage
-from dipdup.performance import caches
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -25,9 +24,6 @@ MatchedEventsT = tuple[SubsquidEventsHandlerConfig, SubsquidEvent[Any]]
 def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ...]) -> tuple[Any, ...]:
     indexed_bytes = b''.join(decode_hex(topic) for topic in topics[1:])
     return tuple(decode_abi(indexed_inputs, indexed_bytes))
-
-
-decode_indexed_topics = caches.add_lru(decode_indexed_topics, 2**14)
 
 
 def decode_event_data(

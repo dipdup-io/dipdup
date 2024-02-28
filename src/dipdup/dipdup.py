@@ -73,6 +73,7 @@ from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
+from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
@@ -82,8 +83,8 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 3
-STATUS_INTERVAL = 10
+METRICS_INTERVAL = 1 if env.DEBUG else 2
+STATUS_INTERVAL = 1 if env.DEBUG else 10
 CLEANUP_INTERVAL = 60 * 5
 INDEX_DISPATCHER_INTERVAL = 1
 
@@ -118,6 +119,7 @@ class IndexDispatcher:
         await self._load_index_state()
 
         on_synchronized_fired = False
+        on_realtime_fired = False
 
         for index in self._indexes.values():
             if isinstance(index, TzktOperationsIndex):
@@ -142,9 +144,9 @@ class IndexDispatcher:
 
                 tasks.append(index.process())
 
-            await gather(*tasks)
-
+            indexes_processed = any(await gather(*tasks))
             indexes_spawned = False
+
             while self._ctx._pending_indexes:
                 index = self._ctx._pending_indexes.popleft()
                 self._indexes[index._config.name] = index
@@ -155,20 +157,26 @@ class IndexDispatcher:
 
             if not indexes_spawned and self.is_oneshot():
                 _logger.info('No indexes left, exiting')
+                await self._on_synchronized()
                 [t.cancel() for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
+                    await self._on_synchronized()
                     on_synchronized_fired = True
-                    await self._ctx.fire_hook('on_synchronized')
-                    metrics.set('synchronized_at', time.time())
+
+                if not on_realtime_fired and not indexes_processed:
+                    await self._on_realtime()
+                    on_realtime_fired = True
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
                 metrics.set('synchronized_at', 0)
+                metrics.set('realtime_at', 0)
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
+                on_realtime_fired = False
 
             await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
 
@@ -268,13 +276,15 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
+        await self._update_metrics()
         total, indexed = metrics['levels_total'], metrics['levels_indexed']
         current_speed = int(metrics['current_speed'])
-        if metrics['synchronized_at']:
+        if metrics['realtime_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
-                'indexing %.2f%%: %s levels left (%s lps)',
+                '%s: %.2f%%: %s levels left (%s lps)',
+                'last mile' if metrics['synchronized_at'] else 'indexing',
                 metrics['progress'] * 100,
                 total - indexed,
                 current_speed,
@@ -524,6 +534,19 @@ class IndexDispatcher:
                 )
 
         _logger.info('`%s` rollback processed', channel)
+
+    async def _on_synchronized(self) -> None:
+        caches.clear()
+
+        await self._ctx.fire_hook('on_synchronized')
+
+        metrics.set('synchronized_at', time.time())
+
+    async def _on_realtime(self) -> None:
+        # NOTE: We don't have system hook for this event!
+        # await self._ctx.fire_hook('on_realtime')
+
+        metrics.set('realtime_at', time.time())
 
 
 class DipDup:

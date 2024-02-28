@@ -9,12 +9,12 @@ There are three module-level singletons, one for each type of resource:
 These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
 """
 
+import gc
 import logging
 from collections import defaultdict
 from collections import deque
 from collections.abc import Callable
 from collections.abc import Coroutine
-from collections.abc import Sized
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
@@ -23,12 +23,11 @@ from typing import Any
 from typing import cast
 
 from async_lru import alru_cache
-from lru import LRU
 
+from dipdup import env
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
-    from tortoise.models import Model
 
     from dipdup.models import CachedModel
 
@@ -37,14 +36,14 @@ _logger = logging.getLogger(__name__)
 
 class _CacheManager:
     def __init__(self) -> None:
-        self._plain: dict[str, Sized] = {}
+        self._plain: dict[str, dict[Any, Any]] = {}
         self._lru: dict[str, Callable[..., Any]] = {}
         self._alru: dict[str, Callable[..., Coroutine[Any, Any, None]]] = {}
-        self._model: dict[str, dict[int | str, Model]] = {}
+        self._models: set['type[CachedModel]'] = set()
 
     def add_plain(
         self,
-        obj: Sized,
+        obj: dict[Any, Any],
         name: str,
     ) -> None:
         self._plain[name] = obj
@@ -81,23 +80,18 @@ class _CacheManager:
         self,
         cls: 'type[CachedModel]',
     ) -> None:
-        if cls.__name__ in self._model:
-            raise Exception(f'Model cache for `{cls}` already exists')
-
-        try:
-            maxsize = cls.Meta.maxsize  # type: ignore[attr-defined]
-            self._model[cls.__name__] = LRU(maxsize)  # type: ignore[assignment]
-        except AttributeError:
-            self._model[cls.__name__] = {}
+        if cls in self._models:
+            raise FrameworkException(f'Model cache for `{cls}` already exists')
+        self._models.add(cls)
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {}
-        for name, cache in self._plain.items():
+        for name, plain_cache in self._plain.items():
             name = f'plain:{name}'
-            stats[name] = {'size': len(cache)}
-        for name, cached_fn in chain(self._lru.items(), self._alru.items()):
+            stats[name] = {'size': len(plain_cache)}
+        for name, fn_cache in chain(self._lru.items(), self._alru.items()):
             name = f'lru:{name}'
-            c = cast(_CacheInfo, cached_fn.cache_info())  # type: ignore[attr-defined]
+            c = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
             if not c.hits and not c.misses:
                 continue
             stats[name] = {
@@ -108,13 +102,39 @@ class _CacheManager:
                 'full': (c.currsize / c.maxsize) if c.maxsize else 0,
                 'hit_rate': c.hits / (c.hits + c.misses),
             }
-        for name, cache in self._model.items():
-            name = f'model:{name}'
-            stats[name] = {
-                'size': len(cache),
-            }
+        for model_cls in self._models:
+            name = f'model:{model_cls.__name__}'
+            stats[name] = model_cls.stats()
 
         return stats
+
+    def clear(self) -> None:
+
+        if env.DEBUG and not env.TEST:
+            from dipdup.report import save_report
+
+            try:
+                raise FrameworkException('debug: cache cleared')
+            except FrameworkException as e:
+                save_report('dipdup.performance', e)
+
+        items = 0
+
+        for plain_cache in self._plain.values():
+            items += len(plain_cache)
+            plain_cache.clear()
+        for fn_cache in chain(self._lru.values(), self._alru.values()):
+            stats = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
+            items += stats.currsize
+            fn_cache.cache_clear()  # type: ignore[attr-defined]
+        for model_cls in self._models:
+            items += model_cls.stats()['size']
+            model_cls.clear()
+
+        _logger.info('Cleared %d cached items', items)
+
+        collected = gc.collect()
+        _logger.info('Garbage collected %d items', collected)
 
 
 class _QueueManager:

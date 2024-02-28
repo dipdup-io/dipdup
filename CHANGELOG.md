@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- performance: Collect hit/miss stats for cached model.
+
+### Fixed
+
+- dipdup: Fixed indexer status logged in regular intervals.
+- models: Fixed memory leak when using `CachedModel` class.
+
 ## [7.4.0] - 2024-02-20
 
 ### Added
