@@ -109,15 +109,6 @@ class _CacheManager:
         return stats
 
     def clear(self) -> None:
-
-        if env.DEBUG and not env.TEST:
-            from dipdup.report import save_report
-
-            try:
-                raise FrameworkException('debug: cache cleared')
-            except FrameworkException as e:
-                save_report('dipdup.performance', e)
-
         items = 0
 
         for plain_cache in self._plain.values():
@@ -131,10 +122,10 @@ class _CacheManager:
             items += model_cls.stats()['size']
             model_cls.clear()
 
-        _logger.info('Cleared %d cached items', items)
+        _logger.debug('Cleared %d cached items', items)
 
         collected = gc.collect()
-        _logger.info('Garbage collected %d items', collected)
+        _logger.debug('Garbage collected %d items', collected)
 
 
 class _QueueManager:

@@ -536,8 +536,6 @@ class IndexDispatcher:
         _logger.info('`%s` rollback processed', channel)
 
     async def _on_synchronized(self) -> None:
-        caches.clear()
-
         await self._ctx.fire_hook('on_synchronized')
 
         metrics.set('synchronized_at', time.time())
@@ -545,6 +543,7 @@ class IndexDispatcher:
     async def _on_realtime(self) -> None:
         # NOTE: We don't have system hook for this event!
         # await self._ctx.fire_hook('on_realtime')
+        caches.clear()
 
         metrics.set('realtime_at', time.time())
 
