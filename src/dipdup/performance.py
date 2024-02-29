@@ -24,7 +24,6 @@ from typing import cast
 
 from async_lru import alru_cache
 
-from dipdup import env
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
