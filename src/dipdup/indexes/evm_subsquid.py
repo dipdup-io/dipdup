@@ -1,6 +1,5 @@
 import asyncio
 import random
-import time
 from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
@@ -25,7 +24,6 @@ from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
-from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
@@ -51,10 +49,10 @@ def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | Non
 
 
 class SubsquidIndex(
+    Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],
     ABC,
-    Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
-    message_type=SubsquidMessageType,
+    message_type=SubsquidMessageType,  # type: ignore[arg-type]
 ):
     def __init__(
         self,
@@ -78,20 +76,6 @@ class SubsquidIndex(
 
     @abstractmethod
     async def _synchronize_node(self, sync_level: int) -> None: ...
-
-    @abstractmethod
-    def _match_level_data(
-        self,
-        handlers: Any,
-        level_data: Any,
-    ) -> deque[Any]: ...
-
-    @abstractmethod
-    async def _call_matched_handler(
-        self,
-        handler_config: Any,
-        level_data: Any,
-    ) -> None: ...
 
     @property
     def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
@@ -200,36 +184,6 @@ class SubsquidIndex(
 
         await self._exit_sync_state(sync_level)
 
-    async def _process_level_data(
-        self,
-        level_data: Any,
-        sync_level: int,
-    ) -> None:
-        if not level_data:
-            return
-
-        batch_level = level_data[0].level
-        index_level = self.state.level
-        if batch_level <= index_level:
-            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
-
-        self._logger.debug('Processing data of level %s', batch_level)
-        started_at = time.time()
-        matched_handlers = self._match_level_data(self._config.handlers, level_data)
-
-        total_matched = len(matched_handlers)
-        Metrics.set_index_handlers_matched(total_matched)
-        metrics[f'{self.name}:handlers_matched'] += total_matched
-        metrics[f'{self.name}:time_in_matcher'] += (time.time() - started_at) / 60
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
-        if not matched_handlers:
-            await self._update_state(level=batch_level)
-            return
-
-        started_at = time.time()
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, data in matched_handlers:
-                await self._call_matched_handler(handler_config, data)
-            await self._update_state(level=batch_level)
-        metrics[f'{self.name}:time_in_callbacks'] += (time.time() - started_at) / 60
+    async def _process_queue(self) -> None:
+        await super()._process_queue()
+        Metrics.set_sqd_processor_last_block(self.state.level)

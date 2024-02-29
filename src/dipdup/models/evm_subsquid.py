@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from dipdup.fetcher import HasLevel
+from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeTransactionData
 
@@ -174,7 +175,7 @@ class Query(TypedDict):
     transactions: NotRequired[list[TransactionRequest]]
 
 
-class SubsquidMessageType(Enum):
+class SubsquidMessageType(MessageType, Enum):
     blocks = 'blocks'
     logs = 'logs'
     traces = 'traces'

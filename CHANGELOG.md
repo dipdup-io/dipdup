@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed incorrect indexer status logging.
 - evm.node: Fixed memory leak when using realtime subscriptions.
+- evm.node: Fixed processing chain reorgs.
 
 ## [7.4.0] - 2024-02-20
 

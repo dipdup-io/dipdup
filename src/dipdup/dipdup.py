@@ -60,6 +60,7 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
+from dipdup.models import RollbackMessage
 from dipdup.models import Schema
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
@@ -70,7 +71,6 @@ from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
@@ -386,13 +386,15 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
+            if isinstance(datasource, IndexDatasource):
+                datasource.call_on_rollback(self._on_rollback)
+
             if isinstance(datasource, TzktDatasource):
                 datasource.call_on_head(self._on_tzkt_head)
                 datasource.call_on_operations(self._on_tzkt_operations)
                 datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
                 datasource.call_on_big_maps(self._on_tzkt_big_maps)
                 datasource.call_on_events(self._on_tzkt_events)
-                datasource.call_on_rollback(self._on_tzkt_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
@@ -415,7 +417,7 @@ class IndexDispatcher:
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
-                index.push_head(head)
+                index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
@@ -480,28 +482,28 @@ class IndexDispatcher:
 
         for index in self._indexes.values():
             if isinstance(index, TzktOperationsIndex) and index.datasource == datasource:
-                index.push_operations(operation_subgroups)
+                index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
         self, datasource: TzktDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
-                index.push_token_transfers(token_transfers)
+                index.push_realtime_message(token_transfers)
 
     async def _on_tzkt_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
-                index.push_big_maps(big_maps)
+                index.push_realtime_message(big_maps)
 
     async def _on_tzkt_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
-                index.push_events(events)
+                index.push_realtime_message(events)
 
-    async def _on_tzkt_rollback(
+    async def _on_rollback(
         self,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         type_: MessageType,
         from_level: int,
         to_level: int,
@@ -530,7 +532,7 @@ class IndexDispatcher:
             else:
                 _logger.debug('%s: affected', index_name)
                 index.push_realtime_message(
-                    TzktRollbackMessage(from_level, to_level),
+                    RollbackMessage(from_level, to_level),
                 )
 
         _logger.info('`%s` rollback processed', channel)

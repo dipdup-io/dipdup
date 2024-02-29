@@ -23,7 +23,6 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogData
@@ -33,6 +32,7 @@ from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
+from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
@@ -49,13 +49,11 @@ NODE_LAST_MILE = 128
 POLL_INTERVAL = 5
 
 
-EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
 LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeLogData, ...]], Awaitable[None]]
 TracesCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTraceData, ...]], Awaitable[None]]
 TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
-RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
 class MagicWeb3Provider(AsyncJSONBaseProvider):
@@ -107,9 +105,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._level_data: defaultdict[int, LevelData] = defaultdict(LevelData)
         self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
-        self._on_connected_callbacks: set[EmptyCallback] = set()
-        self._on_disconnected_callbacks: set[EmptyCallback] = set()
-        self._on_rollback_callbacks: set[RollbackCallback] = set()
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_logs_callbacks: set[LogsCallback] = set()
         self._on_traces_callbacks: set[TracesCallback] = set()
@@ -159,7 +154,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             )
 
             if raw_logs := level_data.logs:
-                logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs)
+                logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs if not log['removed'])
                 await self.emit_logs(logs)
             if level_data.fetch_transactions:
                 full_block = await self.get_block_by_level(
@@ -207,18 +202,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             if isinstance(subscription, EvmNodeSubscription):
                 await self._subscribe(subscription)
 
-    async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
-        for fn in self._on_rollback_callbacks:
-            await fn(self, type_, from_level, to_level)
-
-    async def emit_connected(self) -> None:
-        for fn in self._on_connected_callbacks:
-            await fn()
-
-    async def emit_disconnected(self) -> None:
-        for fn in self._on_disconnected_callbacks:
-            await fn()
-
     async def emit_head(self, head: EvmNodeHeadData) -> None:
         for fn in self._on_head_callbacks:
             await fn(self, head)
@@ -253,12 +236,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     def call_on_syncing(self, fn: SyncingCallback) -> None:
         self._on_syncing_callbacks.add(fn)
-
-    def call_on_connected(self, fn: EmptyCallback) -> None:
-        self._on_connected_callbacks.add(fn)
-
-    def call_on_disconnected(self, fn: EmptyCallback) -> None:
-        self._on_disconnected_callbacks.add(fn)
 
     async def get_block_by_hash(self, block_hash: str) -> dict[str, Any]:
         return await self._jsonrpc_request('eth_getBlockByHash', [block_hash, True])  # type: ignore[no-any-return]
@@ -374,11 +351,12 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             level_data.head = data
 
             if head.level <= known_level:
-                await self.emit_rollback(
-                    MessageType(),
-                    from_level=known_level,
-                    to_level=head.level - 1,
-                )
+                for item in SubsquidMessageType.__members__.values():
+                    await self.emit_rollback(
+                        item,
+                        from_level=known_level,
+                        to_level=head.level - 1,
+                    )
             else:
                 if subscription.transactions:
                     level_data.fetch_transactions = True

@@ -65,6 +65,12 @@ class MessageType:
     value: str
 
 
+@dataclass(frozen=True)
+class RollbackMessage:
+    from_level: int
+    to_level: int
+
+
 class IndexStatus(Enum):
     new = 'new'
     syncing = 'syncing'

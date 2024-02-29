@@ -1,3 +1,4 @@
+import time
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
@@ -12,6 +13,9 @@ from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
+from dipdup.models import MessageType
+from dipdup.models import RollbackMessage
+from dipdup.performance import metrics
 from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
@@ -27,9 +31,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
-    message_type: Any
+    message_type: MessageType
 
-    def __init_subclass__(cls, message_type: Any) -> None:
+    def __init_subclass__(cls, message_type: MessageType) -> None:
         cls.message_type = message_type
         return super().__init_subclass__()
 
@@ -60,9 +64,71 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         ...
 
     @abstractmethod
+    def _match_level_data(
+        self,
+        handlers: Any,
+        level_data: Any,
+    ) -> deque[Any]: ...
+
+    @abstractmethod
+    async def _call_matched_handler(
+        self,
+        handler_config: Any,
+        level_data: Any,
+    ) -> None: ...
+
     async def _process_queue(self) -> None:
-        """Process realtime queue"""
-        ...
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            message = self._queue.popleft()
+            if isinstance(message, RollbackMessage):
+                await self._rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
+            if message_level <= self.state.level:
+                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
+                continue
+
+            await self._process_level_data(message, message_level)
+
+    async def _process_level_data(
+        self,
+        level_data: Any,
+        sync_level: int,
+    ) -> None:
+        if not level_data:
+            return
+
+        batch_level = level_data[0].level
+        index_level = self.state.level
+        if batch_level <= index_level:
+            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
+
+        self._logger.debug('Processing data of level %s', batch_level)
+        started_at = time.time()
+
+        # FIXME: TzktHeadIndexConfig, TzktOperationsUnfilteredIndexConfig still use own methods; see FIXMEs
+        matched_handlers = self._match_level_data(self._config.handlers, level_data)  # type: ignore[union-attr]
+
+        total_matched = len(matched_handlers)
+        Metrics.set_index_handlers_matched(total_matched)
+        metrics[f'{self.name}:handlers_matched'] += total_matched
+        metrics[f'{self.name}:time_in_matcher'] += (time.time() - started_at) / 60
+
+        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        if not matched_handlers:
+            await self._update_state(level=batch_level)
+            return
+
+        started_at = time.time()
+        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
+            for handler_config, data in matched_handlers:
+                await self._call_matched_handler(handler_config, data)
+            await self._update_state(level=batch_level)
+        metrics[f'{self.name}:time_in_callbacks'] += (time.time() - started_at) / 60
 
     @property
     def name(self) -> str:
@@ -190,3 +256,17 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         state.status = status or state.status
         state.level = level or state.level
         await state.save()
+
+    async def _rollback(
+        self,
+        from_level: int,
+        to_level: int,
+    ) -> None:
+        hook_name = 'on_index_rollback'
+        self._logger.warning('Affected by rollback; firing `%s` hook', self.name, hook_name)
+        await self._ctx.fire_hook(
+            name=hook_name,
+            index=self,
+            from_level=from_level,
+            to_level=to_level,
+        )
