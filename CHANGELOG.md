@@ -8,12 +8,16 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- performance: Collect hit/miss stats for model cache.
+- performance: Collect hit/miss stats for cached models.
+
+### Changed
+
+- performance: Drop caches when all indexes have reached realtime.
 
 ### Fixed
 
-- cli: Fixed indexer status logged in regular intervals.
-- models: Fixed memory leak when using `CachedModel` class.
+- cli: Fixed incorrect indexer status logging.
+- evm.node: Fixed memory leak when using realtime subscriptions.
 
 ## [7.4.0] - 2024-02-20
 
