@@ -172,6 +172,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 )
                 await self.emit_transactions(transactions)
 
+            del self._level_data[head.level]
+
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
         client = self._get_ws_client()
