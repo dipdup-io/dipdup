@@ -523,7 +523,7 @@ class IndexDispatcher:
             if index.message_type != type_:
                 _logger.debug('%s: different channel, skipping', index_name)
 
-            elif index.datasource != datasource:
+            elif datasource not in index.datasources:
                 _logger.debug('%s: different datasource, skipping', index_name)
 
             elif to_level >= index_level:

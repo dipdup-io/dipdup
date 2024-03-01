@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
+from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -102,7 +103,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
         self._emitter_queue: Queue[LevelData] = Queue()
-        self._level_data: defaultdict[int, LevelData] = defaultdict(LevelData)
+        self._level_data: defaultdict[str, LevelData] = defaultdict(LevelData)
         self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
         self._on_head_callbacks: set[HeadCallback] = set()
@@ -167,7 +168,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 )
                 await self.emit_transactions(transactions)
 
-            del self._level_data[head.level]
+            del self._level_data[head.hash]
 
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
@@ -345,9 +346,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeHeadSubscription):
-            known_level = max(self._level_data or (0,))
+            known_level = 0
+            for level_data in self._level_data.values():
+                if level_data.head:
+                    known_level = max(known_level, int(level_data.head['number'], 16))
+
             head = EvmNodeHeadData.from_json(data)
-            level_data = self._level_data[head.level]
+            level_data = self._level_data[head.hash]
             level_data.head = data
 
             # NOTE: Push rollback to all EVM indexes, but continue processing.
@@ -363,14 +368,15 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                         from_level=known_level,
                         to_level=head.level - 1,
                     )
-                for level in range(head.level, known_level + 1):
-                    del self._level_data[level]
+                for hash_, level_data in copy(self._level_data).items():
+                    if level_data.head and int(level_data.head['number'], 16) >= head.level:
+                        del self._level_data[hash_]
 
             if subscription.transactions:
                 level_data.fetch_transactions = True
             self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
-            level_data = self._level_data[int(data['blockNumber'], 16)]
+            level_data = self._level_data[data['blockHash']]
             level_data.logs.append(data)
         elif isinstance(subscription, EvmNodeSyncingSubscription):
             syncing = EvmNodeSyncingData.from_json(data)

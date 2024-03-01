@@ -52,6 +52,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
 
+    @property
+    def datasources(self) -> tuple[IndexDatasource[Any], ...]:
+        return (self.datasource,)
+
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
         self._queue.append(message)

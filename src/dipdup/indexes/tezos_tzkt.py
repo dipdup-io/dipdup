@@ -6,7 +6,6 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.index import Index
 from dipdup.index import IndexConfigT
 from dipdup.index import IndexQueueItemT
-from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TzktMessageType
 
 
@@ -15,5 +14,4 @@ class TzktIndex(
     Index[Any, Any, TzktDatasource],
     ABC,
     message_type=TzktMessageType,  # type: ignore[arg-type]
-):
-    ...
+): ...

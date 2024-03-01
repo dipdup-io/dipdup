@@ -15,6 +15,7 @@ from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
@@ -22,7 +23,6 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
-from dipdup.models import RollbackMessage
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
@@ -81,6 +81,10 @@ class SubsquidIndex(
     @property
     def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
         return self._node_datasources
+
+    @property
+    def datasources(self) -> tuple[IndexDatasource[Any], ...]:
+        return (self.datasource, *self.node_datasources)
 
     def get_random_node(self) -> EvmNodeDatasource:
         if not self._node_datasources:
@@ -184,18 +188,3 @@ class SubsquidIndex(
             await self._synchronize_subsquid(sync_level)
 
         await self._exit_sync_state(sync_level)
-
-    async def _process_queue(self) -> None:
-        """Process WebSocket queue"""
-        if self._queue:
-            self._logger.debug('Processing websocket queue')
-        while self._queue:
-            message = self._queue.popleft()
-            if isinstance(message, RollbackMessage):
-                await self._rollback(message.from_level, message.to_level)
-                continue
-
-            message_level = message[0].level
-            await self._process_level_data(message, message_level)
-
-        Metrics.set_sqd_processor_last_block(self.state.level)
