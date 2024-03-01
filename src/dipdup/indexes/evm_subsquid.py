@@ -22,6 +22,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
+from dipdup.models import RollbackMessage
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
@@ -185,5 +186,16 @@ class SubsquidIndex(
         await self._exit_sync_state(sync_level)
 
     async def _process_queue(self) -> None:
-        await super()._process_queue()
+        """Process WebSocket queue"""
+        if self._queue:
+            self._logger.debug('Processing websocket queue')
+        while self._queue:
+            message = self._queue.popleft()
+            if isinstance(message, RollbackMessage):
+                await self._rollback(message.from_level, message.to_level)
+                continue
+
+            message_level = message[0].level
+            await self._process_level_data(message, message_level)
+
         Metrics.set_sqd_processor_last_block(self.state.level)

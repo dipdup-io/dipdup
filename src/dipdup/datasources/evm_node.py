@@ -350,17 +350,25 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             level_data = self._level_data[head.level]
             level_data.head = data
 
+            # NOTE: Push rollback to all EVM indexes, but continue processing.
             if head.level <= known_level:
-                for item in SubsquidMessageType.__members__.values():
+                for type_ in (
+                    SubsquidMessageType.blocks,
+                    SubsquidMessageType.logs,
+                    SubsquidMessageType.traces,
+                    SubsquidMessageType.transactions,
+                ):
                     await self.emit_rollback(
-                        item,
+                        type_,
                         from_level=known_level,
                         to_level=head.level - 1,
                     )
-            else:
-                if subscription.transactions:
-                    level_data.fetch_transactions = True
-                self._emitter_queue.put_nowait(level_data)
+                for level in range(head.level, known_level + 1):
+                    del self._level_data[level]
+
+            if subscription.transactions:
+                level_data.fetch_transactions = True
+            self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level_data = self._level_data[int(data['blockNumber'], 16)]
             level_data.logs.append(data)
