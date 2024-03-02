@@ -14,7 +14,7 @@ This is the last release in the 6.5 branch. Please update to 7.x to get the late
 
 ### Other
 
-- deps: Updated pytezos to 3.11.0.
+- deps: Updated pytezos to 3.11.3.
 
 ### Other
 
