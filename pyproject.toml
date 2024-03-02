@@ -172,6 +172,7 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
     "if TYPE_CHECKING:",
+    "if env.DEBUG:",
 ]
 
 [build-system]

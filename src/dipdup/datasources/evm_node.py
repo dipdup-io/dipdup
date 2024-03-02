@@ -5,7 +5,6 @@ from collections import defaultdict
 from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
-from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -43,11 +42,11 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
-NODE_LEVEL_TIMEOUT = 1.0
+NODE_LEVEL_TIMEOUT = 0.1
 # NOTE: This value was chosen empirically and likely is not optimal.
 NODE_BATCH_SIZE = 32
 NODE_LAST_MILE = 128
-POLL_INTERVAL = 5
+POLL_INTERVAL = 5.0
 
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
@@ -151,10 +150,11 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         while True:
             level_data = await self._emitter_queue.get()
-
             head = EvmNodeHeadData.from_json(
                 await level_data.get_head(),
             )
+
+            self._logger.info('New head: %s -> %s', known_level, head.level)
 
             # NOTE: Push rollback to all EVM indexes, but continue processing.
             if head.level <= known_level:
@@ -174,6 +174,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
             if raw_logs := level_data.logs:
                 logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs if not log['removed'])
+                self._logger.debug('Emitting %s logs', len(logs))
                 await self.emit_logs(logs)
             if level_data.fetch_transactions:
                 full_block = await self.get_block_by_level(
@@ -184,6 +185,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     EvmNodeTransactionData.from_json(transaction, head.timestamp)
                     for transaction in full_block['transactions']
                 )
+                self._logger.debug('Emitting %s transactions', len(transactions))
                 await self.emit_transactions(transactions)
 
             del self._level_data[head.hash]
@@ -355,7 +357,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 if subscription_id not in self._subscription_ids:
                     raise FrameworkException(f'{self.name}: Unknown subscription ID: {subscription_id}')
                 subscription = self._subscription_ids[subscription_id]
-                self._logger.debug('Received a message from channel %s', subscription_id)
                 await self._handle_subscription(subscription, data['params']['result'])
             else:
                 raise DatasourceError(f'Unknown method: {data["method"]}', self.name)

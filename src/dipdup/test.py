@@ -58,7 +58,7 @@ async def spawn_index(dipdup: DipDup, name: str) -> Index[Any, Any, Any]:
     """Spawn index from config and add it to dispatcher."""
     dispatcher = dipdup._index_dispatcher
     index: Index[Any, Any, Any] = await dispatcher._ctx._spawn_index(name)
-    dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.pop()
+    dispatcher._indexes[name] = dispatcher._ctx._pending_indexes.get_nowait()
     return index
 
 

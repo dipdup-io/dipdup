@@ -88,7 +88,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         while self._queue:
             message = self._queue.popleft()
             if not message:
-                continue
+                raise FrameworkException('Empty message in the queue')
 
             if isinstance(message, RollbackMessage):
                 await self._rollback(message.from_level, message.to_level)
@@ -270,12 +270,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         to_level: int,
     ) -> None:
         hook_name = 'on_index_rollback'
-        self._logger.warning('Affected by rollback; firing `%s` hook', self.name, hook_name)
         await self._ctx.fire_hook(
             name=hook_name,
             index=self,
             from_level=from_level,
             to_level=to_level,
         )
-        self.state.level = to_level
-        await self.state.save()
+        await self._update_state(level=to_level)

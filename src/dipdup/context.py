@@ -4,7 +4,6 @@ import asyncio
 import importlib
 import os
 import sys
-from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import contextmanager
 from contextlib import suppress
@@ -136,8 +135,8 @@ class DipDupContext:
         self.transactions = transactions
 
         self.logger = FormattedLogger('dipdup.context')
-        self._pending_indexes: deque[Any] = deque()
-        self._pending_hooks: deque[Awaitable[None]] = deque()
+        self._pending_indexes: asyncio.Queue[Any] = asyncio.Queue()
+        self._pending_hooks: asyncio.Queue[Awaitable[None]] = asyncio.Queue()
         self._rolled_back_indexes: set[str] = set()
         self._handlers: dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: dict[str, HookConfig] = {}
@@ -374,7 +373,7 @@ class DipDupContext:
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
-        self._pending_indexes.append(index)
+        self._pending_indexes.put_nowait(index)
         return index
 
     # TODO: disable_index(name: str)
@@ -525,11 +524,9 @@ class DipDupContext:
         await Index.filter(name=index).update(level=to_level)
         self._rolled_back_indexes.add(index)
 
-    async def _hooks_loop(self, interval: int) -> None:
+    async def _hooks_loop(self) -> None:
         while True:
-            while self._pending_hooks:
-                await self._pending_hooks.popleft()
-            await asyncio.sleep(interval)
+            await self._pending_hooks.get()
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
@@ -610,7 +607,7 @@ class DipDupContext:
                 await fn(new_ctx, *args, **kwargs)
 
         coro = _wrapper()
-        await coro if wait else self._pending_hooks.append(coro)
+        await coro if wait else self._pending_hooks.put_nowait(coro)
 
     async def execute_sql(
         self,

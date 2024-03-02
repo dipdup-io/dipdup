@@ -83,10 +83,10 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 1 if env.DEBUG else 2
-STATUS_INTERVAL = 1 if env.DEBUG else 10
-CLEANUP_INTERVAL = 60 * 5
-INDEX_DISPATCHER_INTERVAL = 1
+METRICS_INTERVAL = 1.0 if env.DEBUG else 2.0
+STATUS_INTERVAL = 1.0 if env.DEBUG else 10.0
+CLEANUP_INTERVAL = 60.0 * 5
+INDEX_DISPATCHER_INTERVAL = 0.1
 
 _logger = logging.getLogger(__name__)
 
@@ -147,8 +147,8 @@ class IndexDispatcher:
             indexes_processed = any(await gather(*tasks))
             indexes_spawned = False
 
-            while self._ctx._pending_indexes:
-                index = self._ctx._pending_indexes.popleft()
+            while not self._ctx._pending_indexes.empty():
+                index = self._ctx._pending_indexes.get_nowait()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
@@ -187,7 +187,7 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        if self._ctx._pending_indexes:
+        if not self._ctx._pending_indexes.empty():
             return False
 
         # NOTE: Run forever if at least one index has no upper bound.
@@ -221,7 +221,7 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
             await self._update_metrics()
 
-    async def _cleanup_loop(self, interval: int) -> None:
+    async def _cleanup_loop(self, interval: float) -> None:
         while True:
             await asyncio.sleep(interval)
             await self._ctx.transactions.cleanup()
@@ -841,7 +841,7 @@ class DipDup:
         _add_task(index_dispatcher._cleanup_loop(CLEANUP_INTERVAL))
 
         # NOTE: Hooks called with `wait=False`
-        _add_task(self._ctx._hooks_loop(INDEX_DISPATCHER_INTERVAL))
+        _add_task(self._ctx._hooks_loop())
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
