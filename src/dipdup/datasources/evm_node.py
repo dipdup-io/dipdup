@@ -46,7 +46,7 @@ NODE_LEVEL_TIMEOUT = 0.1
 # NOTE: This value was chosen empirically and likely is not optimal.
 NODE_BATCH_SIZE = 32
 NODE_LAST_MILE = 128
-POLL_INTERVAL = 5.0
+POLL_INTERVAL = 1.0
 
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
