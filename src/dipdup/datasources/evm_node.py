@@ -174,8 +174,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
             if raw_logs := level_data.logs:
                 logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs if not log['removed'])
-                self._logger.debug('Emitting %s logs', len(logs))
-                await self.emit_logs(logs)
+                if logs:
+                    self._logger.debug('Emitting %s logs', len(logs))
+                    await self.emit_logs(logs)
             if level_data.fetch_transactions:
                 full_block = await self.get_block_by_level(
                     block_number=head.level,
@@ -185,8 +186,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     EvmNodeTransactionData.from_json(transaction, head.timestamp)
                     for transaction in full_block['transactions']
                 )
-                self._logger.debug('Emitting %s transactions', len(transactions))
-                await self.emit_transactions(transactions)
+                if transactions:
+                    self._logger.debug('Emitting %s transactions', len(transactions))
+                    await self.emit_transactions(transactions)
 
             del self._level_data[head.hash]
 
