@@ -518,6 +518,7 @@ class IndexDispatcher:
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
+            await index.state.refresh_from_db()
             index_level = index.state.level
 
             if index.message_type != type_:

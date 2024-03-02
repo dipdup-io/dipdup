@@ -87,6 +87,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             self._logger.debug('Processing websocket queue')
         while self._queue:
             message = self._queue.popleft()
+            if not message:
+                continue
+
             if isinstance(message, RollbackMessage):
                 await self._rollback(message.from_level, message.to_level)
                 continue
@@ -274,3 +277,5 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             from_level=from_level,
             to_level=to_level,
         )
+        self.state.level = to_level
+        await self.state.save()

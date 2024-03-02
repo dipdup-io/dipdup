@@ -147,12 +147,30 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                 await asyncio.sleep(POLL_INTERVAL)
 
     async def _emitter_loop(self) -> None:
+        known_level = 0
+
         while True:
             level_data = await self._emitter_queue.get()
 
             head = EvmNodeHeadData.from_json(
                 await level_data.get_head(),
             )
+
+            # NOTE: Push rollback to all EVM indexes, but continue processing.
+            if head.level <= known_level:
+                for type_ in (
+                    SubsquidMessageType.blocks,
+                    SubsquidMessageType.logs,
+                    SubsquidMessageType.traces,
+                    SubsquidMessageType.transactions,
+                ):
+                    await self.emit_rollback(
+                        type_,
+                        from_level=known_level,
+                        to_level=head.level - 1,
+                    )
+
+            known_level = head.level
 
             if raw_logs := level_data.logs:
                 logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs if not log['removed'])
@@ -346,32 +364,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeHeadSubscription):
-            known_level = 0
-            for level_data in self._level_data.values():
-                if level_data.head:
-                    known_level = max(known_level, int(level_data.head['number'], 16))
-
-            head = EvmNodeHeadData.from_json(data)
-            level_data = self._level_data[head.hash]
+            level_data = self._level_data[data['hash']]
             level_data.head = data
-
-            # NOTE: Push rollback to all EVM indexes, but continue processing.
-            if head.level <= known_level:
-                for type_ in (
-                    SubsquidMessageType.blocks,
-                    SubsquidMessageType.logs,
-                    SubsquidMessageType.traces,
-                    SubsquidMessageType.transactions,
-                ):
-                    await self.emit_rollback(
-                        type_,
-                        from_level=known_level,
-                        to_level=head.level - 1,
-                    )
-                for hash_, level_data in copy(self._level_data).items():
-                    if level_data.head and int(level_data.head['number'], 16) >= head.level:
-                        del self._level_data[hash_]
-
             if subscription.transactions:
                 level_data.fetch_transactions = True
             self._emitter_queue.put_nowait(level_data)
