@@ -7,20 +7,17 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
+from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 
-TokenTransferQueueItem = tuple[TzktTokenTransferData, ...] | TzktRollbackMessage
+QueueItem = tuple[TzktTokenTransferData, ...] | RollbackMessage
 
 
 class TzktTokenTransfersIndex(
-    TzktIndex[TzktTokenTransfersIndexConfig, TokenTransferQueueItem],
+    TzktIndex[TzktTokenTransfersIndexConfig, QueueItem],
     message_type=TzktMessageType.token_transfer,
 ):
-    def push_token_transfers(self, token_transfers: TokenTransferQueueItem) -> None:
-        self.push_realtime_message(token_transfers)
-
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
         token_addresses: set[str] = set()
         token_ids: set[int] = set()

@@ -65,6 +65,12 @@ class MessageType:
     value: str
 
 
+@dataclass(frozen=True)
+class RollbackMessage:
+    from_level: int
+    to_level: int
+
+
 class IndexStatus(Enum):
     new = 'new'
     syncing = 'syncing'
@@ -182,7 +188,7 @@ class ModelUpdate(TortoiseModel):
         else:
             raise ValueError(f'Unknown action: {action}')
 
-        self = ModelUpdate(
+        return ModelUpdate(
             model_name=model.__class__.__name__,
             model_pk=model.pk,
             level=transaction.level,
@@ -190,13 +196,6 @@ class ModelUpdate(TortoiseModel):
             action=action,
             data=data,
         )
-        _logger.debug(
-            'ModelUpdate saved: %s(%s) %s',
-            self.model_name,
-            self.model_pk,
-            self.action.value,
-        )
-        return self
 
     async def revert(self, model: type[TortoiseModel]) -> None:
         """Revert a single model update"""

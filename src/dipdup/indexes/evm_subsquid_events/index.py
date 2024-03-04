@@ -12,15 +12,18 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid_events.fetcher import EventLogFetcher
 from dipdup.indexes.evm_subsquid_events.matcher import match_events
+from dipdup.models import RollbackMessage
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_subsquid import SubsquidEvent
 from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
+QueueItem = tuple[EvmNodeLogData, ...] | RollbackMessage
+
 
 class SubsquidEventsIndex(
-    SubsquidIndex[SubsquidEventsIndexConfig, tuple[EvmNodeLogData, ...], SubsquidDatasource],
+    SubsquidIndex[SubsquidEventsIndexConfig, QueueItem, SubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
@@ -42,14 +45,6 @@ class SubsquidEventsIndex(
                 self._topics[typename] = {k: v['topic0'] for k, v in event_abi.items()}
 
         return self._topics
-
-    async def _process_queue(self) -> None:
-        while self._queue:
-            logs = self._queue.popleft()
-            level = logs[0].level
-            self._logger.info('Processing %s event logs of level %s', len(logs), level)
-            await self._process_level_data(logs, level)
-            Metrics.set_sqd_processor_last_block(level)
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1

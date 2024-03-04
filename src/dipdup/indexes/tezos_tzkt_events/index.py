@@ -9,22 +9,19 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
+from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TzktEvent
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktUnknownEvent
 
-EventQueueItem = tuple[TzktEventData, ...] | TzktRollbackMessage
+QueueItem = tuple[TzktEventData, ...] | RollbackMessage
 
 
 class TzktEventsIndex(
-    TzktIndex[TzktEventsIndexConfig, EventQueueItem],
+    TzktIndex[TzktEventsIndexConfig, QueueItem],
     message_type=TzktMessageType.event,
 ):
-    def push_events(self, events: EventQueueItem) -> None:
-        self.push_realtime_message(events)
-
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()

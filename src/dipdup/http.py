@@ -151,7 +151,6 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         Metrics.set_http_errors_in_row(self._url, 0)
 
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, last_attempt)
             try:
                 return await self._request(
                     method=method,
