@@ -81,11 +81,7 @@ query introspectionQuery($name: String!) {
     }
   }
 }
-""".replace(
-    '\n', ' '
-).replace(
-    '  ', ''
-)
+""".replace('\n', ' ').replace('  ', '')
 
 
 @dataclass
@@ -235,6 +231,9 @@ class HasuraGateway(HTTPGateway):
                 self._http_config.retry_count, retry_count = retry_count, self._http_config.retry_count
 
         self._logger.debug('Response: %s', result)
+        if isinstance(result, list):
+            # for bulk requests with response code 200 it's always list of {"message":"success"}
+            result = result[0]
         if errors := result.get('error') or result.get('errors'):
             raise HasuraError(errors)
 
@@ -508,7 +507,7 @@ class HasuraGateway(HTTPGateway):
         table_names = {t['table']['name'] for t in source['tables']}
         tables = await self._get_fields()
 
-        # TODO: Use new Hasura API
+        bulk_request_args: list[dict[str, Any]] = []
         self._logger.info('Applying table customizations (could take some time)')
         for table in tables:
             if table.root not in table_names:
@@ -516,24 +515,27 @@ class HasuraGateway(HTTPGateway):
 
             custom_root_fields = self._format_custom_root_fields(table.root)
             columns = await self._get_fields(table.root)
-            custom_column_names = self._format_custom_column_names(columns)
+            column_config = self._format_column_config(columns)
             args: dict[str, Any] = {
                 'table': self._format_table_table(table.root),
                 'source': self._hasura_config.source,
                 'configuration': {
                     'identifier': custom_root_fields['select_by_pk'],
                     'custom_root_fields': custom_root_fields,
-                    'custom_column_names': custom_column_names,
+                    'column_config': column_config,
                 },
             }
 
-            await self._hasura_request(
-                endpoint='metadata',
-                json={
-                    'type': 'pg_set_table_customization',
-                    'args': args,
-                },
-            )
+            bulk_request_args.append({'type': 'pg_set_table_customization', 'args': args})
+
+        await self._hasura_request(
+            endpoint='metadata',
+            json={
+                'type': 'bulk',
+                'source': self._hasura_config.source,
+                'args': bulk_request_args,
+            },
+        )
 
     def _format_rest_query(self, name: str, table: str, filter: str, fields: Iterable[Field]) -> dict[str, Any]:
         if not table.endswith('_by_pk'):
@@ -604,9 +606,18 @@ class HasuraGateway(HTTPGateway):
         }
 
     def _format_custom_column_names(self, fields: list[Field]) -> dict[str, Any]:
+        """
+        Deprecated
+        See: https://hasura.io/docs/latest/api-reference/syntax-defs/#customcolumnnames
+        """
         if self._hasura_config.camel_case:
             return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
         return {humps.decamelize(f.name): humps.decamelize(f.name) for f in fields}
+
+    def _format_column_config(self, fields: list[Field]) -> dict[str, Any]:
+        if self._hasura_config.camel_case:
+            return {humps.decamelize(f.name): {'custom_name': humps.camelize(f.name)} for f in fields}
+        return {humps.decamelize(f.name): {'custom_name': humps.decamelize(f.name)} for f in fields}
 
     def _format_table(self, name: str) -> dict[str, Any]:
         return {
