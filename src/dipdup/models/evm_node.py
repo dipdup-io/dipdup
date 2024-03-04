@@ -61,6 +61,10 @@ class EvmNodeHeadData:
 
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
+        # NOTE: Skale Nebula
+        if 'baseFeePerGas' not in block_json:
+            block_json['baseFeePerGas'] = '0x0'
+
         return cls(
             base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
             difficulty=int(block_json['difficulty'], 16),
@@ -103,6 +107,10 @@ class EvmNodeLogData:
 
     @classmethod
     def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
+        # NOTE: Skale Nebula
+        if 'removed' not in log_json:
+            log_json['removed'] = False
+
         return cls(
             address=log_json['address'],
             block_hash=log_json['blockHash'],
