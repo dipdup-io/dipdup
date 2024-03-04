@@ -10,25 +10,20 @@ from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.indexes.evm_subsquid_transactions.fetcher import TransactionFetcher
 from dipdup.indexes.evm_subsquid_transactions.matcher import match_transactions
+from dipdup.models import RollbackMessage
 from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.models.evm_subsquid import SubsquidTransaction
 from dipdup.models.evm_subsquid import TransactionRequest
 from dipdup.prometheus import Metrics
 
+QueueItem = tuple[EvmNodeTransactionData, ...] | RollbackMessage
+
 
 class SubsquidTransactionsIndex(
-    SubsquidIndex[SubsquidTransactionsIndexConfig, tuple[EvmNodeTransactionData, ...], SubsquidDatasource],
+    SubsquidIndex[SubsquidTransactionsIndexConfig, QueueItem, SubsquidDatasource],
     message_type=SubsquidMessageType.transactions,
 ):
-    async def _process_queue(self) -> None:
-        while self._queue:
-            transactions = self._queue.popleft()
-            level = transactions[0].level
-            self._logger.info('Processing %s transactions of level %s', len(transactions), level)
-            await self._process_level_data(transactions, level)
-            Metrics.set_sqd_processor_last_block(level)
-
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_transactions(self._ctx.package, handlers, level_data)
 

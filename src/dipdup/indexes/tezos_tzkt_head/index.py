@@ -7,30 +7,27 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.models import IndexStatus
+from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 
-HeadQueueItem = TzktHeadBlockData | TzktRollbackMessage
+HeadQueueItem = TzktHeadBlockData | RollbackMessage
 
 
 class TzktHeadIndex(
     TzktIndex[TzktHeadIndexConfig, HeadQueueItem],
     message_type=TzktMessageType.head,
 ):
-    def push_head(self, events: HeadQueueItem) -> None:
-        self.push_realtime_message(events)
-
     async def _synchronize(self, sync_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', sync_level)
         await self._update_state(status=IndexStatus.realtime, level=sync_level)
 
-    # FIXME: Use method from TzktIndex
+    # FIXME: Use method from Index
     async def _process_queue(self) -> None:
         while self._queue:
             message = self._queue.popleft()
-            if isinstance(message, TzktRollbackMessage):
-                await self._tzkt_rollback(message.from_level, message.to_level)
+            if isinstance(message, RollbackMessage):
+                await self._rollback(message.from_level, message.to_level)
                 continue
 
             message_level = message.level
@@ -62,5 +59,6 @@ class TzktHeadIndex(
             level_data,
         )
 
+    # FIXME: Use method from Index
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         raise NotImplementedError

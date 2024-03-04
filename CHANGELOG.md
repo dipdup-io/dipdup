@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- performance: Collect hit/miss stats for cached models.
+
+### Changed
+
+- performance: Drop caches when all indexes have reached realtime.
+
+### Fixed
+
+- cli: Fixed incorrect indexer status logging.
+- evm.node: Fixed memory leak when using realtime subscriptions.
+- evm.node: Fixed processing chain reorgs.
+- performance: Decrease main loop and node polling intervals.
+
 ## [7.4.0] - 2024-02-20
 
 ### Added

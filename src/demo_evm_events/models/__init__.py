@@ -10,4 +10,5 @@ class Holder(CachedModel):
     last_seen = fields.BigIntField(null=True)
 
     class Meta:
+        # NOTE: Decrease if you're low on RAM
         maxsize = 2 ** 20

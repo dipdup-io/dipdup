@@ -1,4 +1,6 @@
 from abc import abstractmethod
+from collections.abc import Awaitable
+from collections.abc import Callable
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -10,12 +12,16 @@ from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
+from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)
+
+EmptyCallback = Callable[[], Awaitable[None]]
+RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
@@ -52,6 +58,9 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     ) -> None:
         super().__init__(config)
         self._subscriptions: SubscriptionManager = SubscriptionManager(merge_subscriptions)
+        self._on_connected_callbacks: set[EmptyCallback] = set()
+        self._on_disconnected_callbacks: set[EmptyCallback] = set()
+        self._on_rollback_callbacks: set[RollbackCallback] = set()
 
     @abstractmethod
     async def subscribe(self) -> None: ...
@@ -69,6 +78,27 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
     def get_sync_level(self, subscription: Subscription) -> int | None:
         return self._subscriptions.get_sync_level(subscription)
+
+    def call_on_connected(self, fn: EmptyCallback) -> None:
+        self._on_connected_callbacks.add(fn)
+
+    def call_on_disconnected(self, fn: EmptyCallback) -> None:
+        self._on_disconnected_callbacks.add(fn)
+
+    def call_on_rollback(self, fn: RollbackCallback) -> None:
+        self._on_rollback_callbacks.add(fn)
+
+    async def emit_connected(self) -> None:
+        for fn in self._on_connected_callbacks:
+            await fn()
+
+    async def emit_disconnected(self) -> None:
+        for fn in self._on_disconnected_callbacks:
+            await fn()
+
+    async def emit_rollback(self, type_: MessageType, from_level: int, to_level: int) -> None:
+        for fn in self._on_rollback_callbacks:
+            await fn(self, type_, from_level, to_level)
 
 
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:

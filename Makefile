@@ -34,7 +34,7 @@ ruff:           ## Lint with ruff
 	ruff check --fix ${SOURCE}
 
 mypy:           ## Lint with mypy
-	mypy --no-incremental ${SOURCE}
+	mypy ${SOURCE}
 
 ##
 
