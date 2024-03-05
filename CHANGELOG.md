@@ -8,10 +8,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- hasura: Allow `bulk` request type in custom metadata files.
+
+### Performance
+
+- hasura: Apply table customizations in a single request.
 - performance: Collect hit/miss stats for cached models.
-
-### Changed
-
+- performance: Decrease main loop and node polling intervals.
 - performance: Drop caches when all indexes have reached realtime.
 
 ### Fixed
@@ -19,7 +22,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed incorrect indexer status logging.
 - evm.node: Fixed memory leak when using realtime subscriptions.
 - evm.node: Fixed processing chain reorgs.
-- performance: Decrease main loop and node polling intervals.
 
 ## [7.4.0] - 2024-02-20
 
