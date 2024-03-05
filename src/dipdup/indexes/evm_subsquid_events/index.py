@@ -5,7 +5,6 @@ from typing import Any
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -57,12 +56,21 @@ class SubsquidEventsIndex(
     async def _synchronize_node(self, sync_level: int) -> None:
         batch_first_level = self.state.level + 1
         while batch_first_level <= sync_level:
-            batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
+            node = self.get_random_node()
+            batch_last_level = min(
+                batch_first_level + node._http_config.batch_size,
+                sync_level,
+            )
 
-            log_batch = await self.get_logs_batch(batch_first_level, batch_last_level)
+            log_batch = await self.get_logs_batch(
+                first_level=batch_first_level,
+                last_level=batch_last_level,
+                node=node,
+            )
             block_batch = await self.get_blocks_batch(
                 levels=set(log_batch.keys()),
-                full_transactions=True,
+                full_transactions=False,
+                node=node,
             )
 
             for level_logs, level_block in zip(log_batch.values(), block_batch.values(), strict=True):

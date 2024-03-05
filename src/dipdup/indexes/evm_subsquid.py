@@ -112,12 +112,14 @@ class SubsquidIndex(
         self,
         levels: set[int],
         full_transactions: bool = False,
+        node: EvmNodeDatasource | None = None,
     ) -> dict[int, dict[str, Any]]:
         tasks: deque[asyncio.Task[Any]] = deque()
         blocks: dict[int, Any] = {}
+        node = node or self.get_random_node()
 
         async def _fetch(level: int) -> None:
-            blocks[level] = await self.get_random_node().get_block_by_level(
+            blocks[level] = await node.get_block_by_level(
                 block_number=level,
                 full_transactions=full_transactions,
             )
@@ -137,9 +139,11 @@ class SubsquidIndex(
         self,
         first_level: int,
         last_level: int,
+        node: EvmNodeDatasource | None = None,
     ) -> dict[int, list[dict[str, Any]]]:
         grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
-        logs = await self.get_random_node().get_logs(
+        node = node or self.get_random_node()
+        logs = await node.get_logs(
             {
                 'fromBlock': hex(first_level),
                 'toBlock': hex(last_level),
@@ -149,11 +153,17 @@ class SubsquidIndex(
             grouped_logs[int(log['blockNumber'], 16)].append(log)
         return grouped_logs
 
-    async def _get_node_sync_level(self, subsquid_level: int, index_level: int) -> int | None:
+    async def _get_node_sync_level(
+        self,
+        subsquid_level: int,
+        index_level: int,
+        node: EvmNodeDatasource | None = None,
+    ) -> int | None:
         if not self.node_datasources:
             return None
+        node = node or self.get_random_node()
 
-        node_sync_level = await self.get_random_node().get_head_level()
+        node_sync_level = await node.get_head_level()
         subsquid_lag = abs(node_sync_level - subsquid_level)
         subsquid_available = subsquid_level - index_level
         self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)

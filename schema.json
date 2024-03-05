@@ -511,6 +511,17 @@
           ],
           "default": null
         },
+        "polling_interval": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "replay_path": {
           "anyOf": [
             {

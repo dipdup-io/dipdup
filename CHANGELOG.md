@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - hasura: Allow `bulk` request type in custom metadata files.
+- config: Added `http.polling_interval` option to set the interval between polling requests (some datasources).
+
+### Fixed
+
+- cli: Fixed incorrect indexer status logging.
+- evm.node: Fixed memory leak when using realtime subscriptions.
+- evm.node: Fixed processing chain reorgs.
+- evm.node: Respect `http.batch_size` when fetching block headers.
 
 ### Performance
 
@@ -16,12 +24,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - performance: Collect hit/miss stats for cached models.
 - performance: Decrease main loop and node polling intervals.
 - performance: Drop caches when all indexes have reached realtime.
-
-### Fixed
-
-- cli: Fixed incorrect indexer status logging.
-- evm.node: Fixed memory leak when using realtime subscriptions.
-- evm.node: Fixed processing chain reorgs.
 
 ## [7.4.0] - 2024-02-20
 
