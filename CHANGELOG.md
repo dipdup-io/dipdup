@@ -8,11 +8,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
-- hasura: Allow `bulk` request type in custom metadata files.
 - config: Added `http.polling_interval` option to set the interval between polling requests (some datasources).
+- hasura: Allow `bulk` request type in custom metadata files.
 
 ### Fixed
 
+- abi.etherscan: Raise `AbiNotAvailableError` when contract is not verified.
 - cli: Fixed incorrect indexer status logging.
 - evm.node: Fixed memory leak when using realtime subscriptions.
 - evm.node: Fixed processing chain reorgs.
