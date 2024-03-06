@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [6.5.16] - 2024-03-05
 
 This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.
 
@@ -1090,7 +1090,7 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/6.5.15...HEAD
+[6.5.16]: https://github.com/dipdup-io/dipdup/compare/6.5.15...6.5.16
 [6.5.15]: https://github.com/dipdup-io/dipdup/compare/6.5.14...6.5.15
 [6.5.14]: https://github.com/dipdup-io/dipdup/compare/6.5.13...6.5.14
 [6.5.13]: https://github.com/dipdup-io/dipdup/compare/6.5.12...6.5.13
