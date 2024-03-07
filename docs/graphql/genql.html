@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -175,19 +175,19 @@
 <h2 id="sdk-package-config"><a class="header" href="#sdk-package-config">SDK package config</a></h2>
 <p>Your minimal <em>package.json</em> file will look like the following:</p>
 <pre><code class="language-typescript">{
-  &quot;name&quot;: &quot;%PACKAGE_NAME%&quot;,
-  &quot;version&quot;: &quot;0.0.1&quot;,
-  &quot;main&quot;: &quot;dist/index.js&quot;,
-  &quot;types&quot;: &quot;dist/index.d.ts&quot;,
-  &quot;devDependencies&quot;: {
-    &quot;@genql/cli&quot;: &quot;^2.6.0&quot;
+  "name": "%PACKAGE_NAME%",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@genql/cli": "^2.6.0"
   },
-  &quot;dependencies&quot;: {
-    &quot;@genql/runtime&quot;: &quot;2.6.0&quot;,
-    &quot;graphql&quot;: &quot;^15.5.0&quot;
+  "dependencies": {
+    "@genql/runtime": "2.6.0",
+    "graphql": "^15.5.0"
   },
-  &quot;scripts&quot;: {
-    &quot;build&quot;: &quot;genql --endpoint %GRAPHQL_ENDPOINT% --output ./dist&quot;
+  "scripts": {
+    "build": "genql --endpoint %GRAPHQL_ENDPOINT% --output ./dist"
   }
 }
 </code></pre>

@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -176,18 +176,18 @@
 <h3 id="response"><a class="header" href="#response">Response</a></h3>
 <p>If the (latest block) head subscription state was updated less than <strong>three minutes</strong> ago, everything is <strong>OK</strong>:</p>
 <pre><code class="language-json">{
-  &quot;dipdup_head_status&quot;: [
+  "dipdup_head_status": [
     {
-      &quot;status&quot;: &quot;OK&quot;
+      "status": "OK"
     }
   ]
 }
 </code></pre>
 <p>Otherwise, the state is considered <strong>OUTDATED</strong>:</p>
 <pre><code class="language-json">{
-  &quot;dipdup_head_status&quot;: [
+  "dipdup_head_status": [
     {
-      &quot;status&quot;: &quot;OUTDATED&quot;
+      "status": "OUTDATED"
     }
   ]
 }
@@ -206,7 +206,7 @@ FROM
     dipdup_head;
 </code></pre>
 <p>You can also create your custom alert endpoints using SQL views and functions and then convert them to Hasura REST endpoints.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -183,7 +183,7 @@ class ContractStorage(BaseModel):
 <li>Use generic <code>http</code> datasources for external APIs instead of plain <code>aiohttp</code> requests. This way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.</li>
 <li>Database tables that store off-chain data can be marked as immune, preventing them from being removed on reindexing.</li>
 </ul>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>
@@ -196,7 +196,7 @@ class ContractStorage(BaseModel):
 </div>
 </div>
 <h2 id="one-of-my-indexes-depends-on-another-ones-indexed-data-how-to-process-them-in-a-specific-order"><a class="header" href="#one-of-my-indexes-depends-on-another-ones-indexed-data-how-to-process-them-in-a-specific-order">One of my indexes depends on another one's indexed data. How to process them in a specific order?</a></h2>
-<p>Indexes of all kinds are fully independent. They are processed in parallel, have their message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no &quot;official&quot; way to manage the order of indexing.</p>
+<p>Indexes of all kinds are fully independent. They are processed in parallel, have their message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no "official" way to manage the order of indexing.</p>
 <p>Avoid waiting for sync primitives like <code>asyncio.Event</code> or <code>asyncio.Lock</code> in handlers. Indexing will be stuck forever, waiting for the database transaction to complete.</p>
 <p>Instead, save raw data in handlers and process it later with hooks when all conditions are met. For example, process data batch only when all indexes in the <code>dipdup_index</code> table have reached a specific level.</p>
 <h2 id="how-to-perform-database-migrations"><a class="header" href="#how-to-perform-database-migrations">How to perform database migrations?</a></h2>
@@ -216,12 +216,12 @@ dipdup schema export &gt; new
 diff old new
 </code></pre>
 <pre><code class="language-diff">76c76
-&lt;     &quot;timestamp&quot; TIMESTAMP NOT NULL,
+&lt;     "timestamp" TIMESTAMP NOT NULL,
 ---
-&gt;     &quot;timestamp&quot; TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP,
+&gt;     "timestamp" TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP,
 </code></pre>
 <p>Now you can prepare and execute an <code>ALTER TABLE</code> query manually or using SQL hooks.</p>
-<div id="admonition-see-also-1" class="admonition info">
+<div id="admonition-see-also-1" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-1"></a></p>

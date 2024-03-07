@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -176,9 +176,9 @@
     └── 0
         ├── token_id: 0
         └── token_info
-            ├── name: &quot;&quot;
-            ├── symbol: &quot;&quot;
-            └── decimals: &quot;&quot;
+            ├── name: ""
+            ├── symbol: ""
+            └── decimals: ""
 </code></pre>
 <p>But typically, you want to store more like a token thumbnail icon, and it is no longer feasible to keep such large data on-chain (because you pay gas for every byte stored).<br />
 Then you can put large files somewhere off-chain (e.g., IPFS) and store just links:</p>
@@ -188,7 +188,7 @@ Then you can put large files somewhere off-chain (e.g., IPFS) and store just lin
         ├── token_id: 0
         └── token_info
             ├── ...
-            └── thumbnailUri: &quot;ipfs://&quot;
+            └── thumbnailUri: "ipfs://"
 </code></pre>
 <p>This approach is still costly, but sometimes (in rare cases), you need to have access to the metadata from the contract (example: <a href="https://tzkt.io/KT1NVvPsNDChrLRH5K2cy6Sc9r1uuUwdiZQd/storage/115420">Dogami</a>).<br />
 We can go further and put the entire token info structure to IPFS:</p>
@@ -197,7 +197,7 @@ We can go further and put the entire token info structure to IPFS:</p>
     └── 0
         ├── token_id: 0
         └── token_info
-            └── &quot;&quot;: &quot;ipfs://&quot;
+            └── "": "ipfs://"
 </code></pre>
 <p>It is the most common case right now (example: <a href="https://tzkt.io/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/storage/514">HEN</a>).</p>
 <p>The main advantage of the basic approach is that all the changes applied to token metadata will result in big map diffs that are easily traceable by indexers. Even if you decide to replace the off-chain file, it will cause the IPFS link to change. In the case of HTTP links, indexers cannot detect the content change; thus, token metadata won't be updated.</p>

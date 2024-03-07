@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -165,8 +165,8 @@
 <p>DipDup framework evolves rapidly just like Tezos itself does. We recommend keeping your project up-to-date with the latest version of DipDup.</p>
 <p>If you're using Poetry, set caret version constraint in <code>pyproject.toml</code> to use the latest release of the current major version:</p>
 <pre><code class="language-toml">[tool.poetry.dependencies]
-python = &quot;&gt;=3.10,&lt;3.11&quot;
-dipdup = &quot;^6&quot;
+python = "&gt;=3.10,&lt;3.11"
+dipdup = "^6"
 </code></pre>
 <p>pipx installations always use latest version.</p>
 <p>Run <code>dipdup update</code> periodically to update to the latest version.</p>
@@ -174,11 +174,11 @@ dipdup = &quot;^6&quot;
 <pre><code class="language-Dockerfile">FROM dipdup/dipdup:6
 </code></pre>
 <h2 id="ensure-that-config-is-correct"><a class="header" href="#ensure-that-config-is-correct">Ensure that config is correct</a></h2>
-<p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup &quot;sees&quot; it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
+<p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup "sees" it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
 <pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml config export
 dipdup -c dipdup.yml -c dipdup.prod.yml config env
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

@@ -93,7 +93,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -249,11 +249,11 @@ python -m venv .venv
 pip install dipdup
 
 # or Poetry
-poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
+poetry init --python "&gt;=3.10,&lt;3.11"
 poetry add dipdup
 poetry shell
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also"></a></p>
@@ -307,7 +307,7 @@ templates:
           - destination: &lt;contract&gt;
             entrypoint: mint
 </code></pre>
-<div id="admonition-see-also-1" class="admonition info">
+<div id="admonition-see-also-1" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also-1"></a></p>
@@ -354,7 +354,7 @@ templates:
         └── storage.py
 </code></pre>
 <p>That's a lot of files and directories! But don't worry, we will need only <code>models.py</code> and <code>handlers</code> modules in this guide.</p>
-<div id="admonition-see-also-2" class="admonition info">
+<div id="admonition-see-also-2" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also-2"></a></p>
@@ -388,7 +388,7 @@ class Holder(Model):
     tx_count = fields.BigIntField(default=0)
     last_seen = fields.DatetimeField(null=True)
 </code></pre>
-<div id="admonition-see-also-3" class="admonition info">
+<div id="admonition-see-also-3" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also-3"></a></p>
@@ -475,7 +475,7 @@ async def on_mint(
     )
 </code></pre>
 <p>And that's all! We can run the indexer now.</p>
-<div id="admonition-see-also-4" class="admonition info">
+<div id="admonition-see-also-4" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also-4"></a></p>
@@ -490,7 +490,7 @@ async def on_mint(
 <pre><code class="language-shell">dipdup run
 </code></pre>
 <p>DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!</p>
-<div id="admonition-see-also-5" class="admonition info">
+<div id="admonition-see-also-5" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="quickstart.html#admonition-see-also-5"></a></p>
@@ -511,7 +511,7 @@ async def on_mint(
 <h3 id="non-unix-environments"><a class="header" href="#non-unix-environments">Non-UNIX environments</a></h3>
 <p>Windows is not officially supported, but there's a possibility everything will work fine. In case of issues throw us a message and use WSL or Docker.</p>
 <p>We aim to improve cross-platform compatibility in future releases (<a href="https://github.com/dipdup-io/dipdup/issues?q=is%3Aopen+label%3A%22%F0%9F%9A%A2+ci%2Fcd%22+sort%3Aupdated-desc+">issue</a>).</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="getting-started/installation.html#admonition-see-also"></a></p>
@@ -540,7 +540,7 @@ python -m venv .venv
 pip install dipdup
 
 # or Poetry
-poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
+poetry init --python "&gt;=3.10,&lt;3.11"
 poetry add dipdup
 poetry shell
 </code></pre>
@@ -552,7 +552,7 @@ poetry shell
 <p>DipDup utilizes a microservice approach and relies heavily on existing solutions, making the SDK very lightweight and allowing developers to switch API engines on demand.</p>
 <p>DipDup works with operation groups (explicit operation and all internal ones, a single contract call) and <em>Big_map</em> updates (lazy hash map structures, <a href="https://tezostaquito.io/docs/maps_bigmaps/">read more</a>) — until fully-fledged protocol-level events are not implemented in Tezos.</p>
 <p>Consider DipDup a set of best practices for building custom backends for decentralized applications, plus a toolkit that spares you from writing boilerplate code.</p>
-<p>DipDup is tightly coupled with <a href="http://api.tzkt.io/">TzKT API</a> but can generally use any data provider which implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns &quot;humanified&quot; contract data, which means you don't have to handle raw Michelson expressions.</p>
+<p>DipDup is tightly coupled with <a href="http://api.tzkt.io/">TzKT API</a> but can generally use any data provider which implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns "humanified" contract data, which means you don't have to handle raw Michelson expressions.</p>
 <p>DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you can use any database and API engine (e.g., write API backend in-house).</p>
 <p><img src="getting-started/../assets/dipdup.svg" alt="Default DipDup setup and data flow" /></p>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h2>
@@ -614,7 +614,7 @@ poetry shell
 </code></pre>
 <p>Run <code>config export</code> command if unsure about the final config used by DipDup.</p>
 <h2 id="full-example"><a class="header" href="#full-example">Full example</a></h2>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
@@ -728,7 +728,7 @@ hooks:
 jobs:
   midnight_stats:
     hook: calculate_stats
-    crontab: &quot;0 0 * * *&quot;
+    crontab: "0 0 * * *"
     args:
       major: True
 
@@ -841,7 +841,7 @@ hooks:
             └── .keep
 </code></pre>
 <p>The same rules apply to handler callbacks. Note that the <code>callback</code> field must be a valid Python package name - lowercase letters, underscores, and dots.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="getting-started/project-structure.html#admonition-see-also"></a></p>
@@ -895,7 +895,7 @@ class Record(Model):
 <li>Model fields must be in <code>snake_case</code></li>
 <li>Model fields must differ from table name</li>
 </ul>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="getting-started/defining-models.html#admonition-see-also"></a></p>
@@ -969,7 +969,7 @@ from &lt;package&gt;.types.&lt;typename&gt;.big_map.&lt;path&gt;_value import Pa
 </code></pre>
 <p>Here <code>typename</code> is defined in the contract inventory, <code>entrypoint</code> is specified in the handler pattern, and <code>path</code> is in the handler config.</p>
 <h2 id="handling-name-collisions"><a class="header" href="#handling-name-collisions">Handling name collisions</a></h2>
-<p>Indexing operations of multiple contracts with the same entrypoints can lead to name collisions during code generation. In this case DipDup raises a <code>ConfigurationError</code> and suggests to set alias for each conflicting handler. That applies to <code>operation</code> indexes only. Consider the following index definition, some kind of &quot;chain minting&quot; contract:</p>
+<p>Indexing operations of multiple contracts with the same entrypoints can lead to name collisions during code generation. In this case DipDup raises a <code>ConfigurationError</code> and suggests to set alias for each conflicting handler. That applies to <code>operation</code> indexes only. Consider the following index definition, some kind of "chain minting" contract:</p>
 <pre><code class="language-yaml">kind: operation
 handlers:
   - callback: on_mint
@@ -1058,7 +1058,7 @@ indexes:
     },
 )
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="getting-started/templates-and-variables.html#admonition-see-also"></a></p>
@@ -1153,15 +1153,13 @@ indexes:
 <pre><code class="language-python">async def on_move_event(
     ctx: HandlerContext,
     event: Event[MovePayload],
-) -&gt; None:
-    ...
+) -&gt; None: ...
 </code></pre>
 <p>Each contract can have a fallback handler called for all unknown events so you can process untyped data.</p>
 <pre><code class="language-python">async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
-) -&gt; None:
-    ...
+) -&gt; None: ...
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="head-index"><a class="header" href="#head-index"><code>head</code> index</a></h1>
 <p>This very simple index provides metadata of the latest block when it's baked. Only realtime data is processed; the synchronization stage is skipped for this index.</p>
@@ -1186,7 +1184,7 @@ indexes:
 </code></pre>
 <p>Head index callback receives <code>HeadBlockData</code> model that contains only basic info; no operations are included. Being useless by itself, this index is helpful for monitoring and cron-like tasks. You can define multiple indexes for each datasource used.</p>
 <p>Subscription to the head channel is enabled by default, even if no head indexes are defined. Each time the block is baked, the <code>dipdup_head</code> table is updated per datasource. Use it to ensure that both index datasource and underlying blockchain are up and running.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="indexes/head.html#admonition-see-also"></a></p>
@@ -1356,12 +1354,12 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 <li>Use cursor-based pagination (e.g., by an increasing unique id).</li>
 <li>Narrow down request scope with filtering (e.g., by timestamp or level).</li>
 </ol>
-<p>Ultimately you can get &quot;subscriptions&quot; on top of live quires by requesting all the items having ID greater than the maximum existing or all the items with a timestamp greater than now.</p>
+<p>Ultimately you can get "subscriptions" on top of live quires by requesting all the items having ID greater than the maximum existing or all the items with a timestamp greater than now.</p>
 <h3 id="websocket-transport"><a class="header" href="#websocket-transport">Websocket transport</a></h3>
 <p>Hasura is compatible with <a href="https://github.com/apollographql/subscriptions-transport-ws">subscriptions-transport-ws</a> library, which is currently deprecated but still used by most clients.</p>
 <h2 id="mutations"><a class="header" href="#mutations">Mutations</a></h2>
-<p>The purpose of DipDup is to create indexers, which means you can consistently reproduce the state as long as data sources are accessible. It makes your backend &quot;stateless&quot;, meaning tolerant to data loss.</p>
-<p>However, you might need to introduce a non-recoverable state and mix indexed and user-generated content in some cases. DipDup allows marking these UGC tables &quot;immune&quot;, protecting them from being wiped. In addition to that, you will need to set up <a href="https://hasura.io/docs/latest/graphql/core/auth/index.html">Hasura Auth</a> and adjust write permissions for the tables (by default, they are read-only).</p>
+<p>The purpose of DipDup is to create indexers, which means you can consistently reproduce the state as long as data sources are accessible. It makes your backend "stateless", meaning tolerant to data loss.</p>
+<p>However, you might need to introduce a non-recoverable state and mix indexed and user-generated content in some cases. DipDup allows marking these UGC tables "immune", protecting them from being wiped. In addition to that, you will need to set up <a href="https://hasura.io/docs/latest/graphql/core/auth/index.html">Hasura Auth</a> and adjust write permissions for the tables (by default, they are read-only).</p>
 <p>Lastly, you will need to execute GQL mutations to modify the state from the client side. <a href="https://hasura.io/docs/latest/graphql/core/databases/postgres/mutations/index.html">Read more</a> about how to do that with Hasura.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="hasura-integration"><a class="header" href="#hasura-integration">Hasura integration</a></h1>
 <p>DipDup uses this optional section to configure the Hasura engine to track your tables automatically.</p>
@@ -1407,8 +1405,8 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 }
 </code></pre>
 <p>All fields auto-generated by Hasura will be renamed accordingly: <code>hic_et_nunc_token_by_pk</code> to <code>hicEtNuncTokenByPk</code>, <code>delete_hic_et_nunc_token</code> to <code>deleteHicEtNuncToken</code> and so on. To return to defaults, set <code>camel_case</code> to False and run <code>hasura configure --force</code>.</p>
-<p>Remember that &quot;camelcasing&quot; is a separate stage performed after all tables are registered. So during configuration, you can observe fields in <code>snake_case</code> for several seconds even if conversion to camel case is enabled.</p>
-<div id="admonition-see-also" class="admonition info">
+<p>Remember that "camelcasing" is a separate stage performed after all tables are registered. So during configuration, you can observe fields in <code>snake_case</code> for several seconds even if conversion to camel case is enabled.</p>
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="graphql/hasura.html#admonition-see-also"></a></p>
@@ -1428,21 +1426,21 @@ Read more in <a href="https://hasura.io/docs/latest/graphql/core/databases/postg
 <p>Hasura 2.0 introduced the ability to expose arbitrary GraphQL queries as REST endpoints. By default, DipDup will generate GET and POST endpoints to fetch rows by primary key for all tables:</p>
 <pre><code class="language-shell">curl http://127.0.0.1:8080/api/rest/hicEtNuncHolder?address=tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw
 {
-  &quot;hicEtNuncHolderByPk&quot;: {
-    &quot;address&quot;: &quot;tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw&quot;
+  "hicEtNuncHolderByPk": {
+    "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
   }
 }
 </code></pre>
 <p>However, there's a limitation dictated by how Hasura parses HTTP requests: only models with primary keys of basic types (int, string, and so on) can be fetched with GET requests. An attempt to fetch model with BIGINT primary key will lead to the error: <code>Expected bigint for variable id got Number</code>.
 A workaround to fetching any model is to send a POST request containing a JSON payload with a single key:</p>
-<pre><code class="language-shell">curl -d '{&quot;id&quot;: 152}' http://127.0.0.1:8080/api/rest/hicEtNuncToken
+<pre><code class="language-shell">curl -d '{"id": 152}' http://127.0.0.1:8080/api/rest/hicEtNuncToken
 {
-  &quot;hicEtNuncTokenByPk&quot;: {
-    &quot;creatorId&quot;: &quot;tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw&quot;,
-    &quot;id&quot;: 152,
-    &quot;level&quot;: 1365242,
-    &quot;supply&quot;: 1,
-    &quot;timestamp&quot;: &quot;2021-03-01T03:39:21+00:00&quot;
+  "hicEtNuncTokenByPk": {
+    "creatorId": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+    "id": 152,
+    "level": 1365242,
+    "supply": 1,
+    "timestamp": "2021-03-01T03:39:21+00:00"
   }
 }
 </code></pre>
@@ -1487,19 +1485,19 @@ A workaround to fetching any model is to send a POST request containing a JSON p
 <h2 id="sdk-package-config"><a class="header" href="#sdk-package-config">SDK package config</a></h2>
 <p>Your minimal <em>package.json</em> file will look like the following:</p>
 <pre><code class="language-typescript">{
-  &quot;name&quot;: &quot;%PACKAGE_NAME%&quot;,
-  &quot;version&quot;: &quot;0.0.1&quot;,
-  &quot;main&quot;: &quot;dist/index.js&quot;,
-  &quot;types&quot;: &quot;dist/index.d.ts&quot;,
-  &quot;devDependencies&quot;: {
-    &quot;@genql/cli&quot;: &quot;^2.6.0&quot;
+  "name": "%PACKAGE_NAME%",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "devDependencies": {
+    "@genql/cli": "^2.6.0"
   },
-  &quot;dependencies&quot;: {
-    &quot;@genql/runtime&quot;: &quot;2.6.0&quot;,
-    &quot;graphql&quot;: &quot;^15.5.0&quot;
+  "dependencies": {
+    "@genql/runtime": "2.6.0",
+    "graphql": "^15.5.0"
   },
-  &quot;scripts&quot;: {
-    &quot;build&quot;: &quot;genql --endpoint %GRAPHQL_ENDPOINT% --output ./dist&quot;
+  "scripts": {
+    "build": "genql --endpoint %GRAPHQL_ENDPOINT% --output ./dist"
   }
 }
 </code></pre>
@@ -1640,7 +1638,7 @@ protocol_json = await tzkt.request(
 assert protocol_json['hash'] == 'PtHangz2aRngywmSRGGvrcTyMbbdpWdpFKuS4uMWxg2RaH9i1qx'
 </code></pre>
 <p>Datasource HTTP connection parameters (ratelimit, retry with backoff, etc.) are applied on every request.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/datasources.html#admonition-see-also"></a></p>
@@ -1687,7 +1685,7 @@ async def calculate_stats(
 <p>By default, hooks execute SQL scripts from the corresponding subdirectory of <code>sql/</code>. Remove or comment out the <code>execute_sql</code> call to prevent this. This way, both Python and SQL code may be executed in a single hook if needed.</p>
 <h2 id="arguments-typechecking"><a class="header" href="#arguments-typechecking">Arguments typechecking</a></h2>
 <p>DipDup will ensure that arguments passed to the hooks have the correct types when possible. <code>CallbackTypeError</code> exception will be raised otherwise. Values of an <code>args</code> mapping in a hook config should be either built-in types or <code>__qualname__</code> of external type like <code>decimal.Decimal</code>. Generic types are not supported: hints like <code>Optional[int] = None</code> will be correctly parsed during codegen but ignored on type checking.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/hooks.html#admonition-see-also"></a></p>
@@ -1699,7 +1697,7 @@ async def calculate_stats(
 </div>
 </div>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="event-hooks"><a class="header" href="#event-hooks">Event hooks</a></h1>
-<p>Every DipDup project has multiple event hooks (previously &quot;default hooks&quot;); they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.</p>
+<p>Every DipDup project has multiple event hooks (previously "default hooks"); they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.</p>
 <h2 id="on_restart"><a class="header" href="#on_restart"><code>on_restart</code></a></h2>
 <p>This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at execution and available at <code>ctx.datasources</code>. You can, for example, configure logging here or add contracts and indexes in runtime instead of from static config.</p>
 <h2 id="on_reindex"><a class="header" href="#on_reindex"><code>on_reindex</code></a></h2>
@@ -1709,7 +1707,7 @@ async def calculate_stats(
 <h2 id="on_index_rollback"><a class="header" href="#on_index_rollback"><code>on_index_rollback</code></a></h2>
 <p>Fires when TzKT datasource has received a chain reorg message which can't be processed by dropping buffered messages (<code>buffer_size</code> option).</p>
 <p>Since version 6.0 this hook performs a database-level rollback by default. If it doesn't work for you for some reason remove <code>ctx.rollback</code> call and implement your own rollback logic.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/event-hooks.html#admonition-see-also"></a></p>
@@ -1728,7 +1726,7 @@ async def calculate_stats(
 <pre><code class="language-yaml">jobs:
   midnight_stats:
     hook: calculate_stats
-    crontab: &quot;0 0 * * *&quot;
+    crontab: "0 0 * * *"
     args:
       major: True
   leet_stats:
@@ -1787,7 +1785,7 @@ async def calculate_stats(
 </div>
 <h2 id="crash-reporting"><a class="header" href="#crash-reporting">Crash reporting</a></h2>
 <p>Enables sending crash reports to the Baking Bad team. This is <strong>disabled by default</strong>. You can inspect crash dumps saved as <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> before enabling this option.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/feature-flags.html#admonition-see-also"></a></p>
@@ -1840,7 +1838,7 @@ async def calculate_stats(
 <h2 id="event-hooks-1"><a class="header" href="#event-hooks-1">Event hooks</a></h2>
 <p>Scripts from <code>sql/on_restart</code> directory are executed each time you run DipDup. Those scripts may contain <code>CREATE OR REPLACE VIEW</code> or similar non-destructive operations.</p>
 <p>Scripts from <code>sql/on_reindex</code> directory are executed <em>after</em> the database schema is created based on the <code>models.py</code> module but <em>before</em> indexing starts. It may be useful to change the database schema in ways that are not supported by the Tortoise ORM, e.g., to create a composite primary key.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/sql.html#admonition-see-also"></a></p>
@@ -1890,7 +1888,7 @@ hasura:
 <tr><td><code>retry_count</code></td><td>Number of retries after request failed before giving up</td></tr>
 <tr><td><code>retry_sleep</code></td><td>Sleep time between retries</td></tr>
 <tr><td><code>retry_multiplier</code></td><td>Multiplier for sleep time between retries</td></tr>
-<tr><td><code>ratelimit_rate</code></td><td>Number of requests per period (&quot;drops&quot; in leaky bucket)</td></tr>
+<tr><td><code>ratelimit_rate</code></td><td>Number of requests per period ("drops" in leaky bucket)</td></tr>
 <tr><td><code>ratelimit_period</code></td><td>Period for rate limiting in seconds</td></tr>
 <tr><td><code>connection_limit</code></td><td>Number of simultaneous connections</td></tr>
 <tr><td><code>connection_timeout</code></td><td>Connection timeout in seconds</td></tr>
@@ -1900,7 +1898,7 @@ hasura:
 <p>Each datasource has its defaults. Usually, there's no reason to alter these settings unless you use self-hosted instances of TzKT or other datasource.</p>
 <p>By default, DipDup retries failed requests infinitely, exponentially increasing the delay between attempts. Set <code>retry_count</code> parameter to limit the number of attempts.</p>
 <p><code>batch_size</code> parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. By reducing the <code>connection_limit</code> parameter, you can achieve the same effect (limited to synchronizing multiple indexes concurrently).</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/performance.html#admonition-see-also"></a></p>
@@ -1916,12 +1914,12 @@ hasura:
 </div>
 <p>See <a href="advanced/../config/datasources.html">12.4. datasources</a> for details.</p>
 <h2 id="use-timescaledb-for-time-series"><a class="header" href="#use-timescaledb-for-time-series">Use TimescaleDB for time-series</a></h2>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
 </div>
-<p>DipDup is fully compatible with <a href="https://docs.timescale.com/">TimescaleDB</a>. Try its &quot;continuous aggregates&quot; feature, especially if dealing with market data like DEX quotes.</p>
+<p>DipDup is fully compatible with <a href="https://docs.timescale.com/">TimescaleDB</a>. Try its "continuous aggregates" feature, especially if dealing with market data like DEX quotes.</p>
 <h2 id="cache-commonly-used-models"><a class="header" href="#cache-commonly-used-models">Cache commonly used models</a></h2>
 <p>If your indexer contains models having few fields and used primarily on relations, you can cache such models during synchronization.</p>
 <p>Example code:</p>
@@ -1983,7 +1981,7 @@ if __name__ == '__main__':
 <p>An instance of the <code>HandlerContext</code> class is passed to every handler providing a set of helper methods and read-only properties.</p>
 <h2 id="reference"><a class="header" href="#reference">Reference</a></h2>
 <!-- markdownlint-disable first-line-h1 -->
-<dl class="py class">
+  <dl class="py class">
 <dt class="sig sig-object py" id="dipdup.context.DipDupContext">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dipdup.context.</span></span><span class="sig-name descname"><span class="pre">DipDupContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transactions</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="advanced/context.html#dipdup.context.DipDupContext" title="Link to this definition">¶</a></dt>
 <dd><p>Common execution context for handler and hook callbacks.</p>
@@ -2288,7 +2286,7 @@ to provide a generic metadata interface (see docs).</p>
 SELECT NOW() - timestamp FROM dipdup_head;
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="index-factories"><a class="header" href="#index-factories">Index factories</a></h1>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
@@ -2312,7 +2310,7 @@ indexes:
             similar_to: registry
 </code></pre>
 <p>Another solution is to implement custom logic in <code>on_restart</code> hook (see <a href="https://docs.dipdup.io/advanced/event-hooks.html#on_restart">5.3. Event hooks → on_restart</a>)</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="advanced/index-factories.html#admonition-see-also"></a></p>
@@ -2341,9 +2339,9 @@ indexes:
     └── 0
         ├── token_id: 0
         └── token_info
-            ├── name: &quot;&quot;
-            ├── symbol: &quot;&quot;
-            └── decimals: &quot;&quot;
+            ├── name: ""
+            ├── symbol: ""
+            └── decimals: ""
 </code></pre>
 <p>But typically, you want to store more like a token thumbnail icon, and it is no longer feasible to keep such large data on-chain (because you pay gas for every byte stored).<br />
 Then you can put large files somewhere off-chain (e.g., IPFS) and store just links:</p>
@@ -2353,7 +2351,7 @@ Then you can put large files somewhere off-chain (e.g., IPFS) and store just lin
         ├── token_id: 0
         └── token_info
             ├── ...
-            └── thumbnailUri: &quot;ipfs://&quot;
+            └── thumbnailUri: "ipfs://"
 </code></pre>
 <p>This approach is still costly, but sometimes (in rare cases), you need to have access to the metadata from the contract (example: <a href="https://tzkt.io/KT1NVvPsNDChrLRH5K2cy6Sc9r1uuUwdiZQd/storage/115420">Dogami</a>).<br />
 We can go further and put the entire token info structure to IPFS:</p>
@@ -2362,7 +2360,7 @@ We can go further and put the entire token info structure to IPFS:</p>
     └── 0
         ├── token_id: 0
         └── token_info
-            └── &quot;&quot;: &quot;ipfs://&quot;
+            └── "": "ipfs://"
 </code></pre>
 <p>It is the most common case right now (example: <a href="https://tzkt.io/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/storage/514">HEN</a>).</p>
 <p>The main advantage of the basic approach is that all the changes applied to token metadata will result in big map diffs that are easily traceable by indexers. Even if you decide to replace the off-chain file, it will cause the IPFS link to change. In the case of HTTP links, indexers cannot detect the content change; thus, token metadata won't be updated.</p>
@@ -2430,7 +2428,7 @@ We can go further and put the entire token info structure to IPFS:</p>
 </div>
 <p>By default DipDup uses in-memory SQLite database that destroys after the process exits.</p>
 <p>While sometimes it's convenient to use one database engine for development and another one for production, be careful with specific column types that behave differently in various engines. However, Tortoise ORM mostly hides these differences.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="deployment/database-engines.html#admonition-see-also"></a></p>
@@ -2444,7 +2442,7 @@ We can go further and put the entire token info structure to IPFS:</p>
 </div>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="running-in-docker"><a class="header" href="#running-in-docker">Running in Docker</a></h1>
 <h2 id="base-images"><a class="header" href="#base-images">Base images</a></h2>
-<div id="admonition-warning" class="admonition warning">
+<div id="admonition-warning" class="admonition admonish-warning">
 <div class="admonition-title">
 <p>Warning</p>
 <p><a class="admonition-anchor-link" href="deployment/docker.html#admonition-warning"></a></p>
@@ -2514,14 +2512,14 @@ COPY . .
 <h2 id="deploying-with-docker-compose"><a class="header" href="#deploying-with-docker-compose">Deploying with <code>docker-compose</code></a></h2>
 <p>Make sure you have <a href="https://docs.docker.com/get-docker/">docker</a> run and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed.</p>
 <p>Example <code>docker-compose.yml</code> file:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 
 services:
   dipdup:
     build: .
     depends_on:
       - db
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -2541,7 +2539,7 @@ services:
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     healthcheck:
-      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U dipdup&quot;]
+      test: ["CMD-SHELL", "pg_isready -U dipdup"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -2582,7 +2580,7 @@ hasura:
   camel_case: true
 
 sentry:
-  dsn: ${SENTRY_DSN:-&quot;&quot;}
+  dsn: ${SENTRY_DSN:-""}
   environment: ${SENTRY_ENVIRONMENT:-prod}
 
 prometheus:
@@ -2598,13 +2596,13 @@ advanced:
 </code></pre>
 <p>Try <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> tool to manage Docker containers interactively.</p>
 <h2 id="deploying-with-docker-swarm"><a class="header" href="#deploying-with-docker-swarm">Deploying with Docker Swarm</a></h2>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
 </div>
 <p>Example stack:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 
 services:
   dipdup:
@@ -2612,12 +2610,12 @@ services:
     depends_on:
       - db
       - hasura
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     environment:
-      - &quot;POSTGRES_USER=dipdup&quot;
-      - &quot;POSTGRES_PASSWORD=changeme&quot;
-      - &quot;POSTGRES_DB=dipdup&quot;
-      - &quot;HASURA_SECRET=changeme&quot;
+      - "POSTGRES_USER=dipdup"
+      - "POSTGRES_PASSWORD=changeme"
+      - "POSTGRES_DB=dipdup"
+      - "HASURA_SECRET=changeme"
     networks:
       - dipdup-private
       - prometheus-private
@@ -2631,11 +2629,11 @@ services:
         constraints:
           - node.labels.${SERVICE} == true
     logging: &amp;logging
-      driver: &quot;json-file&quot;
+      driver: "json-file"
       options:
-        max-size: &quot;10m&quot;
-        max-file: &quot;10&quot;
-        tag: &quot;\{\{.Name\}\}.\{\{.ImageID\}\}&quot;
+        max-size: "10m"
+        max-file: "10"
+        tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
     image: postgres:14
@@ -2646,7 +2644,7 @@ services:
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     healthcheck:
-      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -2681,9 +2679,9 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.services.${SERVICE}.loadbalancer.server.port=8080
-        - &quot;traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) &amp;&amp; (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))&quot;
+        - "traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) &amp;&amp; (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))"
         - traefik.http.routers.${SERVICE}.entrypoints=http,${INGRESS:-ingress}
-        - &quot;traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)&quot;
+        - "traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)"
         - traefik.http.routers.${SERVICE}-console.entrypoints=https
         - traefik.http.middlewares.${SERVICE}-console.headers.customrequestheaders.X-Hasura-Admin-Secret=${HASURA_SECRET}
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console
@@ -2709,7 +2707,7 @@ networks:
   debug: False
 </code></pre>
 <p>You can obtain Sentry DSN from the web interface at <em>Settings -&gt; Projects -&gt; &lt;project_name&gt; -&gt; Client Keys (DSN)</em>. The cool thing is that if you catch an exception and suspect there's a bug in DipDup, you can share this event with us using a public link (created at <em>Share</em> menu).</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="deployment/sentry.html#admonition-see-also"></a></p>
@@ -2758,7 +2756,7 @@ async def on_restart(
 <p>This page contains several recipes for backup/restore.</p>
 <h2 id="scheduled-backup-to-s3"><a class="header" href="#scheduled-backup-to-s3">Scheduled backup to S3</a></h2>
 <p>This example is for Swarm deployments. We use this solution to backup our services in production. Adapt it to your needs if needed.</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 services:
   indexer:
     ...
@@ -2828,7 +2826,7 @@ def restore(level: int, database_config: PostgresDatabaseConfig):
         except ErrorReturnCode:
             err = err_buf.getvalue()
             _logger.error(f'Database restore failed: {err}')
-            raise Exception(&quot;Failed to restore&quot;)
+            raise Exception("Failed to restore")
 
 def get_available_backups():
     ...
@@ -2851,7 +2849,7 @@ async def on_index_rollback(
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 
     # if not a postgres db, reindex.
-    if database_config.kind != &quot;postgres&quot;:
+    if database_config.kind != "postgres":
         await ctx.reindex(ReindexingReason.ROLLBACK)
 
     available_levels = backups.get_available_backups()
@@ -2881,10 +2879,10 @@ async def run_backups(
 ) -&gt; None:
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 
-    if database_config.kind != &quot;postgres&quot;:
+    if database_config.kind != "postgres":
         return
 
-    level = ctx.get_tzkt_datasource(&quot;tzkt_mainnet&quot;)._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
 
     if level is None:
         return
@@ -2898,11 +2896,11 @@ async def run_backups(
 async def simulate_reorg(
     ctx: HookContext
 ) -&gt; None:
-    level = ctx.get_tzkt_datasource(&quot;tzkt_mainnet&quot;)._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
 
     if level:
         await ctx.fire_hook(
-            &quot;on_index_rollback&quot;,
+            "on_index_rollback",
             wait=True
             index=None,  # type: ignore[arg-type]
             from_level=level,
@@ -2926,18 +2924,18 @@ async def simulate_reorg(
 <h3 id="response"><a class="header" href="#response">Response</a></h3>
 <p>If the (latest block) head subscription state was updated less than <strong>three minutes</strong> ago, everything is <strong>OK</strong>:</p>
 <pre><code class="language-json">{
-  &quot;dipdup_head_status&quot;: [
+  "dipdup_head_status": [
     {
-      &quot;status&quot;: &quot;OK&quot;
+      "status": "OK"
     }
   ]
 }
 </code></pre>
 <p>Otherwise, the state is considered <strong>OUTDATED</strong>:</p>
 <pre><code class="language-json">{
-  &quot;dipdup_head_status&quot;: [
+  "dipdup_head_status": [
     {
-      &quot;status&quot;: &quot;OUTDATED&quot;
+      "status": "OUTDATED"
     }
   ]
 }
@@ -2956,7 +2954,7 @@ FROM
     dipdup_head;
 </code></pre>
 <p>You can also create your custom alert endpoints using SQL views and functions and then convert them to Hasura REST endpoints.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="deployment/monitoring.html#admonition-see-also"></a></p>
@@ -2992,7 +2990,7 @@ class ContractStorage(BaseModel):
 <li>Use generic <code>http</code> datasources for external APIs instead of plain <code>aiohttp</code> requests. This way you can use the same features DipDup uses for internal requests: retry with backoff, rate limiting, Prometheus integration etc.</li>
 <li>Database tables that store off-chain data can be marked as immune, preventing them from being removed on reindexing.</li>
 </ul>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="faq.html#admonition-see-also"></a></p>
@@ -3005,7 +3003,7 @@ class ContractStorage(BaseModel):
 </div>
 </div>
 <h2 id="one-of-my-indexes-depends-on-another-ones-indexed-data-how-to-process-them-in-a-specific-order"><a class="header" href="#one-of-my-indexes-depends-on-another-ones-indexed-data-how-to-process-them-in-a-specific-order">One of my indexes depends on another one's indexed data. How to process them in a specific order?</a></h2>
-<p>Indexes of all kinds are fully independent. They are processed in parallel, have their message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no &quot;official&quot; way to manage the order of indexing.</p>
+<p>Indexes of all kinds are fully independent. They are processed in parallel, have their message queues, and don't share any state. It is one of the essential DipDup concepts, so there's no "official" way to manage the order of indexing.</p>
 <p>Avoid waiting for sync primitives like <code>asyncio.Event</code> or <code>asyncio.Lock</code> in handlers. Indexing will be stuck forever, waiting for the database transaction to complete.</p>
 <p>Instead, save raw data in handlers and process it later with hooks when all conditions are met. For example, process data batch only when all indexes in the <code>dipdup_index</code> table have reached a specific level.</p>
 <h2 id="how-to-perform-database-migrations"><a class="header" href="#how-to-perform-database-migrations">How to perform database migrations?</a></h2>
@@ -3025,12 +3023,12 @@ dipdup schema export &gt; new
 diff old new
 </code></pre>
 <pre><code class="language-diff">76c76
-&lt;     &quot;timestamp&quot; TIMESTAMP NOT NULL,
+&lt;     "timestamp" TIMESTAMP NOT NULL,
 ---
-&gt;     &quot;timestamp&quot; TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP,
+&gt;     "timestamp" TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP,
 </code></pre>
 <p>Now you can prepare and execute an <code>ALTER TABLE</code> query manually or using SQL hooks.</p>
-<div id="admonition-see-also-1" class="admonition info">
+<div id="admonition-see-also-1" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="faq.html#admonition-see-also-1"></a></p>
@@ -3048,8 +3046,8 @@ diff old new
 <p>DipDup framework evolves rapidly just like Tezos itself does. We recommend keeping your project up-to-date with the latest version of DipDup.</p>
 <p>If you're using Poetry, set caret version constraint in <code>pyproject.toml</code> to use the latest release of the current major version:</p>
 <pre><code class="language-toml">[tool.poetry.dependencies]
-python = &quot;&gt;=3.10,&lt;3.11&quot;
-dipdup = &quot;^6&quot;
+python = "&gt;=3.10,&lt;3.11"
+dipdup = "^6"
 </code></pre>
 <p>pipx installations always use latest version.</p>
 <p>Run <code>dipdup update</code> periodically to update to the latest version.</p>
@@ -3057,11 +3055,11 @@ dipdup = &quot;^6&quot;
 <pre><code class="language-Dockerfile">FROM dipdup/dipdup:6
 </code></pre>
 <h2 id="ensure-that-config-is-correct"><a class="header" href="#ensure-that-config-is-correct">Ensure that config is correct</a></h2>
-<p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup &quot;sees&quot; it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
+<p>DipDup config can be correct syntactically but not necessarily semantically. It's especially easy to make a mistake when actively using templates and environment variables. Use <code>config export</code> command to dump config the way DipDup "sees" it, after resolving all links and templates. <code>config env</code> command can help you to find missing environment variables.</p>
 <pre><code class="language-shell">dipdup -c dipdup.yml -c dipdup.prod.yml config export
 dipdup -c dipdup.yml -c dipdup.prod.yml config env
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="troubleshooting.html#admonition-see-also"></a></p>
@@ -3117,7 +3115,7 @@ poetry run mypy
 <p>The most basic indexer used in Quickstart. A single <code>operation</code> index to track balances of TzBTC token holders, nothing else.</p>
 <h2 id="hic-et-nunc"><a class="header" href="#hic-et-nunc">hic et nunc</a></h2>
 <p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_nft_marketplace">demo_nft_marketplace</a></p>
-<p>Indexes trades and swaps of &quot;hic et nunc&quot;, one of the most popular NFT marketplaces on Tezos.</p>
+<p>Indexes trades and swaps of "hic et nunc", one of the most popular NFT marketplaces on Tezos.</p>
 <h2 id="quipuswap"><a class="header" href="#quipuswap">Quipuswap</a></h2>
 <p>source: <a href="https://github.com/dipdup-io/dipdup/tree/master/src/demo_dex">demo_dex</a></p>
 <p>Covers all available operations of Quipuswap DEX contracts: trades, transfers, moving liquidity. A more complex example with index templates.</p>
@@ -3193,7 +3191,7 @@ poetry run mypy
 <div style="break-before: page; page-break-before: always;"></div><h1 id="mempool"><a class="header" href="#mempool">mempool</a></h1>
 <p>This is an optional section used by the <a href="https://github.com/dipdup-io/mempool">mempool</a> indexer plugin. It uses <a href="services/../config/contracts.html"><code>contracts</code></a> and <a href="services/../config/datasources.html"><code>datasources</code></a> aliases as well as the <a href="services/../config/database.html"><code>database</code></a> connection.</p>
 <p>Mempool configuration has two sections: <code>settings</code> and <code>indexers</code> (required).</p>
-<p>{% page-ref page=&quot;../advanced/mempool-plugin.md&quot; %}</p>
+<p>{% page-ref page="../advanced/mempool-plugin.md" %}</p>
 <h2 id="settings"><a class="header" href="#settings">Settings</a></h2>
 <p>This section is optional so are all the setting keys.</p>
 <pre><code class="language-yaml">mempool:
@@ -3315,7 +3313,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <h4 id="tzkt-2"><a class="header" href="#tzkt-2">tzkt</a></h4>
 <p>An alias pointing to a <a href="services/../config/datasources.html">datasource</a> of kind <code>tzkt</code> is expected.</p>
 <div style="break-before: page; page-break-before: always;"></div><!-- markdownlint-disable first-line-h1 -->
-<section id="dipdup">
+  <section id="dipdup">
 <h1 id="dipdup"><a class="header" href="#dipdup">dipdup<a class="headerlink" href="cli-reference.html#dipdup" title="Link to this heading">¶</a></a></h1>
 <p>Manage and run DipDup indexers.</p>
 <p>Documentation: <a class="reference external" href="https://docs.dipdup.io">https://docs.dipdup.io</a></p>
@@ -3592,7 +3590,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 <tr><td>Tunables</td><td><code>advanced</code></td><td><a href="https://docs.dipdup.io/config/advanced.html">14.2. advanced</a></td></tr>
 <tr><td></td><td><code>logging</code></td><td><a href="https://docs.dipdup.io/config/logging.html">14.11. logging</a></td></tr>
 </tbody></table>
-</div><div id="admonition-see-also" class="admonition info">
+</div><div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/index.html#admonition-see-also"></a></p>
@@ -3604,7 +3602,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </div>
 </div>
 <div style="break-before: page; page-break-before: always;"></div><!-- markdownlint-disable first-line-h1 no-space-in-emphasis -->
-<dl class="py class">
+  <dl class="py class">
 <dt class="sig sig-object py" id="DipDupConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre"></span></span><span class="sig-name descname"><span class="pre">DipDupConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datasources=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">database=SqliteDatabaseConfig(kind='sqlite'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path=':memory:')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contracts=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indexes=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jobs=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hooks=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hasura=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sentry=SentryConfig(dsn=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">release=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prometheus=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advanced=AdvancedConfig(reindex={}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">postpone_jobs=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_realtime=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_subscriptions=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata_interface=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_version_check=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_depth=2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crash_reporting=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decimal_precision=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alt_operation_matcher=False)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging=LoggingValues.default</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="config/reference.html#DipDupConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Main indexer config</p>
@@ -4222,7 +4220,7 @@ Polling multiple nodes allows to detect more refused operations and makes indexi
 </tbody></table>
 </div>
 <p>CLI flags have priority over self-titled <code>AdvancedConfig</code> fields.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/advanced.html#admonition-see-also"></a></p>
@@ -4353,7 +4351,7 @@ custom:
     kind: ipfs
     url: https://ipfs.io/ipfs
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/datasources.html#admonition-see-also"></a></p>
@@ -4375,7 +4373,7 @@ custom:
   select_limit: 100
   source: default
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/hasura.html#admonition-see-also"></a></p>
@@ -4397,7 +4395,7 @@ custom:
      major: bool
      depth: int
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/hooks.html#admonition-see-also"></a></p>
@@ -4413,7 +4411,7 @@ custom:
 <pre><code class="language-yaml">jobs:
   midnight_stats:
     hook: calculate_stats
-    crontab: &quot;0 0 * * *&quot;
+    crontab: "0 0 * * *"
     args:
       major: True
   leet_stats:
@@ -4456,7 +4454,7 @@ custom:
 <tr><td><code>environment</code></td><td>Environment to report to Sentry (informational only)</td></tr>
 <tr><td><code>debug</code></td><td>Catch warning messages and more context</td></tr>
 </tbody></table>
-</div><div id="admonition-see-also" class="admonition info">
+</div><div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="config/sentry.html#admonition-see-also"></a></p>
@@ -4507,32 +4505,61 @@ templates:
 <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="6512---2023-09-15"><a class="header" href="#6512---2023-09-15"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12">6.5.12</a> - 2023-09-15</a></h2>
+<h2 id="6516---2024-03-05"><a class="header" href="#6516---2024-03-05"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.15...6.5.16">6.5.16</a> - 2024-03-05</a></h2>
+<p>This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.</p>
 <h3 id="fixed"><a class="header" href="#fixed">Fixed</a></h3>
+<ul>
+<li>tzkt: Don't use deprecated <code>/events</code> WebSockets endpoint.</li>
+</ul>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<ul>
+<li>deps: Updated pytezos to 3.11.3.</li>
+</ul>
+<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<ul>
+<li>metadata: Added <code>oxfordnet</code> to supported networks.</li>
+</ul>
+<h2 id="6515---2023-12-01"><a class="header" href="#6515---2023-12-01"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.14...6.5.15">6.5.15</a> - 2023-12-01</a></h2>
+<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<ul>
+<li>deps: Updated pytezos to 3.10.3.</li>
+</ul>
+<h2 id="6514---2023-10-20"><a class="header" href="#6514---2023-10-20"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.13...6.5.14">6.5.14</a> - 2023-10-20</a></h2>
+<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<ul>
+<li>token_transfer: Fixed filtering transfers by token_id.</li>
+</ul>
+<h2 id="6513---2023-10-10"><a class="header" href="#6513---2023-10-10"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.12...6.5.13">6.5.13</a> - 2023-10-10</a></h2>
+<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<ul>
+<li>tzkt: Fixed regression in <code>get_transactions</code> method pagination.</li>
+</ul>
+<h2 id="6512---2023-09-15"><a class="header" href="#6512---2023-09-15"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12">6.5.12</a> - 2023-09-15</a></h2>
+<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed issue with processing rollbacks while sync is in progress.</li>
 <li>tzkt: Fixed operation matching when contract code hash specified as a string.</li>
 <li>tzkt: Fixed parsing contract event data.</li>
 </ul>
 <h2 id="6511---2023-09-02"><a class="header" href="#6511---2023-09-02"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11">6.5.11</a> - 2023-09-02</a></h2>
-<h3 id="fixed-1"><a class="header" href="#fixed-1">Fixed</a></h3>
+<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
 <ul>
 <li>index: Fixed crash when parsing typed transactions with empty parameter.</li>
 <li>tzkt: Fixed pagination when requesting transactions.</li>
 <li>tzkt: Use cursor iteration where possible.</li>
 </ul>
 <h2 id="6510---2023-08-02"><a class="header" href="#6510---2023-08-02"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.9...6.5.10">6.5.10</a> - 2023-08-02</a></h2>
-<h3 id="fixed-2"><a class="header" href="#fixed-2">Fixed</a></h3>
+<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
 <ul>
 <li>index: Remove Python limitation on large int&lt;-&gt;str conversions.</li>
 </ul>
 <h2 id="659---2023-07-11"><a class="header" href="#659---2023-07-11"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.8...6.5.9">6.5.9</a> - 2023-07-11</a></h2>
-<h3 id="fixed-3"><a class="header" href="#fixed-3">Fixed</a></h3>
+<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
 <ul>
 <li>tzkt: Optimized queries for <code>operation_unfiltered</code> index.</li>
 </ul>
 <h2 id="658---2023-06-28"><a class="header" href="#658---2023-06-28"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.7...6.5.8">6.5.8</a> - 2023-06-28</a></h2>
-<h3 id="fixed-4"><a class="header" href="#fixed-4">Fixed</a></h3>
+<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
 <ul>
 <li>cli: Fixed <code>init</code> crash when package name is equal to one of the project typenames.</li>
 </ul>
@@ -4541,50 +4568,50 @@ templates:
 <ul>
 <li>config: Added <code>advanced.decimal_precision</code> option to adjust decimal context precision.</li>
 </ul>
-<h3 id="fixed-5"><a class="header" href="#fixed-5">Fixed</a></h3>
+<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
 <ul>
 <li>database: Fixed <code>OperationalError</code> raised in some cases after calling <code>bulk_create</code>.</li>
-<li>database: Allow running project scripts and queries on SQLite. </li>
+<li>database: Allow running project scripts and queries on SQLite.</li>
 <li>database: Don't cleanup model updates on every loop.</li>
 <li>http: Mark <code>asyncio.TimeoutError</code> exception as safe to retry.</li>
 </ul>
-<h3 id="other"><a class="header" href="#other">Other</a></h3>
+<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
 <ul>
 <li>http: Deserialize JSON responses with <code>orjson</code>.</li>
 </ul>
 <h2 id="656---2023-05-02"><a class="header" href="#656---2023-05-02"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.5...6.5.6">6.5.6</a> - 2023-05-02</a></h2>
-<h3 id="fixed-6"><a class="header" href="#fixed-6">Fixed</a></h3>
+<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
 <ul>
 <li>config: Fixed crash due to incorrect parsing of <code>event</code> index definitions.</li>
 <li>http: Fixed waiting for response indefinitely when IPFS hash is not available.</li>
 </ul>
-<h3 id="other-1"><a class="header" href="#other-1">Other</a></h3>
+<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
 <ul>
 <li>ci: Slim Docker image updated to Alpine 3.17.</li>
 <li>metadata: Added <code>nairobinet</code> to supported networks.</li>
 </ul>
 <h2 id="655---2023-04-17"><a class="header" href="#655---2023-04-17"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.4...6.5.5">6.5.5</a> - 2023-04-17</a></h2>
-<h3 id="fixed-7"><a class="header" href="#fixed-7">Fixed</a></h3>
+<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
 <ul>
 <li>config: Enable early realtime mode when config contains bigmap indexes with <code>skip_history</code>.</li>
 <li>http: Fixed crash when using custom datasources.</li>
 <li>index: Allow mixing <code>source</code> and <code>entrypoint</code> filters in <code>operation</code> index pattern.</li>
 </ul>
-<h3 id="other-2"><a class="header" href="#other-2">Other</a></h3>
+<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
 <ul>
 <li>ci: Default git branch switched to <code>next</code>.</li>
 </ul>
 <h2 id="654---2023-03-31"><a class="header" href="#654---2023-03-31"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.3...6.5.4">6.5.4</a> - 2023-03-31</a></h2>
-<h3 id="fixed-8"><a class="header" href="#fixed-8">Fixed</a></h3>
+<h3 id="fixed-11"><a class="header" href="#fixed-11">Fixed</a></h3>
 <ul>
-<li>config: Fixed incorrest parsing of <code>token_transfer</code> index filters. </li>
+<li>config: Fixed incorrest parsing of <code>token_transfer</code> index filters.</li>
 </ul>
-<h3 id="other-3"><a class="header" href="#other-3">Other</a></h3>
+<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
 <ul>
 <li>deps: Updated pytezos to 3.9.0.</li>
 </ul>
 <h2 id="653---2023-03-28"><a class="header" href="#653---2023-03-28"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.2...6.5.3">6.5.3</a> - 2023-03-28</a></h2>
-<h3 id="fixed-9"><a class="header" href="#fixed-9">Fixed</a></h3>
+<h3 id="fixed-12"><a class="header" href="#fixed-12">Fixed</a></h3>
 <ul>
 <li>cli: Don't enforce logging <code>DeprecationWarning</code> warnings.</li>
 <li>cli: Fixed <code>BrokenPipeError</code> messages when interrupting with DipDup with SIGINT.</li>
@@ -4595,10 +4622,10 @@ templates:
 <li>hasura: Forbid using Hasura instances affected by <a href="https://github.com/hasura/graphql-engine/security/advisories/GHSA-c9rw-rw2f-mj4x">GHSA-c9rw-rw2f-mj4x</a>.</li>
 </ul>
 <h2 id="652---2023-03-09"><a class="header" href="#652---2023-03-09"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.1...6.5.2">6.5.2</a> - 2023-03-09</a></h2>
-<h3 id="fixed-10"><a class="header" href="#fixed-10">Fixed</a></h3>
+<h3 id="fixed-13"><a class="header" href="#fixed-13">Fixed</a></h3>
 <ul>
-<li>codegen: Fixed type generation for contracts with &quot;default&quot; entrypoint.</li>
-<li>metadata: Add &quot;mumbainet&quot; to available networks.</li>
+<li>codegen: Fixed type generation for contracts with "default" entrypoint.</li>
+<li>metadata: Add "mumbainet" to available networks.</li>
 <li>sentry: Fixed bug leading to crash reports not being sent in some cases.</li>
 <li>sentry: Fixed crash report grouping.</li>
 </ul>
@@ -4607,13 +4634,13 @@ templates:
 <li>ci: <code>-slim</code> images will be based on Ubuntu instead of Alpine in the next major release.</li>
 </ul>
 <h2 id="651---2023-02-21"><a class="header" href="#651---2023-02-21"><a href="https://github.com/dipdup-io/dipdup/compare/6.5.0...6.5.1">6.5.1</a> - 2023-02-21</a></h2>
-<h3 id="fixed-11"><a class="header" href="#fixed-11">Fixed</a></h3>
+<h3 id="fixed-14"><a class="header" href="#fixed-14">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed bug leading to incorrect imports in generated callbacks in some cases.</li>
 <li>codegen: Fixed validation of created package after <code>dipdup init</code>.</li>
 <li>config: Allow using empty string as default env (<code>{DEFAULT_EMPTY:-}</code>).</li>
 </ul>
-<h3 id="other-4"><a class="header" href="#other-4">Other</a></h3>
+<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
 <ul>
 <li>deps: Updated pydantic to 1.10.5</li>
 <li>deps: Updated datamodel-code-generator to 0.17.1</li>
@@ -4626,7 +4653,7 @@ templates:
 <li>hasura: Apply arbitrary metadata from <code>hasura</code> project directory.</li>
 <li>config: Added <code>allow_inconsistent_metadata</code> option to <code>hasura</code> section.</li>
 </ul>
-<h3 id="fixed-12"><a class="header" href="#fixed-12">Fixed</a></h3>
+<h3 id="fixed-15"><a class="header" href="#fixed-15">Fixed</a></h3>
 <ul>
 <li>config: Do not include coinbase datasource credentials in config repr.</li>
 <li>database: Fixed crash when schema generation should fail with <code>schema_modified</code>.</li>
@@ -4637,14 +4664,14 @@ templates:
 <li>tzkt: Fixed <code>OperationData.type</code> field value for migration originations.</li>
 <li>tzkt: Added missing <code>last_level</code> argument to migration origination fetching methods.</li>
 </ul>
-<h3 id="other-5"><a class="header" href="#other-5">Other</a></h3>
+<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
 <ul>
 <li>tzkt: Updated current testnet protocol (<code>limanet</code>).</li>
 <li>deps: Updated asyncpg to 0.27.0</li>
 <li>deps: Updated hasura to 2.17.0</li>
 </ul>
 <h2 id="643---2023-01-05"><a class="header" href="#643---2023-01-05"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.2...6.4.3">6.4.3</a> - 2023-01-05</a></h2>
-<h3 id="fixed-13"><a class="header" href="#fixed-13">Fixed</a></h3>
+<h3 id="fixed-16"><a class="header" href="#fixed-16">Fixed</a></h3>
 <ul>
 <li>context: Fixed order of <code>add_contract</code> method arguments.</li>
 <li>index: Fixed matching operations when both <code>address</code> and <code>code_hash</code> filters are specified.</li>
@@ -4657,18 +4684,18 @@ templates:
 <li>config: Added <code>http.ratelimit_sleep</code> option to set fixed sleep time on 429 responses.</li>
 <li>context: Allow adding contracts by code hash in runtime.</li>
 </ul>
-<h3 id="fixed-14"><a class="header" href="#fixed-14">Fixed</a></h3>
+<h3 id="fixed-17"><a class="header" href="#fixed-17">Fixed</a></h3>
 <ul>
 <li>http: Fixed merging user-defined HTTP settings and datasource defaults.</li>
 <li>tzkt: Fixed iterating over big map keys.</li>
 </ul>
 <h2 id="641---2022-12-22"><a class="header" href="#641---2022-12-22"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.0...6.4.1">6.4.1</a> - 2022-12-22</a></h2>
-<h3 id="fixed-15"><a class="header" href="#fixed-15">Fixed</a></h3>
+<h3 id="fixed-18"><a class="header" href="#fixed-18">Fixed</a></h3>
 <ul>
 <li>models: Fixed package model detection.</li>
 </ul>
 <h2 id="640---2022-12-20"><a class="header" href="#640---2022-12-20"><a href="https://github.com/dipdup-io/dipdup/compare/6.4.0rc1...6.4.0">6.4.0</a> - 2022-12-20</a></h2>
-<h3 id="fixed-16"><a class="header" href="#fixed-16">Fixed</a></h3>
+<h3 id="fixed-19"><a class="header" href="#fixed-19">Fixed</a></h3>
 <ul>
 <li>cli: <code>update</code> and <code>uninstall</code> commands no longer require a valid config.</li>
 <li>cli: Fixed a regression in <code>new</code> command leading to crash with <code>TypeError</code>.</li>
@@ -4685,7 +4712,7 @@ templates:
 <li>tzkt: Originations and operations now can be fetched by contract code hashes.</li>
 <li>tzkt: Added <code>sender_code_hash</code> and <code>target_code_hash</code> fields to <code>OperationData</code> model.</li>
 </ul>
-<h3 id="fixed-17"><a class="header" href="#fixed-17">Fixed</a></h3>
+<h3 id="fixed-20"><a class="header" href="#fixed-20">Fixed</a></h3>
 <ul>
 <li>codegen: Unresolved index templates are now correctly processed during types generation.</li>
 <li>demos: Fixed outdated <code>demo_dao</code> project.</li>
@@ -4706,7 +4733,7 @@ templates:
 <li>config: <code>DipDupError</code> is an alias for <code>FrameworkError</code> and will be removed in the next major release.</li>
 </ul>
 <h2 id="631---2022-11-25"><a class="header" href="#631---2022-11-25"><a href="https://github.com/dipdup-io/dipdup/compare/6.3.0...6.3.1">6.3.1</a> - 2022-11-25</a></h2>
-<h3 id="fixed-18"><a class="header" href="#fixed-18">Fixed</a></h3>
+<h3 id="fixed-21"><a class="header" href="#fixed-21">Fixed</a></h3>
 <ul>
 <li>cli: Do not apply cli hacks on module import.</li>
 <li>codegen: Include PEP 561 marker in generated packages.</li>
@@ -4724,7 +4751,7 @@ templates:
 <ul>
 <li>hasura: Forbid using Hasura instances running vulnerable versions (<a href="https://github.com/hasura/graphql-engine/security/advisories/GHSA-g7mj-g7f4-hgrg">GHSA-g7mj-g7f4-hgrg</a>)</li>
 </ul>
-<h3 id="other-6"><a class="header" href="#other-6">Other</a></h3>
+<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
 <ul>
 <li>ci: <code>mypy --strict</code> is now enforced on a codebase.</li>
 <li>ci: Finished migration to <code>pytest</code>.</li>
@@ -4736,7 +4763,7 @@ templates:
 <li>context: <code>execute_sql</code> method now accepts arbitrary arguments to format SQL script (unsafe, use with caution).</li>
 <li>index: New filters for <code>token_transfer</code> index.</li>
 </ul>
-<h3 id="fixed-19"><a class="header" href="#fixed-19">Fixed</a></h3>
+<h3 id="fixed-22"><a class="header" href="#fixed-22">Fixed</a></h3>
 <ul>
 <li>cli: Fixed missing log messages from <code>ctx.logger</code>.</li>
 <li>codegen: Better PEP 8 compatibility of generated callbacks.</li>
@@ -4752,7 +4779,7 @@ templates:
 </ul>
 <h3 id="deprecated-2"><a class="header" href="#deprecated-2">Deprecated</a></h3>
 <ul>
-<li>ci: <code>pytezos</code> extra and corresponding Docker image are deprecated. </li>
+<li>ci: <code>pytezos</code> extra and corresponding Docker image are deprecated.</li>
 </ul>
 <h2 id="620---2022-10-12"><a class="header" href="#620---2022-10-12"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.3...6.2.0">6.2.0</a> - 2022-10-12</a></h2>
 <h3 id="added-5"><a class="header" href="#added-5">Added</a></h3>
@@ -4762,7 +4789,7 @@ templates:
 <li>index: New index kind <code>event</code> to process contract events.</li>
 <li>install: New interactive installer based on pipx (<code>install.py</code> or <code>dipdup-install</code>).</li>
 </ul>
-<h3 id="fixed-20"><a class="header" href="#fixed-20">Fixed</a></h3>
+<h3 id="fixed-23"><a class="header" href="#fixed-23">Fixed</a></h3>
 <ul>
 <li>cli: Fixed commands that don't require a valid config yet crash with <code>ConfigurationError</code>.</li>
 <li>codegen: Fail on demand when <code>datamodel-codegen</code> is not available.</li>
@@ -4788,23 +4815,23 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-7"><a class="header" href="#other-7">Other</a></h3>
+<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
-<li>docs: Updated &quot;Contributing Guide&quot; page.</li>
+<li>docs: Updated "Contributing Guide" page.</li>
 </ul>
 <h2 id="613---2022-09-21"><a class="header" href="#613---2022-09-21"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.2...6.1.3">6.1.3</a> - 2022-09-21</a></h2>
 <h3 id="added-6"><a class="header" href="#added-6">Added</a></h3>
 <ul>
 <li>sentry: Enable crash-free session reporting.</li>
 </ul>
-<h3 id="fixed-21"><a class="header" href="#fixed-21">Fixed</a></h3>
+<h3 id="fixed-24"><a class="header" href="#fixed-24">Fixed</a></h3>
 <ul>
 <li>metadata: Updated protocol aliases.</li>
 <li>sentry: Unwrap <code>CallbackError</code> traceback to fix event grouping.</li>
-<li>sentry: Hide &quot;attempting to send...&quot; message on shutdown.</li>
+<li>sentry: Hide "attempting to send..." message on shutdown.</li>
 </ul>
-<h3 id="other-8"><a class="header" href="#other-8">Other</a></h3>
+<h3 id="other-11"><a class="header" href="#other-11">Other</a></h3>
 <ul>
 <li>ci: Do not build default and <code>-pytezos</code> nightly images.</li>
 </ul>
@@ -4814,7 +4841,7 @@ templates:
 <li>config: Added <code>alias</code> field to operation pattern items.</li>
 <li>tzkt: Added quote field <code>gbp</code>.</li>
 </ul>
-<h3 id="fixed-22"><a class="header" href="#fixed-22">Fixed</a></h3>
+<h3 id="fixed-25"><a class="header" href="#fixed-25">Fixed</a></h3>
 <ul>
 <li>config: Require aliases for multiple operations with the same entrypoint.</li>
 <li>http: Raise <code>InvalidRequestError</code> on 204 No Content responses.</li>
@@ -4822,7 +4849,7 @@ templates:
 <li>tzkt: Remove deprecated block field <code>priority</code>.</li>
 </ul>
 <h2 id="611---2022-09-01"><a class="header" href="#611---2022-09-01"><a href="https://github.com/dipdup-io/dipdup/compare/6.1.0...6.1.1">6.1.1</a> - 2022-09-01</a></h2>
-<h3 id="fixed-23"><a class="header" href="#fixed-23">Fixed</a></h3>
+<h3 id="fixed-26"><a class="header" href="#fixed-26">Fixed</a></h3>
 <ul>
 <li>ci: Lock Pydantic to 1.9.2 to avoid breaking changes in dataclasses.</li>
 </ul>
@@ -4835,14 +4862,14 @@ templates:
 <li>ci: Introduced interactive installer (dipdup.io/install.py).</li>
 </ul>
 <h2 id="601---2022-08-19"><a class="header" href="#601---2022-08-19"><a href="https://github.com/dipdup-io/dipdup/compare/6.0.0...6.0.1">6.0.1</a> - 2022-08-19</a></h2>
-<h3 id="fixed-24"><a class="header" href="#fixed-24">Fixed</a></h3>
+<h3 id="fixed-27"><a class="header" href="#fixed-27">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed invalid <code>models.py</code> template.</li>
 <li>context: Do not wrap known exceptions with <code>CallbackError</code>.</li>
 <li>database: Raise <code>DatabaseConfigurationError</code> when backward relation name equals table name.</li>
 <li>database: Wrap schema wiping in a transaction to avoid orphaned tables in the immune schema.</li>
 <li>hasura: Fixed processing M2M relations.</li>
-<li>sentry: Fixed &quot;invalid value <code>environment</code>&quot; error.</li>
+<li>sentry: Fixed "invalid value <code>environment</code>" error.</li>
 <li>sentry: Ignore events from project callbacks when <code>crash_reporting</code> is enabled.</li>
 </ul>
 <h2 id="600---2022-08-08"><a class="header" href="#600---2022-08-08"><a href="https://github.com/dipdup-io/dipdup/compare/6.0.0rc2...6.0.0">6.0.0</a> - 2022-08-08</a></h2>
@@ -4853,7 +4880,7 @@ templates:
 <li>config: Added <code>advanced.crash_reporting</code> flag to enable reporting crashes to Baking Bad.</li>
 <li>dipdup: Save Sentry crashdump in <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> on a crash.</li>
 </ul>
-<h3 id="fixed-25"><a class="header" href="#fixed-25">Fixed</a></h3>
+<h3 id="fixed-28"><a class="header" href="#fixed-28">Fixed</a></h3>
 <ul>
 <li>config: Do not perform env variable substitution in commented-out lines.</li>
 </ul>
@@ -4872,7 +4899,7 @@ templates:
 <li>context: Added <code>rollback</code> method to perform database rollback.</li>
 <li>database: Added an internal <code>ModelUpdate</code> model to store the latest database changes.</li>
 </ul>
-<h3 id="fixed-26"><a class="header" href="#fixed-26">Fixed</a></h3>
+<h3 id="fixed-29"><a class="header" href="#fixed-29">Fixed</a></h3>
 <ul>
 <li>prometheus: Fixed updating <code>dipdup_index_handlers_matched_total</code> metric.</li>
 </ul>
@@ -4888,12 +4915,12 @@ templates:
 <li>index: Do not try to avoid single-level rollbacks by comparing operation hashes.</li>
 </ul>
 <h2 id="525---2022-07-26"><a class="header" href="#525---2022-07-26"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.4...5.2.5">5.2.5</a> - 2022-07-26</a></h2>
-<h3 id="fixed-27"><a class="header" href="#fixed-27">Fixed</a></h3>
+<h3 id="fixed-30"><a class="header" href="#fixed-30">Fixed</a></h3>
 <ul>
 <li>index: Fixed crash when adding an index with new subscriptions in runtime.</li>
 </ul>
 <h2 id="524---2022-07-17"><a class="header" href="#524---2022-07-17"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.3...5.2.4">5.2.4</a> - 2022-07-17</a></h2>
-<h3 id="fixed-28"><a class="header" href="#fixed-28">Fixed</a></h3>
+<h3 id="fixed-31"><a class="header" href="#fixed-31">Fixed</a></h3>
 <ul>
 <li>cli: Fixed logs being printed to stderr instead of stdout.</li>
 <li>config: Fixed job scheduler not starting when config contains no indexes.</li>
@@ -4903,18 +4930,18 @@ templates:
 <ul>
 <li>sentry: Allow customizing <code>server_name</code> and <code>release</code> tags with corresponding fields in Sentry config.</li>
 </ul>
-<h3 id="fixed-29"><a class="header" href="#fixed-29">Fixed</a></h3>
+<h3 id="fixed-32"><a class="header" href="#fixed-32">Fixed</a></h3>
 <ul>
 <li>cli: Fixed <code>hasura configure</code> command crash when models have empty <code>Meta.table</code>.</li>
 <li>config: Removed secrets from config <code>__repr__</code>.</li>
 </ul>
 <h2 id="522---2022-07-03"><a class="header" href="#522---2022-07-03"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.1...5.2.2">5.2.2</a> - 2022-07-03</a></h2>
-<h3 id="fixed-30"><a class="header" href="#fixed-30">Fixed</a></h3>
+<h3 id="fixed-33"><a class="header" href="#fixed-33">Fixed</a></h3>
 <ul>
 <li>hasura: Fixed metadata generation.</li>
 </ul>
 <h2 id="521---2022-07-02"><a class="header" href="#521---2022-07-02"><a href="https://github.com/dipdup-io/dipdup/compare/5.2.0...5.2.1">5.2.1</a> - 2022-07-02</a></h2>
-<h3 id="fixed-31"><a class="header" href="#fixed-31">Fixed</a></h3>
+<h3 id="fixed-34"><a class="header" href="#fixed-34">Fixed</a></h3>
 <ul>
 <li>cli: Fixed setting default logging level.</li>
 <li>hasura: Fixed metadata generation for relations with a custom field name.</li>
@@ -4926,7 +4953,7 @@ templates:
 <li>config: Added <code>logging</code> config field.</li>
 <li>config: Added <code>hasura.create_source</code> flag to create PostgreSQL source if missing.</li>
 </ul>
-<h3 id="fixed-32"><a class="header" href="#fixed-32">Fixed</a></h3>
+<h3 id="fixed-35"><a class="header" href="#fixed-35">Fixed</a></h3>
 <ul>
 <li>hasura: Do not apply table customizations to tables from other sources.</li>
 </ul>
@@ -4938,12 +4965,12 @@ templates:
 <li>config: <code>http.cache</code> flag is deprecated.</li>
 </ul>
 <h2 id="517---2022-06-15"><a class="header" href="#517---2022-06-15"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.6...5.1.7">5.1.7</a> - 2022-06-15</a></h2>
-<h3 id="fixed-33"><a class="header" href="#fixed-33">Fixed</a></h3>
+<h3 id="fixed-36"><a class="header" href="#fixed-36">Fixed</a></h3>
 <ul>
 <li>index: Fixed <code>token_transfer</code> index not receiving realtime updates.</li>
 </ul>
 <h2 id="516---2022-06-08"><a class="header" href="#516---2022-06-08"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.5...5.1.6">5.1.6</a> - 2022-06-08</a></h2>
-<h3 id="fixed-34"><a class="header" href="#fixed-34">Fixed</a></h3>
+<h3 id="fixed-37"><a class="header" href="#fixed-37">Fixed</a></h3>
 <ul>
 <li>cli: Commands with <code>--help</code> option no longer require a working DipDup config.</li>
 <li>index: Fixed crash with <code>RuntimeError</code> after continuous realtime connection loss.</li>
@@ -4952,17 +4979,17 @@ templates:
 <ul>
 <li>cli: Lazy import dependencies to speed up startup.</li>
 </ul>
-<h3 id="other-9"><a class="header" href="#other-9">Other</a></h3>
+<h3 id="other-12"><a class="header" href="#other-12">Other</a></h3>
 <ul>
 <li>docs: Migrate docs from GitBook to mdbook.</li>
 </ul>
 <h2 id="515---2022-06-05"><a class="header" href="#515---2022-06-05"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.4...5.1.5">5.1.5</a> - 2022-06-05</a></h2>
-<h3 id="fixed-35"><a class="header" href="#fixed-35">Fixed</a></h3>
+<h3 id="fixed-38"><a class="header" href="#fixed-38">Fixed</a></h3>
 <ul>
 <li>config: Fixed crash when rollback hook is about to be called.</li>
 </ul>
 <h2 id="514---2022-06-02"><a class="header" href="#514---2022-06-02"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.3...5.1.4">5.1.4</a> - 2022-06-02</a></h2>
-<h3 id="fixed-36"><a class="header" href="#fixed-36">Fixed</a></h3>
+<h3 id="fixed-39"><a class="header" href="#fixed-39">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>OperationIndexConfig.types</code> field being partially ignored.</li>
 <li>index: Allow mixing oneshot and regular indexes in a single config.</li>
@@ -4975,7 +5002,7 @@ templates:
 <li>ci: Decrease the size of generic and <code>-pytezos</code> Docker images by 11% and 16%, respectively.</li>
 </ul>
 <h2 id="513---2022-05-26"><a class="header" href="#513---2022-05-26"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.2...5.1.3">5.1.3</a> - 2022-05-26</a></h2>
-<h3 id="fixed-37"><a class="header" href="#fixed-37">Fixed</a></h3>
+<h3 id="fixed-40"><a class="header" href="#fixed-40">Fixed</a></h3>
 <ul>
 <li>database: Fixed special characters in password not being URL encoded.</li>
 </ul>
@@ -4988,17 +5015,17 @@ templates:
 <ul>
 <li>tzkt: Added <code>originated_contract_tzips</code> field to <code>OperationData</code>.</li>
 </ul>
-<h3 id="fixed-38"><a class="header" href="#fixed-38">Fixed</a></h3>
+<h3 id="fixed-41"><a class="header" href="#fixed-41">Fixed</a></h3>
 <ul>
 <li>jobs: Fixed jobs with <code>daemon</code> schedule never start.</li>
 <li>jobs: Fixed failed jobs not throwing exceptions into the main loop.</li>
 </ul>
-<h3 id="other-10"><a class="header" href="#other-10">Other</a></h3>
+<h3 id="other-13"><a class="header" href="#other-13">Other</a></h3>
 <ul>
 <li>database: Tortoise ORM updated to <code>0.19.1</code>.</li>
 </ul>
 <h2 id="511---2022-05-13"><a class="header" href="#511---2022-05-13"><a href="https://github.com/dipdup-io/dipdup/compare/5.1.0...5.1.1">5.1.1</a> - 2022-05-13</a></h2>
-<h3 id="fixed-39"><a class="header" href="#fixed-39">Fixed</a></h3>
+<h3 id="fixed-42"><a class="header" href="#fixed-42">Fixed</a></h3>
 <ul>
 <li>index: Ignore indexes with different message types on rollback.</li>
 <li>metadata: Add <code>ithacanet</code> to available networks.</li>
@@ -5011,7 +5038,7 @@ templates:
 <li>cli: Show warning when running an outdated version of DipDup.</li>
 <li>hooks: Added a new hook <code>on_index_rollback</code> to perform per-index rollbacks.</li>
 </ul>
-<h3 id="fixed-40"><a class="header" href="#fixed-40">Fixed</a></h3>
+<h3 id="fixed-43"><a class="header" href="#fixed-43">Fixed</a></h3>
 <ul>
 <li>index: Fixed fetching <code>migration</code> operations.</li>
 <li>tzkt: Fixed possible data corruption when using the <code>buffer_size</code> option.</li>
@@ -5022,14 +5049,14 @@ templates:
 <li>hooks: The <code>on_rollback</code> default hook is superseded by <code>on_index_rollback</code> and will be removed later.</li>
 </ul>
 <h2 id="504---2022-05-05"><a class="header" href="#504---2022-05-05"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.3...5.0.4">5.0.4</a> - 2022-05-05</a></h2>
-<h3 id="fixed-41"><a class="header" href="#fixed-41">Fixed</a></h3>
+<h3 id="fixed-44"><a class="header" href="#fixed-44">Fixed</a></h3>
 <ul>
 <li>exceptions: Fixed incorrect formatting and broken links in help messages.</li>
 <li>index: Fixed crash when the only index in config is <code>head</code>.</li>
 <li>index: Fixed fetching originations during the initial sync.</li>
 </ul>
 <h2 id="503---2022-05-04"><a class="header" href="#503---2022-05-04"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.2...5.0.3">5.0.3</a> - 2022-05-04</a></h2>
-<h3 id="fixed-42"><a class="header" href="#fixed-42">Fixed</a></h3>
+<h3 id="fixed-45"><a class="header" href="#fixed-45">Fixed</a></h3>
 <ul>
 <li>index: Fixed crash when no block with the same level arrived after a single-level rollback.</li>
 <li>index: Fixed setting initial index level when <code>IndexConfig.first_level</code> is set.</li>
@@ -5037,7 +5064,7 @@ templates:
 <li>tzkt: Fixed inconsistent behavior of <code>first_level</code>/<code>last_level</code> arguments in different getter methods.</li>
 </ul>
 <h2 id="502---2022-04-21"><a class="header" href="#502---2022-04-21"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.1...5.0.2">5.0.2</a> - 2022-04-21</a></h2>
-<h3 id="fixed-43"><a class="header" href="#fixed-43">Fixed</a></h3>
+<h3 id="fixed-46"><a class="header" href="#fixed-46">Fixed</a></h3>
 <ul>
 <li>context: Fixed reporting incorrect reindexing reason.</li>
 <li>exceptions: Fixed crash with <code>FrozenInstanceError</code> when an exception is raised from a callback.</li>
@@ -5050,7 +5077,7 @@ templates:
 <li>tzkt: Do not request reindexing if missing subgroups have matched no handlers.</li>
 </ul>
 <h2 id="501---2022-04-12"><a class="header" href="#501---2022-04-12"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.0...5.0.1">5.0.1</a> - 2022-04-12</a></h2>
-<h3 id="fixed-44"><a class="header" href="#fixed-44">Fixed</a></h3>
+<h3 id="fixed-47"><a class="header" href="#fixed-47">Fixed</a></h3>
 <ul>
 <li>cli: Fixed <code>schema init</code> command crash with SQLite databases.</li>
 <li>index: Fixed spawning datasources in oneshot mode.</li>
@@ -5064,7 +5091,7 @@ templates:
 <li>tzkt: Added ability to process realtime messages with lag.</li>
 </ul>
 <h2 id="427---2022-04-02"><a class="header" href="#427---2022-04-02"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.6...4.2.7">4.2.7</a> - 2022-04-02</a></h2>
-<h3 id="fixed-45"><a class="header" href="#fixed-45">Fixed</a></h3>
+<h3 id="fixed-48"><a class="header" href="#fixed-48">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>jobs</code> config section validation.</li>
 <li>hasura: Fixed metadata generation for v2.3.0 and above.</li>
@@ -5075,7 +5102,7 @@ templates:
 <ul>
 <li>config: Added <code>custom</code> section to store arbitrary user data.</li>
 </ul>
-<h3 id="fixed-46"><a class="header" href="#fixed-46">Fixed</a></h3>
+<h3 id="fixed-49"><a class="header" href="#fixed-49">Fixed</a></h3>
 <ul>
 <li>config: Fixed default SQLite path (<code>:memory:</code>).</li>
 <li>tzkt: Fixed pagination in several getter methods.</li>
@@ -5088,10 +5115,10 @@ templates:
 <li>cli: Removed dummy <code>schema approve --hashes</code> flag.</li>
 </ul>
 <h2 id="500-rc2---2022-03-13"><a class="header" href="#500-rc2---2022-03-13"><a href="https://github.com/dipdup-io/dipdup/compare/5.0.0-rc1...5.0.0-rc2">5.0.0-rc2</a> - 2022-03-13</a></h2>
-<h3 id="fixed-47"><a class="header" href="#fixed-47">Fixed</a></h3>
+<h3 id="fixed-50"><a class="header" href="#fixed-50">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed crash in methods that do not support cursor pagination.</li>
-<li>prometheus: Fixed invalid metric labels. </li>
+<li>prometheus: Fixed invalid metric labels.</li>
 </ul>
 <h2 id="500-rc1---2022-03-02"><a class="header" href="#500-rc1---2022-03-02"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.6...5.0.0-rc1">5.0.0-rc1</a> - 2022-03-02</a></h2>
 <h3 id="added-17"><a class="header" href="#added-17">Added</a></h3>
@@ -5101,7 +5128,7 @@ templates:
 <li>tzkt: Added missing fields to the <code>HeadBlockData</code> model.</li>
 <li>tzkt: Added <code>iter_...</code> methods to iterate over item batches.</li>
 </ul>
-<h3 id="fixed-48"><a class="header" href="#fixed-48">Fixed</a></h3>
+<h3 id="fixed-51"><a class="header" href="#fixed-51">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed possible OOM while calling methods that support pagination.</li>
 <li>tzkt: Fixed possible data loss in <code>get_originations</code> and <code>get_quotes</code> methods.</li>
@@ -5119,14 +5146,14 @@ templates:
 <li>dipdup: Use fast <code>orjson</code> library instead of built-in <code>json</code> where possible.</li>
 </ul>
 <h2 id="426---2022-02-25"><a class="header" href="#426---2022-02-25"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.5...4.2.6">4.2.6</a> - 2022-02-25</a></h2>
-<h3 id="fixed-49"><a class="header" href="#fixed-49">Fixed</a></h3>
+<h3 id="fixed-52"><a class="header" href="#fixed-52">Fixed</a></h3>
 <ul>
 <li>database: Fixed generating table names from uppercase model names.</li>
 <li>http: Fixed bug that leads to caching invalid responses on the disk.</li>
 <li>tzkt: Fixed processing realtime messages with data from multiple levels.</li>
 </ul>
 <h2 id="425---2022-02-21"><a class="header" href="#425---2022-02-21"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.4...4.2.5">4.2.5</a> - 2022-02-21</a></h2>
-<h3 id="fixed-50"><a class="header" href="#fixed-50">Fixed</a></h3>
+<h3 id="fixed-53"><a class="header" href="#fixed-53">Fixed</a></h3>
 <ul>
 <li>database: Do not add the <code>schema</code> argument to the PostgreSQL connection string when not needed.</li>
 <li>hasura: Wait for Hasura to be configured before starting indexing.</li>
@@ -5136,7 +5163,7 @@ templates:
 <ul>
 <li>config: Added <code>http</code> datasource to making arbitrary http requests.</li>
 </ul>
-<h3 id="fixed-51"><a class="header" href="#fixed-51">Fixed</a></h3>
+<h3 id="fixed-54"><a class="header" href="#fixed-54">Fixed</a></h3>
 <ul>
 <li>context: Fixed crash when calling <code>fire_hook</code> method.</li>
 <li>context: Fixed <code>HookConfig.atomic</code> flag, which was ignored in <code>fire_hook</code> method.</li>
@@ -5144,12 +5171,12 @@ templates:
 <li>database: Fixed excess increasing of <code>decimal</code> context precision.</li>
 <li>index: Fixed loading handler callbacks from nested packages (<a href="https://github.com/veqtor">@veqtor</a>).</li>
 </ul>
-<h3 id="other-11"><a class="header" href="#other-11">Other</a></h3>
+<h3 id="other-14"><a class="header" href="#other-14">Other</a></h3>
 <ul>
 <li>ci: Added GitHub Action to build and publish Docker images for each PR opened.</li>
 </ul>
 <h2 id="423---2022-02-08"><a class="header" href="#423---2022-02-08"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.2...4.2.3">4.2.3</a> - 2022-02-08</a></h2>
-<h3 id="fixed-52"><a class="header" href="#fixed-52">Fixed</a></h3>
+<h3 id="fixed-55"><a class="header" href="#fixed-55">Fixed</a></h3>
 <ul>
 <li>ci: Removed <code>black 21.12b0</code> dependency since bug in <code>datamodel-codegen-generator</code> is fixed.</li>
 <li>cli: Fixed <code>config export</code> command crash when <code>advanced.reindex</code> dictionary is present.</li>
@@ -5161,12 +5188,12 @@ templates:
 <li>tzkt: Fixed crash occurring when reorg message is the first one received by the datasource.</li>
 </ul>
 <h2 id="422---2022-02-01"><a class="header" href="#422---2022-02-01"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.1...4.2.2">4.2.2</a> - 2022-02-01</a></h2>
-<h3 id="fixed-53"><a class="header" href="#fixed-53">Fixed</a></h3>
+<h3 id="fixed-56"><a class="header" href="#fixed-56">Fixed</a></h3>
 <ul>
 <li>config: Fixed <code>ipfs</code> datasource config.</li>
 </ul>
 <h2 id="421---2022-01-31"><a class="header" href="#421---2022-01-31"><a href="https://github.com/dipdup-io/dipdup/compare/4.2.0...4.2.1">4.2.1</a> - 2022-01-31</a></h2>
-<h3 id="fixed-54"><a class="header" href="#fixed-54">Fixed</a></h3>
+<h3 id="fixed-57"><a class="header" href="#fixed-57">Fixed</a></h3>
 <ul>
 <li>ci: Added <code>black 21.12b0</code> dependency to avoid possible conflict with <code>datamodel-codegen-generator</code>.</li>
 </ul>
@@ -5179,7 +5206,7 @@ templates:
 <li>http: Added <code>request</code> method to send arbitrary requests (affects all datasources).</li>
 <li>ipfs: Added <code>ipfs</code> datasource to download JSON and binary data from IPFS.</li>
 </ul>
-<h3 id="fixed-55"><a class="header" href="#fixed-55">Fixed</a></h3>
+<h3 id="fixed-58"><a class="header" href="#fixed-58">Fixed</a></h3>
 <ul>
 <li>http: Removed dangerous method <code>close_session</code>.</li>
 <li>context: Fixed help message of <code>IndexAlreadyExistsError</code> exception.</li>
@@ -5188,7 +5215,7 @@ templates:
 <ul>
 <li>bcd: Added deprecation notice.</li>
 </ul>
-<h3 id="other-12"><a class="header" href="#other-12">Other</a></h3>
+<h3 id="other-15"><a class="header" href="#other-15">Other</a></h3>
 <ul>
 <li>dipdup: Removed unused internal methods.</li>
 </ul>
@@ -5197,14 +5224,14 @@ templates:
 <ul>
 <li>cli: Added <code>schema wipe --force</code> argument to skip confirmation prompt.</li>
 </ul>
-<h3 id="fixed-56"><a class="header" href="#fixed-56">Fixed</a></h3>
+<h3 id="fixed-59"><a class="header" href="#fixed-59">Fixed</a></h3>
 <ul>
 <li>cli: Show warning about deprecated <code>--hashes</code> argument</li>
 <li>cli: Ignore <code>SIGINT</code> signal when shutdown is in progress.</li>
 <li>sentry: Ignore exceptions when shutdown is in progress.</li>
 </ul>
 <h2 id="411---2022-01-25"><a class="header" href="#411---2022-01-25"><a href="https://github.com/dipdup-io/dipdup/compare/4.1.0...4.1.1">4.1.1</a> - 2022-01-25</a></h2>
-<h3 id="fixed-57"><a class="header" href="#fixed-57">Fixed</a></h3>
+<h3 id="fixed-60"><a class="header" href="#fixed-60">Fixed</a></h3>
 <ul>
 <li>cli: Fixed stacktraces missing on exception.</li>
 <li>cli: Fixed wrapping <code>OSError</code> with <code>ConfigurationError</code> during config loading.</li>
@@ -5232,7 +5259,7 @@ templates:
 <li>tzkt: Added <code>get_big_map</code> and <code>get_contract_big_maps</code> datasource methods.</li>
 </ul>
 <h2 id="405---2022-01-20"><a class="header" href="#405---2022-01-20"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.4...4.0.5">4.0.5</a> - 2022-01-20</a></h2>
-<h3 id="fixed-58"><a class="header" href="#fixed-58">Fixed</a></h3>
+<h3 id="fixed-61"><a class="header" href="#fixed-61">Fixed</a></h3>
 <ul>
 <li>index: Fixed deserializing manually modified typeclasses.</li>
 </ul>
@@ -5241,7 +5268,7 @@ templates:
 <ul>
 <li>cli: Added <code>--keep-schemas</code> flag to <code>init</code> command to preserve JSONSchemas along with generated types.</li>
 </ul>
-<h3 id="fixed-59"><a class="header" href="#fixed-59">Fixed</a></h3>
+<h3 id="fixed-62"><a class="header" href="#fixed-62">Fixed</a></h3>
 <ul>
 <li>demos: Tezos Domains and Homebase DAO demos were updated from edo2net to mainnet contracts.</li>
 <li>hasura: Fixed missing relations for models with <code>ManyToManyField</code> fields.</li>
@@ -5251,7 +5278,7 @@ templates:
 <ul>
 <li>dipdup: Minor overall performance improvements.</li>
 </ul>
-<h3 id="other-13"><a class="header" href="#other-13">Other</a></h3>
+<h3 id="other-16"><a class="header" href="#other-16">Other</a></h3>
 <ul>
 <li>ci: Cache virtual environment in GitHub Actions.</li>
 <li>ci: Detect CI environment and skip tests that fail in GitHub Actions.</li>
@@ -5259,7 +5286,7 @@ templates:
 <li>ci: More strict linting rules of <code>flake8</code>.</li>
 </ul>
 <h2 id="403---2022-01-09"><a class="header" href="#403---2022-01-09"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.2...4.0.3">4.0.3</a> - 2022-01-09</a></h2>
-<h3 id="fixed-60"><a class="header" href="#fixed-60">Fixed</a></h3>
+<h3 id="fixed-63"><a class="header" href="#fixed-63">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed parsing parameter with an optional value.</li>
 </ul>
@@ -5268,14 +5295,14 @@ templates:
 <ul>
 <li>tzkt: Added optional <code>delegate_address</code> and <code>delegate_alias</code> fields to <code>OperationData</code>.</li>
 </ul>
-<h3 id="fixed-61"><a class="header" href="#fixed-61">Fixed</a></h3>
+<h3 id="fixed-64"><a class="header" href="#fixed-64">Fixed</a></h3>
 <ul>
 <li>tzkt: Fixed crash due to unprocessed pysignalr exception.</li>
 <li>tzkt: Fixed parsing <code>OperationData.amount</code> field.</li>
 <li>tzkt: Fixed parsing storage with top-level boolean fields.</li>
 </ul>
 <h2 id="401---2021-12-30"><a class="header" href="#401---2021-12-30"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.0...4.0.1">4.0.1</a> - 2021-12-30</a></h2>
-<h3 id="fixed-62"><a class="header" href="#fixed-62">Fixed</a></h3>
+<h3 id="fixed-65"><a class="header" href="#fixed-65">Fixed</a></h3>
 <ul>
 <li>codegen: Fixed generating storage typeclasses with <code>Union</code> fields.</li>
 <li>codegen: Fixed preprocessing contract JSONSchema.</li>
@@ -5290,7 +5317,7 @@ templates:
 <h2 id="400---2021-12-24"><a class="header" href="#400---2021-12-24"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.0-rc3...4.0.0">4.0.0</a> - 2021-12-24</a></h2>
 <p>This release contains no changes except for the version number.</p>
 <h2 id="400-rc3---2021-12-20"><a class="header" href="#400-rc3---2021-12-20"><a href="https://github.com/dipdup-io/dipdup/compare/4.0.0-rc2...4.0.0-rc3">4.0.0-rc3</a> - 2021-12-20</a></h2>
-<h3 id="fixed-63"><a class="header" href="#fixed-63">Fixed</a></h3>
+<h3 id="fixed-66"><a class="header" href="#fixed-66">Fixed</a></h3>
 <ul>
 <li>cli: Fixed missing <code>schema approve --hashes</code> argument.</li>
 <li>codegen: Fixed contract address used instead of an alias when typename is not set.</li>
@@ -5311,7 +5338,7 @@ templates:
 <ul>
 <li>hooks: Added <code>on_synchronized</code> hook, which fires each time all indexes reach realtime state.</li>
 </ul>
-<h3 id="fixed-64"><a class="header" href="#fixed-64">Fixed</a></h3>
+<h3 id="fixed-67"><a class="header" href="#fixed-67">Fixed</a></h3>
 <ul>
 <li>cli: Fixed config not being verified when invoking some commands.</li>
 <li>codegen: Fixed generating callback arguments for untyped operations.</li>
@@ -5339,7 +5366,7 @@ templates:
 <li>config: Added <code>daemon</code> boolean field to <code>JobConfig</code> to run a single callback indefinitely. Conflicts with <code>crontab</code> and <code>interval</code> fields.</li>
 <li>config: Added <code>advanced</code> top-level section.</li>
 </ul>
-<h3 id="fixed-65"><a class="header" href="#fixed-65">Fixed</a></h3>
+<h3 id="fixed-68"><a class="header" href="#fixed-68">Fixed</a></h3>
 <ul>
 <li>cli: Fixed crashes and output inconsistency when piping DipDup commands.</li>
 <li>cli: Fixed <code>schema wipe --immune</code> flag being ignored.</li>
@@ -5369,21 +5396,21 @@ templates:
 <li>config: Configuration files are loaded 10x times faster.</li>
 <li>index: Number of operations processed by matcher reduced by 40%-95% depending on the number of addresses and entrypoints used.</li>
 <li>tzkt: Rate limit was increased. Try to set <code>connection_timeout</code> to a higher value if requests fail with <code>ConnectionTimeout</code> exception.</li>
-<li>tzkt: Improved performance of response deserialization. </li>
+<li>tzkt: Improved performance of response deserialization.</li>
 </ul>
 <h2 id="313---2021-11-15"><a class="header" href="#313---2021-11-15"><a href="https://github.com/dipdup-io/dipdup/compare/3.1.2...3.1.3">3.1.3</a> - 2021-11-15</a></h2>
-<h3 id="fixed-66"><a class="header" href="#fixed-66">Fixed</a></h3>
+<h3 id="fixed-69"><a class="header" href="#fixed-69">Fixed</a></h3>
 <ul>
-<li>codegen: Fixed missing imports in operation handlers. </li>
+<li>codegen: Fixed missing imports in operation handlers.</li>
 <li>codegen: Fixed invalid imports and arguments in big_map handlers.</li>
 </ul>
 <h2 id="312---2021-11-02"><a class="header" href="#312---2021-11-02"><a href="https://github.com/dipdup-io/dipdup/compare/3.1.1...3.1.2">3.1.2</a> - 2021-11-02</a></h2>
-<h3 id="fixed-67"><a class="header" href="#fixed-67">Fixed</a></h3>
+<h3 id="fixed-70"><a class="header" href="#fixed-70">Fixed</a></h3>
 <ul>
 <li>Fixed crash occurred during synchronization of big map indexes.</li>
 </ul>
 <h2 id="311---2021-10-18"><a class="header" href="#311---2021-10-18"><a href="https://github.com/dipdup-io/dipdup/compare/3.1.0...3.1.1">3.1.1</a> - 2021-10-18</a></h2>
-<h3 id="fixed-68"><a class="header" href="#fixed-68">Fixed</a></h3>
+<h3 id="fixed-71"><a class="header" href="#fixed-71">Fixed</a></h3>
 <ul>
 <li>Fixed loss of realtime subscriptions occurred after TzKT API outage.</li>
 <li>Fixed updating schema hash in <code>schema approve</code> command.</li>
@@ -5401,7 +5428,7 @@ templates:
 <li><code>--reindex</code> option is removed. Use <code>dipdup schema wipe</code> instead.</li>
 <li>Values of <code>dipdup_schema.reindex</code> field updated to simplify querying database. See <a href="https://github.com/dipdup-io/dipdup/blob/master/src/dipdup/enums.py"><code>dipdup.enums.ReindexingReason</code></a> class for possible values.</li>
 </ul>
-<h3 id="fixed-69"><a class="header" href="#fixed-69">Fixed</a></h3>
+<h3 id="fixed-72"><a class="header" href="#fixed-72">Fixed</a></h3>
 <ul>
 <li>Fixed <code>ReindexRequiredError</code> not being raised when running DipDup after reindexing was triggered.</li>
 <li>Fixed index config hash calculation. Hashes of existing indexes in a database will be updated during the first run.</li>
@@ -5420,7 +5447,7 @@ templates:
 <ul>
 <li>A significant increase in indexing speed.</li>
 </ul>
-<h3 id="fixed-70"><a class="header" href="#fixed-70">Fixed</a></h3>
+<h3 id="fixed-73"><a class="header" href="#fixed-73">Fixed</a></h3>
 <ul>
 <li>Fixed unexpected reindexing caused by the bug in processing zero- and single-level rollbacks.</li>
 <li>Removed unnecessary file IO calls that could cause <code>PermissionError</code> exception in Docker environments.</li>
@@ -5431,7 +5458,7 @@ templates:
 <li>Public methods of <code>TzktDatasource</code> now return immutable sequences.</li>
 </ul>
 <h2 id="303---2021-10-01"><a class="header" href="#303---2021-10-01"><a href="https://github.com/dipdup-io/dipdup/compare/3.0.2...3.0.3">3.0.3</a> - 2021-10-01</a></h2>
-<h3 id="fixed-71"><a class="header" href="#fixed-71">Fixed</a></h3>
+<h3 id="fixed-74"><a class="header" href="#fixed-74">Fixed</a></h3>
 <ul>
 <li>Fixed processing of single-level rollbacks emitted before rolled back head.</li>
 </ul>
@@ -5442,7 +5469,7 @@ templates:
 <li>Two new options added to <code>dipdup run</code> command:
 <ul>
 <li><code>--forbid-reindexing</code> – raise <code>ReindexingRequiredError</code> instead of truncating database when reindexing is triggered for any reason. To continue indexing with existing database run <code>UPDATE dipdup_schema SET reindex = NULL;</code></li>
-<li><code>--postpone-jobs</code> – job scheduler won't start until all indexes are synchronized. </li>
+<li><code>--postpone-jobs</code> – job scheduler won't start until all indexes are synchronized.</li>
 </ul>
 </li>
 </ul>
@@ -5451,7 +5478,7 @@ templates:
 <li>Migration to this version requires reindexing.</li>
 <li><code>dipdup_index.head_id</code> foreign key removed. <code>dipdup_head</code> table still contains the latest blocks from Websocket received by each datasource.</li>
 </ul>
-<h3 id="fixed-72"><a class="header" href="#fixed-72">Fixed</a></h3>
+<h3 id="fixed-75"><a class="header" href="#fixed-75">Fixed</a></h3>
 <ul>
 <li>Removed unnecessary calls to TzKT API.</li>
 <li>Fixed removal of PostgreSQL extensions (<code>timescaledb</code>, <code>pgcrypto</code>) by function <code>truncate_database</code> triggered on reindex.</li>
@@ -5468,7 +5495,7 @@ templates:
 <ul>
 <li>Added <code>get_quote</code> and <code>get_quotes</code> methods to <code>TzKTDatasource</code>.</li>
 </ul>
-<h3 id="fixed-73"><a class="header" href="#fixed-73">Fixed</a></h3>
+<h3 id="fixed-76"><a class="header" href="#fixed-76">Fixed</a></h3>
 <ul>
 <li>Defer spawning index datasources until initial sync is complete. It helps to mitigate some WebSocket-related crashes, but initial sync is a bit slower now.</li>
 <li>Fixed possible race conditions in <code>TzKTDatasource</code>.</li>
@@ -5506,15 +5533,13 @@ templates:
 <pre><code class="language-python">async def on_move_event(
     ctx: HandlerContext,
     event: Event[MovePayload],
-) -&gt; None:
-    ...
+) -&gt; None: ...
 </code></pre>
 <p>Each contract can have a fallback handler called for all unknown events so you can process untyped data.</p>
 <pre><code class="language-python">async def on_other_event(
     ctx: HandlerContext,
     event: UnknownEvent,
-) -&gt; None:
-    ...
+) -&gt; None: ...
 </code></pre>
 <h2 id="changes-since-513"><a class="header" href="#changes-since-513">Changes since 5.1.3</a></h2>
 <h3 id="added-29"><a class="header" href="#added-29">Added</a></h3>
@@ -5524,7 +5549,7 @@ templates:
 <li>index: New index kind <code>event</code> to process contract events.</li>
 <li>install: New interactive installer based on pipx (<code>install.py</code> or <code>dipdup-install</code>).</li>
 </ul>
-<h3 id="fixed-74"><a class="header" href="#fixed-74">Fixed</a></h3>
+<h3 id="fixed-77"><a class="header" href="#fixed-77">Fixed</a></h3>
 <ul>
 <li>cli: Fixed commands that don't require a valid config yet crash with <code>ConfigurationError</code>.</li>
 <li>codegen: Fail on demand when <code>datamodel-codegen</code> is not available.</li>
@@ -5550,10 +5575,10 @@ templates:
 <li>sentry: Prevent Sentry from leaking hostname if <code>server_name</code> is not set.</li>
 <li>sentry: Notify about using Sentry when DSN is set or crash reporting is enabled.</li>
 </ul>
-<h3 id="other-14"><a class="header" href="#other-14">Other</a></h3>
+<h3 id="other-17"><a class="header" href="#other-17">Other</a></h3>
 <ul>
 <li>ci: A significantly faster execution of GitHub Actions.</li>
-<li>docs: Updated &quot;Contributing Guide&quot; page.</li>
+<li>docs: Updated "Contributing Guide" page.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="600"><a class="header" href="#600">6.0.0</a></h1>
 <h2 id="-breaking-changes"><a class="header" href="#-breaking-changes">⚠ Breaking Changes</a></h2>
@@ -5641,7 +5666,7 @@ Crashdump saved to `/tmp/dipdup/crashdumps/veb7kz07.json`
 <li>database: Added an internal <code>ModelUpdate</code> model to store the latest database changes.</li>
 <li>dipdup: Save Sentry crashdump in <code>/tmp/dipdup/crashdumps/XXXXXXX.json</code> on a crash.</li>
 </ul>
-<h3 id="fixed-75"><a class="header" href="#fixed-75">Fixed</a></h3>
+<h3 id="fixed-78"><a class="header" href="#fixed-78">Fixed</a></h3>
 <ul>
 <li>config: Do not perform env variable substitution in commented-out lines.</li>
 <li>prometheus: Fixed updating <code>dipdup_index_handlers_matched_total</code> metric.</li>
@@ -5745,7 +5770,7 @@ POSTGRES_DB=foobar  # &lt;- set from current env
 </ul>
 <h2 id="migration-from-4x"><a class="header" href="#migration-from-4x">Migration from 4.x</a></h2>
 <ul>
-<li>Ensure that you have a <code>python = &quot;^3.10&quot;</code> dependency in <code>pyproject.toml</code>.</li>
+<li>Ensure that you have a <code>python = "^3.10"</code> dependency in <code>pyproject.toml</code>.</li>
 <li>Remove <code>bcd</code> datasources from config. Use <code>metadata</code> datasource instead to fetch contract and token metadata.</li>
 <li>Update <code>tzkt</code> datasource method calls as described below.</li>
 <li>Run the <code>dipdup schema approve</code> command on every database you use with 5.0.0.</li>
@@ -5798,7 +5823,7 @@ async for key_batch in batch_iter:
 <pre><code class="language-yaml">prometheus:
   host: 0.0.0.0
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="release-notes/5.0.0.html#admonition-see-also"></a></p>
@@ -5820,7 +5845,7 @@ async for key_batch in batch_iter:
 <li>tzkt: Added missing fields to the <code>HeadBlockData</code> model.</li>
 <li>tzkt: Added <code>iter_...</code> methods to iterate over item batches.</li>
 </ul>
-<h3 id="fixed-76"><a class="header" href="#fixed-76">Fixed</a></h3>
+<h3 id="fixed-79"><a class="header" href="#fixed-79">Fixed</a></h3>
 <ul>
 <li>config: Fixed default SQLite path (<code>:memory:</code>).</li>
 <li>prometheus: Fixed invalid metric labels.</li>
@@ -5992,8 +6017,8 @@ hooks:
 </ul>
 <h3 id="built-in-dipdup_head_status-view-and-rest-endpoint"><a class="header" href="#built-in-dipdup_head_status-view-and-rest-endpoint">Built-in <code>dipdup_head_status</code> view and REST endpoint</a></h3>
 <p>DipDup maintains several internal models to keep its state. As Hasura generates GraphQL queries and REST endpoints for those models, you can use them for monitoring. However, some SaaS monitoring solutions can only check whether an HTTP response contains a specific word or not. For such cases <code>dipdup_head_status</code> view was added - a simplified representation of <code>dipdup_head</code> table. It returns <code>OK</code> when datasource received head less than two minutes ago and <code>OUTDATED</code> otherwise. Latter means that something's stuck, either DipDup (e.g., because of database deadlock) or TzKT instance. Or maybe the whole Tezos blockchain, but in that case, you have problems bigger than indexing.</p>
-<pre><code class="language-shell">$ curl &quot;http://127.0.0.1:41000/api/rest/dipdupHeadStatus?name=https%3A%2F%2Fapi.tzkt.io&quot; 
-{&quot;dipdupHeadStatus&quot;:[{&quot;status&quot;:&quot;OUTDATED&quot;}]}%
+<pre><code class="language-shell">$ curl "http://127.0.0.1:41000/api/rest/dipdupHeadStatus?name=https%3A%2F%2Fapi.tzkt.io" 
+{"dipdupHeadStatus":[{"status":"OUTDATED"}]}%
 </code></pre>
 <p>Note that <code>dipdup_head</code> update may be delayed during sync even if the <code>--early-realtime</code> flag is enabled, so don't rely exclusively on this endpoint.</p>
 <h2 id="changelog-2"><a class="header" href="#changelog-2">Changelog</a></h2>
@@ -6088,7 +6113,7 @@ hooks:
 <li>config: Added <code>advanced</code> top-level section.</li>
 <li>hooks: Added <code>on_synchronized</code> hook, which fires each time all indexes reach realtime state.</li>
 </ul>
-<h3 id="fixed-77"><a class="header" href="#fixed-77">Fixed</a></h3>
+<h3 id="fixed-80"><a class="header" href="#fixed-80">Fixed</a></h3>
 <ul>
 <li>cli: Fixed config not being verified when invoking some commands.</li>
 <li>cli: Fixed crashes and output inconsistency when piping DipDup commands.</li>
@@ -6133,7 +6158,7 @@ hooks:
 </ul>
 <div style="break-before: page; page-break-before: always;"></div><!-- markdownlint-disable first-line-h1 -->
 <h1 id="dipdup-contribution-guide"><a class="header" href="#dipdup-contribution-guide">DipDup contribution guide</a></h1>
-<p>The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;, &quot;MAY&quot;, and &quot;OPTIONAL&quot; in this document are to be interpreted as described in <a href="https://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>.</p>
+<p>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <a href="https://www.ietf.org/rfc/rfc2119.txt">RFC 2119</a>.</p>
 <h2 id="general"><a class="header" href="#general">General</a></h2>
 <ul>
 <li>All code in this repository MUST be licensed under the <a href="./LICENSE.html">MIT License</a>.</li>
@@ -6170,7 +6195,7 @@ hooks:
 <ul>
 <li>All changes that affect user (developer) experience MUST be documented in the CHANGELOG.md file.</li>
 <li>Changes that significantly affect DipDup maintainers' experience MAY be documented in the CHANGELOG.md file.</li>
-<li>The changelog MUST conform to the &quot;Keep a Changelog&quot; specification (CI will break otherwise).</li>
+<li>The changelog MUST conform to the "Keep a Changelog" specification (CI will break otherwise).</li>
 <li>Lines describing changes MUST be sorted and begin with DipDup module name (<code>index: Added ...</code>).</li>
 </ul>
 <h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
@@ -6182,7 +6207,7 @@ hooks:
 <h2 id="security-4"><a class="header" href="#security-4">Security</a></h2>
 <ul>
 <li>GitHub alerts about dependencies that contain vulnerabilities MUST be investigated and resolved as soon as possible.</li>
-<li>Security-related bugfixes MUST be mentioned in the changelog under the &quot;Security&quot; section.</li>
+<li>Security-related bugfixes MUST be mentioned in the changelog under the "Security" section.</li>
 </ul>
 <h2 id="privacy"><a class="header" href="#privacy">Privacy</a></h2>
 <ul>
@@ -6218,14 +6243,14 @@ hooks:
 <p>MIT License</p>
 <p>Copyright (c) 2021 Baking Bad</p>
 <p>Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the &quot;Software&quot;), to deal
+of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:</p>
 <p>The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.</p>
-<p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER

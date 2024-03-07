@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -182,7 +182,7 @@ indexes:
 </code></pre>
 <p>Head index callback receives <code>HeadBlockData</code> model that contains only basic info; no operations are included. Being useless by itself, this index is helpful for monitoring and cron-like tasks. You can define multiple indexes for each datasource used.</p>
 <p>Subscription to the head channel is enabled by default, even if no head indexes are defined. Each time the block is baked, the <code>dipdup_head</code> table is updated per datasource. Use it to ensure that both index datasource and underlying blockchain are up and running.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -165,7 +165,7 @@
 <p>DipDup utilizes a microservice approach and relies heavily on existing solutions, making the SDK very lightweight and allowing developers to switch API engines on demand.</p>
 <p>DipDup works with operation groups (explicit operation and all internal ones, a single contract call) and <em>Big_map</em> updates (lazy hash map structures, <a href="https://tezostaquito.io/docs/maps_bigmaps/">read more</a>) — until fully-fledged protocol-level events are not implemented in Tezos.</p>
 <p>Consider DipDup a set of best practices for building custom backends for decentralized applications, plus a toolkit that spares you from writing boilerplate code.</p>
-<p>DipDup is tightly coupled with <a href="http://api.tzkt.io/">TzKT API</a> but can generally use any data provider which implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns &quot;humanified&quot; contract data, which means you don't have to handle raw Michelson expressions.</p>
+<p>DipDup is tightly coupled with <a href="http://api.tzkt.io/">TzKT API</a> but can generally use any data provider which implements a particular feature set. TzKT provides REST endpoints and Websocket subscriptions with flexible filters enabling selective indexing and returns "humanified" contract data, which means you don't have to handle raw Michelson expressions.</p>
 <p>DipDup offers PostgreSQL + Hasura GraphQL Engine combo out-of-the-box to expose indexed data via REST and GraphQL with minimal configuration. However, you can use any database and API engine (e.g., write API backend in-house).</p>
 <p><img src="../assets/dipdup.svg" alt="Default DipDup setup and data flow" /></p>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h2>

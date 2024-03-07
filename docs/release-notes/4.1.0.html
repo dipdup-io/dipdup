@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -223,8 +223,8 @@ hooks:
 </ul>
 <h3 id="built-in-dipdup_head_status-view-and-rest-endpoint"><a class="header" href="#built-in-dipdup_head_status-view-and-rest-endpoint">Built-in <code>dipdup_head_status</code> view and REST endpoint</a></h3>
 <p>DipDup maintains several internal models to keep its state. As Hasura generates GraphQL queries and REST endpoints for those models, you can use them for monitoring. However, some SaaS monitoring solutions can only check whether an HTTP response contains a specific word or not. For such cases <code>dipdup_head_status</code> view was added - a simplified representation of <code>dipdup_head</code> table. It returns <code>OK</code> when datasource received head less than two minutes ago and <code>OUTDATED</code> otherwise. Latter means that something's stuck, either DipDup (e.g., because of database deadlock) or TzKT instance. Or maybe the whole Tezos blockchain, but in that case, you have problems bigger than indexing.</p>
-<pre><code class="language-shell">$ curl &quot;http://127.0.0.1:41000/api/rest/dipdupHeadStatus?name=https%3A%2F%2Fapi.tzkt.io&quot; 
-{&quot;dipdupHeadStatus&quot;:[{&quot;status&quot;:&quot;OUTDATED&quot;}]}%
+<pre><code class="language-shell">$ curl "http://127.0.0.1:41000/api/rest/dipdupHeadStatus?name=https%3A%2F%2Fapi.tzkt.io" 
+{"dipdupHeadStatus":[{"status":"OUTDATED"}]}%
 </code></pre>
 <p>Note that <code>dipdup_head</code> update may be delayed during sync even if the <code>--early-realtime</code> flag is enabled, so don't rely exclusively on this endpoint.</p>
 <h2 id="changelog"><a class="header" href="#changelog">Changelog</a></h2>

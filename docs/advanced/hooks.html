@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -195,7 +195,7 @@ async def calculate_stats(
 <p>By default, hooks execute SQL scripts from the corresponding subdirectory of <code>sql/</code>. Remove or comment out the <code>execute_sql</code> call to prevent this. This way, both Python and SQL code may be executed in a single hook if needed.</p>
 <h2 id="arguments-typechecking"><a class="header" href="#arguments-typechecking">Arguments typechecking</a></h2>
 <p>DipDup will ensure that arguments passed to the hooks have the correct types when possible. <code>CallbackTypeError</code> exception will be raised otherwise. Values of an <code>args</code> mapping in a hook config should be either built-in types or <code>__qualname__</code> of external type like <code>decimal.Decimal</code>. Generic types are not supported: hints like <code>Optional[int] = None</code> will be correctly parsed during codegen but ignored on type checking.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

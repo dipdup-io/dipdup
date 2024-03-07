@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -198,7 +198,7 @@ hasura:
 <tr><td><code>retry_count</code></td><td>Number of retries after request failed before giving up</td></tr>
 <tr><td><code>retry_sleep</code></td><td>Sleep time between retries</td></tr>
 <tr><td><code>retry_multiplier</code></td><td>Multiplier for sleep time between retries</td></tr>
-<tr><td><code>ratelimit_rate</code></td><td>Number of requests per period (&quot;drops&quot; in leaky bucket)</td></tr>
+<tr><td><code>ratelimit_rate</code></td><td>Number of requests per period ("drops" in leaky bucket)</td></tr>
 <tr><td><code>ratelimit_period</code></td><td>Period for rate limiting in seconds</td></tr>
 <tr><td><code>connection_limit</code></td><td>Number of simultaneous connections</td></tr>
 <tr><td><code>connection_timeout</code></td><td>Connection timeout in seconds</td></tr>
@@ -208,7 +208,7 @@ hasura:
 <p>Each datasource has its defaults. Usually, there's no reason to alter these settings unless you use self-hosted instances of TzKT or other datasource.</p>
 <p>By default, DipDup retries failed requests infinitely, exponentially increasing the delay between attempts. Set <code>retry_count</code> parameter to limit the number of attempts.</p>
 <p><code>batch_size</code> parameter is TzKT-specific. By default, DipDup limit requests to 10000 items, the maximum value allowed on public instances provided by Baking Bad. Decreasing this value will reduce the time required for TzKT to process a single request and thus reduce the load. By reducing the <code>connection_limit</code> parameter, you can achieve the same effect (limited to synchronizing multiple indexes concurrently).</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>
@@ -224,12 +224,12 @@ hasura:
 </div>
 <p>See <a href="../config/datasources.html">12.4. datasources</a> for details.</p>
 <h2 id="use-timescaledb-for-time-series"><a class="header" href="#use-timescaledb-for-time-series">Use TimescaleDB for time-series</a></h2>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
 </div>
-<p>DipDup is fully compatible with <a href="https://docs.timescale.com/">TimescaleDB</a>. Try its &quot;continuous aggregates&quot; feature, especially if dealing with market data like DEX quotes.</p>
+<p>DipDup is fully compatible with <a href="https://docs.timescale.com/">TimescaleDB</a>. Try its "continuous aggregates" feature, especially if dealing with market data like DEX quotes.</p>
 <h2 id="cache-commonly-used-models"><a class="header" href="#cache-commonly-used-models">Cache commonly used models</a></h2>
 <p>If your indexer contains models having few fields and used primarily on relations, you can cache such models during synchronization.</p>
 <p>Example code:</p>

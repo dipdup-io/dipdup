@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -160,7 +160,7 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="event-hooks"><a class="header" href="#event-hooks">Event hooks</a></h1>
-<p>Every DipDup project has multiple event hooks (previously &quot;default hooks&quot;); they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.</p>
+<p>Every DipDup project has multiple event hooks (previously "default hooks"); they fire on system-wide events and, like regular hooks, are not linked to any index. Names of those hooks are reserved; you can't use them in config. It's also impossible to fire them manually or with a job scheduler.</p>
 <h2 id="on_restart"><a class="header" href="#on_restart"><code>on_restart</code></a></h2>
 <p>This hook executes right before starting indexing. It allows configuring DipDup in runtime based on data from external sources. Datasources are already initialized at execution and available at <code>ctx.datasources</code>. You can, for example, configure logging here or add contracts and indexes in runtime instead of from static config.</p>
 <h2 id="on_reindex"><a class="header" href="#on_reindex"><code>on_reindex</code></a></h2>
@@ -170,7 +170,7 @@
 <h2 id="on_index_rollback"><a class="header" href="#on_index_rollback"><code>on_index_rollback</code></a></h2>
 <p>Fires when TzKT datasource has received a chain reorg message which can't be processed by dropping buffered messages (<code>buffer_size</code> option).</p>
 <p>Since version 6.0 this hook performs a database-level rollback by default. If it doesn't work for you for some reason remove <code>ctx.rollback</code> call and implement your own rollback logic.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

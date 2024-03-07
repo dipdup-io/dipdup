@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -163,21 +163,21 @@
 <p>Hasura 2.0 introduced the ability to expose arbitrary GraphQL queries as REST endpoints. By default, DipDup will generate GET and POST endpoints to fetch rows by primary key for all tables:</p>
 <pre><code class="language-shell">curl http://127.0.0.1:8080/api/rest/hicEtNuncHolder?address=tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw
 {
-  &quot;hicEtNuncHolderByPk&quot;: {
-    &quot;address&quot;: &quot;tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw&quot;
+  "hicEtNuncHolderByPk": {
+    "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
   }
 }
 </code></pre>
 <p>However, there's a limitation dictated by how Hasura parses HTTP requests: only models with primary keys of basic types (int, string, and so on) can be fetched with GET requests. An attempt to fetch model with BIGINT primary key will lead to the error: <code>Expected bigint for variable id got Number</code>.
 A workaround to fetching any model is to send a POST request containing a JSON payload with a single key:</p>
-<pre><code class="language-shell">curl -d '{&quot;id&quot;: 152}' http://127.0.0.1:8080/api/rest/hicEtNuncToken
+<pre><code class="language-shell">curl -d '{"id": 152}' http://127.0.0.1:8080/api/rest/hicEtNuncToken
 {
-  &quot;hicEtNuncTokenByPk&quot;: {
-    &quot;creatorId&quot;: &quot;tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw&quot;,
-    &quot;id&quot;: 152,
-    &quot;level&quot;: 1365242,
-    &quot;supply&quot;: 1,
-    &quot;timestamp&quot;: &quot;2021-03-01T03:39:21+00:00&quot;
+  "hicEtNuncTokenByPk": {
+    "creatorId": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+    "id": 152,
+    "level": 1365242,
+    "supply": 1,
+    "timestamp": "2021-03-01T03:39:21+00:00"
   }
 }
 </code></pre>

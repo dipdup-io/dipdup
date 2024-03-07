@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -161,7 +161,7 @@
                     <main>
                         <h1 id="running-in-docker"><a class="header" href="#running-in-docker">Running in Docker</a></h1>
 <h2 id="base-images"><a class="header" href="#base-images">Base images</a></h2>
-<div id="admonition-warning" class="admonition warning">
+<div id="admonition-warning" class="admonition admonish-warning">
 <div class="admonition-title">
 <p>Warning</p>
 <p><a class="admonition-anchor-link" href="#admonition-warning"></a></p>
@@ -231,14 +231,14 @@ COPY . .
 <h2 id="deploying-with-docker-compose"><a class="header" href="#deploying-with-docker-compose">Deploying with <code>docker-compose</code></a></h2>
 <p>Make sure you have <a href="https://docs.docker.com/get-docker/">docker</a> run and <a href="https://docs.docker.com/compose/install/">docker-compose</a> installed.</p>
 <p>Example <code>docker-compose.yml</code> file:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 
 services:
   dipdup:
     build: .
     depends_on:
       - db
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
@@ -258,7 +258,7 @@ services:
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     healthcheck:
-      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U dipdup&quot;]
+      test: ["CMD-SHELL", "pg_isready -U dipdup"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -299,7 +299,7 @@ hasura:
   camel_case: true
 
 sentry:
-  dsn: ${SENTRY_DSN:-&quot;&quot;}
+  dsn: ${SENTRY_DSN:-""}
   environment: ${SENTRY_ENVIRONMENT:-prod}
 
 prometheus:
@@ -315,13 +315,13 @@ advanced:
 </code></pre>
 <p>Try <a href="https://github.com/jesseduffield/lazydocker">lazydocker</a> tool to manage Docker containers interactively.</p>
 <h2 id="deploying-with-docker-swarm"><a class="header" href="#deploying-with-docker-swarm">Deploying with Docker Swarm</a></h2>
-<div id="admonition-default" class="admonition warning">
+<div id="admonition-default" class="admonition admonish-warning">
 <div>
 <p>This page or paragraph is yet to be written. Come back later.</p>
 </div>
 </div>
 <p>Example stack:</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 
 services:
   dipdup:
@@ -329,12 +329,12 @@ services:
     depends_on:
       - db
       - hasura
-    command: [&quot;-c&quot;, &quot;dipdup.yml&quot;, &quot;-c&quot;, &quot;dipdup.prod.yml&quot;, &quot;run&quot;]
+    command: ["-c", "dipdup.yml", "-c", "dipdup.prod.yml", "run"]
     environment:
-      - &quot;POSTGRES_USER=dipdup&quot;
-      - &quot;POSTGRES_PASSWORD=changeme&quot;
-      - &quot;POSTGRES_DB=dipdup&quot;
-      - &quot;HASURA_SECRET=changeme&quot;
+      - "POSTGRES_USER=dipdup"
+      - "POSTGRES_PASSWORD=changeme"
+      - "POSTGRES_DB=dipdup"
+      - "HASURA_SECRET=changeme"
     networks:
       - dipdup-private
       - prometheus-private
@@ -348,11 +348,11 @@ services:
         constraints:
           - node.labels.${SERVICE} == true
     logging: &amp;logging
-      driver: &quot;json-file&quot;
+      driver: "json-file"
       options:
-        max-size: &quot;10m&quot;
-        max-file: &quot;10&quot;
-        tag: &quot;\{\{.Name\}\}.\{\{.ImageID\}\}&quot;
+        max-size: "10m"
+        max-file: "10"
+        tag: "\{\{.Name\}\}.\{\{.ImageID\}\}"
 
   db:
     image: postgres:14
@@ -363,7 +363,7 @@ services:
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     healthcheck:
-      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -398,9 +398,9 @@ services:
       labels:
         - traefik.enable=true
         - traefik.http.services.${SERVICE}.loadbalancer.server.port=8080
-        - &quot;traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) &amp;&amp; (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))&quot;
+        - "traefik.http.routers.${SERVICE}.rule=Host(`${HOST}`) &amp;&amp; (PathPrefix(`/v1/graphql`) || PathPrefix(`/api/rest`))"
         - traefik.http.routers.${SERVICE}.entrypoints=http,${INGRESS:-ingress}
-        - &quot;traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)&quot;
+        - "traefik.http.routers.${SERVICE}-console.rule=Host(`${SERVICE}.${SWARM_ROOT_DOMAIN}`)"
         - traefik.http.routers.${SERVICE}-console.entrypoints=https
         - traefik.http.middlewares.${SERVICE}-console.headers.customrequestheaders.X-Hasura-Admin-Secret=${HASURA_SECRET}
         - traefik.http.routers.${SERVICE}-console.middlewares=authelia@docker,${SERVICE}-console

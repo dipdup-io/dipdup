@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -164,7 +164,7 @@
 <p>This page contains several recipes for backup/restore.</p>
 <h2 id="scheduled-backup-to-s3"><a class="header" href="#scheduled-backup-to-s3">Scheduled backup to S3</a></h2>
 <p>This example is for Swarm deployments. We use this solution to backup our services in production. Adapt it to your needs if needed.</p>
-<pre><code class="language-yaml">version: &quot;3.8&quot;
+<pre><code class="language-yaml">version: "3.8"
 services:
   indexer:
     ...
@@ -234,7 +234,7 @@ def restore(level: int, database_config: PostgresDatabaseConfig):
         except ErrorReturnCode:
             err = err_buf.getvalue()
             _logger.error(f'Database restore failed: {err}')
-            raise Exception(&quot;Failed to restore&quot;)
+            raise Exception("Failed to restore")
 
 def get_available_backups():
     ...
@@ -257,7 +257,7 @@ async def on_index_rollback(
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 
     # if not a postgres db, reindex.
-    if database_config.kind != &quot;postgres&quot;:
+    if database_config.kind != "postgres":
         await ctx.reindex(ReindexingReason.ROLLBACK)
 
     available_levels = backups.get_available_backups()
@@ -287,10 +287,10 @@ async def run_backups(
 ) -&gt; None:
     database_config: Union[SqliteDatabaseConfig, PostgresDatabaseConfig] = ctx.config.database
 
-    if database_config.kind != &quot;postgres&quot;:
+    if database_config.kind != "postgres":
         return
 
-    level = ctx.get_tzkt_datasource(&quot;tzkt_mainnet&quot;)._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
 
     if level is None:
         return
@@ -304,11 +304,11 @@ async def run_backups(
 async def simulate_reorg(
     ctx: HookContext
 ) -&gt; None:
-    level = ctx.get_tzkt_datasource(&quot;tzkt_mainnet&quot;)._level.get(MessageType.head)
+    level = ctx.get_tzkt_datasource("tzkt_mainnet")._level.get(MessageType.head)
 
     if level:
         await ctx.fire_hook(
-            &quot;on_index_rollback&quot;,
+            "on_index_rollback",
             wait=True
             index=None,  # type: ignore[arg-type]
             from_level=level,

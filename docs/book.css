@@ -52,3 +52,11 @@ img.logo {
 dd .field-odd {
     margin: 0;
 }
+
+#deprecated {
+    top: 0px;
+    position: sticky;
+    color: var(--text-color);
+    background-color: var(--sidebar-bg);
+    padding: 1em;
+}

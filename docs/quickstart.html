@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -183,11 +183,11 @@ python -m venv .venv
 pip install dipdup
 
 # or Poetry
-poetry init --python &quot;&gt;=3.10,&lt;3.11&quot;
+poetry init --python "&gt;=3.10,&lt;3.11"
 poetry add dipdup
 poetry shell
 </code></pre>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>
@@ -241,7 +241,7 @@ templates:
           - destination: &lt;contract&gt;
             entrypoint: mint
 </code></pre>
-<div id="admonition-see-also-1" class="admonition info">
+<div id="admonition-see-also-1" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-1"></a></p>
@@ -288,7 +288,7 @@ templates:
         └── storage.py
 </code></pre>
 <p>That's a lot of files and directories! But don't worry, we will need only <code>models.py</code> and <code>handlers</code> modules in this guide.</p>
-<div id="admonition-see-also-2" class="admonition info">
+<div id="admonition-see-also-2" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-2"></a></p>
@@ -322,7 +322,7 @@ class Holder(Model):
     tx_count = fields.BigIntField(default=0)
     last_seen = fields.DatetimeField(null=True)
 </code></pre>
-<div id="admonition-see-also-3" class="admonition info">
+<div id="admonition-see-also-3" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-3"></a></p>
@@ -409,7 +409,7 @@ async def on_mint(
     )
 </code></pre>
 <p>And that's all! We can run the indexer now.</p>
-<div id="admonition-see-also-4" class="admonition info">
+<div id="admonition-see-also-4" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-4"></a></p>
@@ -424,7 +424,7 @@ async def on_mint(
 <pre><code class="language-shell">dipdup run
 </code></pre>
 <p>DipDup will fetch all the historical data and then switch to realtime updates. Your application data has been successfully indexed!</p>
-<div id="admonition-see-also-5" class="admonition info">
+<div id="admonition-see-also-5" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also-5"></a></p>

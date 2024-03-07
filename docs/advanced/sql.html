@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -167,7 +167,7 @@
 <h2 id="event-hooks"><a class="header" href="#event-hooks">Event hooks</a></h2>
 <p>Scripts from <code>sql/on_restart</code> directory are executed each time you run DipDup. Those scripts may contain <code>CREATE OR REPLACE VIEW</code> or similar non-destructive operations.</p>
 <p>Scripts from <code>sql/on_reindex</code> directory are executed <em>after</em> the database schema is created based on the <code>models.py</code> module but <em>before</em> indexing starts. It may be useful to change the database schema in ways that are not supported by the Tortoise ORM, e.g., to create a composite primary key.</p>
-<div id="admonition-see-also" class="admonition info">
+<div id="admonition-see-also" class="admonition admonish-info">
 <div class="admonition-title">
 <p>See Also</p>
 <p><a class="admonition-anchor-link" href="#admonition-see-also"></a></p>

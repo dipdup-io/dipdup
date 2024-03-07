@@ -92,7 +92,7 @@
 
             <div class="page">
                 <div id="menu-bar-hover-placeholder" style="z-index: -1;"></div>
-                <div class="admonition-title">✨ DipDup 7.0 is out! Visit⠀<a href="https://dipdup.io/docs/release-notes/v7.0">Release Notes</a>⠀page for details⠀✨</div>
+                <div class="admonition-title" id="deprecated">⚰️ DipDup 6.5 branch is no longer supported. Please, follow the⠀<a href="https://dipdup.io/docs/release-notes/v7.0#migration-guide">Migration Guide</a>⠀to update to the latest version.</div>
                                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -162,7 +162,7 @@
                         <h1 id="mempool"><a class="header" href="#mempool">mempool</a></h1>
 <p>This is an optional section used by the <a href="https://github.com/dipdup-io/mempool">mempool</a> indexer plugin. It uses <a href="../config/contracts.html"><code>contracts</code></a> and <a href="../config/datasources.html"><code>datasources</code></a> aliases as well as the <a href="../config/database.html"><code>database</code></a> connection.</p>
 <p>Mempool configuration has two sections: <code>settings</code> and <code>indexers</code> (required).</p>
-<p>{% page-ref page=&quot;../advanced/mempool-plugin.md&quot; %}</p>
+<p>{% page-ref page="../advanced/mempool-plugin.md" %}</p>
 <h2 id="settings"><a class="header" href="#settings">Settings</a></h2>
 <p>This section is optional so are all the setting keys.</p>
 <pre><code class="language-yaml">mempool:
