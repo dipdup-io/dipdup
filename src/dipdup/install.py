@@ -1,7 +1,7 @@
 """This script (un)installs DipDup and its dependencies with pipx.
 
 WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic will break.
-And no 3.11-only code too. Just to print nice colored "not supported" message instead of crashing.
+And no 3.12-only code too. Just to print nice colored "not supported" message instead of crashing.
 
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
@@ -146,7 +146,7 @@ class DipDupEnvironment:
             fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
-        if not sys.version.startswith('3.11'):
+        if not sys.version.startswith('3.12'):
             fail('DipDup requires Python 3.12')
 
         """Ensure pipx is installed for current user"""
