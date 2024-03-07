@@ -1,6 +1,6 @@
 # demo_evm_events
 
-A very basic indexer for USDt transfers
+Basic indexer for USDt token transfers (event logs)
 
 ## Installation
 

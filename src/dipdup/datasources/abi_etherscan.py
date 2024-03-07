@@ -43,6 +43,10 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
                     self._logger.warning('Ratelimited; sleeping %s seconds', self._http_config.ratelimit_sleep)
                     await asyncio.sleep(self._http_config.retry_sleep)
                     continue
+                if isinstance(result, str) and 'Contract source code not verified' in result:
+                    raise DatasourceError(
+                        'ABI is not verified in the etherscan, please put ABI manually; message: %s' % result, self.name
+                    )
 
                 return cast(dict[str, Any], orjson.loads(result))
 

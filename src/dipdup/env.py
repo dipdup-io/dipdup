@@ -73,6 +73,8 @@ CI: bool
 DEBUG: bool
 DOCKER: bool
 NEXT: bool
+NO_SYMLINK: bool
+NO_VERSION_CHECK: bool
 REPLAY_PATH: Path | None
 TEST: bool
 
@@ -83,17 +85,21 @@ def dump() -> dict[str, str]:
         'DIPDUP_DEBUG': get('DIPDUP_DEBUG') or '',
         'DIPDUP_DOCKER': get('DIPDUP_DOCKER') or '',
         'DIPDUP_NEXT': get('DIPDUP_NEXT') or '',
+        'DIPDUP_NO_SYMLINK': get('DIPDUP_NO_SYMLINK') or '',
+        'DIPDUP_NO_VERSION_CHECK': get('DIPDUP_NO_VERSION_CHECK') or '',
         'DIPDUP_REPLAY_PATH': get('DIPDUP_REPLAY_PATH') or '',
         'DIPDUP_TEST': get('DIPDUP_TEST') or '',
     }
 
 
 def read() -> None:
-    global CI, DEBUG, DOCKER, NEXT, REPLAY_PATH, TEST
+    global CI, DEBUG, DOCKER, NEXT, NO_SYMLINK, NO_VERSION_CHECK, REPLAY_PATH, TEST
     CI = get_bool('DIPDUP_CI')
     DEBUG = get_bool('DIPDUP_DEBUG')
     DOCKER = get_bool('DIPDUP_DOCKER')
     NEXT = get_bool('DIPDUP_NEXT')
+    NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
+    NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
     REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
     TEST = get_bool('DIPDUP_TEST')
 

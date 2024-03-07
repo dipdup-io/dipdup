@@ -54,11 +54,13 @@ class Error(ABC, FrameworkException):
 
     @classmethod
     def default_help(cls) -> str:
-        return format_help("""
+        return format_help(
+            """
                 An unexpected error has occurred! Most likely it's a framework bug.
 
                 Please, tell us about it: https://github.com/dipdup-io/dipdup/issues
-        """)
+        """
+        )
 
     @abstractmethod
     def _help(self) -> str: ...
@@ -114,7 +116,7 @@ class ConfigurationError(Error):
 
 @dataclass(repr=False)
 class InvalidModelsError(Error):
-    """Can't initialize database, `models.py` module is invalid"""
+    """Can't initialize the database, `models` package is invalid"""
 
     msg: str
     model: type['Model']

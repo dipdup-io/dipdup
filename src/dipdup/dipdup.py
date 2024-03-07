@@ -46,6 +46,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -59,17 +60,20 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
+from dipdup.models import RollbackMessage
 from dipdup.models import Schema
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
+from dipdup.models.evm_node import EvmNodeTraceData
+from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
 from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
 from dipdup.package import DipDupPackage
+from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
@@ -79,10 +83,10 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 3
-STATUS_INTERVAL = 10
-CLEANUP_INTERVAL = 60 * 5
-INDEX_DISPATCHER_INTERVAL = 1
+METRICS_INTERVAL = 1.0 if env.DEBUG else 2.0
+STATUS_INTERVAL = 1.0 if env.DEBUG else 10.0
+CLEANUP_INTERVAL = 60.0 * 5
+INDEX_DISPATCHER_INTERVAL = 0.1
 
 _logger = logging.getLogger(__name__)
 
@@ -115,6 +119,7 @@ class IndexDispatcher:
         await self._load_index_state()
 
         on_synchronized_fired = False
+        on_realtime_fired = False
 
         for index in self._indexes.values():
             if isinstance(index, TzktOperationsIndex):
@@ -139,11 +144,11 @@ class IndexDispatcher:
 
                 tasks.append(index.process())
 
-            await gather(*tasks)
-
+            indexes_processed = any(await gather(*tasks))
             indexes_spawned = False
-            while self._ctx._pending_indexes:
-                index = self._ctx._pending_indexes.popleft()
+
+            while not self._ctx._pending_indexes.empty():
+                index = self._ctx._pending_indexes.get_nowait()
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
@@ -152,20 +157,26 @@ class IndexDispatcher:
 
             if not indexes_spawned and self.is_oneshot():
                 _logger.info('No indexes left, exiting')
+                await self._on_synchronized()
                 [t.cancel() for t in asyncio.all_tasks() if t is not asyncio.current_task()]
 
             if self._every_index_is(IndexStatus.realtime) and not indexes_spawned:
                 if not on_synchronized_fired:
+                    await self._on_synchronized()
                     on_synchronized_fired = True
-                    await self._ctx.fire_hook('on_synchronized')
-                    metrics.set('synchronized_at', time.time())
+
+                if not on_realtime_fired and not indexes_processed:
+                    await self._on_realtime()
+                    on_realtime_fired = True
 
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
                 metrics.set('synchronized_at', 0)
+                metrics.set('realtime_at', 0)
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
+                on_realtime_fired = False
 
             await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
 
@@ -176,13 +187,13 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        if self._ctx._pending_indexes:
+        if not self._ctx._pending_indexes.empty():
             return False
 
         # NOTE: Run forever if at least one index has no upper bound.
         for index in self._indexes.values():
             if isinstance(index._config, TzktHeadIndexConfig):
-                continue
+                return False
             if not index._config.last_level:
                 return False
 
@@ -210,7 +221,7 @@ class IndexDispatcher:
             await asyncio.sleep(update_interval)
             await self._update_metrics()
 
-    async def _cleanup_loop(self, interval: int) -> None:
+    async def _cleanup_loop(self, interval: float) -> None:
         while True:
             await asyncio.sleep(interval)
             await self._ctx.transactions.cleanup()
@@ -265,19 +276,18 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
-        stats = metrics.stats()
-        progress = stats.get('progress', 0)
-        total, indexed = stats.get('levels_total', 0), stats.get('levels_indexed', 0)
-        current_speed = stats.get('current_speed', 0)
-        synchronized_at = stats.get('synchronized_at', 0)
-        if synchronized_at:
+        await self._update_metrics()
+        total, indexed = metrics['levels_total'], metrics['levels_indexed']
+        current_speed = int(metrics['current_speed'])
+        if metrics['realtime_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
-                'indexing %.2f%%: %s levels left (%s lps)',
-                progress * 100,
+                '%s: %.2f%%: %s levels left (%s lps)',
+                'last mile' if metrics['synchronized_at'] else 'indexing',
+                metrics['progress'] * 100,
                 total - indexed,
-                int(current_speed),
+                current_speed,
             )
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
@@ -376,16 +386,20 @@ class IndexDispatcher:
 
     async def _subscribe_to_datasource_events(self) -> None:
         for datasource in self._ctx.datasources.values():
+            if isinstance(datasource, IndexDatasource):
+                datasource.call_on_rollback(self._on_rollback)
+
             if isinstance(datasource, TzktDatasource):
                 datasource.call_on_head(self._on_tzkt_head)
                 datasource.call_on_operations(self._on_tzkt_operations)
                 datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
                 datasource.call_on_big_maps(self._on_tzkt_big_maps)
                 datasource.call_on_events(self._on_tzkt_events)
-                datasource.call_on_rollback(self._on_tzkt_rollback)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
+                datasource.call_on_traces(self._on_evm_node_traces)
+                datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
     async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
@@ -403,7 +417,7 @@ class IndexDispatcher:
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
-                index.push_head(head)
+                index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
@@ -419,13 +433,36 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
 
-    async def _on_evm_node_logs(self, datasource: EvmNodeDatasource, logs: EvmNodeLogData) -> None:
+    async def _on_evm_node_logs(
+        self,
+        datasource: EvmNodeDatasource,
+        logs: tuple[EvmNodeLogData, ...],
+    ) -> None:
         for index in self._indexes.values():
             if not isinstance(index, SubsquidEventsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue
             index.push_realtime_message(logs)
+
+    async def _on_evm_node_traces(
+        self,
+        datasource: EvmNodeDatasource,
+        traces: tuple[EvmNodeTraceData, ...],
+    ) -> None:
+        raise NotImplementedError
+
+    async def _on_evm_node_transactions(
+        self,
+        datasource: EvmNodeDatasource,
+        transactions: tuple[EvmNodeTransactionData, ...],
+    ) -> None:
+        for index in self._indexes.values():
+            if not isinstance(index, SubsquidTransactionsIndex):
+                continue
+            if datasource not in index.node_datasources:
+                continue
+            index.push_realtime_message(transactions)
 
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
         raise NotImplementedError
@@ -445,28 +482,28 @@ class IndexDispatcher:
 
         for index in self._indexes.values():
             if isinstance(index, TzktOperationsIndex) and index.datasource == datasource:
-                index.push_operations(operation_subgroups)
+                index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
         self, datasource: TzktDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
-                index.push_token_transfers(token_transfers)
+                index.push_realtime_message(token_transfers)
 
     async def _on_tzkt_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
-                index.push_big_maps(big_maps)
+                index.push_realtime_message(big_maps)
 
     async def _on_tzkt_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
         for index in self._indexes.values():
             if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
-                index.push_events(events)
+                index.push_realtime_message(events)
 
-    async def _on_tzkt_rollback(
+    async def _on_rollback(
         self,
-        datasource: TzktDatasource,
+        datasource: IndexDatasource[Any],
         type_: MessageType,
         from_level: int,
         to_level: int,
@@ -481,12 +518,13 @@ class IndexDispatcher:
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
+            await index.state.refresh_from_db()
             index_level = index.state.level
 
             if index.message_type != type_:
                 _logger.debug('%s: different channel, skipping', index_name)
 
-            elif index.datasource != datasource:
+            elif datasource not in index.datasources:
                 _logger.debug('%s: different datasource, skipping', index_name)
 
             elif to_level >= index_level:
@@ -495,10 +533,22 @@ class IndexDispatcher:
             else:
                 _logger.debug('%s: affected', index_name)
                 index.push_realtime_message(
-                    TzktRollbackMessage(from_level, to_level),
+                    RollbackMessage(from_level, to_level),
                 )
 
         _logger.info('`%s` rollback processed', channel)
+
+    async def _on_synchronized(self) -> None:
+        await self._ctx.fire_hook('on_synchronized')
+
+        metrics.set('synchronized_at', time.time())
+
+    async def _on_realtime(self) -> None:
+        # NOTE: We don't have system hook for this event!
+        # await self._ctx.fire_hook('on_realtime')
+        caches.clear()
+
+        metrics.set('realtime_at', time.time())
 
 
 class DipDup:
@@ -521,7 +571,6 @@ class DipDup:
         )
         self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
-        self._api: Any | None = None
 
     @property
     def schema(self) -> Schema:
@@ -702,11 +751,14 @@ class DipDup:
             self._ctx.register_hook(hook_config)
 
     async def _set_up_prometheus(self) -> None:
-        if self._config.prometheus:
-            from prometheus_client import start_http_server
+        if not self._config.prometheus:
+            return
 
-            Metrics.enabled = True
-            start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+        from prometheus_client import start_http_server
+
+        _logger.info('Setting up Prometheus')
+        Metrics.enabled = True
+        start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
@@ -717,6 +769,7 @@ class DipDup:
 
         from dipdup.api import create_api
 
+        _logger.info('Setting up API')
         api = await create_api(self._ctx)
         runner = web.AppRunner(api)
         await runner.setup()
@@ -791,7 +844,7 @@ class DipDup:
         _add_task(index_dispatcher._cleanup_loop(CLEANUP_INTERVAL))
 
         # NOTE: Hooks called with `wait=False`
-        _add_task(self._ctx._hooks_loop(INDEX_DISPATCHER_INTERVAL))
+        _add_task(self._ctx._hooks_loop())
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

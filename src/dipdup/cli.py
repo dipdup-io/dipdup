@@ -255,7 +255,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
+    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
         fire_and_forget(_check_version())
 
     try:
@@ -647,12 +647,14 @@ async def schema_export(ctx: click.Context) -> None:
     default=None,
     help='Use values from a replay file.',
 )
+@click.option('--template', '-t', type=str, default=None, help='Use a specific template.')
 @_cli_wrapper
 async def new(
     ctx: click.Context,
     quiet: bool,
     force: bool,
     replay: Path | None,
+    template: str | None,
 ) -> None:
     """Create a new project interactively."""
     import os
@@ -668,7 +670,7 @@ async def new(
     elif replay:
         answers = answers_from_replay(replay)
     else:
-        answers = answers_from_terminal()
+        answers = answers_from_terminal(template)
 
     _logger.info('Rendering project')
     render_project(answers, force)

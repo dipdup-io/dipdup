@@ -34,7 +34,13 @@ class TzktTokenStandard(Enum):
 
 
 class TzktOperationType(Enum):
-    """Type of blockchain operation"""
+    """Type of blockchain operation
+
+    :param transaction: transaction
+    :param origination: origination
+    :param migration: migration
+    :param sr_execute: sr_execute
+    """
 
     transaction = 'transaction'
     origination = 'origination'
@@ -714,9 +720,3 @@ class TzktEvent(Generic[EventType]):
 class TzktUnknownEvent:
     data: TzktEventData
     payload: Any | None
-
-
-@dataclass(frozen=True)
-class TzktRollbackMessage:
-    from_level: int
-    to_level: int

@@ -16,7 +16,7 @@ class EventLogFetcher(DataFetcher[SubsquidEventData]):
         datasource: SubsquidDatasource,
         first_level: int,
         last_level: int,
-        topics: list[tuple[str | None, str]],
+        topics: tuple[tuple[str | None, str], ...],
     ) -> None:
         super().__init__(datasource, first_level, last_level)
         self._topics = topics

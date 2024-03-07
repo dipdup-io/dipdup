@@ -10,14 +10,17 @@
 #
 import importlib
 import logging
+import os
 import re
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from collections.abc import Iterator
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
+from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
@@ -42,7 +45,9 @@ from dipdup.config import DipDupConfig
 from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger()
+_logger.setLevel(logging.INFO)
+_process: subprocess.Popen[Any] | None = None
 
 
 class ReferencePage(TypedDict):
@@ -53,9 +58,7 @@ class ReferencePage(TypedDict):
     html_path: str
 
 
-REFERENCE_MARKDOWNLINT_HINT = (
-    '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks -->\n'
-)
+REFERENCE_MARKDOWNLINT_HINT = '<!-- markdownlint-disable first-line-h1 no-space-in-emphasis no-inline-html no-multiple-blanks no-duplicate-heading -->\n'
 REFERENCE_STRIP_HEAD_LINES = 32
 REFERENCE_STRIP_TAIL_LINES = 63
 REFERENCE_HEADER_TEMPLATE = """---
@@ -72,27 +75,30 @@ REFERENCES: tuple[ReferencePage, ...] = (
         description='Command-line interface reference',
         h1='CLI reference',
         md_path='docs/7.references/1.cli.md',
-        html_path='cli-reference.html',
+        html_path='cli.html',
     ),
     ReferencePage(
         title='Config',
         description='Config file reference',
         h1='Config reference',
         md_path='docs/7.references/2.config.md',
-        html_path='config-reference.html',
+        html_path='config.html',
     ),
     ReferencePage(
         title='Context (ctx)',
         description='Context reference',
         h1='Context reference',
         md_path='docs/7.references/3.context.md',
-        html_path='context-reference.html',
+        html_path='context.html',
     ),
 )
 
 
 # {{ #include ../LICENSE }}
-INCLUDE_REGEX = r'{{ #include (.*) }}'
+INCLUDE_REGEX = r'{{ #include ([^: ]*) }}'
+
+# {{ #include ../LICENSE:5:20 }}
+SLICE_INCLUDE_REGEX = r'{{ #include (.*):(.*):(.*) }}'
 
 # {{ project.package }}
 PROJECT_REGEX = r'{{ project.([a-zA-Z_0-9]*) }}'
@@ -117,15 +123,20 @@ IMAGE_EXTENSIONS = (
     '.jpg',
 )
 
-# A fork of `dc_schema` with a patch to support nested Pydantic dataclasses
-PATCHED_DC_SCHEMA_GIT_URL = 'git+https://github.com/droserasprout/dc_schema.git@pydantic-dc'
-
 # Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
 MARKDOWNLINT_IGNORE = (
     'line-length',
     'single-title',
     'single-h1',
 )
+
+
+class ScriptObserver(FileSystemEventHandler):
+    def on_modified(self, event: FileSystemEvent) -> None:
+        _logger.info('script has been modified; restarting')
+        if _process:
+            _process.terminate()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 class DocsBuilder(FileSystemEventHandler):
@@ -191,13 +202,21 @@ class DocsBuilder(FileSystemEventHandler):
 
 def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
-        def replacer(match: re.Match[str]) -> str:
+        def replacer(match: re.Match[str], slice: bool) -> str:
             # FIXME: Slices are not handled yet
-            included_file = source / match.group(1).split(':')[0]
-            _logger.info('including `%s`', included_file.name)
-            return included_file.read_text()
+            included_path = source / match.group(1).split(':')[0]
+            included_file = included_path.read_text()
+            _logger.info('including `%s`', included_path.relative_to(Path.cwd()))
+            if slice:
+                from_, to = match.group(2), match.group(3)
+            else:
+                return included_file
 
-        return re.sub(INCLUDE_REGEX, replacer, data)
+            from_, to = int(from_ or 0), int(to or len(included_file.split('\n')))
+            return '\n'.join(included_file.split('\n')[from_:to])
+
+        data = re.sub(INCLUDE_REGEX, partial(replacer, slice=False), data)
+        return re.sub(SLICE_INCLUDE_REGEX, partial(replacer, slice=True), data)
 
     return callback
 
@@ -229,14 +248,15 @@ def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
 
 @contextmanager
 def frontend(path: Path) -> Iterator[Popen[Any]]:
+    global _process
+
     # NOTE: pnpm is important! Regular npm fails to resolve deps.
-    process = Popen(['pnpm', 'run', 'dev'], cwd=path)
-    time.sleep(3)
-    click.launch('http://localhost:3000/docs')
+    _process = Popen(['pnpm', 'run', 'dev'], cwd=path)
 
-    yield process
+    yield _process
 
-    process.terminate()
+    _process.terminate()
+    _process = None
 
 
 @click.group(help='Various tools to build and maintain DipDup documentation. Read the script source!')
@@ -249,11 +269,13 @@ def main() -> None:
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to watch.',
+    default='docs',
 )
 @click.option(
     '--destination',
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     help='content/ dirertory path to copy to.',
+    default='../interface/content',
 )
 @click.option(
     '--watch',
@@ -279,12 +301,13 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     )
     event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(path), with_rst=False)  # type: ignore[no-untyped-call]
+        event_handler.on_modified(FileModifiedEvent(str(path)), with_rst=False)
 
     if not (watch or serve):
         return
 
     with ExitStack() as stack:
+        stack.enter_context(observer(Path(__file__), ScriptObserver()))
         if watch:
             green_echo('=> Watching for changes')
             stack.enter_context(observer(source, event_handler))
@@ -302,21 +325,24 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     '--source',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
     help='docs/ directory path to check.',
+    default='docs',
 )
-def check_links(source: Path) -> None:
+@click.option('--http', is_flag=True, help='Check HTTP links too.')
+def check_links(source: Path, http: bool) -> None:
     green_echo('=> Checking relative links')
-    files, links, http_links, bad_links, bad_anchors = 0, 0, 0, 0, 0
+    files, links, bad_paths, bad_anchors, bad_http = 0, 0, 0, 0, 0
+    http_links: set[str] = set()
 
     for path in source.rglob('*.md'):
-        logging.info('checking file `%s`', path)
+        _logger.info('checking file `%s`', path)
         files += 1
         data = path.read_text()
         for match in re.finditer(MD_LINK_REGEX, data):
             links += 1
             link = match.group(1)
-            # TODO: Check them too?
+
             if link.startswith('http'):
-                http_links += 1
+                http_links.add(link)
                 continue
 
             link, anchor = link.split('#') if '#' in link else (link, None)
@@ -324,7 +350,7 @@ def check_links(source: Path) -> None:
             full_path = path.parent.joinpath(link)
             if not full_path.exists():
                 logging.error('broken link: `%s`', full_path)
-                bad_links += 1
+                bad_paths += 1
                 continue
 
             if anchor:
@@ -339,10 +365,30 @@ def check_links(source: Path) -> None:
                     bad_anchors += 1
                     continue
 
-    logging.info('_' * 80)
-    logging.info('checked %d files and %d links:', files, links)
-    logging.info('%d URLs, %d bad links, %d bad anchors', http_links, bad_links, bad_anchors)
-    if bad_links or bad_anchors:
+    if http:
+        green_echo('=> Checking HTTP links')
+
+        for link in http_links:
+            green_echo(f'checking link `{link}`')
+            try:
+                res = subprocess.run(
+                    ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', link),
+                    check=True,
+                    capture_output=True,
+                )
+                status_code = int(res.stdout.decode().strip())
+                if status_code != 200:
+                    raise subprocess.CalledProcessError(status_code, 'curl')
+            except subprocess.CalledProcessError:
+                red_echo(f'broken http link: `{status_code}`')
+                bad_http += 1
+
+    _logger.info('_' * 80)
+    _logger.info('checked %d files and %d links:', files, links)
+    _logger.info('paths: %d bad links, %d bad anchors', bad_paths, bad_anchors)
+    _logger.info('http: %d bad links', bad_http)
+
+    if bad_paths or bad_anchors or bad_http:
         red_echo('=> Fix broken links and try again')
         exit(1)
 
@@ -351,13 +397,6 @@ def check_links(source: Path) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    green_echo('=> Installing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'add', '-G', 'dev', PATCHED_DC_SCHEMA_GIT_URL),
-        check=True,
-    )
-
-    green_echo('=> Dumping schema')
     dc_schema = importlib.import_module('dc_schema')
     schema_dict = dc_schema.get_schema(DipDupConfig)
 
@@ -375,17 +414,11 @@ def dump_jsonschema() -> None:
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
-    green_echo('=> Removing patched dc_schema')
-    subprocess.run(
-        ('pdm', 'remove', '-G', 'dev', 'dc_schema'),
-        check=True,
-    )
-
 
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     green_echo('=> Dumping Sphinx references')
-    config_rst = Path('docs/config-reference.rst').read_text().splitlines()
+    config_rst = Path('docs/config.rst').read_text().splitlines()
     classes_in_rst = {line.split('.')[-1] for line in config_rst if line.startswith('.. autoclass::')}
     classes_in_config = set()
     for file in Path('src/dipdup/config').glob('*.py'):
@@ -394,13 +427,15 @@ def dump_references() -> None:
 
     green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
-    diff -= {'Config'}
+    # FIXME: Traces not implemented yet
+    diff -= {'Config', 'SubsquidTracesIndexConfig', 'SubsquidTracesHandlerConfig'}
     if diff:
-        red_echo('=> Config reference is outdated! Update `docs/config-reference.rst` and try again.')
+        red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')
         exit(1)
 
     green_echo('=> Building Sphinx docs')
+    rmtree('docs/_build', ignore_errors=True)
     subprocess.run(
         args=('sphinx-build', '-M', 'html', '.', '_build'),
         cwd='docs',
@@ -413,7 +448,59 @@ def dump_references() -> None:
         from_ = Path(f"docs/_build/html/{page['html_path']}")
 
         # NOTE: Strip HTML boilerplate
-        out = '\n'.join(from_.read_text().split('\n')[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES])
+        lines = from_.read_text().split('\n')
+        out = '\n'.join(lines[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
+
+        # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
+        # to: ## dipdup.config.DipDupConfig
+        for match_ in re.finditer(r'<dt class="sig sig-object py" id="(.*)">', out):
+            out = out.replace(match_.group(0), f'\n## {match_.group(1)}\n')
+
+        # from: <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
+        # to: # Enums
+        for match_ in re.finditer(
+            r'<h(\d)>(.*)<a class="headerlink" href="#.*" title="Link to this heading">¶</a></h\d>', out
+        ):
+            level = int(match_.group(1))
+            out = out.replace(match_.group(0), f'\n{"#" * level} {match_.group(2)}\n')
+
+        # from: <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
+        # to: none
+        out = re.sub(r'<a class="headerlink" href="#.*" title="Link to this definition">¶</a>', '', out)
+
+        # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
+            anchor = match_.group(2).replace('.', '').lower()
+            fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}" target="_self"'
+            out = out.replace(match_.group(0), fixed_link)
+
+        # from: <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # to: <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        for match_ in re.finditer(r'<a class="reference internal" href="([^"]*).html#([^"]*)" title="([^"]*)"', out):
+            anchor = match_.group(3).replace('.', '').lower()
+            fixed_link = f'<a class="reference internal" href="{match_.group(1)}#{anchor}" title="{match_.group(3)}" target="_self"'
+            out = out.replace(match_.group(0), fixed_link)
+
+        # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
+        # to: <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
+        for match_ in re.finditer(r'<dt class="field-even">(.*)<span class="colon">:</span></dt>', out):
+            out = out.replace(
+                match_.group(0),
+                f'<dt class="field-even" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
+            )
+
+        # from: <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+        # to: <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
+        for match_ in re.finditer(r'<dt class="field-odd">(.*)<span class="colon">:</span></dt>', out):
+            out = out.replace(
+                match_.group(0),
+                f'<dt class="field-odd" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
+            )
+
+        # from: <section id="dipdup-config-env">
+        # to: none
+        out = re.sub(r'<section id=".*">', '', out)
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
@@ -424,7 +511,7 @@ def markdownlint() -> None:
     green_echo('=> Running markdownlint')
     try:
         subprocess.run(
-            ('markdownlint', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
+            ('markdownlint', '-f', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
             check=True,
         )
     except subprocess.CalledProcessError:

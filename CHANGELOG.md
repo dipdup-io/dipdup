@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- performance: Collect hit/miss stats for cached models.
+
+### Changed
+
+- performance: Drop caches when all indexes have reached realtime.
+
+### Fixed
+
+- cli: Fixed incorrect indexer status logging.
+- evm.node: Fixed memory leak when using realtime subscriptions.
+- evm.node: Fixed processing chain reorgs.
+- performance: Decrease main loop and node polling intervals.
+
+## [7.4.0] - 2024-02-20
+
+### Added
+
+- cli: Added `--template` option to `new` command to skip template selection.
+- evm.subsquid.transactions: Added `evm.subsquid.transactions` index kind to process EVM transactions.
+
+### Fixed
+
+- cli: Fixed crash when running `init` command with a config outside of the project directory.
+- codegen: Don't create intermediate `events.json` file in ABI directory.
+- evm.subsquid: When request to worker fails, ask router for another one instead of retrying the same worker.
+
+## [7.3.2] - 2024-02-06
+
+## Added
+
+- env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
+
+### Fixed
+
+- cli: Do not consider config as oneshot if `tezos.tzkt.head` index is present.
+- codegen: Allow dots to be used in typenames indicating nested packages.
+- evm.node: Make `withdrawals_root` field optional in `EvmNodeHeadData` model.
+- http: Fixed crash on some datasource URLs.
+
+### Performance
+
+- evm.subsquid.events: Increase indexing speed when using EVM node.
+
+## [7.3.1] - 2024-01-29
+
+### Fixed
+
+- codegen: Always cleanup jsonschemas before generating types.
+- config: Make `ws_url` field optional for `evm.node` datasource.
+
 ## [7.3.0] - 2024-01-23
 
 ### Added
@@ -33,6 +87,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - evm.node: Fixed crash on anonymous event logs during the last mile indexing.
 - evm.node: Raise an exception when no realtime messages have been received in `http.connection_timeout` seconds.
+
+## [6.5.15] - 2023-12-01
+
+### Other
+
+- deps: Updated pytezos to 3.10.3.
 
 ## [7.2.0] - 2023-11-30
 
@@ -82,6 +142,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed `DIPDUP_DEBUG` not being applied to the package logger.
 - tezos.tzkt.token_transfers: Fixed filtering transfers by token_id.
+
+## [6.5.14] - 2023-10-20
+
+### Fixed
+
+- token_transfer: Fixed filtering transfers by token_id.
 
 ## [7.0.2] - 2023-10-10
 
@@ -1289,16 +1355,23 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.3.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.4.0...HEAD
+[7.4.0]: https://github.com/dipdup-io/dipdup/compare/7.3.2...7.4.0
+[7.3.2]: https://github.com/dipdup-io/dipdup/compare/7.3.1...7.3.2
+[7.3.1]: https://github.com/dipdup-io/dipdup/compare/7.3.0...7.3.1
 [7.3.0]: https://github.com/dipdup-io/dipdup/compare/7.2.2...7.3.0
 [7.2.2]: https://github.com/dipdup-io/dipdup/compare/7.2.1...7.2.2
 [7.2.1]: https://github.com/dipdup-io/dipdup/compare/7.2.0...7.2.1
+[6.5.15]: https://github.com/dipdup-io/dipdup/compare/6.5.14...6.5.15
 [7.2.0]: https://github.com/dipdup-io/dipdup/compare/7.1.1...7.2.0
 [7.1.1]: https://github.com/dipdup-io/dipdup/compare/7.1.0...7.1.1
 [7.1.0]: https://github.com/dipdup-io/dipdup/compare/7.0.2...7.1.0
+[6.5.14]: https://github.com/dipdup-io/dipdup/compare/6.5.13...6.5.14
 [7.0.2]: https://github.com/dipdup-io/dipdup/compare/7.0.1...7.0.2
+[6.5.13]: https://github.com/dipdup-io/dipdup/compare/6.5.12...6.5.13
 [7.0.1]: https://github.com/dipdup-io/dipdup/compare/7.0.0...7.0.1
 [7.0.0]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc5...7.0.0
+[6.5.12]: https://github.com/dipdup-io/dipdup/compare/6.5.11...6.5.12
 [7.0.0rc5]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc4...7.0.0rc5
 [6.5.11]: https://github.com/dipdup-io/dipdup/compare/6.5.10...6.5.11
 [7.0.0rc4]: https://github.com/dipdup-io/dipdup/compare/7.0.0rc3...7.0.0rc4

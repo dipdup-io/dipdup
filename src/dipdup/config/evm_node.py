@@ -23,7 +23,7 @@ class EvmNodeDatasourceConfig(IndexDatasourceConfig):
 
     kind: Literal['evm.node']
     url: str
-    ws_url: str
+    ws_url: str | None = None
     http: HttpConfig | None = None
     rollback_depth: int = 32
 
@@ -38,7 +38,7 @@ class EvmNodeDatasourceConfig(IndexDatasourceConfig):
         return v
 
     @validator('ws_url')
-    def _valid_ws_url(cls, v: str) -> str:
-        if not v.startswith(('ws://', 'wss://')):
+    def _valid_ws_url(cls, v: str | None) -> str | None:
+        if v and not v.startswith(('ws://', 'wss://')):
             raise ConfigurationError('Ethereum node WebSocket URL must start with ws(s)://')
         return v
