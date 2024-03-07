@@ -19,7 +19,7 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'python3.11',
+    'python3.12',
     'pipx',
     'dipdup',
     'pdm',
@@ -147,7 +147,7 @@ class DipDupEnvironment:
 
     def ensure_pipx(self) -> None:
         if not sys.version.startswith('3.11'):
-            fail('DipDup requires Python 3.11')
+            fail('DipDup requires Python 3.12')
 
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
@@ -155,10 +155,10 @@ class DipDupEnvironment:
 
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
+            self.run_cmd('python3.12', '-m', 'pip', 'install', '-q', 'pipx')
         else:
-            self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+            self.run_cmd('python3.12', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3.12', '-m', 'pipx', 'ensurepath')
         pipx_path = str(Path.home() / '.local' / 'bin')
         os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
@@ -185,11 +185,11 @@ def install(
     force_str = '--force' if force else ''
     pipx_packages = env._pipx_packages
 
-    python_inter_pipx = cast(str, which('python3.11'))
+    python_inter_pipx = cast(str, which('python3.12'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
             subprocess.run(
-                ['pyenv', 'which', 'python3.11'],
+                ['pyenv', 'which', 'python3.12'],
                 capture_output=True,
                 text=True,
             )

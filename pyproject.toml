@@ -41,7 +41,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
@@ -134,12 +134,12 @@ packages = ["src/dipdup"]
 
 [tool.black]
 line-length = 120
-target-version = ["py311"]
+target-version = ["py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 ignore = [
@@ -152,7 +152,7 @@ flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["dipdup"] }
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
 
