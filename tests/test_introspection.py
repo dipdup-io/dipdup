@@ -29,8 +29,7 @@ def test_list_simple_args() -> None:
 
 
 def test_list_complex_arg() -> None:
-    class Class:
-        ...
+    class Class: ...
 
     assert get_list_elt_type(List[Class]) == Class
     assert get_list_elt_type(List[Optional[Class]]) == Optional[Class]
@@ -71,8 +70,7 @@ def test_dict_simple_args() -> None:
 
 
 def test_dict_complex_arg() -> None:
-    class Class:
-        ...
+    class Class: ...
 
     assert get_dict_value_type(Dict[str, Class]) == Class
     assert get_dict_value_type(Dict[str, Optional[Class]]) == Optional[Class]

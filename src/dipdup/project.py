@@ -200,9 +200,9 @@ class Project(BaseModel):
 
     def get_defaults(self) -> dict[str, Any]:
         return {
-            question.name: question.choices[question.default]
-            if isinstance(question, ChoiceQuestion)
-            else question.default
+            question.name: (
+                question.choices[question.default] if isinstance(question, ChoiceQuestion) else question.default
+            )
             for question in self.questions
         }
 

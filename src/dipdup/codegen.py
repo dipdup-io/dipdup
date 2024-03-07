@@ -8,6 +8,7 @@ For `dipdup new` templates processing see `dipdup.project` module.
 
 Please, keep imports lazy to speed up startup.
 """
+
 import logging
 import re
 import subprocess

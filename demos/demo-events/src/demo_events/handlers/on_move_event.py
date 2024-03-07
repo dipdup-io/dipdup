@@ -7,5 +7,4 @@ from dipdup.models import Event
 async def on_move_event(
     ctx: HandlerContext,
     event: Event[MovePayload],
-) -> None:
-    ...
+) -> None: ...

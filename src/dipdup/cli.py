@@ -171,7 +171,9 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 
     # NOTE: Fire and forget, do not block instant commands
     if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        _logger.info('DipDup 7.0 is out! Visit https://dipdup.io/docs to learn more.')
+        _logger.warning(
+            'WARNING: DipDup 6.5 is no longer supported. Visit https://dipdup.io/docs/release-notes/v7.0#migration-guide'
+        )
         # asyncio.ensure_future(_check_version())
 
     # NOTE: Avoid import errors if project package is incomplete
@@ -325,8 +327,7 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 @cli.group(help='Commands related to Hasura integration.')
 @click.pass_context
 @_cli_wrapper
-async def hasura(ctx: click.Context) -> None:
-    ...
+async def hasura(ctx: click.Context) -> None: ...
 
 
 @hasura.command(name='configure')

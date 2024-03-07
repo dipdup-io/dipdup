@@ -45,8 +45,7 @@ class Datasource(HTTPGateway):
         self._logger = _logger
 
     @abstractmethod
-    async def run(self) -> None:
-        ...
+    async def run(self) -> None: ...
 
     def set_logger(self, name: str) -> None:
         self._logger = FormattedLogger(self._logger.name, name + ': {}')
@@ -65,8 +64,7 @@ class HttpDatasource(Datasource):
 
 
 # TODO: Generic interface
-class GraphQLDatasource(Datasource):
-    ...
+class GraphQLDatasource(Datasource): ...
 
 
 class IndexDatasource(Datasource):
@@ -95,8 +93,7 @@ class IndexDatasource(Datasource):
         return self._network
 
     @abstractmethod
-    async def subscribe(self) -> None:
-        ...
+    async def subscribe(self) -> None: ...
 
     def call_on_head(self, fn: HeadCallbackT) -> None:
         self._on_head_callbacks.add(fn)

@@ -6,5 +6,4 @@ from dipdup.models import HeadBlockData
 async def on_mainnet_head(
     ctx: HandlerContext,
     head: HeadBlockData,
-) -> None:
-    ...
+) -> None: ...

@@ -33,9 +33,9 @@ async def on_update_records(
                 defaults={
                     'tld_id': record_path[-1],
                     'owner': store_records.value.owner,
-                    'token_id': int(store_records.value.tzip12_token_id)
-                    if store_records.value.tzip12_token_id
-                    else None,
+                    'token_id': (
+                        int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None
+                    ),
                 },
             )
 
