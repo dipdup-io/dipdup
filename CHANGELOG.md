@@ -26,6 +26,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - performance: Decrease main loop and node polling intervals.
 - performance: Drop caches when all indexes have reached realtime.
 
+## [6.5.16] - 2024-03-07
+
+This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.
+
+### Fixed
+
+- tzkt: Don't use deprecated `/events` WebSockets endpoint.
+
+### Other
+
+- deps: Updated pytezos to 3.11.3.
+- metadata: Added `oxfordnet` to supported networks.
+
 ## [7.4.0] - 2024-02-20
 
 ### Added
@@ -1361,6 +1374,7 @@ This release contains no changes except for the version number.
 
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.4.0...HEAD
+[6.5.16]: https://github.com/dipdup-io/dipdup/compare/6.5.15...6.5.16
 [7.4.0]: https://github.com/dipdup-io/dipdup/compare/7.3.2...7.4.0
 [7.3.2]: https://github.com/dipdup-io/dipdup/compare/7.3.1...7.3.2
 [7.3.1]: https://github.com/dipdup-io/dipdup/compare/7.3.0...7.3.1
