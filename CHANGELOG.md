@@ -4,22 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.5.0] - 2024-03-06
 
 ### Added
 
-- performance: Collect hit/miss stats for cached models.
-
-### Changed
-
-- performance: Drop caches when all indexes have reached realtime.
+- config: Added `http.polling_interval` option to set the interval between polling requests (some datasources).
+- hasura: Allow `bulk` request type in custom metadata files.
 
 ### Fixed
 
+- abi.etherscan: Raise `AbiNotAvailableError` when contract is not verified.
 - cli: Fixed incorrect indexer status logging.
 - evm.node: Fixed memory leak when using realtime subscriptions.
 - evm.node: Fixed processing chain reorgs.
+- evm.node: Respect `http.batch_size` when fetching block headers.
+
+### Performance
+
+- hasura: Apply table customizations in a single request.
+- performance: Collect hit/miss stats for cached models.
 - performance: Decrease main loop and node polling intervals.
+- performance: Drop caches when all indexes have reached realtime.
+
+## [6.5.16] - 2024-03-07
+
+This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.
+
+### Fixed
+
+- tzkt: Don't use deprecated `/events` WebSockets endpoint.
+
+### Other
+
+- deps: Updated pytezos to 3.11.3.
+- metadata: Added `oxfordnet` to supported networks.
 
 ## [7.4.0] - 2024-02-20
 
@@ -1356,6 +1374,7 @@ This release contains no changes except for the version number.
 
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.4.0...HEAD
+[6.5.16]: https://github.com/dipdup-io/dipdup/compare/6.5.15...6.5.16
 [7.4.0]: https://github.com/dipdup-io/dipdup/compare/7.3.2...7.4.0
 [7.3.2]: https://github.com/dipdup-io/dipdup/compare/7.3.1...7.3.2
 [7.3.1]: https://github.com/dipdup-io/dipdup/compare/7.3.0...7.3.1

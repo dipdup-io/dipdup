@@ -43,10 +43,7 @@ from dipdup.utils import Watchdog
 
 WEB3_CACHE_SIZE = 256
 NODE_LEVEL_TIMEOUT = 0.1
-# NOTE: This value was chosen empirically and likely is not optimal.
-NODE_BATCH_SIZE = 32
 NODE_LAST_MILE = 128
-POLL_INTERVAL = 1.0
 
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
@@ -93,6 +90,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     _default_http_config = HttpConfig(
         batch_size=32,
         ratelimit_sleep=30,
+        polling_interval=1.0,
     )
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
@@ -143,7 +141,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             while True:
                 level = await self.get_head_level()
                 self.set_sync_level(None, level)
-                await asyncio.sleep(POLL_INTERVAL)
+                await asyncio.sleep(self._http_config.polling_interval)
 
     async def _emitter_loop(self) -> None:
         known_level = 0

@@ -163,7 +163,8 @@ class HttpConfig:
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
     :param request_timeout: Request timeout in seconds
-    :param batch_size: Number of items fetched in a single paginated request
+    :param batch_size: Number of items fetched in a single paginated request (when applicable)
+    :param polling_interval: Interval between polling requests in seconds (when applicable)
     :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
     :param alias: Alias for this HTTP client (dev only)
     """
@@ -178,6 +179,7 @@ class HttpConfig:
     connection_timeout: int | None = None
     request_timeout: int | None = None
     batch_size: int | None = None
+    polling_interval: float | None = None
     replay_path: str | None = None
     alias: str | None = None
 
@@ -196,6 +198,7 @@ class ResolvedHttpConfig:
     connection_timeout: int = 60
     request_timeout: int = 60
     batch_size: int = 10000
+    polling_interval: float = 1.0
     replay_path: str | None = None
     alias: str | None = None
 

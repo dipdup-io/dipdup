@@ -24,7 +24,6 @@ from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
-POLL_INTERVAL = 1.0
 LOG_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
@@ -96,7 +95,9 @@ class _SubsquidWorker(Datasource[Any]):
 
 
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
-    _default_http_config = HttpConfig()
+    _default_http_config = HttpConfig(
+        polling_interval=1.0,
+    )
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
@@ -106,7 +107,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             return
         # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
-            await asyncio.sleep(POLL_INTERVAL)
+            await asyncio.sleep(self._http_config.polling_interval)
             await self.initialize()
 
     async def subscribe(self) -> None:

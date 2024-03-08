@@ -3,7 +3,6 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
-from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
@@ -54,11 +53,16 @@ class SubsquidTransactionsIndex(
     async def _synchronize_node(self, sync_level: int) -> None:
         batch_first_level = self.state.level + 1
         while batch_first_level <= sync_level:
-            batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
+            node = self.get_random_node()
+            batch_last_level = min(
+                batch_first_level + node._http_config.batch_size,
+                sync_level,
+            )
 
             block_batch = await self.get_blocks_batch(
                 levels=set(range(batch_first_level, batch_last_level + 1)),
                 full_transactions=True,
+                node=node,
             )
 
             for level, block in sorted(block_batch.items()):
