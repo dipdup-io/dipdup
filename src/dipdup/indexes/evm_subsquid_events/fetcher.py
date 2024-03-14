@@ -41,17 +41,15 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeLogData, ...]]:
         batch_size = self._batch_size_min
         batch_first_level = self._first_level
-        batch_size_limit: int = self._batch_size_max
         ratelimited: bool = False
 
         while batch_first_level <= self._last_level:
             node = random.choice(self._datasources)
-            batch_size, batch_size_limit = self.get_next_batch_size(batch_size, batch_size_limit, ratelimited)
+            batch_size = self.get_next_batch_size(batch_size, ratelimited)
             ratelimited = False
 
             started = time.time()
 
-            print('batch_size:', batch_size)
             batch_last_level = min(
                 batch_first_level + batch_size,
                 self._last_level,
@@ -66,20 +64,10 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
             if finished - started >= node._http_config.ratelimit_sleep:
                 ratelimited = True
 
-            print('got in ', finished - started, 'seconds', 'ratelimited:', ratelimited)
-
             timestamps: dict[int, int] = {}
-
             log_levels = list(log_batch.keys())
-            print('log_levels:', log_levels)
 
             # NOTE: Split log_levels to chunks of batch_size
-
-            # log_level_batches = [
-            #     set(log_levels[i : i + node._http_config.batch_size])
-            #     for i in range(0, len(log_levels), node._http_config.batch_size)
-            # ]
-
             log_level_batches = [set(log_levels[i : i + batch_size]) for i in range(0, len(log_levels), batch_size)]
 
             for log_level_batch in log_level_batches:
@@ -93,10 +81,6 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
                 finished = time.time()
                 if finished - started >= node._http_config.ratelimit_sleep:
                     ratelimited = True
-
-                print('got in ', finished - started, 'seconds', 'ratelimited:', batch_size_limit)
-
-            print('timestamps:', len(timestamps))
 
             for level, level_logs in log_batch.items():
                 if not level_logs:
