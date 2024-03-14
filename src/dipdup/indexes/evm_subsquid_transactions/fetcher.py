@@ -27,10 +27,6 @@ class SubsquidTransactionFetcher(DataFetcher[SubsquidTransactionData]):
         self._filters = filters
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[SubsquidTransactionData, ...]]]:
-        """Iterate over transactions fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by SubsquidTransactionsIndex.
-        """
         transaction_iter = self._datasource.iter_transactions(
             self._first_level,
             self._last_level,

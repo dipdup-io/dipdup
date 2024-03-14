@@ -6,6 +6,7 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
+from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
 from dipdup.models.evm_node import EvmNodeLogData
@@ -39,7 +40,7 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
     _datasource: EvmNodeDatasource
 
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeLogData, ...]]:
-        batch_size = self._batch_size_min
+        batch_size = MIN_BATCH_SIZE
         batch_first_level = self._first_level
         ratelimited: bool = False
 

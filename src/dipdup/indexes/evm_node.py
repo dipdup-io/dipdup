@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import random
 from abc import ABC
 from collections import defaultdict
@@ -14,7 +13,10 @@ from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherBufferT
 
-_logger = logging.getLogger(__name__)
+MIN_BATCH_SIZE = 10
+MAX_BATCH_SIZE = 10000
+BATCH_SIZE_UP = 1.1
+BATCH_SIZE_DOWN = 0.5
 
 
 class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
@@ -27,19 +29,14 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
         super().__init__(datasources[0], first_level, last_level)
         self._datasources = datasources
 
-        self._batch_size_min = 10
-        self._batch_size_max = 10000
-        self._batch_size_decrease = 0.5
-        self._batch_size_increase = 1.1
-
     def get_next_batch_size(self, batch_size: int, ratelimited: bool) -> int:
         if ratelimited:
-            batch_size = int(batch_size * self._batch_size_decrease)
+            batch_size = int(batch_size * BATCH_SIZE_DOWN)
         else:
-            batch_size = int(batch_size * self._batch_size_increase)
+            batch_size = int(batch_size * BATCH_SIZE_UP)
 
-        batch_size = min(self._batch_size_max, batch_size)
-        batch_size = max(self._batch_size_min, batch_size)
+        batch_size = min(MAX_BATCH_SIZE, batch_size)
+        batch_size = max(MIN_BATCH_SIZE, batch_size)
         return int(batch_size)
 
     async def get_block_timestamp(self, level: int) -> datetime:

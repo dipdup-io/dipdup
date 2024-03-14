@@ -15,8 +15,6 @@ if TYPE_CHECKING:
 
 
 class EventFetcher(DataFetcher[TzktEventData]):
-    """Fetches contract events from REST API, merges them and yields by level."""
-
     _datasource: TzktDatasource
 
     def __init__(
@@ -35,10 +33,6 @@ class EventFetcher(DataFetcher[TzktEventData]):
         self._event_tags = event_tags
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktEventData, ...]], None]:
-        """Iterate over events fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
-        """
         event_iter = self._datasource.iter_events(
             self._event_addresses,
             self._event_tags,

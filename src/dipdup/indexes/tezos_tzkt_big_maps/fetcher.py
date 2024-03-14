@@ -84,10 +84,6 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
         )
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktBigMapData, ...]], None]:
-        """Iterate over big map diffs fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktBigMapsIndex.
-        """
         big_map_iter = self._datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,
