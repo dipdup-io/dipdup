@@ -19,6 +19,7 @@ from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherChannel
 from dipdup.fetcher import FetcherFilterT
 from dipdup.fetcher import readahead_by_level
+from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktOperationType
 
@@ -534,7 +535,7 @@ class OperationFetcher(DataFetcher[TzktOperationData]):
                 raise FrameworkException('Operations left in queue')
 
         event_iter = _merged_iter(channels)
-        async for level, operations in readahead_by_level(event_iter, limit=5_000):
+        async for level, operations in readahead_by_level(event_iter, limit=TZKT_READAHEAD_LIMIT):
             yield level, operations
 
 

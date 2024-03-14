@@ -5,6 +5,7 @@ from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.evm_node import EvmNodeFetcher
+from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
 from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
@@ -35,7 +36,7 @@ class SubsquidTransactionFetcher(DataFetcher[SubsquidTransactionData]):
             self._last_level,
             self._filters,
         )
-        async for level, batch in readahead_by_level(transaction_iter, limit=5_000):
+        async for level, batch in readahead_by_level(transaction_iter, limit=SUBSQUID_READAHEAD_LIMIT):
             yield level, batch
 
 
@@ -69,5 +70,5 @@ class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmNodeTransactionData]):
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmNodeTransactionData, ...]]]:
         transaction_iter = self._fetch_by_level()
-        async for level, batch in readahead_by_level(transaction_iter, limit=5_000):
+        async for level, batch in readahead_by_level(transaction_iter, limit=SUBSQUID_READAHEAD_LIMIT):
             yield level, batch
