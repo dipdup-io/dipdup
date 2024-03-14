@@ -31,7 +31,7 @@ black:          ## Format with black
 	black ${SOURCE}
 
 ruff:           ## Lint with ruff
-	ruff check --fix ${SOURCE}
+	ruff check --fix --unsafe-fixes ${SOURCE}
 
 mypy:           ## Lint with mypy
 	mypy ${SOURCE}

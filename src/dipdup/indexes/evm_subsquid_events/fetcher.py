@@ -38,7 +38,6 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
     _datasource: EvmNodeDatasource
 
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeLogData, ...]]:
-
         batch_first_level = self._first_level
         while batch_first_level <= self._last_level:
             node = random.choice(self._datasources)
