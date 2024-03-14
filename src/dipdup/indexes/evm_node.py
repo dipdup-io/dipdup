@@ -5,6 +5,7 @@ import time
 from abc import ABC
 from collections import defaultdict
 from collections import deque
+from datetime import UTC
 from datetime import datetime
 from typing import Any
 from typing import Generic
@@ -46,7 +47,7 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
 
     def estimate_next_batch_size(self, current_batch_size: int, event_found_count: int) -> int:
         if event_found_count > 0:
-            # When we encounter first events, reset the chunk size window
+            # When we encounter first logs, reset the chunk size window
             current_batch_size = self.min_batch_size
         else:
             current_batch_size = int(current_batch_size * self.batch_size_increase)
@@ -55,7 +56,7 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
         current_batch_size = min(self.max_batch_size, current_batch_size)
         return int(current_batch_size)
 
-    def scan(
+    async def scan(
         self,
         first_level: int,
         last_level: int,
@@ -87,7 +88,9 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
             )
 
             start = time.time()
-            actual_last_level, last_level_timestamp, new_entries = self.scan_batch(current_level, estimated_last_level)
+            actual_last_level, last_level_timestamp, new_entries = await self.scan_batch(
+                current_level, estimated_last_level
+            )
 
             # Where does our current chunk scan ends - are we out of chain yet?
             current_end = actual_last_level
@@ -105,43 +108,46 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
 
         return all_processed, total_levels_scanned
 
-    def scan_batch(self, first_level: int, last_level: int) -> tuple[int, datetime, list[Any]]:
+    async def get_block_timestamp(self, level: int) -> datetime:
+        block = (await self.get_blocks_batch({level}))[level]
+        last_time = block['timestamp']
+        return datetime.fromtimestamp(last_time, UTC)
+
+    async def scan_batch(self, first_level: int, last_level: int) -> tuple[int, datetime, list[Any]]:
         block_timestamps = {}
-        get_block_timestamp = self.get_block_timestamp
 
         # Cache block timestamps to reduce some RPC overhead
         # Real solution might include smarter models around block
-        def get_block_when(block_num: int) -> Any:
-            if block_num not in block_timestamps:
-                block_timestamps[block_num] = get_block_timestamp(block_num)
-            return block_timestamps[block_num]
+        async def get_block_when(level: int) -> Any:
+            if level not in block_timestamps:
+                block_timestamps[level] = await self.get_block_timestamp(level)
+            return block_timestamps[level]
 
         all_processed: list[Any] = []
 
-        for _event_type in self.events:
+        logs = await self.get_logs_batch(first_level, last_level)
 
-            events: list[Any] = []
-
-            for evt in events:
-                idx = evt['logIndex']  # Integer of the log index position in the block, null when its pending
+        for level, level_logs in logs.items():
+            for log in level_logs:
+                idx = log['logIndex']  # Integer of the log index position in the block, null when its pending
 
                 # We cannot avoid minor chain reorganisations, but
                 # at least we must avoid blocks that are not mined yet
                 assert idx is not None, 'Somehow tried to scan a pending block'
 
-                block_number = evt['blockNumber']
+                level = log['blockNumber']
 
                 # Get UTC time when this event happened (block mined timestamp)
                 # from our in-memory cache
-                get_block_when(block_number)
+                await get_block_when(level)
 
                 # _logger.debug(
-                #     f"Processing event {evt['event']}, block: {evt['blockNumber']} count: {evt['blockNumber']}"
+                #     f"Processing event {log['event']}, block: {log['blockNumber']} count: {log['blockNumber']}"
                 # )
-                # processed = self.state.process_event(block_when, evt)
+                # processed = self.state.process_event(block_when, log)
                 # all_processed.append(processed)
 
-        last_level_timestamp = get_block_when(last_level)
+        last_level_timestamp = await get_block_when(last_level)
         return last_level, last_level_timestamp, all_processed
 
     def get_random_node(self) -> EvmNodeDatasource:

@@ -88,8 +88,8 @@ class LevelData:
 
 class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
     _default_http_config = HttpConfig(
-        batch_size=32,
-        ratelimit_sleep=30,
+        batch_size=10,
+        ratelimit_sleep=5,
         polling_interval=1.0,
     )
 
