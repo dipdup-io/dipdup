@@ -53,7 +53,7 @@ class SubsquidTransactionsIndex(
 
     async def _synchronize_node(self, sync_level: int) -> None:
         first_level = self.state.level + 1
-        fetcher = self._create_subsquid_fetcher(first_level, sync_level)
+        fetcher = self._create_node_fetcher(first_level, sync_level)
 
         async for _level, transactions in fetcher.fetch_by_level():
             await self._process_level_data(transactions, sync_level)

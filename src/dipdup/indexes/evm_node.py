@@ -11,6 +11,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import FetcherBufferT
 
+EVM_NODE_READAHEAD_LIMIT = 5000
 MIN_BATCH_SIZE = 10
 MAX_BATCH_SIZE = 10000
 BATCH_SIZE_UP = 1.1
