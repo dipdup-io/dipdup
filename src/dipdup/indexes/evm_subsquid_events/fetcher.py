@@ -39,6 +39,11 @@ class SubsquidEventFetcher(DataFetcher[SubsquidEventData]):
 class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
     _datasource: EvmNodeDatasource
 
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmNodeLogData, ...]]]:
+        event_iter = self._fetch_by_level()
+        async for level, batch in readahead_by_level(event_iter, limit=SUBSQUID_READAHEAD_LIMIT):
+            yield level, batch
+
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeLogData, ...]]:
         batch_size = MIN_BATCH_SIZE
         batch_first_level = self._first_level
@@ -92,8 +97,3 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
                 yield parsed_level_logs
 
             batch_first_level = batch_last_level + 1
-
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmNodeLogData, ...]]]:
-        event_iter = self._fetch_by_level()
-        async for level, batch in readahead_by_level(event_iter, limit=SUBSQUID_READAHEAD_LIMIT):
-            yield level, batch
