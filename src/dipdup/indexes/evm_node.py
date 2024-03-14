@@ -3,8 +3,6 @@ import random
 from abc import ABC
 from collections import defaultdict
 from collections import deque
-from datetime import UTC
-from datetime import datetime
 from typing import Any
 from typing import Generic
 
@@ -38,11 +36,6 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
         batch_size = min(MAX_BATCH_SIZE, batch_size)
         batch_size = max(MIN_BATCH_SIZE, batch_size)
         return int(batch_size)
-
-    async def get_block_timestamp(self, level: int) -> datetime:
-        block = (await self.get_blocks_batch({level}))[level]
-        last_time = block['timestamp']
-        return datetime.fromtimestamp(last_time, UTC)
 
     def get_random_node(self) -> EvmNodeDatasource:
         if not self._datasources:
