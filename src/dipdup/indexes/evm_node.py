@@ -5,7 +5,7 @@ import time
 from abc import ABC
 from collections import defaultdict
 from collections import deque
-from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 from typing import Generic
 
@@ -57,63 +57,92 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
 
     def scan(
         self,
-        start_block: int,
-        end_block: int,
-        start_batch_size: int = 20,
-        progress_callback: Callable[..., Any] | None = None,
+        first_level: int,
+        last_level: int,
+        initial_batch_size: int = 20,
     ) -> tuple[list[Any], int]:
-        assert start_block <= end_block
+        assert first_level <= last_level
 
-        current_block = start_block
+        current_level = first_level
 
         # Scan in chunks, commit between
-        batch_size = start_batch_size
+        batch_size = initial_batch_size
         last_scan_duration: float = 0
         last_logs_found: int = 0
-        total_batchs_scanned = 0
+        total_levels_scanned = 0
 
         # All processed entries we got on this scan cycle
         all_processed = []
 
-        while current_block <= end_block:
-
-            # self.state.start_batch(current_block, batch_size)
-
+        while current_level <= last_level:
             # Print some diagnostics to logs to try to fiddle with real world JSON-RPC API performance
-            estimated_end_block = current_block + batch_size
+            estimated_last_level = current_level + batch_size
             _logger.debug(
                 'Scanning token transfers for blocks: {} - {}, chunk size {}, last chunk scan took {}, last logs found {}',
-                current_block,
-                estimated_end_block,
+                current_level,
+                estimated_last_level,
                 batch_size,
                 last_scan_duration,
                 last_logs_found,
             )
 
             start = time.time()
-            actual_end_block, end_block_timestamp, new_entries = self.scan_batch(current_block, estimated_end_block)
+            actual_last_level, last_level_timestamp, new_entries = self.scan_batch(current_level, estimated_last_level)
 
             # Where does our current chunk scan ends - are we out of chain yet?
-            current_end = actual_end_block
+            current_end = actual_last_level
 
             last_scan_duration = time.time() - start
             all_processed += new_entries
-
-            # Print progress bar
-            if progress_callback:
-                progress_callback(
-                    start_block, end_block, current_block, end_block_timestamp, batch_size, len(new_entries)
-                )
 
             # Try to guess how many blocks to fetch over `eth_getLogs` API next time
             batch_size = self.estimate_next_batch_size(batch_size, len(new_entries))
 
             # Set where the next chunk starts
-            current_block = current_end + 1
-            total_batchs_scanned += 1
+            current_level = current_end + 1
+            total_levels_scanned += 1
             # self.state.end_batch(current_end)
 
-        return all_processed, total_batchs_scanned
+        return all_processed, total_levels_scanned
+
+    def scan_batch(self, first_level: int, last_level: int) -> tuple[int, datetime, list[Any]]:
+        block_timestamps = {}
+        get_block_timestamp = self.get_block_timestamp
+
+        # Cache block timestamps to reduce some RPC overhead
+        # Real solution might include smarter models around block
+        def get_block_when(block_num: int) -> Any:
+            if block_num not in block_timestamps:
+                block_timestamps[block_num] = get_block_timestamp(block_num)
+            return block_timestamps[block_num]
+
+        all_processed: list[Any] = []
+
+        for _event_type in self.events:
+
+            events: list[Any] = []
+
+            for evt in events:
+                idx = evt['logIndex']  # Integer of the log index position in the block, null when its pending
+
+                # We cannot avoid minor chain reorganisations, but
+                # at least we must avoid blocks that are not mined yet
+                assert idx is not None, 'Somehow tried to scan a pending block'
+
+                block_number = evt['blockNumber']
+
+                # Get UTC time when this event happened (block mined timestamp)
+                # from our in-memory cache
+                get_block_when(block_number)
+
+                # _logger.debug(
+                #     f"Processing event {evt['event']}, block: {evt['blockNumber']} count: {evt['blockNumber']}"
+                # )
+                # processed = self.state.process_event(block_when, evt)
+                # all_processed.append(processed)
+
+        last_level_timestamp = get_block_when(last_level)
+        return last_level, last_level_timestamp, all_processed
 
     def get_random_node(self) -> EvmNodeDatasource:
         if not self._datasources:
