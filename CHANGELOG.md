@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- evm.node: Fixed default ratelimit sleep time being too high.
+- evm.subsquid.transactions: Fixed issue with `node_only` flag ignored.
+
+### Performance
+
+- evm.subsquid: Dynamically adjust the batch size when syncing with node.
+
 ## [7.5.0] - 2024-03-08
 
 ### Added

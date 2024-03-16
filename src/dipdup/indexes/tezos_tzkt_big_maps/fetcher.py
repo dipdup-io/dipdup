@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
+from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
 from dipdup.models.tezos_tzkt import TzktBigMapData
 
 if TYPE_CHECKING:
@@ -83,15 +84,11 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
         )
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktBigMapData, ...]], None]:
-        """Iterate over big map diffs fetched fetched from REST.
-
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktBigMapsIndex.
-        """
         big_map_iter = self._datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(big_map_iter, limit=5_000):
+        async for level, batch in readahead_by_level(big_map_iter, limit=TZKT_READAHEAD_LIMIT):
             yield level, batch
