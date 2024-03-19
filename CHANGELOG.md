@@ -65,7 +65,7 @@ This is the last release in the 6.5 branch. Please update to 7.x to get the late
 
 ## [7.3.2] - 2024-02-06
 
-## Added
+### Added
 
 - env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
 
@@ -1253,7 +1253,7 @@ This release contains no changes except for the version number.
 - tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
 - tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
 
-## Changed
+### Changed
 
 - cli: `dipdup schema wipe` command now requires confirmation when invoked in the interactive shell.
 - cli: `dipdup schema approve` command now also causes a recalculation of schema and index config hashes.
