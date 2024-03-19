@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tezos.tzkt.operations: Fixed crash when handler definition contains optional items.
+
 ## [7.5.1] - 2024-03-17
 
 ### Fixed
