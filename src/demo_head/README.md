@@ -1,6 +1,6 @@
 # demo_head
 
-Processing head block metadata
+Processing head block metadata (realtime only)
 
 ## Installation
 

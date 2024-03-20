@@ -2,7 +2,7 @@
 [project]
 name = "demo_token"
 version = "0.0.1"
-description = "TzBTC FA1.2 token operations"
+description = "FA1.2 token contract operations"
 license = { text = "MIT" }
 authors = [
     { name = "John Doe", email = "john_doe@example.com" },

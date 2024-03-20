@@ -2,7 +2,7 @@
 [project]
 name = "demo_evm_events"
 version = "0.0.1"
-description = "Basic indexer for USDt token transfers (event logs)"
+description = "ERC-20 token transfers (from event logs)"
 license = { text = "MIT" }
 authors = [
     { name = "John Doe", email = "john_doe@example.com" },

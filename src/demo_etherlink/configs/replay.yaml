@@ -7,7 +7,7 @@ replay:
   template: demo_etherlink
   package: demo_etherlink
   version: 0.0.1
-  description: Indexing Etherlink smart rollup transactions
+  description: Etherlink smart rollup transactions
   license: MIT
   name: John Doe
   email: john_doe@example.com

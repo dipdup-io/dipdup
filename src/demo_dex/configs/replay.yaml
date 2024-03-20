@@ -7,7 +7,7 @@ replay:
   template: demo_dex
   package: demo_dex
   version: 0.0.1
-  description: Quipuswap DEX balances and liquidity
+  description: DEX balances and liquidity (Quipuswap)
   license: MIT
   name: John Doe
   email: john_doe@example.com

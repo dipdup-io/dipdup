@@ -1,6 +1,6 @@
 # demo_nft_marketplace
 
-hic at nunc NFT marketplace
+NFT marketplace (hic at nunc)
 
 ## Installation
 

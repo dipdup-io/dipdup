@@ -2,7 +2,7 @@
 [project]
 name = "demo_auction"
 version = "0.0.1"
-description = "TzColors NFT marketplace"
+description = "NFT marketplace (TzColors)"
 license = { text = "MIT" }
 authors = [
     { name = "John Doe", email = "john_doe@example.com" },

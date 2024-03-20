@@ -1,6 +1,6 @@
 # demo_auction
 
-TzColors NFT marketplace
+NFT marketplace (TzColors)
 
 ## Installation
 
