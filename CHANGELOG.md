@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- evm.node: Fixed updating `dipdup_head` table when head block is received.
+
 ## [7.5.1] - 2024-03-17
 
 ### Fixed
