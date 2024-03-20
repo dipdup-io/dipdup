@@ -34,7 +34,7 @@ async def on_update_records(
     ctx.logger.info('Processing `%s`', record_name)
 
     if len(record_path) != int(store_records.value.level):
-        ctx.logger.error(
+        ctx.logger.warning(
             'Invalid record `%s`: expected %s chunks, got %s',
             record_name,
             store_records.value.level,

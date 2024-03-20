@@ -11,8 +11,8 @@ from dipdup.project import answers_from_replay
 from dipdup.project import render_project
 
 DEMO_PREFIX = 'demo_'
-PROJECTS_PATH = Path(__file__).parent.parent / 'projects'
 SRC_PATH = Path(__file__).parent.parent / 'src'
+PROJECTS_PATH = SRC_PATH / 'dipdup' / 'projects'
 DEFAULT_ENV = {
     **dict(os.environ),
     'STACK': '',

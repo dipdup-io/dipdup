@@ -56,6 +56,7 @@ docs_build:     ## Build docs
 	python scripts/docs.py dump-references
 	python scripts/docs.py dump-demos
 	python scripts/docs.py dump-jsonschema
+	python scripts/docs.py merge-changelog
 	python scripts/docs.py markdownlint
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs
 
