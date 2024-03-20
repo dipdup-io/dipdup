@@ -153,6 +153,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             )
 
             self._logger.info('New head: %s -> %s', known_level, head.level)
+            await self.emit_head(head)
 
             # NOTE: Push rollback to all EVM indexes, but continue processing.
             if head.level <= known_level:

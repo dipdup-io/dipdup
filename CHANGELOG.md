@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- evm.node: Fixed updating `dipdup_head` table when head block is received.
 - tezos.tzkt.operations: Fixed crash when handler definition contains optional items.
 
 ## [7.5.1] - 2024-03-17
