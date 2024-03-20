@@ -1,6 +1,6 @@
 # demo_etherlink
 
-Indexing Etherlink smart rollup transactions
+Etherlink smart rollup transactions
 
 ## Installation
 

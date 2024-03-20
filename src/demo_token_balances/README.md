@@ -1,6 +1,6 @@
 # demo_token_balances
 
-TzBTC FA1.2 token balances
+FA1.2 token balances
 
 ## Installation
 

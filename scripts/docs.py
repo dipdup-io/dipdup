@@ -43,6 +43,8 @@ from watchdog.observers.api import BaseObserver
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
+from dipdup.project import TEMPLATES
+from dipdup.project import answers_from_replay
 from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
@@ -564,6 +566,38 @@ def merge_changelog() -> None:
             for line in sorted(changelog_tree[version][group]):
                 print(line)
             print()
+
+
+@main.command('dump-demos', help='Dump Markdown table of available demo projects')
+def dump_demos() -> None:
+    green_echo('=> Dumping demos table')
+    lines: list[str] = []
+    demos: list[tuple[str, str, str]] = []
+
+    replays = Path('src/dipdup/projects').glob('**/replay.yaml')
+    for replay_path in replays:
+        replay = answers_from_replay(replay_path)
+        package, description = replay['package'], replay['description']
+        if package in TEMPLATES['other']:
+            network = ''
+        elif package in TEMPLATES['evm']:
+            network = 'EVM'
+        elif package in TEMPLATES['tezos']:
+            network = 'Tezos'
+        demos.append((package, network, description))
+
+    # NOTE: Sort by blockchain first, then by package name
+    demos = sorted(demos, key=lambda x: (x[1], x[0]))
+
+    lines = [
+        '<!-- markdownlint-disable first-line-h1 -->',
+        '| name | network | description |',
+        '|-|-|-|',
+        *(f'| {name} | {network} | {description} |' for name, network, description in demos),
+        '',
+    ]
+
+    Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
 
 
 if __name__ == '__main__':

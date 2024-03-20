@@ -1,6 +1,6 @@
 # demo_evm_transactions
 
-Basic indexer for USDt token transfers (transactions)
+ERC-20 token transfers (from transactions)
 
 ## Installation
 

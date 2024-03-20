@@ -1,6 +1,6 @@
 spec_version: 2.0
 replay:
-  description: Uniswap V3 pools, positions, swaps, ticks, etc.
+  description: Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB)
   package: demo_uniswap
   template: demo_uniswap
   postgres_image: timescale/timescaledb-ha:pg15

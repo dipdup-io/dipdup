@@ -1,6 +1,6 @@
 # demo_dex
 
-Quipuswap DEX balances and liquidity
+DEX balances and liquidity (Quipuswap)
 
 ## Installation
 

@@ -7,7 +7,7 @@ replay:
   template: demo_domains
   package: demo_domains
   version: 0.0.1
-  description: Tezos Domains name service
+  description: Domain name service (Tezos Domains)
   license: MIT
   name: John Doe
   email: john_doe@example.com

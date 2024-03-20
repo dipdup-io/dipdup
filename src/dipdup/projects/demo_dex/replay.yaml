@@ -1,5 +1,5 @@
 spec_version: 2.0
 replay:
-  description: Quipuswap DEX balances and liquidity
+  description: DEX balances and liquidity (Quipuswap)
   package: demo_dex
   template: demo_dex

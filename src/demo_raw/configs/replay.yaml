@@ -7,7 +7,7 @@ replay:
   template: demo_raw
   package: demo_raw
   version: 0.0.1
-  description: Process raw operations without filtering and strict typing
+  description: Process raw operations without filtering and typed payloads
   license: MIT
   name: John Doe
   email: john_doe@example.com
