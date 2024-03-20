@@ -557,15 +557,20 @@ def merge_changelog() -> None:
         if not version.startswith('7.'):
             continue
 
-        print(f'## {version}\n')
+        version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')
+        lines: list[str] = ['<!-- markdownlint-disable first-line-h1 -->']
+
+        lines.append(f'## Changes since 7.{int(version[2]) - 1}\n')
         for group in group_order:
             if not changelog_tree[version][group]:
                 continue
 
-            print(f'### {group}\n')
+            lines.append(f'### {group}\n')
             for line in sorted(changelog_tree[version][group]):
-                print(line)
-            print()
+                lines.append(line)
+            lines.append('')
+
+        version_path.write_text('\n'.join(lines))
 
 
 @main.command('dump-demos', help='Dump Markdown table of available demo projects')
