@@ -40,6 +40,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
+from dipdup import __version__
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
@@ -48,6 +49,7 @@ from dipdup.project import answers_from_replay
 from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
+_version = __version__.split('+')[0]
 _logger = logging.getLogger()
 _logger.setLevel(logging.INFO)
 _process: subprocess.Popen[Any] | None = None
@@ -596,9 +598,12 @@ def dump_demos() -> None:
 
     lines = [
         '<!-- markdownlint-disable first-line-h1 -->',
-        '| name | network | description |',
-        '|-|-|-|',
-        *(f'| {name} | {network} | {description} |' for name, network, description in demos),
+        '| name | network | description | source |',
+        '|-|-|-|-|',
+        *(
+            f'| {name} | {network} | {description} | [link](https://github.com/dipdup-io/dipdup/tree/{_version}/src/{name}) |'
+            for name, network, description in demos
+        ),
         '',
     ]
 
