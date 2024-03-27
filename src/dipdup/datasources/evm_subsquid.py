@@ -166,13 +166,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             response = await self.query_worker(query, current_level)
 
             for level_item in response:
-                level = level_item['header']['number']
-                timestamp = level_item['header']['timestamp']
-                current_level = level + 1
+                current_level = level_item['header']['number'] + 1
                 logs: deque[SubsquidEventData] = deque()
                 for raw_log in level_item['logs']:
                     logs.append(
-                        SubsquidEventData.from_json(raw_log, level, timestamp),
+                        SubsquidEventData.from_json(
+                            event_json=raw_log,
+                            header=level_item['header'],
+                        ),
                     )
                 yield tuple(logs)
 
@@ -194,12 +195,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             response = await self.query_worker(query, current_level)
 
             for level_item in response:
-                level = level_item['header']['number']
-                timestamp = level_item['header']['timestamp']
-                current_level = level + 1
+                current_level = level_item['header']['number'] + 1
                 transactions: deque[SubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
-                    transaction = SubsquidTransactionData.from_json(raw_transaction, level, timestamp)
+                    transaction = SubsquidTransactionData.from_json(
+                        transaction_json=raw_transaction,
+                        header=level_item['header'],
+                    )
                     # NOTE: `None` falue is for chains and block ranges not compliant with the post-Byzantinum
                     # hard fork EVM specification (e.g. before 4.370,000 on Ethereum).
                     if transaction.status != 0:
