@@ -90,7 +90,6 @@ async def get_transaction_filters(
                 if code_hash := pattern_config.destination.resolved_code_hash:
                     hashes.add(code_hash)
 
-    _logger.info('Fetching transactions from %s addresses and %s code hashes', len(addresses), len(hashes))
     return addresses, hashes
 
 
@@ -127,7 +126,6 @@ async def get_origination_filters(
                 if code_hash := pattern_config.source.resolved_code_hash:
                     raise FrameworkException('Invalid transaction filter `source.code_hash`')
 
-    _logger.info('Fetching originations from %s addresses and %s code hashes', len(addresses), len(hashes))
     return addresses, hashes
 
 
