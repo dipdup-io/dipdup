@@ -24,7 +24,7 @@ from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 
-SUBSQUID_READAHEAD_LIMIT = 5000
+SUBSQUID_READAHEAD_LIMIT = 10000
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)

@@ -85,6 +85,7 @@ class TraceFieldSelection(TypedDict, total=False):
     callInput: bool
     callResultGasUsed: bool
     callResultOutput: bool
+    callSighash: bool
     callTo: bool
     callType: bool
     callValue: bool
@@ -96,6 +97,7 @@ class TraceFieldSelection(TypedDict, total=False):
     createResultGasUsed: bool
     createValue: bool
     error: bool
+    revertReason: bool
     rewardAuthor: bool
     rewardType: bool
     rewardValue: bool
@@ -105,7 +107,6 @@ class TraceFieldSelection(TypedDict, total=False):
     suicideRefundAddress: bool
     traceAddress: bool
     transactionIndex: bool
-    type: bool
 
 
 class StateDiffFieldSelection(TypedDict, total=False):
@@ -126,15 +127,22 @@ class FieldSelection(TypedDict, total=False):
 
 
 class LogRequest(TypedDict, total=False):
-    address: NotRequired[list[str]]
-    topic0: NotRequired[list[str]]
+    address: list[str]
+    topic0: list[str]
+    topic1: list[str]
+    topic2: list[str]
+    topic3: list[str]
     transaction: bool
+    transactionLogs: bool
+    transactionTraces: bool
 
 
 TransactionRequest = TypedDict(
     'TransactionRequest',
     {
+        'firstNonce': int,
         'from': list[str],
+        'lastNonce': int,
         'logs': bool,
         'sighash': list[str],
         'stateDiffs': bool,
@@ -150,10 +158,13 @@ class TraceRequest(TypedDict, total=False):
     callSighash: list[str]
     callTo: list[str]
     createFrom: list[str]
+    createResultAddress: list[str]
+    parents: bool
     rewardAuthor: list[str]
     subtraces: bool
     suicideRefundAddress: list[str]
     transaction: bool
+    transactionLogs: bool
     type: list[str]
 
 
@@ -170,9 +181,10 @@ class Query(TypedDict):
     includeAllBlocks: NotRequired[bool]
     logs: NotRequired[list[LogRequest]]
     stateDiffs: NotRequired[list[StateDiffRequest]]
-    toBlock: NotRequired[int]
+    toBlock: int
     traces: NotRequired[list[TraceRequest]]
     transactions: NotRequired[list[TransactionRequest]]
+    type: NotRequired[str]
 
 
 class SubsquidMessageType(MessageType, Enum):
@@ -185,6 +197,7 @@ class SubsquidMessageType(MessageType, Enum):
 @dataclass(frozen=True)
 class SubsquidEventData(HasLevel):
     address: str
+    block_hash: str
     data: str
     level: int
     log_index: int
@@ -197,15 +210,15 @@ class SubsquidEventData(HasLevel):
     def from_json(
         cls,
         event_json: dict[str, Any],
-        level: int,
-        timestamp: int,
+        header: dict[str, Any],
     ) -> 'SubsquidEventData':
         return SubsquidEventData(
             address=event_json['address'],
+            block_hash=header['hash'],
             data=event_json['data'],
-            level=level,
+            level=header['number'],
             log_index=event_json['logIndex'],
-            timestamp=timestamp,
+            timestamp=header['timestamp'],
             topics=tuple(event_json['topics']),
             transaction_hash=event_json['transactionHash'],
             transaction_index=event_json['transactionIndex'],
@@ -218,9 +231,10 @@ class SubsquidTraceData(HasLevel): ...
 
 @dataclass(frozen=True)
 class SubsquidTransactionData(HasLevel):
+    block_hash: str
     chain_id: int | None
-    cumulative_gas_used: int | None
     contract_address: str | None
+    cumulative_gas_used: int | None
     effective_gas_price: int | None
     from_: str
     gas: int
@@ -248,8 +262,7 @@ class SubsquidTransactionData(HasLevel):
     def from_json(
         cls,
         transaction_json: dict[str, Any],
-        level: int,
-        timestamp: int,
+        header: dict[str, Any],
     ) -> 'SubsquidTransactionData':
         cumulative_gas_used = (
             int(transaction_json['cumulativeGasUsed'], 16) if transaction_json['cumulativeGasUsed'] else None
@@ -264,9 +277,10 @@ class SubsquidTransactionData(HasLevel):
         v = int(transaction_json['v'], 16) if transaction_json['v'] else None
         y_parity = bool(int(transaction_json['yParity'], 16)) if transaction_json['yParity'] else None
         return SubsquidTransactionData(
+            block_hash=header['hash'],
             chain_id=transaction_json['chainId'],
-            cumulative_gas_used=cumulative_gas_used,
             contract_address=transaction_json['contractAddress'],
+            cumulative_gas_used=cumulative_gas_used,
             effective_gas_price=effective_gas_price,
             from_=transaction_json['from'],
             gas=int(transaction_json['gas'], 16),
@@ -274,7 +288,7 @@ class SubsquidTransactionData(HasLevel):
             gas_used=int(transaction_json['gasUsed'], 16),
             hash=transaction_json['hash'],
             input=transaction_json['input'],
-            level=level,
+            level=header['number'],
             max_fee_per_gas=max_fee_per_gas,
             max_priority_fee_per_gas=max_priority_fee_per_gas,
             nonce=transaction_json['nonce'],
@@ -282,7 +296,7 @@ class SubsquidTransactionData(HasLevel):
             s=transaction_json['s'],
             sighash=transaction_json['sighash'],
             status=transaction_json['status'],
-            timestamp=timestamp,
+            timestamp=header['timestamp'],
             to=transaction_json['to'],
             transaction_index=transaction_json['transactionIndex'],
             type=transaction_json['type'],
