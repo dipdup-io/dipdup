@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- tezos.tzkt.operations: Fixed missing operations when handler pattern contains item without entrypoint.
+
 ## [7.5.2] - 2024-03-20
 
 ### Fixed

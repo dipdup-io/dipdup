@@ -35,7 +35,6 @@ class OperationSubgroup:
     hash: str
     counter: int
     operations: tuple[TzktOperationData, ...]
-    entrypoints: set[str | None]
 
 
 OperationsHandlerArgumentU = (

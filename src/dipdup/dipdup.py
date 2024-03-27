@@ -96,7 +96,7 @@ class IndexDispatcher:
         self._ctx = ctx
         self._indexes: dict[str, Index[Any, Any, Any]] = {}
         # FIXME: Tezos-specific
-        self._entrypoint_filter: set[str | None] = set()
+        self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
         # NOTE: Monitoring purposes

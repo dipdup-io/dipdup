@@ -100,8 +100,8 @@ async def assert_run_dex() -> None:
     async with in_transaction() as conn:
         symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
     assert symbols == 2
-    assert trades == 56
-    assert positions == 133
+    assert trades == 55
+    assert positions == 125
 
 
 async def assert_run_domains() -> None:
