@@ -22,9 +22,7 @@ async def on_fa2_tez_to_token(
     assert tez_to_token_payment.data.amount is not None
     token_quantity = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10**decimals)
     tez_quantity = Decimal(tez_to_token_payment.data.amount) / (10**6)
-    if min_token_quantity > token_quantity:
-        ctx.logger.warning('output is lower than `min_out` (%s > %s)', min_token_quantity, token_quantity)
-        return
+    assert min_token_quantity <= token_quantity, tez_to_token_payment.data.hash
 
     trade = models.Trade(
         symbol=symbol,
