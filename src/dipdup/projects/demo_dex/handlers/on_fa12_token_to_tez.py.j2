@@ -24,9 +24,7 @@ async def on_fa12_token_to_tez(
     token_quantity = Decimal(token_to_tez_payment.parameter.amount) / (10**decimals)
     assert transaction_0.amount is not None
     tez_quantity = Decimal(transaction_0.amount) / (10**6)
-    if min_tez_quantity > tez_quantity:
-        ctx.logger.warning('output is lower than `min_out` (%s > %s)', min_tez_quantity, tez_quantity)
-        return
+    assert min_tez_quantity <= tez_quantity, token_to_tez_payment.data.hash
 
     trade = models.Trade(
         symbol=symbol,
