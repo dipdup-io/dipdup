@@ -38,6 +38,7 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
@@ -46,9 +47,8 @@ from dipdup.utils import write
 
 
 def match_entrypoint_schema(entrypoint_name: str, entrypoint_schemas: list[dict[str, Any]]) -> dict[str, Any]:
-    if entrypoint_name == 'default' and len(entrypoint_schemas) == 1:
+    if entrypoint_name == DEFAULT_ENTRYPOINT and len(entrypoint_schemas) == 1:
         return entrypoint_schemas[0]['parameterSchema']  # type: ignore[no-any-return]
-
     return next(ep['parameterSchema'] for ep in entrypoint_schemas if ep['name'] == entrypoint_name)
 
 
