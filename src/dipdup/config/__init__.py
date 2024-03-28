@@ -24,7 +24,6 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
-from dataclasses import field
 from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
@@ -349,6 +348,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
 
     :param callback: Callback name
     """
+
     def __post_init__(self) -> None:
         CallbackMixin.__post_init__(self)
         ParentMixin.__post_init__(self)

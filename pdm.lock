@@ -5,7 +5,7 @@
 groups = ["default", "docs", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:064750e9326e8f37283472085a13719fe7d7198369b85af86cc4cad893f4395b"
+content_hash = "sha256:811d1a9fdcb961e4b9e9ce186f960f8867334a79a6a3b9c70ea02186fe7d6396"
 
 [[package]]
 name = "aiohttp"
@@ -467,16 +467,6 @@ files = [
     {file = "datamodel_code_generator-0.25.5-py3-none-any.whl", hash = "sha256:3b62b42c8ebf2bb98cfbc24467b523c5b76780c585b72f4ac2fc1f1f576702ab"},
     {file = "datamodel_code_generator-0.25.5.tar.gz", hash = "sha256:545f897481a94781e32b3c26a452ce049320b091310729f7fc6fa780f6a87898"},
 ]
-
-[[package]]
-name = "dc-schema"
-version = "0.0.8"
-requires_python = "<4.0,>=3.9"
-git = "https://github.com/dipdup-io/dc_schema.git"
-ref = "pydantic-dc"
-revision = "6ed9a0cac3e1c43a2cc702e920d501493f9827d3"
-summary = "Generate JSON schema from python dataclasses"
-groups = ["docs"]
 
 [[package]]
 name = "dnspython"
