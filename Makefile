@@ -31,10 +31,10 @@ black:          ## Format with black
 	black ${SOURCE}
 
 ruff:           ## Lint with ruff
-	ruff check --fix ${SOURCE}
+	ruff check --fix --unsafe-fixes ${SOURCE}
 
 mypy:           ## Lint with mypy
-	mypy --no-incremental --exclude ${PACKAGE} ${SOURCE}
+	mypy ${SOURCE}
 
 ##
 
@@ -49,11 +49,15 @@ demos:          ## Recreate demo projects from templates
 	pdm run format
 	pdm run lint
 
+docs: docs_build
+
 docs_build:     ## Build docs
 	python scripts/docs.py check-links --source docs
-	python scripts/docs.py markdownlint
 	python scripts/docs.py dump-references
+	python scripts/docs.py dump-demos
 	python scripts/docs.py dump-jsonschema
+	python scripts/docs.py merge-changelog
+	python scripts/docs.py markdownlint
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs
 
 docs_serve:     ## Build docs and start frontend server
@@ -77,5 +81,5 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make demos
 	make test
 	make docs_build
-	echo "🎉 Commit changes, merge `aux/X.Y.Z`, run 'git checkout next && git pull && git tag X.Y.Z && git push origin X.Y.Z'" 
+	echo "🎉 Commit changes, merge aux/X.Y.Z branch, tag release on next"
 ##

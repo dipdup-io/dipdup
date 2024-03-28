@@ -4,7 +4,6 @@ import asyncio
 import importlib
 import os
 import sys
-from collections import deque
 from contextlib import AsyncExitStack
 from contextlib import contextmanager
 from contextlib import suppress
@@ -26,6 +25,8 @@ from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
@@ -117,7 +118,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (dev only)
+    :param transactions: Transaction manager (don't use it directly)
     :param logger: Context-aware logger instance
     """
 
@@ -134,8 +135,8 @@ class DipDupContext:
         self.transactions = transactions
 
         self.logger = FormattedLogger('dipdup.context')
-        self._pending_indexes: deque[Any] = deque()
-        self._pending_hooks: deque[Awaitable[None]] = deque()
+        self._pending_indexes: asyncio.Queue[Any] = asyncio.Queue()
+        self._pending_hooks: asyncio.Queue[Awaitable[None]] = asyncio.Queue()
         self._rolled_back_indexes: set[str] = set()
         self._handlers: dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: dict[str, HookConfig] = {}
@@ -243,6 +244,8 @@ class DipDupContext:
                 typename=typename,
             )
         elif kind == 'evm':
+            if address is None:
+                raise ConfigurationError('EVM contract address is required')
             contract_config = EvmContractConfig(
                 kind=kind,
                 address=address,
@@ -294,6 +297,8 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
+        from dipdup.indexes.evm_subsquid_traces.index import SubsquidTracesIndex
+        from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
@@ -310,6 +315,8 @@ class DipDupContext:
             | TzktTokenTransfersIndex
             | TzktEventsIndex
             | SubsquidEventsIndex
+            | SubsquidTracesIndex
+            | SubsquidTransactionsIndex
         )
 
         datasource_name = index_config.datasource.name
@@ -340,6 +347,14 @@ class DipDupContext:
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
             index = SubsquidEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            datasource = self.get_subsquid_datasource(datasource_name)
+            node_field = index_config.datasource.node
+            if node_field:
+                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
+            index = SubsquidTransactionsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
@@ -358,7 +373,7 @@ class DipDupContext:
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
-        self._pending_indexes.append(index)
+        self._pending_indexes.put_nowait(index)
         return index
 
     # TODO: disable_index(name: str)
@@ -442,19 +457,31 @@ class DipDupContext:
         raise ConfigurationError(f'`{name}` datasource is neither `evm.node` nor `evm.subsquid`')
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
-        """Get `coinbase` datasource by name"""
+        """Get `coinbase` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, CoinbaseDatasource)
 
     def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
-        """Get `metadata` datasource by name"""
+        """Get `metadata` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
-        """Get `ipfs` datasource by name"""
+        """Get `ipfs` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, IpfsDatasource)
 
     def get_http_datasource(self, name: str) -> HttpDatasource:
-        """Get `http` datasource by name"""
+        """Get `http` datasource by name
+
+        :param name: Name of the datasource
+        """
         return self._get_datasource(name, HttpDatasource)
 
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
@@ -497,11 +524,9 @@ class DipDupContext:
         await Index.filter(name=index).update(level=to_level)
         self._rolled_back_indexes.add(index)
 
-    async def _hooks_loop(self, interval: int) -> None:
+    async def _hooks_loop(self) -> None:
         while True:
-            while self._pending_hooks:
-                await self._pending_hooks.popleft()
-            await asyncio.sleep(interval)
+            await self._pending_hooks.get()
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         if not handler_config.parent:
@@ -582,7 +607,7 @@ class DipDupContext:
                 await fn(new_ctx, *args, **kwargs)
 
         coro = _wrapper()
-        await coro if wait else self._pending_hooks.append(coro)
+        await coro if wait else self._pending_hooks.put_nowait(coro)
 
     async def execute_sql(
         self,
@@ -655,6 +680,11 @@ class DipDupContext:
 class HookContext(DipDupContext):
     """Execution context of hook callbacks.
 
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (don't use it directly)
+    :param logger: Context-aware logger instance
     :param hook_config: Configuration of the current hook
     """
 
@@ -710,6 +740,11 @@ class _TemplateValues(dict[str, Any]):
 class HandlerContext(DipDupContext):
     """Execution context of handler callbacks.
 
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (don't use it directly)
+    :param logger: Context-aware logger instance
     :param handler_config: Configuration of the current handler
     :param datasource: Index datasource instance
     """

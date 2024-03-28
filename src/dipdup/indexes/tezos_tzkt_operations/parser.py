@@ -1,4 +1,3 @@
-from collections.abc import Hashable
 from collections.abc import Iterable
 from contextlib import suppress
 from functools import lru_cache
@@ -24,11 +23,9 @@ StorageType = TypeVar('StorageType', bound=BaseModel)
 
 IntrospectionError = (KeyError, IndexError, AttributeError)
 
-T = TypeVar('T', Hashable, type[BaseModel])
 
-
-def extract_root_outer_type(storage_type: type[BaseModel]) -> T:  # type: ignore[type-var]
-    """Extract Pydantic root type"""
+def extract_root_outer_type(storage_type: type[BaseModel]) -> type[BaseModel]:
+    """Extract Pydantic __root__ type"""
     root_field = storage_type.model_fields['root']
     if not root_field.is_required():
         # NOTE: Optional is a magic _SpecialForm
@@ -132,9 +129,12 @@ def _apply_bigmap_diffs(
     return dict_storage
 
 
-def _process_storage(storage: Any, storage_type: T, bigmap_diffs: dict[int, Iterable[dict[str, Any]]]) -> Any:
+def _process_storage(
+    storage: Any,
+    storage_type: type[Any],
+    bigmap_diffs: dict[int, Iterable[dict[str, Any]]],
+) -> Any:
     """Replace bigmap pointers with actual data from diffs"""
-    storage_type = cast(type[BaseModel], storage_type)  # type: ignore[redundant-cast]
     # NOTE: First, check if the type is a Union. Remember, Optional is a Union too.
     is_union, arg_types = unwrap_union_type(storage_type)
     if is_union:

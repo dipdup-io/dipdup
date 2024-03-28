@@ -1,7 +1,6 @@
 import logging
 from collections import defaultdict
 from collections import deque
-from collections.abc import Coroutine
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
@@ -29,24 +28,25 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import OperationsHandlerArgume
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
+from dipdup.models import RollbackMessage
+from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
 
-OperationQueueItem = tuple[OperationSubgroup, ...] | TzktRollbackMessage
+QueueItem = tuple[OperationSubgroup, ...] | RollbackMessage
 
 
-def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str | None]:
+def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str]:
     """Set of entrypoints to filter operations with before an actual matching"""
     entrypoints = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
             if not isinstance(pattern_config, TransactionPatternConfig):
                 continue
-            entrypoints.add(pattern_config.entrypoint)
+            entrypoints.add(pattern_config.entrypoint or DEFAULT_ENTRYPOINT)
 
     return entrypoints
 
@@ -102,7 +102,7 @@ def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[i
 def extract_operation_subgroups(
     operations: Iterable[TzktOperationData],
     addresses: set[str],
-    entrypoints: set[str | None],
+    entrypoints: set[str],
     code_hashes: set[int],
 ) -> Iterator[OperationSubgroup]:
     filtered: int = 0
@@ -113,7 +113,8 @@ def extract_operation_subgroups(
     for _operation_index, op in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if op.type == 'transaction':
-            if entrypoints and op.entrypoint not in entrypoints:
+            entrypoint = op.entrypoint or DEFAULT_ENTRYPOINT
+            if entrypoints and entrypoint not in entrypoints:
                 filtered += 1
                 continue
 
@@ -141,17 +142,15 @@ def extract_operation_subgroups(
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
-        entrypoints = {op.entrypoint for op in operations}
         yield OperationSubgroup(
             hash=hash_,
             counter=counter,
             operations=tuple(operations),
-            entrypoints=entrypoints,
         )
 
 
 class TzktOperationsIndex(
-    TzktIndex[TzktOperationsIndexConfigU, OperationQueueItem],
+    TzktIndex[TzktOperationsIndexConfigU, QueueItem],
     message_type=TzktMessageType.operation,
 ):
     def __init__(
@@ -161,14 +160,11 @@ class TzktOperationsIndex(
         datasource: TzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self._entrypoint_filter: set[str | None] = set()
+        self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
 
-    def push_operations(self, operation_subgroups: OperationQueueItem) -> None:
-        self.push_realtime_message(operation_subgroups)
-
-    async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
+    async def get_filters(self) -> tuple[set[str], set[str], set[int]]:
         if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
             return set(), set(), set()
 
@@ -183,15 +179,15 @@ class TzktOperationsIndex(
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
-    # FIXME: Use method from TzktIndex
+    # FIXME: Use method from Index
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
 
         while self._queue:
             message = self._queue.popleft()
-            if isinstance(message, TzktRollbackMessage):
-                await self._tzkt_rollback(message.from_level, message.to_level)
+            if isinstance(message, RollbackMessage):
+                await self._rollback(message.from_level, message.to_level)
                 continue
 
             messages_left = len(self._queue)
@@ -253,7 +249,7 @@ class TzktOperationsIndex(
 
         await self._exit_sync_state(sync_level)
 
-    # FIXME: Use method from TzktIndex
+    # FIXME: Use method from Index
     async def _process_level_operations(
         self,
         operation_subgroups: tuple[OperationSubgroup, ...],
@@ -320,8 +316,6 @@ class TzktOperationsIndex(
             *args,
         )
 
+    # FIXME: Use method from Index
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
-        raise NotImplementedError
-
-    def _process_level_data(self, level_data: OperationQueueItem, sync_level: int) -> Coroutine[Any, Any, None]:
         raise NotImplementedError

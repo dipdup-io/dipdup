@@ -38,6 +38,7 @@ from dipdup.datasources.tezos_tzkt import TzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
@@ -46,9 +47,8 @@ from dipdup.utils import write
 
 
 def match_entrypoint_schema(entrypoint_name: str, entrypoint_schemas: list[dict[str, Any]]) -> dict[str, Any]:
-    if entrypoint_name == 'default' and len(entrypoint_schemas) == 1:
+    if entrypoint_name == DEFAULT_ENTRYPOINT and len(entrypoint_schemas) == 1:
         return entrypoint_schemas[0]['parameterSchema']  # type: ignore[no-any-return]
-
     return next(ep['parameterSchema'] for ep in entrypoint_schemas if ep['name'] == entrypoint_name)
 
 
@@ -107,17 +107,16 @@ class TzktCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         pass
 
-    async def generate_schemas(self, force: bool = False) -> None:
+    async def generate_schemas(self) -> None:
         """Fetch JSONSchemas for all contracts used in config"""
+        self._cleanup_schemas()
+
         self._logger.info('Fetching contract schemas')
         await late_tzkt_initialization(
             config=self._config,
             datasources=self._datasources,
             reindex_fn=None,
         )
-
-        if force:
-            self._cleanup_schemas()
 
         unused_operation_templates = [
             t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)

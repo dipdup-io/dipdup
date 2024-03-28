@@ -1,6 +1,9 @@
 {
     "yaml.schemas": {
-        "schema.json": "**/dipdup*.y*ml"
+        "schema.json": [
+            "**/dipdup*.y[a]ml",
+            "tests/configs/*.yml"
+        ],
     },
     "files.associations": {
         "*.env.default": "shellscript"

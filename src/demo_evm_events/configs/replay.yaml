@@ -7,7 +7,7 @@ replay:
   template: demo_evm_events
   package: demo_evm_events
   version: 0.0.1
-  description: A very basic indexer for USDt transfers
+  description: ERC-20 token transfers (from event logs)
   license: MIT
   name: John Doe
   email: john_doe@example.com

@@ -20,7 +20,7 @@ async def on_update_records(
 
     level = store_records.value.level
     if len(record_path) != int(level):
-        ctx.logger.error('`%s`: expected %s chunks, got %s', record_name, level, len(record_path))
+        ctx.logger.warning('`%s`: expected %s chunks, got %s', record_name, level, len(record_path))
         return
 
     if level == '1':

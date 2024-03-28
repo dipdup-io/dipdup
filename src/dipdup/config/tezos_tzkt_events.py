@@ -75,7 +75,7 @@ TzktEventsHandlerConfigU = TzktEventsHandlerConfig | TzktEventsUnknownEventHandl
 class TzktEventsIndexConfig(TzktIndexConfig):
     """Event index config
 
-    :param kind: always `tezos.tzkt.events`
+    :param kind: always 'tezos.tzkt.events'
     :param datasource: Datasource config
     :param handlers: Event handlers
     :param first_level: First block level to index

@@ -125,13 +125,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidEventsIndexConfig"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/TzktBigMapsIndexConfig"
               }
             ]
@@ -175,6 +168,27 @@
             "allOf": [
               {
                 "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTracesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
               }
             ]
           },
@@ -195,13 +209,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidEventsIndexConfig"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "$ref": "#/$defs/TzktBigMapsIndexConfig"
               }
             ]
@@ -245,6 +252,27 @@
             "allOf": [
               {
                 "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTracesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
               }
             ]
           }
@@ -483,6 +511,17 @@
           ],
           "default": null
         },
+        "polling_interval": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "replay_path": {
           "anyOf": [
             {
@@ -692,7 +731,15 @@
           "type": "string"
         },
         "ws_url": {
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "http": {
           "anyOf": [
@@ -716,8 +763,7 @@
       },
       "required": [
         "kind",
-        "url",
-        "ws_url"
+        "url"
       ]
     },
     "SubsquidDatasourceConfig": {
@@ -793,7 +839,8 @@
         "mainnet",
         "ghostnet",
         "mumbainet",
-        "nairobinet"
+        "nairobinet",
+        "oxfordnet"
       ]
     },
     "TzipMetadataDatasourceConfig": {
@@ -1054,119 +1101,6 @@
       },
       "required": [
         "kind"
-      ]
-    },
-    "SubsquidEventsHandlerConfig": {
-      "type": "object",
-      "title": "SubsquidEventsHandlerConfig",
-      "properties": {
-        "callback": {
-          "type": "string"
-        },
-        "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/EvmContractConfig"
-                }
-              ]
-            }
-          ]
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "callback",
-        "contract",
-        "name"
-      ]
-    },
-    "AbiDatasourceConfig": {
-      "type": "object",
-      "title": "AbiDatasourceConfig",
-      "properties": {}
-    },
-    "SubsquidEventsIndexConfig": {
-      "type": "object",
-      "title": "SubsquidEventsIndexConfig",
-      "properties": {
-        "kind": {
-          "enum": [
-            "evm.subsquid.events"
-          ]
-        },
-        "datasource": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/SubsquidDatasourceConfig"
-                }
-              ]
-            }
-          ]
-        },
-        "handlers": {
-          "type": "array",
-          "items": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/SubsquidEventsHandlerConfig"
-              }
-            ]
-          }
-        },
-        "abi": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/AbiDatasourceConfig"
-                }
-              ]
-            },
-            {
-              "type": "array",
-              "items": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/AbiDatasourceConfig"
-                  }
-                ]
-              }
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "node_only": {
-          "type": "boolean",
-          "default": false
-        },
-        "first_level": {
-          "type": "integer",
-          "default": 0
-        },
-        "last_level": {
-          "type": "integer",
-          "default": 0
-        }
-      },
-      "required": [
-        "kind",
-        "datasource",
-        "handlers"
       ]
     },
     "TzktBigMapsHandlerConfig": {
@@ -2013,6 +1947,344 @@
         "datasource"
       ]
     },
+    "SubsquidEventsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidEventsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "name"
+      ]
+    },
+    "AbiDatasourceConfig": {
+      "type": "object",
+      "title": "AbiDatasourceConfig",
+      "properties": {}
+    },
+    "SubsquidEventsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidEventsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.events"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "node_only": {
+          "type": "boolean",
+          "default": false
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
+    "SubsquidTracesHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidTracesHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback"
+      ]
+    },
+    "SubsquidTracesIndexConfig": {
+      "type": "object",
+      "title": "SubsquidTracesIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.traces"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTracesHandlerConfig"
+              }
+            ]
+          }
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "node_only": {
+          "type": "boolean",
+          "default": false
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
+    "SubsquidTransactionsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidTransactionsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string"
+        },
+        "from_": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "callback"
+      ]
+    },
+    "SubsquidTransactionsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidTransactionsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.transactions"
+          ]
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            }
+          ]
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsHandlerConfig"
+              }
+            ]
+          }
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "node_only": {
+          "type": "boolean",
+          "default": false
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ]
+    },
     "IndexTemplateConfig": {
       "type": "object",
       "title": "IndexTemplateConfig",
@@ -2144,7 +2416,7 @@
         },
         "select_limit": {
           "type": "integer",
-          "default": 100
+          "default": 1000
         },
         "allow_aggregations": {
           "type": "boolean",
@@ -2266,6 +2538,10 @@
       "type": "object",
       "title": "ApiConfig",
       "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1"
+        },
         "port": {
           "type": "integer",
           "default": 46339

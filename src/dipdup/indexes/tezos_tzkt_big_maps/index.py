@@ -10,24 +10,20 @@ from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
+from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import TzktBigMapAction
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBigMapDiff
 from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 
-BigMapQueueItem = tuple[TzktBigMapData, ...] | TzktRollbackMessage
+QueueItem = tuple[TzktBigMapData, ...] | RollbackMessage
 
 
 class TzktBigMapsIndex(
-    TzktIndex[TzktBigMapsIndexConfig, BigMapQueueItem],
+    TzktIndex[TzktBigMapsIndexConfig, QueueItem],
     message_type=TzktMessageType.big_map,
 ):
-    def push_big_maps(self, big_maps: BigMapQueueItem) -> None:
-        """Push big map diffs to queue"""
-        self.push_realtime_message(big_maps)
-
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
         index_level = await self._enter_sync_state(sync_level)

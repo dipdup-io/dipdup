@@ -34,7 +34,8 @@ class HeadHandlerConfig(HandlerConfig):
 class TzktHeadIndexConfig(TzktIndexConfig):
     """Head block index config
 
-    :param kind: always `tezos.tzkt.head`
+    :param kind: always 'tezos.tzkt.head'
+    :param callback: Callback name
     :param datasource: Index datasource to receive head blocks
     :param handlers: Mapping of head block handlers
     """

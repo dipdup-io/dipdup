@@ -1,5 +1,5 @@
 spec_version: 2.0
 replay:
-  description: Process raw operations without filtering and strict typing
+  description: Process raw operations without filtering and typed payloads
   package: demo_raw
   template: demo_raw

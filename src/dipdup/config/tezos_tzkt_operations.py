@@ -49,7 +49,7 @@ class SubgroupIndexMixin:
         self._subgroup_index = value
 
 
-class PatternConfig(CodegenMixin):
+class TezosPatternConfig(CodegenMixin):
     """Base class for pattern config items.
 
     Contains methods for import and method signature generation during handler callbacks codegen.
@@ -128,8 +128,8 @@ class PatternConfig(CodegenMixin):
 
 
 @dataclass
-class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixin):
-    """Operation handler pattern config
+class OperationsHandlerTransactionPatternConfig(TezosPatternConfig, SubgroupIndexMixin):
+    """Transaction handler pattern config
 
     :param type: always 'transaction'
     :param source: Match operations by source contract alias
@@ -188,7 +188,7 @@ class OperationsHandlerTransactionPatternConfig(PatternConfig, SubgroupIndexMixi
 
 
 @dataclass
-class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixin):
+class OperationsHandlerOriginationPatternConfig(TezosPatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -237,7 +237,7 @@ class OperationsHandlerOriginationPatternConfig(PatternConfig, SubgroupIndexMixi
 
 
 @dataclass
-class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIndexMixin):
+class OperationsHandlerSmartRollupExecutePatternConfig(TezosPatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
     :param type: always 'sr_execute'
@@ -277,7 +277,7 @@ class OperationsHandlerSmartRollupExecutePatternConfig(PatternConfig, SubgroupIn
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `tezos.tzkt.operations`
+    :param kind: always 'tezos.tzkt.operations'
     :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
@@ -390,7 +390,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig):
 class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
-    :param kind: always `tezos.tzkt.operations_unfiltered`
+    :param kind: always 'tezos.tzkt.operations_unfiltered'
     :param datasource: Alias of index datasource in `datasources` section
     :param callback: Callback name
     :param types: Types of transaction to fetch

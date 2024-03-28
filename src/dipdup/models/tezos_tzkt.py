@@ -17,6 +17,8 @@ from dipdup.fetcher import HasLevel
 from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 
+DEFAULT_ENTRYPOINT = 'default'
+
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -34,7 +36,13 @@ class TzktTokenStandard(Enum):
 
 
 class TzktOperationType(Enum):
-    """Type of blockchain operation"""
+    """Type of blockchain operation
+
+    :param transaction: transaction
+    :param origination: origination
+    :param migration: migration
+    :param sr_execute: sr_execute
+    """
 
     transaction = 'transaction'
     origination = 'origination'
@@ -235,7 +243,7 @@ class TzktOperationData(HasLevel):
         if target_json.get('address', '').startswith('KT1'):
             # NOTE: TzKT returns None for `default` entrypoint
             if entrypoint is None:
-                entrypoint = 'default'
+                entrypoint = DEFAULT_ENTRYPOINT
 
                 # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
                 if parameter is None:
@@ -714,9 +722,3 @@ class TzktEvent(Generic[EventType]):
 class TzktUnknownEvent:
     data: TzktEventData
     payload: Any | None
-
-
-@dataclass(frozen=True)
-class TzktRollbackMessage:
-    from_level: int
-    to_level: int

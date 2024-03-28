@@ -69,7 +69,7 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
 class TzktBigMapsIndexConfig(TzktIndexConfig):
     """Big map index config
 
-    :param kind: always `tezos.tzkt.big_maps`
+    :param kind: always 'tezos.tzkt.big_maps'
     :param datasource: Index datasource to fetch big maps with
     :param handlers: Mapping of big map diff handlers
     :param skip_history: Fetch only current big map keys ignoring historical changes

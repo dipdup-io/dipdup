@@ -24,6 +24,10 @@ if TYPE_CHECKING:
 class HasLevel(Protocol):
     level: int
 
+    @property
+    def block_number(self) -> int:
+        return self.level
+
 
 Level = int
 FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)
@@ -132,6 +136,8 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
 
 
 class DataFetcher(ABC, Generic[FetcherBufferT]):
+    """Fetches contract data from REST API, merges them and yields by level."""
+
     def __init__(
         self,
         datasource: IndexDatasource[Any],
@@ -145,4 +151,9 @@ class DataFetcher(ABC, Generic[FetcherBufferT]):
         self._head = 0
 
     @abstractmethod
-    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]: ...
+    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+        """Iterate over events data from REST.
+
+        Resulting data is splitted by level, deduped, sorted and ready to be processed by TzktEventsIndex.
+        """
+        ...

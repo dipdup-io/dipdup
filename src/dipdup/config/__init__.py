@@ -24,6 +24,8 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
+from dataclasses import field
+from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
 from typing import Any
@@ -53,7 +55,6 @@ from dipdup.yaml import DipDupYAMLConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
     from dipdup.subscriptions import Subscription
 
@@ -163,7 +164,8 @@ class HttpConfig:
     :param connection_limit: Number of simultaneous connections
     :param connection_timeout: Connection timeout in seconds
     :param request_timeout: Request timeout in seconds
-    :param batch_size: Number of items fetched in a single paginated request
+    :param batch_size: Number of items fetched in a single paginated request (when applicable)
+    :param polling_interval: Interval between polling requests in seconds (when applicable)
     :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
     :param alias: Alias for this HTTP client (dev only)
     """
@@ -178,13 +180,14 @@ class HttpConfig:
     connection_timeout: int | None = None
     request_timeout: int | None = None
     batch_size: int | None = None
+    polling_interval: float | None = None
     replay_path: str | None = None
     alias: str | None = None
 
 
 @dataclass
 class ResolvedHttpConfig:
-    """HTTP client configuration with defaults"""
+    __doc__ = HttpConfig.__doc__
 
     retry_count: int = 10
     retry_sleep: float = 1.0
@@ -195,7 +198,8 @@ class ResolvedHttpConfig:
     connection_limit: int = 100
     connection_timeout: int = 60
     request_timeout: int = 60
-    batch_size: int = 10_000
+    batch_size: int = 10000
+    polling_interval: float = 1.0
     replay_path: str | None = None
     alias: str | None = None
 
@@ -242,17 +246,34 @@ class ContractConfig(ABC, NameMixin):
     def module_name(self) -> str:
         return self.typename or self.name
 
+    @property
+    def module_path(self) -> Path:
+        return Path(*self.module_name.split('.'))
+
 
 class DatasourceConfig(ABC, NameMixin):
+    """Base class for datasource configs
+
+    :param kind: Defined by child class
+    :param url: URL of the API
+    :param http: HTTP connection tunables
+    """
+
     kind: str
     url: str
     http: HttpConfig | None
 
 
-class AbiDatasourceConfig(DatasourceConfig): ...
+class AbiDatasourceConfig(DatasourceConfig):
+    """Provider of EVM contract ABIs. Datasource kind starts with 'abi.'"""
+
+    ...
 
 
-class IndexDatasourceConfig(DatasourceConfig): ...
+class IndexDatasourceConfig(DatasourceConfig):
+    """Datasource that can be used as a primary source of historical data"""
+
+    ...
 
 
 @dataclass
@@ -324,6 +345,10 @@ class CallbackMixin(CodegenMixin):
 
 @dataclass
 class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
+    """Base class for index handlers
+
+    :param callback: Callback name
+    """
     def __post_init__(self) -> None:
         CallbackMixin.__post_init__(self)
         ParentMixin.__post_init__(self)
@@ -333,7 +358,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
 class IndexTemplateConfig(NameMixin):
     """Index template config
 
-    :param kind: always `template`
+    :param kind: always 'template'
     :param values: Values to be substituted in template (`<key>` -> `value`)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
@@ -352,6 +377,7 @@ class IndexTemplateConfig(NameMixin):
 class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
+    :param kind: Defined by child class
     :param datasource: Alias of index datasource in `datasources` section
     """
 
@@ -405,7 +431,7 @@ class HasuraConfig:
     admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
-    select_limit: int = 100
+    select_limit: int = 1000
     allow_aggregations: bool = True
     allow_inconsistent_metadata: bool = False
     camel_case: bool = False
@@ -515,7 +541,7 @@ class HookConfig(CallbackMixin):
 
 @dataclass
 class SystemHookConfig(HookConfig):
-    pass
+    __doc__ = HookConfig.__doc__
 
 
 system_hooks = {
@@ -549,7 +575,13 @@ system_hooks = {
 
 @dataclass
 class ApiConfig:
-    host = '127.0.0.1'
+    """Management API config
+
+    :param host: Host to bind to
+    :param port: Port to bind to
+    """
+
+    host: str = '127.0.0.1'
     port: int = 46339  # dial INDEX 😎
 
 
@@ -557,12 +589,12 @@ class ApiConfig:
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
-    :param reindex: Mapping of reindexing reasons and actions DipDup performs
-    :param scheduler: `apscheduler` scheduler config
-    :param postpone_jobs: Do not start job scheduler until all indexes are in realtime state
-    :param early_realtime: Spawn realtime datasources immediately after startup
-    :param skip_version_check: Do not check for new DipDup versions on startup
-    :param rollback_depth: A number of levels to keep for rollback
+    :param reindex: Mapping of reindexing reasons and actions DipDup performs.
+    :param scheduler: `apscheduler` scheduler config.
+    :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
+    :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
+    :param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.
+    :param rollback_depth: A number of levels to keep for rollback.
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
@@ -981,6 +1013,18 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
+        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            raise NotImplementedError
+
+        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.to, str):
+                    handler_config.to = self.get_evm_contract(handler_config.to)
+
+                if isinstance(handler_config.from_, str):
+                    handler_config.from_ = self.get_evm_contract(handler_config.from_)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1014,6 +1058,8 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -1042,9 +1088,8 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TzktDatasourceConfig
 )
-ResolvedIndexConfigU = (
-    SubsquidEventsIndexConfig
-    | TzktBigMapsIndexConfig
+TzktIndexConfigU = (
+    TzktBigMapsIndexConfig
     | TzktEventsIndexConfig
     | TzktHeadIndexConfig
     | TzktOperationsIndexConfig
@@ -1052,6 +1097,9 @@ ResolvedIndexConfigU = (
     | TzktTokenTransfersIndexConfig
     | TzktTokenBalancesIndexConfig
 )
+SubsquidIndexConfigU = SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
+
+ResolvedIndexConfigU = TzktIndexConfigU | SubsquidIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

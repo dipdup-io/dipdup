@@ -6,20 +6,17 @@ from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_tzkt import TzktIndex
 from dipdup.indexes.tezos_tzkt_token_balances.matcher import match_token_balances
+from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktTokenBalanceData
 
-TokenBalanceQueueItem = tuple[TzktTokenBalanceData, ...] | TzktRollbackMessage
+QueueItem = tuple[TzktTokenBalanceData, ...] | RollbackMessage
 
 
 class TzktTokenBalancesIndex(
-    TzktIndex[TzktTokenBalancesIndexConfig, TokenBalanceQueueItem],
+    TzktIndex[TzktTokenBalancesIndexConfig, QueueItem],
     message_type=TzktMessageType.token_balance,
 ):
-    def push_token_balances(self, token_balances: TokenBalanceQueueItem) -> None:
-        self.push_realtime_message(token_balances)
-
     async def _synchronize(self, sync_level: int) -> None:
         await self._enter_sync_state(sync_level)
         await self._synchronize_actual(sync_level)

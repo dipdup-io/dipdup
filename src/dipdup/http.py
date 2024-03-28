@@ -151,7 +151,6 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         Metrics.set_http_errors_in_row(self._url, 0)
 
         while True:
-            self._logger.debug('HTTP request attempt %s/%s', attempt, last_attempt)
             try:
                 return await self._request(
                     method=method,
@@ -217,7 +216,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         metrics.inc(f'{self._alias}:requests_total', 1.0)
         if not url:
-            url = self._path
+            url = self._path or '/'
         elif url.startswith('http'):
             url = url.replace(self._url, '').rstrip('/')
         else:

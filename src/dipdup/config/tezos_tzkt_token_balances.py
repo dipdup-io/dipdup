@@ -47,7 +47,7 @@ class TzktTokenBalancesHandlerConfig(HandlerConfig):
 class TzktTokenBalancesIndexConfig(TzktIndexConfig):
     """Token balance index config
 
-    :param kind: always `tezos.tzkt.token_balances`
+    :param kind: always 'tezos.tzkt.token_balances'
     :param datasource: Index datasource to use
     :param handlers: Mapping of token transfer handlers
 

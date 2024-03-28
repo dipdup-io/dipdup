@@ -207,6 +207,8 @@ def parse_object(
         return type_(**dict(zip(model_keys, data, strict=True)))
     except ValidationError as e:
         raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e
+    except ValueError as e:
+        raise InvalidDataError(f'Failed to parse: {e}', type_, data) from e
 
 
 def _default_for_decimals(obj: Any) -> Any:
@@ -249,6 +251,6 @@ class Watchdog:
                     self._watchdog.wait(),
                     timeout=self._timeout,
                 )
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 msg = f'Watchdog timeout; no messages received in {self._timeout} seconds'
                 raise FrameworkException(msg) from e

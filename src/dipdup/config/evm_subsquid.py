@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import random
+from abc import ABC
 from typing import Literal
 
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
+from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.exceptions import ConfigurationError
@@ -17,7 +19,7 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'
-    :param url: URL of Subsquid Archives API
+    :param url: URL of Subsquid Network API
     :param node: One or more `evm.node` datasource(s) for the same network
     :param http: HTTP client configuration
     """
@@ -44,5 +46,16 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
     @validator('url')
     def _valid_url(cls, v: str) -> str:
         if not v.startswith(('http', 'https')):
-            raise ConfigurationError('Subsquid API URL must start with http(s)')
+            raise ConfigurationError('Subsquid Network URL must start with http(s)')
         return v
+
+
+@dataclass
+class SubsquidIndexConfig(IndexConfig, ABC):
+    """EVM index that use Subsquid Network as a datasource
+
+    :param kind: starts with 'evm.subsquid'
+    :param datasource: Subsquid datasource config
+    """
+
+    datasource: SubsquidDatasourceConfig

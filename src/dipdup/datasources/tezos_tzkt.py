@@ -34,6 +34,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.models import Head
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
+from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktBlockData
@@ -42,7 +43,6 @@ from dipdup.models.tezos_tzkt import TzktHeadBlockData
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.models.tezos_tzkt import TzktQuoteData
-from dipdup.models.tezos_tzkt import TzktRollbackMessage
 from dipdup.models.tezos_tzkt import TzktSubscription
 from dipdup.models.tezos_tzkt import TzktTokenBalanceData
 from dipdup.models.tezos_tzkt import TzktTokenTransferData
@@ -143,14 +143,12 @@ EVENT_FIELDS = (
 )
 
 
-EmptyCallback = Callable[[], Awaitable[None]]
 HeadCallback = Callable[['TzktDatasource', TzktHeadBlockData], Awaitable[None]]
 OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]], Awaitable[None]]
 TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
 TokenBalancesCallback = Callable[['TzktDatasource', tuple[TzktTokenBalanceData, ...]], Awaitable[None]]
 BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
 EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
-RollbackCallback = Callable[['TzktDatasource', MessageType, int, int], Awaitable[None]]
 
 
 class TzktMessageAction(Enum):
@@ -159,7 +157,7 @@ class TzktMessageAction(Enum):
     REORG = 2
 
 
-MessageData = dict[str, Any] | list[dict[str, Any]] | TzktRollbackMessage
+MessageData = dict[str, Any] | list[dict[str, Any]] | RollbackMessage
 
 
 class BufferedMessage(NamedTuple):
@@ -241,7 +239,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
-        batch_size=10_000,
+        batch_size=10000,
     )
 
     def __init__(
@@ -252,15 +250,12 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
-        self._on_connected_callbacks: set[EmptyCallback] = set()
-        self._on_disconnected_callbacks: set[EmptyCallback] = set()
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_operations_callbacks: set[OperationsCallback] = set()
         self._on_token_transfers_callbacks: set[TokenTransfersCallback] = set()
         self._on_token_balances_callbacks: set[TokenBalancesCallback] = set()
         self._on_big_maps_callbacks: set[BigMapsCallback] = set()
         self._on_events_callbacks: set[EventsCallback] = set()
-        self._on_rollback_callbacks: set[RollbackCallback] = set()
 
         self._signalr_client: SignalRClient | None = None
         self._channel_levels: defaultdict[TzktMessageType, int | None] = defaultdict(lambda: None)
@@ -324,15 +319,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
     def call_on_events(self, fn: EventsCallback) -> None:
         self._on_events_callbacks.add(fn)
-
-    def call_on_rollback(self, fn: RollbackCallback) -> None:
-        self._on_rollback_callbacks.add(fn)
-
-    def call_on_connected(self, fn: EmptyCallback) -> None:
-        self._on_connected_callbacks.add(fn)
-
-    def call_on_disconnected(self, fn: EmptyCallback) -> None:
-        self._on_disconnected_callbacks.add(fn)
 
     async def emit_head(self, head: TzktHeadBlockData) -> None:
         for fn in self._on_head_callbacks:
@@ -1171,7 +1157,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         self._logger.info('Creating SignalR client')
         self._signalr_client = SignalRClient(
-            url=f'{self._http._url}/v1/events',
+            url=f'{self._http._url}/v1/ws',
             max_size=None,
         )
 

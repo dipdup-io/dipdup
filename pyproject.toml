@@ -1,12 +1,16 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "7.3.0"
+version = "7.5.3"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
+]
+maintainers = [
+    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
 ]
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
@@ -29,6 +33,7 @@ keywords = [
     "smart-contracts",
     "tezos",
     "tzkt",
+    "web3",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -57,14 +62,14 @@ dependencies = [
     "APScheduler~=3.8",
     "async-lru~=2.0",
     "asyncclick~=8.0",
-    "eth-abi~=4.0",
+    "eth-abi>=5.0.1,<6",
     "lru-dict~=1.3.0",
     "orjson~=3.9",
     "prometheus-client~=0.17",
     "pyarrow>=14.0.1,<15",
     "pycryptodome~=3.17",
     "pyhumps~=3.0",
-    "pysignalr~=0.2",
+    "pysignalr~=1.0",
     "python-dotenv~=1.0",
     "ruamel.yaml~=0.17",
     "sentry-sdk~=1.29",
@@ -90,17 +95,21 @@ dev = [
     "docker",
     "mypy",
     "pprofile",
-    "pytest",
+    "pytest~=7.4",
     "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-cov",
     "pytest-xdist",
     "ruff",
+    "types-pytz",
+    "types-tabulate",
+]
+docs = [
+    # NOTE: Patched to support nested Pydantic dataclasses.
+    "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",
-    "types-pytz",
-    "types-tabulate",
     "watchdog",
 ]
 
@@ -132,12 +141,14 @@ skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
 ignore = [
     "E402",   # module level import not at top of file
     "E501",   # line too long
     "TCH001", # breaks our runtime Pydantic magic
 ]
-target-version = "py311"
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["dipdup"] }
@@ -161,11 +172,12 @@ exclude_lines = [
     "pragma: no cover",
     "def __repr__",
     "raise NotImplementedError",
-    "raise FrameworkError",
+    "raise FrameworkException",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
     "if TYPE_CHECKING:",
+    "if env.DEBUG:",
 ]
 
 [build-system]

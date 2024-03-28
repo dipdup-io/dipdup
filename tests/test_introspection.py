@@ -123,7 +123,7 @@ def test_is_array() -> None:
 
 
 def test_simple_union_unwrap() -> None:
-    assert unwrap_union_type(str | None) == (True, (str, NoneType))  # type: ignore[arg-type,comparison-overlap]
+    assert unwrap_union_type(str | None) == (True, (str, NoneType))  # type: ignore[arg-type]
     assert unwrap_union_type(int | str) == (True, (int, str))  # type: ignore[arg-type]
 
 
@@ -134,7 +134,7 @@ def test_pydantic_optional_unwrap() -> None:
     class OptionalStr(RootModel[Any]):
         root: str | None
 
-    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
+    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))
     assert unwrap_union_type(UnionIntStr) == (True, (int, str))
 
 

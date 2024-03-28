@@ -1,8 +1,7 @@
 import random
 from datetime import datetime
 from pathlib import Path
-
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 from dipdup.performance import get_stats
 from dipdup.performance import metrics
@@ -24,7 +23,8 @@ class ReportHeader(TypedDict):
 def save_report(package: str, error: Exception | None) -> str:
     """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
 
-    event, content = {}, []
+    event: dict[str, Any] = {}
+    content: list[str] = []
     if error:
         from dipdup.sentry import extract_event
 
