@@ -1,6 +1,6 @@
 # demo_token_transfers
 
-TzBTC FA1.2 token transfers
+FA1.2 token transfers
 
 ## Installation
 

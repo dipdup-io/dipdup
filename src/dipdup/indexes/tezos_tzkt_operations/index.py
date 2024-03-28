@@ -29,6 +29,7 @@ from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_tzkt_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.models import RollbackMessage
+from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos_tzkt import TzktMessageType
 from dipdup.models.tezos_tzkt import TzktOperationData
 from dipdup.prometheus import Metrics
@@ -38,14 +39,14 @@ _logger = logging.getLogger('dipdup.matcher')
 QueueItem = tuple[OperationSubgroup, ...] | RollbackMessage
 
 
-def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str | None]:
+def entrypoint_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[str]:
     """Set of entrypoints to filter operations with before an actual matching"""
     entrypoints = set()
     for handler_config in handlers:
         for pattern_config in handler_config.pattern:
             if not isinstance(pattern_config, TransactionPatternConfig):
                 continue
-            entrypoints.add(pattern_config.entrypoint)
+            entrypoints.add(pattern_config.entrypoint or DEFAULT_ENTRYPOINT)
 
     return entrypoints
 
@@ -101,7 +102,7 @@ def code_hash_filter(handlers: tuple[TzktOperationsHandlerConfig, ...]) -> set[i
 def extract_operation_subgroups(
     operations: Iterable[TzktOperationData],
     addresses: set[str],
-    entrypoints: set[str | None],
+    entrypoints: set[str],
     code_hashes: set[int],
 ) -> Iterator[OperationSubgroup]:
     filtered: int = 0
@@ -112,7 +113,8 @@ def extract_operation_subgroups(
     for _operation_index, op in enumerate(operations):
         # NOTE: Filtering out operations that are not part of any index
         if op.type == 'transaction':
-            if entrypoints and op.entrypoint not in entrypoints:
+            entrypoint = op.entrypoint or DEFAULT_ENTRYPOINT
+            if entrypoints and entrypoint not in entrypoints:
                 filtered += 1
                 continue
 
@@ -140,12 +142,10 @@ def extract_operation_subgroups(
 
     for key, operations in operation_subgroups.items():
         hash_, counter = key
-        entrypoints = {op.entrypoint for op in operations}
         yield OperationSubgroup(
             hash=hash_,
             counter=counter,
             operations=tuple(operations),
-            entrypoints=entrypoints,
         )
 
 
@@ -160,11 +160,11 @@ class TzktOperationsIndex(
         datasource: TzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
-        self._entrypoint_filter: set[str | None] = set()
+        self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
 
-    async def get_filters(self) -> tuple[set[str | None], set[str], set[int]]:
+    async def get_filters(self) -> tuple[set[str], set[str], set[int]]:
         if isinstance(self._config, TzktOperationsUnfilteredIndexConfig):
             return set(), set(), set()
 

@@ -24,7 +24,6 @@ from dipdup.models.evm_subsquid import SubsquidEventData
 from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
-POLL_INTERVAL = 1.0
 LOG_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
@@ -96,7 +95,9 @@ class _SubsquidWorker(Datasource[Any]):
 
 
 class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
-    _default_http_config = HttpConfig()
+    _default_http_config = HttpConfig(
+        polling_interval=1.0,
+    )
 
     def __init__(self, config: SubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
@@ -106,7 +107,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             return
         # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
-            await asyncio.sleep(POLL_INTERVAL)
+            await asyncio.sleep(self._http_config.polling_interval)
             await self.initialize()
 
     async def subscribe(self) -> None:
@@ -165,13 +166,14 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             response = await self.query_worker(query, current_level)
 
             for level_item in response:
-                level = level_item['header']['number']
-                timestamp = level_item['header']['timestamp']
-                current_level = level + 1
+                current_level = level_item['header']['number'] + 1
                 logs: deque[SubsquidEventData] = deque()
                 for raw_log in level_item['logs']:
                     logs.append(
-                        SubsquidEventData.from_json(raw_log, level, timestamp),
+                        SubsquidEventData.from_json(
+                            event_json=raw_log,
+                            header=level_item['header'],
+                        ),
                     )
                 yield tuple(logs)
 
@@ -193,12 +195,13 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
             response = await self.query_worker(query, current_level)
 
             for level_item in response:
-                level = level_item['header']['number']
-                timestamp = level_item['header']['timestamp']
-                current_level = level + 1
+                current_level = level_item['header']['number'] + 1
                 transactions: deque[SubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
-                    transaction = SubsquidTransactionData.from_json(raw_transaction, level, timestamp)
+                    transaction = SubsquidTransactionData.from_json(
+                        transaction_json=raw_transaction,
+                        header=level_item['header'],
+                    )
                     # NOTE: `None` falue is for chains and block ranges not compliant with the post-Byzantinum
                     # hard fork EVM specification (e.g. before 4.370,000 on Ethereum).
                     if transaction.status != 0:

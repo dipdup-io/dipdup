@@ -17,6 +17,8 @@ from dipdup.fetcher import HasLevel
 from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 
+DEFAULT_ENTRYPOINT = 'default'
+
 ParameterType = TypeVar('ParameterType', bound=BaseModel)
 StorageType = TypeVar('StorageType', bound=BaseModel)
 KeyType = TypeVar('KeyType', bound=BaseModel)
@@ -241,7 +243,7 @@ class TzktOperationData(HasLevel):
         if target_json.get('address', '').startswith('KT1'):
             # NOTE: TzKT returns None for `default` entrypoint
             if entrypoint is None:
-                entrypoint = 'default'
+                entrypoint = DEFAULT_ENTRYPOINT
 
                 # NOTE: Empty parameter in this case means `{"prim": "Unit"}`
                 if parameter is None:

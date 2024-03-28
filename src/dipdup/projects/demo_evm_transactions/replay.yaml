@@ -1,5 +1,5 @@
 spec_version: 2.0
 replay:
-  description: Basic indexer for USDt token transfers (transactions)
+  description: ERC-20 token transfers (from transactions)
   package: demo_evm_transactions
   template: demo_evm_transactions

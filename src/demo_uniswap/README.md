@@ -1,6 +1,6 @@
 # demo_uniswap
 
-Uniswap V3 pools, positions, swaps, ticks, etc.
+Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB)
 
 ## Installation
 

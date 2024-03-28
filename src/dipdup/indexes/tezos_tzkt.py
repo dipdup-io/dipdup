@@ -8,6 +8,8 @@ from dipdup.index import IndexConfigT
 from dipdup.index import IndexQueueItemT
 from dipdup.models.tezos_tzkt import TzktMessageType
 
+TZKT_READAHEAD_LIMIT = 10000
+
 
 class TzktIndex(
     Generic[IndexConfigT, IndexQueueItemT],

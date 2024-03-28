@@ -1,6 +1,6 @@
 # demo_raw
 
-Process raw operations without filtering and strict typing
+Process raw operations without filtering and typed payloads
 
 ## Installation
 

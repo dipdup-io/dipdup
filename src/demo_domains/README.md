@@ -1,6 +1,6 @@
 # demo_domains
 
-Tezos Domains name service
+Domain name service (Tezos Domains)
 
 ## Installation
 

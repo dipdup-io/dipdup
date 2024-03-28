@@ -3,12 +3,12 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
-from dipdup.datasources.evm_node import NODE_BATCH_SIZE
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid import get_sighash
-from dipdup.indexes.evm_subsquid_transactions.fetcher import TransactionFetcher
+from dipdup.indexes.evm_subsquid_transactions.fetcher import EvmNodeTransactionFetcher
+from dipdup.indexes.evm_subsquid_transactions.fetcher import SubsquidTransactionFetcher
 from dipdup.indexes.evm_subsquid_transactions.matcher import match_transactions
 from dipdup.models import RollbackMessage
 from dipdup.models.evm_node import EvmNodeTransactionData
@@ -45,34 +45,21 @@ class SubsquidTransactionsIndex(
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
-        fetcher = self._create_fetcher(first_level, sync_level)
+        fetcher = self._create_subsquid_fetcher(first_level, sync_level)
 
         async for _level, transactions in fetcher.fetch_by_level():
             await self._process_level_data(transactions, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
-        batch_first_level = self.state.level + 1
-        while batch_first_level <= sync_level:
-            batch_last_level = min(batch_first_level + NODE_BATCH_SIZE, sync_level)
+        first_level = self.state.level + 1
+        fetcher = self._create_node_fetcher(first_level, sync_level)
 
-            block_batch = await self.get_blocks_batch(
-                levels=set(range(batch_first_level, batch_last_level + 1)),
-                full_transactions=True,
-            )
+        async for _level, transactions in fetcher.fetch_by_level():
+            await self._process_level_data(transactions, sync_level)
+            Metrics.set_sqd_processor_last_block(_level)
 
-            for level, block in sorted(block_batch.items()):
-                timestamp = int(block['timestamp'], 16)
-                parsed_transactions = tuple(
-                    EvmNodeTransactionData.from_json(transaction, timestamp) for transaction in block['transactions']
-                )
-
-                await self._process_level_data(parsed_transactions, sync_level)
-                Metrics.set_sqd_processor_last_block(level)
-
-            batch_first_level = batch_last_level + 1
-
-    def _create_fetcher(self, first_level: int, last_level: int) -> TransactionFetcher:
+    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> SubsquidTransactionFetcher:
 
         filters: deque[TransactionRequest] = deque()
         for handler_config in self._config.handlers:
@@ -87,9 +74,16 @@ class SubsquidTransactionsIndex(
                 raise NotImplementedError
             filters.append(query)
 
-        return TransactionFetcher(
+        return SubsquidTransactionFetcher(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
             filters=tuple(filters),
+        )
+
+    def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeTransactionFetcher:
+        return EvmNodeTransactionFetcher(
+            datasources=self.node_datasources,
+            first_level=first_level,
+            last_level=last_level,
         )

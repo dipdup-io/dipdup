@@ -208,6 +208,8 @@ def parse_object(
 
     except ValidationError as e:
         raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e
+    except ValueError as e:
+        raise InvalidDataError(f'Failed to parse: {e}', type_, data) from e
 
 
 def _default_for_decimals(obj: Any) -> Any:

@@ -21,6 +21,8 @@ from dipdup.sys import is_shutting_down
 HEARTBEAT_INTERVAL = 60 * 60 * 24
 
 if TYPE_CHECKING:
+    from sentry_sdk._types import Event
+
     from dipdup.config import SentryConfig
 
 _logger = logging.getLogger(__name__)
@@ -37,19 +39,17 @@ async def _heartbeat() -> None:
             sentry_sdk.Hub.current.start_session()
 
 
-def extract_event(error: Exception) -> dict[str, Any]:
+def extract_event(error: Exception) -> 'Event':
     """Extracts Sentry event from an exception"""
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
-    event = sentry_sdk.serializer.serialize(event)
-    event.pop('_meta', None)
-    return event
+    return sentry_sdk.serializer.serialize(event)
 
 
 def before_send(
-    event: dict[str, Any],
+    event: 'Event',
     hint: dict[str, Any],
-) -> dict[str, Any] | None:
+) -> 'Event | None':
     # NOTE: Terminated connections, cancelled tasks, etc.
     if is_shutting_down():
         return None

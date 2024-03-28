@@ -1,6 +1,6 @@
 # demo_evm_events
 
-Basic indexer for USDt token transfers (event logs)
+ERC-20 token transfers (from event logs)
 
 ## Installation
 

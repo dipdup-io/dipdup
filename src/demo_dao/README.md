@@ -1,6 +1,6 @@
 # demo_dao
 
-Homebase DAO registry
+DAO registry (Homebase DAO)
 
 ## Installation
 

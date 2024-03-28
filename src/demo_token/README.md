@@ -1,6 +1,6 @@
 # demo_token
 
-TzBTC FA1.2 token operations
+FA1.2 token contract operations
 
 ## Installation
 
