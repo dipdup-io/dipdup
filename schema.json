@@ -30,7 +30,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/EtherscanDatasourceConfig"
+                "$ref": "#/$defs/AbiEtherscanDatasourceConfig"
               }
             ]
           },
@@ -51,7 +51,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidDatasourceConfig"
+                "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
               }
             ]
           },
@@ -72,7 +72,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktDatasourceConfig"
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
               }
             ]
           }
@@ -125,70 +125,70 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+                "$ref": "#/$defs/TezosTzktBigMapsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktEventsIndexConfig"
+                "$ref": "#/$defs/TezosTzktEventsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktHeadIndexConfig"
+                "$ref": "#/$defs/TezosTzktHeadIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationsIndexConfig"
+                "$ref": "#/$defs/TezosTzktOperationsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+                "$ref": "#/$defs/TezosTzktOperationsUnfilteredIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+                "$ref": "#/$defs/TezosTzktTokenTransfersIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+                "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidEventsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTracesIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidTracesIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidTransactionsIndexConfig"
               }
             ]
           },
@@ -209,70 +209,70 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+                "$ref": "#/$defs/TezosTzktBigMapsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktEventsIndexConfig"
+                "$ref": "#/$defs/TezosTzktEventsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktHeadIndexConfig"
+                "$ref": "#/$defs/TezosTzktHeadIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationsIndexConfig"
+                "$ref": "#/$defs/TezosTzktOperationsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+                "$ref": "#/$defs/TezosTzktOperationsUnfilteredIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+                "$ref": "#/$defs/TezosTzktTokenTransfersIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+                "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidEventsIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTracesIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidTracesIndexConfig"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
+                "$ref": "#/$defs/EvmSubsquidTransactionsIndexConfig"
               }
             ]
           }
@@ -608,9 +608,9 @@
         "kind"
       ]
     },
-    "EtherscanDatasourceConfig": {
+    "AbiEtherscanDatasourceConfig": {
       "type": "object",
-      "title": "EtherscanDatasourceConfig",
+      "title": "AbiEtherscanDatasourceConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -766,9 +766,9 @@
         "url"
       ]
     },
-    "SubsquidDatasourceConfig": {
+    "EvmSubsquidDatasourceConfig": {
       "type": "object",
-      "title": "SubsquidDatasourceConfig",
+      "title": "EvmSubsquidDatasourceConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -884,9 +884,9 @@
         "network"
       ]
     },
-    "TzktDatasourceConfig": {
+    "TezosTzktDatasourceConfig": {
       "type": "object",
-      "title": "TzktDatasourceConfig",
+      "title": "TezosTzktDatasourceConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1103,9 +1103,9 @@
         "kind"
       ]
     },
-    "TzktBigMapsHandlerConfig": {
+    "TezosTzktBigMapsHandlerConfig": {
       "type": "object",
-      "title": "TzktBigMapsHandlerConfig",
+      "title": "TezosTzktBigMapsHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1142,9 +1142,9 @@
         "always"
       ]
     },
-    "TzktBigMapsIndexConfig": {
+    "TezosTzktBigMapsIndexConfig": {
       "type": "object",
-      "title": "TzktBigMapsIndexConfig",
+      "title": "TezosTzktBigMapsIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1159,7 +1159,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1170,7 +1170,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktBigMapsHandlerConfig"
+                "$ref": "#/$defs/TezosTzktBigMapsHandlerConfig"
               }
             ]
           }
@@ -1198,9 +1198,9 @@
         "handlers"
       ]
     },
-    "TzktEventsHandlerConfig": {
+    "TezosTzktEventsHandlerConfig": {
       "type": "object",
-      "title": "TzktEventsHandlerConfig",
+      "title": "TezosTzktEventsHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1229,9 +1229,9 @@
         "tag"
       ]
     },
-    "TzktEventsUnknownEventHandlerConfig": {
+    "TezosTzktEventsUnknownEventHandlerConfig": {
       "type": "object",
-      "title": "TzktEventsUnknownEventHandlerConfig",
+      "title": "TezosTzktEventsUnknownEventHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1256,9 +1256,9 @@
         "contract"
       ]
     },
-    "TzktEventsIndexConfig": {
+    "TezosTzktEventsIndexConfig": {
       "type": "object",
-      "title": "TzktEventsIndexConfig",
+      "title": "TezosTzktEventsIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1273,7 +1273,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1286,14 +1286,14 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/TzktEventsHandlerConfig"
+                    "$ref": "#/$defs/TezosTzktEventsHandlerConfig"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/TzktEventsUnknownEventHandlerConfig"
+                    "$ref": "#/$defs/TezosTzktEventsUnknownEventHandlerConfig"
                   }
                 ]
               }
@@ -1315,9 +1315,9 @@
         "handlers"
       ]
     },
-    "TzktHeadIndexConfig": {
+    "TezosTzktHeadIndexConfig": {
       "type": "object",
-      "title": "TzktHeadIndexConfig",
+      "title": "TezosTzktHeadIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1332,7 +1332,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1348,9 +1348,9 @@
         "callback"
       ]
     },
-    "OperationsHandlerTransactionPatternConfig": {
+    "TezosTzktOperationsHandlerTransactionPatternConfig": {
       "type": "object",
-      "title": "OperationsHandlerTransactionPatternConfig",
+      "title": "TezosTzktOperationsHandlerTransactionPatternConfig",
       "properties": {
         "type": {
           "enum": [
@@ -1422,9 +1422,9 @@
         }
       }
     },
-    "OperationsHandlerOriginationPatternConfig": {
+    "TezosTzktOperationsHandlerOriginationPatternConfig": {
       "type": "object",
-      "title": "OperationsHandlerOriginationPatternConfig",
+      "title": "TezosTzktOperationsHandlerOriginationPatternConfig",
       "properties": {
         "type": {
           "enum": [
@@ -1489,9 +1489,9 @@
         }
       }
     },
-    "OperationsHandlerSmartRollupExecutePatternConfig": {
+    "TezosTzktOperationsHandlerSmartRollupExecutePatternConfig": {
       "type": "object",
-      "title": "OperationsHandlerSmartRollupExecutePatternConfig",
+      "title": "TezosTzktOperationsHandlerSmartRollupExecutePatternConfig",
       "properties": {
         "type": {
           "enum": [
@@ -1552,9 +1552,9 @@
         }
       }
     },
-    "TzktOperationsHandlerConfig": {
+    "TezosTzktOperationsHandlerConfig": {
       "type": "object",
-      "title": "TzktOperationsHandlerConfig",
+      "title": "TezosTzktOperationsHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1566,21 +1566,21 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/OperationsHandlerTransactionPatternConfig"
+                    "$ref": "#/$defs/TezosTzktOperationsHandlerTransactionPatternConfig"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/OperationsHandlerOriginationPatternConfig"
+                    "$ref": "#/$defs/TezosTzktOperationsHandlerOriginationPatternConfig"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/OperationsHandlerSmartRollupExecutePatternConfig"
+                    "$ref": "#/$defs/TezosTzktOperationsHandlerSmartRollupExecutePatternConfig"
                   }
                 ]
               }
@@ -1593,8 +1593,8 @@
         "pattern"
       ]
     },
-    "TzktOperationType": {
-      "title": "TzktOperationType",
+    "TezosTzktOperationType": {
+      "title": "TezosTzktOperationType",
       "enum": [
         "transaction",
         "origination",
@@ -1602,9 +1602,9 @@
         "sr_execute"
       ]
     },
-    "TzktOperationsIndexConfig": {
+    "TezosTzktOperationsIndexConfig": {
       "type": "object",
-      "title": "TzktOperationsIndexConfig",
+      "title": "TezosTzktOperationsIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1619,7 +1619,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1630,7 +1630,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationsHandlerConfig"
+                "$ref": "#/$defs/TezosTzktOperationsHandlerConfig"
               }
             ]
           }
@@ -1657,7 +1657,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationType"
+                "$ref": "#/$defs/TezosTzktOperationType"
               }
             ]
           },
@@ -1681,9 +1681,9 @@
         "contracts"
       ]
     },
-    "TzktOperationsUnfilteredIndexConfig": {
+    "TezosTzktOperationsUnfilteredIndexConfig": {
       "type": "object",
-      "title": "TzktOperationsUnfilteredIndexConfig",
+      "title": "TezosTzktOperationsUnfilteredIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1698,7 +1698,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1712,7 +1712,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktOperationType"
+                "$ref": "#/$defs/TezosTzktOperationType"
               }
             ]
           },
@@ -1735,9 +1735,9 @@
         "callback"
       ]
     },
-    "TzktTokenTransfersHandlerConfig": {
+    "TezosTzktTokenTransfersHandlerConfig": {
       "type": "object",
-      "title": "TzktTokenTransfersHandlerConfig",
+      "title": "TezosTzktTokenTransfersHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1812,9 +1812,9 @@
         "callback"
       ]
     },
-    "TzktTokenTransfersIndexConfig": {
+    "TezosTzktTokenTransfersIndexConfig": {
       "type": "object",
-      "title": "TzktTokenTransfersIndexConfig",
+      "title": "TezosTzktTokenTransfersIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1829,7 +1829,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1840,7 +1840,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenTransfersHandlerConfig"
+                "$ref": "#/$defs/TezosTzktTokenTransfersHandlerConfig"
               }
             ]
           }
@@ -1859,9 +1859,9 @@
         "datasource"
       ]
     },
-    "TzktTokenBalancesHandlerConfig": {
+    "TezosTzktTokenBalancesHandlerConfig": {
       "type": "object",
-      "title": "TzktTokenBalancesHandlerConfig",
+      "title": "TezosTzktTokenBalancesHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1900,9 +1900,9 @@
         "callback"
       ]
     },
-    "TzktTokenBalancesIndexConfig": {
+    "TezosTzktTokenBalancesIndexConfig": {
       "type": "object",
-      "title": "TzktTokenBalancesIndexConfig",
+      "title": "TezosTzktTokenBalancesIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -1917,7 +1917,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/TzktDatasourceConfig"
+                  "$ref": "#/$defs/TezosTzktDatasourceConfig"
                 }
               ]
             }
@@ -1928,7 +1928,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/TzktTokenBalancesHandlerConfig"
+                "$ref": "#/$defs/TezosTzktTokenBalancesHandlerConfig"
               }
             ]
           }
@@ -1947,9 +1947,9 @@
         "datasource"
       ]
     },
-    "SubsquidEventsHandlerConfig": {
+    "EvmSubsquidEventsHandlerConfig": {
       "type": "object",
-      "title": "SubsquidEventsHandlerConfig",
+      "title": "EvmSubsquidEventsHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -1983,9 +1983,9 @@
       "title": "AbiDatasourceConfig",
       "properties": {}
     },
-    "SubsquidEventsIndexConfig": {
+    "EvmSubsquidEventsIndexConfig": {
       "type": "object",
-      "title": "SubsquidEventsIndexConfig",
+      "title": "EvmSubsquidEventsIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -2000,7 +2000,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                  "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
                 }
               ]
             }
@@ -2011,7 +2011,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidEventsHandlerConfig"
+                "$ref": "#/$defs/EvmSubsquidEventsHandlerConfig"
               }
             ]
           }
@@ -2060,9 +2060,9 @@
         "handlers"
       ]
     },
-    "SubsquidTracesHandlerConfig": {
+    "EvmSubsquidTracesHandlerConfig": {
       "type": "object",
-      "title": "SubsquidTracesHandlerConfig",
+      "title": "EvmSubsquidTracesHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -2072,9 +2072,9 @@
         "callback"
       ]
     },
-    "SubsquidTracesIndexConfig": {
+    "EvmSubsquidTracesIndexConfig": {
       "type": "object",
-      "title": "SubsquidTracesIndexConfig",
+      "title": "EvmSubsquidTracesIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -2089,7 +2089,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                  "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
                 }
               ]
             }
@@ -2100,7 +2100,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTracesHandlerConfig"
+                "$ref": "#/$defs/EvmSubsquidTracesHandlerConfig"
               }
             ]
           }
@@ -2149,9 +2149,9 @@
         "handlers"
       ]
     },
-    "SubsquidTransactionsHandlerConfig": {
+    "EvmSubsquidTransactionsHandlerConfig": {
       "type": "object",
-      "title": "SubsquidTransactionsHandlerConfig",
+      "title": "EvmSubsquidTransactionsHandlerConfig",
       "properties": {
         "callback": {
           "type": "string"
@@ -2208,9 +2208,9 @@
         "callback"
       ]
     },
-    "SubsquidTransactionsIndexConfig": {
+    "EvmSubsquidTransactionsIndexConfig": {
       "type": "object",
-      "title": "SubsquidTransactionsIndexConfig",
+      "title": "EvmSubsquidTransactionsIndexConfig",
       "properties": {
         "kind": {
           "enum": [
@@ -2225,7 +2225,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                  "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
                 }
               ]
             }
@@ -2236,7 +2236,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/SubsquidTransactionsHandlerConfig"
+                "$ref": "#/$defs/EvmSubsquidTransactionsHandlerConfig"
               }
             ]
           }

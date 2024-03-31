@@ -7,13 +7,13 @@ from demo_domains import models as models
 from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
 from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
 from dipdup.context import HandlerContext
-from dipdup.datasources.tezos_tzkt import TzktDatasource
-from dipdup.models.tezos_tzkt import TzktBigMapDiff
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
 
 
 async def on_update_expiry_map(
     ctx: HandlerContext,
-    store_expiry_map: TzktBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
+    store_expiry_map: TezosTzktBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
 ) -> None:
     if not store_expiry_map.action.has_value:
         return
@@ -45,7 +45,7 @@ async def on_update_expiry_map(
             metadata = {} if record.metadata is None else cast(dict[str, Any], record.metadata)
             metadata.update(name=record.id)
             await ctx.update_contract_metadata(
-                network=cast(TzktDatasource, ctx.datasource).name,
+                network=cast(TezosTzktDatasource, ctx.datasource).name,
                 address=record.address,
                 metadata=metadata,
             )

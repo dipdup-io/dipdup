@@ -6,20 +6,20 @@ from typing import TYPE_CHECKING
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TzktEventData
+from dipdup.models.tezos_tzkt import TezosTzktEventData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from dipdup.datasources.tezos_tzkt import TzktDatasource
+    from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-class EventFetcher(DataFetcher[TzktEventData]):
-    _datasource: TzktDatasource
+class EventFetcher(DataFetcher[TezosTzktEventData]):
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         event_addresses: set[str],
@@ -32,7 +32,7 @@ class EventFetcher(DataFetcher[TzktEventData]):
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktEventData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosTzktEventData, ...]], None]:
         event_iter = self._datasource.iter_events(
             self._event_addresses,
             self._event_tags,

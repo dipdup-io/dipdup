@@ -11,10 +11,10 @@ from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
 from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.models.evm_subsquid import SubsquidEventData
+from dipdup.models.evm_subsquid import EvmSubsquidEventData
 
 
-class SubsquidEventFetcher(DataFetcher[SubsquidEventData]):
+class EvmSubsquidEventFetcher(DataFetcher[EvmSubsquidEventData]):
     _datasource: SubsquidDatasource
 
     def __init__(
@@ -27,7 +27,7 @@ class SubsquidEventFetcher(DataFetcher[SubsquidEventData]):
         super().__init__(datasource, first_level, last_level)
         self._topics = topics
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[SubsquidEventData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmSubsquidEventData, ...]]]:
         event_iter = self._datasource.iter_event_logs(
             self._topics,
             self._first_level,

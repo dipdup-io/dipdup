@@ -15,7 +15,7 @@ from dipdup.exceptions import ConfigurationError
 
 
 @dataclass
-class SubsquidDatasourceConfig(IndexDatasourceConfig):
+class EvmSubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'
@@ -51,11 +51,11 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
 
 
 @dataclass
-class SubsquidIndexConfig(IndexConfig, ABC):
+class EvmSubsquidIndexConfig(IndexConfig, ABC):
     """EVM index that use Subsquid Network as a datasource
 
     :param kind: starts with 'evm.subsquid'
     :param datasource: Subsquid datasource config
     """
 
-    datasource: SubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig

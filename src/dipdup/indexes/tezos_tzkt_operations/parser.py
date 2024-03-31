@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktOperationData
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)
@@ -177,9 +177,9 @@ def _process_storage(
 
 
 def deserialize_storage(
-    operation_data: TzktOperationData,
+    operation_data: TezosTzktOperationData,
     storage_type: type[StorageType],
-) -> tuple[TzktOperationData, StorageType]:
+) -> tuple[TezosTzktOperationData, StorageType]:
     """Merge big map diffs and deserialize raw storage into typeclass"""
     bigmap_diffs = _preprocess_bigmap_diffs(operation_data.diffs)
 
@@ -191,7 +191,7 @@ def deserialize_storage(
             storage_type=storage_type,
             bigmap_diffs=bigmap_diffs,
         )
-        operation_data = TzktOperationData(**operation_data_dict)
+        operation_data = TezosTzktOperationData(**operation_data_dict)
         return operation_data, parse_object(storage_type, operation_data.storage)
     except IntrospectionError as e:
         raise InvalidDataError(e.args[0], storage_type, operation_data.storage) from e

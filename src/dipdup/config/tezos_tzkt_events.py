@@ -8,8 +8,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models.tezos_tzkt import EventSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class TzktEventsHandlerConfig(HandlerConfig):
+class TezosTzktEventsHandlerConfig(HandlerConfig):
     """Event handler config
 
     :param callback: Callback name
@@ -34,7 +34,7 @@ class TzktEventsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TzktEvent'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktEvent'
         yield package, 'models as models'
 
         event_cls = snake_to_pascal(self.tag + '_payload')
@@ -45,11 +45,11 @@ class TzktEventsHandlerConfig(HandlerConfig):
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         event_cls = snake_to_pascal(self.tag + '_payload')
         yield 'ctx', 'HandlerContext'
-        yield 'event', f'TzktEvent[{event_cls}]'
+        yield 'event', f'TezosTzktEvent[{event_cls}]'
 
 
 @dataclass
-class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
+class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -60,19 +60,19 @@ class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TzktUnknownEvent'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktUnknownEvent'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'event', 'TzktUnknownEvent'
+        yield 'event', 'TezosTzktUnknownEvent'
 
 
-TzktEventsHandlerConfigU = TzktEventsHandlerConfig | TzktEventsUnknownEventHandlerConfig
+TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosTzktEventsUnknownEventHandlerConfig
 
 
 @dataclass
-class TzktEventsIndexConfig(TzktIndexConfig):
+class TezosTzktEventsIndexConfig(TezosTzktIndexConfig):
     """Event index config
 
     :param kind: always 'tezos.tzkt.events'
@@ -83,8 +83,8 @@ class TzktEventsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.events']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[TzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
+    datasource: TezosTzktDatasourceConfig
+    handlers: tuple[TezosTzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

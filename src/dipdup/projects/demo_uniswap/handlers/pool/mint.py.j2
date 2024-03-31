@@ -6,14 +6,14 @@ from {{ project.package }}.models.pool import pool_update
 from {{ project.package }}.models.repo import models_repo
 from {{ project.package }}.types.pool.evm_events.mint import Mint
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import SubsquidEvent
+from dipdup.models.evm_subsquid import EvmSubsquidEvent
 
 BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 
 
 async def mint(
     ctx: HandlerContext,
-    event: SubsquidEvent[Mint],
+    event: EvmSubsquidEvent[Mint],
 ) -> None:
     pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool or pool.id in BLACKLISTED_POOLS:

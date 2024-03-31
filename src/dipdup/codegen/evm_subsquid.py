@@ -8,16 +8,16 @@ from web3 import Web3
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import AbiDatasourceConfig
+from dipdup.config import EvmSubsquidIndexConfigU
 from dipdup.config import HandlerConfig
-from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid import SubsquidIndexConfig
-from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesHandlerConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
+from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
+from dipdup.config.evm_subsquid_events import EvmSubsquidEventsHandlerConfig
+from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesHandlerConfig
+from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import AbiNotAvailableError
 from dipdup.exceptions import ConfigurationError
@@ -148,10 +148,10 @@ def topic_from_abi(event: dict[str, Any]) -> str:
     return '0x' + eth_utils.crypto.keccak(text=signature).hex()
 
 
-class SubsquidCodeGenerator(CodeGenerator):
+class EvmSubsquidCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, SubsquidIndexConfig):
+            if isinstance(index_config, EvmSubsquidIndexConfig):
                 await self._fetch_abi(index_config)
 
     async def generate_schemas(self) -> None:
@@ -162,12 +162,12 @@ class SubsquidCodeGenerator(CodeGenerator):
         methods: set[str] = set()
 
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, SubsquidEventsIndexConfig):
+            if isinstance(index_config, EvmSubsquidEventsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
-            elif isinstance(index_config, SubsquidTracesIndexConfig):
+            elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
                 raise NotImplementedError
-            elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+            elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
                 for handler_config in index_config.handlers:
                     if handler_config.method:
                         methods.add(handler_config.method)
@@ -183,7 +183,7 @@ class SubsquidCodeGenerator(CodeGenerator):
     async def generate_handlers(self) -> None:
         pass
 
-    async def _fetch_abi(self, index_config: SubsquidIndexConfigU) -> None:
+    async def _fetch_abi(self, index_config: EvmSubsquidIndexConfigU) -> None:
         if isinstance(index_config.abi, tuple):
             datasource_configs = index_config.abi
         elif index_config.abi:
@@ -194,11 +194,11 @@ class SubsquidCodeGenerator(CodeGenerator):
         contract: EvmContractConfig | None = None
 
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, SubsquidEventsHandlerConfig):
+            if isinstance(handler_config, EvmSubsquidEventsHandlerConfig):
                 contract = handler_config.contract
-            elif isinstance(handler_config, SubsquidTracesHandlerConfig):
+            elif isinstance(handler_config, EvmSubsquidTracesHandlerConfig):
                 raise NotImplementedError
-            elif isinstance(handler_config, SubsquidTransactionsHandlerConfig):
+            elif isinstance(handler_config, EvmSubsquidTransactionsHandlerConfig):
                 contract = handler_config.typed_contract
 
             if not contract:

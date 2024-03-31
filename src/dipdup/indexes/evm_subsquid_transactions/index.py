@@ -1,27 +1,27 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.indexes.evm_subsquid_transactions.fetcher import EvmNodeTransactionFetcher
-from dipdup.indexes.evm_subsquid_transactions.fetcher import SubsquidTransactionFetcher
+from dipdup.indexes.evm_subsquid_transactions.fetcher import EvmSubsquidTransactionFetcher
 from dipdup.indexes.evm_subsquid_transactions.matcher import match_transactions
 from dipdup.models import RollbackMessage
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import SubsquidMessageType
-from dipdup.models.evm_subsquid import SubsquidTransaction
+from dipdup.models.evm_subsquid import EvmSubsquidTransaction
 from dipdup.models.evm_subsquid import TransactionRequest
+from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmNodeTransactionData, ...] | RollbackMessage
 
 
-class SubsquidTransactionsIndex(
-    SubsquidIndex[SubsquidTransactionsIndexConfig, QueueItem, SubsquidDatasource],
+class EvmSubsquidTransactionsIndex(
+    SubsquidIndex[EvmSubsquidTransactionsIndexConfig, QueueItem, SubsquidDatasource],
     message_type=SubsquidMessageType.transactions,
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
@@ -29,8 +29,8 @@ class SubsquidTransactionsIndex(
 
     async def _call_matched_handler(
         self,
-        handler_config: SubsquidTransactionsHandlerConfig,
-        transaction: SubsquidTransaction[Any],
+        handler_config: EvmSubsquidTransactionsHandlerConfig,
+        transaction: EvmSubsquidTransaction[Any],
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -59,7 +59,7 @@ class SubsquidTransactionsIndex(
             await self._process_level_data(transactions, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
-    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> SubsquidTransactionFetcher:
+    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidTransactionFetcher:
 
         filters: deque[TransactionRequest] = deque()
         for handler_config in self._config.handlers:
@@ -74,7 +74,7 @@ class SubsquidTransactionsIndex(
                 raise NotImplementedError
             filters.append(query)
 
-        return SubsquidTransactionFetcher(
+        return EvmSubsquidTransactionFetcher(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,

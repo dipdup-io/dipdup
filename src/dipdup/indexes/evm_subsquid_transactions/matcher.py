@@ -7,12 +7,12 @@ import eth_abi.decoding
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import SubsquidTransaction
-from dipdup.models.evm_subsquid import SubsquidTransactionData
+from dipdup.models.evm_subsquid import EvmSubsquidTransaction
+from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
@@ -21,7 +21,8 @@ from dipdup.utils import snake_to_pascal
 _logger = logging.getLogger(__name__)
 
 MatchedTransactionsT = tuple[
-    SubsquidTransactionsHandlerConfig, SubsquidTransaction[Any] | SubsquidTransactionData | EvmNodeTransactionData
+    EvmSubsquidTransactionsHandlerConfig,
+    EvmSubsquidTransaction[Any] | EvmSubsquidTransactionData | EvmNodeTransactionData,
 ]
 
 
@@ -35,9 +36,9 @@ eth_abi.decoding.SingleDecoder.validate_padding_bytes = lambda *a, **kw: None  #
 
 def prepare_transaction_handler_args(
     package: DipDupPackage,
-    handler_config: SubsquidTransactionsHandlerConfig,
-    matched_transaction: SubsquidTransactionData | EvmNodeTransactionData,
-) -> SubsquidTransaction[Any]:
+    handler_config: EvmSubsquidTransactionsHandlerConfig,
+    matched_transaction: EvmSubsquidTransactionData | EvmNodeTransactionData,
+) -> EvmSubsquidTransaction[Any]:
     method, contract = handler_config.method, handler_config.to
     if not method or not contract:
         raise FrameworkException('`method` and `to` are required for typed transaction handler')
@@ -60,7 +61,7 @@ def prepare_transaction_handler_args(
         data=data,
         plain=True,
     )
-    return SubsquidTransaction(
+    return EvmSubsquidTransaction(
         data=matched_transaction,
         input=typed_input,
     )
@@ -68,8 +69,8 @@ def prepare_transaction_handler_args(
 
 def match_transactions(
     package: DipDupPackage,
-    handlers: Iterable[SubsquidTransactionsHandlerConfig],
-    transactions: Iterable[SubsquidTransactionData | EvmNodeTransactionData],
+    handlers: Iterable[EvmSubsquidTransactionsHandlerConfig],
+    transactions: Iterable[EvmSubsquidTransactionData | EvmNodeTransactionData],
 ) -> deque[MatchedTransactionsT]:
     """Try to match contract transactions with all index handlers."""
     matched_handlers: deque[MatchedTransactionsT] = deque()

@@ -7,20 +7,20 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import SubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 
 
 @dataclass
-class SubsquidTracesHandlerConfig(HandlerConfig): ...
+class EvmSubsquidTracesHandlerConfig(HandlerConfig): ...
 
 
 @dataclass
-class SubsquidTracesIndexConfig(SubsquidIndexConfig):
+class EvmSubsquidTracesIndexConfig(EvmSubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 
-    datasource: SubsquidDatasourceConfig
-    handlers: tuple[SubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)
+    datasource: EvmSubsquidDatasourceConfig
+    handlers: tuple[EvmSubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
 

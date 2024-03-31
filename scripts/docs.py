@@ -433,7 +433,7 @@ def dump_references() -> None:
     green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
     # FIXME: Traces not implemented yet
-    diff -= {'Config', 'SubsquidTracesIndexConfig', 'SubsquidTracesHandlerConfig'}
+    diff -= {'Config', 'EvmSubsquidTracesIndexConfig', 'EvmSubsquidTracesHandlerConfig'}
     if diff:
         red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')

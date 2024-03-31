@@ -24,17 +24,17 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
-from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
+from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
+from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.database import execute_sql
 from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
@@ -46,7 +46,7 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
-from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import ConfigurationError
@@ -296,65 +296,65 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
-        from dipdup.indexes.evm_subsquid_traces.index import SubsquidTracesIndex
-        from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
-        from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
-        from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
-        from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
-        from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
-        from dipdup.indexes.tezos_tzkt_token_balances.index import TzktTokenBalancesIndex
-        from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
+        from dipdup.indexes.evm_subsquid_events.index import EvmSubsquidEventsIndex
+        from dipdup.indexes.evm_subsquid_traces.index import EvmSubsquidTracesIndex
+        from dipdup.indexes.evm_subsquid_transactions.index import EvmSubsquidTransactionsIndex
+        from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
+        from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
+        from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
+        from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
+        from dipdup.indexes.tezos_tzkt_token_balances.index import TezosTzktTokenBalancesIndex
+        from dipdup.indexes.tezos_tzkt_token_transfers.index import TezosTzktTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: (
-            TzktOperationsIndex
-            | TzktBigMapsIndex
-            | TzktHeadIndex
-            | TzktTokenBalancesIndex
-            | TzktTokenTransfersIndex
-            | TzktEventsIndex
-            | SubsquidEventsIndex
-            | SubsquidTracesIndex
-            | SubsquidTransactionsIndex
+            TezosTzktOperationsIndex
+            | TezosTzktBigMapsIndex
+            | TezosTzktHeadIndex
+            | TezosTzktTokenBalancesIndex
+            | TezosTzktTokenTransfersIndex
+            | TezosTzktEventsIndex
+            | EvmSubsquidEventsIndex
+            | EvmSubsquidTracesIndex
+            | EvmSubsquidTransactionsIndex
         )
 
         datasource_name = index_config.datasource.name
-        datasource: TzktDatasource | SubsquidDatasource
+        datasource: TezosTzktDatasource | SubsquidDatasource
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
-        if isinstance(index_config, TzktOperationsIndexConfig | TzktOperationsUnfilteredIndexConfig):
+        if isinstance(index_config, TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktOperationsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TzktBigMapsIndexConfig):
+            index = TezosTzktOperationsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktBigMapsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TzktHeadIndexConfig):
+            index = TezosTzktBigMapsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktHeadIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktHeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TzktTokenBalancesIndexConfig):
+            index = TezosTzktHeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktTokenBalancesIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktTokenBalancesIndex(self, index_config, datasource)
-        elif isinstance(index_config, TzktTokenTransfersIndexConfig):
+            index = TezosTzktTokenBalancesIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktTokenTransfersIndex(self, index_config, datasource)
-        elif isinstance(index_config, TzktEventsIndexConfig):
+            index = TezosTzktTokenTransfersIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTzktEventsIndexConfig):
             datasource = self.get_tzkt_datasource(datasource_name)
-            index = TzktEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, SubsquidEventsIndexConfig):
+            index = TezosTzktEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
             node_field = index_config.datasource.node
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
-            index = SubsquidEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, SubsquidTracesIndexConfig):
+            index = EvmSubsquidEventsIndex(self, index_config, datasource)
+        elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
             raise NotImplementedError
-        elif isinstance(index_config, SubsquidTransactionsIndexConfig):
+        elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
             datasource = self.get_subsquid_datasource(datasource_name)
             node_field = index_config.datasource.node
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
-            index = SubsquidTransactionsIndex(self, index_config, datasource)
+            index = EvmSubsquidTransactionsIndex(self, index_config, datasource)
         else:
             raise NotImplementedError
 
@@ -365,7 +365,7 @@ class DipDupContext:
 
         handlers = (
             (index_config.handler_config,)
-            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig)
+            if isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig | TezosTzktHeadIndexConfig)
             else index_config.handlers
         )
         for handler_config in handlers:
@@ -435,9 +435,9 @@ class DipDupContext:
             raise ConfigurationError(f'Datasource `{name}` is not a `{type_.__name__}`')
         return datasource
 
-    def get_tzkt_datasource(self, name: str) -> TzktDatasource:
+    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
         """Get `tezos.tzkt` datasource by name"""
-        return self._get_datasource(name, TzktDatasource)
+        return self._get_datasource(name, TezosTzktDatasource)
 
     def get_subsquid_datasource(self, name: str) -> SubsquidDatasource:
         """Get `evm.subsquid` datasource by name"""

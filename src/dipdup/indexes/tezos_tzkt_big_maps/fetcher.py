@@ -3,21 +3,21 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TzktBigMapData
+from dipdup.models.tezos_tzkt import TezosTzktBigMapData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
     from collections.abc import Iterable
 
-    from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
-    from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-    from dipdup.datasources.tezos_tzkt import TzktDatasource
+    from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+    from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-def get_big_map_addresses(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[str]:
+def get_big_map_addresses(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[str]:
     """Get addresses to fetch big map diffs from during initial synchronization"""
     addresses = set()
     for handler_config in handlers:
@@ -25,7 +25,7 @@ def get_big_map_addresses(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[s
     return addresses
 
 
-def get_big_map_paths(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[str]:
+def get_big_map_paths(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[str]:
     """Get addresses to fetch big map diffs from during initial synchronization"""
     paths = set()
     for handler_config in handlers:
@@ -33,7 +33,7 @@ def get_big_map_paths(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[str]:
     return paths
 
 
-def get_big_map_pairs(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[tuple[str, str]]:
+def get_big_map_pairs(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[tuple[str, str]]:
     """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
     pairs = set()
     for handler_config in handlers:
@@ -46,14 +46,14 @@ def get_big_map_pairs(handlers: Iterable[TzktBigMapsHandlerConfig]) -> set[tuple
     return pairs
 
 
-class BigMapFetcher(DataFetcher[TzktBigMapData]):
+class BigMapFetcher(DataFetcher[TezosTzktBigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 
-    _datasource: TzktDatasource
+    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],
@@ -67,8 +67,8 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
     @classmethod
     def create(
         cls,
-        config: TzktBigMapsIndexConfig,
-        datasource: TzktDatasource,
+        config: TezosTzktBigMapsIndexConfig,
+        datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
     ) -> BigMapFetcher:
@@ -83,7 +83,7 @@ class BigMapFetcher(DataFetcher[TzktBigMapData]):
             big_map_paths=big_map_paths,
         )
 
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TzktBigMapData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosTzktBigMapData, ...]], None]:
         big_map_iter = self._datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,

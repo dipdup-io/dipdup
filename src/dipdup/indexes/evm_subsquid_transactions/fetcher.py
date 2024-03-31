@@ -11,11 +11,11 @@ from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import SubsquidTransactionData
+from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
 
-class SubsquidTransactionFetcher(DataFetcher[SubsquidTransactionData]):
+class EvmSubsquidTransactionFetcher(DataFetcher[EvmSubsquidTransactionData]):
     """Fetches transactions from REST API, merges them and yields by level."""
 
     _datasource: SubsquidDatasource
@@ -30,7 +30,7 @@ class SubsquidTransactionFetcher(DataFetcher[SubsquidTransactionData]):
         super().__init__(datasource, first_level, last_level)
         self._filters = filters
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[SubsquidTransactionData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmSubsquidTransactionData, ...]]]:
         transaction_iter = self._datasource.iter_transactions(
             self._first_level,
             self._last_level,

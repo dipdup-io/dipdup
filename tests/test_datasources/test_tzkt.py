@@ -11,8 +11,8 @@ from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktOperationData
 from tests import tzkt_replay
 
 T = TypeVar('T')
@@ -202,14 +202,14 @@ async def test_on_operation_message_data() -> None:
         tzkt._subscriptions.add(HeadSubscription())
         tzkt.set_sync_level(HeadSubscription(), 1)
 
-        level = tzkt.get_channel_level(TzktMessageType.operation)
+        level = tzkt.get_channel_level(TezosTzktMessageType.operation)
         assert level == 1
 
-        await tzkt._on_message(TzktMessageType.operation, [message])
+        await tzkt._on_message(TezosTzktMessageType.operation, [message])
 
-        level = tzkt.get_channel_level(TzktMessageType.operation)
+        level = tzkt.get_channel_level(TezosTzktMessageType.operation)
         assert level == 2
-        assert isinstance(emit_mock.await_args_list[0][0][1][0], TzktOperationData)
+        assert isinstance(emit_mock.await_args_list[0][0][1][0], TezosTzktOperationData)
 
 
 # FIXME: Hangs without internet

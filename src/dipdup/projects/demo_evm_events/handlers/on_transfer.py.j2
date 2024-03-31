@@ -5,12 +5,12 @@ from tortoise.exceptions import DoesNotExist
 from {{ project.package }} import models as models
 from {{ project.package }}.types.eth_usdt.evm_events.transfer import Transfer
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import SubsquidEvent
+from dipdup.models.evm_subsquid import EvmSubsquidEvent
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: SubsquidEvent[Transfer],
+    event: EvmSubsquidEvent[Transfer],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
     if not amount:

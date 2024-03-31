@@ -9,8 +9,8 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class TzktBigMapsHandlerConfig(HandlerConfig):
+class TezosTzktBigMapsHandlerConfig(HandlerConfig):
     """Big map handler config
 
     :param callback: Callback name
@@ -50,11 +50,11 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
     def format_big_map_diff_argument(cls, path: str) -> tuple[str, str]:
         key_cls = f'{snake_to_pascal(path)}Key'
         value_cls = f'{snake_to_pascal(path)}Value'
-        return pascal_to_snake(path), f'TzktBigMapDiff[{key_cls}, {value_cls}]'
+        return pascal_to_snake(path), f'TezosTzktBigMapDiff[{key_cls}, {value_cls}]'
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TzktBigMapDiff'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktBigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)
@@ -66,7 +66,7 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
 
 
 @dataclass
-class TzktBigMapsIndexConfig(TzktIndexConfig):
+class TezosTzktBigMapsIndexConfig(TezosTzktIndexConfig):
     """Big map index config
 
     :param kind: always 'tezos.tzkt.big_maps'
@@ -78,8 +78,8 @@ class TzktBigMapsIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.big_maps']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[TzktBigMapsHandlerConfig, ...]
+    datasource: TezosTzktDatasourceConfig
+    handlers: tuple[TezosTzktBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
 

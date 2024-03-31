@@ -2,27 +2,27 @@ from collections import deque
 from datetime import datetime
 from typing import Any
 
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsHandlerConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.indexes.tezos_tzkt import TzktIndex
+from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_tzkt_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_tzkt_big_maps.matcher import match_big_maps
 from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
-from dipdup.models.tezos_tzkt import TzktBigMapAction
-from dipdup.models.tezos_tzkt import TzktBigMapData
-from dipdup.models.tezos_tzkt import TzktBigMapDiff
-from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktBigMapAction
+from dipdup.models.tezos_tzkt import TezosTzktBigMapData
+from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
-QueueItem = tuple[TzktBigMapData, ...] | RollbackMessage
+QueueItem = tuple[TezosTzktBigMapData, ...] | RollbackMessage
 
 
-class TzktBigMapsIndex(
-    TzktIndex[TzktBigMapsIndexConfig, QueueItem],
-    message_type=TzktMessageType.big_map,
+class TezosTzktBigMapsIndex(
+    TezosTzktIndex[TezosTzktBigMapsIndexConfig, QueueItem],
+    message_type=TezosTzktMessageType.big_map,
 ):
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch operations via Fetcher and pass to message callback"""
@@ -72,7 +72,7 @@ class TzktBigMapsIndex(
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
-                        TzktBigMapData(
+                        TezosTzktBigMapData(
                             id=big_map_key['id'],
                             level=head_level,
                             operation_id=head_level,
@@ -80,7 +80,7 @@ class TzktBigMapsIndex(
                             bigmap=big_map_id,
                             contract_address=address,
                             path=path,
-                            action=TzktBigMapAction.ADD_KEY,
+                            action=TezosTzktBigMapAction.ADD_KEY,
                             active=big_map_key['active'],
                             key=big_map_key['key'],
                             value=big_map_key['value'],
@@ -94,7 +94,7 @@ class TzktBigMapsIndex(
             await self._update_state(level=head_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktBigMapsHandlerConfig, level_data: TzktBigMapDiff[Any, Any]
+        self, handler_config: TezosTzktBigMapsHandlerConfig, level_data: TezosTzktBigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

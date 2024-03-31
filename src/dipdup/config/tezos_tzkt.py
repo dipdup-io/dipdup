@@ -23,7 +23,7 @@ MAX_BATCH_SIZE = 10000
 
 
 @dataclass
-class TzktDatasourceConfig(IndexDatasourceConfig):
+class TezosTzktDatasourceConfig(IndexDatasourceConfig):
     """TzKT datasource config
 
     :param kind: always 'tezos.tzkt'
@@ -57,14 +57,14 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
 
 
 @dataclass
-class TzktIndexConfig(IndexConfig):
+class TezosTzktIndexConfig(IndexConfig):
     """TzKT index config
 
     :param kind: starts with 'tezos.tzkt'
     :param datasource: `tezos.tzkt` datasource to use
     """
 
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
 
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}
