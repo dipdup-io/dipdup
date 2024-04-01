@@ -134,7 +134,7 @@ def abi_to_jsonschemas(
 
 def sighash_from_abi(abi_item: dict[str, Any]) -> str:
     if abi_item.get('type') != 'function':
-        raise FrameworkException(f"`{abi_item["name"]}` is not a function; can't get sighash")
+        raise FrameworkException(f"`{abi_item['name']}` is not a function; can't get sighash")
 
     signature = f'{abi_item["name"]}({",".join([i["type"] for i in abi_item["inputs"]])})'
     return Web3.keccak(text=signature).hex()[:10]
