@@ -54,11 +54,13 @@ jobs:
         run: cd dipdup_indexer; $(pdm venv activate); make all
 
       - name: Copy installer to scripts
-        if: contains(github.ref, 'next')
+        # TODO: Update to `next` after 8.0 release
+        if: contains(github.ref, 'current')
         run: cp src/dipdup/install.py scripts/install.py
 
       - name: Publish scripts to GitHub Pages
-        if: contains(github.ref, 'next')
+        # TODO: Update to `next` after 8.0 release
+        if: contains(github.ref, 'current')
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
