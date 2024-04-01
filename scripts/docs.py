@@ -96,6 +96,13 @@ REFERENCES: tuple[ReferencePage, ...] = (
         md_path='docs/7.references/3.context.md',
         html_path='context.html',
     ),
+    ReferencePage(
+        title='Models',
+        description='Models reference',
+        h1='Models reference',
+        md_path='docs/7.references/4.models.md',
+        html_path='models.html',
+    ),
 )
 
 
@@ -116,6 +123,10 @@ MD_HEADING_REGEX = r'\#\#* [\w ]*'
 
 # class AbiDatasourceConfig(DatasourceConfig):
 CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
+MODEL_CLASS_REGEX = r'class (.*)\(.*'
+
+IGNORED_CONFIG_CLASSES = {'Config', 'EvmSubsquidTracesIndexConfig', 'EvmSubsquidTracesHandlerConfig'}
+IGNORED_MODEL_CLASSES = {}
 
 TEXT_EXTENSIONS = (
     '.md',
@@ -433,9 +444,28 @@ def dump_references() -> None:
     green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
     # FIXME: Traces not implemented yet
-    diff -= {'Config', 'EvmSubsquidTracesIndexConfig', 'EvmSubsquidTracesHandlerConfig'}
+    diff -= IGNORED_CONFIG_CLASSES
     if diff:
         red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
+        red_echo(f'=> Missing classes: {diff}')
+        exit(1)
+
+    green_echo('=> Verifying that models reference is up to date')
+    models_rst = Path('docs/models.rst').read_text().splitlines()
+    models_in_rst = {line.split(' ')[2] for line in models_rst if line.startswith('.. autoclass::')}
+    model_classes = set()
+    for file in Path('src/dipdup/models').glob('*.py'):
+        for match in re.finditer(MODEL_CLASS_REGEX, file.read_text()):
+            package_path = file.relative_to('src/dipdup/models')
+            if package_path == Path('__init__.py'):
+                package_path = package_path.parent
+            if package_path == Path():
+                continue
+            package_path = package_path.with_suffix('').as_posix().replace('/', '.')
+            model_classes.add(f'dipdup.models.{package_path}.{match.group(1)}')
+    diff = model_classes - models_in_rst
+    if diff:
+        red_echo('=> Models reference is outdated! Update `docs/models.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')
         exit(1)
 
