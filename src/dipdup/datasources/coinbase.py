@@ -7,8 +7,8 @@ from typing import cast
 from dipdup.config import HttpConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.datasources import Datasource
-from dipdup.models.coinbase import CandleData
-from dipdup.models.coinbase import CandleInterval
+from dipdup.models.coinbase import CoinbaseCandleData
+from dipdup.models.coinbase import CoinbaseCandleInterval
 
 CANDLES_REQUEST_LIMIT = 300
 API_URL = 'https://api.pro.coinbase.com'
@@ -38,9 +38,9 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         self,
         since: datetime,
         until: datetime,
-        interval: CandleInterval,
+        interval: CoinbaseCandleInterval,
         ticker: str,
-    ) -> list[CandleData]:
+    ) -> list[CoinbaseCandleData]:
         candles = []
         for _since, _until in self._split_candle_requests(since, until, interval):
             candles_json = await self.request(
@@ -52,14 +52,14 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
                     'granularity': interval.seconds,
                 },
             )
-            candles += [CandleData.from_json(c) for c in candles_json]
+            candles += [CoinbaseCandleData.from_json(c) for c in candles_json]
         return sorted(candles, key=lambda c: c.timestamp)
 
     def _split_candle_requests(
         self,
         since: datetime,
         until: datetime,
-        interval: CandleInterval,
+        interval: CoinbaseCandleInterval,
     ) -> list[tuple[datetime, datetime]]:
         request_interval_limit = timedelta(seconds=interval.seconds * CANDLES_REQUEST_LIMIT)
         request_intervals = []
