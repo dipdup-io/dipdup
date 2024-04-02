@@ -12,7 +12,6 @@ from typing import get_args
 from typing import get_origin
 
 from pydantic import BaseModel
-from pydantic import Extra
 
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tezos_tzkt import TzktOperationData
@@ -156,16 +155,10 @@ def _process_storage(
 
     # NOTE: Dict, process recursively
     elif isinstance(storage, dict):
-        # NOTE: Ignore missing fields along with extra ones
-        ignore = getattr(getattr(storage_type, 'Config', None), 'extra', None) == Extra.ignore
-
         for key, value in storage.items():
-            try:
-                value_type = get_dict_value_type(storage_type, key)
-                storage[key] = _process_storage(value, value_type, bigmap_diffs)
-            except IntrospectionError:
-                if not ignore:
-                    raise
+            value_type = get_dict_value_type(storage_type, key)
+            storage[key] = _process_storage(value, value_type, bigmap_diffs)
+
     # NOTE: Leave others untouched
     else:
         pass
