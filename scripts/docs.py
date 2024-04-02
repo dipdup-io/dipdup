@@ -125,8 +125,40 @@ MD_HEADING_REGEX = r'\#\#* [\w ]*'
 CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
 MODEL_CLASS_REGEX = r'class (.*)\(.*'
 
-IGNORED_CONFIG_CLASSES = {'Config', 'EvmSubsquidTracesIndexConfig', 'EvmSubsquidTracesHandlerConfig'}
-IGNORED_MODEL_CLASSES = {}
+IGNORED_CONFIG_CLASSES = {
+    'Config',
+    'EvmSubsquidTracesIndexConfig',
+    'EvmSubsquidTracesHandlerConfig',
+}
+IGNORED_MODEL_CLASSES = {
+    'dipdup.models.evm_node.EvmNodeHeadSubscription',
+    'dipdup.models.evm_node.EvmNodeLogsSubscription',
+    'dipdup.models.evm_node.EvmNodeSubscription',
+    'dipdup.models.evm_node.EvmNodeSyncingSubscription',
+    'dipdup.models.evm_node.EvmNodeTraceData',
+    'dipdup.models.evm_subsquid.BlockFieldSelection',
+    'dipdup.models.evm_subsquid.EvmSubsquidTrace',
+    'dipdup.models.evm_subsquid.EvmSubsquidTraceData',
+    'dipdup.models.evm_subsquid.FieldSelection',
+    'dipdup.models.evm_subsquid.LogFieldSelection',
+    'dipdup.models.evm_subsquid.LogRequest',
+    'dipdup.models.evm_subsquid.Query',
+    'dipdup.models.evm_subsquid.StateDiffFieldSelection',
+    'dipdup.models.evm_subsquid.StateDiffRequest',
+    'dipdup.models.evm_subsquid.TraceFieldSelection',
+    'dipdup.models.evm_subsquid.TraceRequest',
+    'dipdup.models.subsquid.SubsquidMessageType',
+    'dipdup.models.tezos_tzkt.BigMapSubscription',
+    'dipdup.models.tezos_tzkt.EventSubscription',
+    'dipdup.models.tezos_tzkt.HeadSubscription',
+    'dipdup.models.tezos_tzkt.OriginationSubscription',
+    'dipdup.models.tezos_tzkt.SmartRollupExecuteSubscription',
+    'dipdup.models.tezos_tzkt.TezosTzktMessageType',
+    'dipdup.models.tezos_tzkt.TezosTzktSubscription',
+    'dipdup.models.tezos_tzkt.TokenBalanceSubscription',
+    'dipdup.models.tezos_tzkt.TokenTransferSubscription',
+    'dipdup.models.tezos_tzkt.TransactionSubscription',
+}
 
 TEXT_EXTENSIONS = (
     '.md',
@@ -443,7 +475,6 @@ def dump_references() -> None:
 
     green_echo('=> Verifying that config reference is up to date')
     diff = classes_in_config - classes_in_rst
-    # FIXME: Traces not implemented yet
     diff -= IGNORED_CONFIG_CLASSES
     if diff:
         red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
@@ -461,9 +492,10 @@ def dump_references() -> None:
                 package_path = package_path.parent
             if package_path == Path():
                 continue
-            package_path = package_path.with_suffix('').as_posix().replace('/', '.')
-            model_classes.add(f'dipdup.models.{package_path}.{match.group(1)}')
+            package_path_str = package_path.with_suffix('').as_posix().replace('/', '.')
+            model_classes.add(f'dipdup.models.{package_path_str}.{match.group(1)}')
     diff = model_classes - models_in_rst
+    diff -= IGNORED_MODEL_CLASSES
     if diff:
         red_echo('=> Models reference is outdated! Update `docs/models.rst` and try again.')
         red_echo(f'=> Missing classes: {diff}')
