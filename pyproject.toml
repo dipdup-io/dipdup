@@ -154,10 +154,6 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
 
-[[tool.mypy.overrides]]
-module = "*.types.*"
-ignore_errors = true
-
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 log_cli_level = "WARNING"
