@@ -34,19 +34,26 @@ ENV_VARS = (
     'PYTHONPATH',
 )
 
-WELCOME_ASCII = """\0
+# NOTE: '\0' is to avoid truncating newlines by asyncclick
+WELCOME_ASCII = (
+    '\0'
+    + r"""
         ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
-      / / / // // __ \ / / / // / / // __ \\
+      / / / // // __ \ / / / // / / // __ \
      / /_/ // // /_/ // /_/ // /_/ // /_/ /
     /_____//_// .___//_____/ \__,_// .___/ 
              /_/                  /_/      
 """
-EPILOG = """\0
+)
+EPILOG = (
+    '\0'
+    + """
 Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
 Discord:               https://discord.gg/aG8XKuwsQd
 """
+)
 
 
 class Colors:

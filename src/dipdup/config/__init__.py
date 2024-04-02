@@ -39,7 +39,7 @@ import orjson
 from pydantic import Field
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
@@ -397,7 +397,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
-        config_json = orjson.dumps(self, default=pydantic_encoder)
+        config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)
 
         self.strip(config_dict)
@@ -789,7 +789,7 @@ class DipDupConfig:
             **orjson.loads(
                 orjson.dumps(
                     self,
-                    default=pydantic_encoder,
+                    default=to_jsonable_python,
                 )
             )
         ).dump()
@@ -871,7 +871,7 @@ class DipDupConfig:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
-        raw_template = orjson.dumps(template, default=pydantic_encoder).decode()
+        raw_template = orjson.dumps(template, default=to_jsonable_python).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
