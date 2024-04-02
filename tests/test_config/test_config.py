@@ -12,7 +12,6 @@ from dipdup.config import ResolvedHttpConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
-from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import OriginationSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
@@ -69,12 +68,11 @@ async def test_operation_subscriptions() -> None:
 
 
 async def test_validators() -> None:
-    # NOTE: @validator wrapped with `ConfigurationError` in `DipDupConfig.load`
     with pytest.raises(ValidationError):
         TezosContractConfig(kind='tezos', address='KT1lalala')
     with pytest.raises(ValidationError):
         TezosContractConfig(kind='tezos', address='lalalalalalalalalalalalalalalalalala')
-    with pytest.raises(ConfigurationError):
+    with pytest.raises(ValidationError):
         TzktDatasourceConfig(kind='tezos.tzkt', url='not_an_url')
 
 

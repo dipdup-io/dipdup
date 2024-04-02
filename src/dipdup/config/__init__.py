@@ -37,7 +37,7 @@ from urllib.parse import urlparse
 
 import orjson
 from pydantic import Field
-from pydantic import validator
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from pydantic.json import pydantic_encoder
 
@@ -142,7 +142,8 @@ class PostgresDatabaseConfig:
             'port': self.port,
         }
 
-    @validator('immune_tables', allow_reuse=True)
+    @field_validator('immune_tables')
+    @classmethod
     def _valid_immune_tables(cls, v: set[str]) -> set[str]:
         for table in v:
             if table.startswith('dipdup'):
@@ -438,7 +439,8 @@ class HasuraConfig:
     rest: bool = True
     http: HttpConfig | None = None
 
-    @validator('url', allow_reuse=True)
+    @field_validator('url')
+    @classmethod
     def _valid_url(cls, v: str) -> str:
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):

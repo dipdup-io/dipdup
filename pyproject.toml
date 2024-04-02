@@ -103,7 +103,6 @@ dev = [
     "types-tabulate",
 ]
 docs = [
-    # NOTE: Patched to support nested Pydantic dataclasses.
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",
