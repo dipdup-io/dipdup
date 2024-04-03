@@ -17,6 +17,7 @@ from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PACKAGE_MARKER
 from dipdup.package import DipDupPackage
+from dipdup.project import CODEGEN_HEADER
 from dipdup.project import render_base
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
@@ -122,7 +123,8 @@ class CodeGenerator(ABC):
             class_name=class_name,
             disable_timestamp=True,
             input_file_type=dmcg.InputFileType.JsonSchema,
-            target_python_version=dmcg.PythonVersion.PY_311,
+            target_python_version=dmcg.PythonVersion.PY_312,
+            custom_file_header=CODEGEN_HEADER,
             use_union_operator=True,
             output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
         )

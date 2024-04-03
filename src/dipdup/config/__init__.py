@@ -616,7 +616,7 @@ class AdvancedConfig:
         extra = 'allow'
 
 
-@dataclass()
+@dataclass
 class DipDupConfig:
     """Main indexer config
 
@@ -1166,4 +1166,3 @@ _original_to_aliased = {
 
 
 _patch_annotations(_original_to_aliased)
-# rebuild_dataclass(DipDupConfig, force=True, raise_errors=False)

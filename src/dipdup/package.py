@@ -26,6 +26,7 @@ PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
 DEFAULT_ENV = '.env.default'
 
+
 EVM_ABI_JSON = 'abi.json'
 
 _branch = '│   '
