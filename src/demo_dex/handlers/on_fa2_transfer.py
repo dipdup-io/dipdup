@@ -9,7 +9,7 @@ async def on_fa2_transfer(
     ctx: HandlerContext,
     transfer: TezosTzktTransaction[TransferParameter, QuipuFa2Storage],
 ) -> None:
-    transfer_parameter = transfer.parameter.__root__[0]
+    transfer_parameter = transfer.parameter.root[0]
 
     symbol = ctx.template_values['symbol']
     from_address = transfer_parameter.from_

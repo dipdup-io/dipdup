@@ -4,7 +4,7 @@ import random
 from abc import ABC
 from typing import Literal
 
-from pydantic import validator
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
@@ -43,7 +43,8 @@ class EvmSubsquidDatasourceConfig(IndexDatasourceConfig):
     def rollback_depth(self) -> int:
         return 0
 
-    @validator('url')
+    @field_validator('url')
+    @classmethod
     def _valid_url(cls, v: str) -> str:
         if not v.startswith(('http', 'https')):
             raise ConfigurationError('Subsquid Network URL must start with http(s)')

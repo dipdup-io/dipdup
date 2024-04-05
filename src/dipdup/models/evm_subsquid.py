@@ -1,11 +1,11 @@
 from typing import Any
 from typing import Generic
 from typing import NotRequired
-from typing import TypedDict
 from typing import TypeVar
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
+from typing_extensions import TypedDict
 
 from dipdup.fetcher import HasLevel
 from dipdup.models.evm_node import EvmNodeLogData

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -65,7 +65,7 @@ class EvmSubsquidEventsIndexConfig(EvmSubsquidIndexConfig):
 
     kind: Literal['evm.subsquid.events']
     datasource: EvmSubsquidDatasourceConfig
-    handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = field(default_factory=tuple)
+    handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = Field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
 

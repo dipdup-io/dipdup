@@ -24,7 +24,6 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
-from dataclasses import field
 from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
@@ -37,9 +36,10 @@ from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 import orjson
-from pydantic import validator
+from pydantic import Field
+from pydantic import field_validator
 from pydantic.dataclasses import dataclass
-from pydantic.json import pydantic_encoder
+from pydantic_core import to_jsonable_python
 
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
@@ -79,7 +79,7 @@ class SqliteDatabaseConfig:
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
-    immune_tables: set[str] = field(default_factory=set)
+    immune_tables: set[str] = Field(default_factory=set)
 
     @property
     def schema_name(self) -> str:
@@ -117,8 +117,8 @@ class PostgresDatabaseConfig:
     database: str = DEFAULT_POSTGRES_DATABASE
     port: int = DEFAULT_POSTGRES_PORT
     schema_name: str = DEFAULT_POSTGRES_SCHEMA
-    password: str = field(default='', repr=False)
-    immune_tables: set[str] = field(default_factory=set)
+    password: str = Field(default='', repr=False)
+    immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
 
     @property
@@ -142,7 +142,8 @@ class PostgresDatabaseConfig:
             'port': self.port,
         }
 
-    @validator('immune_tables', allow_reuse=True)
+    @field_validator('immune_tables')
+    @classmethod
     def _valid_immune_tables(cls, v: set[str]) -> set[str]:
         for table in v:
             if table.startswith('dipdup'):
@@ -221,7 +222,7 @@ class ResolvedHttpConfig:
 
 @dataclass
 class NameMixin:
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         self._name: str | None = None
 
     @property
@@ -316,7 +317,7 @@ ParentT = TypeVar('ParentT')
 class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
-    def __post_init_post_parse__(self: ParentMixin[ParentT]) -> None:
+    def __post_init__(self: ParentMixin[ParentT]) -> None:
         self._parent: ParentT | None = None
 
     @property
@@ -337,7 +338,7 @@ class CallbackMixin(CodegenMixin):
 
     callback: str
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         if self.callback and self.callback != pascal_to_snake(self.callback, strip_dots=False):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
@@ -349,9 +350,9 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
     :param callback: Callback name
     """
 
-    def __post_init_post_parse__(self) -> None:
-        CallbackMixin.__post_init_post_parse__(self)
-        ParentMixin.__post_init_post_parse__(self)
+    def __post_init__(self) -> None:
+        CallbackMixin.__post_init__(self)
+        ParentMixin.__post_init__(self)
 
 
 @dataclass
@@ -384,9 +385,9 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     kind: str
     datasource: DatasourceConfig
 
-    def __post_init_post_parse__(self) -> None:
-        NameMixin.__post_init_post_parse__(self)
-        ParentMixin.__post_init_post_parse__(self)
+    def __post_init__(self) -> None:
+        NameMixin.__post_init__(self)
+        ParentMixin.__post_init__(self)
 
         self.template_values: dict[str, str] = {}
 
@@ -396,7 +397,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
-        config_json = orjson.dumps(self, default=pydantic_encoder)
+        config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)
 
         self.strip(config_dict)
@@ -428,7 +429,7 @@ class HasuraConfig:
     """
 
     url: str
-    admin_secret: str | None = field(default=None, repr=False)
+    admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
     select_limit: int = 1000
@@ -438,7 +439,8 @@ class HasuraConfig:
     rest: bool = True
     http: HttpConfig | None = None
 
-    @validator('url', allow_reuse=True)
+    @field_validator('url')
+    @classmethod
     def _valid_url(cls, v: str) -> str:
         parsed_url = urlparse(v)
         if not (parsed_url.scheme and parsed_url.netloc):
@@ -464,20 +466,20 @@ class JobConfig(NameMixin):
     :param daemon: Run hook as a daemon (never stops)
     """
 
-    hook: HookConfig = field()
-    args: dict[str, Any] = field(default_factory=dict)
+    hook: HookConfig
+    args: dict[str, Any] = Field(default_factory=dict)
     crontab: str | None = None
     interval: int | None = None
     daemon: bool = False
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         schedules_enabled = sum(int(bool(x)) for x in (self.crontab, self.interval, self.daemon))
         if schedules_enabled > 1:
             raise ConfigurationError('Only one of `crontab`, `interval` of `daemon` can be specified')
         if not schedules_enabled:
             raise ConfigurationError('One of `crontab`, `interval` or `daemon` must be specified')
 
-        NameMixin.__post_init_post_parse__(self)
+        NameMixin.__post_init__(self)
 
 
 @dataclass
@@ -523,7 +525,7 @@ class HookConfig(CallbackMixin):
     :param atomic: Wrap hook in a single database transaction
     """
 
-    args: dict[str, str] = field(default_factory=dict)
+    args: dict[str, str] = Field(default_factory=dict)
     atomic: bool = False
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -600,7 +602,7 @@ class AdvancedConfig:
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
-    reindex: dict[ReindexingReason, ReindexingAction] = field(default_factory=dict)
+    reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
@@ -638,24 +640,24 @@ class DipDupConfig:
 
     spec_version: str | float
     package: str
-    datasources: dict[str, DatasourceConfigU] = field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = field(
+    datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
+    database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
         default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
     )
-    contracts: dict[str, ContractConfigU] = field(default_factory=dict)
-    indexes: dict[str, IndexConfigU] = field(default_factory=dict)
-    templates: dict[str, ResolvedIndexConfigU] = field(default_factory=dict)
-    jobs: dict[str, JobConfig] = field(default_factory=dict)
-    hooks: dict[str, HookConfig] = field(default_factory=dict)
+    contracts: dict[str, ContractConfigU] = Field(default_factory=dict)
+    indexes: dict[str, IndexConfigU] = Field(default_factory=dict)
+    templates: dict[str, ResolvedIndexConfigU] = Field(default_factory=dict)
+    jobs: dict[str, JobConfig] = Field(default_factory=dict)
+    hooks: dict[str, HookConfig] = Field(default_factory=dict)
     hasura: HasuraConfig | None = None
     sentry: SentryConfig | None = None
     prometheus: PrometheusConfig | None = None
     api: ApiConfig | None = None
-    advanced: AdvancedConfig = field(default_factory=AdvancedConfig)
-    custom: dict[str, Any] = field(default_factory=dict)
+    advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
+    custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
 
-    def __post_init_post_parse__(self) -> None:
+    def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
 
@@ -787,7 +789,7 @@ class DipDupConfig:
             **orjson.loads(
                 orjson.dumps(
                     self,
-                    default=pydantic_encoder,
+                    default=to_jsonable_python,
                 )
             )
         ).dump()
@@ -869,7 +871,7 @@ class DipDupConfig:
         _logger.debug('Resolving index config `%s` from template `%s`', template_config.name, template_config.template)
 
         template = self.get_template(template_config.template)
-        raw_template = orjson.dumps(template, default=pydantic_encoder).decode()
+        raw_template = orjson.dumps(template, default=to_jsonable_python).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
             raw_template = re.sub(value_regex, value, raw_template)
@@ -1125,21 +1127,27 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
 
         for attr in dir(submodule):
             value = getattr(submodule, attr)
-            if hasattr(value, '__annotations__'):
+            if not hasattr(value, '__annotations__'):
+                continue
+
+            reload = False
+            for name, annotation in value.__annotations__.items():
                 # NOTE: All annotations are strings now
-                reload = False
-                for name, annotation in value.__annotations__.items():
-                    annotation = annotation if isinstance(annotation, str) else annotation.__class__.__name__
-                    if new_annotation := replace_table.get(annotation):
-                        value.__annotations__[name] = new_annotation
-                        reload = True
+                if new_annotation := replace_table.get(annotation):
+                    value.__annotations__[name] = new_annotation
+                    reload = True
 
-                # NOTE: Wrap dataclass again to recreate magic methods
-                if reload:
-                    setattr(submodule, attr, dataclass(value))
+            if not reload:
+                continue
 
-            if hasattr(value, '__pydantic_model__'):
-                value.__pydantic_model__.update_forward_refs()
+            # NOTE: Wrap dataclass again to recreate magic methods.
+            # NOTE: We need to trick Pydantic that it's a native dataclass.
+            delattr(value, '__pydantic_validator__')
+            try:
+                value = dataclass(value)
+            except RuntimeError:
+                value = dataclass(value)
+            setattr(submodule, attr, value)
 
 
 _original_to_aliased = {
@@ -1157,4 +1165,6 @@ _original_to_aliased = {
         'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
     ),
 }
+
+
 _patch_annotations(_original_to_aliased)

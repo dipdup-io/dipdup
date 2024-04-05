@@ -20,7 +20,7 @@ async def on_fa2_tez_to_token(
 
     min_token_quantity = Decimal(tez_to_token_payment.parameter.min_out) / (10**decimals)
     assert tez_to_token_payment.data.amount is not None
-    token_quantity = sum(Decimal(tx.amount) for tx in transfer.parameter.__root__[0].txs) / (10**decimals)
+    token_quantity = sum(Decimal(tx.amount) for tx in transfer.parameter.root[0].txs) / (10**decimals)
     tez_quantity = Decimal(tez_to_token_payment.data.amount) / (10**6)
     assert min_token_quantity <= token_quantity, tez_to_token_payment.data.hash
 

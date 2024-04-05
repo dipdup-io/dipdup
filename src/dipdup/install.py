@@ -1,7 +1,7 @@
 """This script (un)installs DipDup and its dependencies with pipx.
 
 WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic will break.
-And no 3.11-only code too. Just to print nice colored "not supported" message instead of crashing.
+And no 3.12-only code too. Just to print nice colored "not supported" message instead of crashing.
 
 Some functions are importable to use in `dipdup.cli`.
 This script is also available as `dipdup-install` or `python -m dipdup.install`.
@@ -19,7 +19,7 @@ from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
 WHICH_CMDS = (
-    'python3.11',
+    'python3.12',
     'pipx',
     'dipdup',
     'pdm',
@@ -34,19 +34,26 @@ ENV_VARS = (
     'PYTHONPATH',
 )
 
-WELCOME_ASCII = """\0
+# NOTE: '\0' is to avoid truncating newlines by asyncclick
+WELCOME_ASCII = (
+    '\0'
+    + r"""
         ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
-      / / / // // __ \ / / / // / / // __ \\
+      / / / // // __ \ / / / // / / // __ \
      / /_/ // // /_/ // /_/ // /_/ // /_/ /
     /_____//_// .___//_____/ \__,_// .___/ 
              /_/                  /_/      
 """
-EPILOG = """\0
+)
+EPILOG = (
+    '\0'
+    + """
 Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
 Discord:               https://discord.gg/aG8XKuwsQd
 """
+)
 
 
 class Colors:
@@ -146,8 +153,8 @@ class DipDupEnvironment:
             fail(f'{cmd} failed: {e.cmd} {e.returncode}')
 
     def ensure_pipx(self) -> None:
-        if not sys.version.startswith('3.11'):
-            fail('DipDup requires Python 3.11')
+        if not sys.version.startswith('3.12'):
+            fail('DipDup requires Python 3.12')
 
         """Ensure pipx is installed for current user"""
         if self._commands.get('pipx'):
@@ -155,10 +162,10 @@ class DipDupEnvironment:
 
         echo('Installing pipx')
         if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3.11', '-m', 'pip', 'install', '-q', 'pipx')
+            self.run_cmd('python3.12', '-m', 'pip', 'install', '-q', 'pipx')
         else:
-            self.run_cmd('python3.11', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3.11', '-m', 'pipx', 'ensurepath')
+            self.run_cmd('python3.12', '-m', 'pip', 'install', '--user', '-q', 'pipx')
+        self.run_cmd('python3.12', '-m', 'pipx', 'ensurepath')
         pipx_path = str(Path.home() / '.local' / 'bin')
         os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
         self._commands['pipx'] = which('pipx')
@@ -185,11 +192,11 @@ def install(
     force_str = '--force' if force else ''
     pipx_packages = env._pipx_packages
 
-    python_inter_pipx = cast(str, which('python3.11'))
+    python_inter_pipx = cast(str, which('python3.12'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
             subprocess.run(
-                ['pyenv', 'which', 'python3.11'],
+                ['pyenv', 'which', 'python3.12'],
                 capture_output=True,
                 text=True,
             )

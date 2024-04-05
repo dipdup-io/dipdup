@@ -101,8 +101,8 @@ def test_deserialize_storage_plain_list() -> None:
 
     # Assert
     assert isinstance(storage_obj, BazaarMarketPlaceStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[0].key.sale_seller == 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb'
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[0].key.sale_seller == 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb'
 
 
 def test_deserialize_storage_list_of_maps() -> None:
@@ -150,8 +150,8 @@ def test_deserialize_storage_list_of_maps() -> None:
 
     # Assert
     assert isinstance(storage_obj, ListOfMapsStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[1]['test'] == '123'
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[1]['test'] == '123'
 
 
 def test_convert_operation_with_default_entrypoint() -> None:
@@ -195,9 +195,9 @@ def test_qwer() -> None:
 
     # Assert
     assert isinstance(storage_obj, QwerStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[0][1].R['1'] == '1'  # type: ignore[union-attr]
-    assert storage_obj.__root__[0][1].R['2'] == '2'  # type: ignore[union-attr]
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[0][1].R['1'] == '1'  # type: ignore[union-attr]
+    assert storage_obj.root[0][1].R['2'] == '2'  # type: ignore[union-attr]
 
 
 def test_asdf() -> None:
@@ -210,8 +210,8 @@ def test_asdf() -> None:
 
     # Assert
     assert isinstance(storage_obj, AsdfStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert isinstance(storage_obj.__root__[0]['pupa'], list)
+    assert isinstance(storage_obj.root, list)
+    assert isinstance(storage_obj.root[0]['pupa'], list)
 
 
 def test_hjkl() -> None:
@@ -224,9 +224,9 @@ def test_hjkl() -> None:
 
     # Assert
     assert isinstance(storage_obj, HjklStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert isinstance(storage_obj.__root__[0].value.mr, dict)
-    assert storage_obj.__root__[0].value.mr['111'] is True
+    assert isinstance(storage_obj.root, list)
+    assert isinstance(storage_obj.root[0].value.mr, dict)
+    assert storage_obj.root[0].value.mr['111'] is True
 
 
 def test_zxcv() -> None:
@@ -285,12 +285,12 @@ def test_kolibri_ovens() -> None:
     # Act
     operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
-    parameter_obj = SetDelegateParameter.parse_obj(operations[0].parameter_json)
+    parameter_obj = SetDelegateParameter.model_validate(operations[0].parameter_json)
 
     # Assert
     assert isinstance(storage_obj, KolibriOvensStorage)
     assert isinstance(parameter_obj, SetDelegateParameter)
-    assert parameter_obj.__root__ is None
+    assert parameter_obj.root is None
 
 
 def test_yupana() -> None:

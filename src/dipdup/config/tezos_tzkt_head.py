@@ -52,6 +52,6 @@ class TezosTzktHeadIndexConfig(TezosTzktIndexConfig):
     def last_level(self) -> int:
         return 0
 
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
+    def __post_init__(self) -> None:
+        super().__post_init__()
         self.handler_config = TezosTzktHeadHandlerConfig(callback=self.callback)

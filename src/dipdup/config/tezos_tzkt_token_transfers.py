@@ -78,7 +78,7 @@ class TezosTzktTokenTransfersIndexConfig(TezosTzktIndexConfig):
                 from_ = handler_config.from_.address if isinstance(handler_config.from_, ContractConfig) else None
                 to = handler_config.to.address if isinstance(handler_config.to, ContractConfig) else None
                 subs.add(
-                    TokenTransferSubscription(  # type: ignore[call-arg]
+                    TokenTransferSubscription(
                         contract=contract,
                         from_=from_,
                         to=to,

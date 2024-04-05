@@ -41,8 +41,8 @@ class TezosTzktDatasourceConfig(IndexDatasourceConfig):
     merge_subscriptions: bool = False
     rollback_depth: int = 2
 
-    def __post_init_post_parse__(self) -> None:
-        super().__post_init_post_parse__()
+    def __post_init__(self) -> None:
+        super().__post_init__()
         self.url = self.url.rstrip('/')
 
         limit = MAX_BATCH_SIZE

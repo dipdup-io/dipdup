@@ -89,11 +89,11 @@ async def test_import_submodules() -> None:
 async def test_parse_object() -> None:
     # empty
     empty = parse_object(SetDelegateParameter, None)
-    assert empty.__root__ is None
+    assert empty.root is None
     # string only
     str_ = parse_object(SetDelegateParameter, 'some')
-    assert str_.__root__ == 'some'
+    assert str_.root == 'some'
     # map
     map_ = parse_object(QwerStorage, [[{'R': {'a': 'b'}}, {'R': {}}], [{'L': 'test'}]])
-    assert isinstance(map_.__root__[0][0], QwerStorageItem1)
-    assert map_.__root__[0][0].R['a'] == 'b'
+    assert isinstance(map_.root[0][0], QwerStorageItem1)
+    assert map_.root[0][0].R['a'] == 'b'

@@ -13,7 +13,7 @@ maintainers = [
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
 ]
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.12,<3.13"
 keywords = [
     "api",
     "backend",
@@ -42,7 +42,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
@@ -52,12 +52,11 @@ dependencies = [
     # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
     "asyncpg~=0.29.0",
     "datamodel-code-generator~=0.25.0",
-    "pydantic~=1.10.11",
-    "tortoise-orm==0.19.3",
+    "pydantic~=2.2",
+    "tortoise-orm==0.20.0",
     #
-    "aiohttp~=3.8",
+    "aiohttp~=3.9",
     "aiolimiter~=1.0",
-    # NOTE: Used as backend by asyncclick
     "anyio>=4.1.0",
     "APScheduler~=3.8",
     "async-lru~=2.0",
@@ -94,7 +93,6 @@ dev = [
     "black",
     "docker",
     "mypy",
-    "pprofile",
     "pytest~=7.4",
     "pytest-aiohttp",
     "pytest-asyncio",
@@ -105,8 +103,6 @@ dev = [
     "types-tabulate",
 ]
 docs = [
-    # NOTE: Patched to support nested Pydantic dataclasses.
-    "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",
@@ -136,12 +132,12 @@ packages = ["src/dipdup"]
 
 [tool.black]
 line-length = 120
-target-version = ["py311"]
+target-version = ["py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 ignore = [
@@ -154,7 +150,7 @@ flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
 isort = { force-single-line = true, known-first-party = ["dipdup"] }
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
 
