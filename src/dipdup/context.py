@@ -41,6 +41,7 @@ from dipdup.database import get_connection
 from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
+from dipdup.datasources.abi_etherscan import AbiEtherscanDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
@@ -455,6 +456,13 @@ class DipDupContext:
                 raise ConfigurationError(f'No `evm.node` datasources linked to `{name}`')
             return self._get_datasource(random_node.name, EvmNodeDatasource)
         raise ConfigurationError(f'`{name}` datasource is neither `evm.node` nor `evm.subsquid`')
+
+    def get_abi_etherscan_datasource(self, name: str) -> AbiEtherscanDatasource:
+        """Get `abi.etherscan` datasource by name
+
+        :param name: Name of the datasource
+        """
+        return self._get_datasource(name, AbiEtherscanDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name

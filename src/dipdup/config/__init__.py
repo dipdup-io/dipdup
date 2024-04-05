@@ -757,6 +757,12 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
+    def get_abi_etherscan_datasource(self, name: str) -> AbiEtherscanDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, AbiEtherscanDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to Etherscan datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
         loglevels = {}
         if not isinstance(self.logging, dict):
