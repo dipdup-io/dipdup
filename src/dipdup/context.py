@@ -324,25 +324,25 @@ class DipDupContext:
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
         if isinstance(index_config, TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktOperationsIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktBigMapsIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosTzktHeadIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktHeadIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosTzktTokenBalancesIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktTokenBalancesIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktTokenTransfersIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosTzktEventsIndexConfig):
-            datasource = self.get_tzkt_datasource(datasource_name)
+            datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
-            datasource = self.get_subsquid_datasource(datasource_name)
+            datasource = self.get_evm_subsquid_datasource(datasource_name)
             node_field = index_config.datasource.node
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
@@ -350,7 +350,7 @@ class DipDupContext:
         elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
             raise NotImplementedError
         elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
-            datasource = self.get_subsquid_datasource(datasource_name)
+            datasource = self.get_evm_subsquid_datasource(datasource_name)
             node_field = index_config.datasource.node
             if node_field:
                 node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
@@ -435,11 +435,11 @@ class DipDupContext:
             raise ConfigurationError(f'Datasource `{name}` is not a `{type_.__name__}`')
         return datasource
 
-    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
+    def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
         """Get `tezos.tzkt` datasource by name"""
         return self._get_datasource(name, TezosTzktDatasource)
 
-    def get_subsquid_datasource(self, name: str) -> EvmSubsquidDatasource:
+    def get_evm_subsquid_datasource(self, name: str) -> EvmSubsquidDatasource:
         """Get `evm.subsquid` datasource by name"""
         return self._get_datasource(name, EvmSubsquidDatasource)
 

@@ -147,7 +147,7 @@ class TezosTzktCodeGenerator(CodeGenerator):
             )
             datasource_name = template_config.datasource
             if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
-                datasource_config = self._config.get_tzkt_datasource(datasource_name)
+                datasource_config = self._config.get_tezos_tzkt_datasource(datasource_name)
                 template_config.datasource = datasource_config
                 await self._fetch_operation_index_schema(template_config)
             else:

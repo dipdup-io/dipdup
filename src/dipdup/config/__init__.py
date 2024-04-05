@@ -739,13 +739,13 @@ class DipDupConfig:
         except KeyError as e:
             raise ConfigurationError(f'Hook `{name}` not found in `templates` config section') from e
 
-    def get_tzkt_datasource(self, name: str) -> TezosTzktDatasourceConfig:
+    def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasourceConfig:
         datasource = self.get_datasource(name)
         if not isinstance(datasource, TezosTzktDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to TzKT datasource')
         return datasource
 
-    def get_subsquid_datasource(self, name: str) -> EvmSubsquidDatasourceConfig:
+    def get_evm_subsquid_datasource(self, name: str) -> EvmSubsquidDatasourceConfig:
         datasource = self.get_datasource(name)
         if not isinstance(datasource, EvmSubsquidDatasourceConfig):
             raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
@@ -931,10 +931,10 @@ class DipDupConfig:
 
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
-            if 'tzkt' in index_config.kind:
-                index_config.datasource = self.get_tzkt_datasource(index_config.datasource)
-            elif 'subsquid' in index_config.kind:
-                index_config.datasource = self.get_subsquid_datasource(index_config.datasource)
+            if index_config.kind.startswith('tezos_tzkt'):
+                index_config.datasource = self.get_tezos_tzkt_datasource(index_config.datasource)
+            elif index_config.kind.startswith('evm_subsquid'):
+                index_config.datasource = self.get_evm_subsquid_datasource(index_config.datasource)
             else:
                 raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
 
