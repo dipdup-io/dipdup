@@ -404,7 +404,7 @@ class OperationsUnfilteredFetcherChannel(FetcherChannel[TezosTzktOperationData, 
             self._head = get_operations_head(operations)
 
 
-class OperationFetcher(DataFetcher[TezosTzktOperationData]):
+class OperationsFetcher(DataFetcher[TezosTzktOperationData]):
     """Fetches operations from multiple REST API endpoints, merges them and yields by level.
 
     Offet of every endpoint is tracked separately.
@@ -437,12 +437,12 @@ class OperationFetcher(DataFetcher[TezosTzktOperationData]):
         datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
-    ) -> OperationFetcher:
+    ) -> OperationsFetcher:
         transaction_addresses, transaction_hashes = await get_transaction_filters(config, datasource)
         origination_addresses, origination_hashes = await get_origination_filters(config, datasource)
         sr_execute_addresses = await get_sr_execute_filters(config)
 
-        return OperationFetcher(
+        return OperationsFetcher(
             datasource=datasource,
             first_level=first_level,
             last_level=last_level,

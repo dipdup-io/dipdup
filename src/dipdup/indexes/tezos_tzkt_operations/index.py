@@ -25,7 +25,7 @@ from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
-from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationFetcher
+from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationsFetcher
 from dipdup.indexes.tezos_tzkt_operations.fetcher import OperationsUnfilteredFetcher
 from dipdup.indexes.tezos_tzkt_operations.matcher import MatchedOperationsT
 from dipdup.indexes.tezos_tzkt_operations.matcher import OperationSubgroup
@@ -210,9 +210,9 @@ class TezosTzktOperationsIndex(
 
     async def _create_fetcher(
         self, first_level: int, sync_level: int
-    ) -> OperationFetcher | OperationsUnfilteredFetcher:
+    ) -> OperationsFetcher | OperationsUnfilteredFetcher:
         if isinstance(self._config, TezosTzktOperationsIndexConfig):
-            return await OperationFetcher.create(
+            return await OperationsFetcher.create(
                 self._config,
                 self._datasource,
                 first_level,
