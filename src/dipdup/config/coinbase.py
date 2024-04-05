@@ -1,6 +1,6 @@
-from dataclasses import field
 from typing import Literal
 
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
@@ -20,7 +20,7 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
 
     kind: Literal['coinbase']
     api_key: str | None = None
-    secret_key: str | None = field(default=None, repr=False)
-    passphrase: str | None = field(default=None, repr=False)
+    secret_key: str | None = Field(default=None, repr=False)
+    passphrase: str | None = Field(default=None, repr=False)
 
     http: HttpConfig | None = None

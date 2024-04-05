@@ -52,12 +52,11 @@ dependencies = [
     # NOTE: Pin core dependencies to minor versions; tortoise-orm to exact one
     "asyncpg~=0.29.0",
     "datamodel-code-generator~=0.25.0",
-    "pydantic~=1.10.11",
-    "tortoise-orm==0.19.3",
-
-    "aiohttp>=3.9.0b0",
+    "pydantic~=2.2",
+    "tortoise-orm==0.20.0",
+    #
+    "aiohttp~=3.9",
     "aiolimiter~=1.0",
-    # NOTE: Used as backend by asyncclick
     "anyio>=4.1.0",
     "APScheduler~=3.8",
     "async-lru~=2.0",
@@ -104,8 +103,6 @@ dev = [
     "types-tabulate",
 ]
 docs = [
-    # NOTE: Patched to support nested Pydantic dataclasses.
-    "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
     "sphinx-click",
     "sphinx-markdown-builder",

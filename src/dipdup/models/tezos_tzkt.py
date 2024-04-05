@@ -135,7 +135,7 @@ class TokenTransferSubscription(TzktSubscription):
     method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
     contract: str | None = None
     token_id: int | None = None
-    from_: str | None = Field(None, alias='from')  # type: ignore[misc]
+    from_: str | None = Field(None)  # type: ignore[misc]
     to: str | None = None
 
     def get_request(self) -> list[dict[str, Any]]:

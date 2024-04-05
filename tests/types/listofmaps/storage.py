@@ -1,5 +1,7 @@
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import RootModel
 
 
-class ListOfMapsStorage(BaseModel):
-    __root__: list[dict[str, str]]
+class ListOfMapsStorage(RootModel[Any]):
+    root: list[dict[str, str]]

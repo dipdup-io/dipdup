@@ -4,36 +4,32 @@
 from __future__ import annotations
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address: str
     nat: str
 
 
 class LedgerItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     key: Key
     value: str
 
 
 class Key1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address: str
     nat: str
 
 
 class Value(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     allowances: list[str]
     borrow: str
@@ -41,38 +37,33 @@ class Value(BaseModel):
 
 
 class Account(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     key: Key1
     value: Value
 
 
 class MainTokenItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     fA12: str
 
 
 class FA2(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address: str
     nat: str
 
 
 class MainTokenItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     fA2: FA2
 
 
 class Tokens(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     mainToken: MainTokenItem | MainTokenItem1
     interestRateModel: str
@@ -93,46 +84,40 @@ class Tokens(BaseModel):
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     token_id: str
     tokens: dict[str, str]
 
 
 class KeyItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     fA12: str
 
 
 class FA21(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address: str
     nat: str
 
 
 class KeyItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     fA2: FA21
 
 
 class Asset(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     key: KeyItem | KeyItem1
     value: str
 
 
 class Storage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     admin: str
     ledger: list[LedgerItem]
@@ -151,8 +136,7 @@ class Storage(BaseModel):
 
 
 class YupanaStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     storage: Storage
     tokenLambdas: dict[str, str]

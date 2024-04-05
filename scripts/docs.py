@@ -8,7 +8,6 @@
 #
 # To run `build --serve` command you need to clone and install frontend from private `dipdup-io/interface` repo first.
 #
-import importlib
 import logging
 import os
 import re
@@ -30,6 +29,7 @@ from typing import TypedDict
 
 import click
 import orjson
+from pydantic import TypeAdapter
 from watchdog.events import EVENT_TYPE_CREATED
 from watchdog.events import EVENT_TYPE_DELETED
 from watchdog.events import EVENT_TYPE_MODIFIED
@@ -402,8 +402,7 @@ def check_links(source: Path, http: bool) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    dc_schema = importlib.import_module('dc_schema')
-    schema_dict = dc_schema.get_schema(DipDupConfig)
+    schema_dict = TypeAdapter(DipDupConfig).json_schema()
 
     # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
     schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = [

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from collections import deque
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
 
 from pydantic.dataclasses import dataclass
@@ -24,6 +26,9 @@ from dipdup.models.tezos_tzkt import TzktSmartRollupExecute
 from dipdup.models.tezos_tzkt import TzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _logger = logging.getLogger('dipdup.matcher')
 

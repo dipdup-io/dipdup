@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from abc import ABC
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic.dataclasses import dataclass
@@ -10,9 +12,17 @@ from dipdup.config import HandlerConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidIndexConfig
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 
 @dataclass
-class SubsquidTracesHandlerConfig(HandlerConfig): ...
+class SubsquidTracesHandlerConfig(HandlerConfig, ABC):
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        raise NotImplementedError
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        raise NotImplementedError
 
 
 @dataclass

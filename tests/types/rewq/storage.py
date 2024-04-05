@@ -6,41 +6,36 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 from pydantic import Field
 
 
 class MapItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     L: dict[str, str]
 
 
 class MapItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     R: dict[str, Any]
 
 
 class OrItem(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     L: dict[str, str]
 
 
 class OrItem1(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     R: dict[str, Any]
 
 
 class RewqStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     map: dict[str, MapItem | MapItem1]
     or_: OrItem | OrItem1 = Field(..., alias='or')
