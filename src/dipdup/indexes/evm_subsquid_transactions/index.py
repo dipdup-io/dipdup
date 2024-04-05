@@ -3,7 +3,7 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
-from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid import get_sighash
@@ -21,7 +21,7 @@ QueueItem = tuple[EvmNodeTransactionData, ...] | RollbackMessage
 
 
 class EvmSubsquidTransactionsIndex(
-    SubsquidIndex[EvmSubsquidTransactionsIndexConfig, QueueItem, SubsquidDatasource],
+    SubsquidIndex[EvmSubsquidTransactionsIndexConfig, QueueItem, EvmSubsquidDatasource],
     message_type=SubsquidMessageType.transactions,
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:

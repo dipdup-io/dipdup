@@ -113,7 +113,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.datasources.abi_etherscan import AbiEtherscanDatasource
     from dipdup.datasources.coinbase import CoinbaseDatasource
     from dipdup.datasources.evm_node import EvmNodeDatasource
-    from dipdup.datasources.evm_subsquid import SubsquidDatasource
+    from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
@@ -126,7 +126,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
         TzipMetadataDatasourceConfig: TzipMetadataDatasource,
         HttpDatasourceConfig: HttpDatasource,
         IpfsDatasourceConfig: IpfsDatasource,
-        EvmSubsquidDatasourceConfig: SubsquidDatasource,
+        EvmSubsquidDatasourceConfig: EvmSubsquidDatasource,
         EvmNodeDatasourceConfig: EvmNodeDatasource,
     }
 

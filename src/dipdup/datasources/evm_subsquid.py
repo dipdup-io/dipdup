@@ -80,7 +80,7 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
-class _SubsquidWorker(Datasource[Any]):
+class _EvmSubsquidWorker(Datasource[Any]):
     async def run(self) -> None:
         raise FrameworkException('Subsquid worker datasource should not be run')
 
@@ -94,7 +94,7 @@ class _SubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class SubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
+class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )
@@ -220,7 +220,7 @@ class SubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
         response = await self.request('get', 'height')
         return int(response)
 
-    async def _get_worker(self, level: int) -> _SubsquidWorker:
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
         worker_url = (
             await self._http.request(
                 'get',
@@ -236,4 +236,4 @@ class SubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
         # NOTE: Fail immediately; retries are handled one level up
         worker_config.http.retry_count = 0
 
-        return _SubsquidWorker(worker_config)
+        return _EvmSubsquidWorker(worker_config)

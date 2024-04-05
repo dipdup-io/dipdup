@@ -5,7 +5,7 @@ from typing import Any
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
@@ -23,14 +23,14 @@ QueueItem = tuple[EvmNodeLogData, ...] | RollbackMessage
 
 
 class EvmSubsquidEventsIndex(
-    SubsquidIndex[EvmSubsquidEventsIndexConfig, QueueItem, SubsquidDatasource],
+    SubsquidIndex[EvmSubsquidEventsIndexConfig, QueueItem, EvmSubsquidDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
         config: EvmSubsquidEventsIndexConfig,
-        datasource: SubsquidDatasource,
+        datasource: EvmSubsquidDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._topics: dict[str, dict[str, str]] | None = None

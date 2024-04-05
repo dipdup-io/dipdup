@@ -3,7 +3,7 @@ import time
 from collections.abc import AsyncIterator
 
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
@@ -18,11 +18,11 @@ from dipdup.models.evm_subsquid import TransactionRequest
 class EvmSubsquidTransactionFetcher(DataFetcher[EvmSubsquidTransactionData]):
     """Fetches transactions from REST API, merges them and yields by level."""
 
-    _datasource: SubsquidDatasource
+    _datasource: EvmSubsquidDatasource
 
     def __init__(
         self,
-        datasource: SubsquidDatasource,
+        datasource: EvmSubsquidDatasource,
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],

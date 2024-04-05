@@ -43,7 +43,7 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
@@ -320,7 +320,7 @@ class DipDupContext:
         )
 
         datasource_name = index_config.datasource.name
-        datasource: TezosTzktDatasource | SubsquidDatasource
+        datasource: TezosTzktDatasource | EvmSubsquidDatasource
         node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
 
         if isinstance(index_config, TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig):
@@ -439,16 +439,16 @@ class DipDupContext:
         """Get `tezos.tzkt` datasource by name"""
         return self._get_datasource(name, TezosTzktDatasource)
 
-    def get_subsquid_datasource(self, name: str) -> SubsquidDatasource:
+    def get_subsquid_datasource(self, name: str) -> EvmSubsquidDatasource:
         """Get `evm.subsquid` datasource by name"""
-        return self._get_datasource(name, SubsquidDatasource)
+        return self._get_datasource(name, EvmSubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name or by linked `evm.subsquid` datasource name"""
         with suppress(ConfigurationError):
             return self._get_datasource(name, EvmNodeDatasource)
         with suppress(ConfigurationError):
-            subsquid = self._get_datasource(name, SubsquidDatasource)
+            subsquid = self._get_datasource(name, EvmSubsquidDatasource)
             # NOTE: Multiple nodes can be linked to a single subsquid. Network is the same, so grab any.
             random_node = subsquid._config.random_node
             if random_node is None:
