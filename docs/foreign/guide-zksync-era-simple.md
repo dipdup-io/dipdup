@@ -4,14 +4,14 @@ Guide targets and what will be in the guide
 
 ## Understanding DipDup
 
-Describe framework stucture, principles, key features and advantages.
-Key thoughts: declarative indexing config with python business logic, ?multiple chains?, flexible database support, configured GraphQL API, ?rich cli?
+Describe the framework structure, principles, key features, and advantages.
+Key thoughts: declarative indexing configuration with Python business logic, multiple chains, flexible database support, a configured GraphQL API, rich CLI.
 
 ## Install DipDup
 
 From quickstart
 
-## Create project
+## Create a project
 
 From quickstart
 
@@ -21,7 +21,7 @@ From quickstart
 
 ## Generate types and stubs
 
-From quickstart, but copy erc-20 ABI before dipdup init
+From quickstart, but copy the ERC-20 ABI before dipdup init
 
 ## Define data models
 
@@ -35,11 +35,11 @@ From quickstart
 
 Shorter "Next steps" from quickstart
 
-## ?Fancy query
+## Fancy query
 
-Demonstrate Hasura request from docker-compose stack
+Demonstrate a Hasura request from the docker-compose stack
 
 ## Explore DipDup
 
 Docs and repository link
-Explore all features in dipdup.io/docs
+Explore all features at dipdup.io/docs
