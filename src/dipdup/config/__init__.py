@@ -937,9 +937,9 @@ class DipDupConfig:
 
         # NOTE: Each index must have a corresponding (currently) TzKT datasource
         if isinstance(index_config.datasource, str):
-            if index_config.kind.startswith('tezos_tzkt'):
+            if index_config.kind.startswith('tezos.tzkt'):
                 index_config.datasource = self.get_tezos_tzkt_datasource(index_config.datasource)
-            elif index_config.kind.startswith('evm_subsquid'):
+            elif index_config.kind.startswith('evm.subsquid'):
                 index_config.datasource = self.get_evm_subsquid_datasource(index_config.datasource)
             else:
                 raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')

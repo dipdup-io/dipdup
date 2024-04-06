@@ -1,5 +1,5 @@
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TzktTransaction
+from dipdup.models.tezos_tzkt import TezosTzktTransaction
 
 import {{ project.package }}.models as models
 from {{ project.package }}.types.token.tezos_parameters.transfer import TransferParameter
@@ -8,7 +8,7 @@ from {{ project.package }}.types.token.tezos_storage import TokenStorage
 
 async def on_transfer(
     ctx: HandlerContext,
-    transfer: TzktTransaction[TransferParameter, TokenStorage],
+    transfer: TezosTzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
     for transfer_item in transfer.parameter.root:
         for tx in transfer_item.txs:

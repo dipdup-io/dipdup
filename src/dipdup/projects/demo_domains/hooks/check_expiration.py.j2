@@ -9,7 +9,7 @@ from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 async def check_expiration(
     ctx: HookContext,
 ) -> None:
-    ds = cast(TzktDatasource, next(iter(ctx.datasources.values())))
+    ds = cast(TezosTzktDatasource, next(iter(ctx.datasources.values())))
     expiring_records = (
         await Record.filter(expired=False, domain__expires_at__lt=datetime.utcnow()).all().prefetch_related('domain')
     )
