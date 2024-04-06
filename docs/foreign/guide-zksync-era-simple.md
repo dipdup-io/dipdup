@@ -1,6 +1,7 @@
 # DipDup
 
 Guide targets and what will be in the guide
+Prerequisites
 
 ## Understanding DipDup
 
