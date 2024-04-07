@@ -89,4 +89,4 @@ sqlite3 /tmp/kakarot.sqlite 'SELECT * FROM transaction LIMIT 10'
 
 ## Explore DipDup
 
-For more information on how to fully utilize DipDup and its capabilities, visit the [official DipDup documentation](https://dipdup.io/docs). There, you'll find extensive guides covering everything from initial setup to exploring advanced functionalities like custom data models and fine-tuning the GraphQL API. The documentation is an essential tool for both new and seasoned developers, structured to support a seamless development journey with detailed tutorials, examples, and recommended practices.
+To dive deeper into DipDup and unlock its full potential, visit the [official DipDup documentation](https://dipdup.io/docs). The documentation offers a thorough exploration of the framework, from installation steps to detailed examples and complex demo projects. It’s designed to assist developers at every step, ensuring an efficient development process for both simple indexers and sophisticated blockchain applications.
