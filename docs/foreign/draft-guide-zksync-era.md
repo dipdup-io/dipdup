@@ -35,6 +35,7 @@ Shorter "Next steps" from quickstart
 ## Fancy query
 
 Demonstrate a Hasura request from the docker-compose stack
+Key steps: how to up compose stack from generated project, show query in hasura web interface
 
 ## Explore DipDup
 
