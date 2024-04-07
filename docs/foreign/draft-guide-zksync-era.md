@@ -1,10 +1,10 @@
 # DipDup
 
-This page will guide you through the steps to get your first DipDup indexer up and running in a few minutes without getting too deep into the details.
+Guide targets and what will be in the guide
 
-Let's create an indexer for output transactions from a specific address. We will need to set up the indexing environment, configure the indexer, and store the results in a database.
+## Prerequisites
 
-A modern Linux/macOS distribution with Python 3.11 installed is required to run DipDup.
+Python knowledge, linux/mac, Python 3.11, Zksync RPC NODE API
 
 ## Understanding DipDup
 
@@ -13,13 +13,7 @@ Key thoughts: declarative indexing configuration with Python business logic, mul
 
 ## Step 1 — Install DipDup
 
-The easiest way to install DipDup as a CLI application [pipx](https://pipx.pypa.io/stable/). We have a convenient wrapper script that installs DipDup for the current user. Run the following command in your terminal:
-
-```shell [Terminal]
-curl -Lsf https://dipdup.io/install.py | python3
-```
-
-See the [Installation](https://dipdup.io/docs/installation) page for all options.
+From quickstart
 
 ## Step 2 — Create a project
 
