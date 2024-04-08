@@ -4,6 +4,8 @@ from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     """Subsquid transaction handler
 
@@ -65,7 +67,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     """Index that uses Subsquid Network as a datasource for transactions
 

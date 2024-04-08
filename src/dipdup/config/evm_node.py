@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
@@ -10,7 +12,7 @@ from dipdup.config import IndexDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class EvmNodeDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 

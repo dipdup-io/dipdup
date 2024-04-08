@@ -1,13 +1,15 @@
 from dataclasses import field
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class CoinbaseDatasourceConfig(DatasourceConfig):
     """Coinbase datasource config
 
