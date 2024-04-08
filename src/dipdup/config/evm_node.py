@@ -9,7 +9,6 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
 from dipdup.config import IndexDatasourceConfig
-from dipdup.exceptions import ConfigurationError
 
 
 @dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
