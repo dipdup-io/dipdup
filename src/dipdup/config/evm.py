@@ -36,7 +36,7 @@ class EvmContractConfig(ContractConfig):
             return v
 
         if not is_address(v):
-            raise ConfigurationError(f'{v} is not a valid EVM contract address')
+            raise ValueError(f'{v} is not a valid EVM contract address')
         # NOTE: Normalizing is converting address to a non-checksum form.
         # See https://coincodex.com/article/2078/ethereum-address-checksum-explained/
         return to_normalized_address(v)

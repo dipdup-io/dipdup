@@ -36,11 +36,11 @@ class EvmNodeDatasourceConfig(IndexDatasourceConfig):
     @validator('url')
     def _valid_url(cls, v: str) -> str:
         if not v.startswith(('http://', 'https://')):
-            raise ConfigurationError('Ethereum node URL must start with http(s)://')
+            raise ValueError('Ethereum node URL must start with http(s)://')
         return v
 
     @validator('ws_url')
     def _valid_ws_url(cls, v: str | None) -> str | None:
         if v and not v.startswith(('ws://', 'wss://')):
-            raise ConfigurationError('Ethereum node WebSocket URL must start with ws(s)://')
+            raise ValueError('Ethereum node WebSocket URL must start with ws(s)://')
         return v
