@@ -34,8 +34,7 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig):
 
     contract: TezosContractConfig | None = None
     token_id: int | None = None
-    # FIXME: Can't use `from_` field alias in dataclass
-    # FIXME: See https://github.com/pydantic/pydantic/issues/4286 (fixed in upcoming v2)
+    # FIXME: Can't use `from_` field alias in dataclasses (fixed in `next` with Pydantic v2)
     from_: TezosContractConfig | None = None
     to: TezosContractConfig | None = None
 
