@@ -548,7 +548,10 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
-            curr_version = line.split('[', 1)[1].split(']')[0]
+            try:
+                curr_version = line.split('[', 1)[1].split(']')[0]
+            except IndexError:
+                continue
             curr_version = '.'.join(curr_version.split('.')[:2])
         elif line.startswith('### '):
             curr_group = line[4:]
