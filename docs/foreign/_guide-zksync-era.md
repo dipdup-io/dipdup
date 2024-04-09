@@ -68,15 +68,18 @@ Notice that we utilize the Transaction model predefined in `models/__init__.py`.
   TODO
 At last step we first of all need to set datasources urls, surely you can set this urls at `dipdup.yaml`, but we offer a better way compliant with [12factors](https://12factor.net/)
 
-  add node and archive to .env
-  show how to start simply
-  in this guide we will run in more advanced configuration: running with docker compose and env
+  1. add node and archive to .env
+  2. show how to start simply: now we can simply run `dipdup -e deploy/.env -c dipdup.yaml -c configs/dipdup.sqlite.yaml run` and ensure results were written to `/tmp/zksync_demo.sqlite`(you can check resulting sqlite there).
 
 ### Fancy query
 
   TODO
-Demonstrate a Hasura request from the docker-compose stack
-Key steps: how to up compose stack from generated project, show query in hasura web interface
+  in this guide we will run in more advanced configuration: running with docker compose
+  1. add postgres_password to run with postgres and hasura secret to access hasura
+  2. `docker compose --env-file deploy/.env -f deploy/compose.yaml up`
+  3. ensure containers up and running ![docker ps](zksync_assets/dockerps.png), hasura address will be in first part of PORTS column, in my case 0.0.0.0:8080, on some systems it will be accessible as localhost:8080
+  4. For demonstration purposes i queried first 10 addresses which have positive balances:
+![hasura request](zksync_assets/hasurarequest.png)
 
 ## Explore DipDup
 
