@@ -4,7 +4,7 @@ Guide targets and what will be in the guide
 
 ## Prerequisites
 
-Python knowledge, linux/mac, Python 3.11, Zksync RPC NODE API
+Python knowledge, linux/mac, Python 3.11, zkSync RPC NODE API
 
 ## Understanding DipDup
 
@@ -27,15 +27,17 @@ Key steps: insert the target token contract, link to docs  # maybe replace "eth"
 ## Step 4 — Implement handlers
 
 Implement handlers from quickstart with an ORM explanation (models were implemented in the demo, check {link to docs}).
+Key steps: check out handlers, explain below about orm and generated models
 
-## Step 5 — Results
+## Step 5 — Run
 
 Shorter "Next steps" from quickstart
+Key steps: how to up compose stack from generated project using env
 
-## Fancy query
+### Fancy query
 
 Demonstrate a Hasura request from the docker-compose stack
-Key steps: how to up compose stack from generated project, show query in hasura web interface
+Key steps: show query in hasura web interface
 
 ## Explore DipDup
 
