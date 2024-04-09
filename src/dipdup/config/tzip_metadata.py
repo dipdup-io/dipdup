@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
@@ -9,7 +11,7 @@ from dipdup.models.tzip_metadata import TzipMetadataNetwork
 DEFAULT_TZIP_METADATA_URL = 'https://metadata.dipdup.net'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class TzipMetadataDatasourceConfig(DatasourceConfig):
     """DipDup Metadata datasource config
 

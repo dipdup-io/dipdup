@@ -2,6 +2,8 @@ from typing import Literal
 
 from eth_utils.address import is_address
 from eth_utils.address import to_normalized_address
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
@@ -12,7 +14,7 @@ EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class EvmContractConfig(ContractConfig):
     """EVM contract config
 
@@ -34,7 +36,7 @@ class EvmContractConfig(ContractConfig):
             return v
 
         if not is_address(v):
-            raise ConfigurationError(f'{v} is not a valid EVM contract address')
+            raise ValueError(f'{v} is not a valid EVM contract address')
         # NOTE: Normalizing is converting address to a non-checksum form.
         # See https://coincodex.com/article/2078/ethereum-address-checksum-explained/
         return to_normalized_address(v)

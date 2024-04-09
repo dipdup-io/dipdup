@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class TzktTokenBalancesHandlerConfig(HandlerConfig):
     """Token balance handler config
 
@@ -43,7 +45,7 @@ class TzktTokenBalancesHandlerConfig(HandlerConfig):
         yield 'token_balance', 'TzktTokenBalanceData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class TzktTokenBalancesIndexConfig(TzktIndexConfig):
     """Token balance index config
 

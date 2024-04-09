@@ -56,8 +56,8 @@ async def test_get_origination_filters(
 ) -> None:
     index_config.handlers = (
         TzktOperationsHandlerConfig(
-            'address_origination',
-            (
+            callback='address_origination',
+            pattern=(
                 OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[0],
                 ),
@@ -70,8 +70,8 @@ async def test_get_origination_filters(
 
     index_config.handlers = (
         TzktOperationsHandlerConfig(
-            'hash_origination',
-            (
+            callback='hash_origination',
+            pattern=(
                 OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[1],
                 ),
@@ -84,8 +84,8 @@ async def test_get_origination_filters(
 
     index_config.handlers = (
         TzktOperationsHandlerConfig(
-            'hash_address_origination',
-            (
+            callback='hash_address_origination',
+            pattern=(
                 OperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[2],
                 ),
@@ -98,8 +98,8 @@ async def test_get_origination_filters(
 
     index_config.handlers = (
         TzktOperationsHandlerConfig(
-            'address_source',
-            (
+            callback='address_source',
+            pattern=(
                 OperationsHandlerOriginationPatternConfig(
                     source=index_config.contracts[0],
                 ),

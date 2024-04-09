@@ -4,6 +4,8 @@ import random
 from abc import ABC
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic import validator
 from pydantic.dataclasses import dataclass
 
@@ -14,7 +16,7 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
@@ -50,7 +52,7 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
         return v
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidIndexConfig(IndexConfig, ABC):
     """EVM index that use Subsquid Network as a datasource
 

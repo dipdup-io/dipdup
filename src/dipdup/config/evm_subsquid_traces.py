@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -11,11 +13,11 @@ from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidIndexConfig
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidTracesHandlerConfig(HandlerConfig): ...
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidTracesIndexConfig(SubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 

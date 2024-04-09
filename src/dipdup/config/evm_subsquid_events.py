@@ -4,6 +4,8 @@ from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -22,7 +24,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidEventsHandlerConfig(HandlerConfig):
     """Subsquid event handler
 
@@ -50,7 +52,7 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
         yield 'event', f'SubsquidEvent[{event_cls}]'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     """Subsquid datasource config
 

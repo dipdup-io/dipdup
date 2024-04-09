@@ -1,6 +1,8 @@
 from typing import Literal
 from urllib.parse import urlparse
 
+from pydantic import ConfigDict
+from pydantic import Extra
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
@@ -22,7 +24,7 @@ DEFAULT_TZKT_URL = next(iter(TZKT_API_URLS.keys()))
 MAX_BATCH_SIZE = 10000
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class TzktDatasourceConfig(IndexDatasourceConfig):
     """TzKT datasource config
 
@@ -56,7 +58,7 @@ class TzktDatasourceConfig(IndexDatasourceConfig):
             raise ConfigurationError(f'`{self.url}` is not a valid TzKT API URL')
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra=Extra.forbid), kw_only=True)
 class TzktIndexConfig(IndexConfig):
     """TzKT index config
 
