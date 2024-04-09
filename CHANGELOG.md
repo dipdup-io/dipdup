@@ -8,9 +8,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- config: Forbid extra arguments in config mappings.
-- config: Fixed issue with `from` filter being ignored.
 - config: Don't raise `ConfigurationError` from some model validators.
+- config: Fixed crash when database path is relative and nested.
+- config: Fixed issue with `from` filter being ignored.
+- config: Forbid extra arguments in config mappings.
 
 ## [7.5.3] - 2024-03-28
 
