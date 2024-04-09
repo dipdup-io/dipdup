@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktEventsHandlerConfig(HandlerConfig):
     """Event handler config
 
@@ -48,7 +49,7 @@ class TzktEventsHandlerConfig(HandlerConfig):
         yield 'event', f'TzktEvent[{event_cls}]'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
     """Unknown event handler config
 
@@ -71,7 +72,7 @@ class TzktEventsUnknownEventHandlerConfig(HandlerConfig):
 TzktEventsHandlerConfigU = TzktEventsHandlerConfig | TzktEventsUnknownEventHandlerConfig
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktEventsIndexConfig(TzktIndexConfig):
     """Event index config
 

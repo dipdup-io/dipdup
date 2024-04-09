@@ -4,6 +4,7 @@ from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     """Subsquid transaction handler
 
@@ -31,6 +32,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     :param method: Method name
     """
 
+    # FIXME: Can't use `from_` field alias in dataclasses (fixed in `next` with Pydantic v2)
     from_: EvmContractConfig | None = None
     to: EvmContractConfig | None = None
     method: str | None = None
@@ -65,7 +67,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     """Index that uses Subsquid Network as a datasource for transactions
 

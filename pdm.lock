@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "dev", "docs"]
+groups = ["default", "docs", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
 content_hash = "sha256:7b3babf0f1e4d5ef966562fa88a483c6f9cfc1bcd246a8629a107a9a3f19015d"
@@ -312,6 +312,46 @@ files = [
 ]
 
 [[package]]
+name = "ckzg"
+version = "1.0.0"
+summary = "Python bindings for C-KZG-4844"
+groups = ["default"]
+files = [
+    {file = "ckzg-1.0.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:7b1eed4e35a3fb35f867770eee12018098bd261fa66b768f75b343e0198ff258"},
+    {file = "ckzg-1.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:3d7f609e943880303ea3f60b0426c9b53a596c74bb09ceed00c917618b519373"},
+    {file = "ckzg-1.0.0-cp312-cp312-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f8c422673236ea67608c434956181b050039b2f57b1006503eeec574b1af8467"},
+    {file = "ckzg-1.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e9321226e65868e66edbe18301b8f76f3298d316e6d3a1261371c7fdbc913816"},
+    {file = "ckzg-1.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6f6fd5bc8c2362483c61adbd00188f7448c968807f00ee067666355c63cf45e0"},
+    {file = "ckzg-1.0.0-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:be79e3c4a735f5bf4c71cc07a89500448555f2d4f4f765da5867194c7e46ec5c"},
+    {file = "ckzg-1.0.0-cp312-cp312-musllinux_1_1_i686.whl", hash = "sha256:2896c108425b64f6b741cc389beee2b8467a41f8d4f901f4a4ecc037311dc681"},
+    {file = "ckzg-1.0.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:fd3f0db4cf514054c386d1a38f9a144725b5109379dd9d2c1b4b0736119f848e"},
+    {file = "ckzg-1.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:7a864097cb88be5b7aeff6103bf03d7dfb1c6dda6c8ef82378838ce32e158a15"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:8d272107d63500ba9c62adef39f01835390ee467c2583fd96c78f05773d87b0d"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:52bfcad99cc0f5611c3a7e452de4d7fa66ce020327c1c1de425b84b20794687b"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:1ae70915d41702d33775d9b81c106b2bff5aa7981f82b06e0c5892daa921ff55"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5deaae9151215d1fad3934fa423a87ee752345f665448a30f58bf5c3177c4623"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6f7e8861174fe26e6bb0f13655aa1f07fd7c3300852748b0f6e47b998153b56b"},
+    {file = "ckzg-1.0.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:dc6c211e16ef7750b2579346eaa05e4f1e7f1726effa55c2cb42354603800b01"},
+    {file = "ckzg-1.0.0-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:d392ef8281f306a0377f4e5fe816e03e4dce2754a4b2ab209b16d9628b7a0bac"},
+    {file = "ckzg-1.0.0-pp37-pypy37_pp73-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:52cbe279f5d3ec9dd7745de8e796383ba201302606edaa9838b5dd5a34218241"},
+    {file = "ckzg-1.0.0-pp37-pypy37_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4a5d3367cee7ebb48131acc78ca3fb0565e3af3fd8fa8eb4ca25bb88577692c4"},
+    {file = "ckzg-1.0.0-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:55e8c6d8df9dc1bdd3862114e239c292f9bdd92d67055ca4e0e7503826e6524f"},
+    {file = "ckzg-1.0.0-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:b040396df453b51cd5f1461bec9b942173b95ca181c7f65caa10c0204cb6144a"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-macosx_10_9_x86_64.whl", hash = "sha256:7951c53321136aabdab64dc389c92ffeda5859d59304b97092e893a6b09e9722"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-macosx_11_0_arm64.whl", hash = "sha256:56256067d31eb6eed1a42c9f3038936aeb7decee322aa13a3224b51cfa3e8026"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:c166f254ce3434dd0d56ef64788fc9637d60721f4e7e126b15a847abb9a44962"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ab02c7ad64fb8616a430b05ad2f8fa4f3fc0a22e3dd4ea7a5d5fa4362534bb21"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:63bb5e6bc4822c732270c70ef12522b0215775ff61cae04fb54983973aef32e3"},
+    {file = "ckzg-1.0.0-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:409f1f18dbc92df5ddbf1ff0d154dc2280a495ec929a4fa27abc69eeacf31ff0"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-macosx_10_9_x86_64.whl", hash = "sha256:2eceae0ef7189d47bd89fd9efd9d8f54c5b06bc92c435ec00c62815363cd9d79"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:e189c00a0030d1a593b020264d7f9b30fa0b980d108923f353c565c206a99147"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:36735543ce3aec4730e7128690265ef90781d28e9b56c039c72b6b2ce9b06839"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fef5f276e24f4bdd19e28ddcc5212e9b6c8514d3c7426bd443c9221f348c176f"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d02164a0d84e55965c14132f6d43cc367be3d12eb318f79ba2f262dac47665c2"},
+    {file = "ckzg-1.0.0-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:88fafab3493a12d5212374889783352bb4b59dddc9e61c86d063358eff6da7bb"},
+]
+
+[[package]]
 name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
@@ -528,12 +568,13 @@ files = [
 
 [[package]]
 name = "eth-account"
-version = "0.11.0"
-requires_python = ">=3.8, <4"
+version = "0.11.2"
+requires_python = "<4,>=3.8"
 summary = "eth-account: Sign Ethereum transactions and messages with local private keys"
 groups = ["default"]
 dependencies = [
     "bitarray>=2.4.0",
+    "ckzg>=0.4.3",
     "eth-abi>=4.0.0-b.2",
     "eth-keyfile>=0.6.0",
     "eth-keys>=0.4.0",
@@ -543,8 +584,8 @@ dependencies = [
     "rlp>=1.0.0",
 ]
 files = [
-    {file = "eth-account-0.11.0.tar.gz", hash = "sha256:2ffc7a0c7538053a06a7d11495c16c7ad9897dd42be0f64ca7551e9f6e0738c3"},
-    {file = "eth_account-0.11.0-py3-none-any.whl", hash = "sha256:76dd261ea096ee09e51455b0a4c99f22185516fdc062f63df0817c28f605e430"},
+    {file = "eth-account-0.11.2.tar.gz", hash = "sha256:b43daf2c0ae43f2a24ba754d66889f043fae4d3511559cb26eb0122bae9afbbd"},
+    {file = "eth_account-0.11.2-py3-none-any.whl", hash = "sha256:95157c262a9823c1e08be826d4bc304bf32f0c32e80afb38c126a325a64f651a"},
 ]
 
 [[package]]
@@ -651,13 +692,13 @@ files = [
 
 [[package]]
 name = "execnet"
-version = "2.0.2"
-requires_python = ">=3.7"
+version = "2.1.1"
+requires_python = ">=3.8"
 summary = "execnet: rapid multi-Python deployment"
 groups = ["dev"]
 files = [
-    {file = "execnet-2.0.2-py3-none-any.whl", hash = "sha256:88256416ae766bc9e8895c76a87928c0012183da3cc4fc18016e6f050e025f41"},
-    {file = "execnet-2.0.2.tar.gz", hash = "sha256:cc59bc4423742fd71ad227122eb0dd44db51efb3dc4095b45ac9a08c770096af"},
+    {file = "execnet-2.1.1-py3-none-any.whl", hash = "sha256:26dee51f1b80cebd6d0ca8e74dd8745419761d3bef34163928cbebbdc4749fdc"},
+    {file = "execnet-2.1.1.tar.gz", hash = "sha256:5189b52c6121c24feae288166ab41b32549c7e2348652736540b9e6e7d4e72e3"},
 ]
 
 [[package]]
@@ -1577,7 +1618,7 @@ files = [
 
 [[package]]
 name = "sentry-sdk"
-version = "1.44.0"
+version = "1.44.1"
 summary = "Python client for Sentry (https://sentry.io)"
 groups = ["default"]
 dependencies = [
@@ -1585,8 +1626,8 @@ dependencies = [
     "urllib3>=1.26.11; python_version >= \"3.6\"",
 ]
 files = [
-    {file = "sentry-sdk-1.44.0.tar.gz", hash = "sha256:f7125a9235795811962d52ff796dc032cd1d0dd98b59beaced8380371cd9c13c"},
-    {file = "sentry_sdk-1.44.0-py2.py3-none-any.whl", hash = "sha256:eb65289da013ca92fad2694851ad2f086aa3825e808dc285bd7dcaf63602bb18"},
+    {file = "sentry-sdk-1.44.1.tar.gz", hash = "sha256:24e6a53eeabffd2f95d952aa35ca52f0f4201d17f820ac9d3ff7244c665aaf68"},
+    {file = "sentry_sdk-1.44.1-py2.py3-none-any.whl", hash = "sha256:5f75eb91d8ab6037c754a87b8501cc581b2827e923682f593bed3539ce5b3999"},
 ]
 
 [[package]]
@@ -1854,13 +1895,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.10.0"
+version = "4.11.0"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
 groups = ["default", "dev"]
 files = [
-    {file = "typing_extensions-4.10.0-py3-none-any.whl", hash = "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475"},
-    {file = "typing_extensions-4.10.0.tar.gz", hash = "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"},
+    {file = "typing_extensions-4.11.0-py3-none-any.whl", hash = "sha256:c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a"},
+    {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
 ]
 
 [[package]]

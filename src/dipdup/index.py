@@ -191,7 +191,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
                 'level': index_level,
                 'config_hash': self._config.hash(),
                 'template': self._config.parent.name if self._config.parent else None,
-                'template_values': self._config.template_values,
+                'template_values': self._config._template_values,
             },
         )
 

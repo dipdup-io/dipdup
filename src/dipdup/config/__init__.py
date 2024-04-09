@@ -36,6 +36,7 @@ from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 import orjson
+from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
@@ -67,7 +68,7 @@ DEFAULT_SQLITE_PATH = ':memory:'
 _logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SqliteDatabaseConfig:
     """
     SQLite connection config
@@ -88,6 +89,11 @@ class SqliteDatabaseConfig:
 
     @property
     def connection_string(self) -> str:
+        if self.path != DEFAULT_SQLITE_PATH:
+            path = Path(self.path).resolve()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return f'{self.kind}:///{path}'
+
         return f'{self.kind}://{self.path}'
 
     @property
@@ -96,7 +102,7 @@ class SqliteDatabaseConfig:
         return 1
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class PostgresDatabaseConfig:
     """Postgres database connection config
 
@@ -151,7 +157,7 @@ class PostgresDatabaseConfig:
         return v
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HttpConfig:
     """Advanced configuration of HTTP client
 
@@ -185,7 +191,7 @@ class HttpConfig:
     alias: str | None = None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class ResolvedHttpConfig:
     __doc__ = HttpConfig.__doc__
 
@@ -220,7 +226,7 @@ class ResolvedHttpConfig:
         return config
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class NameMixin:
     def __post_init__(self) -> None:
         self._name: str | None = None
@@ -276,7 +282,7 @@ class IndexDatasourceConfig(DatasourceConfig):
     ...
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class CodegenMixin(ABC):
     """Base for pattern config classes containing methods required for codegen"""
 
@@ -313,7 +319,7 @@ class CodegenMixin(ABC):
 ParentT = TypeVar('ParentT')
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class ParentMixin(Generic[ParentT]):
     """`parent` field for index and template configs"""
 
@@ -329,7 +335,7 @@ class ParentMixin(Generic[ParentT]):
         self._parent = value
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class CallbackMixin(CodegenMixin):
     """Mixin for callback configs
 
@@ -343,7 +349,7 @@ class CallbackMixin(CodegenMixin):
             raise ConfigurationError('`callback` field must be a valid Python module name')
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
     """Base class for index handlers
 
@@ -355,7 +361,7 @@ class HandlerConfig(CallbackMixin, ParentMixin['IndexConfig']):
         ParentMixin.__post_init__(self)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class IndexTemplateConfig(NameMixin):
     """Index template config
 
@@ -374,7 +380,7 @@ class IndexTemplateConfig(NameMixin):
     last_level: int = 0
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
@@ -389,7 +395,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         NameMixin.__post_init__(self)
         ParentMixin.__post_init__(self)
 
-        self.template_values: dict[str, str] = {}
+        self._template_values: dict[str, str] = {}
 
     @abstractmethod
     def get_subscriptions(self) -> set[Subscription]: ...
@@ -412,7 +418,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         config_dict['datasource'].pop('buffer_size', None)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HasuraConfig:
     """Config for the Hasura integration.
 
@@ -455,7 +461,7 @@ class HasuraConfig:
         return {}
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class JobConfig(NameMixin):
     """Job schedule config
 
@@ -482,7 +488,7 @@ class JobConfig(NameMixin):
         NameMixin.__post_init__(self)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SentryConfig:
     """Config for Sentry integration.
 
@@ -502,7 +508,7 @@ class SentryConfig:
     debug: bool = False
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class PrometheusConfig:
     """Config for Prometheus integration.
 
@@ -516,7 +522,7 @@ class PrometheusConfig:
     update_interval: float = 1.0
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HookConfig(CallbackMixin):
     """Hook config
 
@@ -541,7 +547,7 @@ class HookConfig(CallbackMixin):
                 yield package, obj
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SystemHookConfig(HookConfig):
     __doc__ = HookConfig.__doc__
 
@@ -575,7 +581,7 @@ system_hooks = {
 }
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class ApiConfig:
     """Management API config
 
@@ -587,7 +593,7 @@ class ApiConfig:
     port: int = 46339  # dial INDEX 😎
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
@@ -883,7 +889,7 @@ class DipDupConfig:
 
         json_template = orjson.loads(raw_template)
         new_index_config = template.__class__(**json_template)
-        new_index_config.template_values = template_config.values
+        new_index_config._template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
         if not isinstance(new_index_config, TzktHeadIndexConfig):
