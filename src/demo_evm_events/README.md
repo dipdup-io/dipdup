@@ -1,12 +1,12 @@
 # demo_evm_events
 
-Basic indexer for USDt token transfers (event logs)
+ERC-20 token transfers (from event logs)
 
 ## Installation
 
 This project is based on [DipDup](https://dipdup.io), a framework for building featureful dapps.
 
-You need a Linux/macOS system with Python 3.11 installed. To install DipDup with pipx for the current user:
+You need a Linux/macOS system with Python 3.12 installed. To install DipDup with pipx for the current user:
 
 ```shell
 curl -Lsf https://dipdup.io/install.py | python3

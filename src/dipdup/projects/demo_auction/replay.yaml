@@ -1,5 +1,5 @@
 spec_version: 2.0
 replay:
-  description: TzColors NFT marketplace
+  description: NFT marketplace (TzColors)
   package: demo_auction
   template: demo_auction

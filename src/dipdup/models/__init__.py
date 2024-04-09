@@ -308,7 +308,7 @@ class DeleteQuery(TortoiseDeleteQuery):
         return await super()._execute()
 
 
-class BulkUpdateQuery(TortoiseBulkUpdateQuery):
+class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
     async def _execute(self) -> int:
         for model in self.objects:
             if update := ModelUpdate.from_model(
@@ -320,7 +320,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):
         return await super()._execute()
 
 
-class BulkCreateQuery(TortoiseBulkCreateQuery):
+class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
     async def _execute(self) -> list[MODEL]:
         for model in self.objects:
             if update := ModelUpdate.from_model(

@@ -6,20 +6,69 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Added
-
-- performance: Collect hit/miss stats for cached models.
-
 ### Changed
 
-- performance: Drop caches when all indexes have reached realtime.
+- dipdup: Python 3.12 is now required to run DipDup.
+- dipdup: Pydantic v2 migration.
+
+## [7.5.3] - 2024-03-28
 
 ### Fixed
 
+- tezos.tzkt.operations: Fixed missing operations when handler pattern contains item without entrypoint.
+
+## [7.5.2] - 2024-03-20
+
+### Fixed
+
+- evm.node: Fixed updating `dipdup_head` table when head block is received.
+- tezos.tzkt.operations: Fixed crash when handler definition contains optional items.
+
+## [7.5.1] - 2024-03-17
+
+### Fixed
+
+- evm.node: Fixed default ratelimit sleep time being too high.
+- evm.subsquid.transactions: Fixed issue with `node_only` flag ignored.
+
+### Performance
+
+- evm.subsquid: Dynamically adjust the batch size when syncing with node.
+
+## [7.5.0] - 2024-03-08
+
+### Added
+
+- config: Added `http.polling_interval` option to set the interval between polling requests (some datasources).
+- hasura: Allow `bulk` request type in custom metadata files.
+
+### Fixed
+
+- abi.etherscan: Raise `AbiNotAvailableError` when contract is not verified.
 - cli: Fixed incorrect indexer status logging.
 - evm.node: Fixed memory leak when using realtime subscriptions.
 - evm.node: Fixed processing chain reorgs.
+- evm.node: Respect `http.batch_size` when fetching block headers.
+
+### Performance
+
+- hasura: Apply table customizations in a single request.
+- performance: Collect hit/miss stats for cached models.
 - performance: Decrease main loop and node polling intervals.
+- performance: Drop caches when all indexes have reached realtime.
+
+## [6.5.16] - 2024-03-07
+
+This is the last release in the 6.5 branch. Please update to 7.x to get the latest features and bug fixes.
+
+### Fixed
+
+- tzkt: Don't use deprecated `/events` WebSockets endpoint.
+
+### Other
+
+- deps: Updated pytezos to 3.11.3.
+- metadata: Added `oxfordnet` to supported networks.
 
 ## [7.4.0] - 2024-02-20
 
@@ -36,7 +85,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [7.3.2] - 2024-02-06
 
-## Added
+### Added
 
 - env: Added `DIPDUP_NO_VERSION_CHECK` and `DIPDUP_NO_SYMLINK` variables.
 
@@ -1224,7 +1273,7 @@ This release contains no changes except for the version number.
 - tzkt: Fixed `get_originated_contracts` and `get_similar_contracts` methods whose output was limited to `HTTPConfig.batch_size` field.
 - tzkt: Fixed lots of SignalR bugs by replacing `aiosignalrcore` library with `pysignalr`.
 
-## Changed
+### Changed
 
 - cli: `dipdup schema wipe` command now requires confirmation when invoked in the interactive shell.
 - cli: `dipdup schema approve` command now also causes a recalculation of schema and index config hashes.
@@ -1355,7 +1404,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.4.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.2...HEAD
+[7.5.2]: https://github.com/dipdup-io/dipdup/compare/7.5.1...7.5.2
+[7.5.1]: https://github.com/dipdup-io/dipdup/compare/7.5.0...7.5.1
+[7.5.0]: https://github.com/dipdup-io/dipdup/compare/7.4.0...7.5.0
+[6.5.16]: https://github.com/dipdup-io/dipdup/compare/6.5.15...6.5.16
 [7.4.0]: https://github.com/dipdup-io/dipdup/compare/7.3.2...7.4.0
 [7.3.2]: https://github.com/dipdup-io/dipdup/compare/7.3.1...7.3.2
 [7.3.1]: https://github.com/dipdup-io/dipdup/compare/7.3.0...7.3.1

@@ -10,7 +10,7 @@ async def on_transfer(
     ctx: HandlerContext,
     transfer: TzktTransaction[TransferParameter, TokenStorage],
 ) -> None:
-    for transfer_item in transfer.parameter.__root__:
+    for transfer_item in transfer.parameter.root:
         for tx in transfer_item.txs:
             await models.Transfer.create(
                 from_=transfer_item.from_,

@@ -3,7 +3,7 @@ from dipdup.fetcher import DataFetcher
 from dipdup.models.evm_subsquid import SubsquidTraceData
 
 
-class TraceFetcher(DataFetcher[SubsquidTraceData]):
+class SubsquidTraceFetcher(DataFetcher[SubsquidTraceData]):
     _datasource: SubsquidDatasource
 
     ...

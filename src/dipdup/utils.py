@@ -201,13 +201,14 @@ def parse_object(
 ) -> ObjectT:
     try:
         if plain is False or data is None:
-            return type_.parse_obj(data)
+            return type_.model_validate(data)
 
-        model_keys = tuple(field.alias for field in type_.__fields__.values())
+        model_keys = tuple(field.alias or key for key, field in type_.model_fields.items())
         return type_(**dict(zip(model_keys, data, strict=True)))
-
     except ValidationError as e:
         raise InvalidDataError(f'Failed to parse: {e.errors()}', type_, data) from e
+    except ValueError as e:
+        raise InvalidDataError(f'Failed to parse: {e}', type_, data) from e
 
 
 def _default_for_decimals(obj: Any) -> Any:

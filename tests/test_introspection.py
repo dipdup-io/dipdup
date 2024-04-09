@@ -1,5 +1,8 @@
+from typing import Any
+
 import pytest
 from pydantic import BaseModel
+from pydantic import RootModel
 
 from dipdup.indexes.tezos_tzkt_operations.parser import IntrospectionError
 from dipdup.indexes.tezos_tzkt_operations.parser import extract_root_outer_type
@@ -35,13 +38,13 @@ def test_list_complex_arg() -> None:
 
 def test_pydantic_list_arg() -> None:
     class ListOfMapsStorage(BaseModel):
-        __root__: list[int | dict[str, str]]
+        root: list[int | dict[str, str]]
 
     class SomethingElse(BaseModel):
-        __root__: dict[str, str]
+        root: dict[str, str]
 
     class OptionalList(BaseModel):
-        __root__: list[str] | None
+        root: list[str] | None
 
     assert get_list_elt_type(ListOfMapsStorage) == int | dict[str, str]
 
@@ -75,14 +78,14 @@ def test_dict_complex_arg() -> None:
 
 
 def test_pydantic_dict_arg() -> None:
-    class DictOfMapsStorage(BaseModel):
-        __root__: dict[str, int | dict[str, str]]
+    class DictOfMapsStorage(RootModel[Any]):
+        root: dict[str, int | dict[str, str]]
 
-    class SomethingElse(BaseModel):
-        __root__: list[str]
+    class SomethingElse(RootModel[Any]):
+        root: list[str]
 
-    class OptionalDict(BaseModel):
-        __root__: dict[str, str] | None
+    class OptionalDict(RootModel[Any]):
+        root: dict[str, str] | None
 
     assert get_dict_value_type(DictOfMapsStorage) == int | dict[str, str]
     with pytest.raises(IntrospectionError):
@@ -108,11 +111,11 @@ def test_pydantic_object_key() -> None:
 
 
 def test_is_array() -> None:
-    class ListOfMapsStorage(BaseModel):
-        __root__: list[int | dict[str, str]]
+    class ListOfMapsStorage(RootModel[Any]):
+        root: list[int | dict[str, str]]
 
-    class OptionalList(BaseModel):
-        __root__: list[str] | None
+    class OptionalList(RootModel[Any]):
+        root: list[str] | None
 
     assert is_array_type(list[str]) is True
     assert is_array_type(ListOfMapsStorage) is True
@@ -120,28 +123,28 @@ def test_is_array() -> None:
 
 
 def test_simple_union_unwrap() -> None:
-    assert unwrap_union_type(str | None) == (True, (str, NoneType))  # type: ignore[arg-type,comparison-overlap]
+    assert unwrap_union_type(str | None) == (True, (str, NoneType))  # type: ignore[arg-type]
     assert unwrap_union_type(int | str) == (True, (int, str))  # type: ignore[arg-type]
 
 
 def test_pydantic_optional_unwrap() -> None:
-    class UnionIntStr(BaseModel):
-        __root__: int | str
+    class UnionIntStr(RootModel[Any]):
+        root: int | str
 
-    class OptionalStr(BaseModel):
-        __root__: str | None
+    class OptionalStr(RootModel[Any]):
+        root: str | None
 
-    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))  # type: ignore[comparison-overlap]
+    assert unwrap_union_type(OptionalStr) == (True, (str, NoneType))
     assert unwrap_union_type(UnionIntStr) == (True, (int, str))
 
 
 def test_root_type_extraction() -> None:
-    class OptionalStr(BaseModel):
-        __root__: str | None
+    class OptionalStr(RootModel[Any]):
+        root: str | None
 
-    class ListOfMapsStorage(BaseModel):
-        __root__: list[int | dict[str, str]]
+    class ListOfMapsStorage(RootModel[Any]):
+        root: list[int | dict[str, str]]
 
     assert extract_root_outer_type(OptionalStr) == str | None
-    # FIXME: left operand type: "Type[BaseModel]", right operand type: "Type[List[Any]]"
+    # FIXME: left operand type: "Type[BaseModel]", right operand type: "Type[list[Any]]"
     assert extract_root_outer_type(ListOfMapsStorage) == list[int | dict[str, str]]  # type: ignore[comparison-overlap]

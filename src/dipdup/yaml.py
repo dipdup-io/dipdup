@@ -74,7 +74,7 @@ def read_config_yaml(path: Path) -> str:
 
 
 def dump(value: Any) -> str:
-    yaml = YAML(typ='unsafe', pure=True)
+    yaml = YAML()
     yaml.default_flow_style = False
     yaml.indent = 2
 

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from collections import deque
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
 
 from pydantic.dataclasses import dataclass
@@ -25,6 +27,9 @@ from dipdup.models.tezos_tzkt import TzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 _logger = logging.getLogger('dipdup.matcher')
 
 
@@ -35,7 +40,6 @@ class OperationSubgroup:
     hash: str
     counter: int
     operations: tuple[TzktOperationData, ...]
-    entrypoints: set[str | None]
 
 
 OperationsHandlerArgumentU = (
@@ -51,7 +55,8 @@ def prepare_operation_handler_args(
 ) -> deque[OperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[OperationsHandlerArgumentU] = deque()
-    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=True):
+    # NOTE: There can be more pattern items than matched operations; some of them are optional.
+    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=False):
         if operation_data is None:
             args.append(None)
 

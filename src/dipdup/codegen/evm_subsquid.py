@@ -19,7 +19,9 @@ from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
+from dipdup.exceptions import AbiNotAvailableError
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import ConvertedAbi
 from dipdup.package import ConvertedEventAbi
@@ -132,7 +134,7 @@ def abi_to_jsonschemas(
 
 def sighash_from_abi(abi_item: dict[str, Any]) -> str:
     if abi_item.get('type') != 'function':
-        raise FrameworkException(f'`{abi_item["name"]}` is not a function; can\'t get sighash')
+        raise FrameworkException(f"`{abi_item['name']}` is not a function; can't get sighash")
 
     signature = f'{abi_item["name"]}({",".join([i["type"] for i in abi_item["inputs"]])})'
     return Web3.keccak(text=signature).hex()[:10]
@@ -216,11 +218,16 @@ class SubsquidCodeGenerator(CodeGenerator):
                     raise ConfigurationError('`abi` must be a list of ABI datasources')
 
                 datasource = cast(AbiDatasource[Any], self._datasources[datasource_config.name])
-                abi_json = await datasource.get_abi(address)
-                if abi_json:
+                try:
+                    abi_json = await datasource.get_abi(address)
                     break
+                except DatasourceError as e:
+                    self._logger.warning('Failed to fetch ABI from `%s`: %s', datasource_config.name, e)
             else:
-                raise ConfigurationError(f'ABI for contract `{address}` not found')
+                raise AbiNotAvailableError(
+                    address=address,
+                    typename=contract.module_name,
+                )
 
             touch(abi_path)
             abi_path.write_bytes(json_dumps(abi_json))

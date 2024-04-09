@@ -43,7 +43,10 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
                     self._logger.warning('Ratelimited; sleeping %s seconds', self._http_config.ratelimit_sleep)
                     await asyncio.sleep(self._http_config.retry_sleep)
                     continue
+                try:
 
-                return cast(dict[str, Any], orjson.loads(result))
+                    return cast(dict[str, Any], orjson.loads(result))
+                except orjson.JSONDecodeError as e:
+                    raise DatasourceError(result, self.name) from e
 
         raise DatasourceError(message, self.name)

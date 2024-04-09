@@ -28,13 +28,13 @@ async def on_update_records(
     assert store_records.key
     assert store_records.value
 
-    record_name = bytes.fromhex(store_records.key.__root__).decode()
+    record_name = bytes.fromhex(store_records.key.root).decode()
     record_path = record_name.split('.')
     domain_data = decode_domain_data(store_records.value.data)
     ctx.logger.info('Processing `%s`', record_name)
 
     if len(record_path) != int(store_records.value.level):
-        ctx.logger.error(
+        ctx.logger.warning(
             'Invalid record `%s`: expected %s chunks, got %s',
             record_name,
             store_records.value.level,

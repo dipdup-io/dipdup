@@ -32,7 +32,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: macOS runner workaround
@@ -48,17 +48,19 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Install dev dependencies
-        run: cd dipdup_indexer; pdm venv create; pdm install
+        run: cd dipdup_indexer; pdm venv create; pdm remove dipdup; pdm add ..; pdm install
 
       - name: make all
         run: cd dipdup_indexer; $(pdm venv activate); make all
 
       - name: Copy installer to scripts
-        if: contains(github.ref, 'next')
+        # TODO: Update to `next` after 8.0 release
+        if: contains(github.ref, 'current')
         run: cp src/dipdup/install.py scripts/install.py
 
       - name: Publish scripts to GitHub Pages
-        if: contains(github.ref, 'next')
+        # TODO: Update to `next` after 8.0 release
+        if: contains(github.ref, 'current')
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

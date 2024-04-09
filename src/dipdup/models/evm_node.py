@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
+from dipdup.fetcher import HasLevel
 from dipdup.subscriptions import Subscription
 
 
@@ -39,13 +40,14 @@ class EvmNodeSyncingSubscription(EvmNodeSubscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeHeadData:
+class EvmNodeHeadData(HasLevel):
     base_fee_per_gas: int
     difficulty: int
     extra_data: str
     gas_limit: int
     gas_used: int
     hash: str
+    level: int
     logs_bloom: str
     miner: str
     mix_hash: str
@@ -61,6 +63,10 @@ class EvmNodeHeadData:
 
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
+        # NOTE: Skale Nebula
+        if 'baseFeePerGas' not in block_json:
+            block_json['baseFeePerGas'] = '0x0'
+
         return cls(
             base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
             difficulty=int(block_json['difficulty'], 16),
@@ -68,6 +74,7 @@ class EvmNodeHeadData:
             gas_limit=int(block_json['gasLimit'], 16),
             gas_used=int(block_json['gasUsed'], 16),
             hash=block_json['hash'],
+            level=int(block_json['number'], 16),
             logs_bloom=block_json['logsBloom'],
             miner=block_json['miner'],
             mix_hash=block_json['mixHash'],
@@ -82,17 +89,13 @@ class EvmNodeHeadData:
             withdrawals_root=block_json.get('withdrawalsRoot', None),
         )
 
-    @property
-    def level(self) -> int:
-        return self.number
-
 
 @dataclass(frozen=True)
-class EvmNodeLogData:
+class EvmNodeLogData(HasLevel):
     address: str
     block_hash: str
-    block_number: int
     data: str
+    level: int
     log_index: int
     topics: tuple[str, ...]
     transaction_hash: str
@@ -103,11 +106,15 @@ class EvmNodeLogData:
 
     @classmethod
     def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
+        # NOTE: Skale Nebula
+        if 'removed' not in log_json:
+            log_json['removed'] = False
+
         return cls(
             address=log_json['address'],
             block_hash=log_json['blockHash'],
-            block_number=int(log_json['blockNumber'], 16),
             data=log_json['data'],
+            level=int(log_json['blockNumber'], 16),
             log_index=int(log_json['logIndex'], 16),
             topics=log_json['topics'],
             transaction_hash=log_json['transactionHash'],
@@ -116,20 +123,15 @@ class EvmNodeLogData:
             timestamp=timestamp,
         )
 
-    @property
-    def level(self) -> int:
-        return self.block_number
+
+@dataclass(frozen=True)
+class EvmNodeTraceData(HasLevel): ...
 
 
 @dataclass(frozen=True)
-class EvmNodeTraceData: ...
-
-
-@dataclass(frozen=True)
-class EvmNodeTransactionData:
+class EvmNodeTransactionData(HasLevel):
     access_list: tuple[dict[str, Any], ...] | None
     block_hash: str
-    block_number: int
     chain_id: int | None
     data: str | None
     from_: str
@@ -137,6 +139,7 @@ class EvmNodeTransactionData:
     gas_price: int
     hash: str
     input: str
+    level: int
     max_fee_per_gas: int | None
     max_priority_fee_per_gas: int | None
     nonce: int
@@ -158,7 +161,6 @@ class EvmNodeTransactionData:
         return cls(
             access_list=tuple(transaction_json['accessList']) if 'accessList' in transaction_json else None,
             block_hash=transaction_json['blockHash'],
-            block_number=int(transaction_json['blockNumber'], 16),
             chain_id=int(transaction_json['chainId'], 16) if 'chainId' in transaction_json else None,
             data=transaction_json.get('data'),
             from_=transaction_json['from'],
@@ -166,6 +168,7 @@ class EvmNodeTransactionData:
             gas_price=int(transaction_json['gasPrice'], 16),
             hash=transaction_json['hash'],
             input=transaction_json['input'],
+            level=int(transaction_json['blockNumber'], 16),
             max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16) if 'maxFeePerGas' in transaction_json else None,
             max_priority_fee_per_gas=(
                 int(transaction_json['maxPriorityFeePerGas'], 16)
@@ -184,10 +187,6 @@ class EvmNodeTransactionData:
             value=int(transaction_json['value'], 16) if 'value' in transaction_json else None,
             v=int(transaction_json['v'], 16) if 'v' in transaction_json else None,
         )
-
-    @property
-    def level(self) -> int:
-        return self.block_number
 
 
 @dataclass(frozen=True)

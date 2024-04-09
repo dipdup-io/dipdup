@@ -161,8 +161,8 @@ indexes:
       token_contract: kusd_token_mainnet
       symbol: kUSD
       decimals: 18
-    first_level: 1434927
-    last_level: 1435026
+    first_level: 3032136
+    last_level: 3032136
 
   hdao_mainnet:
     template: quipuswap_fa2

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
@@ -84,7 +84,7 @@ class TzktEventsIndexConfig(TzktIndexConfig):
 
     kind: Literal['tezos.tzkt.events']
     datasource: TzktDatasourceConfig
-    handlers: tuple[TzktEventsHandlerConfigU, ...] = field(default_factory=tuple)
+    handlers: tuple[TzktEventsHandlerConfigU, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

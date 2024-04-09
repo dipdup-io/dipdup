@@ -1,9 +1,6 @@
-import asyncio
 import random
 from abc import ABC
 from abc import abstractmethod
-from collections import defaultdict
-from collections import deque
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -26,6 +23,8 @@ from dipdup.index import IndexQueueItemT
 from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
+
+SUBSQUID_READAHEAD_LIMIT = 10000
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
@@ -86,11 +85,6 @@ class SubsquidIndex(
     def datasources(self) -> tuple[IndexDatasource[Any], ...]:
         return (self.datasource, *self.node_datasources)
 
-    def get_random_node(self) -> EvmNodeDatasource:
-        if not self._node_datasources:
-            raise FrameworkException('A node datasource requested, but none attached to this index')
-        return random.choice(self._node_datasources)
-
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = set()
@@ -108,52 +102,17 @@ class SubsquidIndex(
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(set[int], sync_levels))
 
-    async def get_blocks_batch(
+    async def _get_node_sync_level(
         self,
-        levels: set[int],
-        full_transactions: bool = False,
-    ) -> dict[int, dict[str, Any]]:
-        tasks: deque[asyncio.Task[Any]] = deque()
-        blocks: dict[int, Any] = {}
-
-        async def _fetch(level: int) -> None:
-            blocks[level] = await self.get_random_node().get_block_by_level(
-                block_number=level,
-                full_transactions=full_transactions,
-            )
-
-        for level in levels:
-            tasks.append(
-                asyncio.create_task(
-                    _fetch(level),
-                    name=f'get_block_range:{level}',
-                ),
-            )
-
-        await asyncio.gather(*tasks)
-        return blocks
-
-    async def get_logs_batch(
-        self,
-        first_level: int,
-        last_level: int,
-    ) -> dict[int, list[dict[str, Any]]]:
-        grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
-        logs = await self.get_random_node().get_logs(
-            {
-                'fromBlock': hex(first_level),
-                'toBlock': hex(last_level),
-            },
-        )
-        for log in logs:
-            grouped_logs[int(log['blockNumber'], 16)].append(log)
-        return grouped_logs
-
-    async def _get_node_sync_level(self, subsquid_level: int, index_level: int) -> int | None:
+        subsquid_level: int,
+        index_level: int,
+        node: EvmNodeDatasource | None = None,
+    ) -> int | None:
         if not self.node_datasources:
             return None
+        node = node or random.choice(self.node_datasources)
 
-        node_sync_level = await self.get_random_node().get_head_level()
+        node_sync_level = await node.get_head_level()
         subsquid_lag = abs(node_sync_level - subsquid_level)
         subsquid_available = subsquid_level - index_level
         self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)

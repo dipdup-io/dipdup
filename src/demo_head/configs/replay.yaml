@@ -7,7 +7,7 @@ replay:
   template: demo_head
   package: demo_head
   version: 0.0.1
-  description: Processing head block metadata
+  description: Processing head block metadata (realtime only)
   license: MIT
   name: John Doe
   email: john_doe@example.com

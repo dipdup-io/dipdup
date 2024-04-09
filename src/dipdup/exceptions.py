@@ -75,11 +75,28 @@ class DatasourceError(Error):
 
     def _help(self) -> str:
         return f"""
-            `{self.datasource}` datasource returned an error.
+            `{self.datasource}` datasource returned an error:
             
-            {self.msg}
+            "{self.msg}"
 
             See https://dipdup.io/docs/getting-started/datasources
+        """
+
+
+@dataclass(repr=False, kw_only=True)
+class AbiNotAvailableError(Error):
+    """ABI for the contract is not available"""
+
+    address: str
+    typename: str
+
+    def _help(self) -> str:
+        return f"""
+            ABI for the contract `{self.address}` is not available.
+
+            Check the contract address and datasource configuration. If contract is not verified, place ABI manually to `abi/{self.typename}/abi.json` and run `dipdup init`.
+
+            See https://dipdup.io/docs/datasources/abi_etherscan
         """
 
 

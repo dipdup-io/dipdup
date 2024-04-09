@@ -8,13 +8,13 @@
 #
 # To run `build --serve` command you need to clone and install frontend from private `dipdup-io/interface` repo first.
 #
-import importlib
 import logging
 import os
 import re
 import subprocess
 import sys
 import time
+from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Iterator
 from contextlib import ExitStack
@@ -29,6 +29,7 @@ from typing import TypedDict
 
 import click
 import orjson
+from pydantic import TypeAdapter
 from watchdog.events import EVENT_TYPE_CREATED
 from watchdog.events import EVENT_TYPE_DELETED
 from watchdog.events import EVENT_TYPE_MODIFIED
@@ -39,12 +40,16 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
+from dipdup import __version__
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
+from dipdup.project import TEMPLATES
+from dipdup.project import answers_from_replay
 from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
+_version = __version__.split('+')[0]
 _logger = logging.getLogger()
 _logger.setLevel(logging.INFO)
 _process: subprocess.Popen[Any] | None = None
@@ -397,8 +402,7 @@ def check_links(source: Path, http: bool) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    dc_schema = importlib.import_module('dc_schema')
-    schema_dict = dc_schema.get_schema(DipDupConfig)
+    schema_dict = TypeAdapter(DipDupConfig).json_schema()
 
     # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
     schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = [
@@ -517,6 +521,92 @@ def markdownlint() -> None:
     except subprocess.CalledProcessError:
         red_echo('=> Fix markdownlint errors and try again')
         exit(1)
+
+
+# FIXME: It's a full-copilot script to fix the changelog once, quickly. Rewrite or remove it.
+@main.command('merge-changelog', help='Print changelog grouped by minor versions')
+def merge_changelog() -> None:
+    group_order = (
+        'Added',
+        'Fixed',
+        'Changed',
+        'Deprecated',
+        'Removed',
+        'Performance',
+        'Security',
+        'Other',
+    )
+
+    changelog_path = Path('CHANGELOG.md')
+    changelog = changelog_path.read_text().split('<!-- Links -->')[0].strip()
+
+    changelog_tree: defaultdict[str, defaultdict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    curr_version, curr_group = '', ''
+
+    for line in changelog.split('\n'):
+        line = line.strip()
+
+        if line.startswith('## '):
+            curr_version = line.split('[', 1)[1].split(']')[0]
+            curr_version = '.'.join(curr_version.split('.')[:2])
+        elif line.startswith('### '):
+            curr_group = line[4:]
+        elif line.startswith('- '):
+            changelog_tree[curr_version][curr_group].append(line)
+
+    for version in sorted(changelog_tree.keys()):
+        if not version.startswith('7.'):
+            continue
+
+        version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')
+        lines: list[str] = ['<!-- markdownlint-disable first-line-h1 -->']
+
+        lines.append(f'## Changes since 7.{int(version[2]) - 1}\n')
+        for group in group_order:
+            if not changelog_tree[version][group]:
+                continue
+
+            lines.append(f'### {group}\n')
+            for line in sorted(changelog_tree[version][group]):
+                lines.append(line)
+            lines.append('')
+
+        version_path.write_text('\n'.join(lines))
+
+
+@main.command('dump-demos', help='Dump Markdown table of available demo projects')
+def dump_demos() -> None:
+    green_echo('=> Dumping demos table')
+    lines: list[str] = []
+    demos: list[tuple[str, str, str]] = []
+
+    replays = Path('src/dipdup/projects').glob('**/replay.yaml')
+    for replay_path in replays:
+        replay = answers_from_replay(replay_path)
+        package, description = replay['package'], replay['description']
+        if package in TEMPLATES['other']:
+            network = ''
+        elif package in TEMPLATES['evm']:
+            network = 'EVM'
+        elif package in TEMPLATES['tezos']:
+            network = 'Tezos'
+        demos.append((package, network, description))
+
+    # NOTE: Sort by blockchain first, then by package name
+    demos = sorted(demos, key=lambda x: (x[1], x[0]))
+
+    lines = [
+        '<!-- markdownlint-disable first-line-h1 -->',
+        '| name | network | description | source |',
+        '|-|-|-|-|',
+        *(
+            f'| {name} | {network} | {description} | [link](https://github.com/dipdup-io/dipdup/tree/{_version}/src/{name}) |'
+            for name, network, description in demos
+        ),
+        '',
+    ]
+
+    Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
 
 
 if __name__ == '__main__':
