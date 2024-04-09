@@ -90,6 +90,11 @@ class SqliteDatabaseConfig:
 
     @property
     def connection_string(self) -> str:
+        if self.path != DEFAULT_SQLITE_PATH:
+            path = Path(self.path).resolve()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return f'{self.kind}:///{path}'
+
         return f'{self.kind}://{self.path}'
 
     @property
