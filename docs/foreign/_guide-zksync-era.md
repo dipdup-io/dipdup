@@ -55,22 +55,26 @@ In the project root, you'll find a file named `dipdup.yaml`. It's the main confi
 
 ## Step 4 — Implement handlers
 
-  TODO
-Implement handlers from quickstart with an ORM explanation (models were implemented in the demo, check {link to docs}).
-Key steps: check out handlers, explain below about orm and generated models
+Now, let's examine `handlers/on_transfer.py`. As defined in `dipdup.yaml`, this handler is activated when the transfer method of the token contract is called. In this guide, we focus on tracking USDT balances on zkSync:
 
 ```yaml [on_transfer.py]
 {{ #include foreign/zksync_files/on_transfer.py }}
 ```
 
-## Step 5 — Run
+Notice that we utilize the Transaction model predefined in `models/__init__.py`. DipDup is compatible with several databases, including SQLite, PostgreSQL, and TimescaleDB, thanks to a custom ORM layer built on top of Tortoise ORM.
 
-  To copy from kakarot
-Shorter "Next steps" from quickstart
-Key steps: how to up compose stack from generated project using env
+## Step 5 — Run 
+
+  TODO
+At last step we first of all need to set datasources urls, surely you can set this urls at `dipdup.yaml`, but we offer a better way compliant with [12factors](https://12factor.net/)
+
+  add node and archive to .env
+  show how to start simply
+  in this guide we will run in more advanced configuration: running with docker compose and env
 
 ### Fancy query
 
+  TODO
 Demonstrate a Hasura request from the docker-compose stack
 Key steps: how to up compose stack from generated project, show query in hasura web interface
 
