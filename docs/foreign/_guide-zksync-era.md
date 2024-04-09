@@ -61,7 +61,7 @@ Now, let's examine `handlers/on_transfer.py`. As defined in `dipdup.yaml`, this 
 {{ #include foreign/zksync_files/on_transfer.py }}
 ```
 
-Notice that we utilize the Transaction model predefined in `models/__init__.py`. DipDup is compatible with several databases, including SQLite, PostgreSQL, and TimescaleDB, thanks to a custom ORM layer built on top of Tortoise ORM.
+Notice that we utilize the Transaction model predefined in `models/__init__.py`. DipDup is compatible with several databases, including SQLite, PostgreSQL, and TimescaleDB, thanks to a custom ORM layer built on top of Tortoise ORM. For more information on DipDup's data models and how to utilize them in your projects, visit the [models page in our docs](https://dipdup.io/docs/getting-started/models).
 
 ## Step 5 — Run 
 
