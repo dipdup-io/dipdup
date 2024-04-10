@@ -3,8 +3,10 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.indexes.evm_subsquid_transactions.fetcher import EvmNodeTransactionFetcher
@@ -18,10 +20,11 @@ from dipdup.models.evm_subsquid import TransactionRequest
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmNodeTransactionData, ...] | RollbackMessage
+Datasource = SubsquidDatasource | EvmNodeDatasource
 
 
 class SubsquidTransactionsIndex(
-    SubsquidIndex[SubsquidTransactionsIndexConfig, QueueItem, SubsquidDatasource],
+    SubsquidIndex[SubsquidTransactionsIndexConfig, QueueItem, Datasource],
     message_type=SubsquidMessageType.transactions,
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
@@ -73,6 +76,9 @@ class SubsquidTransactionsIndex(
             if not query:
                 raise NotImplementedError
             filters.append(query)
+
+        if not isinstance(self._datasource, SubsquidDatasource):
+            raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
 
         return SubsquidTransactionFetcher(
             datasource=self._datasource,

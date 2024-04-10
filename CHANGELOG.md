@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- evm.subsquid: `evm.node` datasources can be used as index datasources.
+
 ## [7.5.4] - 2024-04-09
 
 ### Fixed
