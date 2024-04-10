@@ -87,7 +87,7 @@ async def test_reserved_keywords() -> None:
         == 'from'
     )
 
-    # FIXME: Can't use `from_` field alias in dataclasses (fixed in `next` with Pydantic v2)
+    # FIXME: Can't use `from_` field alias in dataclasses
     raw_config, _ = DipDupYAMLConfig.load(
         paths=[Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml']
     )

@@ -32,7 +32,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     :param method: Method name
     """
 
-    # FIXME: Can't use `from_` field alias in dataclasses (fixed in `next` with Pydantic v2)
+    # FIXME: Can't use `from_` field alias in dataclasses
     from_: EvmContractConfig | None = None
     to: EvmContractConfig | None = None
     method: str | None = None
