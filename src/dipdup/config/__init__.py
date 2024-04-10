@@ -38,6 +38,7 @@ from urllib.parse import urlparse
 import orjson
 from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import ValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
@@ -695,6 +696,16 @@ class DipDupConfig:
             config = cls(**config_json)
         except ConfigurationError:
             raise
+        except ValidationError as e:
+            msgs = []
+            for error in e.errors():
+                if error['loc'][-1] == 'kind':
+                    continue
+                path = '.'.join(str(e) for e in error['loc'])
+                msgs.append(f'- {path}: {error["msg"]}')
+
+            msg = 'Config validation failed:\n\n' + '\n'.join(msgs)
+            raise ConfigurationError(msg) from e
         except Exception as e:
             raise ConfigurationError(str(e)) from e
 

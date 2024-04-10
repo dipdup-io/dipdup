@@ -46,7 +46,7 @@ class Error(ABC, FrameworkException):
     def __str__(self) -> str:
         if not self.__doc__:
             raise NotImplementedError(f'{self.__class__.__name__} has no docstring')
-        return self.__doc__ + ' -> ' + ' '.join(self.args)
+        return self.__doc__ + ' -> ' + ' '.join(self.args).split('\n')[0]
 
     def help(self) -> str:
         """Return a string containing a help message for this error."""
@@ -122,6 +122,9 @@ class ConfigurationError(Error):
     """DipDup YAML config is invalid"""
 
     msg: str
+
+    def __repr__(self) -> str:
+        return ''
 
     def _help(self) -> str:
         return f"""
