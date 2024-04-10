@@ -214,7 +214,7 @@ test_params = (
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
     ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
     ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
-    # NOTE: EVM indexes with `node_only`
+    # NOTE: Indexes with `evm.node` as index datasource
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Smoke tests for small tools.

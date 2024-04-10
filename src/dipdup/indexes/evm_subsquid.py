@@ -124,9 +124,6 @@ class SubsquidIndex(
         self._logger.info('Subsquid is %s levels behind; %s available', subsquid_lag, subsquid_available)
         if subsquid_available < NODE_LAST_MILE:
             return node_sync_level
-        if self._config.node_only:
-            self._logger.debug('`node_only` flag is set; using node anyway')
-            return node_sync_level
         return None
 
     async def _synchronize(self, sync_level: int) -> None:
