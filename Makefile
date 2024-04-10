@@ -46,8 +46,7 @@ image:          ## Build Docker image
 demos:          ## Recreate demo projects from templates
 	python scripts/demos.py render ${DEMO}
 	python scripts/demos.py init ${DEMO}
-	pdm run format
-	pdm run lint
+	make format lint
 
 docs: docs_build
 

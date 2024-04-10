@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -8,7 +9,7 @@ from dipdup.config import HttpConfig
 DEFAULT_ETHERSCAN_URL = 'https://api.etherscan.io/api'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class AbiEtherscanDatasourceConfig(AbiDatasourceConfig):
     """Etherscan datasource config
 

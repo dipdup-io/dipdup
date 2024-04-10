@@ -1,12 +1,14 @@
 {
   "$defs": {
     "AbiDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Provider of EVM contract ABIs. Datasource kind starts with 'abi.'",
       "properties": {},
       "title": "AbiDatasourceConfig",
       "type": "object"
     },
     "AbiEtherscanDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Etherscan datasource config\n\n:param kind: always 'abi.etherscan'\n:param url: API URL\n:param api_key: API key\n:param http: HTTP client configuration",
       "properties": {
         "kind": {
@@ -49,6 +51,7 @@
       "type": "object"
     },
     "AdvancedConfig": {
+      "additionalProperties": false,
       "description": "This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.\n\n:param reindex: Mapping of reindexing reasons and actions DipDup performs.\n:param scheduler: `apscheduler` scheduler config.\n:param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.\n:param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).\n:param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.\n:param rollback_depth: A number of levels to keep for rollback.\n:param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.\n:param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.\n:param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)",
       "properties": {
         "reindex": {
@@ -124,6 +127,7 @@
       "type": "object"
     },
     "ApiConfig": {
+      "additionalProperties": false,
       "description": "Management API config\n\n:param host: Host to bind to\n:param port: Port to bind to",
       "properties": {
         "host": {
@@ -141,24 +145,9 @@
       "type": "object"
     },
     "CoinbaseDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Coinbase datasource config\n\n:param kind: always 'coinbase'\n:param api_key: API key\n:param secret_key: API secret key\n:param passphrase: API passphrase\n:param http: HTTP client configuration",
       "properties": {
-        "kind": {
-          "const": "coinbase",
-          "title": "Kind"
-        },
-        "api_key": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Api Key"
-        },
         "secret_key": {
           "anyOf": [
             {
@@ -183,6 +172,22 @@
           "default": null,
           "title": "Passphrase"
         },
+        "kind": {
+          "const": "coinbase",
+          "title": "Kind"
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Key"
+        },
         "http": {
           "anyOf": [
             {
@@ -202,6 +207,7 @@
       "type": "object"
     },
     "EvmContractConfig": {
+      "additionalProperties": false,
       "description": "EVM contract config\n\n:param kind: Always `evm`\n:param address: Contract address\n:param abi: Contract ABI\n:param typename: Alias for the contract script",
       "properties": {
         "kind": {
@@ -255,6 +261,7 @@
       "type": "object"
     },
     "EvmNodeDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Subsquid datasource config\n\n:param kind: Always 'evm.node'\n:param url: Ethereum node URL\n:param ws_url: Ethereum node WebSocket URL\n:param http: HTTP client configuration\n:param rollback_depth: A number of blocks to store in database for rollback",
       "properties": {
         "kind": {
@@ -302,6 +309,7 @@
       "type": "object"
     },
     "EvmSubsquidDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Subsquid datasource config\n\n:param kind: always 'evm.subsquid'\n:param url: URL of Subsquid Network API\n:param node: One or more `evm.node` datasource(s) for the same network\n:param http: HTTP client configuration",
       "properties": {
         "kind": {
@@ -359,12 +367,9 @@
       "type": "object"
     },
     "EvmSubsquidEventsHandlerConfig": {
+      "additionalProperties": false,
       "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -379,17 +384,22 @@
         "name": {
           "title": "Name",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "name"
+        "name",
+        "callback"
       ],
       "title": "EvmSubsquidEventsHandlerConfig",
       "type": "object"
     },
     "EvmSubsquidEventsIndexConfig": {
+      "additionalProperties": false,
       "description": "Subsquid datasource config\n\n:param kind: Always 'evm.subsquid.events'\n:param datasource: Subsquid datasource\n:param handlers: Event handlers\n:param abi: One or more `evm.abi` datasource(s) for the same network\n:param node_only: Don't use Subsquid Network API (dev only)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
       "properties": {
         "kind": {
@@ -456,6 +466,7 @@
       "type": "object"
     },
     "EvmSubsquidTracesHandlerConfig": {
+      "additionalProperties": false,
       "properties": {
         "callback": {
           "title": "Callback",
@@ -469,6 +480,7 @@
       "type": "object"
     },
     "EvmSubsquidTracesIndexConfig": {
+      "additionalProperties": false,
       "properties": {
         "kind": {
           "const": "evm.subsquid.traces",
@@ -535,12 +547,9 @@
       "type": "object"
     },
     "EvmSubsquidTransactionsHandlerConfig": {
+      "additionalProperties": false,
       "description": "Subsquid transaction handler\n\n:param callback: Callback name\n:param from_: Transaction sender\n:param to: Transaction receiver\n:param method: Method name",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "from_": {
           "anyOf": [
             {
@@ -582,6 +591,10 @@
           ],
           "default": null,
           "title": "Method"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -591,6 +604,7 @@
       "type": "object"
     },
     "EvmSubsquidTransactionsIndexConfig": {
+      "additionalProperties": false,
       "description": "Index that uses Subsquid Network as a datasource for transactions\n\n:param kind: always 'evm.subsquid.transactions'\n:param datasource: Subsquid datasource config\n:param handlers: Transaction handlers\n:param abi: One or many ABI datasource(s)\n:param node_only: Don't use Subsquid Network, only node RPC\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -658,12 +672,9 @@
       "type": "object"
     },
     "HasuraConfig": {
+      "additionalProperties": false,
       "description": "Config for the Hasura integration.\n\n:param url: URL of the Hasura instance.\n:param admin_secret: Admin secret of the Hasura instance.\n:param create_source: Whether source should be added to Hasura if missing.\n:param source: Hasura source for DipDup to configure, others will be left untouched.\n:param select_limit: Row limit for unauthenticated queries.\n:param allow_aggregations: Whether to allow aggregations in unauthenticated queries.\n:param allow_inconsistent_metadata: Whether to ignore errors when applying Hasura metadata.\n:param camel_case: Whether to use camelCase instead of default pascal_case for the field names.\n:param rest: Enable REST API both for autogenerated and custom queries.\n:param http: HTTP connection tunables",
       "properties": {
-        "url": {
-          "title": "Url",
-          "type": "string"
-        },
         "admin_secret": {
           "anyOf": [
             {
@@ -675,6 +686,10 @@
           ],
           "default": null,
           "title": "Admin Secret"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
         },
         "create_source": {
           "default": false,
@@ -730,18 +745,19 @@
       "type": "object"
     },
     "HookConfig": {
+      "additionalProperties": false,
       "description": "Hook config\n\n:param callback: Callback name\n:param args: Mapping of argument names and annotations (checked lazily when possible)\n:param atomic: Wrap hook in a single database transaction",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "args": {
           "additionalProperties": {
             "type": "string"
           },
           "title": "Args",
           "type": "object"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         },
         "atomic": {
           "default": false,
@@ -756,6 +772,7 @@
       "type": "object"
     },
     "HttpConfig": {
+      "additionalProperties": false,
       "description": "Advanced configuration of HTTP client\n\n:param retry_count: Number of retries after request failed before giving up\n:param retry_sleep: Sleep time between retries\n:param retry_multiplier: Multiplier for sleep time between retries\n:param ratelimit_rate: Number of requests per period (\"drops\" in leaky bucket)\n:param ratelimit_period: Time period for rate limiting in seconds\n:param ratelimit_sleep: Sleep time between requests when rate limit is reached\n:param connection_limit: Number of simultaneous connections\n:param connection_timeout: Connection timeout in seconds\n:param request_timeout: Request timeout in seconds\n:param batch_size: Number of items fetched in a single paginated request (when applicable)\n:param polling_interval: Interval between polling requests in seconds (when applicable)\n:param replay_path: Use cached HTTP responses instead of making real requests (dev only)\n:param alias: Alias for this HTTP client (dev only)",
       "properties": {
         "retry_count": {
@@ -919,6 +936,7 @@
       "type": "object"
     },
     "HttpDatasourceConfig": {
+      "additionalProperties": false,
       "description": "Generic HTTP datasource config\n\n:param kind: always 'http'\n:param url: URL to fetch data from\n:param http: HTTP client configuration",
       "properties": {
         "kind": {
@@ -949,6 +967,7 @@
       "type": "object"
     },
     "IndexTemplateConfig": {
+      "additionalProperties": false,
       "description": "Index template config\n\n:param kind: always 'template'\n:param values: Values to be substituted in template (`<key>` -> `value`)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at\n:param template: Template alias in `templates` section",
       "properties": {
         "template": {
@@ -981,6 +1000,7 @@
       "type": "object"
     },
     "IpfsDatasourceConfig": {
+      "additionalProperties": false,
       "description": "IPFS datasource config\n\n:param kind: always 'ipfs'\n:param url: IPFS node URL, e.g. https://ipfs.io/ipfs/\n:param http: HTTP client configuration",
       "properties": {
         "kind": {
@@ -1011,6 +1031,7 @@
       "type": "object"
     },
     "JobConfig": {
+      "additionalProperties": false,
       "description": "Job schedule config\n\n:param hook: Name of hook to run\n:param args: Arguments to pass to the hook\n:param crontab: Schedule with crontab syntax (`* * * * *`)\n:param interval: Schedule with interval in seconds\n:param daemon: Run hook as a daemon (never stops)",
       "properties": {
         "hook": {
@@ -1065,8 +1086,22 @@
       "type": "object"
     },
     "PostgresDatabaseConfig": {
+      "additionalProperties": false,
       "description": "Postgres database connection config\n\n:param kind: always 'postgres'\n:param host: Host\n:param port: Port\n:param user: User\n:param password: Password\n:param database: Database name\n:param schema_name: Schema name\n:param immune_tables: List of tables to preserve during reindexing\n:param connection_timeout: Connection timeout",
       "properties": {
+        "password": {
+          "default": "",
+          "title": "Password",
+          "type": "string"
+        },
+        "immune_tables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Immune Tables",
+          "type": "array",
+          "uniqueItems": true
+        },
         "kind": {
           "const": "postgres",
           "title": "Kind"
@@ -1095,19 +1130,6 @@
           "title": "Schema Name",
           "type": "string"
         },
-        "password": {
-          "default": "",
-          "title": "Password",
-          "type": "string"
-        },
-        "immune_tables": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Immune Tables",
-          "type": "array",
-          "uniqueItems": true
-        },
         "connection_timeout": {
           "default": 60,
           "title": "Connection Timeout",
@@ -1122,6 +1144,7 @@
       "type": "object"
     },
     "PrometheusConfig": {
+      "additionalProperties": false,
       "description": "Config for Prometheus integration.\n\n:param host: Host to bind to\n:param port: Port to bind to\n:param update_interval: Interval to update some metrics in seconds",
       "properties": {
         "host": {
@@ -1156,6 +1179,7 @@
       "type": "string"
     },
     "SentryConfig": {
+      "additionalProperties": false,
       "description": "Config for Sentry integration.\n\n:param dsn: DSN of the Sentry instance\n:param environment: Environment; if not set, guessed from docker/ci/gha/local.\n:param server_name: Server name; defaults to obfuscated hostname.\n:param release: Release version; defaults to DipDup package version.\n:param user_id: User ID; defaults to obfuscated package/environment.\n:param debug: Catch warning messages, increase verbosity.",
       "properties": {
         "dsn": {
@@ -1233,8 +1257,17 @@
       "type": "string"
     },
     "SqliteDatabaseConfig": {
+      "additionalProperties": false,
       "description": "SQLite connection config\n\n:param kind: always 'sqlite'\n:param path: Path to .sqlite3 file, leave default for in-memory database (`:memory:`)\n:param immune_tables: List of tables to preserve during reindexing",
       "properties": {
+        "immune_tables": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Immune Tables",
+          "type": "array",
+          "uniqueItems": true
+        },
         "kind": {
           "const": "sqlite",
           "title": "Kind"
@@ -1243,14 +1276,6 @@
           "default": ":memory:",
           "title": "Path",
           "type": "string"
-        },
-        "immune_tables": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Immune Tables",
-          "type": "array",
-          "uniqueItems": true
         }
       },
       "required": [
@@ -1260,6 +1285,7 @@
       "type": "object"
     },
     "TezosContractConfig": {
+      "additionalProperties": false,
       "description": "Tezos contract config.\n\n:param kind: Always `tezos`\n:param address: Contract address\n:param code_hash: Contract code hash or address to fetch it from\n:param typename: Alias for the contract script",
       "properties": {
         "kind": {
@@ -1313,12 +1339,9 @@
       "type": "object"
     },
     "TezosTzktBigMapsHandlerConfig": {
+      "additionalProperties": false,
       "description": "Big map handler config\n\n:param callback: Callback name\n:param contract: Contract to fetch big map from\n:param path: Path to big map (alphanumeric string with dots)",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -1333,17 +1356,22 @@
         "path": {
           "title": "Path",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "path"
+        "path",
+        "callback"
       ],
       "title": "TezosTzktBigMapsHandlerConfig",
       "type": "object"
     },
     "TezosTzktBigMapsIndexConfig": {
+      "additionalProperties": false,
       "description": "Big map index config\n\n:param kind: always 'tezos.tzkt.big_maps'\n:param datasource: Index datasource to fetch big maps with\n:param handlers: Mapping of big map diff handlers\n:param skip_history: Fetch only current big map keys ignoring historical changes\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -1396,6 +1424,7 @@
       "type": "object"
     },
     "TezosTzktDatasourceConfig": {
+      "additionalProperties": false,
       "description": "TzKT datasource config\n\n:param kind: always 'tezos.tzkt'\n:param url: Base API URL, e.g. https://api.tzkt.io/\n:param http: HTTP client configuration\n:param buffer_size: Number of levels to keep in FIFO buffer before processing\n:param merge_subscriptions: Whether to merge realtime subscriptions\n:param rollback_depth: Number of blocks to keep in the database to handle reorgs",
       "properties": {
         "kind": {
@@ -1441,12 +1470,9 @@
       "type": "object"
     },
     "TezosTzktEventsHandlerConfig": {
+      "additionalProperties": false,
       "description": "Event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event\n:param tag: Event tag",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -1461,17 +1487,22 @@
         "tag": {
           "title": "Tag",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "tag"
+        "tag",
+        "callback"
       ],
       "title": "TezosTzktEventsHandlerConfig",
       "type": "object"
     },
     "TezosTzktEventsIndexConfig": {
+      "additionalProperties": false,
       "description": "Event index config\n\n:param kind: always 'tezos.tzkt.events'\n:param datasource: Datasource config\n:param handlers: Event handlers\n:param first_level: First block level to index\n:param last_level: Last block level to index",
       "properties": {
         "kind": {
@@ -1522,12 +1553,9 @@
       "type": "object"
     },
     "TezosTzktEventsUnknownEventHandlerConfig": {
+      "additionalProperties": false,
       "description": "Unknown event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -1538,16 +1566,21 @@
             }
           ],
           "title": "Contract"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
-        "contract"
+        "contract",
+        "callback"
       ],
       "title": "TezosTzktEventsUnknownEventHandlerConfig",
       "type": "object"
     },
     "TezosTzktHeadIndexConfig": {
+      "additionalProperties": false,
       "description": "Head block index config\n\n:param kind: always 'tezos.tzkt.head'\n:param callback: Callback name\n:param datasource: Index datasource to receive head blocks\n:param handlers: Mapping of head block handlers",
       "properties": {
         "kind": {
@@ -1590,6 +1623,7 @@
       "type": "string"
     },
     "TezosTzktOperationsHandlerConfig": {
+      "additionalProperties": false,
       "description": "Operation handler config\n\n:param callback: Callback name\n:param pattern: Filters to match operation groups",
       "properties": {
         "callback": {
@@ -1622,6 +1656,7 @@
       "type": "object"
     },
     "TezosTzktOperationsHandlerOriginationPatternConfig": {
+      "additionalProperties": false,
       "description": "Origination handler pattern config\n\n:param type: always 'origination'\n:param source: Match operations by source contract alias\n:param originated_contract: Match origination of exact contract\n:param optional: Whether can operation be missing in operation group\n:param strict: Match operations by storage only or by the whole code\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
         "type": {
@@ -1686,6 +1721,7 @@
       "type": "object"
     },
     "TezosTzktOperationsHandlerSmartRollupExecutePatternConfig": {
+      "additionalProperties": false,
       "description": "Operation handler pattern config\n\n:param type: always 'sr_execute'\n:param source: Match operations by source contract alias\n:param destination: Match operations by destination contract alias\n:param optional: Whether can operation be missing in operation group\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
         "type": {
@@ -1745,6 +1781,7 @@
       "type": "object"
     },
     "TezosTzktOperationsHandlerTransactionPatternConfig": {
+      "additionalProperties": false,
       "description": "Transaction handler pattern config\n\n:param type: always 'transaction'\n:param source: Match operations by source contract alias\n:param destination: Match operations by destination contract alias\n:param entrypoint: Match operations by contract entrypoint\n:param optional: Whether can operation be missing in operation group\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
         "type": {
@@ -1816,6 +1853,7 @@
       "type": "object"
     },
     "TezosTzktOperationsIndexConfig": {
+      "additionalProperties": false,
       "description": "Operation index config\n\n:param kind: always 'tezos.tzkt.operations'\n:param datasource: Alias of index datasource in `datasources` section\n:param handlers: List of indexer handlers\n:param types: Types of transaction to fetch\n:param contracts: Aliases of contracts being indexed in `contracts` section\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -1884,6 +1922,7 @@
       "type": "object"
     },
     "TezosTzktOperationsUnfilteredIndexConfig": {
+      "additionalProperties": false,
       "description": "Operation index config\n\n:param kind: always 'tezos.tzkt.operations_unfiltered'\n:param datasource: Alias of index datasource in `datasources` section\n:param callback: Callback name\n:param types: Types of transaction to fetch\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -1935,12 +1974,9 @@
       "type": "object"
     },
     "TezosTzktTokenBalancesHandlerConfig": {
+      "additionalProperties": false,
       "description": "Token balance handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -1967,6 +2003,10 @@
           ],
           "default": null,
           "title": "Token Id"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -1976,6 +2016,7 @@
       "type": "object"
     },
     "TezosTzktTokenBalancesIndexConfig": {
+      "additionalProperties": false,
       "description": "Token balance index config\n\n:param kind: always 'tezos.tzkt.token_balances'\n:param datasource: Index datasource to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -2019,12 +2060,9 @@
       "type": "object"
     },
     "TezosTzktTokenTransfersHandlerConfig": {
+      "additionalProperties": false,
       "description": "Token transfer handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID\n:param from_: Filter by sender\n:param to: Filter by recipient",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
             {
@@ -2081,6 +2119,10 @@
           ],
           "default": null,
           "title": "To"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -2090,6 +2132,7 @@
       "type": "object"
     },
     "TezosTzktTokenTransfersIndexConfig": {
+      "additionalProperties": false,
       "description": "Token transfer index config\n\n:param kind: always 'tezos.tzkt.token_transfers'\n:param datasource: Index datasource to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
@@ -2133,6 +2176,7 @@
       "type": "object"
     },
     "TzipMetadataDatasourceConfig": {
+      "additionalProperties": false,
       "description": "DipDup Metadata datasource config\n\n:param kind: always 'tzip_metadata'\n:param network: Network name, e.g. mainnet, ghostnet, etc.\n:param url: GraphQL API URL, e.g. https://metadata.dipdup.net\n:param http: HTTP client configuration",
       "properties": {
         "kind": {

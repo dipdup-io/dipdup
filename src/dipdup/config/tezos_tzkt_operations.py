@@ -5,6 +5,7 @@ from typing import Any
 from typing import Literal
 from typing import cast
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubgroupIndexMixin:
     """`subgroup_index` field to track index of operation in group
 
@@ -127,7 +128,7 @@ class TezosTzktPatternConfig(CodegenMixin):
         return arg_name, 'TezosTzktOperationData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Transaction handler pattern config
 
@@ -187,7 +188,7 @@ class TezosTzktOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig,
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
@@ -236,7 +237,7 @@ class TezosTzktOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig,
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
@@ -273,7 +274,7 @@ class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPattern
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 
@@ -337,7 +338,7 @@ TezosTzktOperationsHandlerPatternConfigU = (
 )
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsHandlerConfig(HandlerConfig):
     """Operation handler config
 
@@ -369,7 +370,7 @@ class TezosTzktOperationsHandlerConfig(HandlerConfig):
             yield arg, arg_type
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
     """Handler of unfiltered operation index
 
@@ -386,7 +387,7 @@ class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
         yield 'operation', 'TezosTzktOperationData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 

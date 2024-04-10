@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
@@ -8,7 +9,7 @@ from dipdup.config import HttpConfig
 DEFAULT_IPFS_URL = 'https://ipfs.io/ipfs'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class IpfsDatasourceConfig(DatasourceConfig):
     """IPFS datasource config
 
