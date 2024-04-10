@@ -26,11 +26,10 @@ contracts:
 indexes:
   eth_usdt_events:
     kind: evm.subsquid.events
-    datasource: subsquid
+    datasource: evm_node
     handlers:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
     first_level: 18077421
     last_level: 18077421
-    node_only: true

@@ -11,6 +11,7 @@ from dipdup.config import AbiDatasourceConfig
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
@@ -75,17 +76,15 @@ class EvmSubsquidTransactionsIndexConfig(EvmSubsquidIndexConfig):
     :param datasource: Subsquid datasource config
     :param handlers: Transaction handlers
     :param abi: One or many ABI datasource(s)
-    :param node_only: Don't use Subsquid Network, only node RPC
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
     """
 
     kind: Literal['evm.subsquid.transactions']
 
-    datasource: EvmSubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
     handlers: tuple[EvmSubsquidTransactionsHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
-    node_only: bool = False
 
     first_level: int = 0
     last_level: int = 0

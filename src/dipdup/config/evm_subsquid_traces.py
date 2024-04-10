@@ -10,6 +10,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 
@@ -30,10 +31,9 @@ class EvmSubsquidTracesHandlerConfig(HandlerConfig, ABC):
 class EvmSubsquidTracesIndexConfig(EvmSubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 
-    datasource: EvmSubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
     handlers: tuple[EvmSubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
-    node_only: bool = False
 
     first_level: int = 0
     last_level: int = 0

@@ -10,6 +10,7 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
@@ -59,16 +60,14 @@ class EvmSubsquidEventsIndexConfig(EvmSubsquidIndexConfig):
     :param datasource: Subsquid datasource
     :param handlers: Event handlers
     :param abi: One or more `evm.abi` datasource(s) for the same network
-    :param node_only: Don't use Subsquid Network API (dev only)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing and disable this index
     """
 
     kind: Literal['evm.subsquid.events']
-    datasource: EvmSubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
     handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = Field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
-    node_only: bool = False
 
     first_level: int = 0
     last_level: int = 0

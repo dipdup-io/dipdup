@@ -400,7 +400,7 @@
     },
     "EvmSubsquidEventsIndexConfig": {
       "additionalProperties": false,
-      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.subsquid.events'\n:param datasource: Subsquid datasource\n:param handlers: Event handlers\n:param abi: One or more `evm.abi` datasource(s) for the same network\n:param node_only: Don't use Subsquid Network API (dev only)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
+      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.subsquid.events'\n:param datasource: Subsquid datasource\n:param handlers: Event handlers\n:param abi: One or more `evm.abi` datasource(s) for the same network\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
       "properties": {
         "kind": {
           "const": "evm.subsquid.events",
@@ -413,6 +413,9 @@
             },
             {
               "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+            },
+            {
+              "$ref": "#/$defs/EvmNodeDatasourceConfig"
             }
           ],
           "title": "Datasource"
@@ -441,11 +444,6 @@
           ],
           "default": null,
           "title": "Abi"
-        },
-        "node_only": {
-          "default": false,
-          "title": "Node Only",
-          "type": "boolean"
         },
         "first_level": {
           "default": 0,
@@ -493,6 +491,9 @@
             },
             {
               "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+            },
+            {
+              "$ref": "#/$defs/EvmNodeDatasourceConfig"
             }
           ],
           "title": "Datasource"
@@ -521,11 +522,6 @@
           ],
           "default": null,
           "title": "Abi"
-        },
-        "node_only": {
-          "default": false,
-          "title": "Node Only",
-          "type": "boolean"
         },
         "first_level": {
           "default": 0,
@@ -605,7 +601,7 @@
     },
     "EvmSubsquidTransactionsIndexConfig": {
       "additionalProperties": false,
-      "description": "Index that uses Subsquid Network as a datasource for transactions\n\n:param kind: always 'evm.subsquid.transactions'\n:param datasource: Subsquid datasource config\n:param handlers: Transaction handlers\n:param abi: One or many ABI datasource(s)\n:param node_only: Don't use Subsquid Network, only node RPC\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
+      "description": "Index that uses Subsquid Network as a datasource for transactions\n\n:param kind: always 'evm.subsquid.transactions'\n:param datasource: Subsquid datasource config\n:param handlers: Transaction handlers\n:param abi: One or many ABI datasource(s)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
           "const": "evm.subsquid.transactions",
@@ -618,6 +614,9 @@
             },
             {
               "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+            },
+            {
+              "$ref": "#/$defs/EvmNodeDatasourceConfig"
             }
           ],
           "title": "Datasource"
@@ -646,11 +645,6 @@
           ],
           "default": null,
           "title": "Abi"
-        },
-        "node_only": {
-          "default": false,
-          "title": "Node Only",
-          "type": "boolean"
         },
         "first_level": {
           "default": 0,
