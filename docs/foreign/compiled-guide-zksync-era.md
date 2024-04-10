@@ -50,7 +50,37 @@ Dipdup will generate complete project structure, including USDT balances trackin
 In the project root, you'll find a file named `dipdup.yaml`. It's the main configuration file of your indexer. We will discuss it in detail in the [Config](https://dipdup.io/docs/getting-started/config) section; for now just replace contract address with target token, I will use zkSync USDT for this example:
 
 ```yaml [dipdup.yaml]
-{{ #include foreign/zksync_files/dipdup.yaml }}
+spec_version: 2.0
+package: zksync_demo
+
+datasources:
+  subsquid:
+    kind: evm.subsquid
+    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    node: evm_node
+  etherscan:
+    kind: abi.etherscan
+    url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
+    api_key: ${ETHERSCAN_API_KEY:-''}
+  evm_node:
+    kind: evm.node
+    url: ${NODE_URL:-https://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+    ws_url: ${NODE_WS_URL:-wss://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0x493257fD37EDB34451f62EDf8D2a0C418852bA4C
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_events:
+    kind: evm.subsquid.events
+    datasource: subsquid
+    handlers:
+      - callback: on_transfer
+        contract: eth_usdt
+        name: Transfer
 ```
 
 ## Step 4 — Implement handlers
@@ -58,7 +88,57 @@ In the project root, you'll find a file named `dipdup.yaml`. It's the main confi
 Now, let's examine `handlers/on_transfer.py`. As defined in `dipdup.yaml`, this handler is activated when the transfer method of the token contract is called. In this guide, we focus on tracking USDT balances on zkSync:
 
 ```yaml [on_transfer.py]
-{{ #include foreign/zksync_files/on_transfer.py }}
+from decimal import Decimal
+
+from tortoise.exceptions import DoesNotExist
+
+from zksync_demo import models as models
+from zksync_demo.types.eth_usdt.evm_events.transfer import Transfer
+from dipdup.context import HandlerContext
+from dipdup.models.evm_subsquid import SubsquidEvent
+
+
+async def on_transfer(
+    ctx: HandlerContext,
+    event: SubsquidEvent[Transfer],
+) -> None:
+    amount = Decimal(event.payload.value) / (10**6)
+    if not amount:
+        return
+
+    await on_balance_update(
+        address=event.payload.from_,
+        balance_update=-amount,
+        level=event.data.level,
+    )
+    await on_balance_update(
+        address=event.payload.to,
+        balance_update=amount,
+        level=event.data.level,
+    )
+    
+
+async def on_balance_update(
+    address: str,
+    balance_update: Decimal,
+    level: int,
+) -> None:
+    try:
+        holder = await models.Holder.cached_get(pk=address)
+    except DoesNotExist:
+        holder = models.Holder(
+            address=address,
+            balance=0,
+            turnover=0,
+            tx_count=0,
+            last_seen=None,
+        )
+        holder.cache()
+    holder.balance += balance_update
+    holder.turnover += abs(balance_update)
+    holder.tx_count += 1
+    holder.last_seen = level
+    await holder.save()
 ```
 
 Notice that we utilize the Transaction model predefined in `models/__init__.py`. DipDup is compatible with several databases, including SQLite, PostgreSQL, and TimescaleDB, thanks to a custom ORM layer built on top of Tortoise ORM. For more information on DipDup's data models and how to utilize them in your projects, visit the [models page in our docs](https://dipdup.io/docs/getting-started/models).
