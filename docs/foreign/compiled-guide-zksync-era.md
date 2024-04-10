@@ -146,7 +146,7 @@ Notice that we utilize the Transaction model predefined in `models/__init__.py`.
 ## Step 5 — Run
 
 In 'dipdup.yaml' we have three datasources, in this tutorial we will use two of them: Subsquid Network for historical data and JSON-RPC API (EVM node) for real-time and historical data.
-Before running, set URLs for datasources. These URLs can be set in `dipdup.yaml`, but here we offer better .env file approach:
+Before running, set URLs for datasources. These URLs can be set in `dipdup.yaml`, but we offer the .env file approach according to the [12factor config](https://12factor.net/config):  
 
   1. Copy `deploy/.env.default` file to `deploy/.env`.  
   2. Set `SUBSQUID_URL=https://v2.archive.subsquid.io/network/zksync-mainnet`.
@@ -166,12 +166,12 @@ sqlite3 /tmp/zksync_demo.sqlite 'SELECT * FROM holder LIMIT 10'
 
 The next part of the guide will explain how to start production-ready DipDup application in Docker environment with GraphQL API for your data.
 
-### Query API
+### Fancy query
 
 Most powerful and common DipDup application configuration uses PostgreSQL to store data and Hasura to have production ready API, steps to deploy stack in Docker environment in a few simple steps:
 
   1. Generate and set `HASURA_SECRET` and `POSTGRES_PASSWORD` in `deploy/.env` file, Hasura secret will be used later to access Hasura.
-  2. Build and start Docker containers: `docker compose --env-file deploy/.env -f deploy/compose.yaml up -d`.
+  2. Build and start Docker containers: `docker compose --env-file deploy/.env -f deploy/compose.yaml up -d'.
   3. Run `docker ps` to check that all containers are running. Locate the URL of the Hasura console in the PORTS column [compose.yml documentation](https://docs.docker.com/compose/compose-file/compose-file-v3/#ports). If the container isn't accessible via `0.0.0.0:PORT`, it may be accessible via `localhost:PORT` in certain environments.
   ![docker ps](zksync_assets/dockerps.png)
   4. As an example, let's query the first 10 addresses with a positive balance:
