@@ -23,18 +23,22 @@ from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import is_contract_address
 from dipdup.config.tezos import is_rollup_address
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsUnknownEventHandlerConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerPatternConfigU as PatternConfigU
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
+from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_operations import (
+    TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
+)
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_tzkt_operations import (
+    TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
+)
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.datasources import Datasource
-from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -85,7 +89,7 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     return schema
 
 
-class TzktCodeGenerator(CodeGenerator):
+class TezosTzktCodeGenerator(CodeGenerator):
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(
@@ -119,18 +123,18 @@ class TzktCodeGenerator(CodeGenerator):
         )
 
         unused_operation_templates = [
-            t for t in self._config.templates.values() if isinstance(t, TzktOperationsIndexConfig)
+            t for t in self._config.templates.values() if isinstance(t, TezosTzktOperationsIndexConfig)
         ]
 
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, TzktOperationsIndexConfig):
+            if isinstance(index_config, TezosTzktOperationsIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-                template = cast(TzktOperationsIndexConfig, index_config.parent)
+                template = cast(TezosTzktOperationsIndexConfig, index_config.parent)
                 if template in unused_operation_templates:
                     unused_operation_templates.remove(template)
-            elif isinstance(index_config, TzktBigMapsIndexConfig):
+            elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
-            elif isinstance(index_config, TzktEventsIndexConfig):
+            elif isinstance(index_config, TezosTzktEventsIndexConfig):
                 await self._fetch_event_index_schema(index_config)
             else:
                 pass
@@ -143,13 +147,13 @@ class TzktCodeGenerator(CodeGenerator):
             )
             datasource_name = template_config.datasource
             if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
-                datasource_config = self._config.get_tzkt_datasource(datasource_name)
+                datasource_config = self._config.get_tezos_tzkt_datasource(datasource_name)
                 template_config.datasource = datasource_config
                 await self._fetch_operation_index_schema(template_config)
             else:
                 self._logger.info('Unresolved `datasource` field, trying to guess it.')
                 for possible_datasource_config in self._config.datasources.values():
-                    if not isinstance(possible_datasource_config, TzktDatasourceConfig):
+                    if not isinstance(possible_datasource_config, TezosTzktDatasourceConfig):
                         continue
                     # NOTE: Do not modify config without necessity
                     template_config.datasource = possible_datasource_config
@@ -167,7 +171,7 @@ class TzktCodeGenerator(CodeGenerator):
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             # NOTE: Always single handler
-            if isinstance(index_config, TzktOperationsUnfilteredIndexConfig | TzktHeadIndexConfig):
+            if isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig | TezosTzktHeadIndexConfig):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
@@ -207,12 +211,12 @@ class TzktCodeGenerator(CodeGenerator):
 
     async def _get_schema(
         self,
-        datasource_config: TzktDatasourceConfig,
+        datasource_config: TezosTzktDatasourceConfig,
         contract_config: TezosContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""
         datasource = self._datasources[datasource_config.name]
-        if not isinstance(datasource, TzktDatasource):
+        if not isinstance(datasource, TezosTzktDatasource):
             raise FrameworkException('`tzkt` datasource expected')
 
         if contract_config.address:
@@ -241,7 +245,7 @@ class TzktCodeGenerator(CodeGenerator):
     async def _fetch_operation_pattern_schema(
         self,
         operation_pattern_config: PatternConfigU,
-        datasource_config: TzktDatasourceConfig,
+        datasource_config: TezosTzktDatasourceConfig,
     ) -> None:
         contract_config = operation_pattern_config.typed_contract
         if contract_config is None:
@@ -315,7 +319,7 @@ class TzktCodeGenerator(CodeGenerator):
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
                 )
 
-    async def _fetch_operation_index_schema(self, index_config: TzktOperationsIndexConfig) -> None:
+    async def _fetch_operation_index_schema(self, index_config: TezosTzktOperationsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
@@ -323,7 +327,7 @@ class TzktCodeGenerator(CodeGenerator):
                     index_config.datasource,
                 )
 
-    async def _fetch_big_map_index_schema(self, index_config: TzktBigMapsIndexConfig) -> None:
+    async def _fetch_big_map_index_schema(self, index_config: TezosTzktBigMapsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract
 
@@ -352,9 +356,9 @@ class TzktCodeGenerator(CodeGenerator):
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
             write(big_map_value_schema_path, json_dumps(big_map_value_schema))
 
-    async def _fetch_event_index_schema(self, index_config: TzktEventsIndexConfig) -> None:
+    async def _fetch_event_index_schema(self, index_config: TezosTzktEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, TzktEventsUnknownEventHandlerConfig):
+            if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
                 continue
 
             contract_config = handler_config.contract
@@ -379,7 +383,7 @@ class TzktCodeGenerator(CodeGenerator):
 
     async def get_schemas(
         self,
-        datasource: TzktDatasource,
+        datasource: TezosTzktDatasource,
         contract_config: TezosContractConfig,
     ) -> dict[str, Any]:
         """Get contract JSONSchema from TzKT or from cache"""

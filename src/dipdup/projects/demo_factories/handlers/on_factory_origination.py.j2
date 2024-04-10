@@ -3,13 +3,13 @@ from typing import cast
 
 from dipdup.context import HandlerContext
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktOperationData
 
 
 async def on_factory_origination(
     ctx: HandlerContext,
-    transaction_0: TzktOperationData,
-    origination_1: TzktOperationData,
+    transaction_0: TezosTzktOperationData,
+    origination_1: TezosTzktOperationData,
 ) -> None:
     assert transaction_0.parameter_json
     dex_contract = cast(str, origination_1.originated_contract_address)

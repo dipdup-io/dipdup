@@ -7,15 +7,15 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class HeadHandlerConfig(HandlerConfig):
+class TezosTzktHeadHandlerConfig(HandlerConfig):
     """Head block handler config
 
     :param callback: Callback name
@@ -23,16 +23,16 @@ class HeadHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TzktHeadBlockData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktHeadBlockData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'head', 'TzktHeadBlockData'
+        yield 'head', 'TezosTzktHeadBlockData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TzktHeadIndexConfig(TzktIndexConfig):
+class TezosTzktHeadIndexConfig(TezosTzktIndexConfig):
     """Head block index config
 
     :param kind: always 'tezos.tzkt.head'
@@ -42,7 +42,7 @@ class TzktHeadIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.head']
-    datasource: TzktDatasourceConfig
+    datasource: TezosTzktDatasourceConfig
     callback: str
 
     @property
@@ -55,4 +55,4 @@ class TzktHeadIndexConfig(TzktIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = HeadHandlerConfig(callback=self.callback)
+        self.handler_config = TezosTzktHeadHandlerConfig(callback=self.callback)

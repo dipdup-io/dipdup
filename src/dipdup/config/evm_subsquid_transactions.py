@@ -11,8 +11,8 @@ from dipdup.config import AbiDatasourceConfig
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import SubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
+class EvmSubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     """Subsquid transaction handler
 
     :param callback: Callback name
@@ -48,7 +48,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
             module_name = self.typed_contract.module_name
             yield f'{package}.types.{module_name}.evm_methods.{transaction_module}', transaction_cls
         else:
-            yield 'dipdup.models.evm_subsquid', 'SubsquidTransactionData'
+            yield 'dipdup.models.evm_subsquid', 'EvmSubsquidTransactionData'
             yield 'dipdup.models.evm_node', 'EvmNodeTransactionData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -58,7 +58,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
             transaction_cls = snake_to_pascal(self.method)
             yield 'transaction', f'SubsquidTransaction[{transaction_cls}]'
         else:
-            yield 'transaction', 'SubsquidTransactionData | EvmNodeTransactionData'
+            yield 'transaction', 'EvmSubsquidTransactionData | EvmNodeTransactionData'
 
     @property
     def typed_contract(self) -> EvmContractConfig | None:
@@ -68,7 +68,7 @@ class SubsquidTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
+class EvmSubsquidTransactionsIndexConfig(EvmSubsquidIndexConfig):
     """Index that uses Subsquid Network as a datasource for transactions
 
     :param kind: always 'evm.subsquid.transactions'
@@ -82,8 +82,8 @@ class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
 
     kind: Literal['evm.subsquid.transactions']
 
-    datasource: SubsquidDatasourceConfig
-    handlers: tuple[SubsquidTransactionsHandlerConfig, ...] = field(default_factory=tuple)
+    datasource: EvmSubsquidDatasourceConfig
+    handlers: tuple[EvmSubsquidTransactionsHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
 

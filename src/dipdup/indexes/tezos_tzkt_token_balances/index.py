@@ -1,21 +1,21 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesHandlerConfig
-from dipdup.config.tezos_tzkt_token_balances import TzktTokenBalancesIndexConfig
+from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesHandlerConfig
+from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesIndexConfig
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.indexes.tezos_tzkt import TzktIndex
+from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_token_balances.matcher import match_token_balances
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktTokenBalanceData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktTokenBalanceData
 
-QueueItem = tuple[TzktTokenBalanceData, ...] | RollbackMessage
+QueueItem = tuple[TezosTzktTokenBalanceData, ...] | RollbackMessage
 
 
-class TzktTokenBalancesIndex(
-    TzktIndex[TzktTokenBalancesIndexConfig, QueueItem],
-    message_type=TzktMessageType.token_balance,
+class TezosTzktTokenBalancesIndex(
+    TezosTzktIndex[TezosTzktTokenBalancesIndexConfig, QueueItem],
+    message_type=TezosTzktMessageType.token_balance,
 ):
     async def _synchronize(self, sync_level: int) -> None:
         await self._enter_sync_state(sync_level)
@@ -45,7 +45,7 @@ class TzktTokenBalancesIndex(
             await self._update_state(level=head_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktTokenBalancesHandlerConfig, token_balance: TzktTokenBalanceData
+        self, handler_config: TezosTzktTokenBalancesHandlerConfig, token_balance: TezosTzktTokenBalanceData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

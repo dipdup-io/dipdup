@@ -40,19 +40,19 @@ from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.tezos_tzkt import TzktDatasource
+from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.indexes.evm_subsquid_events.index import SubsquidEventsIndex
-from dipdup.indexes.evm_subsquid_transactions.index import SubsquidTransactionsIndex
-from dipdup.indexes.tezos_tzkt_big_maps.index import TzktBigMapsIndex
-from dipdup.indexes.tezos_tzkt_events.index import TzktEventsIndex
-from dipdup.indexes.tezos_tzkt_head.index import TzktHeadIndex
-from dipdup.indexes.tezos_tzkt_operations.index import TzktOperationsIndex
+from dipdup.indexes.evm_subsquid_events.index import EvmSubsquidEventsIndex
+from dipdup.indexes.evm_subsquid_transactions.index import EvmSubsquidTransactionsIndex
+from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
+from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
+from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
+from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
 from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
-from dipdup.indexes.tezos_tzkt_token_transfers.index import TzktTokenTransfersIndex
+from dipdup.indexes.tezos_tzkt_token_transfers.index import TezosTzktTokenTransfersIndex
 from dipdup.models import Contract
 from dipdup.models import ContractKind
 from dipdup.models import Head
@@ -67,11 +67,11 @@ from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.tezos_tzkt import TzktBigMapData
-from dipdup.models.tezos_tzkt import TzktEventData
-from dipdup.models.tezos_tzkt import TzktHeadBlockData
-from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktTokenTransferData
+from dipdup.models.tezos_tzkt import TezosTzktBigMapData
+from dipdup.models.tezos_tzkt import TezosTzktEventData
+from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
+from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
 from dipdup.performance import metrics
@@ -122,7 +122,7 @@ class IndexDispatcher:
         on_realtime_fired = False
 
         for index in self._indexes.values():
-            if isinstance(index, TzktOperationsIndex):
+            if isinstance(index, TezosTzktOperationsIndex):
                 await self._apply_filters(index)
 
         while True:
@@ -152,7 +152,7 @@ class IndexDispatcher:
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
-                if isinstance(index, TzktOperationsIndex):
+                if isinstance(index, TezosTzktOperationsIndex):
                     await self._apply_filters(index)
 
             if not indexes_spawned and self.is_oneshot():
@@ -181,7 +181,7 @@ class IndexDispatcher:
             await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
 
     def is_oneshot(self) -> bool:
-        from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+        from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
 
         # NOTE: Empty config means indexes will be spawned later via API.
         if not self._indexes:
@@ -192,7 +192,7 @@ class IndexDispatcher:
 
         # NOTE: Run forever if at least one index has no upper bound.
         for index in self._indexes.values():
-            if isinstance(index._config, TzktHeadIndexConfig):
+            if isinstance(index._config, TezosTzktHeadIndexConfig):
                 return False
             if not index._config.last_level:
                 return False
@@ -290,7 +290,7 @@ class IndexDispatcher:
                 current_speed,
             )
 
-    async def _apply_filters(self, index: TzktOperationsIndex) -> None:
+    async def _apply_filters(self, index: TezosTzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
@@ -389,7 +389,7 @@ class IndexDispatcher:
             if isinstance(datasource, IndexDatasource):
                 datasource.call_on_rollback(self._on_rollback)
 
-            if isinstance(datasource, TzktDatasource):
+            if isinstance(datasource, TezosTzktDatasource):
                 datasource.call_on_head(self._on_tzkt_head)
                 datasource.call_on_operations(self._on_tzkt_operations)
                 datasource.call_on_token_transfers(self._on_tzkt_token_transfers)
@@ -402,7 +402,7 @@ class IndexDispatcher:
                 datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
-    async def _on_tzkt_head(self, datasource: TzktDatasource, head: TzktHeadBlockData) -> None:
+    async def _on_tzkt_head(self, datasource: TezosTzktDatasource, head: TezosTzktHeadBlockData) -> None:
         # NOTE: Do not await query results, it may block Websocket loop. We do not use Head anyway.
         fire_and_forget(
             Head.update_or_create(
@@ -416,7 +416,7 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, TzktHeadIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktHeadIndex) and index.datasource == datasource:
                 index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
@@ -439,7 +439,7 @@ class IndexDispatcher:
         logs: tuple[EvmNodeLogData, ...],
     ) -> None:
         for index in self._indexes.values():
-            if not isinstance(index, SubsquidEventsIndex):
+            if not isinstance(index, EvmSubsquidEventsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue
@@ -458,7 +458,7 @@ class IndexDispatcher:
         transactions: tuple[EvmNodeTransactionData, ...],
     ) -> None:
         for index in self._indexes.values():
-            if not isinstance(index, SubsquidTransactionsIndex):
+            if not isinstance(index, EvmSubsquidTransactionsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue
@@ -467,7 +467,9 @@ class IndexDispatcher:
     async def _on_evm_node_syncing(self, datasource: EvmNodeDatasource, syncing: EvmNodeSyncingData) -> None:
         raise NotImplementedError
 
-    async def _on_tzkt_operations(self, datasource: TzktDatasource, operations: tuple[TzktOperationData, ...]) -> None:
+    async def _on_tzkt_operations(
+        self, datasource: TezosTzktDatasource, operations: tuple[TezosTzktOperationData, ...]
+    ) -> None:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
@@ -481,24 +483,26 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, TzktOperationsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktOperationsIndex) and index.datasource == datasource:
                 index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
-        self, datasource: TzktDatasource, token_transfers: tuple[TzktTokenTransferData, ...]
+        self, datasource: TezosTzktDatasource, token_transfers: tuple[TezosTzktTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TzktTokenTransfersIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktTokenTransfersIndex) and index.datasource == datasource:
                 index.push_realtime_message(token_transfers)
 
-    async def _on_tzkt_big_maps(self, datasource: TzktDatasource, big_maps: tuple[TzktBigMapData, ...]) -> None:
+    async def _on_tzkt_big_maps(
+        self, datasource: TezosTzktDatasource, big_maps: tuple[TezosTzktBigMapData, ...]
+    ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TzktBigMapsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktBigMapsIndex) and index.datasource == datasource:
                 index.push_realtime_message(big_maps)
 
-    async def _on_tzkt_events(self, datasource: TzktDatasource, events: tuple[TzktEventData, ...]) -> None:
+    async def _on_tzkt_events(self, datasource: TezosTzktDatasource, events: tuple[TezosTzktEventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TzktEventsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTzktEventsIndex) and index.datasource == datasource:
                 index.push_realtime_message(events)
 
     async def _on_rollback(
@@ -585,8 +589,8 @@ class DipDup:
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
-        from dipdup.codegen.evm_subsquid import SubsquidCodeGenerator
-        from dipdup.codegen.tezos_tzkt import TzktCodeGenerator
+        from dipdup.codegen.evm_subsquid import EvmSubsquidCodeGenerator
+        from dipdup.codegen.tezos_tzkt import TezosTzktCodeGenerator
 
         await self._create_datasources()
 
@@ -597,8 +601,8 @@ class DipDup:
             package = DipDupPackage(self._config.package_path)
 
             codegen_classes: tuple[type[CodeGenerator], ...] = (
-                TzktCodeGenerator,
-                SubsquidCodeGenerator,
+                TezosTzktCodeGenerator,
+                EvmSubsquidCodeGenerator,
             )
             for codegen_cls in codegen_classes:
                 codegen = codegen_cls(
@@ -809,7 +813,7 @@ class DipDup:
             if not isinstance(datasource, IndexDatasource):
                 continue
             await datasource.initialize()
-            if isinstance(datasource, TzktDatasource):
+            if isinstance(datasource, TezosTzktDatasource):
                 init_tzkt = True
 
         if init_tzkt:

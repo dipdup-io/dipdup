@@ -102,31 +102,31 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
 
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
-    from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
+    from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
     from dipdup.config.coinbase import CoinbaseDatasourceConfig
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
-    from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+    from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
-    from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+    from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
-    from dipdup.datasources.abi_etherscan import EtherscanDatasource
+    from dipdup.datasources.abi_etherscan import AbiEtherscanDatasource
     from dipdup.datasources.coinbase import CoinbaseDatasource
     from dipdup.datasources.evm_node import EvmNodeDatasource
-    from dipdup.datasources.evm_subsquid import SubsquidDatasource
+    from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
-    from dipdup.datasources.tezos_tzkt import TzktDatasource
+    from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
     from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 
     by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
-        EtherscanDatasourceConfig: EtherscanDatasource,
+        AbiEtherscanDatasourceConfig: AbiEtherscanDatasource,
         CoinbaseDatasourceConfig: CoinbaseDatasource,
-        TzktDatasourceConfig: TzktDatasource,
+        TezosTzktDatasourceConfig: TezosTzktDatasource,
         TzipMetadataDatasourceConfig: TzipMetadataDatasource,
         HttpDatasourceConfig: HttpDatasource,
         IpfsDatasourceConfig: IpfsDatasource,
-        SubsquidDatasourceConfig: SubsquidDatasource,
+        EvmSubsquidDatasourceConfig: EvmSubsquidDatasource,
         EvmNodeDatasourceConfig: EvmNodeDatasource,
     }
 

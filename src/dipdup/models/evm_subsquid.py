@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any
 from typing import Generic
 from typing import NotRequired
@@ -9,7 +8,6 @@ from pydantic.dataclasses import dataclass
 from typing_extensions import TypedDict
 
 from dipdup.fetcher import HasLevel
-from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeTransactionData
 
@@ -187,15 +185,8 @@ class Query(TypedDict):
     type: NotRequired[str]
 
 
-class SubsquidMessageType(MessageType, Enum):
-    blocks = 'blocks'
-    logs = 'logs'
-    traces = 'traces'
-    transactions = 'transactions'
-
-
 @dataclass(frozen=True)
-class SubsquidEventData(HasLevel):
+class EvmSubsquidEventData(HasLevel):
     address: str
     block_hash: str
     data: str
@@ -211,8 +202,8 @@ class SubsquidEventData(HasLevel):
         cls,
         event_json: dict[str, Any],
         header: dict[str, Any],
-    ) -> 'SubsquidEventData':
-        return SubsquidEventData(
+    ) -> 'EvmSubsquidEventData':
+        return EvmSubsquidEventData(
             address=event_json['address'],
             block_hash=header['hash'],
             data=event_json['data'],
@@ -226,11 +217,11 @@ class SubsquidEventData(HasLevel):
 
 
 @dataclass(frozen=True)
-class SubsquidTraceData(HasLevel): ...
+class EvmSubsquidTraceData(HasLevel): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransactionData(HasLevel):
+class EvmSubsquidTransactionData(HasLevel):
     block_hash: str
     chain_id: int | None
     contract_address: str | None
@@ -263,7 +254,7 @@ class SubsquidTransactionData(HasLevel):
         cls,
         transaction_json: dict[str, Any],
         header: dict[str, Any],
-    ) -> 'SubsquidTransactionData':
+    ) -> 'EvmSubsquidTransactionData':
         cumulative_gas_used = (
             int(transaction_json['cumulativeGasUsed'], 16) if transaction_json['cumulativeGasUsed'] else None
         )
@@ -276,7 +267,7 @@ class SubsquidTransactionData(HasLevel):
         )
         v = int(transaction_json['v'], 16) if transaction_json['v'] else None
         y_parity = bool(int(transaction_json['yParity'], 16)) if transaction_json['yParity'] else None
-        return SubsquidTransactionData(
+        return EvmSubsquidTransactionData(
             block_hash=header['hash'],
             chain_id=transaction_json['chainId'],
             contract_address=transaction_json['contractAddress'],
@@ -307,16 +298,16 @@ class SubsquidTransactionData(HasLevel):
 
 
 @dataclass(frozen=True)
-class SubsquidEvent(Generic[PayloadT]):
-    data: SubsquidEventData | EvmNodeLogData
+class EvmSubsquidEvent(Generic[PayloadT]):
+    data: EvmSubsquidEventData | EvmNodeLogData
     payload: PayloadT
 
 
 @dataclass(frozen=True)
-class SubsquidTrace(Generic[PayloadT]): ...
+class EvmSubsquidTrace(Generic[PayloadT]): ...
 
 
 @dataclass(frozen=True)
-class SubsquidTransaction(Generic[InputT]):
-    data: SubsquidTransactionData | EvmNodeTransactionData
+class EvmSubsquidTransaction(Generic[InputT]):
+    data: EvmSubsquidTransactionData | EvmNodeTransactionData
     input: InputT

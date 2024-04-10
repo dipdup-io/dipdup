@@ -10,7 +10,7 @@ DEFAULT_ETHERSCAN_URL = 'https://api.etherscan.io/api'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EtherscanDatasourceConfig(AbiDatasourceConfig):
+class AbiEtherscanDatasourceConfig(AbiDatasourceConfig):
     """Etherscan datasource config
 
     :param kind: always 'abi.etherscan'

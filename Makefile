@@ -23,7 +23,7 @@ lint:           ## Lint with all tools
 	make ruff mypy
 
 test:           ## Run tests
-	pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
+	COVERAGE_CORE=sysmon pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
 ##
 

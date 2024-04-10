@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic.dataclasses import dataclass
 
 
-class CandleInterval(Enum):
+class CoinbaseCandleInterval(Enum):
     ONE_MINUTE = 'ONE_MINUTE'
     FIVE_MINUTES = 'FIVE_MINUTES'
     FIFTEEN_MINUTES = 'FIFTEEN_MINUTES'
@@ -17,17 +17,17 @@ class CandleInterval(Enum):
     @property
     def seconds(self) -> int:
         return {
-            CandleInterval.ONE_MINUTE: 60,
-            CandleInterval.FIVE_MINUTES: 300,
-            CandleInterval.FIFTEEN_MINUTES: 900,
-            CandleInterval.ONE_HOUR: 3600,
-            CandleInterval.SIX_HOURS: 21600,
-            CandleInterval.ONE_DAY: 86400,
+            CoinbaseCandleInterval.ONE_MINUTE: 60,
+            CoinbaseCandleInterval.FIVE_MINUTES: 300,
+            CoinbaseCandleInterval.FIFTEEN_MINUTES: 900,
+            CoinbaseCandleInterval.ONE_HOUR: 3600,
+            CoinbaseCandleInterval.SIX_HOURS: 21600,
+            CoinbaseCandleInterval.ONE_DAY: 86400,
         }[self]
 
 
 @dataclass
-class CandleData:
+class CoinbaseCandleData:
     timestamp: datetime
     low: Decimal
     high: Decimal
@@ -36,8 +36,8 @@ class CandleData:
     volume: Decimal
 
     @classmethod
-    def from_json(cls, json: list[int | float]) -> 'CandleData':
-        return CandleData(
+    def from_json(cls, json: list[int | float]) -> 'CoinbaseCandleData':
+        return CoinbaseCandleData(
             timestamp=datetime.fromtimestamp(json[0], tz=UTC),
             low=Decimal(str(json[1])),
             high=Decimal(str(json[2])),

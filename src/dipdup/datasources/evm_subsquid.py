@@ -11,17 +11,17 @@ from typing import cast
 import pyarrow.ipc  # type: ignore[import-untyped]
 
 from dipdup.config import HttpConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
+from dipdup.models.evm_subsquid import EvmSubsquidEventData
+from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
-from dipdup.models.evm_subsquid import SubsquidEventData
-from dipdup.models.evm_subsquid import SubsquidTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
 LOG_FIELDS: FieldSelection = {
@@ -80,7 +80,7 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
-class _SubsquidWorker(Datasource[Any]):
+class _EvmSubsquidWorker(Datasource[Any]):
     async def run(self) -> None:
         raise FrameworkException('Subsquid worker datasource should not be run')
 
@@ -94,12 +94,12 @@ class _SubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
+class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )
 
-    def __init__(self, config: SubsquidDatasourceConfig) -> None:
+    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
         super().__init__(config, False)
 
     async def run(self) -> None:
@@ -141,7 +141,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         topics: tuple[tuple[str | None, str], ...],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+    ) -> AsyncIterator[tuple[EvmSubsquidEventData, ...]]:
         current_level = first_level
 
         # TODO: Smarter query optimizator
@@ -167,10 +167,10 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
-                logs: deque[SubsquidEventData] = deque()
+                logs: deque[EvmSubsquidEventData] = deque()
                 for raw_log in level_item['logs']:
                     logs.append(
-                        SubsquidEventData.from_json(
+                        EvmSubsquidEventData.from_json(
                             event_json=raw_log,
                             header=level_item['header'],
                         ),
@@ -182,7 +182,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
-    ) -> AsyncIterator[tuple[SubsquidTransactionData, ...]]:
+    ) -> AsyncIterator[tuple[EvmSubsquidTransactionData, ...]]:
         current_level = first_level
 
         while current_level <= last_level:
@@ -196,9 +196,9 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
-                transactions: deque[SubsquidTransactionData] = deque()
+                transactions: deque[EvmSubsquidTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
-                    transaction = SubsquidTransactionData.from_json(
+                    transaction = EvmSubsquidTransactionData.from_json(
                         transaction_json=raw_transaction,
                         header=level_item['header'],
                     )
@@ -220,7 +220,7 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         response = await self.request('get', 'height')
         return int(response)
 
-    async def _get_worker(self, level: int) -> _SubsquidWorker:
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
         worker_url = (
             await self._http.request(
                 'get',
@@ -236,4 +236,4 @@ class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
         # NOTE: Fail immediately; retries are handled one level up
         worker_config.http.retry_count = 0
 
-        return _SubsquidWorker(worker_config)
+        return _EvmSubsquidWorker(worker_config)

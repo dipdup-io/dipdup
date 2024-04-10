@@ -1,4 +1,4 @@
-spec_version: 2.0
+spec_version: 2.1
 replay:
   description: Example of spawning indexes in runtime
   package: demo_factories

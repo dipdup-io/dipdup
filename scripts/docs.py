@@ -96,6 +96,13 @@ REFERENCES: tuple[ReferencePage, ...] = (
         md_path='docs/7.references/3.context.md',
         html_path='context.html',
     ),
+    ReferencePage(
+        title='Models',
+        description='Models reference',
+        h1='Models reference',
+        md_path='docs/7.references/4.models.md',
+        html_path='models.html',
+    ),
 )
 
 
@@ -115,7 +122,55 @@ MD_LINK_REGEX = r'\[.*\]\(([0-9a-zA-Z\.\-\_\/\#\:\/\=\?]*)\)'
 MD_HEADING_REGEX = r'\#\#* [\w ]*'
 
 # class AbiDatasourceConfig(DatasourceConfig):
-CONFIG_CLASS_REGEX = r'class (.*Config)[:\(].*'
+CLASS_REGEX = r'class (\w*)[\(:]'
+
+IGNORED_CONFIG_CLASSES = {
+    'dipdup.config.CallbackMixin',
+    'dipdup.config.CodegenMixin',
+    'dipdup.config.Config',
+    'dipdup.config.evm_subsquid_traces.EvmSubsquidTracesHandlerConfig',
+    'dipdup.config.evm_subsquid_traces.EvmSubsquidTracesIndexConfig',
+    'dipdup.config.NameMixin',
+    'dipdup.config.ParentMixin',
+    'dipdup.config.tezos_tzkt_operations.SubgroupIndexMixin',
+}
+IGNORED_MODEL_CLASSES = {
+    'dipdup.models.BulkCreateQuery',
+    'dipdup.models.BulkUpdateQuery',
+    'dipdup.models.DeleteQuery',
+    'dipdup.models.evm_node.EvmNodeHeadSubscription',
+    'dipdup.models.evm_node.EvmNodeLogsSubscription',
+    'dipdup.models.evm_node.EvmNodeSubscription',
+    'dipdup.models.evm_node.EvmNodeSyncingSubscription',
+    'dipdup.models.evm_node.EvmNodeTraceData',
+    'dipdup.models.evm_subsquid.BlockFieldSelection',
+    'dipdup.models.evm_subsquid.EvmSubsquidTrace',
+    'dipdup.models.evm_subsquid.EvmSubsquidTraceData',
+    'dipdup.models.evm_subsquid.FieldSelection',
+    'dipdup.models.evm_subsquid.LogFieldSelection',
+    'dipdup.models.evm_subsquid.LogRequest',
+    'dipdup.models.evm_subsquid.Query',
+    'dipdup.models.evm_subsquid.StateDiffFieldSelection',
+    'dipdup.models.evm_subsquid.StateDiffRequest',
+    'dipdup.models.evm_subsquid.TraceFieldSelection',
+    'dipdup.models.evm_subsquid.TraceRequest',
+    'dipdup.models.MessageType',
+    'dipdup.models.QuerySet',
+    'dipdup.models.RollbackMessage',
+    'dipdup.models.subsquid.SubsquidMessageType',
+    'dipdup.models.tezos_tzkt.BigMapSubscription',
+    'dipdup.models.tezos_tzkt.EventSubscription',
+    'dipdup.models.tezos_tzkt.HeadSubscription',
+    'dipdup.models.tezos_tzkt.OriginationSubscription',
+    'dipdup.models.tezos_tzkt.SmartRollupExecuteSubscription',
+    'dipdup.models.tezos_tzkt.TezosTzktMessageType',
+    'dipdup.models.tezos_tzkt.TezosTzktSubscription',
+    'dipdup.models.tezos_tzkt.TokenBalanceSubscription',
+    'dipdup.models.tezos_tzkt.TokenTransferSubscription',
+    'dipdup.models.tezos_tzkt.TransactionSubscription',
+    'dipdup.models.UpdateQuery',
+    'dipdup.models.VersionedTransaction',
+}
 
 TEXT_EXTENSIONS = (
     '.md',
@@ -422,20 +477,47 @@ def dump_jsonschema() -> None:
 @main.command('dump-references', help='Dump Sphinx references to ugly Markdown files')
 def dump_references() -> None:
     green_echo('=> Dumping Sphinx references')
-    config_rst = Path('docs/config.rst').read_text().splitlines()
-    classes_in_rst = {line.split('.')[-1] for line in config_rst if line.startswith('.. autoclass::')}
-    classes_in_config = set()
-    for file in Path('src/dipdup/config').glob('*.py'):
-        for match in re.finditer(CONFIG_CLASS_REGEX, file.read_text()):
-            classes_in_config.add(match.group(1))
 
     green_echo('=> Verifying that config reference is up to date')
-    diff = classes_in_config - classes_in_rst
-    # FIXME: Traces not implemented yet
-    diff -= {'Config', 'SubsquidTracesIndexConfig', 'SubsquidTracesHandlerConfig'}
+    config_rst = Path('docs/config.rst').read_text().splitlines()
+    classes_in_rst = {line.split(' ')[2] for line in config_rst if line.startswith('.. autoclass::')}
+    classes_in_package = set()
+    for file in Path('src/dipdup/config').glob('*.py'):
+        for match in re.finditer(CLASS_REGEX, file.read_text()):
+            package_path = file.relative_to('src/dipdup/config')
+            if package_path == Path('__init__.py'):
+                package_path = package_path.parent
+            if package_path == Path():
+                package_path_str = ''
+            else:
+                package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
+            classes_in_package.add(f'dipdup.config{package_path_str}.{match.group(1)}')
+
+    diff = (classes_in_package ^ classes_in_rst) - IGNORED_CONFIG_CLASSES
     if diff:
         red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
-        red_echo(f'=> Missing classes: {diff}')
+        red_echo(f'=> Add or remove classes: {diff}')
+        exit(1)
+
+    green_echo('=> Verifying that models reference is up to date')
+    models_rst = Path('docs/models.rst').read_text().splitlines()
+    classes_in_rst = {line.split(' ')[2] for line in models_rst if line.startswith('.. autoclass::')}
+    classes_in_package = set()
+    for file in Path('src/dipdup/models').glob('*.py'):
+        for match in re.finditer(CLASS_REGEX, file.read_text()):
+            package_path = file.relative_to('src/dipdup/models')
+            if package_path == Path('__init__.py'):
+                package_path = package_path.parent
+            if package_path == Path():
+                package_path_str = ''
+            else:
+                package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
+            classes_in_package.add(f'dipdup.models{package_path_str}.{match.group(1)}')
+
+    diff = (classes_in_package ^ classes_in_rst) - IGNORED_MODEL_CLASSES
+    if diff:
+        red_echo('=> Models reference is outdated! Update `docs/models.rst` and try again.')
+        red_echo(f'=> Add or remove classes: {diff}')
         exit(1)
 
     green_echo('=> Building Sphinx docs')

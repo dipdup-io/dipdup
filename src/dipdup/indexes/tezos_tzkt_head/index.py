@@ -1,22 +1,22 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_head import HeadHandlerConfig
-from dipdup.config.tezos_tzkt_head import TzktHeadIndexConfig
+from dipdup.config.tezos_tzkt_head import TezosTzktHeadHandlerConfig
+from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.tezos_tzkt import TzktIndex
+from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TzktHeadBlockData
-from dipdup.models.tezos_tzkt import TzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
-HeadQueueItem = TzktHeadBlockData | RollbackMessage
+HeadQueueItem = TezosTzktHeadBlockData | RollbackMessage
 
 
-class TzktHeadIndex(
-    TzktIndex[TzktHeadIndexConfig, HeadQueueItem],
-    message_type=TzktMessageType.head,
+class TezosTzktHeadIndex(
+    TezosTzktIndex[TezosTzktHeadIndexConfig, HeadQueueItem],
+    message_type=TezosTzktMessageType.head,
 ):
     async def _synchronize(self, sync_level: int) -> None:
         self._logger.info('Setting index level to %s and moving on', sync_level)
@@ -47,7 +47,9 @@ class TzktHeadIndex(
                 await self._call_matched_handler(self._config.handler_config, message)
                 await self._update_state(level=batch_level)
 
-    async def _call_matched_handler(self, handler_config: HeadHandlerConfig, level_data: TzktHeadBlockData) -> None:
+    async def _call_matched_handler(
+        self, handler_config: TezosTzktHeadHandlerConfig, level_data: TezosTzktHeadBlockData
+    ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException
 

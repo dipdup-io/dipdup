@@ -9,21 +9,25 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.codegen.tezos_tzkt import get_parameter_type
 from dipdup.codegen.tezos_tzkt import get_storage_type
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
 from dipdup.config.tezos_tzkt_operations import (
-    OperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+    TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import OperationsHandlerTransactionPatternConfig as TransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TzktOperationsHandlerConfigU
-from dipdup.config.tezos_tzkt_operations import TzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt_operations import (
+    TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
+)
+from dipdup.config.tezos_tzkt_operations import (
+    TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
+)
+from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
-from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktOperationType
-from dipdup.models.tezos_tzkt import TzktOrigination
-from dipdup.models.tezos_tzkt import TzktSmartRollupExecute
-from dipdup.models.tezos_tzkt import TzktTransaction
+from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktOperationType
+from dipdup.models.tezos_tzkt import TezosTzktOrigination
+from dipdup.models.tezos_tzkt import TezosTzktSmartRollupExecute
+from dipdup.models.tezos_tzkt import TezosTzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
@@ -39,22 +43,28 @@ class OperationSubgroup:
 
     hash: str
     counter: int
-    operations: tuple[TzktOperationData, ...]
+    operations: tuple[TezosTzktOperationData, ...]
 
 
-OperationsHandlerArgumentU = (
-    TzktTransaction[Any, Any] | TzktOrigination[Any] | TzktSmartRollupExecute | TzktOperationData | None
+TezosTzktOperationsHandlerArgumentU = (
+    TezosTzktTransaction[Any, Any]
+    | TezosTzktOrigination[Any]
+    | TezosTzktSmartRollupExecute
+    | TezosTzktOperationData
+    | None
 )
-MatchedOperationsT = tuple[OperationSubgroup, TzktOperationsHandlerConfigU, deque[OperationsHandlerArgumentU]]
+MatchedOperationsT = tuple[
+    OperationSubgroup, TezosTzktOperationsHandlerConfigU, deque[TezosTzktOperationsHandlerArgumentU]
+]
 
 
 def prepare_operation_handler_args(
     package: DipDupPackage,
-    handler_config: TzktOperationsHandlerConfig,
-    matched_operations: deque[TzktOperationData | None],
-) -> deque[OperationsHandlerArgumentU]:
+    handler_config: TezosTzktOperationsHandlerConfig,
+    matched_operations: deque[TezosTzktOperationData | None],
+) -> deque[TezosTzktOperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
-    args: deque[OperationsHandlerArgumentU] = deque()
+    args: deque[TezosTzktOperationsHandlerArgumentU] = deque()
     # NOTE: There can be more pattern items than matched operations; some of them are optional.
     for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=False):
         if operation_data is None:
@@ -72,7 +82,7 @@ def prepare_operation_handler_args(
             storage_type = get_storage_type(package, typename)
             operation_data, storage = deserialize_storage(operation_data, storage_type)
 
-            typed_transaction: TzktTransaction[Any, Any] = TzktTransaction(
+            typed_transaction: TezosTzktTransaction[Any, Any] = TezosTzktTransaction(
                 data=operation_data,
                 parameter=parameter,
                 storage=storage,
@@ -88,14 +98,14 @@ def prepare_operation_handler_args(
             storage_type = get_storage_type(package, typename)
             operation_data, storage = deserialize_storage(operation_data, storage_type)
 
-            typed_origination = TzktOrigination(
+            typed_origination = TezosTzktOrigination(
                 data=operation_data,
                 storage=storage,
             )
             args.append(typed_origination)
 
         elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
-            sr_execute: TzktSmartRollupExecute = TzktSmartRollupExecute.create(operation_data)
+            sr_execute: TezosTzktSmartRollupExecute = TezosTzktSmartRollupExecute.create(operation_data)
             args.append(sr_execute)
 
         else:
@@ -106,7 +116,7 @@ def prepare_operation_handler_args(
 
 def match_transaction(
     pattern_config: TransactionPatternConfig,
-    operation: TzktOperationData,
+    operation: TezosTzktOperationData,
 ) -> bool:
     """Match a single transaction with pattern"""
     if entrypoint := pattern_config.entrypoint:
@@ -128,7 +138,7 @@ def match_transaction(
 
 def match_origination(
     pattern_config: OriginationPatternConfig,
-    operation: TzktOperationData,
+    operation: TezosTzktOperationData,
 ) -> bool:
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
@@ -147,7 +157,7 @@ def match_origination(
 
 def match_sr_execute(
     pattern_config: SmartRollupExecutePatternConfig,
-    operation: TzktOperationData,
+    operation: TezosTzktOperationData,
 ) -> bool:
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
@@ -160,13 +170,13 @@ def match_sr_execute(
 
 
 def match_operation_unfiltered_subgroup(
-    index: TzktOperationsUnfilteredIndexConfig,
+    index: TezosTzktOperationsUnfilteredIndexConfig,
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
     matched_handlers: deque[MatchedOperationsT] = deque()
 
     for operation in operation_subgroup.operations:
-        if TzktOperationType[operation.type] in index.types:
+        if TezosTzktOperationType[operation.type] in index.types:
             matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
 
     return matched_handlers
@@ -174,7 +184,7 @@ def match_operation_unfiltered_subgroup(
 
 def match_operation_subgroup(
     package: DipDupPackage,
-    handlers: Iterable[TzktOperationsHandlerConfig],
+    handlers: Iterable[TezosTzktOperationsHandlerConfig],
     operation_subgroup: OperationSubgroup,
     alt: bool = False,
 ) -> deque[MatchedOperationsT]:
@@ -185,7 +195,7 @@ def match_operation_subgroup(
     for handler_config in handlers:
         subgroup_index = 0
         pattern_index = 0
-        matched_operations: deque[TzktOperationData | None] = deque()
+        matched_operations: deque[TezosTzktOperationData | None] = deque()
 
         # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
         while subgroup_index < len(operations):
@@ -238,13 +248,13 @@ def match_operation_subgroup(
     id_list = []
     for handler in matched_handlers:
         last_operation = handler[2][-1]
-        if isinstance(last_operation, TzktOperationData):
+        if isinstance(last_operation, TezosTzktOperationData):
             id_list.append(last_operation.id)
-        elif isinstance(last_operation, TzktOrigination):
+        elif isinstance(last_operation, TezosTzktOrigination):
             id_list.append(last_operation.data.id)
-        elif isinstance(last_operation, TzktTransaction):
+        elif isinstance(last_operation, TezosTzktTransaction):
             id_list.append(last_operation.data.id)
-        elif isinstance(last_operation, TzktSmartRollupExecute):
+        elif isinstance(last_operation, TezosTzktSmartRollupExecute):
             id_list.append(last_operation.data.id)
         else:
             raise FrameworkException('Type of the first handler argument is unknown')

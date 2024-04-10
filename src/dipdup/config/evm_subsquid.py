@@ -16,7 +16,7 @@ from dipdup.exceptions import ConfigurationError
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidDatasourceConfig(IndexDatasourceConfig):
+class EvmSubsquidDatasourceConfig(IndexDatasourceConfig):
     """Subsquid datasource config
 
     :param kind: always 'evm.subsquid'
@@ -53,11 +53,11 @@ class SubsquidDatasourceConfig(IndexDatasourceConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidIndexConfig(IndexConfig, ABC):
+class EvmSubsquidIndexConfig(IndexConfig, ABC):
     """EVM index that use Subsquid Network as a datasource
 
     :param kind: starts with 'evm.subsquid'
     :param datasource: Subsquid datasource config
     """
 
-    datasource: SubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig

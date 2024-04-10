@@ -1,7 +1,7 @@
 # To refresh existing project run `dipdup init --base --force` after modifying this file.
 # To generate a new project from this replay run `dipdup new --replay <path_to_file>`.
 #
-spec_version: 2.0
+spec_version: 2.1
 replay:
   dipdup_version: 7
   template: demo_raw

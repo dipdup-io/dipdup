@@ -32,7 +32,7 @@ from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import SubsquidMessageType
+from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message

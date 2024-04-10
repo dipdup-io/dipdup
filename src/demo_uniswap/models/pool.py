@@ -1,5 +1,5 @@
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import SubsquidEvent
+from dipdup.models.evm_subsquid import EvmSubsquidEvent
 
 from demo_uniswap import models
 from demo_uniswap.models.repo import get_ctx_factory
@@ -18,7 +18,7 @@ class PoolUpdateSign:
 async def pool_update(
     ctx: HandlerContext,
     pool: models.Pool,
-    event: SubsquidEvent[Burn] | SubsquidEvent[Mint],
+    event: EvmSubsquidEvent[Burn] | EvmSubsquidEvent[Mint],
     sign: int,
 ) -> None:
     factory = await get_ctx_factory(ctx)

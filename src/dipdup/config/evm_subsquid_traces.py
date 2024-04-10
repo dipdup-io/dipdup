@@ -10,15 +10,15 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import SubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidTracesHandlerConfig(HandlerConfig, ABC):
+class EvmSubsquidTracesHandlerConfig(HandlerConfig, ABC):
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         raise NotImplementedError
 
@@ -27,11 +27,11 @@ class SubsquidTracesHandlerConfig(HandlerConfig, ABC):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidTracesIndexConfig(SubsquidIndexConfig):
+class EvmSubsquidTracesIndexConfig(EvmSubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 
-    datasource: SubsquidDatasourceConfig
-    handlers: tuple[SubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)
+    datasource: EvmSubsquidDatasourceConfig
+    handlers: tuple[EvmSubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
 

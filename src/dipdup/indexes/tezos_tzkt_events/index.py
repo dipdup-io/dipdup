@@ -1,26 +1,26 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfig
-from dipdup.config.tezos_tzkt_events import TzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import TzktEventsIndexConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.tezos_tzkt import TzktIndex
+from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_tzkt_events.matcher import match_events
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TzktEvent
-from dipdup.models.tezos_tzkt import TzktEventData
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktUnknownEvent
+from dipdup.models.tezos_tzkt import TezosTzktEvent
+from dipdup.models.tezos_tzkt import TezosTzktEventData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktUnknownEvent
 
-QueueItem = tuple[TzktEventData, ...] | RollbackMessage
+QueueItem = tuple[TezosTzktEventData, ...] | RollbackMessage
 
 
-class TzktEventsIndex(
-    TzktIndex[TzktEventsIndexConfig, QueueItem],
-    message_type=TzktMessageType.event,
+class TezosTzktEventsIndex(
+    TezosTzktIndex[TezosTzktEventsIndexConfig, QueueItem],
+    message_type=TezosTzktMessageType.event,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
@@ -49,9 +49,9 @@ class TzktEventsIndex(
         await self._exit_sync_state(sync_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktEventsHandlerConfigU, level_data: TzktEvent[Any] | TzktUnknownEvent
+        self, handler_config: TezosTzktEventsHandlerConfigU, level_data: TezosTzktEvent[Any] | TezosTzktUnknownEvent
     ) -> None:
-        if isinstance(handler_config, TzktEventsHandlerConfig) != isinstance(level_data, TzktEvent):
+        if isinstance(handler_config, TezosTzktEventsHandlerConfig) != isinstance(level_data, TezosTzktEvent):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {level_data}')
 
         if not handler_config.parent:
@@ -76,7 +76,7 @@ class TzktEventsIndex(
         """Get tags to fetch events during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            if isinstance(handler_config, TzktEventsHandlerConfig):
+            if isinstance(handler_config, TezosTzktEventsHandlerConfig):
                 paths.add(handler_config.tag)
         return paths
 

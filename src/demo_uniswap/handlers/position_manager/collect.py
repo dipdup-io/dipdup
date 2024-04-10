@@ -3,14 +3,14 @@ from demo_uniswap.models.position import save_position_snapshot
 from demo_uniswap.models.token import convert_token_amount
 from demo_uniswap.types.position_manager.evm_events.collect import Collect
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import SubsquidEvent
+from dipdup.models.evm_subsquid import EvmSubsquidEvent
 
 BLACKLISTED_BLOCKS = {14317993}
 
 
 async def collect(
     ctx: HandlerContext,
-    event: SubsquidEvent[Collect],
+    event: EvmSubsquidEvent[Collect],
 ) -> None:
     if event.data.level in BLACKLISTED_BLOCKS:
         ctx.logger.warning('Blacklisted level %d', event.data.level)

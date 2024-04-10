@@ -10,8 +10,8 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import SubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidEventsHandlerConfig(HandlerConfig):
+class EvmSubsquidEventsHandlerConfig(HandlerConfig):
     """Subsquid event handler
 
     :param callback: Callback name
@@ -48,11 +48,11 @@ class SubsquidEventsHandlerConfig(HandlerConfig):
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         event_cls = snake_to_pascal(self.name)
         yield 'ctx', 'HandlerContext'
-        yield 'event', f'SubsquidEvent[{event_cls}]'
+        yield 'event', f'EvmSubsquidEvent[{event_cls}]'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubsquidEventsIndexConfig(SubsquidIndexConfig):
+class EvmSubsquidEventsIndexConfig(EvmSubsquidIndexConfig):
     """Subsquid datasource config
 
     :param kind: Always 'evm.subsquid.events'
@@ -65,8 +65,8 @@ class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     """
 
     kind: Literal['evm.subsquid.events']
-    datasource: SubsquidDatasourceConfig
-    handlers: tuple[SubsquidEventsHandlerConfig, ...] = Field(default_factory=tuple)
+    datasource: EvmSubsquidDatasourceConfig
+    handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = Field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
     node_only: bool = False
 

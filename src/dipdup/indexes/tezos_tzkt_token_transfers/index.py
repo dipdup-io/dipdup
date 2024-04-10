@@ -1,22 +1,22 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersHandlerConfig
-from dipdup.config.tezos_tzkt_token_transfers import TzktTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersHandlerConfig
+from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.indexes.tezos_tzkt import TzktIndex
+from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktTokenTransferData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
 
-QueueItem = tuple[TzktTokenTransferData, ...] | RollbackMessage
+QueueItem = tuple[TezosTzktTokenTransferData, ...] | RollbackMessage
 
 
-class TzktTokenTransfersIndex(
-    TzktIndex[TzktTokenTransfersIndexConfig, QueueItem],
-    message_type=TzktMessageType.token_transfer,
+class TezosTzktTokenTransfersIndex(
+    TezosTzktIndex[TezosTzktTokenTransfersIndexConfig, QueueItem],
+    message_type=TezosTzktMessageType.token_transfer,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
         token_addresses: set[str] = set()
@@ -59,7 +59,7 @@ class TzktTokenTransfersIndex(
         await self._exit_sync_state(sync_level)
 
     async def _call_matched_handler(
-        self, handler_config: TzktTokenTransfersHandlerConfig, token_transfer: TzktTokenTransferData
+        self, handler_config: TezosTzktTokenTransfersHandlerConfig, token_transfer: TezosTzktTokenTransferData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

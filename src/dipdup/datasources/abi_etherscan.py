@@ -5,12 +5,12 @@ from typing import cast
 import orjson
 
 from dipdup.config import HttpConfig
-from dipdup.config.abi_etherscan import EtherscanDatasourceConfig
+from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import DatasourceError
 
 
-class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
+class AbiEtherscanDatasource(AbiDatasource[AbiEtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=1,
         ratelimit_period=5,

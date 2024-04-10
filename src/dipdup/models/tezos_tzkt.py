@@ -30,12 +30,12 @@ def _parse_timestamp(timestamp: str) -> datetime:
     return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=UTC)
 
 
-class TzktTokenStandard(Enum):
+class TezosTzktTokenStandard(Enum):
     FA12 = 'fa1.2'
     FA2 = 'fa2'
 
 
-class TzktOperationType(Enum):
+class TezosTzktOperationType(Enum):
     """Type of blockchain operation
 
     :param transaction: transaction
@@ -50,7 +50,7 @@ class TzktOperationType(Enum):
     sr_execute = 'sr_execute'
 
 
-class TzktMessageType(MessageType, Enum):
+class TezosTzktMessageType(MessageType, Enum):
     """Enum for realtime message types"""
 
     operation = 'operation'
@@ -61,7 +61,7 @@ class TzktMessageType(MessageType, Enum):
     event = 'event'
 
 
-class TzktSubscription(Subscription):
+class TezosTzktSubscription(Subscription):
     type: str
     method: str
 
@@ -70,7 +70,7 @@ class TzktSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class HeadSubscription(TzktSubscription):
+class HeadSubscription(TezosTzktSubscription):
     type: Literal['head'] = 'head'
     method: Literal['SubscribeToHead'] = 'SubscribeToHead'
 
@@ -79,7 +79,7 @@ class HeadSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class OriginationSubscription(TzktSubscription):
+class OriginationSubscription(TezosTzktSubscription):
     type: Literal['origination'] = 'origination'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
 
@@ -88,7 +88,7 @@ class OriginationSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class TransactionSubscription(TzktSubscription):
+class TransactionSubscription(TezosTzktSubscription):
     type: Literal['transaction'] = 'transaction'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
     address: str | None = None
@@ -101,7 +101,7 @@ class TransactionSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class SmartRollupExecuteSubscription(TzktSubscription):
+class SmartRollupExecuteSubscription(TezosTzktSubscription):
     type: Literal['sr_execute'] = 'sr_execute'
     method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
     address: str | None = None
@@ -115,7 +115,7 @@ class SmartRollupExecuteSubscription(TzktSubscription):
 
 # TODO: Add `ptr` and `tags` filters?
 @dataclass(frozen=True)
-class BigMapSubscription(TzktSubscription):
+class BigMapSubscription(TezosTzktSubscription):
     type: Literal['big_map'] = 'big_map'
     method: Literal['SubscribeToBigMaps'] = 'SubscribeToBigMaps'
     address: str | None = None
@@ -130,7 +130,7 @@ class BigMapSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class TokenTransferSubscription(TzktSubscription):
+class TokenTransferSubscription(TezosTzktSubscription):
     type: Literal['token_transfer'] = 'token_transfer'
     method: Literal['SubscribeToTokenTransfers'] = 'SubscribeToTokenTransfers'
     contract: str | None = None
@@ -152,7 +152,7 @@ class TokenTransferSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class TokenBalanceSubscription(TzktSubscription):
+class TokenBalanceSubscription(TezosTzktSubscription):
     type: Literal['token_balance'] = 'token_balance'
     method: Literal['SubscribeToTokenBalances'] = 'SubscribeToTokenBalances'
     contract: str | None = None
@@ -168,7 +168,7 @@ class TokenBalanceSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class EventSubscription(TzktSubscription):
+class EventSubscription(TezosTzktSubscription):
     type: Literal['event'] = 'event'
     method: Literal['SubscribeToEvents'] = 'SubscribeToEvents'
     address: str | None = None
@@ -181,7 +181,7 @@ class EventSubscription(TzktSubscription):
 
 
 @dataclass(frozen=True)
-class TzktOperationData(HasLevel):
+class TezosTzktOperationData(HasLevel):
     """Basic structure for operations from TzKT response"""
 
     type: str
@@ -221,7 +221,7 @@ class TzktOperationData(HasLevel):
         cls,
         operation_json: dict[str, Any],
         type_: str | None = None,
-    ) -> 'TzktOperationData':
+    ) -> 'TezosTzktOperationData':
         """Convert raw operation message from WS/REST into dataclass"""
         # NOTE: Migration originations are handled in a separate method
         sender_json = operation_json.get('sender') or {}
@@ -249,7 +249,7 @@ class TzktOperationData(HasLevel):
                 if parameter is None:
                     parameter = {}
 
-        return TzktOperationData(
+        return TezosTzktOperationData(
             type=type_ or operation_json['type'],
             id=operation_json['id'],
             level=operation_json['level'],
@@ -287,9 +287,9 @@ class TzktOperationData(HasLevel):
     def from_migration_json(
         cls,
         migration_origination_json: dict[str, Any],
-    ) -> 'TzktOperationData':
+    ) -> 'TezosTzktOperationData':
         """Convert raw migration message from REST into dataclass"""
-        return TzktOperationData(
+        return TezosTzktOperationData(
             type='migration',
             id=migration_origination_json['id'],
             level=migration_origination_json['level'],
@@ -313,24 +313,24 @@ class TzktOperationData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktTransaction(Generic[ParameterType, StorageType]):
+class TezosTzktTransaction(Generic[ParameterType, StorageType]):
     """Wrapper for matched transaction with typed data passed to the handler"""
 
-    data: TzktOperationData
+    data: TezosTzktOperationData
     parameter: ParameterType
     storage: StorageType
 
 
 @dataclass(frozen=True)
-class TzktOrigination(Generic[StorageType]):
+class TezosTzktOrigination(Generic[StorageType]):
     """Wrapper for matched origination with typed data passed to the handler"""
 
-    data: TzktOperationData
+    data: TezosTzktOperationData
     storage: StorageType
 
 
 @dataclass(frozen=True)
-class TzktSmartRollupCommitment:
+class TezosTzktSmartRollupCommitment:
     id: int
     initiator_address: str
     initiator_alias: str | None
@@ -342,7 +342,7 @@ class TzktSmartRollupCommitment:
     first_time: datetime
 
     @classmethod
-    def create(cls, operation_data: TzktOperationData) -> 'TzktSmartRollupCommitment':
+    def create(cls, operation_data: TezosTzktOperationData) -> 'TezosTzktSmartRollupCommitment':
         commitment_data = operation_data.commitment_json
         initiator_data = commitment_data.get('initiator') or {}
         return cls(
@@ -359,22 +359,22 @@ class TzktSmartRollupCommitment:
 
 
 @dataclass(frozen=True)
-class TzktSmartRollupExecute:
+class TezosTzktSmartRollupExecute:
     """Wrapper for matched smart rollup execute to the handler"""
 
-    data: TzktOperationData
-    commitment: TzktSmartRollupCommitment
+    data: TezosTzktOperationData
+    commitment: TezosTzktSmartRollupCommitment
 
     @classmethod
-    def create(cls, operation_data: TzktOperationData) -> 'TzktSmartRollupExecute':
-        commitment = TzktSmartRollupCommitment.create(operation_data)
+    def create(cls, operation_data: TezosTzktOperationData) -> 'TezosTzktSmartRollupExecute':
+        commitment = TezosTzktSmartRollupCommitment.create(operation_data)
         return cls(
             data=operation_data,
             commitment=commitment,
         )
 
 
-class TzktBigMapAction(Enum):
+class TezosTzktBigMapAction(Enum):
     """Mapping for action in TzKT response"""
 
     ALLOCATE = 'allocate'
@@ -385,15 +385,19 @@ class TzktBigMapAction(Enum):
 
     @property
     def has_key(self) -> bool:
-        return self in (TzktBigMapAction.ADD_KEY, TzktBigMapAction.UPDATE_KEY, TzktBigMapAction.REMOVE_KEY)
+        return self in (
+            TezosTzktBigMapAction.ADD_KEY,
+            TezosTzktBigMapAction.UPDATE_KEY,
+            TezosTzktBigMapAction.REMOVE_KEY,
+        )
 
     @property
     def has_value(self) -> bool:
-        return self in (TzktBigMapAction.ADD_KEY, TzktBigMapAction.UPDATE_KEY)
+        return self in (TezosTzktBigMapAction.ADD_KEY, TezosTzktBigMapAction.UPDATE_KEY)
 
 
 @dataclass(frozen=True)
-class TzktBigMapData(HasLevel):
+class TezosTzktBigMapData(HasLevel):
     """Basic structure for big map diffs from TzKT response"""
 
     id: int
@@ -403,7 +407,7 @@ class TzktBigMapData(HasLevel):
     bigmap: int
     contract_address: str
     path: str
-    action: TzktBigMapAction
+    action: TezosTzktBigMapAction
     active: bool
     key: Any | None = None
     value: Any | None = None
@@ -412,11 +416,11 @@ class TzktBigMapData(HasLevel):
     def from_json(
         cls,
         big_map_json: dict[str, Any],
-    ) -> 'TzktBigMapData':
+    ) -> 'TezosTzktBigMapData':
         """Convert raw big map diff message from WS/REST into dataclass"""
-        action = TzktBigMapAction(big_map_json['action'])
-        active = action not in (TzktBigMapAction.REMOVE, TzktBigMapAction.REMOVE_KEY)
-        return TzktBigMapData(
+        action = TezosTzktBigMapAction(big_map_json['action'])
+        active = action not in (TezosTzktBigMapAction.REMOVE, TezosTzktBigMapAction.REMOVE_KEY)
+        return TezosTzktBigMapData(
             id=big_map_json['id'],
             level=big_map_json['level'],
             # NOTE: missing `operation_id` field in API to identify operation
@@ -433,17 +437,17 @@ class TzktBigMapData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktBigMapDiff(Generic[KeyType, ValueType]):
+class TezosTzktBigMapDiff(Generic[KeyType, ValueType]):
     """Wrapper for matched big map diff with typed data passed to the handler"""
 
-    action: TzktBigMapAction
-    data: TzktBigMapData
+    action: TezosTzktBigMapAction
+    data: TezosTzktBigMapData
     key: KeyType | None
     value: ValueType | None
 
 
 @dataclass(frozen=True)
-class TzktBlockData(HasLevel):
+class TezosTzktBlockData(HasLevel):
     """Basic structure for blocks received from TzKT REST API"""
 
     level: int
@@ -463,9 +467,9 @@ class TzktBlockData(HasLevel):
     def from_json(
         cls,
         block_json: dict[str, Any],
-    ) -> 'TzktBlockData':
+    ) -> 'TezosTzktBlockData':
         """Convert raw block message from REST into dataclass"""
-        return TzktBlockData(
+        return TezosTzktBlockData(
             level=block_json['level'],
             hash=block_json['hash'],
             timestamp=_parse_timestamp(block_json['timestamp']),
@@ -482,7 +486,7 @@ class TzktBlockData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktHeadBlockData(HasLevel):
+class TezosTzktHeadBlockData(HasLevel):
     """Basic structure for head block received from TzKT SignalR API"""
 
     chain: str
@@ -512,9 +516,9 @@ class TzktHeadBlockData(HasLevel):
     def from_json(
         cls,
         head_block_json: dict[str, Any],
-    ) -> 'TzktHeadBlockData':
+    ) -> 'TezosTzktHeadBlockData':
         """Convert raw head block message from WS/REST into dataclass"""
-        return TzktHeadBlockData(
+        return TezosTzktHeadBlockData(
             chain=head_block_json['chain'],
             chain_id=head_block_json['chainId'],
             cycle=head_block_json['cycle'],
@@ -541,7 +545,7 @@ class TzktHeadBlockData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktQuoteData(HasLevel):
+class TezosTzktQuoteData(HasLevel):
     """Basic structure for quotes received from TzKT REST API"""
 
     level: int
@@ -556,9 +560,9 @@ class TzktQuoteData(HasLevel):
     gbp: Decimal
 
     @classmethod
-    def from_json(cls, quote_json: dict[str, Any]) -> 'TzktQuoteData':
+    def from_json(cls, quote_json: dict[str, Any]) -> 'TezosTzktQuoteData':
         """Convert raw quote message from REST into dataclass"""
-        return TzktQuoteData(
+        return TezosTzktQuoteData(
             level=quote_json['level'],
             timestamp=_parse_timestamp(quote_json['timestamp']),
             btc=Decimal(quote_json['btc']),
@@ -573,7 +577,7 @@ class TzktQuoteData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktTokenTransferData(HasLevel):
+class TezosTzktTokenTransferData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -583,7 +587,7 @@ class TzktTokenTransferData(HasLevel):
     contract_address: str | None = None
     contract_alias: str | None = None
     token_id: int | None = None
-    standard: TzktTokenStandard | None = None
+    standard: TezosTzktTokenStandard | None = None
     metadata: dict[str, Any] | None = None
     from_alias: str | None = None
     from_address: str | None = None
@@ -595,7 +599,7 @@ class TzktTokenTransferData(HasLevel):
     tzkt_migration_id: int | None = None
 
     @classmethod
-    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenTransferData':
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTzktTokenTransferData':
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         contract_json = token_json.get('contract') or {}
@@ -606,7 +610,7 @@ class TzktTokenTransferData(HasLevel):
         amount = token_transfer_json.get('amount')
         amount = int(amount) if amount is not None else None
 
-        return TzktTokenTransferData(
+        return TezosTzktTokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
             timestamp=_parse_timestamp(token_transfer_json['timestamp']),
@@ -614,7 +618,7 @@ class TzktTokenTransferData(HasLevel):
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=TzktTokenStandard(standard) if standard else None,
+            standard=TezosTzktTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
             from_alias=from_json.get('alias'),
             from_address=from_json.get('address'),
@@ -628,7 +632,7 @@ class TzktTokenTransferData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktTokenBalanceData(HasLevel):
+class TezosTzktTokenBalanceData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -644,7 +648,7 @@ class TzktTokenBalanceData(HasLevel):
     contract_address: str | None = None
     contract_alias: str | None = None
     token_id: int | None = None
-    standard: TzktTokenStandard | None = None
+    standard: TezosTzktTokenStandard | None = None
     metadata: dict[str, Any] | None = None
 
     balance: str | None = None
@@ -655,14 +659,14 @@ class TzktTokenBalanceData(HasLevel):
         return self.last_level
 
     @classmethod
-    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TzktTokenBalanceData':
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTzktTokenBalanceData':
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
         contract_json = token_json.get('contract') or {}
 
-        return TzktTokenBalanceData(
+        return TezosTzktTokenBalanceData(
             id=token_transfer_json['id'],
             transfers_count=token_transfer_json['transfersCount'],
             first_level=token_transfer_json['firstLevel'],
@@ -675,7 +679,7 @@ class TzktTokenBalanceData(HasLevel):
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=TzktTokenStandard(standard) if standard else None,
+            standard=TezosTzktTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
             balance=token_transfer_json.get('balance'),
             balance_value=token_transfer_json.get('balanceValue'),
@@ -683,7 +687,7 @@ class TzktTokenBalanceData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktEventData(HasLevel):
+class TezosTzktEventData(HasLevel):
     """Basic structure for events received from TzKT REST API"""
 
     id: int
@@ -697,9 +701,9 @@ class TzktEventData(HasLevel):
     transaction_id: int | None = None
 
     @classmethod
-    def from_json(cls, event_json: dict[str, Any]) -> 'TzktEventData':
+    def from_json(cls, event_json: dict[str, Any]) -> 'TezosTzktEventData':
         """Convert raw event message from WS/REST into dataclass"""
-        return TzktEventData(
+        return TezosTzktEventData(
             id=event_json['id'],
             level=event_json['level'],
             timestamp=_parse_timestamp(event_json['timestamp']),
@@ -713,12 +717,12 @@ class TzktEventData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TzktEvent(Generic[EventType]):
-    data: TzktEventData
+class TezosTzktEvent(Generic[EventType]):
+    data: TezosTzktEventData
     payload: EventType
 
 
 @dataclass(frozen=True)
-class TzktUnknownEvent:
-    data: TzktEventData
+class TezosTzktUnknownEvent:
+    data: TezosTzktEventData
     payload: Any | None

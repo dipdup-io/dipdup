@@ -8,26 +8,26 @@ from typing import cast
 
 from web3 import Web3
 
-from dipdup.config import SubsquidIndexConfigU
+from dipdup.config import EvmSubsquidIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.evm_subsquid import SubsquidDatasource
+from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
-from dipdup.models.evm_subsquid import SubsquidMessageType
+from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 
 SUBSQUID_READAHEAD_LIMIT = 10000
 
-IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
-DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
+IndexConfigT = TypeVar('IndexConfigT', bound=EvmSubsquidIndexConfigU)
+DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource)
 
 
 _sighashes: dict[str, str] = {}

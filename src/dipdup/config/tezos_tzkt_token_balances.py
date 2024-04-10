@@ -10,8 +10,8 @@ from pydantic.fields import Field
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TzktIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models.tezos_tzkt import TokenBalanceSubscription
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TzktTokenBalancesHandlerConfig(HandlerConfig):
+class TezosTzktTokenBalancesHandlerConfig(HandlerConfig):
     """Token balance handler config
 
     :param callback: Callback name
@@ -35,17 +35,17 @@ class TzktTokenBalancesHandlerConfig(HandlerConfig):
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         """This iterator result will be used in codegen to generate handler(s) template"""
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TzktTokenBalanceData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktTokenBalanceData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         """This iterator result will be used in codegen to generate handler(s) template"""
         yield 'ctx', 'HandlerContext'
-        yield 'token_balance', 'TzktTokenBalanceData'
+        yield 'token_balance', 'TezosTzktTokenBalanceData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TzktTokenBalancesIndexConfig(TzktIndexConfig):
+class TezosTzktTokenBalancesIndexConfig(TezosTzktIndexConfig):
     """Token balance index config
 
     :param kind: always 'tezos.tzkt.token_balances'
@@ -57,8 +57,8 @@ class TzktTokenBalancesIndexConfig(TzktIndexConfig):
     """
 
     kind: Literal['tezos.tzkt.token_balances']
-    datasource: TzktDatasourceConfig
-    handlers: tuple[TzktTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
+    datasource: TezosTzktDatasourceConfig
+    handlers: tuple[TezosTzktTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

@@ -6,13 +6,13 @@ from demo_dex.types.fa12_token.tezos_storage import Fa12TokenStorage
 from demo_dex.types.quipu_fa12.tezos_parameters.tez_to_token_payment import TezToTokenPaymentParameter
 from demo_dex.types.quipu_fa12.tezos_storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TzktTransaction
+from dipdup.models.tezos_tzkt import TezosTzktTransaction
 
 
 async def on_fa12_tez_to_token(
     ctx: HandlerContext,
-    tez_to_token_payment: TzktTransaction[TezToTokenPaymentParameter, QuipuFa12Storage],
-    transfer: TzktTransaction[TransferParameter, Fa12TokenStorage],
+    tez_to_token_payment: TezosTzktTransaction[TezToTokenPaymentParameter, QuipuFa12Storage],
+    transfer: TezosTzktTransaction[TransferParameter, Fa12TokenStorage],
 ) -> None:
     decimals = int(ctx.template_values['decimals'])
     symbol = ctx.template_values['symbol']
