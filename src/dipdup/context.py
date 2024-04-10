@@ -770,7 +770,7 @@ class HandlerContext(DipDupContext):
         self.datasource = datasource
         self.template_values = _TemplateValues(
             handler_config.parent.name if handler_config.parent else 'unknown',
-            handler_config.parent.template_values if handler_config.parent else {},
+            handler_config.parent._template_values if handler_config.parent else {},
         )
 
     @classmethod

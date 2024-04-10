@@ -5,6 +5,7 @@ from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import AbiDatasourceConfig
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubsquidTracesHandlerConfig(HandlerConfig, ABC):
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         raise NotImplementedError
@@ -25,7 +26,7 @@ class SubsquidTracesHandlerConfig(HandlerConfig, ABC):
         raise NotImplementedError
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubsquidTracesIndexConfig(SubsquidIndexConfig):
     kind: Literal['evm.subsquid.traces']
 

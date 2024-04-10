@@ -11,6 +11,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - dipdup: Python 3.12 is now required to run DipDup.
 - dipdup: Pydantic v2 migration.
 
+## [7.5.4] - 2024-04-09
+
+### Fixed
+
+- config: Don't raise `ConfigurationError` from some model validators.
+- config: Fixed crash when database path is relative and nested.
+- config: Fixed issue with `from` filter being ignored.
+- config: Forbid extra arguments in config mappings.
+
 ## [7.5.3] - 2024-03-28
 
 ### Fixed
@@ -1404,7 +1413,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.4...HEAD
+[7.5.4]: https://github.com/dipdup-io/dipdup/compare/7.5.3...7.5.4
+[7.5.3]: https://github.com/dipdup-io/dipdup/compare/7.5.2...7.5.3
 [7.5.2]: https://github.com/dipdup-io/dipdup/compare/7.5.1...7.5.2
 [7.5.1]: https://github.com/dipdup-io/dipdup/compare/7.5.0...7.5.1
 [7.5.0]: https://github.com/dipdup-io/dipdup/compare/7.4.0...7.5.0

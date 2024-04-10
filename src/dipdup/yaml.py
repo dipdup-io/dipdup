@@ -112,9 +112,10 @@ def get_default_env_variables(config_yaml: str) -> dict[str, str]:
     return environment
 
 
+# FIXME: Can't use `from_` field alias in dataclasses
 def fix_dataclass_field_aliases(config: dict[str, Any]) -> None:
     for k, v in copy(config).items():
-        if 'callack' in config and k == 'from':
+        if 'callback' in config and k == 'from':
             config['from_'] = config.pop('from')
         elif isinstance(v, dict):
             fix_dataclass_field_aliases(v)
@@ -164,6 +165,5 @@ class DipDupYAMLConfig(dict[str, Any]):
 
     def _post_load_hooks(self) -> None:
         self.validate_version()
-        # FIXME: Can't use `from_` field alias in dataclass
-        # FIXME: See https://github.com/pydantic/pydantic/issues/4286 (fixed in upcoming v2)
+        # FIXME: Can't use `from_` field alias in dataclasses
         fix_dataclass_field_aliases(self)

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
@@ -25,7 +26,7 @@ def is_wallet_address(address: str) -> bool:
     return len(address) == ADDRESS_LENGTH and address.startswith(WALLET_PREFIXES)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosContractConfig(ContractConfig):
     """Tezos contract config.
 

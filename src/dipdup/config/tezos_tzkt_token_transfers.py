@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktTokenTransfersHandlerConfig(HandlerConfig):
     """Token transfer handler config
 
@@ -32,8 +33,7 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig):
 
     contract: TezosContractConfig | None = None
     token_id: int | None = None
-    # FIXME: Can't use `from_` field alias in dataclass
-    # FIXME: See https://github.com/pydantic/pydantic/issues/4286 (fixed in upcoming v2)
+    # FIXME: Can't use `from_` field alias in dataclasses
     from_: TezosContractConfig | None = None
     to: TezosContractConfig | None = None
 
@@ -47,7 +47,7 @@ class TzktTokenTransfersHandlerConfig(HandlerConfig):
         yield 'token_transfer', 'TzktTokenTransferData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktTokenTransfersIndexConfig(TzktIndexConfig):
     """Token transfer index config
 

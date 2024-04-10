@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktBigMapsHandlerConfig(HandlerConfig):
     """Big map handler config
 
@@ -65,7 +66,7 @@ class TzktBigMapsHandlerConfig(HandlerConfig):
         yield self.format_big_map_diff_argument(self.path)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktBigMapsIndexConfig(TzktIndexConfig):
     """Big map index config
 

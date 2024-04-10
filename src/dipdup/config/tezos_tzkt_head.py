@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HeadHandlerConfig(HandlerConfig):
     """Head block handler config
 
@@ -30,7 +31,7 @@ class HeadHandlerConfig(HandlerConfig):
         yield 'head', 'TzktHeadBlockData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktHeadIndexConfig(TzktIndexConfig):
     """Head block index config
 

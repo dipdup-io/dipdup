@@ -9,6 +9,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TzktDatasourceConfig
 from dipdup.config.tezos_tzkt_operations import TzktOperationsIndexConfig
@@ -16,6 +17,7 @@ from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import OriginationSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.models.tezos_tzkt import TzktOperationType
+from dipdup.yaml import DipDupYAMLConfig
 
 
 def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig:
@@ -74,6 +76,25 @@ async def test_validators() -> None:
         TezosContractConfig(kind='tezos', address='lalalalalalalalalalalalalalalalalala')
     with pytest.raises(ValidationError):
         TzktDatasourceConfig(kind='tezos.tzkt', url='not_an_url')
+
+
+async def test_reserved_keywords() -> None:
+    assert (
+        SubsquidTransactionsHandlerConfig(  # type: ignore[comparison-overlap]
+            callback='test',
+            from_='from',  # type: ignore[arg-type]
+        ).from_
+        == 'from'
+    )
+
+    # FIXME: Can't use `from_` field alias in dataclasses
+    raw_config, _ = DipDupYAMLConfig.load(
+        paths=[Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml']
+    )
+    assert raw_config['indexes']['tzbtc_holders_mainnet']['handlers'][1]['from_'] == 'tzbtc_mainnet'
+
+    config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml'])
+    assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[union-attr]
 
 
 async def test_dump() -> None:

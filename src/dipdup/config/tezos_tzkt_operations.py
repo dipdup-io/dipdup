@@ -5,6 +5,7 @@ from typing import Any
 from typing import Literal
 from typing import cast
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     from dipdup.subscriptions import Subscription
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class SubgroupIndexMixin:
     """`subgroup_index` field to track index of operation in group
 
@@ -127,7 +128,7 @@ class TezosPatternConfig(CodegenMixin):
         return arg_name, 'TzktOperationData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class OperationsHandlerTransactionPatternConfig(TezosPatternConfig, SubgroupIndexMixin):
     """Transaction handler pattern config
 
@@ -187,7 +188,7 @@ class OperationsHandlerTransactionPatternConfig(TezosPatternConfig, SubgroupInde
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class OperationsHandlerOriginationPatternConfig(TezosPatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
@@ -236,7 +237,7 @@ class OperationsHandlerOriginationPatternConfig(TezosPatternConfig, SubgroupInde
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class OperationsHandlerSmartRollupExecutePatternConfig(TezosPatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
@@ -273,7 +274,7 @@ class OperationsHandlerSmartRollupExecutePatternConfig(TezosPatternConfig, Subgr
         return None
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktOperationsIndexConfig(TzktIndexConfig):
     """Operation index config
 
@@ -337,7 +338,7 @@ OperationsHandlerPatternConfigU = (
 )
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktOperationsHandlerConfig(HandlerConfig):
     """Operation handler config
 
@@ -369,7 +370,7 @@ class TzktOperationsHandlerConfig(HandlerConfig):
             yield arg, arg_type
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class OperationUnfilteredHandlerConfig(HandlerConfig):
     """Handler of unfiltered operation index
 
@@ -386,7 +387,7 @@ class OperationUnfilteredHandlerConfig(HandlerConfig):
         yield 'operation', 'TzktOperationData'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TzktOperationsUnfilteredIndexConfig(TzktIndexConfig):
     """Operation index config
 
