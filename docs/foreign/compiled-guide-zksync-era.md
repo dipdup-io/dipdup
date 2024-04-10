@@ -146,7 +146,7 @@ Notice that we utilize the Transaction model predefined in `models/__init__.py`.
 ## Step 5 — Run
 
 In 'dipdup.yaml' we have three datasources, in this tutorial we will use two of them: Subsquid Network for historical data and JSON-RPC API (EVM node) for real-time and historical data.
-Before running, set URLs for datasources. These URLs can be set in `dipdup.yaml`, but we offer the .env file approach according to the [12factor config](https://12factor.net/config):  
+Before running, set URLs for datasources. These URLs can be set in `dipdup.yaml`, but here we offer better .env file approach:
 
   1. Copy `deploy/.env.default` file to `deploy/.env`.  
   2. Set `SUBSQUID_URL=https://v2.archive.subsquid.io/network/zksync-mainnet`.
@@ -166,7 +166,7 @@ sqlite3 /tmp/zksync_demo.sqlite 'SELECT * FROM holder LIMIT 10'
 
 The next part of the guide will explain how to start production-ready DipDup application in Docker environment with GraphQL API for your data.
 
-### Fancy query
+### Query API
 
 Most powerful and common DipDup application configuration uses PostgreSQL to store data and Hasura to have production ready API, steps to deploy stack in Docker environment in a few simple steps:
 
