@@ -123,9 +123,6 @@ class ConfigurationError(Error):
 
     msg: str
 
-    def __repr__(self) -> str:
-        return ''
-
     def _help(self) -> str:
         return f"""
             {self.msg}
