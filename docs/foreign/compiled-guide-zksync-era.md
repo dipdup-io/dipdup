@@ -171,7 +171,7 @@ The next part of the guide will explain how to start production-ready DipDup app
 Most powerful and common DipDup application configuration uses PostgreSQL to store data and Hasura to have production ready API, steps to deploy stack in Docker environment in a few simple steps:
 
   1. Generate and set `HASURA_SECRET` and `POSTGRES_PASSWORD` in `deploy/.env` file, Hasura secret will be used later to access Hasura.
-  2. Build and start Docker containers: `docker compose --env-file deploy/.env -f deploy/compose.yaml up -d'.
+  2. Build and start Docker containers: `docker compose --env-file deploy/.env -f deploy/compose.yaml up -d`.
   3. Run `docker ps` to check that all containers are running. Locate the URL of the Hasura console in the PORTS column [compose.yml documentation](https://docs.docker.com/compose/compose-file/compose-file-v3/#ports). If the container isn't accessible via `0.0.0.0:PORT`, it may be accessible via `localhost:PORT` in certain environments.
   ![docker ps](zksync_assets/dockerps.png)
   4. As an example, let's query the first 10 addresses with a positive balance:
