@@ -104,7 +104,7 @@ custom:
         try:
             DipDupConfig.load([Path(config_path)], True)
         except ConfigurationError as exc:
-            assert str(exc) == f'DipDup YAML config is invalid -> {exc.args[0]}'
+            assert str(exc) == 'DipDup YAML config is invalid -> ' + exc.args[0].split('\n')[0]
             assert exc.args[0] == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
         else:
             raise AssertionError('ConfigurationError not raised')
