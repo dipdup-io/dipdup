@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- evm.subsquid: `evm.node` datasources can be used as index datasources.
+
 ### Changed
 
 - dipdup: Python 3.12 is now required to run DipDup.
 - dipdup: Pydantic v2 migration.
+
+### Removed
+
+- evm.subsquid: `node_only` index config option has been removed; use `evm.node` datasource directly.
 
 ## [7.5.4] - 2024-04-09
 

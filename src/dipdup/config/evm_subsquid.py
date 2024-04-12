@@ -60,4 +60,4 @@ class EvmSubsquidIndexConfig(IndexConfig, ABC):
     :param datasource: Subsquid datasource config
     """
 
-    datasource: EvmSubsquidDatasourceConfig
+    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig

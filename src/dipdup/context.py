@@ -24,6 +24,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
 from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
 from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
@@ -77,7 +79,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import ModuleType
 
-    from dipdup.config.evm_node import EvmNodeDatasourceConfig
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
@@ -321,8 +322,7 @@ class DipDupContext:
         )
 
         datasource_name = index_config.datasource.name
-        datasource: TezosTzktDatasource | EvmSubsquidDatasource
-        node_configs: tuple[EvmNodeDatasourceConfig, ...] = ()
+        datasource: TezosTzktDatasource | EvmSubsquidDatasource | EvmNodeDatasource
 
         if isinstance(index_config, TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
@@ -343,26 +343,33 @@ class DipDupContext:
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktEventsIndex(self, index_config, datasource)
         elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
-            datasource = self.get_evm_subsquid_datasource(datasource_name)
-            node_field = index_config.datasource.node
-            if node_field:
-                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
+            datasource_config = index_config.datasource
+            if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
+                datasource = self.get_evm_subsquid_datasource(datasource_name)
+            elif isinstance(datasource_config, EvmNodeDatasourceConfig):
+                datasource = self.get_evm_node_datasource(datasource_name)
+            else:
+                raise NotImplementedError
             index = EvmSubsquidEventsIndex(self, index_config, datasource)
+            for node_datasource in index.node_datasources:
+                node_datasource.add_index(index_config)
         elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
             raise NotImplementedError
         elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
-            datasource = self.get_evm_subsquid_datasource(datasource_name)
-            node_field = index_config.datasource.node
-            if node_field:
-                node_configs = node_configs + node_field if isinstance(node_field, tuple) else (node_field,)
+            datasource_config = index_config.datasource
+            if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
+                datasource = self.get_evm_subsquid_datasource(datasource_name)
+            elif isinstance(datasource_config, EvmNodeDatasourceConfig):
+                datasource = self.get_evm_node_datasource(datasource_name)
+            else:
+                raise NotImplementedError
             index = EvmSubsquidTransactionsIndex(self, index_config, datasource)
+            for node_datasource in index.node_datasources:
+                node_datasource.add_index(index_config)
         else:
             raise NotImplementedError
 
         datasource.add_index(index_config)
-        for node_config in node_configs:
-            node_datasource = self.get_evm_node_datasource(node_config.name)
-            node_datasource.add_index(index_config)
 
         handlers = (
             (index_config.handler_config,)

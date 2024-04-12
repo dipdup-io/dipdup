@@ -952,12 +952,16 @@ class DipDupConfig:
         """
         handler_config: HandlerConfig
 
-        # NOTE: Each index must have a corresponding (currently) TzKT datasource
+        # NOTE: Each index must have a corresponding index datasource
         if isinstance(index_config.datasource, str):
+            name = index_config.datasource
             if index_config.kind.startswith('tezos.tzkt'):
-                index_config.datasource = self.get_tezos_tzkt_datasource(index_config.datasource)
+                index_config.datasource = self.get_tezos_tzkt_datasource(name)
             elif index_config.kind.startswith('evm.subsquid'):
-                index_config.datasource = self.get_evm_subsquid_datasource(index_config.datasource)
+                try:
+                    index_config.datasource = self.get_evm_subsquid_datasource(name)
+                except ConfigurationError:
+                    index_config.datasource = self.get_evm_node_datasource(name)
             else:
                 raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
 
@@ -1176,6 +1180,7 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
 _original_to_aliased = {
     'TezosTzktDatasourceConfig': 'str | TezosTzktDatasourceConfig',
     'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
+    'EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig': 'str | EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig',
     'ContractConfig': 'str | ContractConfig',
     'ContractConfig | None': 'str | ContractConfig | None',
     'TezosContractConfig': 'str | TezosContractConfig',
