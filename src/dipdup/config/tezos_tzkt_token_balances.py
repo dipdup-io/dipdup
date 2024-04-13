@@ -35,13 +35,13 @@ class TezosTzktTokenBalancesHandlerConfig(HandlerConfig):
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         """This iterator result will be used in codegen to generate handler(s) template"""
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktTokenBalanceData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktTokenBalanceData as TokenBalanceData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         """This iterator result will be used in codegen to generate handler(s) template"""
         yield 'ctx', 'HandlerContext'
-        yield 'token_balance', 'TezosTzktTokenBalanceData'
+        yield 'token_balance', 'TokenBalanceData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

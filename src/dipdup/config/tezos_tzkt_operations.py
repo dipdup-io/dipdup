@@ -83,7 +83,7 @@ class TezosTzktPatternConfig(CodegenMixin):
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:
-        return 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData'
+        return 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
 
     @classmethod
     def format_origination_argument(
@@ -95,8 +95,8 @@ class TezosTzktPatternConfig(CodegenMixin):
         arg_name = pascal_to_snake(alias or f'{module_name}_origination')
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return arg_name, f'TezosTzktOrigination[{storage_cls}] | None'
-        return arg_name, f'TezosTzktOrigination[{storage_cls}]'
+            return arg_name, f'Origination[{storage_cls}] | None'
+        return arg_name, f'Origination[{storage_cls}]'
 
     @classmethod
     def format_operation_argument(
@@ -111,8 +111,8 @@ class TezosTzktPatternConfig(CodegenMixin):
         parameter_cls = f'{snake_to_pascal(arg_name)}Parameter'
         storage_cls = f'{snake_to_pascal(module_name)}Storage'
         if optional:
-            return pascal_to_snake(arg_name), f'TezosTzktTransaction[{parameter_cls}, {storage_cls}] | None'
-        return pascal_to_snake(arg_name), f'TezosTzktTransaction[{parameter_cls}, {storage_cls}]'
+            return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}] | None'
+        return pascal_to_snake(arg_name), f'Transaction[{parameter_cls}, {storage_cls}]'
 
     @classmethod
     def format_untyped_operation_argument(
@@ -124,8 +124,8 @@ class TezosTzktPatternConfig(CodegenMixin):
     ) -> tuple[str, str]:
         arg_name = pascal_to_snake(alias or f'{type_}_{subgroup_index}')
         if optional:
-            return arg_name, 'TezosTzktOperationData | None'
-        return arg_name, 'TezosTzktOperationData'
+            return arg_name, 'OperationData | None'
+        return arg_name, 'OperationData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -153,7 +153,7 @@ class TezosTzktOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig,
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktTransaction'
+            yield 'dipdup.models.tezos_tzkt', 'TezosTzktTransaction as Transaction'
             yield self.format_parameter_import(
                 package,
                 module_name,
@@ -210,10 +210,10 @@ class TezosTzktOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig,
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOrigination'
+            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOrigination as Origination'
             yield self.format_storage_import(package, module_name)
         else:
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData'
+            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -258,14 +258,14 @@ class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPattern
         SubgroupIndexMixin.__post_init__(self)
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktSmartRollupExecute'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktSmartRollupExecute as SmartRollupExecute'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         arg_name = pascal_to_snake(self.alias or f'sr_execute_{self.subgroup_index}')
         if self.optional:
-            yield arg_name, 'TezosTzktSmartRollupExecute | None'
+            yield arg_name, 'SmartRollupExecute | None'
         else:
-            yield arg_name, 'TezosTzktSmartRollupExecute'
+            yield arg_name, 'SmartRollupExecute'
 
     @property
     def typed_contract(self) -> TezosContractConfig | None:
@@ -350,6 +350,7 @@ class TezosTzktOperationsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
+        yield package, 'models as models'
         for pattern in self.pattern:
             yield from pattern.iter_imports(package)
 
@@ -379,7 +380,7 @@ class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:

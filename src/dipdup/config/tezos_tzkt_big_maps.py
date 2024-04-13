@@ -51,11 +51,11 @@ class TezosTzktBigMapsHandlerConfig(HandlerConfig):
     def format_big_map_diff_argument(cls, path: str) -> tuple[str, str]:
         key_cls = f'{snake_to_pascal(path)}Key'
         value_cls = f'{snake_to_pascal(path)}Value'
-        return pascal_to_snake(path), f'TezosTzktBigMapDiff[{key_cls}, {value_cls}]'
+        return pascal_to_snake(path), f'BigMapDiff[{key_cls}, {value_cls}]'
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktBigMapDiff'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktBigMapDiff as BigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)

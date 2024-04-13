@@ -23,12 +23,12 @@ class TezosTzktHeadHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktHeadBlockData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTzktHeadBlockData as HeadBlockData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'head', 'TezosTzktHeadBlockData'
+        yield 'head', 'HeadBlockData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
