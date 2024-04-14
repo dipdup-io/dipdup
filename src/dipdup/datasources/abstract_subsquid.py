@@ -14,6 +14,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
 
 AbstractSubsquidQuery = dict[str, Any]
+FieldSelection = dict
 
 # class AbstractSubsquidQuery(TypedDict):
 #     fromBlock: int

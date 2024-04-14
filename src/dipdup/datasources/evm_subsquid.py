@@ -92,6 +92,9 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
     def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
         super().__init__(config)
 
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
+        return _EvmSubsquidWorker(await self._fetch_worker(level))
+
     async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:  # TODO: fix typing
         return await super().query_worker(query, current_level)
 
@@ -121,7 +124,6 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
                 'fields': LOG_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
-                'includeAllBlocks': True,  # NOTE: Without includeAllBlocks subsquid will return only the first and the last
             }
             response = await self.query_worker(query, current_level)
 
@@ -151,7 +153,6 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'transactions': list(filters),
-                'includeAllBlocks': True,
             }
             response = await self.query_worker(query, current_level)
 
@@ -168,6 +169,3 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
                     if transaction.status != 0:
                         transactions.append(transaction)
                 yield tuple(transactions)
-
-    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
-        return _EvmSubsquidWorker(await self._fetch_worker(level))
