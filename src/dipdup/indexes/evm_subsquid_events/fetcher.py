@@ -10,11 +10,10 @@ from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
-from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.models.evm_subsquid import EvmSubsquidEventData
+from dipdup.models.evm import EvmLogData
 
 
-class EvmSubsquidEventFetcher(DataFetcher[EvmSubsquidEventData]):
+class EvmLogFetcher(DataFetcher[EvmLogData]):
     _datasource: EvmSubsquidDatasource
 
     def __init__(
@@ -27,7 +26,7 @@ class EvmSubsquidEventFetcher(DataFetcher[EvmSubsquidEventData]):
         super().__init__(datasource, first_level, last_level)
         self._topics = topics
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmSubsquidEventData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmLogData, ...]]]:
         event_iter = self._datasource.iter_event_logs(
             self._topics,
             self._first_level,
@@ -37,15 +36,15 @@ class EvmSubsquidEventFetcher(DataFetcher[EvmSubsquidEventData]):
             yield level, batch
 
 
-class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
+class EvmNodeLogFetcher(EvmNodeFetcher[EvmLogData]):
     _datasource: EvmNodeDatasource
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmNodeLogData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmLogData, ...]]]:
         event_iter = self._fetch_by_level()
         async for level, batch in readahead_by_level(event_iter, limit=EVM_NODE_READAHEAD_LIMIT):
             yield level, batch
 
-    async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeLogData, ...]]:
+    async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmLogData, ...]]:
         batch_size = MIN_BATCH_SIZE
         batch_first_level = self._first_level
         ratelimited: bool = False
@@ -93,7 +92,7 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmNodeLogData]):
                 if not level_logs:
                     continue
 
-                parsed_level_logs = tuple(EvmNodeLogData.from_json(log, timestamps[level]) for log in level_logs)
+                parsed_level_logs = tuple(EvmLogData.from_node_json(log, timestamps[level]) for log in level_logs)
 
                 yield parsed_level_logs
 

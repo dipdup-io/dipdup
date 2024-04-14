@@ -11,12 +11,12 @@
 .. autoclass:: dipdup.config.DatasourceConfig
 .. autoclass:: dipdup.config.evm.EvmContractConfig
 .. autoclass:: dipdup.config.evm_node.EvmNodeDatasourceConfig
-.. autoclass:: dipdup.config.evm_subsquid_events.EvmSubsquidEventsHandlerConfig
-.. autoclass:: dipdup.config.evm_subsquid_events.EvmSubsquidEventsIndexConfig
+.. autoclass:: dipdup.config.evm_logs.EvmLogsHandlerConfig
+.. autoclass:: dipdup.config.evm_logs.EvmLogsIndexConfig
 .. autoclass:: dipdup.config.evm_subsquid.EvmSubsquidDatasourceConfig
-.. autoclass:: dipdup.config.evm_subsquid.EvmSubsquidIndexConfig
-.. autoclass:: dipdup.config.evm_subsquid_transactions.EvmSubsquidTransactionsHandlerConfig
-.. autoclass:: dipdup.config.evm_subsquid_transactions.EvmSubsquidTransactionsIndexConfig
+.. autoclass:: dipdup.config.evm_subsquid.EvmIndexConfig
+.. autoclass:: dipdup.config.evm_transactions.EvmTransactionsHandlerConfig
+.. autoclass:: dipdup.config.evm_transactions.EvmTransactionsIndexConfig
 .. autoclass:: dipdup.config.HandlerConfig
 .. autoclass:: dipdup.config.HasuraConfig
 .. autoclass:: dipdup.config.HookConfig

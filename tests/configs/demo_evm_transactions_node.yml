@@ -23,7 +23,7 @@ contracts:
 
 indexes:
   eth_usdt_transactions:
-    kind: evm.subsquid.transactions
+    kind: evm.transactions
     datasource: evm_node
     handlers:
       - callback: on_transfer

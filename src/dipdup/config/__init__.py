@@ -955,9 +955,9 @@ class DipDupConfig:
         # NOTE: Each index must have a corresponding index datasource
         if isinstance(index_config.datasource, str):
             name = index_config.datasource
-            if index_config.kind.startswith('tezos.tzkt'):
+            if index_config.kind.startswith('tezos'):
                 index_config.datasource = self.get_tezos_tzkt_datasource(name)
-            elif index_config.kind.startswith('evm.subsquid'):
+            elif index_config.kind.startswith('evm'):
                 try:
                     index_config.datasource = self.get_evm_subsquid_datasource(name)
                 except ConfigurationError:
@@ -1035,7 +1035,7 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+        elif isinstance(index_config, EvmLogsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1045,7 +1045,7 @@ class DipDupConfig:
         elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
             raise NotImplementedError
 
-        elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
+        elif isinstance(index_config, EvmTransactionsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1086,9 +1086,9 @@ from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
-from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
+from dipdup.config.evm_logs import EvmLogsIndexConfig
+from dipdup.config.evm_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -1126,11 +1126,9 @@ TezosTzktIndexConfigU = (
     | TezosTzktTokenTransfersIndexConfig
     | TezosTzktTokenBalancesIndexConfig
 )
-EvmSubsquidIndexConfigU = (
-    EvmSubsquidEventsIndexConfig | EvmSubsquidTracesIndexConfig | EvmSubsquidTransactionsIndexConfig
-)
+EvmIndexConfigU = EvmLogsIndexConfig | EvmSubsquidTracesIndexConfig | EvmTransactionsIndexConfig
 
-ResolvedIndexConfigU = TezosTzktIndexConfigU | EvmSubsquidIndexConfigU
+ResolvedIndexConfigU = TezosTzktIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

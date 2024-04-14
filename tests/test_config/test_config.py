@@ -9,7 +9,7 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
-from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
+from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
@@ -80,7 +80,7 @@ async def test_validators() -> None:
 
 async def test_reserved_keywords() -> None:
     assert (
-        EvmSubsquidTransactionsHandlerConfig(  # type: ignore[comparison-overlap]
+        EvmTransactionsHandlerConfig(  # type: ignore[comparison-overlap]
             callback='test',
             from_='from',  # type: ignore[arg-type]
         ).from_

@@ -50,14 +50,3 @@ class EvmSubsquidDatasourceConfig(IndexDatasourceConfig):
         if not v.startswith(('http', 'https')):
             raise ConfigurationError('Subsquid Network URL must start with http(s)')
         return v
-
-
-@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EvmSubsquidIndexConfig(IndexConfig, ABC):
-    """EVM index that use Subsquid Network as a datasource
-
-    :param kind: starts with 'evm.subsquid'
-    :param datasource: Subsquid datasource config
-    """
-
-    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig

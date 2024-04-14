@@ -1,4 +1,4 @@
-# demo_evm_events
+# demo_evm_logs
 
 ERC-20 token transfers (from event logs)
 

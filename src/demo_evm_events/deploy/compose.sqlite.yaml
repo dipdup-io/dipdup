@@ -1,5 +1,5 @@
 version: "3.8"
-name: demo_evm_events
+name: demo_evm_logs
 
 services:
   dipdup:
@@ -13,7 +13,7 @@ services:
       - 46339
       - 9000
     volumes:
-      - sqlite:${SQLITE_PATH:-/tmp/demo_evm_events.sqlite}
+      - sqlite:${SQLITE_PATH:-/tmp/demo_evm_logs.sqlite}
 
 volumes:
   sqlite:

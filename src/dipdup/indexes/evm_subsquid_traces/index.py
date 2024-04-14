@@ -1,4 +1,4 @@
-from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_traces import EvmSubsquidTracesIndexConfig
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.models import RollbackMessage

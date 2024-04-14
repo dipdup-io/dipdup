@@ -1,5 +1,5 @@
-spec_version: 2.1
-package: demo_evm_events
+spec_version: 2.0
+package: demo_evm_logs
 
 datasources:
   subsquid:

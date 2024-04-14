@@ -45,8 +45,8 @@ from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.indexes.evm_subsquid_events.index import EvmSubsquidEventsIndex
-from dipdup.indexes.evm_subsquid_transactions.index import EvmSubsquidTransactionsIndex
+from dipdup.indexes.evm_logs.index import EvmLogsIndex
+from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
 from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
 from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
 from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
@@ -62,11 +62,11 @@ from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
+from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
-from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeTraceData
-from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.tezos_tzkt import TezosTzktBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktEventData
 from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
@@ -436,10 +436,10 @@ class IndexDispatcher:
     async def _on_evm_node_logs(
         self,
         datasource: EvmNodeDatasource,
-        logs: tuple[EvmNodeLogData, ...],
+        logs: tuple[EvmLogData, ...],
     ) -> None:
         for index in self._indexes.values():
-            if not isinstance(index, EvmSubsquidEventsIndex):
+            if not isinstance(index, EvmLogsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue
@@ -455,10 +455,10 @@ class IndexDispatcher:
     async def _on_evm_node_transactions(
         self,
         datasource: EvmNodeDatasource,
-        transactions: tuple[EvmNodeTransactionData, ...],
+        transactions: tuple[EvmTransactionData, ...],
     ) -> None:
         for index in self._indexes.values():
-            if not isinstance(index, EvmSubsquidTransactionsIndex):
+            if not isinstance(index, EvmTransactionsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue

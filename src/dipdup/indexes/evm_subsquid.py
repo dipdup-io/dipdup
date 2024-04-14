@@ -8,7 +8,7 @@ from typing import cast
 
 from web3 import Web3
 
-from dipdup.config import EvmSubsquidIndexConfigU
+from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
@@ -27,7 +27,7 @@ from dipdup.prometheus import Metrics
 
 SUBSQUID_READAHEAD_LIMIT = 10000
 
-IndexConfigT = TypeVar('IndexConfigT', bound=EvmSubsquidIndexConfigU)
+IndexConfigT = TypeVar('IndexConfigT', bound=EvmIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource | EvmNodeDatasource)
 
 

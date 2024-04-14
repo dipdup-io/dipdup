@@ -23,15 +23,15 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
+from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeHeadSubscription
-from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.evm_node import EvmNodeTraceData
-from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.performance import caches
 from dipdup.performance import metrics
@@ -47,9 +47,9 @@ NODE_LAST_MILE = 128
 
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
-LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeLogData, ...]], Awaitable[None]]
+LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmLogData, ...]], Awaitable[None]]
 TracesCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTraceData, ...]], Awaitable[None]]
-TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTransactionData, ...]], Awaitable[None]]
+TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 
 
@@ -172,7 +172,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             known_level = head.level
 
             if raw_logs := level_data.logs:
-                logs = tuple(EvmNodeLogData.from_json(log, head.timestamp) for log in raw_logs if not log['removed'])
+                logs = tuple(EvmLogData.from_node_json(log, head.timestamp) for log in raw_logs if not log['removed'])
                 if logs:
                     self._logger.debug('Emitting %s logs', len(logs))
                     await self.emit_logs(logs)
@@ -182,7 +182,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
                     full_transactions=True,
                 )
                 transactions = tuple(
-                    EvmNodeTransactionData.from_json(transaction, head.timestamp)
+                    EvmTransactionData.from_node_json(transaction, head.timestamp)
                     for transaction in full_block['transactions']
                 )
                 if transactions:
@@ -228,7 +228,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_head_callbacks:
             await fn(self, head)
 
-    async def emit_logs(self, logs: tuple[EvmNodeLogData, ...]) -> None:
+    async def emit_logs(self, logs: tuple[EvmLogData, ...]) -> None:
         for fn in self._on_logs_callbacks:
             await fn(self, logs)
 
@@ -240,7 +240,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_traces_callbacks:
             await fn(self, traces)
 
-    async def emit_transactions(self, transactions: tuple[EvmNodeTransactionData, ...]) -> None:
+    async def emit_transactions(self, transactions: tuple[EvmTransactionData, ...]) -> None:
         for fn in self._on_transactions_callbacks:
             await fn(self, transactions)
 

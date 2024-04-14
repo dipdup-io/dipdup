@@ -3,7 +3,7 @@
 !*/
 
 # Add metadata and build files
-!demo_evm_events
+!demo_evm_logs
 !.gitignore
 !.dockerignore
 !py.typed

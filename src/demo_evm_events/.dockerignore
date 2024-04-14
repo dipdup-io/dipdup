@@ -2,7 +2,7 @@
 *
 
 # Add metadata and build files
-!demo_evm_events
+!demo_evm_logs
 !pyproject.toml
 !*.lock
 !README.md

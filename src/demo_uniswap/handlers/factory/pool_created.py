@@ -4,10 +4,10 @@ from typing import cast
 from demo_uniswap import models as models
 from demo_uniswap.models.token import WHITELIST_TOKENS
 from demo_uniswap.models.token import ERC20Token
-from demo_uniswap.types.factory.evm_events.pool_created import PoolCreated
+from demo_uniswap.types.factory.evm_logs.pool_created import PoolCreated
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 from tortoise.exceptions import OperationalError
 
 POOL_BLACKLIST = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
@@ -36,7 +36,7 @@ async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
 
 async def pool_created(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[PoolCreated],
+    event: EvmLog[PoolCreated],
 ) -> None:
     if event.payload.pool in POOL_BLACKLIST:
         ctx.logger.info('Pool %s is blacklisted', event.payload.pool)

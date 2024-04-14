@@ -7,9 +7,9 @@ from demo_uniswap.models.repo import models_repo
 from demo_uniswap.models.token import WHITELIST_TOKENS
 from demo_uniswap.models.token import convert_token_amount
 from demo_uniswap.models.token import token_derive_eth
-from demo_uniswap.types.pool.evm_events.swap import Swap
+from demo_uniswap.types.pool.evm_logs.swap import Swap
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 POOL_BLACKLIST = {'0x9663f2ca0454accad3e094448ea6f77443880454'}
 Q192 = Decimal(2**192)
@@ -48,7 +48,7 @@ def sqrt_price_x96_to_token_prices(
 
 async def swap(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Swap],
+    event: EvmLog[Swap],
 ) -> None:
     factory = await get_ctx_factory(ctx)
     pool = await models.Pool.cached_get_or_none(event.data.address)

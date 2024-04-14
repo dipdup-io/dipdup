@@ -4,8 +4,8 @@
 spec_version: 2.1
 replay:
   dipdup_version: 7
-  template: demo_evm_events
-  package: demo_evm_events
+  template: demo_evm_logs
+  package: demo_evm_logs
   version: 0.0.1
   description: ERC-20 token transfers (from event logs)
   license: MIT

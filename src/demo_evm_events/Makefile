@@ -3,7 +3,7 @@ MAKEFLAGS += --no-print-directory
 ##
 ##  🚧 DipDup developer tools
 ##
-PACKAGE=demo_evm_events
+PACKAGE=demo_evm_logs
 TAG=latest
 COMPOSE=deploy/compose.yaml
 

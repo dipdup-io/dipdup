@@ -10,12 +10,11 @@ from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
-from dipdup.models.evm_node import EvmNodeTransactionData
-from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
 
-class EvmSubsquidTransactionFetcher(DataFetcher[EvmSubsquidTransactionData]):
+class EvmSubsquidTransactionFetcher(DataFetcher[EvmTransactionData]):
     """Fetches transactions from REST API, merges them and yields by level."""
 
     _datasource: EvmSubsquidDatasource
@@ -30,7 +29,7 @@ class EvmSubsquidTransactionFetcher(DataFetcher[EvmSubsquidTransactionData]):
         super().__init__(datasource, first_level, last_level)
         self._filters = filters
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmSubsquidTransactionData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:
         transaction_iter = self._datasource.iter_transactions(
             self._first_level,
             self._last_level,
@@ -40,15 +39,15 @@ class EvmSubsquidTransactionFetcher(DataFetcher[EvmSubsquidTransactionData]):
             yield level, batch
 
 
-class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmNodeTransactionData]):
+class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmTransactionData]):
     _datasource: EvmNodeDatasource
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmNodeTransactionData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:
         transaction_iter = self._fetch_by_level()
         async for level, batch in readahead_by_level(transaction_iter, limit=EVM_NODE_READAHEAD_LIMIT):
             yield level, batch
 
-    async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmNodeTransactionData, ...]]:
+    async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmTransactionData, ...]]:
         batch_size = MIN_BATCH_SIZE
         batch_first_level = self._first_level
         ratelimited: bool = False
@@ -82,7 +81,7 @@ class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmNodeTransactionData]):
                     continue
 
                 parsed_level_transactions = tuple(
-                    EvmNodeTransactionData.from_json(transaction, timestamp) for transaction in block['transactions']
+                    EvmTransactionData.from_node_json(transaction, timestamp) for transaction in block['transactions']
                 )
 
                 yield parsed_level_transactions

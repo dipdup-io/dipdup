@@ -3,14 +3,14 @@ from decimal import Decimal
 from tortoise.exceptions import DoesNotExist
 
 from {{ project.package }} import models as models
-from {{ project.package }}.types.eth_usdt.evm_events.transfer import Transfer
+from {{ project.package }}.types.eth_usdt.evm_logs.transfer import Transfer
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Transfer],
+    event: EvmLog[Transfer],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
     if not amount:

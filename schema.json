@@ -13,7 +13,11 @@
       "properties": {
         "kind": {
           "const": "abi.etherscan",
-          "title": "Kind"
+          "enum": [
+            "abi.etherscan"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "default": "https://api.etherscan.io/api",
@@ -174,7 +178,11 @@
         },
         "kind": {
           "const": "coinbase",
-          "title": "Kind"
+          "enum": [
+            "coinbase"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "api_key": {
           "anyOf": [
@@ -212,7 +220,11 @@
       "properties": {
         "kind": {
           "const": "evm",
-          "title": "Kind"
+          "enum": [
+            "evm"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "address": {
           "anyOf": [
@@ -260,13 +272,118 @@
       "title": "EvmContractConfig",
       "type": "object"
     },
+    "EvmLogsHandlerConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
+      "properties": {
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/EvmContractConfig"
+            }
+          ],
+          "title": "Contract"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        }
+      },
+      "required": [
+        "contract",
+        "name",
+        "callback"
+      ],
+      "title": "EvmLogsHandlerConfig",
+      "type": "object"
+    },
+    "EvmLogsIndexConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.logs'\n:param datasource: Subsquid datasource\n:param handlers: Event handlers\n:param abi: One or more `evm.abi` datasource(s) for the same network\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
+      "properties": {
+        "kind": {
+          "const": "evm.logs",
+          "enum": [
+            "evm.logs"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+            },
+            {
+              "$ref": "#/$defs/EvmNodeDatasourceConfig"
+            }
+          ],
+          "title": "Datasource"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/EvmLogsHandlerConfig"
+          },
+          "title": "Handlers",
+          "type": "array"
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AbiDatasourceConfig"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/AbiDatasourceConfig"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Abi"
+        },
+        "first_level": {
+          "default": 0,
+          "title": "First Level",
+          "type": "integer"
+        },
+        "last_level": {
+          "default": 0,
+          "title": "Last Level",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource"
+      ],
+      "title": "EvmLogsIndexConfig",
+      "type": "object"
+    },
     "EvmNodeDatasourceConfig": {
       "additionalProperties": false,
       "description": "Subsquid datasource config\n\n:param kind: Always 'evm.node'\n:param url: Ethereum node URL\n:param ws_url: Ethereum node WebSocket URL\n:param http: HTTP client configuration\n:param rollback_depth: A number of blocks to store in database for rollback",
       "properties": {
         "kind": {
           "const": "evm.node",
-          "title": "Kind"
+          "enum": [
+            "evm.node"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "title": "Url",
@@ -314,7 +431,11 @@
       "properties": {
         "kind": {
           "const": "evm.subsquid",
-          "title": "Kind"
+          "enum": [
+            "evm.subsquid"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "title": "Url",
@@ -366,103 +487,6 @@
       "title": "EvmSubsquidDatasourceConfig",
       "type": "object"
     },
-    "EvmSubsquidEventsHandlerConfig": {
-      "additionalProperties": false,
-      "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
-      "properties": {
-        "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/EvmContractConfig"
-            }
-          ],
-          "title": "Contract"
-        },
-        "name": {
-          "title": "Name",
-          "type": "string"
-        },
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        }
-      },
-      "required": [
-        "contract",
-        "name",
-        "callback"
-      ],
-      "title": "EvmSubsquidEventsHandlerConfig",
-      "type": "object"
-    },
-    "EvmSubsquidEventsIndexConfig": {
-      "additionalProperties": false,
-      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.subsquid.events'\n:param datasource: Subsquid datasource\n:param handlers: Event handlers\n:param abi: One or more `evm.abi` datasource(s) for the same network\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
-      "properties": {
-        "kind": {
-          "const": "evm.subsquid.events",
-          "title": "Kind"
-        },
-        "datasource": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
-            },
-            {
-              "$ref": "#/$defs/EvmNodeDatasourceConfig"
-            }
-          ],
-          "title": "Datasource"
-        },
-        "handlers": {
-          "items": {
-            "$ref": "#/$defs/EvmSubsquidEventsHandlerConfig"
-          },
-          "title": "Handlers",
-          "type": "array"
-        },
-        "abi": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AbiDatasourceConfig"
-            },
-            {
-              "items": {
-                "$ref": "#/$defs/AbiDatasourceConfig"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Abi"
-        },
-        "first_level": {
-          "default": 0,
-          "title": "First Level",
-          "type": "integer"
-        },
-        "last_level": {
-          "default": 0,
-          "title": "Last Level",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "kind",
-        "datasource"
-      ],
-      "title": "EvmSubsquidEventsIndexConfig",
-      "type": "object"
-    },
     "EvmSubsquidTracesHandlerConfig": {
       "additionalProperties": false,
       "properties": {
@@ -481,8 +505,12 @@
       "additionalProperties": false,
       "properties": {
         "kind": {
-          "const": "evm.subsquid.traces",
-          "title": "Kind"
+          "const": "evm.traces",
+          "enum": [
+            "evm.traces"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -542,7 +570,7 @@
       "title": "EvmSubsquidTracesIndexConfig",
       "type": "object"
     },
-    "EvmSubsquidTransactionsHandlerConfig": {
+    "EvmTransactionsHandlerConfig": {
       "additionalProperties": false,
       "description": "Subsquid transaction handler\n\n:param callback: Callback name\n:param from_: Transaction sender\n:param to: Transaction receiver\n:param method: Method name",
       "properties": {
@@ -596,16 +624,20 @@
       "required": [
         "callback"
       ],
-      "title": "EvmSubsquidTransactionsHandlerConfig",
+      "title": "EvmTransactionsHandlerConfig",
       "type": "object"
     },
-    "EvmSubsquidTransactionsIndexConfig": {
+    "EvmTransactionsIndexConfig": {
       "additionalProperties": false,
-      "description": "Index that uses Subsquid Network as a datasource for transactions\n\n:param kind: always 'evm.subsquid.transactions'\n:param datasource: Subsquid datasource config\n:param handlers: Transaction handlers\n:param abi: One or many ABI datasource(s)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
+      "description": "Index that uses Subsquid Network as a datasource for transactions\n\n:param kind: always 'evm.transactions'\n:param datasource: Subsquid datasource config\n:param handlers: Transaction handlers\n:param abi: One or many ABI datasource(s)\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "evm.subsquid.transactions",
-          "title": "Kind"
+          "const": "evm.transactions",
+          "enum": [
+            "evm.transactions"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -623,7 +655,7 @@
         },
         "handlers": {
           "items": {
-            "$ref": "#/$defs/EvmSubsquidTransactionsHandlerConfig"
+            "$ref": "#/$defs/EvmTransactionsHandlerConfig"
           },
           "title": "Handlers",
           "type": "array"
@@ -662,7 +694,7 @@
         "datasource",
         "handlers"
       ],
-      "title": "EvmSubsquidTransactionsIndexConfig",
+      "title": "EvmTransactionsIndexConfig",
       "type": "object"
     },
     "HasuraConfig": {
@@ -935,7 +967,11 @@
       "properties": {
         "kind": {
           "const": "http",
-          "title": "Kind"
+          "enum": [
+            "http"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "title": "Url",
@@ -999,7 +1035,11 @@
       "properties": {
         "kind": {
           "const": "ipfs",
-          "title": "Kind"
+          "enum": [
+            "ipfs"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "default": "https://ipfs.io/ipfs",
@@ -1098,7 +1138,11 @@
         },
         "kind": {
           "const": "postgres",
-          "title": "Kind"
+          "enum": [
+            "postgres"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "host": {
           "title": "Host",
@@ -1264,7 +1308,11 @@
         },
         "kind": {
           "const": "sqlite",
-          "title": "Kind"
+          "enum": [
+            "sqlite"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "path": {
           "default": ":memory:",
@@ -1284,7 +1332,11 @@
       "properties": {
         "kind": {
           "const": "tezos",
-          "title": "Kind"
+          "enum": [
+            "tezos"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "address": {
           "anyOf": [
@@ -1370,7 +1422,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.big_maps",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.big_maps"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -1423,7 +1479,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "url": {
           "default": "https://api.tzkt.io",
@@ -1501,7 +1561,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.events",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.events"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -1579,7 +1643,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.head",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.head"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -1656,7 +1724,11 @@
         "type": {
           "const": "origination",
           "default": "origination",
-          "title": "Type"
+          "enum": [
+            "origination"
+          ],
+          "title": "Type",
+          "type": "string"
         },
         "source": {
           "anyOf": [
@@ -1721,7 +1793,11 @@
         "type": {
           "const": "sr_execute",
           "default": "sr_execute",
-          "title": "Type"
+          "enum": [
+            "sr_execute"
+          ],
+          "title": "Type",
+          "type": "string"
         },
         "source": {
           "anyOf": [
@@ -1781,7 +1857,11 @@
         "type": {
           "const": "transaction",
           "default": "transaction",
-          "title": "Type"
+          "enum": [
+            "transaction"
+          ],
+          "title": "Type",
+          "type": "string"
         },
         "source": {
           "anyOf": [
@@ -1852,7 +1932,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.operations",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.operations"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -1921,7 +2005,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.operations_unfiltered",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.operations_unfiltered"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -2015,7 +2103,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.token_balances",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.token_balances"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -2131,7 +2223,11 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt.token_transfers",
-          "title": "Kind"
+          "enum": [
+            "tezos.tzkt.token_transfers"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "datasource": {
           "anyOf": [
@@ -2175,7 +2271,11 @@
       "properties": {
         "kind": {
           "const": "tzip_metadata",
-          "title": "Kind"
+          "enum": [
+            "tzip_metadata"
+          ],
+          "title": "Kind",
+          "type": "string"
         },
         "network": {
           "$ref": "#/$defs/TzipMetadataNetwork"
@@ -2316,13 +2416,13 @@
             "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmSubsquidEventsIndexConfig"
+            "$ref": "#/$defs/EvmLogsIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmSubsquidTracesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmSubsquidTransactionsIndexConfig"
+            "$ref": "#/$defs/EvmTransactionsIndexConfig"
           },
           {
             "$ref": "#/$defs/IndexTemplateConfig"
@@ -2357,13 +2457,13 @@
             "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmSubsquidEventsIndexConfig"
+            "$ref": "#/$defs/EvmLogsIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmSubsquidTracesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmSubsquidTransactionsIndexConfig"
+            "$ref": "#/$defs/EvmTransactionsIndexConfig"
           }
         ]
       },

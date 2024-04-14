@@ -1,16 +1,16 @@
 from demo_uniswap import models
 from demo_uniswap.models.position import save_position_snapshot
 from demo_uniswap.models.token import convert_token_amount
-from demo_uniswap.types.position_manager.evm_events.decrease_liquidity import DecreaseLiquidity
+from demo_uniswap.types.position_manager.evm_logs.decrease_liquidity import DecreaseLiquidity
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 BLACKLISTED_BLOCKS = {14317993}
 
 
 async def decrease_liquidity(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[DecreaseLiquidity],
+    event: EvmLog[DecreaseLiquidity],
 ) -> None:
     if event.data.level in BLACKLISTED_BLOCKS:
         ctx.logger.warning('Blacklisted level %d', event.data.level)

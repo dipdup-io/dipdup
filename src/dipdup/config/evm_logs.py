@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EvmSubsquidEventsHandlerConfig(HandlerConfig):
+class EvmLogsHandlerConfig(HandlerConfig):
     """Subsquid event handler
 
     :param callback: Callback name
@@ -38,25 +38,25 @@ class EvmSubsquidEventsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.evm_subsquid', 'SubsquidEvent'
+        yield 'dipdup.models.evm', 'EvmLog'
         yield package, 'models as models'
 
         event_cls = snake_to_pascal(self.name)
         event_module = pascal_to_snake(self.name)
         module_name = self.contract.module_name
-        yield f'{package}.types.{module_name}.evm_events.{event_module}', event_cls
+        yield f'{package}.types.{module_name}.evm_logs.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         event_cls = snake_to_pascal(self.name)
         yield 'ctx', 'HandlerContext'
-        yield 'event', f'EvmSubsquidEvent[{event_cls}]'
+        yield 'log', f'EvmLog[{event_cls}]'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EvmSubsquidEventsIndexConfig(EvmSubsquidIndexConfig):
+class EvmLogsIndexConfig(EvmIndexConfig):
     """Subsquid datasource config
 
-    :param kind: Always 'evm.subsquid.events'
+    :param kind: Always 'evm.logs'
     :param datasource: Subsquid datasource
     :param handlers: Event handlers
     :param abi: One or more `evm.abi` datasource(s) for the same network
@@ -64,9 +64,9 @@ class EvmSubsquidEventsIndexConfig(EvmSubsquidIndexConfig):
     :param last_level: Level to stop indexing and disable this index
     """
 
-    kind: Literal['evm.subsquid.events']
+    kind: Literal['evm.logs']
     datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
-    handlers: tuple[EvmSubsquidEventsHandlerConfig, ...] = Field(default_factory=tuple)
+    handlers: tuple[EvmLogsHandlerConfig, ...] = Field(default_factory=tuple)
     abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
 
     first_level: int = 0

@@ -7,10 +7,9 @@ from typing import Any
 from eth_abi.abi import decode as decode_abi
 from eth_utils.hexadecimal import decode_hex
 
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsHandlerConfig
-from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
-from dipdup.models.evm_subsquid import EvmSubsquidEventData
+from dipdup.config.evm_logs import EvmLogsHandlerConfig
+from dipdup.models.evm import EvmLog
+from dipdup.models.evm import EvmLogData
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
@@ -18,7 +17,7 @@ from dipdup.utils import snake_to_pascal
 
 _logger = logging.getLogger(__name__)
 
-MatchedEventsT = tuple[EvmSubsquidEventsHandlerConfig, EvmSubsquidEvent[Any]]
+MatchedEventsT = tuple[EvmLogsHandlerConfig, EvmLog[Any]]
 
 
 def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ...]) -> tuple[Any, ...]:
@@ -54,15 +53,15 @@ def decode_event_data(
 
 def prepare_event_handler_args(
     package: DipDupPackage,
-    handler_config: EvmSubsquidEventsHandlerConfig,
-    matched_event: EvmSubsquidEventData | EvmNodeLogData,
-) -> EvmSubsquidEvent[Any]:
+    handler_config: EvmLogsHandlerConfig,
+    matched_event: EvmLogData | EvmLogData,
+) -> EvmLog[Any]:
     typename = handler_config.contract.module_name
     inputs = package.get_converted_abi(typename)['events'][handler_config.name]['inputs']
 
     type_ = package.get_type(
         typename=typename,
-        module=f'evm_events.{pascal_to_snake(handler_config.name)}',
+        module=f'evm_logs.{pascal_to_snake(handler_config.name)}',
         name=snake_to_pascal(handler_config.name),
     )
 
@@ -77,7 +76,7 @@ def prepare_event_handler_args(
         data=data,
         plain=True,
     )
-    return EvmSubsquidEvent(
+    return EvmLog(
         data=matched_event,
         payload=typed_payload,
     )
@@ -85,8 +84,8 @@ def prepare_event_handler_args(
 
 def match_events(
     package: DipDupPackage,
-    handlers: Iterable[EvmSubsquidEventsHandlerConfig],
-    events: Iterable[EvmSubsquidEventData | EvmNodeLogData],
+    handlers: Iterable[EvmLogsHandlerConfig],
+    events: Iterable[EvmLogData | EvmLogData],
     topics: dict[str, dict[str, str]],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""

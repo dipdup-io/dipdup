@@ -49,9 +49,9 @@ tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-ass
 class IndexType(Enum):
     """Enum for `dipdup.models.Index`"""
 
-    evm_subsquid_events = 'evm.subsquid.events'
-    evm_subsquid_transactions = 'evm.subsquid.transactions'
-    evm_subsquid_traces = 'evm.subsquid.traces'
+    evm_logs = 'evm.logs'
+    evm_transactions = 'evm.transactions'
+    evm_subsquid_traces = 'evm.traces'
     tezos_tzkt_big_maps = 'tezos.tzkt.big_maps'
     tezos_tzkt_events = 'tezos.tzkt.events'
     tezos_tzkt_head = 'tezos.tzkt.head'

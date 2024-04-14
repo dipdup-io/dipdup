@@ -2,9 +2,9 @@ from demo_uniswap import models
 from demo_uniswap.models.pool import PoolUpdateSign
 from demo_uniswap.models.pool import pool_update
 from demo_uniswap.models.repo import models_repo
-from demo_uniswap.types.pool.evm_events.mint import Mint
+from demo_uniswap.types.pool.evm_logs.mint import Mint
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 from eth_utils.address import to_normalized_address
 
 BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
@@ -12,7 +12,7 @@ BLACKLISTED_POOLS = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 
 async def mint(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Mint],
+    event: EvmLog[Mint],
 ) -> None:
     pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool or pool.id in BLACKLISTED_POOLS:

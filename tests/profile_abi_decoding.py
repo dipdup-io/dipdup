@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pprofile  # type: ignore[import-not-found]
 
-from dipdup.indexes.evm_subsquid_events.matcher import decode_event_data
+from dipdup.indexes.evm_logs.matcher import decode_event_data
 from dipdup.package import ConvertedEventAbi
 
 data = '0x000000000000000000000000c36442b4a4522e871399cd717abdd847ab11fe88000000000000000000000000000000000000000000000000000e15b0c3e67bc30000000000000000000000000000000000000000000000000dc0bcc485bdc70800000000000000000000000000000000000000000000000000000000000f1eb7'

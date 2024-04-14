@@ -2,14 +2,14 @@ from decimal import Decimal
 
 from demo_uniswap import models
 from demo_uniswap.models.token import token_derive_eth
-from demo_uniswap.types.pool.evm_events.initialize import Initialize
+from demo_uniswap.types.pool.evm_logs.initialize import Initialize
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 
 async def initialize(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Initialize],
+    event: EvmLog[Initialize],
 ) -> None:
     pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool:

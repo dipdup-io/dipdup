@@ -1,15 +1,15 @@
 from decimal import Decimal
 
-from demo_evm_events import models as models
-from demo_evm_events.types.eth_usdt.evm_events.transfer import Transfer
+from demo_evm_logs import models as models
+from demo_evm_logs.types.eth_usdt.evm_logs.transfer import Transfer
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 from tortoise.exceptions import DoesNotExist
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Transfer],
+    event: EvmLog[Transfer],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
     if not amount:

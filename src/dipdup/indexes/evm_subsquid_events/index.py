@@ -2,36 +2,35 @@ from collections import deque
 from collections.abc import Iterable
 from typing import Any
 
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsHandlerConfig
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
+from dipdup.config.evm_logs import EvmLogsHandlerConfig
+from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_subsquid import SubsquidIndex
-from dipdup.indexes.evm_subsquid_events.fetcher import EvmNodeEventFetcher
-from dipdup.indexes.evm_subsquid_events.fetcher import EvmSubsquidEventFetcher
-from dipdup.indexes.evm_subsquid_events.matcher import match_events
+from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
+from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
+from dipdup.indexes.evm_logs.matcher import match_events
 from dipdup.models import RollbackMessage
-from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
-from dipdup.models.evm_subsquid import EvmSubsquidEventData
+from dipdup.models.evm import EvmLog
+from dipdup.models.evm import EvmLogData
 from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
-QueueItem = tuple[EvmNodeLogData, ...] | RollbackMessage
+QueueItem = tuple[EvmLogData, ...] | RollbackMessage
 Datasource = EvmSubsquidDatasource | EvmNodeDatasource
 
 
-class EvmSubsquidEventsIndex(
-    SubsquidIndex[EvmSubsquidEventsIndexConfig, QueueItem, Datasource],
+class EvmLogsIndex(
+    SubsquidIndex[EvmLogsIndexConfig, QueueItem, Datasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
-        config: EvmSubsquidEventsIndexConfig,
+        config: EvmLogsIndexConfig,
         datasource: Datasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
@@ -64,7 +63,7 @@ class EvmSubsquidEventsIndex(
             await self._process_level_data(events, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
-    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidEventFetcher:
+    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmLogFetcher:
         addresses = set()
         topics: deque[tuple[str | None, str]] = deque()
 
@@ -83,15 +82,15 @@ class EvmSubsquidEventsIndex(
         if not isinstance(self._datasource, EvmSubsquidDatasource):
             raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
 
-        return EvmSubsquidEventFetcher(
+        return EvmLogFetcher(
             datasource=self._datasource,
             first_level=first_level,
             last_level=last_level,
             topics=tuple(topics),
         )
 
-    def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeEventFetcher:
-        return EvmNodeEventFetcher(
+    def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeLogFetcher:
+        return EvmNodeLogFetcher(
             datasources=self.node_datasources,
             first_level=first_level,
             last_level=last_level,
@@ -99,17 +98,17 @@ class EvmSubsquidEventsIndex(
 
     def _match_level_data(
         self,
-        handlers: tuple[EvmSubsquidEventsHandlerConfig, ...],
-        level_data: Iterable[EvmSubsquidEventData | EvmNodeLogData],
+        handlers: tuple[EvmLogsHandlerConfig, ...],
+        level_data: Iterable[EvmLogData | EvmLogData],
     ) -> deque[Any]:
         return match_events(self._ctx.package, handlers, level_data, self.topics)
 
     async def _call_matched_handler(
         self,
-        handler_config: EvmSubsquidEventsHandlerConfig,
-        event: EvmSubsquidEvent[Any],
+        handler_config: EvmLogsHandlerConfig,
+        event: EvmLog[Any],
     ) -> None:
-        if isinstance(handler_config, EvmSubsquidEventsHandlerConfig) != isinstance(event, EvmSubsquidEvent):
+        if isinstance(handler_config, EvmLogsHandlerConfig) != isinstance(event, EvmLog):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
 
         if not handler_config.parent:

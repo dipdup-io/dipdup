@@ -1,14 +1,14 @@
 from {{ project.package }} import models
 from {{ project.package }}.models.pool import PoolUpdateSign
 from {{ project.package }}.models.pool import pool_update
-from {{ project.package }}.types.pool.evm_events.burn import Burn
+from {{ project.package }}.types.pool.evm_logs.burn import Burn
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 
 async def burn(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[Burn],
+    event: EvmLog[Burn],
 ) -> None:
     pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool:

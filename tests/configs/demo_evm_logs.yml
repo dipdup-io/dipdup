@@ -1,5 +1,5 @@
 spec_version: 2.1
-package: demo_evm_events
+package: demo_evm_logs
 
 datasources:
   etherscan:
@@ -25,8 +25,8 @@ contracts:
 
 indexes:
   eth_usdt_events:
-    kind: evm.subsquid.events
-    datasource: evm_node
+    kind: evm.logs
+    datasource: subsquid
     handlers:
       - callback: on_transfer
         contract: eth_usdt

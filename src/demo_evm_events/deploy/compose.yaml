@@ -1,5 +1,5 @@
 version: "3.8"
-name: demo_evm_events
+name: demo_evm_logs
 
 services:
   dipdup:

@@ -1,31 +1,52 @@
 :orphan:
 
+===============================================================================
+Base classes
+===============================================================================
+
 .. autoclass:: dipdup.models.CachedModel
-.. autoclass:: dipdup.models.coinbase.CoinbaseCandleData
-.. autoclass:: dipdup.models.coinbase.CoinbaseCandleInterval
+.. autoclass:: dipdup.models.Model
+
+===============================================================================
+Internal models
+===============================================================================
+
+.. autoclass:: dipdup.models.ContractMetadata
+.. autoclass:: dipdup.models.Head
+.. autoclass:: dipdup.models.TokenMetadata
 .. autoclass:: dipdup.models.Contract
 .. autoclass:: dipdup.models.ContractKind
-.. autoclass:: dipdup.models.ContractMetadata
-.. autoclass:: dipdup.models.evm_node.EvmNodeHeadData
-.. autoclass:: dipdup.models.evm_node.EvmNodeLogData
-.. autoclass:: dipdup.models.evm_node.EvmNodeSyncingData
-.. autoclass:: dipdup.models.evm_node.EvmNodeTransactionData
-.. autoclass:: dipdup.models.evm_subsquid.EvmSubsquidEvent
-.. autoclass:: dipdup.models.evm_subsquid.EvmSubsquidEventData
-.. autoclass:: dipdup.models.evm_subsquid.EvmSubsquidTransaction
-.. autoclass:: dipdup.models.evm_subsquid.EvmSubsquidTransactionData
-.. autoclass:: dipdup.models.Head
 .. autoclass:: dipdup.models.Index
 .. autoclass:: dipdup.models.IndexStatus
 .. autoclass:: dipdup.models.IndexType
-.. autoclass:: dipdup.models.Meta
-.. autoclass:: dipdup.models.Model
-.. autoclass:: dipdup.models.ModelUpdate
-.. autoclass:: dipdup.models.ModelUpdateAction
+.. autoclass:: dipdup.models.Schema
 .. autoclass:: dipdup.models.ReindexingAction
 .. autoclass:: dipdup.models.ReindexingReason
-.. autoclass:: dipdup.models.Schema
 .. autoclass:: dipdup.models.SkipHistory
+.. autoclass:: dipdup.models.Meta
+.. autoclass:: dipdup.models.ModelUpdate
+.. autoclass:: dipdup.models.ModelUpdateAction
+
+
+===============================================================================
+Datasource models
+===============================================================================
+
+-------------------------------------------------------------------------------
+EVM
+-------------------------------------------------------------------------------
+
+.. autoclass:: dipdup.models.evm.EvmTransaction
+.. autoclass:: dipdup.models.evm.EvmTransactionData
+.. autoclass:: dipdup.models.evm.EvmLog
+.. autoclass:: dipdup.models.evm.EvmLogData
+.. autoclass:: dipdup.models.evm_node.EvmNodeHeadData
+.. autoclass:: dipdup.models.evm_node.EvmNodeSyncingData
+
+-------------------------------------------------------------------------------
+Tezos
+-------------------------------------------------------------------------------
+
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapAction
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapDiff
@@ -44,5 +65,11 @@
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTokenTransferData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTransaction
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktUnknownEvent
-.. autoclass:: dipdup.models.TokenMetadata
+
+-------------------------------------------------------------------------------
+Other
+-------------------------------------------------------------------------------
+
+.. autoclass:: dipdup.models.coinbase.CoinbaseCandleData
+.. autoclass:: dipdup.models.coinbase.CoinbaseCandleInterval
 .. autoclass:: dipdup.models.tzip_metadata.TzipMetadataNetwork

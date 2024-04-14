@@ -1,16 +1,16 @@
 from {{ project.package }} import models
 from {{ project.package }}.models.position import save_position_snapshot
 from {{ project.package }}.models.token import convert_token_amount
-from {{ project.package }}.types.position_manager.evm_events.increase_liquidity import IncreaseLiquidity
+from {{ project.package }}.types.position_manager.evm_logs.increase_liquidity import IncreaseLiquidity
 from dipdup.context import HandlerContext
-from dipdup.models.evm_subsquid import EvmSubsquidEvent
+from dipdup.models.evm import EvmLog
 
 BLACKLISTED_BLOCKS = {14317993}
 
 
 async def increase_liquidity(
     ctx: HandlerContext,
-    event: EvmSubsquidEvent[IncreaseLiquidity],
+    event: EvmLog[IncreaseLiquidity],
 ) -> None:
     if event.data.level in BLACKLISTED_BLOCKS:
         ctx.logger.warning('Blacklisted level %d', event.data.level)

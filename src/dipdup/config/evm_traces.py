@@ -12,7 +12,7 @@ from dipdup.config import AbiDatasourceConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidIndexConfig
+from dipdup.config.evm_subsquid import EvmIndexConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -28,8 +28,8 @@ class EvmSubsquidTracesHandlerConfig(HandlerConfig, ABC):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EvmSubsquidTracesIndexConfig(EvmSubsquidIndexConfig):
-    kind: Literal['evm.subsquid.traces']
+class EvmSubsquidTracesIndexConfig(EvmIndexConfig):
+    kind: Literal['evm.traces']
 
     datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
     handlers: tuple[EvmSubsquidTracesHandlerConfig, ...] = field(default_factory=tuple)

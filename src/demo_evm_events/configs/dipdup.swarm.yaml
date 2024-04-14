@@ -1,13 +1,13 @@
 database:
   kind: postgres
-  host: ${POSTGRES_HOST:-demo_evm_events_db}
+  host: ${POSTGRES_HOST:-demo_evm_logs_db}
   port: 5432
   user: ${POSTGRES_USER:-dipdup}
   password: ${POSTGRES_PASSWORD}
   database: ${POSTGRES_DB:-dipdup}
 
 hasura:
-  url: http://${HASURA_HOST:-demo_evm_events_hasura}:8080
+  url: http://${HASURA_HOST:-demo_evm_logs_hasura}:8080
   admin_secret: ${HASURA_SECRET}
   allow_aggregations: ${HASURA_ALLOW_AGGREGATIONS:-false}
   select_limit: ${HASURA_SELECT_LIMIT:-100}

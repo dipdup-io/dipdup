@@ -26,9 +26,9 @@ from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid_events import EvmSubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import EvmSubsquidTracesIndexConfig
-from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsIndexConfig
+from dipdup.config.evm_logs import EvmLogsIndexConfig
+from dipdup.config.evm_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
 from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
@@ -298,9 +298,9 @@ class DipDupContext:
 
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
-        from dipdup.indexes.evm_subsquid_events.index import EvmSubsquidEventsIndex
+        from dipdup.indexes.evm_logs.index import EvmLogsIndex
         from dipdup.indexes.evm_subsquid_traces.index import EvmSubsquidTracesIndex
-        from dipdup.indexes.evm_subsquid_transactions.index import EvmSubsquidTransactionsIndex
+        from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
         from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
@@ -316,9 +316,9 @@ class DipDupContext:
             | TezosTzktTokenBalancesIndex
             | TezosTzktTokenTransfersIndex
             | TezosTzktEventsIndex
-            | EvmSubsquidEventsIndex
+            | EvmLogsIndex
             | EvmSubsquidTracesIndex
-            | EvmSubsquidTransactionsIndex
+            | EvmTransactionsIndex
         )
 
         datasource_name = index_config.datasource.name
@@ -342,7 +342,7 @@ class DipDupContext:
         elif isinstance(index_config, TezosTzktEventsIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosTzktEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, EvmSubsquidEventsIndexConfig):
+        elif isinstance(index_config, EvmLogsIndexConfig):
             datasource_config = index_config.datasource
             if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
                 datasource = self.get_evm_subsquid_datasource(datasource_name)
@@ -350,12 +350,12 @@ class DipDupContext:
                 datasource = self.get_evm_node_datasource(datasource_name)
             else:
                 raise NotImplementedError
-            index = EvmSubsquidEventsIndex(self, index_config, datasource)
+            index = EvmLogsIndex(self, index_config, datasource)
             for node_datasource in index.node_datasources:
                 node_datasource.add_index(index_config)
         elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
             raise NotImplementedError
-        elif isinstance(index_config, EvmSubsquidTransactionsIndexConfig):
+        elif isinstance(index_config, EvmTransactionsIndexConfig):
             datasource_config = index_config.datasource
             if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
                 datasource = self.get_evm_subsquid_datasource(datasource_name)
@@ -363,7 +363,7 @@ class DipDupContext:
                 datasource = self.get_evm_node_datasource(datasource_name)
             else:
                 raise NotImplementedError
-            index = EvmSubsquidTransactionsIndex(self, index_config, datasource)
+            index = EvmTransactionsIndex(self, index_config, datasource)
             for node_datasource in index.node_datasources:
                 node_datasource.add_index(index_config)
         else:

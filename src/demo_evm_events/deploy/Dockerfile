@@ -5,5 +5,5 @@ FROM dipdup/dipdup:7
 # COPY --chown=dipdup pyproject.toml README.md .
 # RUN pip install .
 
-COPY --chown=dipdup . demo_evm_events
-WORKDIR demo_evm_events
+COPY --chown=dipdup . demo_evm_logs
+WORKDIR demo_evm_logs
