@@ -3,7 +3,7 @@
 #
 spec_version: 2.1
 replay:
-  dipdup_version: 7
+  dipdup_version: 8
   template: demo_dao
   package: demo_dao
   version: 0.0.1

@@ -3,7 +3,7 @@ name: demo_events
 
 services:
   dipdup:
-    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-7}
+    image: ${IMAGE:-ghcr.io/dipdup-io/dipdup}:${TAG:-8}
     depends_on:
       - db
       - hasura
