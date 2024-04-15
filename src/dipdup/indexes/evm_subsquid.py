@@ -11,6 +11,7 @@ from web3 import Web3
 from dipdup.config import SubsquidIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
@@ -27,7 +28,7 @@ from dipdup.prometheus import Metrics
 SUBSQUID_READAHEAD_LIMIT = 10000
 
 IndexConfigT = TypeVar('IndexConfigT', bound=SubsquidIndexConfigU)
-DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource)
+DatasourceT = TypeVar('DatasourceT', bound=SubsquidDatasource | EvmNodeDatasource)
 
 
 _sighashes: dict[str, str] = {}
@@ -62,14 +63,19 @@ class SubsquidIndex(
     ) -> None:
         super().__init__(ctx, config, datasource)
 
-        node_field = self._config.datasource.node
-        if node_field is None:
-            node_field = ()
-        elif isinstance(node_field, EvmNodeDatasourceConfig):
-            node_field = (node_field,)
-        self._node_datasources = tuple(
-            self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
-        )
+        if isinstance(datasource, SubsquidDatasource) and isinstance(config.datasource, SubsquidDatasourceConfig):
+            node_field = config.datasource.node
+            if node_field is None:
+                node_field = ()
+            elif isinstance(node_field, EvmNodeDatasourceConfig):
+                node_field = (node_field,)
+            self._node_datasources = tuple(
+                self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
+            )
+        elif isinstance(datasource, EvmNodeDatasource) and isinstance(config.datasource, EvmNodeDatasourceConfig):
+            self._node_datasources = (datasource,)
+        else:
+            raise FrameworkException('Invalid datasource type')
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...
@@ -133,8 +139,12 @@ class SubsquidIndex(
         if levels_left <= 0:
             return
 
-        subsquid_sync_level = await self.datasource.get_head_level()
-        Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
+        if isinstance(self.datasource, SubsquidDatasource):
+            subsquid_sync_level = await self.datasource.get_head_level()
+            Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
+        else:
+            subsquid_sync_level = 0
+
         node_sync_level = await self._get_node_sync_level(subsquid_sync_level, index_level)
 
         # NOTE: Fetch last blocks from node if there are not enough realtime messages in queue

@@ -5,6 +5,7 @@ from typing import Any
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -20,17 +21,18 @@ from dipdup.models.evm_subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmNodeLogData, ...] | RollbackMessage
+Datasource = SubsquidDatasource | EvmNodeDatasource
 
 
 class SubsquidEventsIndex(
-    SubsquidIndex[SubsquidEventsIndexConfig, QueueItem, SubsquidDatasource],
+    SubsquidIndex[SubsquidEventsIndexConfig, QueueItem, Datasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
         config: SubsquidEventsIndexConfig,
-        datasource: SubsquidDatasource,
+        datasource: Datasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
         self._topics: dict[str, dict[str, str]] | None = None
@@ -77,6 +79,9 @@ class SubsquidEventsIndex(
                 handler_config.name
             ]
             topics.append((address, event_abi['topic0']))
+
+        if not isinstance(self._datasource, SubsquidDatasource):
+            raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
 
         return SubsquidEventFetcher(
             datasource=self._datasource,
