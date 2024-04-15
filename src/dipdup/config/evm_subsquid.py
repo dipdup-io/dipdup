@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from abc import ABC
 from typing import Literal
 
 from pydantic import ConfigDict
@@ -9,7 +8,6 @@ from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
-from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.exceptions import ConfigurationError

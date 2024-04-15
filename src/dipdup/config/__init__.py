@@ -1042,7 +1042,7 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
+        elif isinstance(index_config, EvmTracesIndexConfig):
             raise NotImplementedError
 
         elif isinstance(index_config, EvmTransactionsIndexConfig):
@@ -1084,10 +1084,10 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.config.evm_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -1126,7 +1126,7 @@ TezosTzktIndexConfigU = (
     | TezosTzktTokenTransfersIndexConfig
     | TezosTzktTokenBalancesIndexConfig
 )
-EvmIndexConfigU = EvmLogsIndexConfig | EvmSubsquidTracesIndexConfig | EvmTransactionsIndexConfig
+EvmIndexConfigU = EvmLogsIndexConfig | EvmTracesIndexConfig | EvmTransactionsIndexConfig
 
 ResolvedIndexConfigU = TezosTzktIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig

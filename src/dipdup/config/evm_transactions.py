@@ -11,9 +11,9 @@ from dipdup.config import AbiDatasourceConfig
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_subsquid import EvmIndexConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake

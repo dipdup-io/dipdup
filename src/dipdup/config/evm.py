@@ -7,7 +7,8 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import ContractConfig, IndexConfig
+from dipdup.config import ContractConfig
+from dipdup.config import IndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
@@ -48,8 +49,6 @@ class EvmContractConfig(ContractConfig):
         if self.address is None:
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
         return self.address
-
-
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

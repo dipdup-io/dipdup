@@ -8,6 +8,6 @@ For testing purposes, you can enforce DipDup to use only data from EVM node.
 ```yaml [dipdup.yaml]
 indexes:
   evm_index:
-    kind: evm.subsquid.<index>
+    kind: evm.<index>
     datasource: evm_node
 ```

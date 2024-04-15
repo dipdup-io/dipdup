@@ -42,7 +42,7 @@ TRANSACTION_FIELDS: FieldSelection = {
         'timestamp': True,
     },
     'transaction': {
-        'accessList': True,
+        # 'accessList': True,
         'chainId': True,
         'contractAddress': True,
         'cumulativeGasUsed': True,

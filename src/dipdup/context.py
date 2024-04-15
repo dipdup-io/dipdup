@@ -24,10 +24,10 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.config.evm_traces import EvmSubsquidTracesIndexConfig
+from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
@@ -299,7 +299,7 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_logs.index import EvmLogsIndex
-        from dipdup.indexes.evm_subsquid_traces.index import EvmSubsquidTracesIndex
+        from dipdup.indexes.evm_traces.index import EvmTracesIndex
         from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
         from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
         from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
@@ -317,7 +317,7 @@ class DipDupContext:
             | TezosTzktTokenTransfersIndex
             | TezosTzktEventsIndex
             | EvmLogsIndex
-            | EvmSubsquidTracesIndex
+            | EvmTracesIndex
             | EvmTransactionsIndex
         )
 
@@ -353,7 +353,7 @@ class DipDupContext:
             index = EvmLogsIndex(self, index_config, datasource)
             for node_datasource in index.node_datasources:
                 node_datasource.add_index(index_config)
-        elif isinstance(index_config, EvmSubsquidTracesIndexConfig):
+        elif isinstance(index_config, EvmTracesIndexConfig):
             raise NotImplementedError
         elif isinstance(index_config, EvmTransactionsIndexConfig):
             datasource_config = index_config.datasource

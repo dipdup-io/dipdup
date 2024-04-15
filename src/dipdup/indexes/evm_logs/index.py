@@ -9,10 +9,10 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
 from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
 from dipdup.indexes.evm_logs.matcher import match_events
+from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.evm import EvmLog
 from dipdup.models.evm import EvmLogData

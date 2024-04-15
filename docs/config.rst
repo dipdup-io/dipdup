@@ -14,7 +14,7 @@
 .. autoclass:: dipdup.config.evm_logs.EvmLogsHandlerConfig
 .. autoclass:: dipdup.config.evm_logs.EvmLogsIndexConfig
 .. autoclass:: dipdup.config.evm_subsquid.EvmSubsquidDatasourceConfig
-.. autoclass:: dipdup.config.evm_subsquid.EvmIndexConfig
+.. autoclass:: dipdup.config.evm.EvmIndexConfig
 .. autoclass:: dipdup.config.evm_transactions.EvmTransactionsHandlerConfig
 .. autoclass:: dipdup.config.evm_transactions.EvmTransactionsIndexConfig
 .. autoclass:: dipdup.config.HandlerConfig

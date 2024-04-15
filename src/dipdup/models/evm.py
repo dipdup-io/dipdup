@@ -153,7 +153,9 @@ class EvmTransactionData(HasLevel, ABC):
         v = int(transaction_json['v'], 16) if transaction_json['v'] else None
         y_parity = bool(int(transaction_json['yParity'], 16)) if transaction_json['yParity'] else None
         return cls(
-            access_list=tuple(transaction_json['accessList']) if transaction_json['accessList'] else None,
+            # FIXME: 500
+            # access_list=tuple(transaction_json['accessList']) if transaction_json['accessList'] else None,
+            access_list=None,
             block_hash=header['hash'],
             chain_id=transaction_json['chainId'],
             contract_address=transaction_json['contractAddress'],
@@ -182,13 +184,13 @@ class EvmTransactionData(HasLevel, ABC):
             y_parity=y_parity,
         )
 
+
 @dataclass(frozen=True)
 class EvmTraceData(HasLevel): ...
 
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 InputT = TypeVar('InputT', bound=BaseModel)
-
 
 
 @dataclass(frozen=True)
