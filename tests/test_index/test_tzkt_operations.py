@@ -6,14 +6,14 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
-from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
+from dipdup.indexes.tezos_tzkt_operations.index import TezosOperationsIndex
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TezosTzktOperationType
 from dipdup.models.tezos_tzkt import TransactionSubscription
@@ -30,15 +30,15 @@ async def tzkt() -> AsyncIterator[TezosTzktDatasource]:
 
 
 @pytest.fixture
-def index_config() -> TezosTzktOperationsIndexConfig:
+def index_config() -> TezosOperationsIndexConfig:
     config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yml'], True)
     config.initialize()
-    return cast(TezosTzktOperationsIndexConfig, config.indexes['test'])
+    return cast(TezosOperationsIndexConfig, config.indexes['test'])
 
 
 async def test_ignored_type_filter(
     tzkt: TezosTzktDatasource,
-    index_config: TezosTzktOperationsIndexConfig,
+    index_config: TezosOperationsIndexConfig,
 ) -> None:
     index_config.types = ()
     addresses, hashes = await get_origination_filters(index_config, tzkt)
@@ -53,7 +53,7 @@ async def test_ignored_type_filter(
 @pytest.mark.skip('FIXME: Pydantic 2 migration mystery')
 async def test_get_origination_filters(
     tzkt: TezosTzktDatasource,
-    index_config: TezosTzktOperationsIndexConfig,
+    index_config: TezosOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
         TezosTzktOperationsHandlerConfig(
@@ -113,7 +113,7 @@ async def test_get_origination_filters(
 
 
 @pytest.mark.skip('FIXME: Pydantic 2 migration mystery')
-async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: TezosTzktOperationsIndexConfig) -> None:
+async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: TezosOperationsIndexConfig) -> None:
     index_config.types = (TezosTzktOperationType.transaction,)
     index_config.contracts[2].code_hash = -680664524
 
@@ -157,7 +157,7 @@ async def test_realtime() -> None:
         await dipdup._set_up_datasources(stack)
 
         dispatcher = dipdup._index_dispatcher
-        index = cast(TezosTzktOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
+        index = cast(TezosOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
 
         # NOTE: Start sync and realtime connection simultaneously.
         first_level = 1365000

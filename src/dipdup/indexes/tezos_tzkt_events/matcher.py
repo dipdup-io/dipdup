@@ -5,10 +5,10 @@ from contextlib import suppress
 from copy import copy
 from typing import Any
 
-from dipdup.codegen.tezos_tzkt import get_event_payload_type
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
+from dipdup.codegen.tezos import get_event_payload_type
+from dipdup.config.tezos_events import TezosTzktEventsHandlerConfig
+from dipdup.config.tezos_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
 from dipdup.models.tezos_tzkt import TezosTzktEvent
@@ -22,7 +22,7 @@ _logger = logging.getLogger('dipdup.matcher')
 
 MatchedEventsT = (
     tuple[TezosTzktEventsHandlerConfig, TezosTzktEvent[Any]]
-    | tuple[TezosTzktEventsUnknownEventHandlerConfig, TezosTzktUnknownEvent]
+    | tuple[TezosEventsUnknownEventHandlerConfig, TezosTzktUnknownEvent]
 )
 
 
@@ -33,7 +33,7 @@ def prepare_event_handler_args(
 ) -> TezosTzktEvent[Any] | TezosTzktUnknownEvent | None:
     _logger.debug('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
-    if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
+    if isinstance(handler_config, TezosEventsUnknownEventHandlerConfig):
         return TezosTzktUnknownEvent(
             data=matched_event,
             payload=matched_event.payload,
@@ -85,7 +85,7 @@ def match_events(
             if isinstance(arg, TezosTzktEvent) and isinstance(handler_config, TezosTzktEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif isinstance(arg, TezosTzktUnknownEvent) and isinstance(
-                handler_config, TezosTzktEventsUnknownEventHandlerConfig
+                handler_config, TezosEventsUnknownEventHandlerConfig
             ):
                 matched_handlers.append((handler_config, arg))
             elif arg is None:

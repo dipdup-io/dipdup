@@ -1,8 +1,8 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadHandlerConfig
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+from dipdup.config.tezos_head import TezosTzktHeadHandlerConfig
+from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
@@ -14,8 +14,8 @@ from dipdup.models.tezos_tzkt import TezosTzktMessageType
 HeadQueueItem = TezosTzktHeadBlockData | RollbackMessage
 
 
-class TezosTzktHeadIndex(
-    TezosTzktIndex[TezosTzktHeadIndexConfig, HeadQueueItem],
+class TezosHeadIndex(
+    TezosTzktIndex[TezosHeadIndexConfig, HeadQueueItem],
     message_type=TezosTzktMessageType.head,
 ):
     async def _synchronize(self, sync_level: int) -> None:

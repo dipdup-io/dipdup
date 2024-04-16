@@ -7,20 +7,20 @@ from typing import Any
 
 from pydantic.dataclasses import dataclass
 
-from dipdup.codegen.tezos_tzkt import get_parameter_type
-from dipdup.codegen.tezos_tzkt import get_storage_type
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.codegen.tezos import get_parameter_type
+from dipdup.codegen.tezos import get_storage_type
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfigU
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TezosTzktOperationData
@@ -170,7 +170,7 @@ def match_sr_execute(
 
 
 def match_operation_unfiltered_subgroup(
-    index: TezosTzktOperationsUnfilteredIndexConfig,
+    index: TezosOperationsUnfilteredIndexConfig,
     operation_subgroup: OperationSubgroup,
 ) -> deque[MatchedOperationsT]:
     matched_handlers: deque[MatchedOperationsT] = deque()

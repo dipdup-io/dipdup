@@ -32,10 +32,10 @@ class TezosTzktHeadHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktHeadIndexConfig(TezosTzktIndexConfig):
+class TezosHeadIndexConfig(TezosTzktIndexConfig):
     """Head block index config
 
-    :param kind: always 'tezos.tzkt.head'
+    :param kind: always 'tezos.head'
     :param callback: Callback name
     :param datasource: Index datasource to receive head blocks
     :param handlers: Mapping of head block handlers

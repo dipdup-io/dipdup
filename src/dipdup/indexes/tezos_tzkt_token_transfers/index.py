@@ -1,8 +1,8 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersHandlerConfig
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersHandlerConfig
+from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher

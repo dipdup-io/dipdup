@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from demo_evm_transactions import models as models
-from demo_evm_transactions.types.eth_usdt.evm_methods.transfer import Transfer
+from demo_evm_transactions.types.eth_usdt.evm_transactions.transfer import Transfer
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmTransaction
 from tortoise.exceptions import DoesNotExist

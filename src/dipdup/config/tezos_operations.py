@@ -275,10 +275,10 @@ class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPattern
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsIndexConfig(TezosTzktIndexConfig):
+class TezosOperationsIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 
-    :param kind: always 'tezos.tzkt.operations'
+    :param kind: always 'tezos.operations'
     :param datasource: Alias of index datasource in `datasources` section
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
@@ -389,10 +389,10 @@ class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
+class TezosOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
     """Operation index config
 
-    :param kind: always 'tezos.tzkt.operations_unfiltered'
+    :param kind: always 'tezos.operations_unfiltered'
     :param datasource: Alias of index datasource in `datasources` section
     :param callback: Callback name
     :param types: Types of transaction to fetch
@@ -420,4 +420,4 @@ class TezosTzktOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
 
 
 TezosTzktOperationsHandlerConfigU = TezosTzktOperationsHandlerConfig | TezosTzktOperationsUnfilteredHandlerConfig
-TezosTzktOperationsIndexConfigU = TezosTzktOperationsIndexConfig | TezosTzktOperationsUnfilteredIndexConfig
+TezosOperationsIndexConfigU = TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig

@@ -1,8 +1,8 @@
 import pytest
 
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerTransactionPatternConfig
 
 
 @pytest.fixture

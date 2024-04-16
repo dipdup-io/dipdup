@@ -877,12 +877,12 @@ class DipDupConfig:
             return
 
         # NOTE: Indexes that process only the current state imply early realtime.
-        from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-        from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesIndexConfig
+        from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
+        from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
 
         for name, index_config in self.indexes.items():
             is_big_maps = (
-                isinstance(index_config, TezosTzktBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never
+                isinstance(index_config, TezosBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never
             )
             is_token_balances = isinstance(index_config, TezosTzktTokenBalancesIndexConfig)
             if is_big_maps or is_token_balances:
@@ -909,7 +909,7 @@ class DipDupConfig:
         new_index_config._template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
-        if not isinstance(new_index_config, TezosTzktHeadIndexConfig):
+        if not isinstance(new_index_config, TezosHeadIndexConfig):
             new_index_config.first_level |= template_config.first_level
             new_index_config.last_level |= template_config.last_level
         self.indexes[template_config.name] = new_index_config
@@ -965,7 +965,7 @@ class DipDupConfig:
             else:
                 raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
 
-        if isinstance(index_config, TezosTzktOperationsIndexConfig):
+        if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:
                 for i, contract in enumerate(index_config.contracts):
                     if isinstance(contract, str):
@@ -996,13 +996,13 @@ class DipDupConfig:
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
 
-        elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
+        elif isinstance(index_config, TezosBigMapsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
-        elif isinstance(index_config, TezosTzktHeadIndexConfig):
+        elif isinstance(index_config, TezosHeadIndexConfig):
             index_config.handler_config.parent = index_config
 
         elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
@@ -1025,10 +1025,10 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
-        elif isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig):
+        elif isinstance(index_config, TezosOperationsUnfilteredIndexConfig):
             index_config.handler_config.parent = index_config
 
-        elif isinstance(index_config, TezosTzktEventsIndexConfig):
+        elif isinstance(index_config, TezosEventsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1093,16 +1093,16 @@ from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerSmartRollupExecutePatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerTransactionPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesIndexConfig
-from dipdup.config.tezos_tzkt_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
+from dipdup.config.tezos_events import TezosEventsIndexConfig
+from dipdup.config.tezos_head import TezosHeadIndexConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerSmartRollupExecutePatternConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
+from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersIndexConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
@@ -1118,11 +1118,11 @@ DatasourceConfigU = (
     | TezosTzktDatasourceConfig
 )
 TezosTzktIndexConfigU = (
-    TezosTzktBigMapsIndexConfig
-    | TezosTzktEventsIndexConfig
-    | TezosTzktHeadIndexConfig
-    | TezosTzktOperationsIndexConfig
-    | TezosTzktOperationsUnfilteredIndexConfig
+    TezosBigMapsIndexConfig
+    | TezosEventsIndexConfig
+    | TezosHeadIndexConfig
+    | TezosOperationsIndexConfig
+    | TezosOperationsUnfilteredIndexConfig
     | TezosTzktTokenTransfersIndexConfig
     | TezosTzktTokenBalancesIndexConfig
 )

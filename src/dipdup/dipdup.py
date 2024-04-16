@@ -47,10 +47,10 @@ from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.indexes.evm_logs.index import EvmLogsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
-from dipdup.indexes.tezos_tzkt_big_maps.index import TezosTzktBigMapsIndex
-from dipdup.indexes.tezos_tzkt_events.index import TezosTzktEventsIndex
-from dipdup.indexes.tezos_tzkt_head.index import TezosTzktHeadIndex
-from dipdup.indexes.tezos_tzkt_operations.index import TezosTzktOperationsIndex
+from dipdup.indexes.tezos_tzkt_big_maps.index import TezosBigMapsIndex
+from dipdup.indexes.tezos_tzkt_events.index import TezosEventsIndex
+from dipdup.indexes.tezos_tzkt_head.index import TezosHeadIndex
+from dipdup.indexes.tezos_tzkt_operations.index import TezosOperationsIndex
 from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_tzkt_token_transfers.index import TezosTzktTokenTransfersIndex
 from dipdup.models import Contract
@@ -122,7 +122,7 @@ class IndexDispatcher:
         on_realtime_fired = False
 
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktOperationsIndex):
+            if isinstance(index, TezosOperationsIndex):
                 await self._apply_filters(index)
 
         while True:
@@ -152,7 +152,7 @@ class IndexDispatcher:
                 self._indexes[index._config.name] = index
                 indexes_spawned = True
 
-                if isinstance(index, TezosTzktOperationsIndex):
+                if isinstance(index, TezosOperationsIndex):
                     await self._apply_filters(index)
 
             if not indexes_spawned and self.is_oneshot():
@@ -181,7 +181,7 @@ class IndexDispatcher:
             await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
 
     def is_oneshot(self) -> bool:
-        from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
+        from dipdup.config.tezos_head import TezosHeadIndexConfig
 
         # NOTE: Empty config means indexes will be spawned later via API.
         if not self._indexes:
@@ -192,7 +192,7 @@ class IndexDispatcher:
 
         # NOTE: Run forever if at least one index has no upper bound.
         for index in self._indexes.values():
-            if isinstance(index._config, TezosTzktHeadIndexConfig):
+            if isinstance(index._config, TezosHeadIndexConfig):
                 return False
             if not index._config.last_level:
                 return False
@@ -290,7 +290,7 @@ class IndexDispatcher:
                 current_speed,
             )
 
-    async def _apply_filters(self, index: TezosTzktOperationsIndex) -> None:
+    async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
@@ -416,7 +416,7 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktHeadIndex) and index.datasource == datasource:
+            if isinstance(index, TezosHeadIndex) and index.datasource == datasource:
                 index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
@@ -483,7 +483,7 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktOperationsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosOperationsIndex) and index.datasource == datasource:
                 index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
@@ -497,12 +497,12 @@ class IndexDispatcher:
         self, datasource: TezosTzktDatasource, big_maps: tuple[TezosTzktBigMapData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktBigMapsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosBigMapsIndex) and index.datasource == datasource:
                 index.push_realtime_message(big_maps)
 
     async def _on_tzkt_events(self, datasource: TezosTzktDatasource, events: tuple[TezosTzktEventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktEventsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosEventsIndex) and index.datasource == datasource:
                 index.push_realtime_message(events)
 
     async def _on_rollback(
@@ -589,8 +589,8 @@ class DipDup:
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
-        from dipdup.codegen.evm_subsquid import EvmSubsquidCodeGenerator
-        from dipdup.codegen.tezos_tzkt import TezosTzktCodeGenerator
+        from dipdup.codegen.evm import EvmCodeGenerator
+        from dipdup.codegen.tezos import TezosCodeGenerator
 
         await self._create_datasources()
 
@@ -601,8 +601,8 @@ class DipDup:
             package = DipDupPackage(self._config.package_path)
 
             codegen_classes: tuple[type[CodeGenerator], ...] = (
-                TezosTzktCodeGenerator,
-                EvmSubsquidCodeGenerator,
+                TezosCodeGenerator,
+                EvmCodeGenerator,
             )
             for codegen_cls in codegen_classes:
                 codegen = codegen_cls(

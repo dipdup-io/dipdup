@@ -4,9 +4,9 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 from typing import Any
 
-from dipdup.codegen.tezos_tzkt import get_big_map_key_type
-from dipdup.codegen.tezos_tzkt import get_big_map_value_type
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
+from dipdup.codegen.tezos import get_big_map_key_type
+from dipdup.codegen.tezos import get_big_map_value_type
+from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
 from dipdup.models.tezos_tzkt import TezosTzktBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
 from dipdup.package import DipDupPackage
@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedBigMapsT = tuple[TezosTzktBigMapsHandlerConfig, TezosTzktBigMapDiff[Any, Any]]
+MatchedBigMapsT = tuple[TezosBigMapsHandlerConfig, TezosTzktBigMapDiff[Any, Any]]
 
 
 def prepare_big_map_handler_args(
     package: DipDupPackage,
-    handler_config: TezosTzktBigMapsHandlerConfig,
+    handler_config: TezosBigMapsHandlerConfig,
     matched_big_map: TezosTzktBigMapData,
 ) -> TezosTzktBigMapDiff[Any, Any]:
     _logger.debug('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
@@ -47,7 +47,7 @@ def prepare_big_map_handler_args(
 
 
 def match_big_map(
-    handler_config: TezosTzktBigMapsHandlerConfig,
+    handler_config: TezosBigMapsHandlerConfig,
     big_map: TezosTzktBigMapData,
 ) -> bool:
     """Match single big map diff with pattern"""
@@ -60,7 +60,7 @@ def match_big_map(
 
 def match_big_maps(
     package: DipDupPackage,
-    handlers: Iterable[TezosTzktBigMapsHandlerConfig],
+    handlers: Iterable[TezosBigMapsHandlerConfig],
     big_maps: Iterable[TezosTzktBigMapData],
 ) -> deque[MatchedBigMapsT]:
     """Try to match big map diffs with all index handlers."""

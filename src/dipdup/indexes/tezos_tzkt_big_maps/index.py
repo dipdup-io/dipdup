@@ -2,8 +2,8 @@ from collections import deque
 from datetime import datetime
 from typing import Any
 
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
+from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
@@ -20,8 +20,8 @@ from dipdup.models.tezos_tzkt import TezosTzktMessageType
 QueueItem = tuple[TezosTzktBigMapData, ...] | RollbackMessage
 
 
-class TezosTzktBigMapsIndex(
-    TezosTzktIndex[TezosTzktBigMapsIndexConfig, QueueItem],
+class TezosBigMapsIndex(
+    TezosTzktIndex[TezosBigMapsIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.big_map,
 ):
     async def _synchronize(self, sync_level: int) -> None:
@@ -94,7 +94,7 @@ class TezosTzktBigMapsIndex(
             await self._update_state(level=head_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktBigMapsHandlerConfig, level_data: TezosTzktBigMapDiff[Any, Any]
+        self, handler_config: TezosBigMapsHandlerConfig, level_data: TezosTzktBigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

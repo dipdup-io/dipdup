@@ -6,17 +6,17 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import DataFetcher
@@ -56,7 +56,7 @@ def get_operations_head(operations: tuple[TezosTzktOperationData, ...]) -> int:
 
 
 async def get_transaction_filters(
-    config: TezosTzktOperationsIndexConfig,
+    config: TezosOperationsIndexConfig,
     datasource: TezosTzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch transactions from during initial synchronization"""
@@ -98,7 +98,7 @@ async def get_transaction_filters(
 
 
 async def get_origination_filters(
-    config: TezosTzktOperationsIndexConfig,
+    config: TezosOperationsIndexConfig,
     datasource: TezosTzktDatasource,
 ) -> tuple[set[str], set[int]]:
     """Get addresses to fetch origination from during initial synchronization"""
@@ -134,7 +134,7 @@ async def get_origination_filters(
 
 
 async def get_sr_execute_filters(
-    config: TezosTzktOperationsIndexConfig,
+    config: TezosOperationsIndexConfig,
 ) -> set[str]:
     """Get addresses to fetch smart rollup executions from during initial synchronization"""
     if TezosTzktOperationType.sr_execute not in config.types:
@@ -433,7 +433,7 @@ class OperationsFetcher(DataFetcher[TezosTzktOperationData]):
     @classmethod
     async def create(
         cls,
-        config: TezosTzktOperationsIndexConfig,
+        config: TezosOperationsIndexConfig,
         datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
@@ -457,7 +457,7 @@ class OperationsFetcher(DataFetcher[TezosTzktOperationData]):
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TezosTzktOperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is split by level, deduped, sorted and ready to be processed by TezosTzktOperationsIndex.
+        Resulting data is split by level, deduped, sorted and ready to be processed by TezosOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,
@@ -559,7 +559,7 @@ class OperationsUnfilteredFetcher(DataFetcher[TezosTzktOperationData]):
     @classmethod
     async def create(
         cls,
-        config: TezosTzktOperationsUnfilteredIndexConfig,
+        config: TezosOperationsUnfilteredIndexConfig,
         datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,
@@ -576,7 +576,7 @@ class OperationsUnfilteredFetcher(DataFetcher[TezosTzktOperationData]):
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TezosTzktOperationData, ...]]]:
         """Iterate over operations fetched with multiple REST requests with different filters.
 
-        Resulting data is split by level, deduped, sorted and ready to be processed by TezosTzktOperationsIndex.
+        Resulting data is split by level, deduped, sorted and ready to be processed by TezosOperationsIndex.
         """
         channel_kwargs = {
             'buffer': self._buffer,

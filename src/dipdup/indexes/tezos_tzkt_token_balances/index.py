@@ -1,8 +1,8 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesHandlerConfig
-from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesIndexConfig
+from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesHandlerConfig
+from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.indexes.tezos_tzkt_token_balances.matcher import match_token_balances

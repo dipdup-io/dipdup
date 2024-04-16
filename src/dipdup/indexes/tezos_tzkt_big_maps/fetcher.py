@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsHandlerConfig
+from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
@@ -13,11 +13,11 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
     from collections.abc import Iterable
 
-    from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
+    from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-def get_big_map_addresses(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[str]:
+def get_big_map_addresses(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[str]:
     """Get addresses to fetch big map diffs from during initial synchronization"""
     addresses = set()
     for handler_config in handlers:
@@ -25,7 +25,7 @@ def get_big_map_addresses(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> 
     return addresses
 
 
-def get_big_map_paths(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[str]:
+def get_big_map_paths(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[str]:
     """Get addresses to fetch big map diffs from during initial synchronization"""
     paths = set()
     for handler_config in handlers:
@@ -33,7 +33,7 @@ def get_big_map_paths(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[
     return paths
 
 
-def get_big_map_pairs(handlers: Iterable[TezosTzktBigMapsHandlerConfig]) -> set[tuple[str, str]]:
+def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[tuple[str, str]]:
     """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
     pairs = set()
     for handler_config in handlers:
@@ -67,7 +67,7 @@ class BigMapFetcher(DataFetcher[TezosTzktBigMapData]):
     @classmethod
     def create(
         cls,
-        config: TezosTzktBigMapsIndexConfig,
+        config: TezosBigMapsIndexConfig,
         datasource: TezosTzktDatasource,
         first_level: int,
         last_level: int,

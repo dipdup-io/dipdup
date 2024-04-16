@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktBigMapsHandlerConfig(HandlerConfig):
+class TezosBigMapsHandlerConfig(HandlerConfig):
     """Big map handler config
 
     :param callback: Callback name
@@ -67,10 +67,10 @@ class TezosTzktBigMapsHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktBigMapsIndexConfig(TezosTzktIndexConfig):
+class TezosBigMapsIndexConfig(TezosTzktIndexConfig):
     """Big map index config
 
-    :param kind: always 'tezos.tzkt.big_maps'
+    :param kind: always 'tezos.big_maps'
     :param datasource: Index datasource to fetch big maps with
     :param handlers: Mapping of big map diff handlers
     :param skip_history: Fetch only current big map keys ignoring historical changes
@@ -80,7 +80,7 @@ class TezosTzktBigMapsIndexConfig(TezosTzktIndexConfig):
 
     kind: Literal['tezos.tzkt.big_maps']
     datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktBigMapsHandlerConfig, ...]
+    handlers: tuple[TezosBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
 

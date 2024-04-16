@@ -50,7 +50,7 @@ class TezosTzktEventsHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig):
+class TezosEventsUnknownEventHandlerConfig(HandlerConfig):
     """Unknown event handler config
 
     :param callback: Callback name
@@ -69,14 +69,14 @@ class TezosTzktEventsUnknownEventHandlerConfig(HandlerConfig):
         yield 'event', 'UnknownEvent'
 
 
-TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosTzktEventsUnknownEventHandlerConfig
+TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosEventsUnknownEventHandlerConfig
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktEventsIndexConfig(TezosTzktIndexConfig):
+class TezosEventsIndexConfig(TezosTzktIndexConfig):
     """Event index config
 
-    :param kind: always 'tezos.tzkt.events'
+    :param kind: always 'tezos.events'
     :param datasource: Datasource config
     :param handlers: Event handlers
     :param first_level: First block level to index

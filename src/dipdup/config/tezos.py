@@ -4,9 +4,12 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import ContractConfig
+from dipdup.config import ContractConfig, IndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions import Subscription
 
 ADDRESS_LENGTH = 36
 SMART_CONTRACT_PREFIX = 'KT1'
@@ -63,3 +66,18 @@ class TezosContractConfig(ContractConfig):
         if isinstance(self.code_hash, str):
             raise FrameworkException('`code_hash` was not resolved during startup')
         return self.code_hash
+
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+class TezosTzktIndexConfig(IndexConfig):
+    """TzKT index config
+
+    :param kind: starts with 'tezos'
+    :param datasource: `tezos.tzkt` datasource to use
+    """
+
+    datasource: TezosTzktDatasourceConfig
+
+    def get_subscriptions(self) -> set[Subscription]:
+        return {HeadSubscription()}

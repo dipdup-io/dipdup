@@ -6,20 +6,20 @@ from collections.abc import Iterator
 from collections.abc import Sequence
 from typing import Any
 
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerConfigU
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfigU
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfigU
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfigU
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -153,14 +153,14 @@ def extract_operation_subgroups(
         )
 
 
-class TezosTzktOperationsIndex(
-    TezosTzktIndex[TezosTzktOperationsIndexConfigU, QueueItem],
+class TezosOperationsIndex(
+    TezosTzktIndex[TezosOperationsIndexConfigU, QueueItem],
     message_type=TezosTzktMessageType.operation,
 ):
     def __init__(
         self,
         ctx: DipDupContext,
-        config: TezosTzktOperationsIndexConfigU,
+        config: TezosOperationsIndexConfigU,
         datasource: TezosTzktDatasource,
     ) -> None:
         super().__init__(ctx, config, datasource)
@@ -169,7 +169,7 @@ class TezosTzktOperationsIndex(
         self._code_hash_filter: set[int] = set()
 
     async def get_filters(self) -> tuple[set[str], set[str], set[int]]:
-        if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+        if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
             return set(), set(), set()
 
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
@@ -211,14 +211,14 @@ class TezosTzktOperationsIndex(
     async def _create_fetcher(
         self, first_level: int, sync_level: int
     ) -> OperationsFetcher | OperationsUnfilteredFetcher:
-        if isinstance(self._config, TezosTzktOperationsIndexConfig):
+        if isinstance(self._config, TezosOperationsIndexConfig):
             return await OperationsFetcher.create(
                 self._config,
                 self._datasource,
                 first_level,
                 sync_level,
             )
-        if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+        if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
             return await OperationsUnfilteredFetcher.create(
                 self._config,
                 self._datasource,
@@ -272,7 +272,7 @@ class TezosTzktOperationsIndex(
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
-            if isinstance(self._config, TezosTzktOperationsUnfilteredIndexConfig):
+            if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
                     index=self._config,
                     operation_subgroup=operation_subgroup,

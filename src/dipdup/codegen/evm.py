@@ -118,7 +118,7 @@ def abi_to_jsonschemas(
                 if name not in methods:
                     continue
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_methods' / f'{name}.json'
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_transactions' / f'{name}.json'
             elif abi_item['type'] == 'event':
                 name = abi_item['name']
                 if name not in events:
@@ -148,7 +148,7 @@ def topic_from_abi(event: dict[str, Any]) -> str:
     return '0x' + eth_utils.crypto.keccak(text=signature).hex()
 
 
-class EvmSubsquidCodeGenerator(CodeGenerator):
+class EvmCodeGenerator(CodeGenerator):
     async def generate_abi(self) -> None:
         for index_config in self._config.indexes.values():
             if isinstance(index_config, EvmIndexConfig):
@@ -238,7 +238,7 @@ class EvmSubsquidCodeGenerator(CodeGenerator):
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         markers = {
             'evm_logs',
-            'evm_methods',
+            'evm_transactions',
         }
         if not set(schema_path.parts).intersection(markers):
             return

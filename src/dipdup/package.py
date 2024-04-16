@@ -197,7 +197,7 @@ class DipDupPackage:
 
     def get_converted_abi(self, typename: str) -> ConvertedAbi:
         if not self._converted_abis:
-            from dipdup.codegen.evm_subsquid import convert_abi
+            from dipdup.codegen.evm import convert_abi
 
             self._converted_abis = convert_abi(self)
         return self._converted_abis[typename]

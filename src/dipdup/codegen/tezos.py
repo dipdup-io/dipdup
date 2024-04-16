@@ -24,19 +24,19 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import is_contract_address
 from dipdup.config.tezos import is_rollup_address
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt_big_maps import TezosTzktBigMapsIndexConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsUnknownEventHandlerConfig
-from dipdup.config.tezos_tzkt_head import TezosTzktHeadIndexConfig
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
+from dipdup.config.tezos_events import TezosEventsIndexConfig
+from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
+from dipdup.config.tezos_head import TezosHeadIndexConfig
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerPatternConfigU as PatternConfigU
-from dipdup.config.tezos_tzkt_operations import (
+from dipdup.config.tezos_operations import TezosTzktOperationsHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_operations import (
     TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
 )
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
@@ -89,7 +89,7 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
     return schema
 
 
-class TezosTzktCodeGenerator(CodeGenerator):
+class TezosCodeGenerator(CodeGenerator):
     """Generates package based on config, invoked from `init` CLI command"""
 
     def __init__(
@@ -123,18 +123,18 @@ class TezosTzktCodeGenerator(CodeGenerator):
         )
 
         unused_operation_templates = [
-            t for t in self._config.templates.values() if isinstance(t, TezosTzktOperationsIndexConfig)
+            t for t in self._config.templates.values() if isinstance(t, TezosOperationsIndexConfig)
         ]
 
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, TezosTzktOperationsIndexConfig):
+            if isinstance(index_config, TezosOperationsIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-                template = cast(TezosTzktOperationsIndexConfig, index_config.parent)
+                template = cast(TezosOperationsIndexConfig, index_config.parent)
                 if template in unused_operation_templates:
                     unused_operation_templates.remove(template)
-            elif isinstance(index_config, TezosTzktBigMapsIndexConfig):
+            elif isinstance(index_config, TezosBigMapsIndexConfig):
                 await self._fetch_big_map_index_schema(index_config)
-            elif isinstance(index_config, TezosTzktEventsIndexConfig):
+            elif isinstance(index_config, TezosEventsIndexConfig):
                 await self._fetch_event_index_schema(index_config)
             else:
                 pass
@@ -171,7 +171,7 @@ class TezosTzktCodeGenerator(CodeGenerator):
             if isinstance(index_config, IndexTemplateConfig):
                 continue
             # NOTE: Always single handler
-            if isinstance(index_config, TezosTzktOperationsUnfilteredIndexConfig | TezosTzktHeadIndexConfig):
+            if isinstance(index_config, TezosOperationsUnfilteredIndexConfig | TezosHeadIndexConfig):
                 await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
@@ -319,7 +319,7 @@ class TezosTzktCodeGenerator(CodeGenerator):
                     'Contract `%s` falsely claims to be a `%s`', contract_config.address, contract_config.typename
                 )
 
-    async def _fetch_operation_index_schema(self, index_config: TezosTzktOperationsIndexConfig) -> None:
+    async def _fetch_operation_index_schema(self, index_config: TezosOperationsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
@@ -327,7 +327,7 @@ class TezosTzktCodeGenerator(CodeGenerator):
                     index_config.datasource,
                 )
 
-    async def _fetch_big_map_index_schema(self, index_config: TezosTzktBigMapsIndexConfig) -> None:
+    async def _fetch_big_map_index_schema(self, index_config: TezosBigMapsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract
 
@@ -356,9 +356,9 @@ class TezosTzktCodeGenerator(CodeGenerator):
             big_map_value_schema_path = big_map_schemas_path / f'{big_map_path}_value.json'
             write(big_map_value_schema_path, json_dumps(big_map_value_schema))
 
-    async def _fetch_event_index_schema(self, index_config: TezosTzktEventsIndexConfig) -> None:
+    async def _fetch_event_index_schema(self, index_config: TezosEventsIndexConfig) -> None:
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, TezosTzktEventsUnknownEventHandlerConfig):
+            if isinstance(handler_config, TezosEventsUnknownEventHandlerConfig):
                 continue
 
             contract_config = handler_config.contract

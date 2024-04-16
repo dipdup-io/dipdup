@@ -1,9 +1,9 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsHandlerConfigU
-from dipdup.config.tezos_tzkt_events import TezosTzktEventsIndexConfig
+from dipdup.config.tezos_events import TezosTzktEventsHandlerConfig
+from dipdup.config.tezos_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
@@ -18,8 +18,8 @@ from dipdup.models.tezos_tzkt import TezosTzktUnknownEvent
 QueueItem = tuple[TezosTzktEventData, ...] | RollbackMessage
 
 
-class TezosTzktEventsIndex(
-    TezosTzktIndex[TezosTzktEventsIndexConfig, QueueItem],
+class TezosEventsIndex(
+    TezosTzktIndex[TezosEventsIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.event,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:

@@ -55,17 +55,3 @@ class TezosTzktDatasourceConfig(IndexDatasourceConfig):
         parsed_url = urlparse(self.url)
         if not (parsed_url.scheme and parsed_url.netloc):
             raise ConfigurationError(f'`{self.url}` is not a valid TzKT API URL')
-
-
-@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktIndexConfig(IndexConfig):
-    """TzKT index config
-
-    :param kind: starts with 'tezos.tzkt'
-    :param datasource: `tezos.tzkt` datasource to use
-    """
-
-    datasource: TezosTzktDatasourceConfig
-
-    def get_subscriptions(self) -> set[Subscription]:
-        return {HeadSubscription()}

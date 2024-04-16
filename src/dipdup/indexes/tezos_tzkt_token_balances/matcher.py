@@ -2,7 +2,7 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 
-from dipdup.config.tezos_tzkt_token_balances import TezosTzktTokenBalancesHandlerConfig
+from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesHandlerConfig
 from dipdup.models.tezos_tzkt import TezosTzktTokenBalanceData
 
 _logger = logging.getLogger('dipdup.matcher')
