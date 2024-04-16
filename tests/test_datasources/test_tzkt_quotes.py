@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from dipdup.models.tezos_tzkt import TezosTzktQuoteData
+from dipdup.models.tezos import TezosTzktQuoteData
 
 
 @pytest.mark.parametrize(

@@ -11,9 +11,9 @@ from dipdup.config.tezos_events import TezosEventsHandlerConfigU
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tezos_tzkt import TezosTzktEvent
-from dipdup.models.tezos_tzkt import TezosTzktEventData
-from dipdup.models.tezos_tzkt import TezosTzktUnknownEvent
+from dipdup.models.tezos import TezosTzktEvent
+from dipdup.models.tezos import TezosTzktEventData
+from dipdup.models.tezos import TezosTzktUnknownEvent
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 

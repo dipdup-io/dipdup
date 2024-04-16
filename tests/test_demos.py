@@ -7,7 +7,7 @@ from functools import partial
 import pytest
 
 from dipdup.database import tortoise_wrapper
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
+from dipdup.models.tezos import TezosTzktOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS

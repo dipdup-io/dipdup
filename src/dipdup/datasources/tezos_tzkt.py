@@ -35,17 +35,17 @@ from dipdup.models import Head
 from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TezosTokenBalanceData
-from dipdup.models.tezos_tzkt import TezosTokenTransferData
-from dipdup.models.tezos_tzkt import TezosTzktBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktBlockData
-from dipdup.models.tezos_tzkt import TezosTzktEventData
-from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktQuoteData
-from dipdup.models.tezos_tzkt import TezosTzktSubscription
+from dipdup.models.tezos import HeadSubscription
+from dipdup.models.tezos import TezosTokenBalanceData
+from dipdup.models.tezos import TezosTokenTransferData
+from dipdup.models.tezos import TezosTzktBigMapData
+from dipdup.models.tezos import TezosTzktBlockData
+from dipdup.models.tezos import TezosTzktEventData
+from dipdup.models.tezos import TezosTzktHeadBlockData
+from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktQuoteData
+from dipdup.models.tezos import TezosTzktSubscription
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100

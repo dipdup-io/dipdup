@@ -13,10 +13,10 @@ from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import OriginationSubscription
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.models.tezos import HeadSubscription
+from dipdup.models.tezos import OriginationSubscription
+from dipdup.models.tezos import TezosTzktOperationType
+from dipdup.models.tezos import TransactionSubscription
 from dipdup.yaml import DipDupYAMLConfig
 
 

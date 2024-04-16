@@ -10,10 +10,10 @@ from dipdup.indexes.tezos_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_events.matcher import match_events
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TezosTzktEvent
-from dipdup.models.tezos_tzkt import TezosTzktEventData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktUnknownEvent
+from dipdup.models.tezos import TezosTzktEvent
+from dipdup.models.tezos import TezosTzktEventData
+from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktUnknownEvent
 
 QueueItem = tuple[TezosTzktEventData, ...] | RollbackMessage
 

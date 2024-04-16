@@ -38,7 +38,7 @@ from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
+from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake

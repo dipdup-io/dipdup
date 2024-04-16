@@ -6,7 +6,7 @@ from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.index import Index
 from dipdup.index import IndexConfigT
 from dipdup.index import IndexQueueItemT
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktMessageType
 
 TZKT_READAHEAD_LIMIT = 10000
 

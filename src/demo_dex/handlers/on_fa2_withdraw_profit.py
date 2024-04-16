@@ -4,8 +4,8 @@ import demo_dex.models as models
 from demo_dex.types.quipu_fa2.tezos_parameters.withdraw_profit import WithdrawProfitParameter
 from demo_dex.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktTransaction
+from dipdup.models.tezos import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktTransaction
 
 
 async def on_fa2_withdraw_profit(

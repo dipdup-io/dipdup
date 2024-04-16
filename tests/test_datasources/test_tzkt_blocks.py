@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from dipdup.models.tezos_tzkt import TezosTzktBlockData
+from dipdup.models.tezos import TezosTzktBlockData
 
 
 @pytest.mark.parametrize(

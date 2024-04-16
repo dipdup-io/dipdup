@@ -3,7 +3,7 @@ from typing import cast
 
 from dipdup.context import HandlerContext
 from dipdup.exceptions import ContractAlreadyExistsError
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktOperationData
 
 
 async def on_factory_origination(

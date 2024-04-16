@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TezosTokenTransferData
+from dipdup.models.tezos import TezosTokenTransferData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator

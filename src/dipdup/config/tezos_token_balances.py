@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models.tezos_tzkt import TokenBalanceSubscription
+from dipdup.models.tezos import TokenBalanceSubscription
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

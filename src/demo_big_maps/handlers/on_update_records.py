@@ -2,7 +2,7 @@ import demo_big_maps.models as models
 from demo_big_maps.types.name_registry.tezos_big_maps.store_records_key import StoreRecordsKey
 from demo_big_maps.types.name_registry.tezos_big_maps.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosTzktBigMapDiff
 
 
 async def on_update_records(

@@ -29,9 +29,9 @@ from dipdup.indexes.tezos_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import DEFAULT_ENTRYPOINT
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos import DEFAULT_ENTRYPOINT
+from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktOperationData
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')

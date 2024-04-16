@@ -67,11 +67,11 @@ from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeTraceData
-from dipdup.models.tezos_tzkt import TezosTokenTransferData
-from dipdup.models.tezos_tzkt import TezosTzktBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktEventData
-from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos import TezosTokenTransferData
+from dipdup.models.tezos import TezosTzktBigMapData
+from dipdup.models.tezos import TezosTzktEventData
+from dipdup.models.tezos import TezosTzktHeadBlockData
+from dipdup.models.tezos import TezosTzktOperationData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
 from dipdup.performance import metrics

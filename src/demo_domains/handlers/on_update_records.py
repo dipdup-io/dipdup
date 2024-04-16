@@ -7,7 +7,7 @@ from demo_domains.types.name_registry.tezos_big_maps.store_records_key import St
 from demo_domains.types.name_registry.tezos_big_maps.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosTzktBigMapDiff
 
 
 def decode_domain_data(data: dict[str, str]) -> dict[str, str]:

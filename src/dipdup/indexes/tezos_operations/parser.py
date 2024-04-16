@@ -14,7 +14,7 @@ from typing import get_origin
 from pydantic import BaseModel
 
 from dipdup.exceptions import InvalidDataError
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktOperationData
 from dipdup.utils import parse_object
 
 StorageType = TypeVar('StorageType', bound=BaseModel)

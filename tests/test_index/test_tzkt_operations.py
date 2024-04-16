@@ -14,9 +14,9 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_operations.fetcher import get_transaction_filters
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.models.tezos import HeadSubscription
+from dipdup.models.tezos import TezosTzktOperationType
+from dipdup.models.tezos import TransactionSubscription
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
 from tests import TEST_CONFIGS

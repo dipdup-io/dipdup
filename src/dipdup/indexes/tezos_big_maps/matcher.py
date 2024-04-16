@@ -7,8 +7,8 @@ from typing import Any
 from dipdup.codegen.tezos import get_big_map_key_type
 from dipdup.codegen.tezos import get_big_map_value_type
 from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
-from dipdup.models.tezos_tzkt import TezosTzktBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosTzktBigMapData
+from dipdup.models.tezos import TezosTzktBigMapDiff
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 

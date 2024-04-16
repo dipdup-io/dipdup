@@ -8,8 +8,8 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktHeadBlockData
+from dipdup.models.tezos import TezosTzktMessageType
 
 HeadQueueItem = TezosTzktHeadBlockData | RollbackMessage
 

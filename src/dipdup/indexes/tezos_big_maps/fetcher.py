@@ -7,7 +7,7 @@ from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TezosTzktBigMapData
+from dipdup.models.tezos import TezosTzktBigMapData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

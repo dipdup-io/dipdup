@@ -12,10 +12,10 @@ from dipdup.indexes.tezos_big_maps.matcher import match_big_maps
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
-from dipdup.models.tezos_tzkt import TezosTzktBigMapAction
-from dipdup.models.tezos_tzkt import TezosTzktBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktBigMapAction
+from dipdup.models.tezos import TezosTzktBigMapData
+from dipdup.models.tezos import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosTzktMessageType
 
 QueueItem = tuple[TezosTzktBigMapData, ...] | RollbackMessage
 

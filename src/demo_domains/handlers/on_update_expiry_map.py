@@ -8,7 +8,7 @@ from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_key import
 from demo_domains.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
 from dipdup.context import HandlerContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosTzktBigMapDiff
 
 
 async def on_update_expiry_map(

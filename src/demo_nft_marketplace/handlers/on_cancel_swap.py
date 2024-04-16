@@ -2,7 +2,7 @@ import demo_nft_marketplace.models as models
 from demo_nft_marketplace.types.hen_minter.tezos_parameters.cancel_swap import CancelSwapParameter
 from demo_nft_marketplace.types.hen_minter.tezos_storage import HenMinterStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktTransaction
+from dipdup.models.tezos import TezosTzktTransaction
 
 
 async def on_cancel_swap(

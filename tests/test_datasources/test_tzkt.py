@@ -10,9 +10,9 @@ import pytest
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.models.tezos import HeadSubscription
+from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosTzktOperationData
 from tests import tzkt_replay
 
 T = TypeVar('T')

@@ -3,7 +3,7 @@ from collections import deque
 from collections.abc import Iterable
 
 from dipdup.config.tezos_token_balances import TezosTokenBalancesHandlerConfig
-from dipdup.models.tezos_tzkt import TezosTokenBalanceData
+from dipdup.models.tezos import TezosTokenBalanceData
 
 _logger = logging.getLogger('dipdup.matcher')
 

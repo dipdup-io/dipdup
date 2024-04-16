@@ -19,11 +19,11 @@ from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatt
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_operations.parser import deserialize_storage
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
-from dipdup.models.tezos_tzkt import TezosTzktOrigination
-from dipdup.models.tezos_tzkt import TezosTzktSmartRollupExecute
-from dipdup.models.tezos_tzkt import TezosTzktTransaction
+from dipdup.models.tezos import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktOperationType
+from dipdup.models.tezos import TezosTzktOrigination
+from dipdup.models.tezos import TezosTzktSmartRollupExecute
+from dipdup.models.tezos import TezosTzktTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 

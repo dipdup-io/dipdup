@@ -20,8 +20,8 @@ from dipdup.fetcher import FetcherChannel
 from dipdup.fetcher import FetcherFilterT
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
+from dipdup.models.tezos import TezosTzktOperationData
+from dipdup.models.tezos import TezosTzktOperationType
 
 if TYPE_CHECKING:
     from collections import defaultdict

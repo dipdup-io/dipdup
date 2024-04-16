@@ -1,7 +1,7 @@
 import demo_dao.models as models
 from demo_dao.types.registry.tezos_storage import RegistryStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktOrigination
+from dipdup.models.tezos import TezosTzktOrigination
 
 
 async def on_origination(
