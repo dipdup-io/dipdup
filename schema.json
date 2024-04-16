@@ -1326,64 +1326,6 @@
       "title": "SqliteDatabaseConfig",
       "type": "object"
     },
-    "TezosContractConfig": {
-      "additionalProperties": false,
-      "description": "Tezos contract config.\n\n:param kind: Always `tezos`\n:param address: Contract address\n:param code_hash: Contract code hash or address to fetch it from\n:param typename: Alias for the contract script",
-      "properties": {
-        "kind": {
-          "const": "tezos",
-          "enum": [
-            "tezos"
-          ],
-          "title": "Kind",
-          "type": "string"
-        },
-        "address": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Address"
-        },
-        "code_hash": {
-          "anyOf": [
-            {
-              "type": "integer"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Code Hash"
-        },
-        "typename": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Typename"
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "title": "TezosContractConfig",
-      "type": "object"
-    },
     "TezosBigMapsHandlerConfig": {
       "additionalProperties": false,
       "description": "Big map handler config\n\n:param callback: Callback name\n:param contract: Contract to fetch big map from\n:param path: Path to big map (alphanumeric string with dots)",
@@ -1473,54 +1415,62 @@
       "title": "TezosBigMapsIndexConfig",
       "type": "object"
     },
-    "TezosTzktDatasourceConfig": {
+    "TezosContractConfig": {
       "additionalProperties": false,
-      "description": "TzKT datasource config\n\n:param kind: always 'tezos.tzkt'\n:param url: Base API URL, e.g. https://api.tzkt.io/\n:param http: HTTP client configuration\n:param buffer_size: Number of levels to keep in FIFO buffer before processing\n:param merge_subscriptions: Whether to merge realtime subscriptions\n:param rollback_depth: Number of blocks to keep in the database to handle reorgs",
+      "description": "Tezos contract config.\n\n:param kind: Always `tezos`\n:param address: Contract address\n:param code_hash: Contract code hash or address to fetch it from\n:param typename: Alias for the contract script",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt",
+          "const": "tezos",
           "enum": [
-            "tezos.tzkt"
+            "tezos"
           ],
           "title": "Kind",
           "type": "string"
         },
-        "url": {
-          "default": "https://api.tzkt.io",
-          "title": "Url",
-          "type": "string"
-        },
-        "http": {
+        "address": {
           "anyOf": [
             {
-              "$ref": "#/$defs/HttpConfig"
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Address"
         },
-        "buffer_size": {
-          "default": 0,
-          "title": "Buffer Size",
-          "type": "integer"
+        "code_hash": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Code Hash"
         },
-        "merge_subscriptions": {
-          "default": false,
-          "title": "Merge Subscriptions",
-          "type": "boolean"
-        },
-        "rollback_depth": {
-          "default": 2,
-          "title": "Rollback Depth",
-          "type": "integer"
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Typename"
         }
       },
       "required": [
         "kind"
       ],
-      "title": "TezosTzktDatasourceConfig",
+      "title": "TezosContractConfig",
       "type": "object"
     },
     "TezosEventsHandlerConfig": {
@@ -2263,6 +2213,56 @@
         "datasource"
       ],
       "title": "TezosTokenTransfersIndexConfig",
+      "type": "object"
+    },
+    "TezosTzktDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "TzKT datasource config\n\n:param kind: always 'tezos.tzkt'\n:param url: Base API URL, e.g. https://api.tzkt.io/\n:param http: HTTP client configuration\n:param buffer_size: Number of levels to keep in FIFO buffer before processing\n:param merge_subscriptions: Whether to merge realtime subscriptions\n:param rollback_depth: Number of blocks to keep in the database to handle reorgs",
+      "properties": {
+        "kind": {
+          "const": "tezos.tzkt",
+          "enum": [
+            "tezos.tzkt"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://api.tzkt.io",
+          "title": "Url",
+          "type": "string"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "buffer_size": {
+          "default": 0,
+          "title": "Buffer Size",
+          "type": "integer"
+        },
+        "merge_subscriptions": {
+          "default": false,
+          "title": "Merge Subscriptions",
+          "type": "boolean"
+        },
+        "rollback_depth": {
+          "default": 2,
+          "title": "Rollback Depth",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "TezosTzktDatasourceConfig",
       "type": "object"
     },
     "TzipMetadataDatasourceConfig": {

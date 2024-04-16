@@ -40,31 +40,29 @@ EVM
 .. autoclass:: dipdup.models.evm.EvmTransactionData
 .. autoclass:: dipdup.models.evm.EvmLog
 .. autoclass:: dipdup.models.evm.EvmLogData
-.. autoclass:: dipdup.models.evm_node.EvmNodeHeadData
-.. autoclass:: dipdup.models.evm_node.EvmNodeSyncingData
 
 -------------------------------------------------------------------------------
 Tezos
 -------------------------------------------------------------------------------
 
-.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapAction
-.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapDiff
-.. autoclass:: dipdup.models.tezos_tzkt.TezosBlockData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktEvent
-.. autoclass:: dipdup.models.tezos_tzkt.TezosEventData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosHeadBlockData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosOperationData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosOperationType
-.. autoclass:: dipdup.models.tezos_tzkt.TezosOrigination
-.. autoclass:: dipdup.models.tezos_tzkt.TezosQuoteData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosSmartRollupCommitment
-.. autoclass:: dipdup.models.tezos_tzkt.TezosSmartRollupExecute
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenBalanceData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenStandard
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenTransferData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTransaction
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktUnknownEvent
+.. autoclass:: dipdup.models.tezos.TezosBigMapAction
+.. autoclass:: dipdup.models.tezos.TezosBigMapData
+.. autoclass:: dipdup.models.tezos.TezosBigMapDiff
+.. autoclass:: dipdup.models.tezos.TezosBlockData
+.. autoclass:: dipdup.models.tezos.TezosTzktEvent
+.. autoclass:: dipdup.models.tezos.TezosEventData
+.. autoclass:: dipdup.models.tezos.TezosHeadBlockData
+.. autoclass:: dipdup.models.tezos.TezosOperationData
+.. autoclass:: dipdup.models.tezos.TezosOperationType
+.. autoclass:: dipdup.models.tezos.TezosOrigination
+.. autoclass:: dipdup.models.tezos.TezosQuoteData
+.. autoclass:: dipdup.models.tezos.TezosSmartRollupCommitment
+.. autoclass:: dipdup.models.tezos.TezosSmartRollupExecute
+.. autoclass:: dipdup.models.tezos.TezosTokenBalanceData
+.. autoclass:: dipdup.models.tezos.TezosTokenStandard
+.. autoclass:: dipdup.models.tezos.TezosTokenTransferData
+.. autoclass:: dipdup.models.tezos.TezosTransaction
+.. autoclass:: dipdup.models.tezos.TezosTzktUnknownEvent
 
 -------------------------------------------------------------------------------
 Other

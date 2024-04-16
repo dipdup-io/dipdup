@@ -34,6 +34,7 @@
 .. autoclass:: dipdup.config.SqliteDatabaseConfig
 .. autoclass:: dipdup.config.SystemHookConfig
 .. autoclass:: dipdup.config.tezos.TezosContractConfig
+.. autoclass:: dipdup.config.tezos.TezosIndexConfig
 .. autoclass:: dipdup.config.tezos_big_maps.TezosBigMapsHandlerConfig
 .. autoclass:: dipdup.config.tezos_big_maps.TezosBigMapsIndexConfig
 .. autoclass:: dipdup.config.tezos_events.TezosEventsHandlerConfig
@@ -50,7 +51,6 @@
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsUnfilteredIndexConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosTzktPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt.TezosTzktDatasourceConfig
-.. autoclass:: dipdup.config.tezos_tzkt.TezosIndexConfig
 .. autoclass:: dipdup.config.tezos_token_balances.TezosTokenBalancesHandlerConfig
 .. autoclass:: dipdup.config.tezos_token_balances.TezosTokenBalancesIndexConfig
 .. autoclass:: dipdup.config.tezos_token_transfers.TezosTokenTransfersHandlerConfig
