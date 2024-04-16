@@ -1,11 +1,27 @@
-from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource, AbstractSubsquidWorker
+from typing import Any, AsyncIterator
 
+from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
+from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
 
-StarknetQuery = {}
+# ----------------
+
+# from dipdup.models.starknet_subsquid import Query
+# from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
+# from dipdup.models.starknet import StarknetTransactionData
+# from dipdup.models.starknet import StarknetEventData
+# from dipdup.models.starknet_subsquid import TransactionRequest
+
+from dipdup.config import DatasourceConfig
+
+Query = dict
+StarknetSubsquidDatasourceConfig = DatasourceConfig
+StarknetTransactionData = dict
+StarknetEventData = dict
+TransactionRequest = dict
 
 
 class _StarknetSubsquidWorker(AbstractSubsquidWorker):
-    async def query(self, query: StarknetQuery) -> list[dict[str, Any]]:  # TODO: fix typing
+    async def query(self, query: Query) -> list[dict[str, Any]]:  # TODO: fix typing
         return await super().query(query)
 
 class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
@@ -14,17 +30,16 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
         super().__init__(config, False)
 
     async def _get_worker(self, level: int) -> _StarknetSubsquidWorker:
-        return StarknetSubsquidWorker(await self._fetch_worker(level))
+        return _StarknetSubsquidWorker(await self._fetch_worker(level))
 
-    async def query_worker(self, query: StarknetQuery, current_level: int) -> list[dict[str, Any]]:  # TODO: fix typing
+    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:  # TODO: fix typing
         return await super().query_worker(query, current_level)
 
     async def iter_event_logs(
         self,
-        topics: tuple[tuple[str | None, str], ...],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[StarknetSubsquidEventData, ...]]:
+    ) -> AsyncIterator[tuple[StarknetEventData, ...]]:
         raise NotImplementedError()
 
     async def iter_transactions(
@@ -32,5 +47,5 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
-    ) -> AsyncIterator[tuple[StarknetSubsquidTransactionData, ...]]:
+    ) -> AsyncIterator[tuple[StarknetTransactionData, ...]]:
         raise NotImplementedError()

@@ -13,14 +13,9 @@ from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
 
-AbstractSubsquidQuery = dict[str, Any]
-FieldSelection = dict
+AbstractSubsquidQuery = dict[str, Any]  # TODO: from dipdup.models.subsquid import AbstractSubsquidQuery
+FieldSelection = dict[str, dict[str, bool]]
 
-# class AbstractSubsquidQuery(TypedDict):
-#     fromBlock: int
-#     toBlock: NotRequired[int]
-#     includeAllBlocks: NotRequired[bool]
-#     fields: NotRequired[FieldSelection]
 
 class AbstractSubsquidWorker(Datasource[Any]):
     async def run(self) -> None:
