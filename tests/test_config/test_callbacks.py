@@ -18,9 +18,9 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
         destination=contract,
         entrypoint='fooBar',
     )
-    assert tuple(pattern.iter_arguments()) == (('foo_bar', 'Transaction[FooBarParameter, DexContractStorage]'),)
+    assert tuple(pattern.iter_arguments()) == (('foo_bar', 'TezosTransaction[FooBarParameter, DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTransaction as Transaction'),
+        ('dipdup.models.tezos', 'TezosTransaction'),
         ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
@@ -29,9 +29,9 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'Transaction[AliasedParameter, DexContractStorage] | None'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosTransaction[AliasedParameter, DexContractStorage] | None'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTransaction as Transaction'),
+        ('dipdup.models.tezos', 'TezosTransaction'),
         ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter as AliasedParameter'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
@@ -41,15 +41,15 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
         destination=contract,
     )
     pattern.subgroup_index = 1
-    assert tuple(pattern.iter_arguments()) == (('transaction_1', 'OperationData'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('transaction_1', 'TezosOperationData'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
     # NOTE: With alias and optional
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'OperationData | None'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOperationData | None'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
 
 def test_origination_callbacks(contract: TezosContractConfig) -> None:
@@ -57,9 +57,9 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     pattern = TezosOperationsHandlerOriginationPatternConfig(
         originated_contract=contract,
     )
-    assert tuple(pattern.iter_arguments()) == (('dex_contract_origination', 'Origination[DexContractStorage]'),)
+    assert tuple(pattern.iter_arguments()) == (('dex_contract_origination', 'TezosOrigination[DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosOrigination as Origination'),
+        ('dipdup.models.tezos', 'TezosOrigination'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
@@ -67,9 +67,9 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'Origination[DexContractStorage] | None'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOrigination[DexContractStorage] | None'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosOrigination as Origination'),
+        ('dipdup.models.tezos', 'TezosOrigination'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
@@ -78,12 +78,12 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
         source=contract,
     )
     pattern.subgroup_index = 1
-    assert tuple(pattern.iter_arguments()) == (('origination_1', 'OperationData'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('origination_1', 'TezosOperationData'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
     # NOTE: With alias and optional
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'OperationData | None'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOperationData | None'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
