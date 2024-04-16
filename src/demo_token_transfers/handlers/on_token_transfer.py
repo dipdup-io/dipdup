@@ -3,7 +3,7 @@ from decimal import InvalidOperation
 
 from demo_token_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTokenTransferData
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 
 
 async def on_token_transfer(

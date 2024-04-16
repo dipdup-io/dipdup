@@ -6,7 +6,7 @@ from demo_etherlink.types.ticket_helper.tezos_storage import TicketHelperStorage
 from demo_etherlink.types.ticketer.tezos_parameters.deposit import DepositParameter
 from demo_etherlink.types.ticketer.tezos_storage import TicketerStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTransaction as Transaction
+from dipdup.models.tezos_tzkt import TezosTransaction as Transaction
 
 
 async def on_deposit(
