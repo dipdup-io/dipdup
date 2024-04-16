@@ -16,10 +16,10 @@ from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.models.tezos import OriginationSubscription
-from dipdup.models.tezos import SmartRollupExecuteSubscription
-from dipdup.models.tezos import TezosTzktOperationType
-from dipdup.models.tezos import TransactionSubscription
+from dipdup.models.tezos import TezosOperationType
+from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
+from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -83,7 +83,7 @@ class TezosTzktPatternConfig(CodegenMixin):
 
     @classmethod
     def format_untyped_operation_import(cls) -> tuple[str, str]:
-        return 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
+        return 'dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'
 
     @classmethod
     def format_origination_argument(
@@ -153,7 +153,7 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig, Sub
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktTransaction as Transaction'
+            yield 'dipdup.models.tezos_tzkt', 'TezosTransaction as Transaction'
             yield self.format_parameter_import(
                 package,
                 module_name,
@@ -210,10 +210,10 @@ class TezosOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig, Sub
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
             module_name = self.typed_contract.module_name
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOrigination as Origination'
+            yield 'dipdup.models.tezos_tzkt', 'TezosOrigination as Origination'
             yield self.format_storage_import(package, module_name)
         else:
-            yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
+            yield 'dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         if self.typed_contract:
@@ -258,7 +258,7 @@ class TezosOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPatternConf
         SubgroupIndexMixin.__post_init__(self)
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktSmartRollupExecute as SmartRollupExecute'
+        yield 'dipdup.models.tezos_tzkt', 'TezosSmartRollupExecute as SmartRollupExecute'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         arg_name = pascal_to_snake(self.alias or f'sr_execute_{self.subgroup_index}')
@@ -291,7 +291,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosOperationsHandlerConfig, ...]
     contracts: list[TezosContractConfig] = Field(default_factory=list)
-    types: tuple[TezosTzktOperationType, ...] = (TezosTzktOperationType.transaction,)
+    types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 
     first_level: int = 0
     last_level: int = 0
@@ -299,7 +299,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
 
-        if TezosTzktOperationType.transaction in self.types:
+        if TezosOperationType.transaction in self.types:
             if self.datasource.merge_subscriptions:
                 subs.add(TransactionSubscription())
             else:
@@ -308,10 +308,10 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
                         raise ConfigInitializationException
                     subs.add(TransactionSubscription(address=contract_config.address))
 
-        if TezosTzktOperationType.origination in self.types:
+        if TezosOperationType.origination in self.types:
             subs.add(OriginationSubscription())
 
-        if TezosTzktOperationType.sr_execute in self.types:
+        if TezosOperationType.sr_execute in self.types:
             if self.datasource.merge_subscriptions:
                 subs.add(SmartRollupExecuteSubscription())
             else:
@@ -380,12 +380,12 @@ class TezosOperationsUnfilteredHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktOperationData as OperationData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosOperationData as OperationData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'operation', 'TezosTzktOperationData'
+        yield 'operation', 'TezosOperationData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -404,7 +404,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     kind: Literal['tezos.operations_unfiltered']
     datasource: TezosTzktDatasourceConfig
     callback: str
-    types: tuple[TezosTzktOperationType, ...] = (TezosTzktOperationType.transaction,)
+    types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 
     first_level: int = 0
     last_level: int = 0

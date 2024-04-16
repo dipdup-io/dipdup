@@ -2,12 +2,12 @@ import demo_nft_marketplace.models as models
 from demo_nft_marketplace.types.hen_minter.tezos_parameters.collect import CollectParameter
 from demo_nft_marketplace.types.hen_minter.tezos_storage import HenMinterStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_collect(
     ctx: HandlerContext,
-    collect: TezosTzktTransaction[CollectParameter, HenMinterStorage],
+    collect: TezosTransaction[CollectParameter, HenMinterStorage],
 ) -> None:
     swap = await models.Swap.filter(id=collect.parameter.swap_id).get()
     seller = await swap.creator

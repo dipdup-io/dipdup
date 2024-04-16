@@ -4,7 +4,7 @@ from typing import cast
 import orjson
 from dipdup.context import HandlerContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos_tzkt import TezosBigMapDiff
 
 from {{ project.package }} import models as models
 from {{ project.package }}.types.name_registry.tezos_big_maps.store_records_key import StoreRecordsKey
@@ -22,7 +22,7 @@ def decode_domain_data(data: dict[str, str]) -> dict[str, str]:
 
 async def on_update_records(
     ctx: HandlerContext,
-    store_records: TezosTzktBigMapDiff[StoreRecordsKey, StoreRecordsValue],
+    store_records: TezosBigMapDiff[StoreRecordsKey, StoreRecordsValue],
 ) -> None:
     if not store_records.action.has_value:
         return

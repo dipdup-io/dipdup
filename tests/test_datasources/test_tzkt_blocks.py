@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from dipdup.models.tezos import TezosTzktBlockData
+from dipdup.models.tezos import TezosBlockData
 
 
 @pytest.mark.parametrize(
@@ -13,14 +13,14 @@ from dipdup.models.tezos import TezosTzktBlockData
 )
 async def test_deprecated_priority(tzkt_block_json: str) -> None:
     tzkt_block_dict = json.loads(tzkt_block_json)
-    block = TezosTzktBlockData.from_json(tzkt_block_dict)
+    block = TezosBlockData.from_json(tzkt_block_dict)
     assert block
-    assert isinstance(block, TezosTzktBlockData)
+    assert isinstance(block, TezosBlockData)
     assert block.priority == 0
 
     del tzkt_block_dict['priority']
 
-    block = TezosTzktBlockData.from_json(tzkt_block_dict)
+    block = TezosBlockData.from_json(tzkt_block_dict)
     assert block
-    assert isinstance(block, TezosTzktBlockData)
+    assert isinstance(block, TezosBlockData)
     assert block.priority is None

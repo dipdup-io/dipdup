@@ -6,13 +6,13 @@ from demo_dex.types.fa2_token.tezos_storage import Fa2TokenStorage
 from demo_dex.types.quipu_fa2.tezos_parameters.invest_liquidity import InvestLiquidityParameter
 from demo_dex.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_fa2_invest_liquidity(
     ctx: HandlerContext,
-    invest_liquidity: TezosTzktTransaction[InvestLiquidityParameter, QuipuFa2Storage],
-    transfer: TezosTzktTransaction[TransferParameter, Fa2TokenStorage],
+    invest_liquidity: TezosTransaction[InvestLiquidityParameter, QuipuFa2Storage],
+    transfer: TezosTransaction[TransferParameter, Fa2TokenStorage],
 ) -> None:
     storage = invest_liquidity.storage
 

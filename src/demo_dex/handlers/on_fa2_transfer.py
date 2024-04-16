@@ -2,12 +2,12 @@ import demo_dex.models as models
 from demo_dex.types.quipu_fa2.tezos_parameters.transfer import TransferParameter
 from demo_dex.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_fa2_transfer(
     ctx: HandlerContext,
-    transfer: TezosTzktTransaction[TransferParameter, QuipuFa2Storage],
+    transfer: TezosTransaction[TransferParameter, QuipuFa2Storage],
 ) -> None:
     transfer_parameter = transfer.parameter.root[0]
 

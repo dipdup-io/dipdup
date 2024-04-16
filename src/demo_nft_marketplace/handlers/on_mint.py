@@ -4,13 +4,13 @@ from demo_nft_marketplace.types.hen_minter.tezos_storage import HenMinterStorage
 from demo_nft_marketplace.types.hen_objkts.tezos_parameters.mint import MintParameter
 from demo_nft_marketplace.types.hen_objkts.tezos_storage import HenObjktsStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_mint(
     ctx: HandlerContext,
-    mint_objkt: TezosTzktTransaction[MintOBJKTParameter, HenMinterStorage],
-    mint: TezosTzktTransaction[MintParameter, HenObjktsStorage],
+    mint_objkt: TezosTransaction[MintOBJKTParameter, HenMinterStorage],
+    mint: TezosTransaction[MintParameter, HenObjktsStorage],
 ) -> None:
     holder, _ = await models.Holder.get_or_create(address=mint.parameter.address)
     token = models.Token(

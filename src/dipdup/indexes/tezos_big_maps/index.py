@@ -12,12 +12,12 @@ from dipdup.indexes.tezos_big_maps.matcher import match_big_maps
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
-from dipdup.models.tezos import TezosTzktBigMapAction
-from dipdup.models.tezos import TezosTzktBigMapData
-from dipdup.models.tezos import TezosTzktBigMapDiff
-from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosBigMapAction
+from dipdup.models.tezos import TezosBigMapData
+from dipdup.models.tezos import TezosBigMapDiff
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
-QueueItem = tuple[TezosTzktBigMapData, ...] | RollbackMessage
+QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 
 
 class TezosBigMapsIndex(
@@ -72,7 +72,7 @@ class TezosBigMapsIndex(
             for big_map_id, address, path in big_map_ids:
                 async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
-                        TezosTzktBigMapData(
+                        TezosBigMapData(
                             id=big_map_key['id'],
                             level=head_level,
                             operation_id=head_level,
@@ -80,7 +80,7 @@ class TezosBigMapsIndex(
                             bigmap=big_map_id,
                             contract_address=address,
                             path=path,
-                            action=TezosTzktBigMapAction.ADD_KEY,
+                            action=TezosBigMapAction.ADD_KEY,
                             active=big_map_key['active'],
                             key=big_map_key['key'],
                             value=big_map_key['value'],
@@ -94,7 +94,7 @@ class TezosBigMapsIndex(
             await self._update_state(level=head_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosBigMapsHandlerConfig, level_data: TezosTzktBigMapDiff[Any, Any]
+        self, handler_config: TezosBigMapsHandlerConfig, level_data: TezosBigMapDiff[Any, Any]
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

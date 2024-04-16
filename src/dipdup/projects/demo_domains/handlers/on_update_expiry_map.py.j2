@@ -5,7 +5,7 @@ from typing import cast
 import strict_rfc3339  # type: ignore[import-untyped]
 from dipdup.context import HandlerContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
-from dipdup.models.tezos_tzkt import TezosTzktBigMapDiff
+from dipdup.models.tezos_tzkt import TezosBigMapDiff
 
 from {{ project.package }} import models as models
 from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
@@ -14,7 +14,7 @@ from {{ project.package }}.types.name_registry.tezos_big_maps.store_expiry_map_v
 
 async def on_update_expiry_map(
     ctx: HandlerContext,
-    store_expiry_map: TezosTzktBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
+    store_expiry_map: TezosBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
 ) -> None:
     if not store_expiry_map.action.has_value:
         return

@@ -14,9 +14,9 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_operations.fetcher import get_transaction_filters
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
-from dipdup.models.tezos import HeadSubscription
-from dipdup.models.tezos import TezosTzktOperationType
-from dipdup.models.tezos import TransactionSubscription
+from dipdup.models.tezos import TezosOperationType
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
 from tests import TEST_CONFIGS
@@ -114,7 +114,7 @@ async def test_get_origination_filters(
 
 @pytest.mark.skip('FIXME: Pydantic 2 migration mystery')
 async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: TezosOperationsIndexConfig) -> None:
-    index_config.types = (TezosTzktOperationType.transaction,)
+    index_config.types = (TezosOperationType.transaction,)
     index_config.contracts[2].code_hash = -680664524
 
     filters = await get_transaction_filters(index_config, tzkt)

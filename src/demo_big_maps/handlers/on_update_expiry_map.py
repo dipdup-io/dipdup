@@ -2,12 +2,12 @@ import demo_big_maps.models as models
 from demo_big_maps.types.name_registry.tezos_big_maps.store_expiry_map_key import StoreExpiryMapKey
 from demo_big_maps.types.name_registry.tezos_big_maps.store_expiry_map_value import StoreExpiryMapValue
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosBigMapDiff
 
 
 async def on_update_expiry_map(
     ctx: HandlerContext,
-    store_expiry_map: TezosTzktBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
+    store_expiry_map: TezosBigMapDiff[StoreExpiryMapKey, StoreExpiryMapValue],
 ) -> None:
     if not store_expiry_map.action.has_value:
         return

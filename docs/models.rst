@@ -47,23 +47,23 @@ EVM
 Tezos
 -------------------------------------------------------------------------------
 
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapAction
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBigMapDiff
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktBlockData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapAction
+.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosBigMapDiff
+.. autoclass:: dipdup.models.tezos_tzkt.TezosBlockData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktEvent
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktEventData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktHeadBlockData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktOperationData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktOperationType
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktOrigination
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktQuoteData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktSmartRollupCommitment
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktSmartRollupExecute
+.. autoclass:: dipdup.models.tezos_tzkt.TezosEventData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosHeadBlockData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosOperationData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosOperationType
+.. autoclass:: dipdup.models.tezos_tzkt.TezosOrigination
+.. autoclass:: dipdup.models.tezos_tzkt.TezosQuoteData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosSmartRollupCommitment
+.. autoclass:: dipdup.models.tezos_tzkt.TezosSmartRollupExecute
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTokenBalanceData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTokenStandard
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTokenTransferData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTransaction
+.. autoclass:: dipdup.models.tezos_tzkt.TezosTransaction
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktUnknownEvent
 
 -------------------------------------------------------------------------------

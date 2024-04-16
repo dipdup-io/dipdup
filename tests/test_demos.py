@@ -7,7 +7,7 @@ from functools import partial
 import pytest
 
 from dipdup.database import tortoise_wrapper
-from dipdup.models.tezos import TezosTzktOperationType
+from dipdup.models.tezos import TezosOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
@@ -133,9 +133,9 @@ async def assert_run_factories() -> None:
 async def assert_run_raw() -> None:
     import demo_raw.models
 
-    transactions = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.transaction).count()
-    originations = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.origination).count()
-    migrations = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.migration).count()
+    transactions = await demo_raw.models.Operation.filter(type=TezosOperationType.transaction).count()
+    originations = await demo_raw.models.Operation.filter(type=TezosOperationType.origination).count()
+    migrations = await demo_raw.models.Operation.filter(type=TezosOperationType.migration).count()
 
     assert transactions == 167
     assert originations == 1

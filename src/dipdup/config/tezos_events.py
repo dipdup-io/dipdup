@@ -11,7 +11,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models.tezos import EventSubscription
+from dipdup.models.tezos_tzkt import EventSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 

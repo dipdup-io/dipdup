@@ -19,11 +19,11 @@ from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatt
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_operations.parser import deserialize_storage
-from dipdup.models.tezos import TezosTzktOperationData
-from dipdup.models.tezos import TezosTzktOperationType
-from dipdup.models.tezos import TezosTzktOrigination
-from dipdup.models.tezos import TezosTzktSmartRollupExecute
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosOperationData
+from dipdup.models.tezos import TezosOperationType
+from dipdup.models.tezos import TezosOrigination
+from dipdup.models.tezos import TezosSmartRollupExecute
+from dipdup.models.tezos import TezosTransaction
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
@@ -39,15 +39,11 @@ class OperationSubgroup:
 
     hash: str
     counter: int
-    operations: tuple[TezosTzktOperationData, ...]
+    operations: tuple[TezosOperationData, ...]
 
 
 TezosOperationsHandlerArgumentU = (
-    TezosTzktTransaction[Any, Any]
-    | TezosTzktOrigination[Any]
-    | TezosTzktSmartRollupExecute
-    | TezosTzktOperationData
-    | None
+    TezosTransaction[Any, Any] | TezosOrigination[Any] | TezosSmartRollupExecute | TezosOperationData | None
 )
 MatchedOperationsT = tuple[OperationSubgroup, TezosOperationsHandlerConfigU, deque[TezosOperationsHandlerArgumentU]]
 
@@ -55,7 +51,7 @@ MatchedOperationsT = tuple[OperationSubgroup, TezosOperationsHandlerConfigU, deq
 def prepare_operation_handler_args(
     package: DipDupPackage,
     handler_config: TezosOperationsHandlerConfig,
-    matched_operations: deque[TezosTzktOperationData | None],
+    matched_operations: deque[TezosOperationData | None],
 ) -> deque[TezosOperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[TezosOperationsHandlerArgumentU] = deque()
@@ -76,7 +72,7 @@ def prepare_operation_handler_args(
             storage_type = get_storage_type(package, typename)
             operation_data, storage = deserialize_storage(operation_data, storage_type)
 
-            typed_transaction: TezosTzktTransaction[Any, Any] = TezosTzktTransaction(
+            typed_transaction: TezosTransaction[Any, Any] = TezosTransaction(
                 data=operation_data,
                 parameter=parameter,
                 storage=storage,
@@ -92,14 +88,14 @@ def prepare_operation_handler_args(
             storage_type = get_storage_type(package, typename)
             operation_data, storage = deserialize_storage(operation_data, storage_type)
 
-            typed_origination = TezosTzktOrigination(
+            typed_origination = TezosOrigination(
                 data=operation_data,
                 storage=storage,
             )
             args.append(typed_origination)
 
         elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
-            sr_execute: TezosTzktSmartRollupExecute = TezosTzktSmartRollupExecute.create(operation_data)
+            sr_execute: TezosSmartRollupExecute = TezosSmartRollupExecute.create(operation_data)
             args.append(sr_execute)
 
         else:
@@ -110,7 +106,7 @@ def prepare_operation_handler_args(
 
 def match_transaction(
     pattern_config: TransactionPatternConfig,
-    operation: TezosTzktOperationData,
+    operation: TezosOperationData,
 ) -> bool:
     """Match a single transaction with pattern"""
     if entrypoint := pattern_config.entrypoint:
@@ -132,7 +128,7 @@ def match_transaction(
 
 def match_origination(
     pattern_config: OriginationPatternConfig,
-    operation: TezosTzktOperationData,
+    operation: TezosOperationData,
 ) -> bool:
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
@@ -151,7 +147,7 @@ def match_origination(
 
 def match_sr_execute(
     pattern_config: SmartRollupExecutePatternConfig,
-    operation: TezosTzktOperationData,
+    operation: TezosOperationData,
 ) -> bool:
     if source := pattern_config.source:
         if source.address not in (operation.sender_address, None):
@@ -170,7 +166,7 @@ def match_operation_unfiltered_subgroup(
     matched_handlers: deque[MatchedOperationsT] = deque()
 
     for operation in operation_subgroup.operations:
-        if TezosTzktOperationType[operation.type] in index.types:
+        if TezosOperationType[operation.type] in index.types:
             matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
 
     return matched_handlers
@@ -189,7 +185,7 @@ def match_operation_subgroup(
     for handler_config in handlers:
         subgroup_index = 0
         pattern_index = 0
-        matched_operations: deque[TezosTzktOperationData | None] = deque()
+        matched_operations: deque[TezosOperationData | None] = deque()
 
         # TODO: Ensure complex cases work, e.g. when optional argument is followed by required one
         while subgroup_index < len(operations):
@@ -242,13 +238,13 @@ def match_operation_subgroup(
     id_list = []
     for handler in matched_handlers:
         last_operation = handler[2][-1]
-        if isinstance(last_operation, TezosTzktOperationData):
+        if isinstance(last_operation, TezosOperationData):
             id_list.append(last_operation.id)
-        elif isinstance(last_operation, TezosTzktOrigination):
+        elif isinstance(last_operation, TezosOrigination):
             id_list.append(last_operation.data.id)
-        elif isinstance(last_operation, TezosTzktTransaction):
+        elif isinstance(last_operation, TezosTransaction):
             id_list.append(last_operation.data.id)
-        elif isinstance(last_operation, TezosTzktSmartRollupExecute):
+        elif isinstance(last_operation, TezosSmartRollupExecute):
             id_list.append(last_operation.data.id)
         else:
             raise FrameworkException('Type of the first handler argument is unknown')

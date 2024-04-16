@@ -8,10 +8,10 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos import TezosTzktHeadBlockData
-from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos import TezosHeadBlockData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
-HeadQueueItem = TezosTzktHeadBlockData | RollbackMessage
+HeadQueueItem = TezosHeadBlockData | RollbackMessage
 
 
 class TezosHeadIndex(
@@ -48,7 +48,7 @@ class TezosHeadIndex(
                 await self._update_state(level=batch_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktHeadHandlerConfig, level_data: TezosTzktHeadBlockData
+        self, handler_config: TezosTzktHeadHandlerConfig, level_data: TezosHeadBlockData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

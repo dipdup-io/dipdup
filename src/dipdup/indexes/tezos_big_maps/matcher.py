@@ -7,8 +7,8 @@ from typing import Any
 from dipdup.codegen.tezos import get_big_map_key_type
 from dipdup.codegen.tezos import get_big_map_value_type
 from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
-from dipdup.models.tezos import TezosTzktBigMapData
-from dipdup.models.tezos import TezosTzktBigMapDiff
+from dipdup.models.tezos import TezosBigMapData
+from dipdup.models.tezos import TezosBigMapDiff
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
@@ -17,14 +17,14 @@ if TYPE_CHECKING:
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedBigMapsT = tuple[TezosBigMapsHandlerConfig, TezosTzktBigMapDiff[Any, Any]]
+MatchedBigMapsT = tuple[TezosBigMapsHandlerConfig, TezosBigMapDiff[Any, Any]]
 
 
 def prepare_big_map_handler_args(
     package: DipDupPackage,
     handler_config: TezosBigMapsHandlerConfig,
-    matched_big_map: TezosTzktBigMapData,
-) -> TezosTzktBigMapDiff[Any, Any]:
+    matched_big_map: TezosBigMapData,
+) -> TezosBigMapDiff[Any, Any]:
     _logger.debug('%s: `%s` handler matched!', matched_big_map.operation_id, handler_config.callback)
 
     key: BaseModel | None = None
@@ -38,7 +38,7 @@ def prepare_big_map_handler_args(
         type_ = get_big_map_value_type(package, handler_config.contract.module_name, handler_config.path)
         value = parse_object(type_, matched_big_map.value) if type_ else None
 
-    return TezosTzktBigMapDiff(
+    return TezosBigMapDiff(
         data=matched_big_map,
         action=matched_big_map.action,
         key=key,
@@ -48,7 +48,7 @@ def prepare_big_map_handler_args(
 
 def match_big_map(
     handler_config: TezosBigMapsHandlerConfig,
-    big_map: TezosTzktBigMapData,
+    big_map: TezosBigMapData,
 ) -> bool:
     """Match single big map diff with pattern"""
     if handler_config.path != big_map.path:
@@ -61,7 +61,7 @@ def match_big_map(
 def match_big_maps(
     package: DipDupPackage,
     handlers: Iterable[TezosBigMapsHandlerConfig],
-    big_maps: Iterable[TezosTzktBigMapData],
+    big_maps: Iterable[TezosBigMapData],
 ) -> deque[MatchedBigMapsT]:
     """Try to match big map diffs with all index handlers."""
     matched_handlers: deque[MatchedBigMapsT] = deque()

@@ -4,12 +4,12 @@ from demo_token.handlers.on_balance_update import on_balance_update
 from demo_token.types.tzbtc.tezos_parameters.transfer import TransferParameter
 from demo_token.types.tzbtc.tezos_storage import TzbtcStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    transfer: TezosTzktTransaction[TransferParameter, TzbtcStorage],
+    transfer: TezosTransaction[TransferParameter, TzbtcStorage],
 ) -> None:
     if transfer.parameter.from_ == transfer.parameter.to:
         # NOTE: Internal tzBTC transfer

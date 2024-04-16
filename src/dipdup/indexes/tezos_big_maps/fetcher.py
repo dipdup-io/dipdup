@@ -7,7 +7,7 @@ from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos import TezosTzktBigMapData
+from dipdup.models.tezos import TezosBigMapData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -46,7 +46,7 @@ def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[tupl
     return pairs
 
 
-class BigMapFetcher(DataFetcher[TezosTzktBigMapData]):
+class BigMapFetcher(DataFetcher[TezosBigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
 
     _datasource: TezosTzktDatasource
@@ -83,7 +83,7 @@ class BigMapFetcher(DataFetcher[TezosTzktBigMapData]):
             big_map_paths=big_map_paths,
         )
 
-    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosTzktBigMapData, ...]], None]:
+    async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosBigMapData, ...]], None]:
         big_map_iter = self._datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,

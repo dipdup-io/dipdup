@@ -13,7 +13,7 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models import SkipHistory
-from dipdup.models.tezos import BigMapSubscription
+from dipdup.models.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -55,7 +55,7 @@ class TezosBigMapsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktBigMapDiff as BigMapDiff'
+        yield 'dipdup.models.tezos_tzkt', 'TezosBigMapDiff as BigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)

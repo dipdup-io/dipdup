@@ -1,12 +1,12 @@
 import demo_dex.models as models
 from demo_dex.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktOrigination
+from dipdup.models.tezos import TezosOrigination
 
 
 async def on_fa2_origination(
     ctx: HandlerContext,
-    quipu_fa2_origination: TezosTzktOrigination[QuipuFa2Storage],
+    quipu_fa2_origination: TezosOrigination[QuipuFa2Storage],
 ) -> None:
     symbol = ctx.template_values['symbol']
 

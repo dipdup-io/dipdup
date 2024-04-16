@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from dipdup.models.tezos import TezosTzktQuoteData
+from dipdup.models.tezos import TezosQuoteData
 
 
 @pytest.mark.parametrize(
@@ -27,9 +27,9 @@ from dipdup.models.tezos import TezosTzktQuoteData
 )
 async def test_convert_quote(tzkt_quote_json: str, expected_fields: dict[str, object]) -> None:
     tzkt_quote_dict = json.loads(tzkt_quote_json)
-    quote = TezosTzktQuoteData.from_json(tzkt_quote_dict)
+    quote = TezosQuoteData.from_json(tzkt_quote_dict)
     assert quote
-    assert isinstance(quote, TezosTzktQuoteData)
+    assert isinstance(quote, TezosQuoteData)
     for field, expected_value in expected_fields.items():
         assert hasattr(quote, field)
         value = getattr(quote, field)

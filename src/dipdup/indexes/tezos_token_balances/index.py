@@ -8,7 +8,7 @@ from dipdup.indexes.tezos_token_balances.matcher import match_token_balances
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosTokenBalanceData
-from dipdup.models.tezos import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
 QueueItem = tuple[TezosTokenBalanceData, ...] | RollbackMessage
 

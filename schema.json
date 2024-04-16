@@ -1673,7 +1673,7 @@
       "title": "TezosHeadIndexConfig",
       "type": "object"
     },
-    "TezosTzktOperationType": {
+    "TezosOperationType": {
       "description": "Type of blockchain operation\n\n:param transaction: transaction\n:param origination: origination\n:param migration: migration\n:param sr_execute: sr_execute",
       "enum": [
         "transaction",
@@ -1681,7 +1681,7 @@
         "migration",
         "sr_execute"
       ],
-      "title": "TezosTzktOperationType",
+      "title": "TezosOperationType",
       "type": "string"
     },
     "TezosOperationsHandlerConfig": {
@@ -1975,7 +1975,7 @@
             "transaction"
           ],
           "items": {
-            "$ref": "#/$defs/TezosTzktOperationType"
+            "$ref": "#/$defs/TezosOperationType"
           },
           "title": "Types",
           "type": "array"
@@ -2031,7 +2031,7 @@
             "transaction"
           ],
           "items": {
-            "$ref": "#/$defs/TezosTzktOperationType"
+            "$ref": "#/$defs/TezosOperationType"
           },
           "title": "Types",
           "type": "array"

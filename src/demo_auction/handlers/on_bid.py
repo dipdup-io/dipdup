@@ -2,12 +2,12 @@ import demo_auction.models as models
 from demo_auction.types.tzcolors_auction.tezos_parameters.bid import BidParameter
 from demo_auction.types.tzcolors_auction.tezos_storage import TzcolorsAuctionStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_bid(
     ctx: HandlerContext,
-    bid: TezosTzktTransaction[BidParameter, TzcolorsAuctionStorage],
+    bid: TezosTransaction[BidParameter, TzcolorsAuctionStorage],
 ) -> None:
     assert bid.data.amount is not None
 

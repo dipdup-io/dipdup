@@ -30,8 +30,8 @@ from dipdup.indexes.tezos_operations.matcher import match_operation_unfiltered_s
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import DEFAULT_ENTRYPOINT
-from dipdup.models.tezos import TezosTzktMessageType
-from dipdup.models.tezos import TezosTzktOperationData
+from dipdup.models.tezos import TezosOperationData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.prometheus import Metrics
 
 _logger = logging.getLogger('dipdup.matcher')
@@ -100,14 +100,14 @@ def code_hash_filter(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> set[
 
 
 def extract_operation_subgroups(
-    operations: Iterable[TezosTzktOperationData],
+    operations: Iterable[TezosOperationData],
     addresses: set[str],
     entrypoints: set[str],
     code_hashes: set[int],
 ) -> Iterator[OperationSubgroup]:
     filtered: int = 0
     levels: set[int] = set()
-    operation_subgroups: defaultdict[tuple[str, int], deque[TezosTzktOperationData]] = defaultdict(deque)
+    operation_subgroups: defaultdict[tuple[str, int], deque[TezosOperationData]] = defaultdict(deque)
 
     _operation_index = -1
     for _operation_index, op in enumerate(operations):

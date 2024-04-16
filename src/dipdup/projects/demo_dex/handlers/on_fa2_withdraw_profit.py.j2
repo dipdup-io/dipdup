@@ -5,14 +5,14 @@ import {{project.package}}.models as models
 from {{project.package}}.types.quipu_fa2.tezos_parameters.withdraw_profit import WithdrawProfitParameter
 from {{project.package}}.types.quipu_fa2.tezos_storage import QuipuFa2Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktTransaction
+from dipdup.models.tezos_tzkt import TezosOperationData
+from dipdup.models.tezos_tzkt import TezosTransaction
 
 
 async def on_fa2_withdraw_profit(
     ctx: HandlerContext,
-    withdraw_profit: TezosTzktTransaction[WithdrawProfitParameter, QuipuFa2Storage],
-    transaction_0: TezosTzktOperationData | None = None,
+    withdraw_profit: TezosTransaction[WithdrawProfitParameter, QuipuFa2Storage],
+    transaction_0: TezosOperationData | None = None,
 ) -> None:
     symbol = ctx.template_values['symbol']
     trader = withdraw_profit.data.sender_address

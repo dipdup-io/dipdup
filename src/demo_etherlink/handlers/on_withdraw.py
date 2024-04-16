@@ -2,9 +2,9 @@ from demo_etherlink import models as models
 from demo_etherlink.types.ticketer.tezos_parameters.withdraw import WithdrawParameter
 from demo_etherlink.types.ticketer.tezos_storage import TicketerStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktOperationData as OperationData
-from dipdup.models.tezos import TezosTzktSmartRollupExecute as SmartRollupExecute
-from dipdup.models.tezos import TezosTzktTransaction as Transaction
+from dipdup.models.tezos import TezosOperationData as OperationData
+from dipdup.models.tezos import TezosSmartRollupExecute as SmartRollupExecute
+from dipdup.models.tezos import TezosTransaction as Transaction
 
 
 async def on_withdraw(

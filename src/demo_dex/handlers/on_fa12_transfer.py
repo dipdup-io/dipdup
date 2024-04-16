@@ -2,12 +2,12 @@ import demo_dex.models as models
 from demo_dex.types.quipu_fa12.tezos_parameters.transfer import TransferParameter
 from demo_dex.types.quipu_fa12.tezos_storage import QuipuFa12Storage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos import TezosTzktTransaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_fa12_transfer(
     ctx: HandlerContext,
-    transfer: TezosTzktTransaction[TransferParameter, QuipuFa12Storage],
+    transfer: TezosTransaction[TransferParameter, QuipuFa12Storage],
 ) -> None:
     symbol = ctx.template_values['symbol']
     from_address = transfer.parameter.from_

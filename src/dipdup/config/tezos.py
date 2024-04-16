@@ -9,7 +9,7 @@ from dipdup.config import IndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tezos import HeadSubscription
+from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.subscriptions import Subscription
 
 ADDRESS_LENGTH = 36
