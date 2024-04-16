@@ -1,10 +1,10 @@
 from demo_head import models as models
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosHeadBlockData as HeadBlockData
+from dipdup.models.tezos import TezosHeadBlockData
 
 
 async def on_mainnet_head(
     ctx: HandlerContext,
-    head: HeadBlockData,
+    head: TezosHeadBlockData,
 ) -> None:
     ...

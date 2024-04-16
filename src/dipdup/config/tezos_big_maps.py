@@ -55,7 +55,7 @@ class TezosBigMapsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosBigMapDiff as BigMapDiff'
+        yield 'dipdup.models.tezos', 'TezosBigMapDiff'
         yield package, 'models as models'
 
         yield self.format_key_import(package, self.contract.module_name, self.path)

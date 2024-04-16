@@ -10,9 +10,9 @@ from dipdup.indexes.tezos_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_events.matcher import match_events
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
 from dipdup.models import RollbackMessage
+from dipdup.models.tezos import TezosEvent
 from dipdup.models.tezos import TezosEventData
-from dipdup.models.tezos import TezosTzktEvent
-from dipdup.models.tezos import TezosTzktUnknownEvent
+from dipdup.models.tezos import TezosUnknownEvent
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
 QueueItem = tuple[TezosEventData, ...] | RollbackMessage
@@ -49,9 +49,9 @@ class TezosEventsIndex(
         await self._exit_sync_state(sync_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosEventsHandlerConfigU, level_data: TezosTzktEvent[Any] | TezosTzktUnknownEvent
+        self, handler_config: TezosEventsHandlerConfigU, level_data: TezosEvent[Any] | TezosUnknownEvent
     ) -> None:
-        if isinstance(handler_config, TezosEventsHandlerConfig) != isinstance(level_data, TezosTzktEvent):
+        if isinstance(handler_config, TezosEventsHandlerConfig) != isinstance(level_data, TezosEvent):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {level_data}')
 
         if not handler_config.parent:

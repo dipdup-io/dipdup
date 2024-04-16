@@ -582,12 +582,12 @@ class TezosEventData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TezosTzktEvent(Generic[EventType]):
+class TezosEvent(Generic[EventType]):
     data: TezosEventData
     payload: EventType
 
 
 @dataclass(frozen=True)
-class TezosTzktUnknownEvent:
+class TezosUnknownEvent:
     data: TezosEventData
     payload: Any | None

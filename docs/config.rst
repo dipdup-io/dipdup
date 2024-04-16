@@ -47,9 +47,9 @@
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerSmartRollupExecutePatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsIndexConfig
+.. autoclass:: dipdup.config.tezos_operations.TezosOperationsPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsUnfilteredHandlerConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsUnfilteredIndexConfig
-.. autoclass:: dipdup.config.tezos_operations.TezosTzktPatternConfig
 .. autoclass:: dipdup.config.tezos_tzkt.TezosTzktDatasourceConfig
 .. autoclass:: dipdup.config.tezos_token_balances.TezosTokenBalancesHandlerConfig
 .. autoclass:: dipdup.config.tezos_token_balances.TezosTokenBalancesIndexConfig

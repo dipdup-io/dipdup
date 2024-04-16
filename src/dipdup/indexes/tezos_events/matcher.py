@@ -11,9 +11,9 @@ from dipdup.config.tezos_events import TezosEventsHandlerConfigU
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
+from dipdup.models.tezos import TezosEvent
 from dipdup.models.tezos import TezosEventData
-from dipdup.models.tezos import TezosTzktEvent
-from dipdup.models.tezos import TezosTzktUnknownEvent
+from dipdup.models.tezos import TezosUnknownEvent
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 
@@ -21,8 +21,7 @@ _logger = logging.getLogger('dipdup.matcher')
 
 
 MatchedEventsT = (
-    tuple[TezosEventsHandlerConfig, TezosTzktEvent[Any]]
-    | tuple[TezosEventsUnknownEventHandlerConfig, TezosTzktUnknownEvent]
+    tuple[TezosEventsHandlerConfig, TezosEvent[Any]] | tuple[TezosEventsUnknownEventHandlerConfig, TezosUnknownEvent]
 )
 
 
@@ -30,11 +29,11 @@ def prepare_event_handler_args(
     package: DipDupPackage,
     handler_config: TezosEventsHandlerConfigU,
     matched_event: TezosEventData,
-) -> TezosTzktEvent[Any] | TezosTzktUnknownEvent | None:
+) -> TezosEvent[Any] | TezosUnknownEvent | None:
     _logger.debug('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
 
     if isinstance(handler_config, TezosEventsUnknownEventHandlerConfig):
-        return TezosTzktUnknownEvent(
+        return TezosUnknownEvent(
             data=matched_event,
             payload=matched_event.payload,
         )
@@ -49,7 +48,7 @@ def prepare_event_handler_args(
 
     with suppress(InvalidDataError):
         typed_payload = parse_object(type_, matched_event.payload)
-        return TezosTzktEvent(
+        return TezosEvent(
             data=matched_event,
             payload=typed_payload,
         )
@@ -82,9 +81,9 @@ def match_events(
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
-            if isinstance(arg, TezosTzktEvent) and isinstance(handler_config, TezosEventsHandlerConfig):
+            if isinstance(arg, TezosEvent) and isinstance(handler_config, TezosEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
-            elif isinstance(arg, TezosTzktUnknownEvent) and isinstance(
+            elif isinstance(arg, TezosUnknownEvent) and isinstance(
                 handler_config, TezosEventsUnknownEventHandlerConfig
             ):
                 matched_handlers.append((handler_config, arg))

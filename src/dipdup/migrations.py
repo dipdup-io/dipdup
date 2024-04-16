@@ -44,7 +44,7 @@ IMPORTS_20_TO_21 = {
     'dipdup.models.tezos_tzkt.TzktBigMapDiff': 'dipdup.models.tezos_tzkt.TezosBigMapDiff',
     'dipdup.models.tezos_tzkt.TzktBlockData': 'dipdup.models.tezos_tzkt.TezosBlockData',
     'dipdup.models.tezos_tzkt.TzktEventData': 'dipdup.models.tezos_tzkt.TezosEventData',
-    'dipdup.models.tezos_tzkt.TzktEvent': 'dipdup.models.tezos_tzkt.TezosTzktEvent',
+    'dipdup.models.tezos_tzkt.TzktEvent': 'dipdup.models.tezos_tzkt.TezosEvent',
     'dipdup.models.tezos_tzkt.TzktHeadBlockData': 'dipdup.models.tezos_tzkt.TezosHeadBlockData',
     'dipdup.models.tezos_tzkt.TzktMessageType': 'dipdup.models.tezos_tzkt.TezosTzktMessageType',
     'dipdup.models.tezos_tzkt.TzktOperationData': 'dipdup.models.tezos_tzkt.TezosOperationData',
@@ -58,7 +58,7 @@ IMPORTS_20_TO_21 = {
     'dipdup.models.tezos_tzkt.TzktTokenStansard': 'dipdup.models.tezos_tzkt.TezosTokenStandard',
     'dipdup.models.tezos_tzkt.TzktTokenTransferData': 'dipdup.models.tezos_tzkt.TezosTokenTransferData',
     'dipdup.models.tezos_tzkt.TzktTokenTransfersHandlerConfig': 'dipdup.models.tezos_tzkt.TezosTokenTransfersHandlerConfig',
-    'dipdup.models.tezos_tzkt.TzktUnknownEvent': 'dipdup.models.tezos_tzkt.TezosTzktUnknownEvent',
+    'dipdup.models.tezos_tzkt.TzktUnknownEvent': 'dipdup.models.tezos_tzkt.TezosUnknownEvent',
 }
 METHODS_20_TO_21 = {
     'config.get_tzkt_datasource': 'config.get_tezos_tzkt_datasource',

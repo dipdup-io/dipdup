@@ -49,7 +49,7 @@ Tezos
 .. autoclass:: dipdup.models.tezos.TezosBigMapData
 .. autoclass:: dipdup.models.tezos.TezosBigMapDiff
 .. autoclass:: dipdup.models.tezos.TezosBlockData
-.. autoclass:: dipdup.models.tezos.TezosTzktEvent
+.. autoclass:: dipdup.models.tezos.TezosEvent
 .. autoclass:: dipdup.models.tezos.TezosEventData
 .. autoclass:: dipdup.models.tezos.TezosHeadBlockData
 .. autoclass:: dipdup.models.tezos.TezosOperationData
@@ -62,7 +62,7 @@ Tezos
 .. autoclass:: dipdup.models.tezos.TezosTokenStandard
 .. autoclass:: dipdup.models.tezos.TezosTokenTransferData
 .. autoclass:: dipdup.models.tezos.TezosTransaction
-.. autoclass:: dipdup.models.tezos.TezosTzktUnknownEvent
+.. autoclass:: dipdup.models.tezos.TezosUnknownEvent
 
 -------------------------------------------------------------------------------
 Other

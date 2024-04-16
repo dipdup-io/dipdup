@@ -35,7 +35,7 @@ class TezosEventsHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktEvent as Event'
+        yield 'dipdup.models.tezos', 'TezosEvent'
         yield package, 'models as models'
 
         event_cls = snake_to_pascal(self.tag + '_payload')
@@ -46,7 +46,7 @@ class TezosEventsHandlerConfig(HandlerConfig):
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         event_cls = snake_to_pascal(self.tag + '_payload')
         yield 'ctx', 'HandlerContext'
-        yield 'event', f'Event[{event_cls}]'
+        yield 'event', f'TezosEvent[{event_cls}]'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -61,12 +61,12 @@ class TezosEventsUnknownEventHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktUnknownEvent as UnknownEvent'
+        yield 'dipdup.models.tezos', 'TezosUnknownEvent'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'event', 'UnknownEvent'
+        yield 'event', 'TezosUnknownEvent'
 
 
 TezosEventsHandlerConfigU = TezosEventsHandlerConfig | TezosEventsUnknownEventHandlerConfig

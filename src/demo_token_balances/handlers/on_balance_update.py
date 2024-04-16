@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from demo_token_balances import models as models
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTokenBalanceData
+from dipdup.models.tezos import TezosTokenBalanceData
 
 
 async def on_balance_update(

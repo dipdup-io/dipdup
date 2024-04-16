@@ -6,13 +6,13 @@ from demo_etherlink.types.ticket_helper.tezos_storage import TicketHelperStorage
 from demo_etherlink.types.ticketer.tezos_parameters.deposit import DepositParameter
 from demo_etherlink.types.ticketer.tezos_storage import TicketerStorage
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTransaction as Transaction
+from dipdup.models.tezos import TezosTransaction
 
 
 async def on_deposit(
     ctx: HandlerContext,
-    deposit: Transaction[DepositParameter, TicketerStorage],
-    default: Transaction[DefaultParameter, TicketHelperStorage],
-    rollup_default: Transaction[RollupDefaultParameter, RollupStorage],
+    deposit: TezosTransaction[DepositParameter, TicketerStorage],
+    default: TezosTransaction[DefaultParameter, TicketHelperStorage],
+    rollup_default: TezosTransaction[RollupDefaultParameter, RollupStorage],
 ) -> None:
     ...

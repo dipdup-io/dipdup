@@ -39,12 +39,12 @@ class TezosTokenTransfersHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTokenTransferData as TokenTransferData'
+        yield 'dipdup.models.tezos', 'TezosTokenTransferData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
         yield 'ctx', 'HandlerContext'
-        yield 'token_transfer', 'TokenTransferData'
+        yield 'token_transfer', 'TezosTokenTransferData'
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
