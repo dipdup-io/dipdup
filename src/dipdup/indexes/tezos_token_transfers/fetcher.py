@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-class TokenTransferFetcher(DataFetcher[TezosTzktTokenTransferData]):
+class TokenTransferFetcher(DataFetcher[TezosTokenTransferData]):
     _datasource: TezosTzktDatasource
 
     def __init__(
@@ -34,7 +34,7 @@ class TokenTransferFetcher(DataFetcher[TezosTzktTokenTransferData]):
         self._from_addresses = from_addresses
         self._to_addresses = to_addresses
 
-    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TezosTzktTokenTransferData, ...]]]:
+    async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TezosTokenTransferData, ...]]]:
         token_transfer_iter = self._datasource.iter_token_transfers(
             self._token_addresses,
             self._token_ids,

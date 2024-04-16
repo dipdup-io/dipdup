@@ -47,12 +47,12 @@ from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
 from dipdup.indexes.evm_logs.index import EvmLogsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
-from dipdup.indexes.tezos_tzkt_big_maps.index import TezosBigMapsIndex
-from dipdup.indexes.tezos_tzkt_events.index import TezosEventsIndex
-from dipdup.indexes.tezos_tzkt_head.index import TezosHeadIndex
-from dipdup.indexes.tezos_tzkt_operations.index import TezosOperationsIndex
-from dipdup.indexes.tezos_tzkt_operations.index import extract_operation_subgroups
-from dipdup.indexes.tezos_tzkt_token_transfers.index import TezosTzktTokenTransfersIndex
+from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
+from dipdup.indexes.tezos_events.index import TezosEventsIndex
+from dipdup.indexes.tezos_head.index import TezosHeadIndex
+from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
+from dipdup.indexes.tezos_operations.index import extract_operation_subgroups
+from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
 from dipdup.models import Contract
 from dipdup.models import ContractKind
 from dipdup.models import Head
@@ -67,11 +67,11 @@ from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeTraceData
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import TezosTzktBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktEventData
 from dipdup.models.tezos_tzkt import TezosTzktHeadBlockData
 from dipdup.models.tezos_tzkt import TezosTzktOperationData
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
 from dipdup.performance import metrics
@@ -487,10 +487,10 @@ class IndexDispatcher:
                 index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
-        self, datasource: TezosTzktDatasource, token_transfers: tuple[TezosTzktTokenTransferData, ...]
+        self, datasource: TezosTzktDatasource, token_transfers: tuple[TezosTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosTzktTokenTransfersIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTokenTransfersIndex) and index.datasource == datasource:
                 index.push_realtime_message(token_transfers)
 
     async def _on_tzkt_big_maps(

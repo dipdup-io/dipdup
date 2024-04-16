@@ -27,19 +27,19 @@ async def test_in_global_transaction() -> None:
         await Tortoise.generate_schemas()
 
         # 1. Success query without transaction
-        await Index(name='1', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+        await Index(name='1', type=IndexType.tezos_operations, config_hash='').save()
         count = await Index.filter().count()
         assert count == 1
 
         # 2. Success query within transaction
         async with transactions.in_transaction():
-            await Index(name='2', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+            await Index(name='2', type=IndexType.tezos_operations, config_hash='').save()
         count = await Index.filter().count()
         assert count == 2
 
         # 3. Not rolled back query without transaction
         with suppress(SomeException):
-            await Index(name='3', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+            await Index(name='3', type=IndexType.tezos_operations, config_hash='').save()
             raise SomeException
         count = await Index.filter().count()
         assert count == 3
@@ -47,7 +47,7 @@ async def test_in_global_transaction() -> None:
         # 4. Rolled back query within transaction
         with suppress(SomeException):
             async with transactions.in_transaction():
-                await Index(name='4', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+                await Index(name='4', type=IndexType.tezos_operations, config_hash='').save()
                 raise SomeException
         count = await Index.filter().count()
         assert count == 3

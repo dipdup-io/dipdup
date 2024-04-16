@@ -6,8 +6,8 @@ from copy import copy
 from typing import Any
 
 from dipdup.codegen.tezos import get_event_payload_type
-from dipdup.config.tezos_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_events import TezosEventsHandlerConfig
+from dipdup.config.tezos_events import TezosEventsHandlerConfigU
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidDataError
@@ -21,14 +21,14 @@ _logger = logging.getLogger('dipdup.matcher')
 
 
 MatchedEventsT = (
-    tuple[TezosTzktEventsHandlerConfig, TezosTzktEvent[Any]]
+    tuple[TezosEventsHandlerConfig, TezosTzktEvent[Any]]
     | tuple[TezosEventsUnknownEventHandlerConfig, TezosTzktUnknownEvent]
 )
 
 
 def prepare_event_handler_args(
     package: DipDupPackage,
-    handler_config: TezosTzktEventsHandlerConfigU,
+    handler_config: TezosEventsHandlerConfigU,
     matched_event: TezosTzktEventData,
 ) -> TezosTzktEvent[Any] | TezosTzktUnknownEvent | None:
     _logger.debug('%s: `%s` handler matched!', matched_event.level, handler_config.callback)
@@ -57,9 +57,9 @@ def prepare_event_handler_args(
     return None
 
 
-def match_event(handler_config: TezosTzktEventsHandlerConfigU, event: TezosTzktEventData) -> bool:
+def match_event(handler_config: TezosEventsHandlerConfigU, event: TezosTzktEventData) -> bool:
     """Match single contract event with pattern"""
-    if isinstance(handler_config, TezosTzktEventsHandlerConfig) and handler_config.tag != event.tag:
+    if isinstance(handler_config, TezosEventsHandlerConfig) and handler_config.tag != event.tag:
         return False
     if handler_config.contract.address != event.contract_address:
         return False
@@ -68,7 +68,7 @@ def match_event(handler_config: TezosTzktEventsHandlerConfigU, event: TezosTzktE
 
 def match_events(
     package: DipDupPackage,
-    handlers: Iterable[TezosTzktEventsHandlerConfigU],
+    handlers: Iterable[TezosEventsHandlerConfigU],
     events: Iterable[TezosTzktEventData],
 ) -> deque[MatchedEventsT]:
     """Try to match contract events with all index handlers."""
@@ -82,7 +82,7 @@ def match_events(
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
-            if isinstance(arg, TezosTzktEvent) and isinstance(handler_config, TezosTzktEventsHandlerConfig):
+            if isinstance(arg, TezosTzktEvent) and isinstance(handler_config, TezosEventsHandlerConfig):
                 matched_handlers.append((handler_config, arg))
             elif isinstance(arg, TezosTzktUnknownEvent) and isinstance(
                 handler_config, TezosEventsUnknownEventHandlerConfig

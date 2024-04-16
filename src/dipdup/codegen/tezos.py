@@ -23,20 +23,16 @@ from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import is_contract_address
 from dipdup.config.tezos import is_rollup_address
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
 from dipdup.config.tezos_head import TezosHeadIndexConfig
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
-)
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerPatternConfigU as PatternConfigU
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
-)
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerPatternConfigU as PatternConfigU
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization

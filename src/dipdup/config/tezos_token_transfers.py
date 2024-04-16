@@ -10,8 +10,8 @@ from pydantic.fields import Field
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models.tezos_tzkt import TokenTransferSubscription
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktTokenTransfersHandlerConfig(HandlerConfig):
+class TezosTokenTransfersHandlerConfig(HandlerConfig):
     """Token transfer handler config
 
     :param callback: Callback name
@@ -39,7 +39,7 @@ class TezosTzktTokenTransfersHandlerConfig(HandlerConfig):
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktTokenTransferData as TokenTransferData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTokenTransferData as TokenTransferData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -48,7 +48,7 @@ class TezosTzktTokenTransfersHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktTokenTransfersIndexConfig(TezosTzktIndexConfig):
+class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     """Token transfer index config
 
     :param kind: always 'tezos.token_transfers'
@@ -59,9 +59,9 @@ class TezosTzktTokenTransfersIndexConfig(TezosTzktIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.tzkt.token_transfers']
+    kind: Literal['tezos.token_transfers']
     datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

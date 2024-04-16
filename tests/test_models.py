@@ -6,7 +6,7 @@ from typing import Any
 
 import orjson as json
 
-from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
+from dipdup.indexes.tezos_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TezosTzktOperationData
 from tests.types.asdf.storage import AsdfStorage
 from tests.types.bazaar.storage import BazaarMarketPlaceStorage

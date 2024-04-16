@@ -1,8 +1,8 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_head import TezosTzktHeadHandlerConfig
 from dipdup.config.tezos_head import TezosHeadIndexConfig
+from dipdup.config.tezos_head import TezosTzktHeadHandlerConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex

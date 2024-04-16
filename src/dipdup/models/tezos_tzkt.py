@@ -30,7 +30,7 @@ def _parse_timestamp(timestamp: str) -> datetime:
     return datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=UTC)
 
 
-class TezosTzktTokenStandard(Enum):
+class TezosTokenStandard(Enum):
     FA12 = 'fa1.2'
     FA2 = 'fa2'
 
@@ -577,7 +577,7 @@ class TezosTzktQuoteData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TezosTzktTokenTransferData(HasLevel):
+class TezosTokenTransferData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -587,7 +587,7 @@ class TezosTzktTokenTransferData(HasLevel):
     contract_address: str | None = None
     contract_alias: str | None = None
     token_id: int | None = None
-    standard: TezosTzktTokenStandard | None = None
+    standard: TezosTokenStandard | None = None
     metadata: dict[str, Any] | None = None
     from_alias: str | None = None
     from_address: str | None = None
@@ -599,7 +599,7 @@ class TezosTzktTokenTransferData(HasLevel):
     tzkt_migration_id: int | None = None
 
     @classmethod
-    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTzktTokenTransferData':
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTokenTransferData':
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         contract_json = token_json.get('contract') or {}
@@ -610,7 +610,7 @@ class TezosTzktTokenTransferData(HasLevel):
         amount = token_transfer_json.get('amount')
         amount = int(amount) if amount is not None else None
 
-        return TezosTzktTokenTransferData(
+        return TezosTokenTransferData(
             id=token_transfer_json['id'],
             level=token_transfer_json['level'],
             timestamp=_parse_timestamp(token_transfer_json['timestamp']),
@@ -618,7 +618,7 @@ class TezosTzktTokenTransferData(HasLevel):
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=TezosTzktTokenStandard(standard) if standard else None,
+            standard=TezosTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
             from_alias=from_json.get('alias'),
             from_address=from_json.get('address'),
@@ -632,7 +632,7 @@ class TezosTzktTokenTransferData(HasLevel):
 
 
 @dataclass(frozen=True)
-class TezosTzktTokenBalanceData(HasLevel):
+class TezosTokenBalanceData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
     id: int
@@ -648,7 +648,7 @@ class TezosTzktTokenBalanceData(HasLevel):
     contract_address: str | None = None
     contract_alias: str | None = None
     token_id: int | None = None
-    standard: TezosTzktTokenStandard | None = None
+    standard: TezosTokenStandard | None = None
     metadata: dict[str, Any] | None = None
 
     balance: str | None = None
@@ -659,14 +659,14 @@ class TezosTzktTokenBalanceData(HasLevel):
         return self.last_level
 
     @classmethod
-    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTzktTokenBalanceData':
+    def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTokenBalanceData':
         """Convert raw token transfer message from REST or WS into dataclass"""
         token_json = token_transfer_json.get('token') or {}
         standard = token_json.get('standard')
         metadata = token_json.get('metadata')
         contract_json = token_json.get('contract') or {}
 
-        return TezosTzktTokenBalanceData(
+        return TezosTokenBalanceData(
             id=token_transfer_json['id'],
             transfers_count=token_transfer_json['transfersCount'],
             first_level=token_transfer_json['firstLevel'],
@@ -679,7 +679,7 @@ class TezosTzktTokenBalanceData(HasLevel):
             contract_address=contract_json.get('address'),
             contract_alias=contract_json.get('alias'),
             token_id=token_json.get('tokenId'),
-            standard=TezosTzktTokenStandard(standard) if standard else None,
+            standard=TezosTokenStandard(standard) if standard else None,
             metadata=metadata if isinstance(metadata, dict) else {},
             balance=token_transfer_json.get('balance'),
             balance_value=token_transfer_json.get('balanceValue'),

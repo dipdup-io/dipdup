@@ -132,7 +132,7 @@ IGNORED_CONFIG_CLASSES = {
     'dipdup.config.evm_traces.EvmTracesIndexConfig',
     'dipdup.config.NameMixin',
     'dipdup.config.ParentMixin',
-    'dipdup.config.tezos_tzkt_operations.SubgroupIndexMixin',
+    'dipdup.config.tezos_operations.SubgroupIndexMixin',
 }
 IGNORED_MODEL_CLASSES = {
     'dipdup.models.BulkCreateQuery',

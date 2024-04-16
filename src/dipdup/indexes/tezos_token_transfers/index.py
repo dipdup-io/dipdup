@@ -1,21 +1,21 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersHandlerConfig
-from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_token_transfers import TezosTokenTransfersHandlerConfig
+from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.exceptions import ConfigInitializationException
+from dipdup.indexes.tezos_token_transfers.fetcher import TokenTransferFetcher
+from dipdup.indexes.tezos_token_transfers.matcher import match_token_transfers
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
-from dipdup.indexes.tezos_tzkt_token_transfers.fetcher import TokenTransferFetcher
-from dipdup.indexes.tezos_tzkt_token_transfers.matcher import match_token_transfers
 from dipdup.models import RollbackMessage
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
 
-QueueItem = tuple[TezosTzktTokenTransferData, ...] | RollbackMessage
+QueueItem = tuple[TezosTokenTransferData, ...] | RollbackMessage
 
 
-class TezosTzktTokenTransfersIndex(
-    TezosTzktIndex[TezosTzktTokenTransfersIndexConfig, QueueItem],
+class TezosTokenTransfersIndex(
+    TezosTzktIndex[TezosTokenTransfersIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.token_transfer,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
@@ -59,7 +59,7 @@ class TezosTzktTokenTransfersIndex(
         await self._exit_sync_state(sync_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktTokenTransfersHandlerConfig, token_transfer: TezosTzktTokenTransferData
+        self, handler_config: TezosTokenTransfersHandlerConfig, token_transfer: TezosTokenTransferData
     ) -> None:
         if not handler_config.parent:
             raise ConfigInitializationException

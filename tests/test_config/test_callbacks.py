@@ -1,8 +1,8 @@
 import pytest
 
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def contract() -> TezosContractConfig:
 
 def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     # NOTE: Typed `transaction`
-    pattern = TezosTzktOperationsHandlerTransactionPatternConfig(
+    pattern = TezosOperationsHandlerTransactionPatternConfig(
         destination=contract,
         entrypoint='fooBar',
     )
@@ -37,7 +37,7 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     )
 
     # NOTE: Untyped `transaction`
-    pattern = TezosTzktOperationsHandlerTransactionPatternConfig(
+    pattern = TezosOperationsHandlerTransactionPatternConfig(
         destination=contract,
     )
     pattern.subgroup_index = 1
@@ -58,7 +58,7 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
 
 def test_origination_callbacks(contract: TezosContractConfig) -> None:
     # NOTE: Typed `origination`
-    pattern = TezosTzktOperationsHandlerOriginationPatternConfig(
+    pattern = TezosOperationsHandlerOriginationPatternConfig(
         originated_contract=contract,
     )
     assert tuple(pattern.iter_arguments()) == (('dex_contract_origination', 'Origination[DexContractStorage]'),)
@@ -78,7 +78,7 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     )
 
     # NOTE: Untyped `origination`
-    pattern = TezosTzktOperationsHandlerOriginationPatternConfig(
+    pattern = TezosOperationsHandlerOriginationPatternConfig(
         source=contract,
     )
     pattern.subgroup_index = 1

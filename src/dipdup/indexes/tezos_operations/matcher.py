@@ -9,20 +9,16 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.codegen.tezos import get_parameter_type
 from dipdup.codegen.tezos import get_storage_type
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfigU
+from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerConfigU
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
+    TezosOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
-)
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
-)
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
+from dipdup.indexes.tezos_operations.parser import deserialize_storage
 from dipdup.models.tezos_tzkt import TezosTzktOperationData
 from dipdup.models.tezos_tzkt import TezosTzktOperationType
 from dipdup.models.tezos_tzkt import TezosTzktOrigination
@@ -46,25 +42,23 @@ class OperationSubgroup:
     operations: tuple[TezosTzktOperationData, ...]
 
 
-TezosTzktOperationsHandlerArgumentU = (
+TezosOperationsHandlerArgumentU = (
     TezosTzktTransaction[Any, Any]
     | TezosTzktOrigination[Any]
     | TezosTzktSmartRollupExecute
     | TezosTzktOperationData
     | None
 )
-MatchedOperationsT = tuple[
-    OperationSubgroup, TezosTzktOperationsHandlerConfigU, deque[TezosTzktOperationsHandlerArgumentU]
-]
+MatchedOperationsT = tuple[OperationSubgroup, TezosOperationsHandlerConfigU, deque[TezosOperationsHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
     package: DipDupPackage,
-    handler_config: TezosTzktOperationsHandlerConfig,
+    handler_config: TezosOperationsHandlerConfig,
     matched_operations: deque[TezosTzktOperationData | None],
-) -> deque[TezosTzktOperationsHandlerArgumentU]:
+) -> deque[TezosOperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
-    args: deque[TezosTzktOperationsHandlerArgumentU] = deque()
+    args: deque[TezosOperationsHandlerArgumentU] = deque()
     # NOTE: There can be more pattern items than matched operations; some of them are optional.
     for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=False):
         if operation_data is None:
@@ -184,7 +178,7 @@ def match_operation_unfiltered_subgroup(
 
 def match_operation_subgroup(
     package: DipDupPackage,
-    handlers: Iterable[TezosTzktOperationsHandlerConfig],
+    handlers: Iterable[TezosOperationsHandlerConfig],
     operation_subgroup: OperationSubgroup,
     alt: bool = False,
 ) -> deque[MatchedOperationsT]:

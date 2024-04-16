@@ -4,7 +4,8 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import ContractConfig, IndexConfig
+from dipdup.config import ContractConfig
+from dipdup.config import IndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -68,9 +69,8 @@ class TezosContractConfig(ContractConfig):
         return self.code_hash
 
 
-
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktIndexConfig(IndexConfig):
+class TezosIndexConfig(IndexConfig):
     """TzKT index config
 
     :param kind: starts with 'tezos'

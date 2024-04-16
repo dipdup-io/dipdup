@@ -43,7 +43,7 @@ class EvmTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
         yield package, 'models as models'
 
         if self.typed_contract and self.method:
-            yield 'dipdup.models.evm_subsquid', 'SubsquidTransaction'
+            yield 'dipdup.models.evm_subsquid', 'EvmTransaction'
             transaction_module = pascal_to_snake(self.method)
             transaction_cls = snake_to_pascal(self.method)
             module_name = self.typed_contract.module_name

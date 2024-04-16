@@ -3,12 +3,12 @@ from decimal import InvalidOperation
 
 from demo_token_transfers.handlers.on_balance_update import on_balance_update
 from dipdup.context import HandlerContext
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 
 
 async def on_token_transfer(
     ctx: HandlerContext,
-    token_transfer: TezosTzktTokenTransferData,
+    token_transfer: TezosTokenTransferData,
 ) -> None:
     from_, to = token_transfer.from_address, token_transfer.to_address
     if not from_ or not to or from_ == to:

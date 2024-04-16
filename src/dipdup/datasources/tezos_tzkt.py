@@ -36,6 +36,8 @@ from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.models.tezos_tzkt import TezosTokenBalanceData
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import TezosTzktBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktBlockData
 from dipdup.models.tezos_tzkt import TezosTzktEventData
@@ -44,8 +46,6 @@ from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.models.tezos_tzkt import TezosTzktOperationData
 from dipdup.models.tezos_tzkt import TezosTzktQuoteData
 from dipdup.models.tezos_tzkt import TezosTzktSubscription
-from dipdup.models.tezos_tzkt import TezosTzktTokenBalanceData
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100
@@ -145,8 +145,8 @@ EVENT_FIELDS = (
 
 HeadCallback = Callable[['TezosTzktDatasource', TezosTzktHeadBlockData], Awaitable[None]]
 OperationsCallback = Callable[['TezosTzktDatasource', tuple[TezosTzktOperationData, ...]], Awaitable[None]]
-TokenTransfersCallback = Callable[['TezosTzktDatasource', tuple[TezosTzktTokenTransferData, ...]], Awaitable[None]]
-TokenBalancesCallback = Callable[['TezosTzktDatasource', tuple[TezosTzktTokenBalanceData, ...]], Awaitable[None]]
+TokenTransfersCallback = Callable[['TezosTzktDatasource', tuple[TezosTokenTransferData, ...]], Awaitable[None]]
+TokenBalancesCallback = Callable[['TezosTzktDatasource', tuple[TezosTokenBalanceData, ...]], Awaitable[None]]
 BigMapsCallback = Callable[['TezosTzktDatasource', tuple[TezosTzktBigMapData, ...]], Awaitable[None]]
 EventsCallback = Callable[['TezosTzktDatasource', tuple[TezosTzktEventData, ...]], Awaitable[None]]
 
@@ -328,11 +328,11 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
         for fn in self._on_operations_callbacks:
             await fn(self, operations)
 
-    async def emit_token_transfers(self, token_transfers: tuple[TezosTzktTokenTransferData, ...]) -> None:
+    async def emit_token_transfers(self, token_transfers: tuple[TezosTokenTransferData, ...]) -> None:
         for fn in self._on_token_transfers_callbacks:
             await fn(self, token_transfers)
 
-    async def emit_token_balances(self, token_balances: tuple[TezosTzktTokenBalanceData, ...]) -> None:
+    async def emit_token_balances(self, token_balances: tuple[TezosTokenBalanceData, ...]) -> None:
         for fn in self._on_token_balances_callbacks:
             await fn(self, token_balances)
 
@@ -907,7 +907,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
         last_level: int,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TezosTzktTokenTransferData, ...]:
+    ) -> tuple[TezosTokenTransferData, ...]:
         """Get token transfers for contract"""
         params = self._get_request_params(
             first_level,
@@ -925,7 +925,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
             },
         )
         raw_token_transfers = await self._request_values_dict('get', url='v1/tokens/transfers', params=params)
-        return tuple(TezosTzktTokenTransferData.from_json(item) for item in raw_token_transfers)
+        return tuple(TezosTokenTransferData.from_json(item) for item in raw_token_transfers)
 
     async def iter_token_transfers(
         self,
@@ -935,7 +935,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
         to_addresses: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TezosTzktTokenTransferData, ...]]:
+    ) -> AsyncIterator[tuple[TezosTokenTransferData, ...]]:
         """Iterate token transfers for contract"""
         async for batch in self._iter_batches(
             self.get_token_transfers,
@@ -957,7 +957,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
         last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TezosTzktTokenBalanceData, ...]:
+    ) -> tuple[TezosTokenBalanceData, ...]:
         params = self._get_request_params(
             first_level,
             last_level,
@@ -972,7 +972,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
             },
         )
         raw_token_balances = await self._request_values_dict('get', url='v1/tokens/balances', params=params)
-        return tuple(TezosTzktTokenBalanceData.from_json(item) for item in raw_token_balances)
+        return tuple(TezosTokenBalanceData.from_json(item) for item in raw_token_balances)
 
     async def iter_token_balances(
         self,
@@ -980,7 +980,7 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
         token_ids: set[int],
         first_level: int | None = None,
         last_level: int | None = None,
-    ) -> AsyncIterator[tuple[TezosTzktTokenBalanceData, ...]]:
+    ) -> AsyncIterator[tuple[TezosTokenBalanceData, ...]]:
         async for batch in self._iter_batches(
             self.get_token_balances,
             token_addresses,
@@ -1270,10 +1270,10 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
 
     async def _process_token_transfers_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw token transfers from WS"""
-        level_token_transfers: defaultdict[int, deque[TezosTzktTokenTransferData]] = defaultdict(deque)
+        level_token_transfers: defaultdict[int, deque[TezosTokenTransferData]] = defaultdict(deque)
 
         for token_transfer_json in data:
-            token_transfer = TezosTzktTokenTransferData.from_json(token_transfer_json)
+            token_transfer = TezosTokenTransferData.from_json(token_transfer_json)
             level_token_transfers[token_transfer.level].append(token_transfer)
 
         for _level, token_transfers in level_token_transfers.items():
@@ -1281,10 +1281,10 @@ class TezosTzktDatasource(IndexDatasource[TezosTzktDatasourceConfig]):
 
     async def _process_token_balances_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw token balances from WS"""
-        level_token_balances: defaultdict[int, deque[TezosTzktTokenBalanceData]] = defaultdict(deque)
+        level_token_balances: defaultdict[int, deque[TezosTokenBalanceData]] = defaultdict(deque)
 
         for token_balance_json in data:
-            token_balance = TezosTzktTokenBalanceData.from_json(token_balance_json)
+            token_balance = TezosTokenBalanceData.from_json(token_balance_json)
             level_token_balances[token_balance.level].append(token_balance)
 
         for _level, token_balances in level_token_balances.items():

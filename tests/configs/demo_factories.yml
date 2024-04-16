@@ -20,7 +20,7 @@ datasources:
 
 templates:
   dex:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt
     types:
       - transaction
@@ -38,7 +38,7 @@ templates:
 
 indexes:
   factory:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt
     contracts:
       - factory

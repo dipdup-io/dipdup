@@ -21,7 +21,7 @@ datasources:
 
 indexes:
   test:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt_replay
     types:
       - origination

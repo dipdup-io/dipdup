@@ -10,8 +10,8 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
@@ -67,7 +67,7 @@ class TezosBigMapsHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosBigMapsIndexConfig(TezosTzktIndexConfig):
+class TezosBigMapsIndexConfig(TezosIndexConfig):
     """Big map index config
 
     :param kind: always 'tezos.big_maps'
@@ -78,7 +78,7 @@ class TezosBigMapsIndexConfig(TezosTzktIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.tzkt.big_maps']
+    kind: Literal['tezos.big_maps']
     datasource: TezosTzktDatasourceConfig
     handlers: tuple[TezosBigMapsHandlerConfig, ...]
 

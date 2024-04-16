@@ -60,9 +60,9 @@ Tezos
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktQuoteData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktSmartRollupCommitment
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktSmartRollupExecute
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTokenBalanceData
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTokenStandard
-.. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTokenTransferData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenBalanceData
+.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenStandard
+.. autoclass:: dipdup.models.tezos_tzkt.TezosTokenTransferData
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktTransaction
 .. autoclass:: dipdup.models.tezos_tzkt.TezosTzktUnknownEvent
 

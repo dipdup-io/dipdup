@@ -1421,9 +1421,9 @@
       "description": "Big map index config\n\n:param kind: always 'tezos.big_maps'\n:param datasource: Index datasource to fetch big maps with\n:param handlers: Mapping of big map diff handlers\n:param skip_history: Fetch only current big map keys ignoring historical changes\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.big_maps",
+          "const": "tezos.big_maps",
           "enum": [
-            "tezos.tzkt.big_maps"
+            "tezos.big_maps"
           ],
           "title": "Kind",
           "type": "string"
@@ -1523,7 +1523,7 @@
       "title": "TezosTzktDatasourceConfig",
       "type": "object"
     },
-    "TezosTzktEventsHandlerConfig": {
+    "TezosEventsHandlerConfig": {
       "additionalProperties": false,
       "description": "Event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event\n:param tag: Event tag",
       "properties": {
@@ -1552,7 +1552,7 @@
         "tag",
         "callback"
       ],
-      "title": "TezosTzktEventsHandlerConfig",
+      "title": "TezosEventsHandlerConfig",
       "type": "object"
     },
     "TezosEventsIndexConfig": {
@@ -1560,9 +1560,9 @@
       "description": "Event index config\n\n:param kind: always 'tezos.events'\n:param datasource: Datasource config\n:param handlers: Event handlers\n:param first_level: First block level to index\n:param last_level: Last block level to index",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.events",
+          "const": "tezos.events",
           "enum": [
-            "tezos.tzkt.events"
+            "tezos.events"
           ],
           "title": "Kind",
           "type": "string"
@@ -1582,7 +1582,7 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/TezosTzktEventsHandlerConfig"
+                "$ref": "#/$defs/TezosEventsHandlerConfig"
               },
               {
                 "$ref": "#/$defs/TezosEventsUnknownEventHandlerConfig"
@@ -1642,9 +1642,9 @@
       "description": "Head block index config\n\n:param kind: always 'tezos.head'\n:param callback: Callback name\n:param datasource: Index datasource to receive head blocks\n:param handlers: Mapping of head block handlers",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.head",
+          "const": "tezos.head",
           "enum": [
-            "tezos.tzkt.head"
+            "tezos.head"
           ],
           "title": "Kind",
           "type": "string"
@@ -1684,7 +1684,7 @@
       "title": "TezosTzktOperationType",
       "type": "string"
     },
-    "TezosTzktOperationsHandlerConfig": {
+    "TezosOperationsHandlerConfig": {
       "additionalProperties": false,
       "description": "Operation handler config\n\n:param callback: Callback name\n:param pattern: Filters to match operation groups",
       "properties": {
@@ -1696,13 +1696,13 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/TezosTzktOperationsHandlerTransactionPatternConfig"
+                "$ref": "#/$defs/TezosOperationsHandlerTransactionPatternConfig"
               },
               {
-                "$ref": "#/$defs/TezosTzktOperationsHandlerOriginationPatternConfig"
+                "$ref": "#/$defs/TezosOperationsHandlerOriginationPatternConfig"
               },
               {
-                "$ref": "#/$defs/TezosTzktOperationsHandlerSmartRollupExecutePatternConfig"
+                "$ref": "#/$defs/TezosOperationsHandlerSmartRollupExecutePatternConfig"
               }
             ]
           },
@@ -1714,10 +1714,10 @@
         "callback",
         "pattern"
       ],
-      "title": "TezosTzktOperationsHandlerConfig",
+      "title": "TezosOperationsHandlerConfig",
       "type": "object"
     },
-    "TezosTzktOperationsHandlerOriginationPatternConfig": {
+    "TezosOperationsHandlerOriginationPatternConfig": {
       "additionalProperties": false,
       "description": "Origination handler pattern config\n\n:param type: always 'origination'\n:param source: Match operations by source contract alias\n:param originated_contract: Match origination of exact contract\n:param optional: Whether can operation be missing in operation group\n:param strict: Match operations by storage only or by the whole code\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
@@ -1783,10 +1783,10 @@
           "title": "Alias"
         }
       },
-      "title": "TezosTzktOperationsHandlerOriginationPatternConfig",
+      "title": "TezosOperationsHandlerOriginationPatternConfig",
       "type": "object"
     },
-    "TezosTzktOperationsHandlerSmartRollupExecutePatternConfig": {
+    "TezosOperationsHandlerSmartRollupExecutePatternConfig": {
       "additionalProperties": false,
       "description": "Operation handler pattern config\n\n:param type: always 'sr_execute'\n:param source: Match operations by source contract alias\n:param destination: Match operations by destination contract alias\n:param optional: Whether can operation be missing in operation group\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
@@ -1847,10 +1847,10 @@
           "title": "Alias"
         }
       },
-      "title": "TezosTzktOperationsHandlerSmartRollupExecutePatternConfig",
+      "title": "TezosOperationsHandlerSmartRollupExecutePatternConfig",
       "type": "object"
     },
-    "TezosTzktOperationsHandlerTransactionPatternConfig": {
+    "TezosOperationsHandlerTransactionPatternConfig": {
       "additionalProperties": false,
       "description": "Transaction handler pattern config\n\n:param type: always 'transaction'\n:param source: Match operations by source contract alias\n:param destination: Match operations by destination contract alias\n:param entrypoint: Match operations by contract entrypoint\n:param optional: Whether can operation be missing in operation group\n:param alias: Alias for operation (helps to avoid duplicates)",
       "properties": {
@@ -1923,7 +1923,7 @@
           "title": "Alias"
         }
       },
-      "title": "TezosTzktOperationsHandlerTransactionPatternConfig",
+      "title": "TezosOperationsHandlerTransactionPatternConfig",
       "type": "object"
     },
     "TezosOperationsIndexConfig": {
@@ -1931,9 +1931,9 @@
       "description": "Operation index config\n\n:param kind: always 'tezos.operations'\n:param datasource: Alias of index datasource in `datasources` section\n:param handlers: List of indexer handlers\n:param types: Types of transaction to fetch\n:param contracts: Aliases of contracts being indexed in `contracts` section\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.operations",
+          "const": "tezos.operations",
           "enum": [
-            "tezos.tzkt.operations"
+            "tezos.operations"
           ],
           "title": "Kind",
           "type": "string"
@@ -1951,7 +1951,7 @@
         },
         "handlers": {
           "items": {
-            "$ref": "#/$defs/TezosTzktOperationsHandlerConfig"
+            "$ref": "#/$defs/TezosOperationsHandlerConfig"
           },
           "title": "Handlers",
           "type": "array"
@@ -2004,9 +2004,9 @@
       "description": "Operation index config\n\n:param kind: always 'tezos.operations_unfiltered'\n:param datasource: Alias of index datasource in `datasources` section\n:param callback: Callback name\n:param types: Types of transaction to fetch\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.operations_unfiltered",
+          "const": "tezos.operations_unfiltered",
           "enum": [
-            "tezos.tzkt.operations_unfiltered"
+            "tezos.operations_unfiltered"
           ],
           "title": "Kind",
           "type": "string"
@@ -2055,7 +2055,7 @@
       "title": "TezosOperationsUnfilteredIndexConfig",
       "type": "object"
     },
-    "TezosTzktTokenBalancesHandlerConfig": {
+    "TezosTokenBalancesHandlerConfig": {
       "additionalProperties": false,
       "description": "Token balance handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID",
       "properties": {
@@ -2094,17 +2094,17 @@
       "required": [
         "callback"
       ],
-      "title": "TezosTzktTokenBalancesHandlerConfig",
+      "title": "TezosTokenBalancesHandlerConfig",
       "type": "object"
     },
-    "TezosTzktTokenBalancesIndexConfig": {
+    "TezosTokenBalancesIndexConfig": {
       "additionalProperties": false,
       "description": "Token balance index config\n\n:param kind: always 'tezos.token_balances'\n:param datasource: Index datasource to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.token_balances",
+          "const": "tezos.token_balances",
           "enum": [
-            "tezos.tzkt.token_balances"
+            "tezos.token_balances"
           ],
           "title": "Kind",
           "type": "string"
@@ -2122,7 +2122,7 @@
         },
         "handlers": {
           "items": {
-            "$ref": "#/$defs/TezosTzktTokenBalancesHandlerConfig"
+            "$ref": "#/$defs/TezosTokenBalancesHandlerConfig"
           },
           "title": "Handlers",
           "type": "array"
@@ -2142,10 +2142,10 @@
         "kind",
         "datasource"
       ],
-      "title": "TezosTzktTokenBalancesIndexConfig",
+      "title": "TezosTokenBalancesIndexConfig",
       "type": "object"
     },
-    "TezosTzktTokenTransfersHandlerConfig": {
+    "TezosTokenTransfersHandlerConfig": {
       "additionalProperties": false,
       "description": "Token transfer handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID\n:param from_: Filter by sender\n:param to: Filter by recipient",
       "properties": {
@@ -2214,17 +2214,17 @@
       "required": [
         "callback"
       ],
-      "title": "TezosTzktTokenTransfersHandlerConfig",
+      "title": "TezosTokenTransfersHandlerConfig",
       "type": "object"
     },
-    "TezosTzktTokenTransfersIndexConfig": {
+    "TezosTokenTransfersIndexConfig": {
       "additionalProperties": false,
       "description": "Token transfer index config\n\n:param kind: always 'tezos.token_transfers'\n:param datasource: Index datasource to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
-          "const": "tezos.tzkt.token_transfers",
+          "const": "tezos.token_transfers",
           "enum": [
-            "tezos.tzkt.token_transfers"
+            "tezos.token_transfers"
           ],
           "title": "Kind",
           "type": "string"
@@ -2242,7 +2242,7 @@
         },
         "handlers": {
           "items": {
-            "$ref": "#/$defs/TezosTzktTokenTransfersHandlerConfig"
+            "$ref": "#/$defs/TezosTokenTransfersHandlerConfig"
           },
           "title": "Handlers",
           "type": "array"
@@ -2262,7 +2262,7 @@
         "kind",
         "datasource"
       ],
-      "title": "TezosTzktTokenTransfersIndexConfig",
+      "title": "TezosTokenTransfersIndexConfig",
       "type": "object"
     },
     "TzipMetadataDatasourceConfig": {
@@ -2410,10 +2410,10 @@
             "$ref": "#/$defs/TezosOperationsUnfilteredIndexConfig"
           },
           {
-            "$ref": "#/$defs/TezosTzktTokenTransfersIndexConfig"
+            "$ref": "#/$defs/TezosTokenTransfersIndexConfig"
           },
           {
-            "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
+            "$ref": "#/$defs/TezosTokenBalancesIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmLogsIndexConfig"
@@ -2451,10 +2451,10 @@
             "$ref": "#/$defs/TezosOperationsUnfilteredIndexConfig"
           },
           {
-            "$ref": "#/$defs/TezosTzktTokenTransfersIndexConfig"
+            "$ref": "#/$defs/TezosTokenTransfersIndexConfig"
           },
           {
-            "$ref": "#/$defs/TezosTzktTokenBalancesIndexConfig"
+            "$ref": "#/$defs/TezosTokenBalancesIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmLogsIndexConfig"

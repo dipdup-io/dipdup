@@ -35,8 +35,8 @@ from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
-from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
+from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.database import execute_sql
 from dipdup.database import execute_sql_query
 from dipdup.database import get_connection
@@ -301,20 +301,20 @@ class DipDupContext:
         from dipdup.indexes.evm_logs.index import EvmLogsIndex
         from dipdup.indexes.evm_traces.index import EvmTracesIndex
         from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
-        from dipdup.indexes.tezos_tzkt_big_maps.index import TezosBigMapsIndex
-        from dipdup.indexes.tezos_tzkt_events.index import TezosEventsIndex
-        from dipdup.indexes.tezos_tzkt_head.index import TezosHeadIndex
-        from dipdup.indexes.tezos_tzkt_operations.index import TezosOperationsIndex
-        from dipdup.indexes.tezos_tzkt_token_balances.index import TezosTzktTokenBalancesIndex
-        from dipdup.indexes.tezos_tzkt_token_transfers.index import TezosTzktTokenTransfersIndex
+        from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
+        from dipdup.indexes.tezos_events.index import TezosEventsIndex
+        from dipdup.indexes.tezos_head.index import TezosHeadIndex
+        from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
+        from dipdup.indexes.tezos_token_balances.index import TezosTokenBalancesIndex
+        from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
 
         index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
         index: (
             TezosOperationsIndex
             | TezosBigMapsIndex
             | TezosHeadIndex
-            | TezosTzktTokenBalancesIndex
-            | TezosTzktTokenTransfersIndex
+            | TezosTokenBalancesIndex
+            | TezosTokenTransfersIndex
             | TezosEventsIndex
             | EvmLogsIndex
             | EvmTracesIndex
@@ -333,12 +333,12 @@ class DipDupContext:
         elif isinstance(index_config, TezosHeadIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosHeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktTokenBalancesIndexConfig):
+        elif isinstance(index_config, TezosTokenBalancesIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosTzktTokenBalancesIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
+            index = TezosTokenBalancesIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTokenTransfersIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosTzktTokenTransfersIndex(self, index_config, datasource)
+            index = TezosTokenTransfersIndex(self, index_config, datasource)
         elif isinstance(index_config, TezosEventsIndexConfig):
             datasource = self.get_tezos_tzkt_datasource(datasource_name)
             index = TezosEventsIndex(self, index_config, datasource)

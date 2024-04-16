@@ -16,7 +16,7 @@ datasources:
 
 templates:
   big_maps:
-    kind: tezos.tzkt.big_maps
+    kind: tezos.big_maps
     datasource: <datasource>
     handlers:
       - callback: on_update_records

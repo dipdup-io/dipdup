@@ -10,8 +10,8 @@ from pydantic.fields import Field
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models.tezos_tzkt import TokenBalanceSubscription
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktTokenBalancesHandlerConfig(HandlerConfig):
+class TezosTokenBalancesHandlerConfig(HandlerConfig):
     """Token balance handler config
 
     :param callback: Callback name
@@ -35,7 +35,7 @@ class TezosTzktTokenBalancesHandlerConfig(HandlerConfig):
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         """This iterator result will be used in codegen to generate handler(s) template"""
         yield 'dipdup.context', 'HandlerContext'
-        yield 'dipdup.models.tezos_tzkt', 'TezosTzktTokenBalanceData as TokenBalanceData'
+        yield 'dipdup.models.tezos_tzkt', 'TezosTokenBalanceData as TokenBalanceData'
         yield package, 'models as models'
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -45,7 +45,7 @@ class TezosTzktTokenBalancesHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktTokenBalancesIndexConfig(TezosTzktIndexConfig):
+class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """Token balance index config
 
     :param kind: always 'tezos.token_balances'
@@ -56,9 +56,9 @@ class TezosTzktTokenBalancesIndexConfig(TezosTzktIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.tzkt.token_balances']
+    kind: Literal['tezos.token_balances']
     datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

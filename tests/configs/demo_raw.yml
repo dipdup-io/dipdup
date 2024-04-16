@@ -10,7 +10,7 @@ datasources:
 
 indexes:
   mainnet_operations:
-    kind: tezos.tzkt.operations_unfiltered
+    kind: tezos.operations_unfiltered
     datasource: tzkt
     types:
       - transaction
@@ -20,7 +20,7 @@ indexes:
     last_level: 1589247
 
   mainnet_originations:
-    kind: tezos.tzkt.operations_unfiltered
+    kind: tezos.operations_unfiltered
     datasource: tzkt
     types:
       - origination

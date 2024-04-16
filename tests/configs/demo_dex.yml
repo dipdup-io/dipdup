@@ -28,7 +28,7 @@ datasources:
 
 templates:
   quipuswap_fa12:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt_mainnet
     contracts:
       - <dex_contract>
@@ -91,7 +91,7 @@ templates:
             optional: True
 
   quipuswap_fa2:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt_mainnet
     contracts:
       - <dex_contract>

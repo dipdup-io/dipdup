@@ -12,8 +12,8 @@ from pydantic.fields import Field
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos_tzkt import OriginationSubscription
@@ -129,7 +129,7 @@ class TezosTzktPatternConfig(CodegenMixin):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
+class TezosOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Transaction handler pattern config
 
     :param type: always 'transaction'
@@ -189,7 +189,7 @@ class TezosTzktOperationsHandlerTransactionPatternConfig(TezosTzktPatternConfig,
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
+class TezosOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Origination handler pattern config
 
     :param type: always 'origination'
@@ -238,7 +238,7 @@ class TezosTzktOperationsHandlerOriginationPatternConfig(TezosTzktPatternConfig,
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
+class TezosOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPatternConfig, SubgroupIndexMixin):
     """Operation handler pattern config
 
     :param type: always 'sr_execute'
@@ -275,7 +275,7 @@ class TezosTzktOperationsHandlerSmartRollupExecutePatternConfig(TezosTzktPattern
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosOperationsIndexConfig(TezosTzktIndexConfig):
+class TezosOperationsIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations'
@@ -287,9 +287,9 @@ class TezosOperationsIndexConfig(TezosTzktIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.tzkt.operations']
+    kind: Literal['tezos.operations']
     datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktOperationsHandlerConfig, ...]
+    handlers: tuple[TezosOperationsHandlerConfig, ...]
     contracts: list[TezosContractConfig] = Field(default_factory=list)
     types: tuple[TezosTzktOperationType, ...] = (TezosTzktOperationType.transaction,)
 
@@ -331,22 +331,22 @@ class TezosOperationsIndexConfig(TezosTzktIndexConfig):
                 item.pop('alias', None)
 
 
-TezosTzktOperationsHandlerPatternConfigU = (
-    TezosTzktOperationsHandlerTransactionPatternConfig
-    | TezosTzktOperationsHandlerOriginationPatternConfig
-    | TezosTzktOperationsHandlerSmartRollupExecutePatternConfig
+TezosOperationsHandlerPatternConfigU = (
+    TezosOperationsHandlerTransactionPatternConfig
+    | TezosOperationsHandlerOriginationPatternConfig
+    | TezosOperationsHandlerSmartRollupExecutePatternConfig
 )
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsHandlerConfig(HandlerConfig):
+class TezosOperationsHandlerConfig(HandlerConfig):
     """Operation handler config
 
     :param callback: Callback name
     :param pattern: Filters to match operation groups
     """
 
-    pattern: tuple[TezosTzktOperationsHandlerPatternConfigU, ...]
+    pattern: tuple[TezosOperationsHandlerPatternConfigU, ...]
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -372,7 +372,7 @@ class TezosTzktOperationsHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
+class TezosOperationsUnfilteredHandlerConfig(HandlerConfig):
     """Handler of unfiltered operation index
 
     :param callback: Callback name
@@ -389,7 +389,7 @@ class TezosTzktOperationsUnfilteredHandlerConfig(HandlerConfig):
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
+class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations_unfiltered'
@@ -401,7 +401,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.tzkt.operations_unfiltered']
+    kind: Literal['tezos.operations_unfiltered']
     datasource: TezosTzktDatasourceConfig
     callback: str
     types: tuple[TezosTzktOperationType, ...] = (TezosTzktOperationType.transaction,)
@@ -411,7 +411,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = TezosTzktOperationsUnfilteredHandlerConfig(callback=self.callback)
+        self.handler_config = TezosOperationsUnfilteredHandlerConfig(callback=self.callback)
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
@@ -419,5 +419,5 @@ class TezosOperationsUnfilteredIndexConfig(TezosTzktIndexConfig):
         return subs
 
 
-TezosTzktOperationsHandlerConfigU = TezosTzktOperationsHandlerConfig | TezosTzktOperationsUnfilteredHandlerConfig
+TezosOperationsHandlerConfigU = TezosOperationsHandlerConfig | TezosOperationsUnfilteredHandlerConfig
 TezosOperationsIndexConfigU = TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig

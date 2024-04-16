@@ -878,13 +878,13 @@ class DipDupConfig:
 
         # NOTE: Indexes that process only the current state imply early realtime.
         from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
-        from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
+        from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
 
         for name, index_config in self.indexes.items():
             is_big_maps = (
                 isinstance(index_config, TezosBigMapsIndexConfig) and index_config.skip_history != SkipHistory.never
             )
-            is_token_balances = isinstance(index_config, TezosTzktTokenBalancesIndexConfig)
+            is_token_balances = isinstance(index_config, TezosTokenBalancesIndexConfig)
             if is_big_maps or is_token_balances:
                 _logger.info('`%s` index is configured to skip history; implying `early_realtime` flag', name)
                 self.advanced.early_realtime = True
@@ -977,13 +977,13 @@ class DipDupConfig:
                     # NOTE: Untyped operations are named as `transaction_N` or `origination_N` based on their index
                     pattern_config._subgroup_index = idx
 
-                    if isinstance(pattern_config, TezosTzktOperationsHandlerTransactionPatternConfig):
+                    if isinstance(pattern_config, TezosOperationsHandlerTransactionPatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
-                    elif isinstance(pattern_config, TezosTzktOperationsHandlerOriginationPatternConfig):
+                    elif isinstance(pattern_config, TezosOperationsHandlerOriginationPatternConfig):
                         if isinstance(pattern_config.source, str):
                             pattern_config.source = self.get_tezos_contract(pattern_config.source)
 
@@ -992,7 +992,7 @@ class DipDupConfig:
                                 pattern_config.originated_contract
                             )
 
-                    elif isinstance(pattern_config, TezosTzktOperationsHandlerSmartRollupExecutePatternConfig):
+                    elif isinstance(pattern_config, TezosOperationsHandlerSmartRollupExecutePatternConfig):
                         if isinstance(pattern_config.destination, str):
                             pattern_config.destination = self.get_tezos_contract(pattern_config.destination)
 
@@ -1005,7 +1005,7 @@ class DipDupConfig:
         elif isinstance(index_config, TezosHeadIndexConfig):
             index_config.handler_config.parent = index_config
 
-        elif isinstance(index_config, TezosTzktTokenTransfersIndexConfig):
+        elif isinstance(index_config, TezosTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1018,7 +1018,7 @@ class DipDupConfig:
                 if isinstance(handler_config.to, str):
                     handler_config.to = self.get_tezos_contract(handler_config.to)
 
-        elif isinstance(index_config, TezosTzktTokenBalancesIndexConfig):
+        elif isinstance(index_config, TezosTokenBalancesIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1092,17 +1092,17 @@ from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_head import TezosHeadIndexConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerSmartRollupExecutePatternConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerSmartRollupExecutePatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
-from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesIndexConfig
-from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersIndexConfig
+from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
+from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
@@ -1117,18 +1117,18 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
 )
-TezosTzktIndexConfigU = (
+TezosIndexConfigU = (
     TezosBigMapsIndexConfig
     | TezosEventsIndexConfig
     | TezosHeadIndexConfig
     | TezosOperationsIndexConfig
     | TezosOperationsUnfilteredIndexConfig
-    | TezosTzktTokenTransfersIndexConfig
-    | TezosTzktTokenBalancesIndexConfig
+    | TezosTokenTransfersIndexConfig
+    | TezosTokenBalancesIndexConfig
 )
 EvmIndexConfigU = EvmLogsIndexConfig | EvmTracesIndexConfig | EvmTransactionsIndexConfig
 
-ResolvedIndexConfigU = TezosTzktIndexConfigU | EvmIndexConfigU
+ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

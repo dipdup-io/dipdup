@@ -19,7 +19,7 @@ datasources:
 
 indexes:
   tzbtc_holders_mainnet:
-    kind: tezos.tzkt.token_transfers
+    kind: tezos.token_transfers
     datasource: tzkt
     handlers:
       - callback: on_token_transfer

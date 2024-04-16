@@ -9,8 +9,8 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt import TezosTzktIndexConfig
 from dipdup.models.tezos_tzkt import EventSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosTzktEventsHandlerConfig(HandlerConfig):
+class TezosEventsHandlerConfig(HandlerConfig):
     """Event handler config
 
     :param callback: Callback name
@@ -69,11 +69,11 @@ class TezosEventsUnknownEventHandlerConfig(HandlerConfig):
         yield 'event', 'UnknownEvent'
 
 
-TezosTzktEventsHandlerConfigU = TezosTzktEventsHandlerConfig | TezosEventsUnknownEventHandlerConfig
+TezosEventsHandlerConfigU = TezosEventsHandlerConfig | TezosEventsUnknownEventHandlerConfig
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class TezosEventsIndexConfig(TezosTzktIndexConfig):
+class TezosEventsIndexConfig(TezosIndexConfig):
     """Event index config
 
     :param kind: always 'tezos.events'
@@ -83,9 +83,9 @@ class TezosEventsIndexConfig(TezosTzktIndexConfig):
     :param last_level: Last block level to index
     """
 
-    kind: Literal['tezos.tzkt.events']
+    kind: Literal['tezos.events']
     datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTzktEventsHandlerConfigU, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosEventsHandlerConfigU, ...] = Field(default_factory=tuple)
 
     first_level: int = 0
     last_level: int = 0

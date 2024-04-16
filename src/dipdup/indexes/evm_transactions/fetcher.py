@@ -14,7 +14,7 @@ from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
 
-class EvmSubsquidTransactionFetcher(DataFetcher[EvmTransactionData]):
+class EvmEvmTransactionFetcher(DataFetcher[EvmTransactionData]):
     """Fetches transactions from REST API, merges them and yields by level."""
 
     _datasource: EvmSubsquidDatasource

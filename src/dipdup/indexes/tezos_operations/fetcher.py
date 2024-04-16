@@ -6,15 +6,11 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerOriginationPatternConfig as OriginationPatternConfig,
+    TezosOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
-)
-from dipdup.config.tezos_operations import (
-    TezosTzktOperationsHandlerTransactionPatternConfig as TransactionPatternConfig,
-)
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.exceptions import ConfigurationError

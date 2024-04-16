@@ -52,13 +52,13 @@ class IndexType(Enum):
     evm_logs = 'evm.logs'
     evm_transactions = 'evm.transactions'
     evm_subsquid_traces = 'evm.traces'
-    tezos_tzkt_big_maps = 'tezos.tzkt.big_maps'
-    tezos_tzkt_events = 'tezos.tzkt.events'
-    tezos_tzkt_head = 'tezos.tzkt.head'
-    tezos_tzkt_operations = 'tezos.tzkt.operations'
-    tezos_tzkt_operations_unfiltered = 'tezos.tzkt.operations_unfiltered'
-    tezos_tzkt_token_transfers = 'tezos.tzkt.token_transfers'
-    tezos_tzkt_token_balances = 'tezos.tzkt.token_balances'
+    tezos_big_maps = 'tezos.big_maps'
+    tezos_events = 'tezos.events'
+    tezos_head = 'tezos.head'
+    tezos_operations = 'tezos.operations'
+    tezos_operations_unfiltered = 'tezos.operations_unfiltered'
+    tezos_token_transfers = 'tezos.token_transfers'
+    tezos_token_balances = 'tezos.token_balances'
 
 
 class MessageType:

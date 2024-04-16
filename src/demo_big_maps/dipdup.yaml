@@ -14,7 +14,7 @@ datasources:
 
 templates:
   big_maps:
-    kind: tezos.tzkt.big_maps
+    kind: tezos.big_maps
     datasource: <datasource>
     skip_history: once
     handlers:

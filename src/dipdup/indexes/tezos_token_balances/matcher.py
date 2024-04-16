@@ -2,17 +2,17 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 
-from dipdup.config.tezos_token_balances import TezosTzktTokenBalancesHandlerConfig
-from dipdup.models.tezos_tzkt import TezosTzktTokenBalanceData
+from dipdup.config.tezos_token_balances import TezosTokenBalancesHandlerConfig
+from dipdup.models.tezos_tzkt import TezosTokenBalanceData
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedTokenBalancesT = tuple[TezosTzktTokenBalancesHandlerConfig, TezosTzktTokenBalanceData]
+MatchedTokenBalancesT = tuple[TezosTokenBalancesHandlerConfig, TezosTokenBalanceData]
 
 
 def match_token_balance(
-    handler_config: TezosTzktTokenBalancesHandlerConfig,
-    token_balance: TezosTzktTokenBalanceData,
+    handler_config: TezosTokenBalancesHandlerConfig,
+    token_balance: TezosTokenBalanceData,
 ) -> bool:
     """Match single token balance with pattern"""
     if handler_config.contract:
@@ -25,7 +25,7 @@ def match_token_balance(
 
 
 def match_token_balances(
-    handlers: Iterable[TezosTzktTokenBalancesHandlerConfig], token_balances: Iterable[TezosTzktTokenBalanceData]
+    handlers: Iterable[TezosTokenBalancesHandlerConfig], token_balances: Iterable[TezosTokenBalanceData]
 ) -> deque[MatchedTokenBalancesT]:
     """Try to match token balances with all index handlers."""
 

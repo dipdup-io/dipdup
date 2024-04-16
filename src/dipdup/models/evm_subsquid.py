@@ -179,6 +179,6 @@ class Query(TypedDict):
 
 
 # NOTE: Compatibility aliases; remove in 9.0
-EvmSubsquidTransactionData = EvmTransactionData
+EvmEvmTransactionData = EvmTransactionData
 EvmSubsquidLogData = EvmSubsquidEventData = EvmLogData
 EvmSubsquidTraceData = EvmTraceData

@@ -2,17 +2,17 @@ import logging
 from collections import deque
 from collections.abc import Iterable
 
-from dipdup.config.tezos_token_transfers import TezosTzktTokenTransfersHandlerConfig
-from dipdup.models.tezos_tzkt import TezosTzktTokenTransferData
+from dipdup.config.tezos_token_transfers import TezosTokenTransfersHandlerConfig
+from dipdup.models.tezos_tzkt import TezosTokenTransferData
 
 _logger = logging.getLogger('dipdup.matcher')
 
-MatchedTokenTransfersT = tuple[TezosTzktTokenTransfersHandlerConfig, TezosTzktTokenTransferData]
+MatchedTokenTransfersT = tuple[TezosTokenTransfersHandlerConfig, TezosTokenTransferData]
 
 
 def match_token_transfer(
-    handler_config: TezosTzktTokenTransfersHandlerConfig,
-    token_transfer: TezosTzktTokenTransferData,
+    handler_config: TezosTokenTransfersHandlerConfig,
+    token_transfer: TezosTokenTransferData,
 ) -> bool:
     """Match single token transfer with pattern"""
     if handler_config.contract:
@@ -31,7 +31,7 @@ def match_token_transfer(
 
 
 def match_token_transfers(
-    handlers: Iterable[TezosTzktTokenTransfersHandlerConfig], token_transfers: Iterable[TezosTzktTokenTransferData]
+    handlers: Iterable[TezosTokenTransfersHandlerConfig], token_transfers: Iterable[TezosTokenTransferData]
 ) -> deque[MatchedTokenTransfersT]:
     """Try to match token transfers with all index handlers."""
 

@@ -11,8 +11,8 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import OriginationSubscription
 from dipdup.models.tezos_tzkt import TezosTzktOperationType

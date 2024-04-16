@@ -1,14 +1,14 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_events import TezosTzktEventsHandlerConfig
-from dipdup.config.tezos_events import TezosTzktEventsHandlerConfigU
+from dipdup.config.tezos_events import TezosEventsHandlerConfig
+from dipdup.config.tezos_events import TezosEventsHandlerConfigU
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
+from dipdup.indexes.tezos_events.fetcher import EventFetcher
+from dipdup.indexes.tezos_events.matcher import match_events
 from dipdup.indexes.tezos_tzkt import TezosTzktIndex
-from dipdup.indexes.tezos_tzkt_events.fetcher import EventFetcher
-from dipdup.indexes.tezos_tzkt_events.matcher import match_events
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos_tzkt import TezosTzktEvent
 from dipdup.models.tezos_tzkt import TezosTzktEventData
@@ -49,9 +49,9 @@ class TezosEventsIndex(
         await self._exit_sync_state(sync_level)
 
     async def _call_matched_handler(
-        self, handler_config: TezosTzktEventsHandlerConfigU, level_data: TezosTzktEvent[Any] | TezosTzktUnknownEvent
+        self, handler_config: TezosEventsHandlerConfigU, level_data: TezosTzktEvent[Any] | TezosTzktUnknownEvent
     ) -> None:
-        if isinstance(handler_config, TezosTzktEventsHandlerConfig) != isinstance(level_data, TezosTzktEvent):
+        if isinstance(handler_config, TezosEventsHandlerConfig) != isinstance(level_data, TezosTzktEvent):
             raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {level_data}')
 
         if not handler_config.parent:
@@ -76,7 +76,7 @@ class TezosEventsIndex(
         """Get tags to fetch events during initial synchronization"""
         paths = set()
         for handler_config in self._config.handlers:
-            if isinstance(handler_config, TezosTzktEventsHandlerConfig):
+            if isinstance(handler_config, TezosEventsHandlerConfig):
                 paths.add(handler_config.tag)
         return paths
 

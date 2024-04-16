@@ -6,14 +6,14 @@ from typing import cast
 import pytest
 
 from dipdup.config import DipDupConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerConfig
-from dipdup.config.tezos_operations import TezosTzktOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.tezos_tzkt_operations.fetcher import get_origination_filters
-from dipdup.indexes.tezos_tzkt_operations.fetcher import get_transaction_filters
-from dipdup.indexes.tezos_tzkt_operations.index import TezosOperationsIndex
+from dipdup.indexes.tezos_operations.fetcher import get_origination_filters
+from dipdup.indexes.tezos_operations.fetcher import get_transaction_filters
+from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import TezosTzktOperationType
 from dipdup.models.tezos_tzkt import TransactionSubscription
@@ -56,10 +56,10 @@ async def test_get_origination_filters(
     index_config: TezosOperationsIndexConfig,
 ) -> None:
     index_config.handlers = (
-        TezosTzktOperationsHandlerConfig(
+        TezosOperationsHandlerConfig(
             callback='address_origination',
             pattern=(
-                TezosTzktOperationsHandlerOriginationPatternConfig(
+                TezosOperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[0],
                 ),
             ),
@@ -70,10 +70,10 @@ async def test_get_origination_filters(
     assert not hashes
 
     index_config.handlers = (
-        TezosTzktOperationsHandlerConfig(
+        TezosOperationsHandlerConfig(
             callback='hash_origination',
             pattern=(
-                TezosTzktOperationsHandlerOriginationPatternConfig(
+                TezosOperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[1],
                 ),
             ),
@@ -84,10 +84,10 @@ async def test_get_origination_filters(
     assert hashes == {-1585533315}
 
     index_config.handlers = (
-        TezosTzktOperationsHandlerConfig(
+        TezosOperationsHandlerConfig(
             callback='hash_address_origination',
             pattern=(
-                TezosTzktOperationsHandlerOriginationPatternConfig(
+                TezosOperationsHandlerOriginationPatternConfig(
                     originated_contract=index_config.contracts[2],
                 ),
             ),
@@ -98,10 +98,10 @@ async def test_get_origination_filters(
         await get_origination_filters(index_config, tzkt)
 
     index_config.handlers = (
-        TezosTzktOperationsHandlerConfig(
+        TezosOperationsHandlerConfig(
             callback='address_source',
             pattern=(
-                TezosTzktOperationsHandlerOriginationPatternConfig(
+                TezosOperationsHandlerOriginationPatternConfig(
                     source=index_config.contracts[0],
                 ),
             ),

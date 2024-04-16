@@ -5,11 +5,8 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
-from dipdup.config import IndexConfig
 from dipdup.config import IndexDatasourceConfig
 from dipdup.exceptions import ConfigurationError
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.subscriptions import Subscription
 
 TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
