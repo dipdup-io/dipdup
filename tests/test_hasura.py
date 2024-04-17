@@ -29,7 +29,7 @@ async def test_configure_hasura() -> None:
     if os.uname().sysname != 'Linux' or 'microsoft' in os.uname().release:  # check for WSL, Windows, mac and else
         pytest.skip('Test is not supported for os archetecture', allow_module_level=True)
 
-    config_path = Path(__file__).parent / 'configs' / 'demo_nft_marketplace.yml'
+    config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yml'
 
     config = DipDupConfig.load([config_path])
     config.database = await run_postgres_container()
@@ -70,10 +70,10 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
     hasura_config = HasuraConfig(url=fake_client_url)
     postgres_config = PostgresDatabaseConfig(kind='postgres', host='localhost')
 
-    hasura_gateway = HasuraGateway('demo_nft_marketplace', hasura_config, postgres_config)
+    hasura_gateway = HasuraGateway('demo_tezos_nft_marketplace', hasura_config, postgres_config)
 
     with pytest.raises(UnsupportedAPIError):
         async with hasura_gateway:
-            async with tortoise_wrapper('sqlite://:memory:', 'demo_nft_marketplace.models'):
+            async with tortoise_wrapper('sqlite://:memory:', 'demo_tezos_nft_marketplace.models'):
                 await Tortoise.generate_schemas()
                 await hasura_gateway.configure()

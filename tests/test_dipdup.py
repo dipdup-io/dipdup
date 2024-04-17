@@ -31,7 +31,7 @@ async def _create_index(hash_: str) -> None:
 
 class IndexStateTest:
     def __init__(self) -> None:
-        name = 'demo_nft_marketplace.yml'
+        name = 'demo_tezos_nft_marketplace.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
         self.config.database = SqliteDatabaseConfig(kind='sqlite')

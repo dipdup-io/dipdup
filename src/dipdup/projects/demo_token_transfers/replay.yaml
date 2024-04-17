@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: FA1.2 token transfers
-  package: demo_token_transfers
-  template: demo_token_transfers

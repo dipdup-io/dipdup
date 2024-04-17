@@ -29,7 +29,9 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosTransaction[AliasedParameter, DexContractStorage] | None'),)
+    assert tuple(pattern.iter_arguments()) == (
+        ('aliased', 'TezosTransaction[AliasedParameter, DexContractStorage] | None'),
+    )
     assert tuple(pattern.iter_imports('test')) == (
         ('dipdup.models.tezos', 'TezosTransaction'),
         ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter as AliasedParameter'),

@@ -1,0 +1,5 @@
+spec_version: 2.1
+replay:
+  description: FA1.2 token balances
+  package: demo_tezos_token_balances
+  template: demo_tezos_token_balances

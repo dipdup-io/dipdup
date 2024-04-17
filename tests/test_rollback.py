@@ -1,8 +1,8 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
 
-import demo_domains.models as domains_models
-import demo_nft_marketplace.models as hen_models
+import demo_tezos_domains.models as domains_models
+import demo_tezos_nft_marketplace.models as hen_models
 from tortoise.expressions import F
 
 from dipdup.config import DipDupConfig
@@ -15,7 +15,7 @@ from dipdup.test import create_dummy_dipdup
 
 
 async def test_model_updates() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_nft_marketplace')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
@@ -128,7 +128,7 @@ async def test_model_updates() -> None:
 
 
 async def test_cleanup_and_filtering() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_nft_marketplace')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
@@ -160,7 +160,7 @@ async def test_cleanup_and_filtering() -> None:
 
 
 async def test_optionals() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_domains')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_domains')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
@@ -201,7 +201,7 @@ async def test_optionals() -> None:
 
 
 async def test_bulk_create_update() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_domains')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_domains')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
@@ -284,7 +284,7 @@ async def test_bulk_create_update() -> None:
 
 
 async def test_update_prefetch() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_domains')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_domains')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:
@@ -335,7 +335,7 @@ async def test_update_prefetch() -> None:
 
 
 async def test_update_arithmetics() -> None:
-    config = DipDupConfig(spec_version='2.1', package='demo_nft_marketplace')
+    config = DipDupConfig(spec_version='2.1', package='demo_tezos_nft_marketplace')
     config.advanced.rollback_depth = 2
 
     async with AsyncExitStack() as stack:

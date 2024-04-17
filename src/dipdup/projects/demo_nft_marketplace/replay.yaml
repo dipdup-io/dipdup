@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: NFT marketplace (hic at nunc)
-  package: demo_nft_marketplace
-  template: demo_nft_marketplace

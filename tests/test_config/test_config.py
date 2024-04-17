@@ -89,11 +89,11 @@ async def test_reserved_keywords() -> None:
 
     # FIXME: Can't use `from_` field alias in dataclasses
     raw_config, _ = DipDupYAMLConfig.load(
-        paths=[Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml']
+        paths=[Path(__file__).parent.parent / 'configs' / 'demo_tezos_token_transfers_4.yml']
     )
     assert raw_config['indexes']['tzbtc_holders_mainnet']['handlers'][1]['from_'] == 'tzbtc_mainnet'
 
-    config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml'])
+    config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_tezos_token_transfers_4.yml'])
     assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[union-attr]
 
 

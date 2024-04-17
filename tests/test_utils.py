@@ -72,7 +72,7 @@ async def test_humps_helpers() -> None:
 
 
 async def test_iter_models() -> None:
-    models = list(iter_models('demo_token'))
+    models = list(iter_models('demo_tezos_token'))
     assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
@@ -80,9 +80,9 @@ async def test_iter_models() -> None:
 
 async def test_import_submodules() -> None:
     with raises(FrameworkException):
-        import_submodules('demo_token')
+        import_submodules('demo_tezos_token')
 
-    submodules = import_submodules('demo_token.handlers')
+    submodules = import_submodules('demo_tezos_token.handlers')
     assert len(submodules) == 3
 
 
