@@ -19,6 +19,6 @@
 .. automethod:: dipdup.context.DipDupContext.get_tezos_tzkt_datasource
 .. automethod:: dipdup.context.DipDupContext.reindex
 .. automethod:: dipdup.context.DipDupContext.restart
+.. automethod:: dipdup.context.DipDupContext.rollback
 .. automethod:: dipdup.context.DipDupContext.update_contract_metadata
 .. automethod:: dipdup.context.DipDupContext.update_token_metadata
-.. automethod:: dipdup.context.HookContext.rollback
