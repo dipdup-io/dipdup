@@ -81,5 +81,5 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make demos
 	make test
 	make docs_build
-	echo "🎉 Commit changes, merge aux/X.Y.Z branch, tag release on next"
+	echo "🎉 Commit changes, merge aux/X.Y.Z branch, tag release on current/next"
 ##
