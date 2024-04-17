@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from demo_evm_transactions import models as models
-from demo_evm_transactions.types.eth_usdt.evm_transactions.transfer import Transfer
+from demo_evm_transactions.types.eth_usdt.evm_transactions.transfer import TransferInput
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmTransaction
 from tortoise.exceptions import DoesNotExist
@@ -9,7 +9,7 @@ from tortoise.exceptions import DoesNotExist
 
 async def on_transfer(
     ctx: HandlerContext,
-    transaction: EvmTransaction[Transfer],
+    transaction: EvmTransaction[TransferInput],
 ) -> None:
     amount = Decimal(transaction.input.value) / (10**6)
     if not amount:

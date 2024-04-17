@@ -1,11 +1,11 @@
 from {{ project.package }} import models as models
-from {{ project.package }}.types.pool.evm_logs.flash import Flash
+from {{ project.package }}.types.pool.evm_logs.flash import FlashPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmLog
 
 
 async def flash(
     ctx: HandlerContext,
-    event: EvmLog[Flash],
+    log: EvmLog[FlashPayload],
 ) -> None:
     ...

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class Collect(BaseModel):
+class CollectPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

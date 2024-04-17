@@ -11,7 +11,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
 from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
-from dipdup.indexes.evm_logs.matcher import match_events
+from dipdup.indexes.evm_logs.matcher import match_logs
 from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.evm import EvmLog
@@ -51,16 +51,16 @@ class EvmLogsIndex(
         first_level = self.state.level + 1
         fetcher = self._create_subsquid_fetcher(first_level, sync_level)
 
-        async for _level, events in fetcher.fetch_by_level():
-            await self._process_level_data(events, sync_level)
+        async for _level, logs in fetcher.fetch_by_level():
+            await self._process_level_data(logs, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
         first_level = self.state.level + 1
         fetcher = self._create_node_fetcher(first_level, sync_level)
 
-        async for _level, events in fetcher.fetch_by_level():
-            await self._process_level_data(events, sync_level)
+        async for _level, logs in fetcher.fetch_by_level():
+            await self._process_level_data(logs, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmLogFetcher:
@@ -99,17 +99,15 @@ class EvmLogsIndex(
     def _match_level_data(
         self,
         handlers: tuple[EvmLogsHandlerConfig, ...],
-        level_data: Iterable[EvmLogData | EvmLogData],
+        level_data: Iterable[EvmLogData],
     ) -> deque[Any]:
-        return match_events(self._ctx.package, handlers, level_data, self.topics)
+        return match_logs(self._ctx.package, handlers, level_data, self.topics)
 
     async def _call_matched_handler(
         self,
         handler_config: EvmLogsHandlerConfig,
-        event: EvmLog[Any],
+        log: EvmLog[Any],
     ) -> None:
-        if isinstance(handler_config, EvmLogsHandlerConfig) != isinstance(event, EvmLog):
-            raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {event}')
 
         if not handler_config.parent:
             raise ConfigInitializationException
@@ -119,5 +117,5 @@ class EvmLogsIndex(
             handler_config.parent.name,
             self.datasource,
             None,
-            event,
+            log,
         )

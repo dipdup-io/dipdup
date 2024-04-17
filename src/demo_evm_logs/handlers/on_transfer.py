@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from demo_evm_logs import models as models
-from demo_evm_logs.types.eth_usdt.evm_logs.transfer import Transfer
+from demo_evm_logs.types.eth_usdt.evm_logs.transfer import TransferPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmLog
 from tortoise.exceptions import DoesNotExist
@@ -9,21 +9,21 @@ from tortoise.exceptions import DoesNotExist
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: EvmLog[Transfer],
+    log: EvmLog[TransferPayload],
 ) -> None:
-    amount = Decimal(event.payload.value) / (10**6)
+    amount = Decimal(log.payload.value) / (10**6)
     if not amount:
         return
 
     await on_balance_update(
-        address=event.payload.from_,
+        address=log.payload.from_,
         balance_update=-amount,
-        level=event.data.level,
+        level=log.data.level,
     )
     await on_balance_update(
-        address=event.payload.to,
+        address=log.payload.to,
         balance_update=amount,
-        level=event.data.level,
+        level=log.data.level,
     )
     
 

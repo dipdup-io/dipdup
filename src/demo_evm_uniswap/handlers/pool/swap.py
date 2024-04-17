@@ -7,7 +7,7 @@ from demo_evm_uniswap.models.repo import models_repo
 from demo_evm_uniswap.models.token import WHITELIST_TOKENS
 from demo_evm_uniswap.models.token import convert_token_amount
 from demo_evm_uniswap.models.token import token_derive_eth
-from demo_evm_uniswap.types.pool.evm_logs.swap import Swap
+from demo_evm_uniswap.types.pool.evm_logs.swap import SwapPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmLog
 
@@ -48,17 +48,17 @@ def sqrt_price_x96_to_token_prices(
 
 async def swap(
     ctx: HandlerContext,
-    event: EvmLog[Swap],
+    log: EvmLog[SwapPayload],
 ) -> None:
     factory = await get_ctx_factory(ctx)
-    pool = await models.Pool.cached_get_or_none(event.data.address)
+    pool = await models.Pool.cached_get_or_none(log.data.address)
     if not pool:
         return
     token0 = await models.Token.cached_get(pool.token0_id)
     token1 = await models.Token.cached_get(pool.token1_id)
 
-    amount0 = convert_token_amount(event.payload.amount0, token0.decimals)
-    amount1 = convert_token_amount(event.payload.amount1, token1.decimals)
+    amount0 = convert_token_amount(log.payload.amount0, token0.decimals)
+    amount1 = convert_token_amount(log.payload.amount1, token1.decimals)
     amount0_abs = abs(amount0)
     amount1_abs = abs(amount1)
 
@@ -98,9 +98,9 @@ async def swap(
     pool.tx_count += 1
 
     # Update the pool with the new active liquidity, price, and tick.
-    pool.liquidity = Decimal(event.payload.liquidity)
-    pool.tick = int(event.payload.tick)
-    pool.sqrt_price = Decimal(event.payload.sqrtPriceX96)
+    pool.liquidity = Decimal(log.payload.liquidity)
+    pool.tick = int(log.payload.tick)
+    pool.sqrt_price = Decimal(log.payload.sqrtPriceX96)
     pool.total_value_locked_token0 += amount0
     pool.total_value_locked_token1 += amount1
 
@@ -146,21 +146,21 @@ async def swap(
     token1.total_value_locked_usd = token1.total_value_locked * token1.derived_eth * eth_usd
 
     swap_tx = await models.Swap.create(
-        id=f'{event.data.transaction_hash}#{event.data.log_index}',
-        transaction_hash=event.data.transaction_hash,
+        id=f'{log.data.transaction_hash}#{log.data.log_index}',
+        transaction_hash=log.data.transaction_hash,
         pool=pool,
         token0=token0,
         token1=token1,
-        sender=event.payload.sender,
-        recipient=event.payload.recipient,
-        origin=event.payload.sender,  # FIXME: transaction origin
-        timestamp=event.data.timestamp,
+        sender=log.payload.sender,
+        recipient=log.payload.recipient,
+        origin=log.payload.sender,  # FIXME: transaction origin
+        timestamp=log.data.timestamp,
         amount0=amount0,
         amount1=amount1,
         amount_usd=amount_total_usd_tracked,
-        tick=event.payload.tick,
-        sqrt_price_x96=event.payload.sqrtPriceX96,
-        log_index=event.data.log_index,
+        tick=log.payload.tick,
+        sqrt_price_x96=log.payload.sqrtPriceX96,
+        log_index=log.data.log_index,
     )
     await swap_tx.save()
 

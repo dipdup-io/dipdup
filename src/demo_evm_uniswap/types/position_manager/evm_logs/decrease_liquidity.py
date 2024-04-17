@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class DecreaseLiquidity(BaseModel):
+class DecreaseLiquidityPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

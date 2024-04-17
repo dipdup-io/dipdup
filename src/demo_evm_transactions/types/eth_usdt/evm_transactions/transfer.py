@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class Transfer(BaseModel):
+class TransferInput(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

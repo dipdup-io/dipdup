@@ -7,7 +7,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 
 
-class Transfer(BaseModel):
+class TransferPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

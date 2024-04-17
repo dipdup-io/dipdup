@@ -28,6 +28,7 @@ from dipdup.package import ConvertedEventAbi
 from dipdup.package import ConvertedMethodAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
+from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 
 _abi_type_map: dict[str, str] = {
@@ -233,7 +234,14 @@ class EvmCodeGenerator(CodeGenerator):
             abi_path.write_bytes(json_dumps(abi_json))
 
     def get_typeclass_name(self, schema_path: Path) -> str:
-        return schema_path.stem
+        module_name = schema_path.stem
+        if schema_path.parent.name == 'evm_logs':
+            class_name = f'{module_name}_payload'
+        elif schema_path.parent.name == 'evm_transactions':
+            class_name = f'{module_name}_input'
+        else:
+            class_name = module_name
+        return snake_to_pascal(class_name)
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         markers = {

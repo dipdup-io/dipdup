@@ -41,13 +41,13 @@ class EvmLogsHandlerConfig(HandlerConfig):
         yield 'dipdup.models.evm', 'EvmLog'
         yield package, 'models as models'
 
-        event_cls = snake_to_pascal(self.name)
+        event_cls = snake_to_pascal(self.name) + 'Payload'
         event_module = pascal_to_snake(self.name)
         module_name = self.contract.module_name
         yield f'{package}.types.{module_name}.evm_logs.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
-        event_cls = snake_to_pascal(self.name)
+        event_cls = snake_to_pascal(self.name) + 'Payload'
         yield 'ctx', 'HandlerContext'
         yield 'log', f'EvmLog[{event_cls}]'
 

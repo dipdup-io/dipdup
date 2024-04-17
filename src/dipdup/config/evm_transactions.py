@@ -45,7 +45,7 @@ class EvmTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
         if self.typed_contract and self.method:
             yield 'dipdup.models.evm', 'EvmTransaction'
             transaction_module = pascal_to_snake(self.method)
-            transaction_cls = snake_to_pascal(self.method)
+            transaction_cls = snake_to_pascal(self.method) + 'Input'
             module_name = self.typed_contract.module_name
             yield f'{package}.types.{module_name}.evm_transactions.{transaction_module}', transaction_cls
         else:
@@ -55,7 +55,7 @@ class EvmTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
         yield 'ctx', 'HandlerContext'
 
         if self.typed_contract and self.method:
-            transaction_cls = snake_to_pascal(self.method)
+            transaction_cls = snake_to_pascal(self.method) + 'Input'
             yield 'transaction', f'EvmTransaction[{transaction_cls}]'
         else:
             yield 'transaction', 'EvmTransactionData'

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class Flash(BaseModel):
+class FlashPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

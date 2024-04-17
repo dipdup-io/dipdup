@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class PoolCreated(BaseModel):
+class PoolCreatedPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

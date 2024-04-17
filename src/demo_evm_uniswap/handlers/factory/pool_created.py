@@ -4,7 +4,7 @@ from typing import cast
 from demo_evm_uniswap import models as models
 from demo_evm_uniswap.models.token import WHITELIST_TOKENS
 from demo_evm_uniswap.models.token import ERC20Token
-from demo_evm_uniswap.types.factory.evm_logs.pool_created import PoolCreated
+from demo_evm_uniswap.types.factory.evm_logs.pool_created import PoolCreatedPayload
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmLog
@@ -36,10 +36,10 @@ async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
 
 async def pool_created(
     ctx: HandlerContext,
-    event: EvmLog[PoolCreated],
+    log: EvmLog[PoolCreatedPayload],
 ) -> None:
-    if event.payload.pool in POOL_BLACKLIST:
-        ctx.logger.info('Pool %s is blacklisted', event.payload.pool)
+    if log.payload.pool in POOL_BLACKLIST:
+        ctx.logger.info('Pool %s is blacklisted', log.payload.pool)
         return
 
     factory_address = cast(EvmContractConfig, ctx.config.get_contract('factory')).address
@@ -47,15 +47,15 @@ async def pool_created(
     factory.pool_count += 1
     await factory.save()
 
-    pool_id = event.payload.pool
+    pool_id = log.payload.pool
     try:
-        token0 = event.payload.token0
+        token0 = log.payload.token0
         await create_token(ctx, token0, pool_id)
     except Exception as e:
         ctx.logger.warning('Failed to get token %s for pool %s: %s', token0, pool_id, e)
         return  # skip this pool
     try:
-        token1 = event.payload.token1
+        token1 = log.payload.token1
         await create_token(ctx, token1, pool_id)
     except Exception as e:
         ctx.logger.warning('Failed to get token %s for pool %s: %s', token1, pool_id, e)
@@ -63,9 +63,9 @@ async def pool_created(
 
     pool = models.Pool(
         id=pool_id,
-        fee_tier=int(event.payload.fee),
-        created_at_timestamp=event.data.timestamp,
-        created_at_block_number=int(event.data.level),
+        fee_tier=int(log.payload.fee),
+        created_at_timestamp=log.data.timestamp,
+        created_at_block_number=int(log.data.level),
         token0_id=token0,
         token1_id=token1,
     )

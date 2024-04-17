@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class Burn(BaseModel):
+class BurnPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class Swap(BaseModel):
+class SwapPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )

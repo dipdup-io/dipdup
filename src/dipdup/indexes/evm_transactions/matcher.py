@@ -53,7 +53,7 @@ def prepare_transaction_handler_args(
     type_ = package.get_type(
         typename=typename,
         module=f'evm_transactions.{pascal_to_snake(method)}',
-        name=snake_to_pascal(method),
+        name=snake_to_pascal(method) + 'Input',
     )
     typed_input = parse_object(
         type_=type_,
