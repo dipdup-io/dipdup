@@ -6,4 +6,4 @@ Contains software versions and other metadata.
 import importlib.metadata
 
 __version__ = importlib.metadata.version('dipdup')
-__spec_version__ = '2.1'
+__spec_version__ = '3.0'

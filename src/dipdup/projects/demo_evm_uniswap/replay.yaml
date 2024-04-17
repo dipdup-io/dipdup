@@ -1,4 +1,4 @@
-spec_version: 2.1
+spec_version: 3.0
 replay:
   description: Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB)
   package: demo_evm_uniswap
