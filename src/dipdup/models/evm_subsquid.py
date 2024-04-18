@@ -2,10 +2,6 @@ from typing import NotRequired
 
 from typing_extensions import TypedDict
 
-from dipdup.models.evm import EvmLogData
-from dipdup.models.evm import EvmTraceData
-from dipdup.models.evm import EvmTransactionData
-
 
 class BlockFieldSelection(TypedDict, total=False):
     baseFeePerGas: bool
@@ -176,9 +172,3 @@ class Query(TypedDict):
     traces: NotRequired[list[TraceRequest]]
     transactions: NotRequired[list[TransactionRequest]]
     type: NotRequired[str]
-
-
-# NOTE: Compatibility aliases; remove in 9.0
-EvmEvmTransactionData = EvmTransactionData
-EvmSubsquidLogData = EvmSubsquidEventData = EvmLogData
-EvmSubsquidTraceData = EvmTraceData

@@ -128,8 +128,6 @@ IGNORED_CONFIG_CLASSES = {
     'dipdup.config.CallbackMixin',
     'dipdup.config.CodegenMixin',
     'dipdup.config.Config',
-    'dipdup.config.evm_traces.EvmTracesHandlerConfig',
-    'dipdup.config.evm_traces.EvmTracesIndexConfig',
     'dipdup.config.NameMixin',
     'dipdup.config.ParentMixin',
     'dipdup.config.tezos_operations.SubgroupIndexMixin',
@@ -138,8 +136,6 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.BulkCreateQuery',
     'dipdup.models.BulkUpdateQuery',
     'dipdup.models.DeleteQuery',
-    'dipdup.models.evm.EvmTrace',
-    'dipdup.models.evm.EvmTraceData',
     'dipdup.models.evm_node.EvmNodeHeadData',
     'dipdup.models.evm_node.EvmNodeHeadSubscription',
     'dipdup.models.evm_node.EvmNodeLogsSubscription',
@@ -630,6 +626,9 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
+            # FIXME: Remove after the first 8.0 release
+            line = line.replace('## [Unreleased]', '## [8.0.0]')
+
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:
@@ -641,7 +640,7 @@ def merge_changelog() -> None:
             changelog_tree[curr_version][curr_group].append(line)
 
     for version in sorted(changelog_tree.keys()):
-        if not version.startswith('7.'):
+        if version[0] not in ('7', '8'):
             continue
 
         version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')

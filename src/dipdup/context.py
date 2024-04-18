@@ -27,7 +27,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
@@ -299,7 +298,6 @@ class DipDupContext:
     async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
         # NOTE: Avoiding circular import
         from dipdup.indexes.evm_logs.index import EvmLogsIndex
-        from dipdup.indexes.evm_traces.index import EvmTracesIndex
         from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
         from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
         from dipdup.indexes.tezos_events.index import TezosEventsIndex
@@ -317,7 +315,6 @@ class DipDupContext:
             | TezosTokenTransfersIndex
             | TezosEventsIndex
             | EvmLogsIndex
-            | EvmTracesIndex
             | EvmTransactionsIndex
         )
 
@@ -353,8 +350,6 @@ class DipDupContext:
             index = EvmLogsIndex(self, index_config, datasource)
             for node_datasource in index.node_datasources:
                 node_datasource.add_index(index_config)
-        elif isinstance(index_config, EvmTracesIndexConfig):
-            raise NotImplementedError
         elif isinstance(index_config, EvmTransactionsIndexConfig):
             datasource_config = index_config.datasource
             if isinstance(datasource_config, EvmSubsquidDatasourceConfig):

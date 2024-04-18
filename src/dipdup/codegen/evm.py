@@ -14,8 +14,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_logs import EvmLogsHandlerConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.config.evm_traces import EvmTracesHandlerConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
@@ -166,8 +164,6 @@ class EvmCodeGenerator(CodeGenerator):
             if isinstance(index_config, EvmLogsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
-            elif isinstance(index_config, EvmTracesIndexConfig):
-                raise NotImplementedError
             elif isinstance(index_config, EvmTransactionsIndexConfig):
                 for handler_config in index_config.handlers:
                     if handler_config.method:
@@ -197,8 +193,6 @@ class EvmCodeGenerator(CodeGenerator):
         for handler_config in index_config.handlers:
             if isinstance(handler_config, EvmLogsHandlerConfig):
                 contract = handler_config.contract
-            elif isinstance(handler_config, EvmTracesHandlerConfig):
-                raise NotImplementedError
             elif isinstance(handler_config, EvmTransactionsHandlerConfig):
                 contract = handler_config.typed_contract
 

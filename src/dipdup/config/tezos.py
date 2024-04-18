@@ -17,6 +17,8 @@ SMART_CONTRACT_PREFIX = 'KT1'
 SMART_ROLLUP_PREFIX = 'sr1'
 WALLET_PREFIXES = ('tz1', 'tz2', 'tz3')
 
+TezosDatasourceConfigU = TezosTzktDatasourceConfig
+
 
 def is_contract_address(address: str) -> bool:
     return len(address) == ADDRESS_LENGTH and address.startswith(SMART_CONTRACT_PREFIX)
@@ -74,10 +76,10 @@ class TezosIndexConfig(IndexConfig):
     """TzKT index config
 
     :param kind: starts with 'tezos'
-    :param datasource: `tezos.tzkt` datasource to use
+    :param datasources: `tezos` datasources to use
     """
 
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[TezosDatasourceConfigU, ...]
 
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}

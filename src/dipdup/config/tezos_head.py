@@ -7,8 +7,8 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HandlerConfig
+from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -37,12 +37,12 @@ class TezosHeadIndexConfig(TezosIndexConfig):
 
     :param kind: always 'tezos.head'
     :param callback: Callback name
-    :param datasource: Index datasource to receive head blocks
+    :param datasources: `tezos` datasources to use
     :param handlers: Mapping of head block handlers
     """
 
     kind: Literal['tezos.head']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[TezosDatasourceConfigU, ...]
     callback: str
 
     @property

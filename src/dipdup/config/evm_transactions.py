@@ -7,13 +7,11 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import AbiDatasourceConfig
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmDatasourceConfigU
 from dipdup.config.evm import EvmIndexConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
@@ -72,18 +70,16 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
     """Index that uses Subsquid Network as a datasource for transactions
 
     :param kind: always 'evm.transactions'
-    :param datasource: Subsquid datasource config
+    :param datasources: `evm` datasources to use
     :param handlers: Transaction handlers
-    :param abi: One or many ABI datasource(s)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
     """
 
     kind: Literal['evm.transactions']
 
-    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
+    datasources: tuple[EvmDatasourceConfigU, ...] = field(default_factory=tuple)
     handlers: tuple[EvmTransactionsHandlerConfig, ...] = field(default_factory=tuple)
-    abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
 
     first_level: int = 0
     last_level: int = 0

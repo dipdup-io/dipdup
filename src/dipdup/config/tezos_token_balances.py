@@ -10,8 +10,8 @@ from pydantic.fields import Field
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos_tzkt import TokenBalanceSubscription
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """Token balance index config
 
     :param kind: always 'tezos.token_balances'
-    :param datasource: Index datasource to use
+    :param datasources: `tezos` datasources to use
     :param handlers: Mapping of token transfer handlers
 
     :param first_level: Level to start indexing from
@@ -57,7 +57,7 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_balances']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[TezosDatasourceConfigU, ...]
     handlers: tuple[TezosTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

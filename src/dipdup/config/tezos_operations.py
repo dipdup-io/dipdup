@@ -12,8 +12,8 @@ from pydantic.fields import Field
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
-from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
@@ -279,7 +279,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations'
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: `tezos` datasources to use
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
@@ -288,7 +288,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[TezosDatasourceConfigU, ...]
     handlers: tuple[TezosOperationsHandlerConfig, ...]
     contracts: list[TezosContractConfig] = Field(default_factory=list)
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
@@ -393,7 +393,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations_unfiltered'
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: `tezos` datasources to use
     :param callback: Callback name
     :param types: Types of transaction to fetch
 
@@ -402,7 +402,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations_unfiltered']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[TezosDatasourceConfigU, ...]
     callback: str
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 

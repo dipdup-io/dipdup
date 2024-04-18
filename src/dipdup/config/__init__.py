@@ -386,11 +386,11 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param kind: Defined by child class
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: Aliases of index datasources in `datasources` section
     """
 
     kind: str
-    datasource: DatasourceConfig
+    datasources: tuple[DatasourceConfig, ...]
 
     def __post_init__(self) -> None:
         NameMixin.__post_init__(self)
@@ -1042,9 +1042,6 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmTracesIndexConfig):
-            raise NotImplementedError
-
         elif isinstance(index_config, EvmTransactionsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -1087,7 +1084,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -1126,7 +1122,7 @@ TezosIndexConfigU = (
     | TezosTokenTransfersIndexConfig
     | TezosTokenBalancesIndexConfig
 )
-EvmIndexConfigU = EvmLogsIndexConfig | EvmTracesIndexConfig | EvmTransactionsIndexConfig
+EvmIndexConfigU = EvmLogsIndexConfig | EvmTransactionsIndexConfig
 
 ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig

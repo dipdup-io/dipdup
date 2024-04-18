@@ -9,12 +9,15 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
 from dipdup.config import IndexConfig
+from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
+
+EvmDatasourceConfigU = EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig | AbiEtherscanDatasourceConfig
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -56,7 +59,7 @@ class EvmIndexConfig(IndexConfig, ABC):
     """EVM index that use Subsquid Network as a datasource
 
     :param kind: starts with 'evm'
-    :param datasource: Subsquid or Node datasource config
+    :param datasources: `evm` datasources to use
     """
 
-    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
+    datasources: tuple[EvmDatasourceConfigU, ...]
