@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: Processing head block metadata (realtime only)
-  package: demo_head
-  template: demo_head

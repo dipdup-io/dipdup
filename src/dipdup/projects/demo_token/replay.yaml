@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: FA1.2 token contract operations
-  package: demo_token
-  template: demo_token

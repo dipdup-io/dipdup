@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: FA1.2 token balances
-  package: demo_token_balances
-  template: demo_token_balances

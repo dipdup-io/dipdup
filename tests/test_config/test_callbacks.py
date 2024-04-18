@@ -1,8 +1,8 @@
 import pytest
 
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerOriginationPatternConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsHandlerTransactionPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig
 
 
 @pytest.fixture
@@ -14,15 +14,13 @@ def contract() -> TezosContractConfig:
 
 def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     # NOTE: Typed `transaction`
-    pattern = TezosTzktOperationsHandlerTransactionPatternConfig(
+    pattern = TezosOperationsHandlerTransactionPatternConfig(
         destination=contract,
         entrypoint='fooBar',
     )
-    assert tuple(pattern.iter_arguments()) == (
-        ('foo_bar', 'TezosTzktTransaction[FooBarParameter, DexContractStorage]'),
-    )
+    assert tuple(pattern.iter_arguments()) == (('foo_bar', 'TezosTransaction[FooBarParameter, DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTzktTransaction'),
+        ('dipdup.models.tezos', 'TezosTransaction'),
         ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
@@ -32,40 +30,38 @@ def test_transaction_callbacks(contract: TezosContractConfig) -> None:
     pattern.optional = True
 
     assert tuple(pattern.iter_arguments()) == (
-        ('aliased', 'TezosTzktTransaction[AliasedParameter, DexContractStorage] | None'),
+        ('aliased', 'TezosTransaction[AliasedParameter, DexContractStorage] | None'),
     )
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTzktTransaction'),
+        ('dipdup.models.tezos', 'TezosTransaction'),
         ('test.types.dex_contract.tezos_parameters.foo_bar', 'FooBarParameter as AliasedParameter'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: Untyped `transaction`
-    pattern = TezosTzktOperationsHandlerTransactionPatternConfig(
+    pattern = TezosOperationsHandlerTransactionPatternConfig(
         destination=contract,
     )
     pattern.subgroup_index = 1
-    assert tuple(pattern.iter_arguments()) == (('transaction_1', 'TezosTzktOperationData'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosTzktOperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('transaction_1', 'TezosOperationData'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
     # NOTE: With alias and optional
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosTzktOperationData | None'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosTzktOperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOperationData | None'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
 
 def test_origination_callbacks(contract: TezosContractConfig) -> None:
     # NOTE: Typed `origination`
-    pattern = TezosTzktOperationsHandlerOriginationPatternConfig(
+    pattern = TezosOperationsHandlerOriginationPatternConfig(
         originated_contract=contract,
     )
-    assert tuple(pattern.iter_arguments()) == (
-        ('dex_contract_origination', 'TezosTzktOrigination[DexContractStorage]'),
-    )
+    assert tuple(pattern.iter_arguments()) == (('dex_contract_origination', 'TezosOrigination[DexContractStorage]'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTzktOrigination'),
+        ('dipdup.models.tezos', 'TezosOrigination'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
@@ -73,23 +69,23 @@ def test_origination_callbacks(contract: TezosContractConfig) -> None:
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosTzktOrigination[DexContractStorage] | None'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOrigination[DexContractStorage] | None'),)
     assert tuple(pattern.iter_imports('test')) == (
-        ('dipdup.models.tezos_tzkt', 'TezosTzktOrigination'),
+        ('dipdup.models.tezos', 'TezosOrigination'),
         ('test.types.dex_contract.tezos_storage', 'DexContractStorage'),
     )
 
     # NOTE: Untyped `origination`
-    pattern = TezosTzktOperationsHandlerOriginationPatternConfig(
+    pattern = TezosOperationsHandlerOriginationPatternConfig(
         source=contract,
     )
     pattern.subgroup_index = 1
-    assert tuple(pattern.iter_arguments()) == (('origination_1', 'TezosTzktOperationData'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosTzktOperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('origination_1', 'TezosOperationData'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)
 
     # NOTE: With alias and optional
     pattern.alias = 'aliased'
     pattern.optional = True
 
-    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosTzktOperationData | None'),)
-    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos_tzkt', 'TezosTzktOperationData'),)
+    assert tuple(pattern.iter_arguments()) == (('aliased', 'TezosOperationData | None'),)
+    assert tuple(pattern.iter_imports('test')) == (('dipdup.models.tezos', 'TezosOperationData'),)

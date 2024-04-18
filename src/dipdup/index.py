@@ -117,7 +117,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._logger.debug('Processing data of level %s', batch_level)
         started_at = time.time()
 
-        # FIXME: TezosTzktHeadIndexConfig, TezosTzktOperationsUnfilteredIndexConfig still use own methods; see FIXMEs
+        # FIXME: TezosHeadIndexConfig, TezosOperationsUnfilteredIndexConfig still use own methods; see FIXMEs
         matched_handlers = self._match_level_data(self._config.handlers, level_data)  # type: ignore[union-attr]
 
         total_matched = len(matched_handlers)

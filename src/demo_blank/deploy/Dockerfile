@@ -1,5 +1,5 @@
-FROM dipdup/dipdup:7
-# FROM ghcr.io/dipdup-io/dipdup:7
+FROM dipdup/dipdup:8
+# FROM ghcr.io/dipdup-io/dipdup:8
 # FROM ghcr.io/dipdup-io/dipdup:next
 
 # COPY --chown=dipdup pyproject.toml README.md .

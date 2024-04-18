@@ -5,6 +5,9 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.fetcher import HasLevel
+from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmTraceData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.subscriptions import Subscription
 
 
@@ -91,105 +94,6 @@ class EvmNodeHeadData(HasLevel):
 
 
 @dataclass(frozen=True)
-class EvmNodeLogData(HasLevel):
-    address: str
-    block_hash: str
-    data: str
-    level: int
-    log_index: int
-    topics: tuple[str, ...]
-    transaction_hash: str
-    transaction_index: int
-    removed: bool
-
-    timestamp: int
-
-    @classmethod
-    def from_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmNodeLogData':
-        # NOTE: Skale Nebula
-        if 'removed' not in log_json:
-            log_json['removed'] = False
-
-        return cls(
-            address=log_json['address'],
-            block_hash=log_json['blockHash'],
-            data=log_json['data'],
-            level=int(log_json['blockNumber'], 16),
-            log_index=int(log_json['logIndex'], 16),
-            topics=log_json['topics'],
-            transaction_hash=log_json['transactionHash'],
-            transaction_index=int(log_json['transactionIndex'], 16),
-            removed=log_json['removed'],
-            timestamp=timestamp,
-        )
-
-
-@dataclass(frozen=True)
-class EvmNodeTraceData(HasLevel): ...
-
-
-@dataclass(frozen=True)
-class EvmNodeTransactionData(HasLevel):
-    access_list: tuple[dict[str, Any], ...] | None
-    block_hash: str
-    chain_id: int | None
-    data: str | None
-    from_: str
-    gas: int
-    gas_price: int
-    hash: str
-    input: str
-    level: int
-    max_fee_per_gas: int | None
-    max_priority_fee_per_gas: int | None
-    nonce: int
-    r: str | None
-    s: str | None
-    timestamp: int
-    to: str | None
-    transaction_index: int | None
-    type: int | None
-    value: int | None
-    v: int | None
-
-    @property
-    def sighash(self) -> str:
-        return self.input[:10]
-
-    @classmethod
-    def from_json(cls, transaction_json: dict[str, Any], timestamp: int) -> 'EvmNodeTransactionData':
-        return cls(
-            access_list=tuple(transaction_json['accessList']) if 'accessList' in transaction_json else None,
-            block_hash=transaction_json['blockHash'],
-            chain_id=int(transaction_json['chainId'], 16) if 'chainId' in transaction_json else None,
-            data=transaction_json.get('data'),
-            from_=transaction_json['from'],
-            gas=int(transaction_json['gas'], 16),
-            gas_price=int(transaction_json['gasPrice'], 16),
-            hash=transaction_json['hash'],
-            input=transaction_json['input'],
-            level=int(transaction_json['blockNumber'], 16),
-            max_fee_per_gas=int(transaction_json['maxFeePerGas'], 16) if 'maxFeePerGas' in transaction_json else None,
-            max_priority_fee_per_gas=(
-                int(transaction_json['maxPriorityFeePerGas'], 16)
-                if 'maxPriorityFeePerGas' in transaction_json
-                else None
-            ),
-            nonce=int(transaction_json['nonce'], 16),
-            r=transaction_json.get('r'),
-            s=transaction_json.get('s'),
-            timestamp=timestamp,
-            to=transaction_json.get('to'),
-            transaction_index=(
-                int(transaction_json['transactionIndex'], 16) if 'transactionIndex' in transaction_json else None
-            ),
-            type=int(transaction_json['type'], 16) if 'type' in transaction_json else None,
-            value=int(transaction_json['value'], 16) if 'value' in transaction_json else None,
-            v=int(transaction_json['v'], 16) if 'v' in transaction_json else None,
-        )
-
-
-@dataclass(frozen=True)
 class EvmNodeSyncingData:
     current_block: int
     highest_block: int
@@ -202,3 +106,9 @@ class EvmNodeSyncingData:
             highest_block=int(syncing_json['highestBlock'], 16),
             starting_block=int(syncing_json['startingBlock'], 16),
         )
+
+
+# NOTE: Compatibility aliases; remove in 9.0
+EvmNodeTraceData = EvmTraceData
+EvmNodeLogData = EvmNodeEventData = EvmLogData
+EvmNodeTransactionData = EvmTransactionData

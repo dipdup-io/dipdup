@@ -25,13 +25,13 @@ async def _create_index(hash_: str) -> None:
         template_values={},
         status=IndexStatus.new,
         updated_at=datetime(2021, 10, 8, 18, 43, 35, 744449, tzinfo=UTC),
-        type=IndexType.tezos_tzkt_operations,
+        type=IndexType.tezos_operations,
     )
 
 
 class IndexStateTest:
     def __init__(self) -> None:
-        name = 'demo_nft_marketplace.yml'
+        name = 'demo_tezos_nft_marketplace.yml'
         config_path = Path(__file__).parent / 'configs' / name
         self.config = DipDupConfig.load([config_path])
         self.config.database = SqliteDatabaseConfig(kind='sqlite')

@@ -1,5 +1,5 @@
-spec_version: 2.1
-package: demo_nft_marketplace
+spec_version: 3.0
+package: demo_tezos_nft_marketplace
 
 contracts:
   by_address:
@@ -21,7 +21,7 @@ datasources:
 
 indexes:
   test:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt_replay
     types:
       - origination

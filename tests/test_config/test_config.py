@@ -9,13 +9,13 @@ from dipdup.config import HasuraConfig
 from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ResolvedHttpConfig
-from dipdup.config.evm_subsquid_transactions import EvmSubsquidTransactionsHandlerConfig
+from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.config.tezos_tzkt_operations import TezosTzktOperationsIndexConfig
+from dipdup.models.tezos import TezosOperationType
 from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.models.tezos_tzkt import OriginationSubscription
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -24,7 +24,7 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
     path = Path(__file__).parent.parent / 'configs' / 'dipdup.yaml'
     config = DipDupConfig.load([path])
     if origs:
-        config.indexes['hen_mainnet'].types += (TezosTzktOperationType.origination,)  # type: ignore
+        config.indexes['hen_mainnet'].types += (TezosOperationType.origination,)  # type: ignore
     config.datasources['tzkt_mainnet'].merge_subscriptions = merge_subs  # type: ignore
     config.initialize()
     return config
@@ -33,7 +33,7 @@ def create_config(merge_subs: bool = False, origs: bool = False) -> DipDupConfig
 async def test_load_initialize() -> None:
     config = create_config()
     index_config = config.indexes['hen_mainnet']
-    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
+    assert isinstance(index_config, TezosOperationsIndexConfig)
 
     assert isinstance(config, DipDupConfig)
     destination = index_config.handlers[0].pattern[0].destination  # type: ignore[union-attr]
@@ -42,18 +42,18 @@ async def test_load_initialize() -> None:
 
 async def test_operation_subscriptions() -> None:
     index_config = create_config(False, False).indexes['hen_mainnet']
-    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
+    assert isinstance(index_config, TezosOperationsIndexConfig)
     assert index_config.get_subscriptions() == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         HeadSubscription(),
     }
 
     index_config = create_config(True, False).indexes['hen_mainnet']
-    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
+    assert isinstance(index_config, TezosOperationsIndexConfig)
     assert index_config.get_subscriptions() == {TransactionSubscription(), HeadSubscription()}
 
     index_config = create_config(False, True).indexes['hen_mainnet']
-    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
+    assert isinstance(index_config, TezosOperationsIndexConfig)
     assert index_config.get_subscriptions() == {
         TransactionSubscription(address='KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'),
         OriginationSubscription(),
@@ -61,7 +61,7 @@ async def test_operation_subscriptions() -> None:
     }
 
     index_config = create_config(True, True).indexes['hen_mainnet']
-    assert isinstance(index_config, TezosTzktOperationsIndexConfig)
+    assert isinstance(index_config, TezosOperationsIndexConfig)
     assert index_config.get_subscriptions() == {
         TransactionSubscription(),
         OriginationSubscription(),
@@ -80,7 +80,7 @@ async def test_validators() -> None:
 
 async def test_reserved_keywords() -> None:
     assert (
-        EvmSubsquidTransactionsHandlerConfig(  # type: ignore[comparison-overlap]
+        EvmTransactionsHandlerConfig(  # type: ignore[comparison-overlap]
             callback='test',
             from_='from',  # type: ignore[arg-type]
         ).from_
@@ -89,11 +89,11 @@ async def test_reserved_keywords() -> None:
 
     # FIXME: Can't use `from_` field alias in dataclasses
     raw_config, _ = DipDupYAMLConfig.load(
-        paths=[Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml']
+        paths=[Path(__file__).parent.parent / 'configs' / 'demo_tezos_token_transfers_4.yml']
     )
     assert raw_config['indexes']['tzbtc_holders_mainnet']['handlers'][1]['from_'] == 'tzbtc_mainnet'
 
-    config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_token_transfers_4.yml'])
+    config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_tezos_token_transfers_4.yml'])
     assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[union-attr]
 
 

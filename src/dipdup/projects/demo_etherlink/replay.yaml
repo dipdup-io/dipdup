@@ -1,5 +1,0 @@
-spec_version: 2.1
-replay:
-  description: Etherlink smart rollup transactions
-  package: demo_etherlink
-  template: demo_etherlink

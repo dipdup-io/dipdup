@@ -1,0 +1,5 @@
+spec_version: 3.0
+replay:
+  description: Indexing specific big maps
+  package: demo_tezos_big_maps
+  template: demo_tezos_big_maps

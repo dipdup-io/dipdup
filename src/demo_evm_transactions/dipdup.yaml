@@ -1,4 +1,4 @@
-spec_version: 2.1
+spec_version: 3.0
 package: demo_evm_transactions
 
 datasources:
@@ -23,7 +23,7 @@ contracts:
 
 indexes:
   eth_usdt_transactions:
-    kind: evm.subsquid.transactions
+    kind: evm.transactions
     datasource: subsquid
     handlers:
       - callback: on_transfer

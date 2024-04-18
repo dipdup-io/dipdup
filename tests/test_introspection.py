@@ -4,12 +4,12 @@ import pytest
 from pydantic import BaseModel
 from pydantic import RootModel
 
-from dipdup.indexes.tezos_tzkt_operations.parser import IntrospectionError
-from dipdup.indexes.tezos_tzkt_operations.parser import extract_root_outer_type
-from dipdup.indexes.tezos_tzkt_operations.parser import get_dict_value_type
-from dipdup.indexes.tezos_tzkt_operations.parser import get_list_elt_type
-from dipdup.indexes.tezos_tzkt_operations.parser import is_array_type
-from dipdup.indexes.tezos_tzkt_operations.parser import unwrap_union_type
+from dipdup.indexes.tezos_operations.parser import IntrospectionError
+from dipdup.indexes.tezos_operations.parser import extract_root_outer_type
+from dipdup.indexes.tezos_operations.parser import get_dict_value_type
+from dipdup.indexes.tezos_operations.parser import get_list_elt_type
+from dipdup.indexes.tezos_operations.parser import is_array_type
+from dipdup.indexes.tezos_operations.parser import unwrap_union_type
 
 NoneType = type(None)
 

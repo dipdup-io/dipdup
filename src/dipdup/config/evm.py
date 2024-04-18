@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Literal
 
 from eth_utils.address import is_address
@@ -7,6 +8,9 @@ from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import ContractConfig
+from dipdup.config import IndexConfig
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 EVM_ADDRESS_PREFIXES = ('0x',)
@@ -45,3 +49,14 @@ class EvmContractConfig(ContractConfig):
         if self.address is None:
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
         return self.address
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+class EvmIndexConfig(IndexConfig, ABC):
+    """EVM index that use Subsquid Network as a datasource
+
+    :param kind: starts with 'evm'
+    :param datasource: Subsquid or Node datasource config
+    """
+
+    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig

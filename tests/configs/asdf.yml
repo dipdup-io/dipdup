@@ -1,4 +1,4 @@
-spec_version: 2.1
+spec_version: 3.0
 package: asdf
 
 contracts:
@@ -16,7 +16,7 @@ datasources:
 
 indexes:
   asdf:
-    kind: tezos.tzkt.operations
+    kind: tezos.operations
     datasource: tzkt
     contracts:
       - asdf

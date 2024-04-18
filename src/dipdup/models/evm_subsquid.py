@@ -1,18 +1,10 @@
-from typing import Any
-from typing import Generic
 from typing import NotRequired
-from typing import TypeVar
 
-from pydantic import BaseModel
-from pydantic.dataclasses import dataclass
 from typing_extensions import TypedDict
 
-from dipdup.fetcher import HasLevel
-from dipdup.models.evm_node import EvmNodeLogData
-from dipdup.models.evm_node import EvmNodeTransactionData
-
-PayloadT = TypeVar('PayloadT', bound=BaseModel)
-InputT = TypeVar('InputT', bound=BaseModel)
+from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmTraceData
+from dipdup.models.evm import EvmTransactionData
 
 
 class BlockFieldSelection(TypedDict, total=False):
@@ -40,6 +32,7 @@ class BlockFieldSelection(TypedDict, total=False):
 TransactionFieldSelection = TypedDict(
     'TransactionFieldSelection',
     {
+        'accessList': bool,
         'chainId': bool,
         'contractAddress': bool,
         'cumulativeGasUsed': bool,
@@ -185,129 +178,7 @@ class Query(TypedDict):
     type: NotRequired[str]
 
 
-@dataclass(frozen=True)
-class EvmSubsquidEventData(HasLevel):
-    address: str
-    block_hash: str
-    data: str
-    level: int
-    log_index: int
-    timestamp: int
-    topics: tuple[str, ...]
-    transaction_hash: str
-    transaction_index: int
-
-    @classmethod
-    def from_json(
-        cls,
-        event_json: dict[str, Any],
-        header: dict[str, Any],
-    ) -> 'EvmSubsquidEventData':
-        return EvmSubsquidEventData(
-            address=event_json['address'],
-            block_hash=header['hash'],
-            data=event_json['data'],
-            level=header['number'],
-            log_index=event_json['logIndex'],
-            timestamp=header['timestamp'],
-            topics=tuple(event_json['topics']),
-            transaction_hash=event_json['transactionHash'],
-            transaction_index=event_json['transactionIndex'],
-        )
-
-
-@dataclass(frozen=True)
-class EvmSubsquidTraceData(HasLevel): ...
-
-
-@dataclass(frozen=True)
-class EvmSubsquidTransactionData(HasLevel):
-    block_hash: str
-    chain_id: int | None
-    contract_address: str | None
-    cumulative_gas_used: int | None
-    effective_gas_price: int | None
-    from_: str
-    gas: int
-    gas_price: int
-    gas_used: int
-    hash: str
-    input: str
-    level: int
-    max_fee_per_gas: int | None
-    max_priority_fee_per_gas: int | None
-    nonce: int
-    r: str | None
-    s: str | None
-    sighash: str
-    status: int | None
-    timestamp: int
-    to: str
-    transaction_index: int
-    type: int | None
-    value: int
-    v: int | None
-    y_parity: bool | None
-
-    @classmethod
-    def from_json(
-        cls,
-        transaction_json: dict[str, Any],
-        header: dict[str, Any],
-    ) -> 'EvmSubsquidTransactionData':
-        cumulative_gas_used = (
-            int(transaction_json['cumulativeGasUsed'], 16) if transaction_json['cumulativeGasUsed'] else None
-        )
-        effective_gas_price = (
-            int(transaction_json['effectiveGasPrice'], 16) if transaction_json['effectiveGasPrice'] else None
-        )
-        max_fee_per_gas = int(transaction_json['maxFeePerGas'], 16) if transaction_json['maxFeePerGas'] else None
-        max_priority_fee_per_gas = (
-            int(transaction_json['maxPriorityFeePerGas'], 16) if transaction_json['maxPriorityFeePerGas'] else None
-        )
-        v = int(transaction_json['v'], 16) if transaction_json['v'] else None
-        y_parity = bool(int(transaction_json['yParity'], 16)) if transaction_json['yParity'] else None
-        return EvmSubsquidTransactionData(
-            block_hash=header['hash'],
-            chain_id=transaction_json['chainId'],
-            contract_address=transaction_json['contractAddress'],
-            cumulative_gas_used=cumulative_gas_used,
-            effective_gas_price=effective_gas_price,
-            from_=transaction_json['from'],
-            gas=int(transaction_json['gas'], 16),
-            gas_price=int(transaction_json['gasPrice'], 16),
-            gas_used=int(transaction_json['gasUsed'], 16),
-            hash=transaction_json['hash'],
-            input=transaction_json['input'],
-            level=header['number'],
-            max_fee_per_gas=max_fee_per_gas,
-            max_priority_fee_per_gas=max_priority_fee_per_gas,
-            nonce=transaction_json['nonce'],
-            r=transaction_json['r'],
-            s=transaction_json['s'],
-            sighash=transaction_json['sighash'],
-            status=transaction_json['status'],
-            timestamp=header['timestamp'],
-            to=transaction_json['to'],
-            transaction_index=transaction_json['transactionIndex'],
-            type=transaction_json['type'],
-            value=int(transaction_json['value'], 16),
-            v=v,
-            y_parity=y_parity,
-        )
-
-
-@dataclass(frozen=True)
-class EvmSubsquidEvent(Generic[PayloadT]):
-    data: EvmSubsquidEventData | EvmNodeLogData
-    payload: PayloadT
-
-
-@dataclass(frozen=True)
-class EvmSubsquidTrace(Generic[PayloadT]): ...
-
-
-@dataclass(frozen=True)
-class EvmSubsquidTransaction(Generic[InputT]):
-    data: EvmSubsquidTransactionData | EvmNodeTransactionData
-    input: InputT
+# NOTE: Compatibility aliases; remove in 9.0
+EvmEvmTransactionData = EvmTransactionData
+EvmSubsquidLogData = EvmSubsquidEventData = EvmLogData
+EvmSubsquidTraceData = EvmTraceData

@@ -22,7 +22,7 @@ _dipdup_tables = {
 
 
 async def test_schema_sqlite() -> None:
-    package = 'demo_domains'
+    package = 'demo_tezos_domains'
     config_path = TEST_CONFIGS / f'{package}.yml'
     env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
 
@@ -68,7 +68,7 @@ async def test_schema_sqlite() -> None:
 
 
 async def test_schema_sqlite_immune() -> None:
-    package = 'demo_domains'
+    package = 'demo_tezos_domains'
     config_path = TEST_CONFIGS / f'{package}.yml'
     env_config_path = TEST_CONFIGS / 'test_sqlite_immune.yaml'
 
@@ -114,7 +114,7 @@ async def test_schema_sqlite_immune() -> None:
 
 
 async def test_schema_postgres() -> None:
-    package = 'demo_domains'
+    package = 'demo_tezos_domains'
     config_path = TEST_CONFIGS / f'{package}.yml'
     env_config_path = TEST_CONFIGS / 'test_postgres.yaml'
 
@@ -156,7 +156,7 @@ async def test_schema_postgres() -> None:
 
 
 async def test_schema_postgres_immune() -> None:
-    package = 'demo_domains'
+    package = 'demo_tezos_domains'
     config_path = TEST_CONFIGS / f'{package}.yml'
     env_config_path = TEST_CONFIGS / 'test_postgres_immune.yaml'
 

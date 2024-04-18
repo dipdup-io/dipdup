@@ -17,8 +17,8 @@ from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
-from dipdup.models.evm_subsquid import EvmSubsquidEventData
-from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
+from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
@@ -42,6 +42,7 @@ TRANSACTION_FIELDS: FieldSelection = {
         'timestamp': True,
     },
     'transaction': {
+        # 'accessList': True,
         'chainId': True,
         'contractAddress': True,
         'cumulativeGasUsed': True,
@@ -141,7 +142,7 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
         topics: tuple[tuple[str | None, str], ...],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[EvmSubsquidEventData, ...]]:
+    ) -> AsyncIterator[tuple[EvmLogData, ...]]:
         current_level = first_level
 
         # TODO: Smarter query optimizator
@@ -167,11 +168,11 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
-                logs: deque[EvmSubsquidEventData] = deque()
+                logs: deque[EvmLogData] = deque()
                 for raw_log in level_item['logs']:
                     logs.append(
-                        EvmSubsquidEventData.from_json(
-                            event_json=raw_log,
+                        EvmLogData.from_subsquid_json(
+                            log_json=raw_log,
                             header=level_item['header'],
                         ),
                     )
@@ -182,7 +183,7 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
-    ) -> AsyncIterator[tuple[EvmSubsquidTransactionData, ...]]:
+    ) -> AsyncIterator[tuple[EvmTransactionData, ...]]:
         current_level = first_level
 
         while current_level <= last_level:
@@ -196,9 +197,9 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
-                transactions: deque[EvmSubsquidTransactionData] = deque()
+                transactions: deque[EvmTransactionData] = deque()
                 for raw_transaction in level_item['transactions']:
-                    transaction = EvmSubsquidTransactionData.from_json(
+                    transaction = EvmTransactionData.from_subsquid_json(
                         transaction_json=raw_transaction,
                         header=level_item['header'],
                     )

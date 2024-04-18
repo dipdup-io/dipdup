@@ -7,17 +7,17 @@ from functools import partial
 import pytest
 
 from dipdup.database import tortoise_wrapper
-from dipdup.models.tezos_tzkt import TezosTzktOperationType
+from dipdup.models.tezos import TezosOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
 
 
 async def assert_run_token() -> None:
-    import demo_token.models
+    import demo_tezos_token.models
 
-    holders = await demo_token.models.Holder.filter().count()
-    holder = await demo_token.models.Holder.first()
+    holders = await demo_tezos_token.models.Holder.filter().count()
+    holder = await demo_tezos_token.models.Holder.first()
     assert holder
     random_balance = holder.balance
 
@@ -26,12 +26,12 @@ async def assert_run_token() -> None:
 
 
 async def assert_run_nft_marketplace() -> None:
-    import demo_nft_marketplace.models
+    import demo_tezos_nft_marketplace.models
 
-    holders = await demo_nft_marketplace.models.Holder.filter().count()
-    tokens = await demo_nft_marketplace.models.Token.filter().count()
-    swaps = await demo_nft_marketplace.models.Swap.filter().count()
-    trades = await demo_nft_marketplace.models.Trade.filter().count()
+    holders = await demo_tezos_nft_marketplace.models.Holder.filter().count()
+    tokens = await demo_tezos_nft_marketplace.models.Token.filter().count()
+    swaps = await demo_tezos_nft_marketplace.models.Swap.filter().count()
+    trades = await demo_tezos_nft_marketplace.models.Trade.filter().count()
 
     assert holders == 22
     assert tokens == 29
@@ -40,12 +40,12 @@ async def assert_run_nft_marketplace() -> None:
 
 
 async def assert_run_auction() -> None:
-    import demo_auction.models
+    import demo_tezos_auction.models
 
-    users = await demo_auction.models.User.filter().count()
-    tokens = await demo_auction.models.Token.filter().count()
-    auctions = await demo_auction.models.Auction.filter().count()
-    bids = await demo_auction.models.Bid.filter().count()
+    users = await demo_tezos_auction.models.User.filter().count()
+    tokens = await demo_tezos_auction.models.Token.filter().count()
+    auctions = await demo_tezos_auction.models.Auction.filter().count()
+    bids = await demo_tezos_auction.models.Bid.filter().count()
 
     assert users == 9
     assert tokens == 14
@@ -54,10 +54,10 @@ async def assert_run_auction() -> None:
 
 
 async def assert_run_token_transfers(expected_holders: int, expected_balance: str) -> None:
-    import demo_token_transfers.models
+    import demo_tezos_token_transfers.models
 
-    holders = await demo_token_transfers.models.Holder.filter().count()
-    holder = await demo_token_transfers.models.Holder.first()
+    holders = await demo_tezos_token_transfers.models.Holder.filter().count()
+    holder = await demo_tezos_token_transfers.models.Holder.first()
     assert holder
     random_balance = holder.balance
 
@@ -66,10 +66,10 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
 
 
 async def assert_run_balances() -> None:
-    import demo_token_balances.models
+    import demo_tezos_token_balances.models
 
-    holders = await demo_token_balances.models.Holder.filter().count()
-    holder = await demo_token_balances.models.Holder.first()
+    holders = await demo_tezos_token_balances.models.Holder.filter().count()
+    holder = await demo_tezos_token_balances.models.Holder.first()
     assert holder
     random_balance = holder.balance
 
@@ -78,10 +78,10 @@ async def assert_run_balances() -> None:
 
 
 async def assert_run_big_maps() -> None:
-    import demo_big_maps.models
+    import demo_tezos_big_maps.models
 
-    tlds = await demo_big_maps.models.TLD.filter().count()
-    domains = await demo_big_maps.models.Domain.filter().count()
+    tlds = await demo_tezos_big_maps.models.TLD.filter().count()
+    domains = await demo_tezos_big_maps.models.Domain.filter().count()
 
     assert tlds == 1
     assert domains == 1
@@ -92,11 +92,11 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    import demo_dex.models
+    import demo_tezos_dex.models
     from tortoise.transactions import in_transaction
 
-    trades = await demo_dex.models.Trade.filter().count()
-    positions = await demo_dex.models.Position.filter().count()
+    trades = await demo_tezos_dex.models.Trade.filter().count()
+    positions = await demo_tezos_dex.models.Position.filter().count()
     async with in_transaction() as conn:
         symbols = (await conn.execute_query('select count(distinct(symbol)) from trade group by symbol;'))[0]
     assert symbols == 2
@@ -105,10 +105,10 @@ async def assert_run_dex() -> None:
 
 
 async def assert_run_domains() -> None:
-    import demo_domains.models
+    import demo_tezos_domains.models
 
-    tlds = await demo_domains.models.TLD.filter().count()
-    domains = await demo_domains.models.Domain.filter().count()
+    tlds = await demo_tezos_domains.models.TLD.filter().count()
+    domains = await demo_tezos_domains.models.Domain.filter().count()
 
     assert tlds == 1
     assert domains == 1
@@ -119,33 +119,33 @@ async def assert_run_events() -> None:
 
 
 async def assert_run_factories() -> None:
-    import demo_factories.models
+    import demo_tezos_factories.models
 
     from dipdup import models
 
     indexes = await models.Index.filter().count()
-    transfers = await demo_factories.models.Transfer.filter().count()
+    transfers = await demo_tezos_factories.models.Transfer.filter().count()
 
     assert indexes == 2
     assert transfers == 1
 
 
 async def assert_run_raw() -> None:
-    import demo_raw.models
+    import demo_tezos_raw.models
 
-    transactions = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.transaction).count()
-    originations = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.origination).count()
-    migrations = await demo_raw.models.Operation.filter(type=TezosTzktOperationType.migration).count()
+    transactions = await demo_tezos_raw.models.Operation.filter(type=TezosOperationType.transaction).count()
+    originations = await demo_tezos_raw.models.Operation.filter(type=TezosOperationType.origination).count()
+    migrations = await demo_tezos_raw.models.Operation.filter(type=TezosOperationType.migration).count()
 
     assert transactions == 167
     assert originations == 1
     assert migrations == 2
 
 
-async def assert_run_evm_events() -> None:
-    import demo_evm_events.models
+async def assert_run_evm_logs() -> None:
+    import demo_evm_logs.models
 
-    holders = await demo_evm_events.models.Holder.filter().count()
+    holders = await demo_evm_logs.models.Holder.filter().count()
     assert holders == 26
 
 
@@ -153,15 +153,15 @@ async def assert_run_evm_transactions() -> None:
     import demo_evm_transactions.models
 
     holders = await demo_evm_transactions.models.Holder.filter().count()
-    # NOTE: Another 4 holders covered by `demo_evm_events` index are from non-`Transfer` calls.
+    # NOTE: Another 4 holders covered by `demo_evm_logs` index are from non-`Transfer` calls.
     assert holders == 22
 
 
 async def assert_run_dao() -> None:
-    import demo_dao.models
+    import demo_tezos_dao.models
 
-    proposals = await demo_dao.models.DAO.filter().count()
-    votes = await demo_dao.models.Proposal.filter().count()
+    proposals = await demo_tezos_dao.models.DAO.filter().count()
+    votes = await demo_tezos_dao.models.Proposal.filter().count()
 
     assert proposals == 1
     assert votes == 1
@@ -169,61 +169,71 @@ async def assert_run_dao() -> None:
 
 test_args = ('config', 'package', 'cmd', 'assert_fn')
 test_params = (
-    ('demo_token.yml', 'demo_token', 'run', assert_run_token),
-    ('demo_token.yml', 'demo_token', 'init', None),
-    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'run', assert_run_nft_marketplace),
-    ('demo_nft_marketplace.yml', 'demo_nft_marketplace', 'init', None),
-    ('demo_auction.yml', 'demo_auction', 'run', assert_run_auction),
-    ('demo_auction.yml', 'demo_auction', 'init', None),
-    ('demo_token_transfers.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 4, '-0.01912431')),
-    # TODO: Too many token transfer runs
-    ('demo_token_transfers.yml', 'demo_token_transfers', 'init', None),
+    ('demo_tezos_token.yml', 'demo_tezos_token', 'run', assert_run_token),
+    ('demo_tezos_token.yml', 'demo_tezos_token', 'init', None),
+    ('demo_tezos_nft_marketplace.yml', 'demo_tezos_nft_marketplace', 'run', assert_run_nft_marketplace),
+    ('demo_tezos_nft_marketplace.yml', 'demo_tezos_nft_marketplace', 'init', None),
+    ('demo_tezos_auction.yml', 'demo_tezos_auction', 'run', assert_run_auction),
+    ('demo_tezos_auction.yml', 'demo_tezos_auction', 'init', None),
     (
-        'demo_token_transfers_2.yml',
-        'demo_token_transfers',
+        'demo_tezos_token_transfers.yml',
+        'demo_tezos_token_transfers',
+        'run',
+        partial(assert_run_token_transfers, 4, '-0.01912431'),
+    ),
+    # TODO: Too many token transfer runs
+    ('demo_tezos_token_transfers.yml', 'demo_tezos_token_transfers', 'init', None),
+    (
+        'demo_tezos_token_transfers_2.yml',
+        'demo_tezos_token_transfers',
         'run',
         partial(assert_run_token_transfers, 12, '0.26554711'),
     ),
-    ('demo_token_transfers_3.yml', 'demo_token_transfers', 'run', partial(assert_run_token_transfers, 9, '0.15579888')),
+    (
+        'demo_tezos_token_transfers_3.yml',
+        'demo_tezos_token_transfers',
+        'run',
+        partial(assert_run_token_transfers, 9, '0.15579888'),
+    ),
     # FIXME: Reenable after fixing fetcher
     # (
-    #     'demo_token_transfers_4.yml',
-    #     'demo_token_transfers',
+    #     'demo_tezos_token_transfers_4.yml',
+    #     'demo_tezos_token_transfers',
     #     'run',
     #     partial(assert_run_token_transfers, 2, '-0.02302128'),
     # ),
-    ('demo_token_balances.yml', 'demo_token_balances', 'run', assert_run_balances),
-    ('demo_token_balances.yml', 'demo_token_balances', 'init', None),
-    ('demo_big_maps.yml', 'demo_big_maps', 'run', assert_run_big_maps),
-    ('demo_big_maps.yml', 'demo_big_maps', 'init', None),
-    ('demo_domains.yml', 'demo_domains', 'run', assert_run_domains),
-    ('demo_domains.yml', 'demo_domains', 'init', None),
-    ('demo_dex.yml', 'demo_dex', 'run', assert_run_dex),
-    ('demo_dex.yml', 'demo_dex', 'init', None),
-    ('demo_dao.yml', 'demo_dao', 'run', assert_run_dao),
-    ('demo_dao.yml', 'demo_dao', 'init', None),
-    ('demo_factories.yml', 'demo_factories', 'run', assert_run_factories),
-    ('demo_factories.yml', 'demo_factories', 'init', None),
-    ('demo_events.yml', 'demo_events', 'run', assert_run_events),
-    ('demo_events.yml', 'demo_events', 'init', None),
-    ('demo_raw.yml', 'demo_raw', 'run', assert_run_raw),
-    ('demo_raw.yml', 'demo_raw', 'init', None),
-    ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
-    ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
+    ('demo_tezos_token_balances.yml', 'demo_tezos_token_balances', 'run', assert_run_balances),
+    ('demo_tezos_token_balances.yml', 'demo_tezos_token_balances', 'init', None),
+    ('demo_tezos_big_maps.yml', 'demo_tezos_big_maps', 'run', assert_run_big_maps),
+    ('demo_tezos_big_maps.yml', 'demo_tezos_big_maps', 'init', None),
+    ('demo_tezos_domains.yml', 'demo_tezos_domains', 'run', assert_run_domains),
+    ('demo_tezos_domains.yml', 'demo_tezos_domains', 'init', None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', 'run', assert_run_dex),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', 'init', None),
+    ('demo_tezos_dao.yml', 'demo_tezos_dao', 'run', assert_run_dao),
+    ('demo_tezos_dao.yml', 'demo_tezos_dao', 'init', None),
+    ('demo_tezos_factories.yml', 'demo_tezos_factories', 'run', assert_run_factories),
+    ('demo_tezos_factories.yml', 'demo_tezos_factories', 'init', None),
+    ('demo_tezos_events.yml', 'demo_tezos_events', 'run', assert_run_events),
+    ('demo_tezos_events.yml', 'demo_tezos_events', 'init', None),
+    ('demo_tezos_raw.yml', 'demo_tezos_raw', 'run', assert_run_raw),
+    ('demo_tezos_raw.yml', 'demo_tezos_raw', 'init', None),
+    ('demo_evm_logs.yml', 'demo_evm_logs', 'run', assert_run_evm_logs),
+    ('demo_evm_logs.yml', 'demo_evm_logs', 'init', None),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
-    ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
-    ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
+    ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'run', None),
+    ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'init', None),
     # NOTE: Indexes with `evm.node` as index datasource
-    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_logs_node.yml', 'demo_evm_logs', 'run', assert_run_evm_logs),
     ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Smoke tests for small tools.
-    ('demo_dex.yml', 'demo_dex', ('config', 'env', '--compose', '--internal'), None),
-    ('demo_dex.yml', 'demo_dex', ('config', 'export', '--full'), None),
-    ('demo_dex.yml', 'demo_dex', ('package', 'tree'), None),
-    ('demo_dex.yml', 'demo_dex', ('report', 'ls'), None),
-    ('demo_dex.yml', 'demo_dex', ('self', 'env'), None),
-    ('demo_dex.yml', 'demo_dex', ('schema', 'export'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'env', '--compose', '--internal'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'export', '--full'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('package', 'tree'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('report', 'ls'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('self', 'env'), None),
+    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('schema', 'export'), None),
 )
 
 

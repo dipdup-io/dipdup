@@ -6,8 +6,8 @@ from typing import Any
 
 import orjson as json
 
-from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
-from dipdup.models.tezos_tzkt import TezosTzktOperationData
+from dipdup.indexes.tezos_operations.parser import deserialize_storage
+from dipdup.models.tezos import TezosOperationData
 from tests.types.asdf.storage import AsdfStorage
 from tests.types.bazaar.storage import BazaarMarketPlaceStorage
 from tests.types.ftzfun.storage import FtzFunStorage
@@ -23,8 +23,8 @@ from tests.types.yupana.storage import YupanaStorage
 from tests.types.zxcv.storage import ZxcvStorage
 
 
-def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> TezosTzktOperationData:
-    return TezosTzktOperationData(
+def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> TezosOperationData:
+    return TezosOperationData(
         storage=storage,
         diffs=diffs,
         type='transaction',
@@ -160,7 +160,7 @@ def test_convert_operation_with_default_entrypoint() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
 
     # Assert
     assert operations[0].entrypoint == 'default'
@@ -175,7 +175,7 @@ def test_deserialize_storage_dict_key() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], FtzFunStorage)
 
     # Assert
@@ -190,7 +190,7 @@ def test_qwer() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], QwerStorage)
 
     # Assert
@@ -205,7 +205,7 @@ def test_asdf() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], AsdfStorage)
 
     # Assert
@@ -219,7 +219,7 @@ def test_hjkl() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], HjklStorage)
 
     # Assert
@@ -234,7 +234,7 @@ def test_zxcv() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], ZxcvStorage)
 
     # Assert
@@ -252,7 +252,7 @@ def test_rewq() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], RewqStorage)
 
     # Assert
@@ -269,7 +269,7 @@ def test_hen_subjkt() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
 
     # Assert
@@ -283,7 +283,7 @@ def test_kolibri_ovens() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
     parameter_obj = SetDelegateParameter.model_validate(operations[0].parameter_json)
 
@@ -298,7 +298,7 @@ def test_yupana() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TezosTzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
     _, storage_obj = deserialize_storage(operations[0], YupanaStorage)
 
     # Assert
@@ -314,6 +314,6 @@ def _load_response(name: str) -> Any:
 
 def test_origination_amount() -> None:
     operations_json = _load_response('origination_amount.json')
-    operation = TezosTzktOperationData.from_json(operations_json[0])
+    operation = TezosOperationData.from_json(operations_json[0])
 
     assert operation.amount == 31000000
