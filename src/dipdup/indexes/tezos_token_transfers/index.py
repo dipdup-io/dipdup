@@ -67,7 +67,6 @@ class TezosTokenTransfersIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             # NOTE: missing `operation_id` field in API to identify operation
             None,
             token_transfer,

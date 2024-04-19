@@ -24,6 +24,30 @@ EmptyCallback = Callable[[], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
+class EvmHistoryProvider:
+    pass
+
+
+class EvmRealtimeProvider:
+    pass
+
+
+class EvmAbiProvider:
+    pass
+
+
+class TezosHistoryProvider:
+    pass
+
+
+class TezosRealtimeProvider:
+    pass
+
+
+class TezosAbiProvider:
+    pass
+
+
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
     _default_http_config = HttpConfig()
 

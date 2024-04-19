@@ -60,7 +60,6 @@ class TezosEventsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             str(level_data.data.transaction_id),
             level_data,
         )

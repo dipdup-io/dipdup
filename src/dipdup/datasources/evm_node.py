@@ -20,6 +20,8 @@ from web3.utils.caching import SimpleCache
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.datasources import EvmHistoryProvider
+from dipdup.datasources import EvmRealtimeProvider
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -31,7 +33,6 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
-from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.performance import caches
 from dipdup.performance import metrics
@@ -48,7 +49,6 @@ NODE_LAST_MILE = 128
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
 LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmLogData, ...]], Awaitable[None]]
-TracesCallback = Callable[['EvmNodeDatasource', tuple[EvmNodeTraceData, ...]], Awaitable[None]]
 TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 
@@ -86,7 +86,7 @@ class LevelData:
             await asyncio.sleep(to_wait)
 
 
-class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
+class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProvider, EvmRealtimeProvider):
     _default_http_config = HttpConfig(
         batch_size=10,
         ratelimit_sleep=1,
@@ -105,7 +105,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_logs_callbacks: set[LogsCallback] = set()
-        self._on_traces_callbacks: set[TracesCallback] = set()
         self._on_transactions_callbacks: set[TransactionsCallback] = set()
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
@@ -236,10 +235,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
         for fn in self._on_syncing_callbacks:
             await fn(self, syncing)
 
-    async def emit_traces(self, traces: tuple[EvmNodeTraceData, ...]) -> None:
-        for fn in self._on_traces_callbacks:
-            await fn(self, traces)
-
     async def emit_transactions(self, transactions: tuple[EvmTransactionData, ...]) -> None:
         for fn in self._on_transactions_callbacks:
             await fn(self, transactions)
@@ -249,9 +244,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
     def call_on_logs(self, fn: LogsCallback) -> None:
         self._on_logs_callbacks.add(fn)
-
-    def call_on_traces(self, fn: TracesCallback) -> None:
-        self._on_traces_callbacks.add(fn)
 
     def call_on_transactions(self, fn: TransactionsCallback) -> None:
         self._on_transactions_callbacks.add(fn)

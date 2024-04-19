@@ -1,12 +1,10 @@
 from contextlib import suppress
-from typing import cast
 
 import orjson
 from demo_tezos_domains import models as models
 from demo_tezos_domains.types.name_registry.tezos_big_maps.store_records_key import StoreRecordsKey
 from demo_tezos_domains.types.name_registry.tezos_big_maps.store_records_value import StoreRecordsValue
 from dipdup.context import HandlerContext
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.models.tezos import TezosBigMapDiff
 
 
@@ -55,7 +53,7 @@ async def on_update_records(
         token_id = store_records.value.tzip12_token_id
         if token_id:
             await ctx.update_token_metadata(
-                network=cast(TezosTzktDatasource, ctx.datasource).name,
+                network=ctx.handler_config.parent.datasources[0].name,
                 address=store_records.data.contract_address,
                 token_id=token_id,
                 metadata={
@@ -92,7 +90,7 @@ async def on_update_records(
 
     if store_records.value.address is not None:
         await ctx.update_contract_metadata(
-            network=cast(TezosTzktDatasource, ctx.datasource).name,
+            network=ctx.handler_config.parent.datasources[0].name,
             address=store_records.value.address,
             metadata={**domain_data, 'name': record_name},
         )

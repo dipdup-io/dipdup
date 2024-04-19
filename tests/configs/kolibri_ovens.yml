@@ -17,7 +17,8 @@ datasources:
 indexes:
   kolibri_ovens:
     kind: tezos.operations
-    datasource: tzkt
+    datasources:
+      - tzkt
     contracts:
       - kolibri_ovens
     handlers:

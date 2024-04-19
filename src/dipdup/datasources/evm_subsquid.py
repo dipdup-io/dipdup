@@ -13,6 +13,7 @@ import pyarrow.ipc  # type: ignore[import-untyped]
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources import Datasource
+from dipdup.datasources import EvmHistoryProvider
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -95,7 +96,7 @@ class _EvmSubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
+class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig], EvmHistoryProvider):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )

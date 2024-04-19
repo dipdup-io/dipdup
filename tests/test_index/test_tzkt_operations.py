@@ -134,7 +134,7 @@ async def test_get_sync_level() -> None:
         with pytest.raises(FrameworkException):
             index.get_sync_level()
 
-        index.datasource.set_sync_level(None, 0)
+        index.datasources[0].set_sync_level(None, 0)
         assert index.get_sync_level() == 0
 
         subs = index._config.get_subscriptions()
@@ -144,7 +144,7 @@ async def test_get_sync_level() -> None:
         }
 
         for i, sub in enumerate(subs):
-            index.datasource.set_sync_level(sub, i + 1)
+            index.datasources[0].set_sync_level(sub, i + 1)
             assert index.get_sync_level() == i + 1
 
 

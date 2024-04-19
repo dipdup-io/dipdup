@@ -66,7 +66,6 @@ METHODS = {
     'ctx.get_subsquid_datasource': 'ctx.get_evm_subsquid_datasource',
     'ctx.get_tzkt_datasource': 'ctx.get_tezos_tzkt_datasource',
 }
-DATASOURCE_KINDS = {}
 INDEX_KINDS = {
     'evm.subsquid.events': 'evm.logs',
     'evm.subsquid.transactions': 'evm.transactions',
@@ -108,3 +107,5 @@ def migrate_config(raw_config: str) -> str:
             _logger.info('<<< %s', line)
             _logger.info('>>> %s', new_line)
             lines[i] = new_line
+
+    return '\n'.join(lines)

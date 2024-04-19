@@ -1,7 +1,6 @@
 import random
 from abc import ABC
 from abc import abstractmethod
-from typing import Any
 from typing import Generic
 from typing import TypeVar
 from typing import cast
@@ -10,10 +9,7 @@ from web3 import Web3
 
 from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.context import DipDupContext
-from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
@@ -59,23 +55,16 @@ class SubsquidIndex(
         self,
         ctx: DipDupContext,
         config: IndexConfigT,
-        datasource: DatasourceT,
+        datasources: tuple[DatasourceT, ...],
     ) -> None:
-        super().__init__(ctx, config, datasource)
+        super().__init__(ctx, config, datasources)
 
-        if isinstance(datasource, EvmSubsquidDatasource) and isinstance(config.datasource, EvmSubsquidDatasourceConfig):
-            node_field = config.datasource.node
-            if node_field is None:
-                node_field = ()
-            elif isinstance(node_field, EvmNodeDatasourceConfig):
-                node_field = (node_field,)
-            self._node_datasources = tuple(
-                self._ctx.get_evm_node_datasource(node_config.name) for node_config in node_field
-            )
-        elif isinstance(datasource, EvmNodeDatasource) and isinstance(config.datasource, EvmNodeDatasourceConfig):
-            self._node_datasources = (datasource,)
-        else:
-            raise FrameworkException('Invalid datasource type')
+        self.subsquid_datasources = tuple(
+            datasource for datasource in datasources if isinstance(datasource, EvmSubsquidDatasource)
+        )
+        self.node_datasources = tuple(
+            datasource for datasource in datasources if isinstance(datasource, EvmNodeDatasource)
+        )
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...
@@ -83,20 +72,11 @@ class SubsquidIndex(
     @abstractmethod
     async def _synchronize_node(self, sync_level: int) -> None: ...
 
-    @property
-    def node_datasources(self) -> tuple[EvmNodeDatasource, ...]:
-        return self._node_datasources
-
-    @property
-    def datasources(self) -> tuple[IndexDatasource[Any], ...]:
-        return (self.datasource, *self.node_datasources)
-
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
         sync_levels = set()
         for sub in self._config.get_subscriptions():
-            sync_levels.add(self.datasource.get_sync_level(sub))
-            for datasource in self.node_datasources or ():
+            for datasource in self._datasources:
                 sync_levels.add(datasource.get_sync_level(sub))
 
         if None in sync_levels:
@@ -136,8 +116,8 @@ class SubsquidIndex(
         if levels_left <= 0:
             return
 
-        if isinstance(self.datasource, EvmSubsquidDatasource):
-            subsquid_sync_level = await self.datasource.get_head_level()
+        if self.subsquid_datasources:
+            subsquid_sync_level = await self.subsquid_datasources[0].get_head_level()
             Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
         else:
             subsquid_sync_level = 0

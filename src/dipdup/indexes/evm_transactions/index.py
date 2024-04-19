@@ -41,7 +41,6 @@ class EvmTransactionsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             None,
             transaction,
         )
@@ -77,11 +76,13 @@ class EvmTransactionsIndex(
                 raise NotImplementedError
             filters.append(query)
 
-        if not isinstance(self._datasource, EvmSubsquidDatasource):
-            raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
+        try:
+            datasource = self.subsquid_datasources[0]
+        except IndexError:
+            raise FrameworkException('Creating subsquid fetcher without subsquid datasource') from None
 
         return EvmEvmTransactionFetcher(
-            datasource=self._datasource,
+            datasource=datasource,
             first_level=first_level,
             last_level=last_level,
             filters=tuple(filters),

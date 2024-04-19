@@ -313,7 +313,6 @@ class TezosOperationsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             operation_subgroup.hash + ': {}',
             *args,
         )

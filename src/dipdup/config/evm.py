@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import Literal
+from typing import TypeAlias
 
 from eth_utils.address import is_address
 from eth_utils.address import to_normalized_address
@@ -17,7 +18,7 @@ from dipdup.exceptions import ConfigurationError
 EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
 
-EvmDatasourceConfigU = EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig | AbiEtherscanDatasourceConfig
+EvmDatasourceConfigU: TypeAlias = EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig | AbiEtherscanDatasourceConfig
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

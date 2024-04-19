@@ -31,9 +31,9 @@ class EvmLogsIndex(
         self,
         ctx: DipDupContext,
         config: EvmLogsIndexConfig,
-        datasource: Datasource,
+        datasources: tuple[Datasource, ...],
     ) -> None:
-        super().__init__(ctx, config, datasource)
+        super().__init__(ctx, config, datasources)
         self._topics: dict[str, dict[str, str]] | None = None
 
     @property
@@ -79,17 +79,21 @@ class EvmLogsIndex(
             ]
             topics.append((address, event_abi['topic0']))
 
-        if not isinstance(self._datasource, EvmSubsquidDatasource):
-            raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
+        try:
+            datasource = self.subsquid_datasources[0]
+        except IndexError:
+            raise FrameworkException('Creating subsquid fetcher with no subsquid datasources') from None
 
         return EvmLogFetcher(
-            datasource=self._datasource,
+            datasource=datasource,
             first_level=first_level,
             last_level=last_level,
             topics=tuple(topics),
         )
 
     def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeLogFetcher:
+        if not self.node_datasources:
+            raise FrameworkException('Creating node fetcher with no node datasources')
         return EvmNodeLogFetcher(
             datasources=self.node_datasources,
             first_level=first_level,
@@ -115,7 +119,6 @@ class EvmLogsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             None,
             log,
         )

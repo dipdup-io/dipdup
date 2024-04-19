@@ -81,5 +81,10 @@ class TezosIndexConfig(IndexConfig):
 
     datasources: tuple[TezosDatasourceConfigU, ...]
 
+    def __post_init__(self) -> None:
+        if len(self.datasources) != 1:
+            raise ConfigurationError('Tezos indexes currently do not support multiple datasources')
+        self.datasource = self.datasources[0]
+
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}

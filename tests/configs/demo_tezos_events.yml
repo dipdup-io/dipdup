@@ -16,7 +16,8 @@ indexes:
     kind: tezos.events
     first_level: 1250000
     last_level: 1258176
-    datasource: tzkt
+    datasources:
+      - tzkt
     handlers:
       - callback: on_move_event
         contract: events_contract

@@ -24,6 +24,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
+from copy import copy
 from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
@@ -46,7 +47,6 @@ from pydantic_core import to_jsonable_python
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
@@ -328,7 +328,9 @@ class ParentMixin(Generic[ParentT]):
         self._parent: ParentT | None = None
 
     @property
-    def parent(self) -> ParentT | None:
+    def parent(self) -> ParentT:
+        if self._parent is None:
+            raise ConfigInitializationException(f'{self.__class__.__name__} parent is not set')
         return self._parent
 
     @parent.setter
@@ -952,18 +954,11 @@ class DipDupConfig:
         """
         handler_config: HandlerConfig
 
-        # NOTE: Each index must have a corresponding index datasource
-        if isinstance(index_config.datasource, str):
-            name = index_config.datasource
-            if index_config.kind.startswith('tezos'):
-                index_config.datasource = self.get_tezos_tzkt_datasource(name)
-            elif index_config.kind.startswith('evm'):
-                try:
-                    index_config.datasource = self.get_evm_subsquid_datasource(name)
-                except ConfigurationError:
-                    index_config.datasource = self.get_evm_node_datasource(name)
-            else:
-                raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
+        datasources = list(index_config.datasources)
+        for i, datasource in enumerate(copy(datasources)):
+            if isinstance(datasource, str):
+                datasources[i] = self.get_datasource(datasource)  # type: ignore[assignment]
+        index_config.datasources = tuple(datasources)  # type: ignore[assignment]
 
         if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:

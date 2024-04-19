@@ -7,9 +7,9 @@ import orjson
 from web3 import Web3
 
 from dipdup.codegen import CodeGenerator
-from dipdup.config import AbiDatasourceConfig
 from dipdup.config import EvmIndexConfigU
 from dipdup.config import HandlerConfig
+from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_logs import EvmLogsHandlerConfig
@@ -181,12 +181,9 @@ class EvmCodeGenerator(CodeGenerator):
         pass
 
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
-        if isinstance(index_config.abi, tuple):
-            datasource_configs = index_config.abi
-        elif index_config.abi:
-            datasource_configs = (index_config.abi,)
-        else:
-            datasource_configs = self._config.abi_datasources
+        datasource_configs = tuple(c for c in index_config.datasources if isinstance(c, AbiEtherscanDatasourceConfig))
+        if not datasource_configs:
+            raise ConfigurationError('No EVM ABI datasources found')
 
         contract: EvmContractConfig | None = None
 
@@ -208,9 +205,9 @@ class EvmCodeGenerator(CodeGenerator):
                 raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
 
             for datasource_config in datasource_configs:
-                # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
-                if not isinstance(datasource_config, AbiDatasourceConfig):
-                    raise ConfigurationError('`abi` must be a list of ABI datasources')
+                # # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
+                # if not isinstance(datasource_config, AbiDatasourceConfig):
+                #     raise ConfigurationError('`abi` must be a list of ABI datasources')
 
                 datasource = cast(AbiDatasource[Any], self._datasources[datasource_config.name])
                 try:

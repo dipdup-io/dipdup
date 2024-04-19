@@ -48,7 +48,8 @@ indexes:
   tzcolors_auction:
     template: tzcolors_auction
     values:
-      datasource: tzkt
+      datasources:
+      - tzkt
       minter: tzcolors_minter
       auction: tzcolors_auction
 

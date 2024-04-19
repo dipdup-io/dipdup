@@ -32,7 +32,8 @@ indexes:
     first_level: 1417329
     last_level: 1417729
     values:
-      datasource: tzkt
+      datasources:
+      - tzkt
       name_registry: name_registry
 
 logging: WARN

@@ -56,7 +56,6 @@ class TezosHeadIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             level_data.hash,
             level_data,
         )
