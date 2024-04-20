@@ -102,15 +102,19 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig], EvmHis
     )
 
     def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
+        self._started = asyncio.Event()
         super().__init__(config, False)
 
     async def run(self) -> None:
-        if self._config.node:
-            return
+        await self._started.wait()
+
         # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
             await asyncio.sleep(self._http_config.polling_interval)
             await self.initialize()
+
+    async def start(self) -> None:
+        self._started.set()
 
     async def subscribe(self) -> None:
         pass

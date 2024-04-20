@@ -7,6 +7,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosDatasourceConfigU
@@ -30,7 +31,7 @@ class TezosEventsHandlerConfig(HandlerConfig):
     :param tag: Event tag
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
     tag: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -57,7 +58,7 @@ class TezosEventsUnknownEventHandlerConfig(HandlerConfig):
     :param contract: Contract which emits event
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -84,7 +85,7 @@ class TezosEventsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.events']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
     handlers: tuple[TezosEventsHandlerConfigU, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

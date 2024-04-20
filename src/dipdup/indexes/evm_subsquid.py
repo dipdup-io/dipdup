@@ -10,6 +10,7 @@ from web3 import Web3
 from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import DipDupContext
+from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
@@ -77,6 +78,8 @@ class SubsquidIndex(
         sync_levels = set()
         for sub in self._config.get_subscriptions():
             for datasource in self._datasources:
+                if not isinstance(datasource, IndexDatasource):
+                    continue
                 sync_levels.add(datasource.get_sync_level(sub))
 
         if None in sync_levels:

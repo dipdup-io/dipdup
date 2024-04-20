@@ -7,6 +7,7 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -60,7 +61,7 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_transfers']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
     handlers: tuple[TezosTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

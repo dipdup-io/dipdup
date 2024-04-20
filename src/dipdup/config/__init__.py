@@ -27,7 +27,9 @@ from contextlib import suppress
 from copy import copy
 from pathlib import Path
 from pydoc import locate
+from types import NoneType
 from typing import TYPE_CHECKING
+from typing import Annotated
 from typing import Any
 from typing import Generic
 from typing import Literal
@@ -65,6 +67,9 @@ DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
+
+_T = TypeVar('_T')
+Alias = Annotated[_T, NoneType]
 
 _logger = logging.getLogger(__name__)
 
@@ -328,9 +333,7 @@ class ParentMixin(Generic[ParentT]):
         self._parent: ParentT | None = None
 
     @property
-    def parent(self) -> ParentT:
-        if self._parent is None:
-            raise ConfigInitializationException(f'{self.__class__.__name__} parent is not set')
+    def parent(self) -> ParentT | None:
         return self._parent
 
     @parent.setter
@@ -392,7 +395,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """
 
     kind: str
-    datasources: tuple[DatasourceConfig, ...]
+    datasources: tuple[Alias[DatasourceConfig], ...]
 
     def __post_init__(self) -> None:
         NameMixin.__post_init__(self)
@@ -417,8 +420,9 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
         """Strip config from tunables that are not needed for hash calculation."""
-        config_dict['datasource'].pop('http', None)
-        config_dict['datasource'].pop('buffer_size', None)
+        for datasource in config_dict['datasources']:
+            datasource.pop('http', None)
+            datasource.pop('buffer_size', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -922,18 +926,6 @@ class DipDupConfig:
                 self._resolve_template(index_config)
 
     def _resolve_links(self) -> None:
-        for datasource_config in self.datasources.values():
-            if not isinstance(datasource_config, EvmSubsquidDatasourceConfig):
-                continue
-            node_field = datasource_config.node
-            if isinstance(node_field, str):
-                datasource_config.node = self.datasources[node_field]
-            elif isinstance(node_field, tuple):
-                nodes = []
-                for node in node_field:
-                    nodes.append(self.get_evm_node_datasource(node) if isinstance(node, str) else node)
-                datasource_config.node = tuple(nodes)
-
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException('Index templates must be resolved first')
@@ -1123,7 +1115,7 @@ ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
-def _patch_annotations(replace_table: dict[str, str]) -> None:
+def _patch_annotations() -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
     DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
@@ -1149,8 +1141,20 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
             reload = False
             for name, annotation in value.__annotations__.items():
                 # NOTE: All annotations are strings now
-                if new_annotation := replace_table.get(annotation):
-                    value.__annotations__[name] = new_annotation
+                if not isinstance(annotation, str):
+                    continue
+
+                # NOTE: Unwrap `Alias[...]` to 'str | ...' to allow using aliases in config files
+                unwrapped = annotation
+
+                while match := re.match(r'(.*)Alias\[(.*)', unwrapped):
+                    before, body = match.groups()
+                    body, after = body.split(']', 1)
+                    unwrapped = f'{before}str | {body}{after}'
+
+                if annotation != unwrapped:
+                    print(annotation, ' -> ', unwrapped)
+                    value.__annotations__[name] = unwrapped
                     reload = True
 
             if not reload:
@@ -1166,22 +1170,4 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
             setattr(submodule, attr, value)
 
 
-_original_to_aliased = {
-    'TezosTzktDatasourceConfig': 'str | TezosTzktDatasourceConfig',
-    'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
-    'EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig': 'str | EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig',
-    'ContractConfig': 'str | ContractConfig',
-    'ContractConfig | None': 'str | ContractConfig | None',
-    'TezosContractConfig': 'str | TezosContractConfig',
-    'TezosContractConfig | None': 'str | TezosContractConfig | None',
-    'EvmContractConfig': 'str | EvmContractConfig',
-    'EvmContractConfig | None': 'str | EvmContractConfig | None',
-    'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
-    'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
-        'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
-    ),
-}
-
-
-_patch_annotations(_original_to_aliased)
+_patch_annotations()

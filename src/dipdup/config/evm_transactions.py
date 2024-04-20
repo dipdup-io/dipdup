@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
@@ -78,7 +79,7 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
 
     kind: Literal['evm.transactions']
 
-    datasources: tuple[EvmDatasourceConfigU, ...] = field(default_factory=tuple)
+    datasources: tuple[Alias[EvmDatasourceConfigU], ...] = field(default_factory=tuple)
     handlers: tuple[EvmTransactionsHandlerConfig, ...] = field(default_factory=tuple)
 
     first_level: int = 0

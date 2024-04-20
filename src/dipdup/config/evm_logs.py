@@ -7,6 +7,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmDatasourceConfigU
@@ -31,7 +32,7 @@ class EvmLogsHandlerConfig(HandlerConfig):
     :param name: Event name
     """
 
-    contract: EvmContractConfig
+    contract: Alias[EvmContractConfig]
     name: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -62,7 +63,7 @@ class EvmLogsIndexConfig(EvmIndexConfig):
     """
 
     kind: Literal['evm.logs']
-    datasources: tuple[EvmDatasourceConfigU, ...]
+    datasources: tuple[Alias[EvmDatasourceConfigU], ...]
     handlers: tuple[EvmLogsHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

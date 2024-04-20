@@ -269,30 +269,22 @@
       "additionalProperties": false,
       "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
       "properties": {
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        },
         "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/EvmContractConfig"
-            }
-          ],
-          "title": "Contract"
+          "$ref": "#/$defs/EvmContractConfig"
         },
         "name": {
           "title": "Name",
           "type": "string"
-        },
-        "callback": {
-          "title": "Callback",
-          "type": "string"
         }
       },
       "required": [
+        "callback",
         "contract",
-        "name",
-        "callback"
+        "name"
       ],
       "title": "EvmLogsHandlerConfig",
       "type": "object"
@@ -422,15 +414,6 @@
         "node": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
               "$ref": "#/$defs/EvmNodeDatasourceConfig"
             },
             {
@@ -469,11 +452,12 @@
       "additionalProperties": false,
       "description": "Subsquid transaction handler\n\n:param callback: Callback name\n:param from_: Transaction sender\n:param to: Transaction receiver\n:param method: Method name",
       "properties": {
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        },
         "from_": {
           "anyOf": [
-            {
-              "type": "string"
-            },
             {
               "$ref": "#/$defs/EvmContractConfig"
             },
@@ -481,23 +465,18 @@
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "From "
+          "default": null
         },
         "to": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/EvmContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "To"
+          "default": null
         },
         "method": {
           "anyOf": [
@@ -510,10 +489,6 @@
           ],
           "default": null,
           "title": "Method"
-        },
-        "callback": {
-          "title": "Callback",
-          "type": "string"
         }
       },
       "required": [
@@ -946,20 +921,12 @@
       "additionalProperties": false,
       "description": "Job schedule config\n\n:param hook: Name of hook to run\n:param args: Arguments to pass to the hook\n:param crontab: Schedule with crontab syntax (`* * * * *`)\n:param interval: Schedule with interval in seconds\n:param daemon: Run hook as a daemon (never stops)",
       "properties": {
-        "hook": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/HookConfig"
-            }
-          ],
-          "title": "Hook"
-        },
         "args": {
           "title": "Args",
           "type": "object"
+        },
+        "hook": {
+          "$ref": "#/$defs/HookConfig"
         },
         "crontab": {
           "anyOf": [
@@ -1343,30 +1310,22 @@
       "additionalProperties": false,
       "description": "Event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event\n:param tag: Event tag",
       "properties": {
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        },
         "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/TezosContractConfig"
-            }
-          ],
-          "title": "Contract"
+          "$ref": "#/$defs/TezosContractConfig"
         },
         "tag": {
           "title": "Tag",
           "type": "string"
-        },
-        "callback": {
-          "title": "Callback",
-          "type": "string"
         }
       },
       "required": [
+        "callback",
         "contract",
-        "tag",
-        "callback"
+        "tag"
       ],
       "title": "TezosEventsHandlerConfig",
       "type": "object"
@@ -1426,25 +1385,17 @@
       "additionalProperties": false,
       "description": "Unknown event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event",
       "properties": {
-        "contract": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/TezosContractConfig"
-            }
-          ],
-          "title": "Contract"
-        },
         "callback": {
           "title": "Callback",
           "type": "string"
+        },
+        "contract": {
+          "$ref": "#/$defs/TezosContractConfig"
         }
       },
       "required": [
-        "contract",
-        "callback"
+        "callback",
+        "contract"
       ],
       "title": "TezosEventsUnknownEventHandlerConfig",
       "type": "object"
@@ -1541,32 +1492,24 @@
         "source": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Source"
+          "default": null
         },
         "originated_contract": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Originated Contract"
+          "default": null
         },
         "optional": {
           "default": false,
@@ -1610,32 +1553,24 @@
         "source": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Source"
+          "default": null
         },
         "destination": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Destination"
+          "default": null
         },
         "optional": {
           "default": false,
@@ -1674,32 +1609,24 @@
         "source": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Source"
+          "default": null
         },
         "destination": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Destination"
+          "default": null
         },
         "entrypoint": {
           "anyOf": [
@@ -1738,6 +1665,13 @@
       "additionalProperties": false,
       "description": "Operation index config\n\n:param kind: always 'tezos.operations'\n:param datasources: `tezos` datasources to use\n:param handlers: List of indexer handlers\n:param types: Types of transaction to fetch\n:param contracts: Aliases of contracts being indexed in `contracts` section\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
+        "contracts": {
+          "items": {
+            "$ref": "#/$defs/TezosContractConfig"
+          },
+          "title": "Contracts",
+          "type": "array"
+        },
         "kind": {
           "const": "tezos.operations",
           "enum": [
@@ -1758,20 +1692,6 @@
             "$ref": "#/$defs/TezosOperationsHandlerConfig"
           },
           "title": "Handlers",
-          "type": "array"
-        },
-        "contracts": {
-          "items": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/$defs/TezosContractConfig"
-              }
-            ]
-          },
-          "title": "Contracts",
           "type": "array"
         },
         "types": {
@@ -1941,11 +1861,12 @@
       "additionalProperties": false,
       "description": "Token transfer handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID\n:param from_: Filter by sender\n:param to: Filter by recipient",
       "properties": {
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        },
         "contract": {
           "anyOf": [
-            {
-              "type": "string"
-            },
             {
               "$ref": "#/$defs/TezosContractConfig"
             },
@@ -1953,8 +1874,7 @@
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "Contract"
+          "default": null
         },
         "token_id": {
           "anyOf": [
@@ -1971,36 +1891,24 @@
         "from_": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "From "
+          "default": null
         },
         "to": {
           "anyOf": [
             {
-              "type": "string"
-            },
-            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null,
-          "title": "To"
-        },
-        "callback": {
-          "title": "Callback",
-          "type": "string"
+          "default": null
         }
       },
       "required": [

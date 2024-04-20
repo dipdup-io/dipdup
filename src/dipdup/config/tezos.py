@@ -4,6 +4,7 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import IndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
@@ -79,7 +80,7 @@ class TezosIndexConfig(IndexConfig):
     :param datasources: `tezos` datasources to use
     """
 
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
 
     def __post_init__(self) -> None:
         if len(self.datasources) != 1:
