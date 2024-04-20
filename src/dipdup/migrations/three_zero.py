@@ -6,7 +6,7 @@ IMPORTS = {
     'dipdup.config.evm_subsquid_events.SubsquidEventsHandlerConfig': 'dipdup.config.evm_logs.EvmLogsHandlerConfig',
     'dipdup.config.evm_subsquid_events.SubsquidEventsIndexConfig': 'dipdup.config.evm_logs.EvmLogsIndexConfig',
     'dipdup.config.evm_subsquid.SubsquidDatasourceConfig': 'dipdup.config.evm_subsquid.EvmSubsquidDatasourceConfig',
-    'dipdup.config.evm_subsquid.SubsquidIndexConfig': 'dipdup.config.evm_subsquid.EvmIndexConfig',
+    'dipdup.config.evm_subsquid.EvmIndexConfig': 'dipdup.config.evm_subsquid.EvmIndexConfig',
     'dipdup.config.evm_subsquid_transactions.SubsquidTransactionsHandlerConfig': 'dipdup.config.evm_subsquid_transactions.EvmTransactionsHandlerConfig',
     'dipdup.config.tezos_tzkt_big_maps.TzktBigMapsHandlerConfig': 'dipdup.config.tezos_tzkt_big_maps.TezosTzktBigMapsHandlerConfig',
     'dipdup.config.tezos_tzkt_big_maps.TzktBigMapsIndexConfig': 'dipdup.config.tezos_tzkt_big_maps.TezosTzktBigMapsIndexConfig',

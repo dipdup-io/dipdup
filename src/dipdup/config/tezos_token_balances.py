@@ -7,11 +7,12 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos_tzkt import TokenBalanceSubscription
 
 if TYPE_CHECKING:
@@ -29,7 +30,7 @@ class TezosTokenBalancesHandlerConfig(HandlerConfig):
     :param token_id: Filter by token ID
     """
 
-    contract: TezosContractConfig | None = None
+    contract: Alias[TezosContractConfig] | None = None
     token_id: int | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -57,7 +58,7 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_balances']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

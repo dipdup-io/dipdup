@@ -8,6 +8,7 @@ from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import IndexConfig
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
@@ -63,4 +64,4 @@ class EvmIndexConfig(IndexConfig, ABC):
     :param datasources: `evm` datasources to use
     """
 
-    datasources: tuple[EvmDatasourceConfigU, ...]
+    datasources: tuple[Alias[EvmDatasourceConfigU], ...]

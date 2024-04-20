@@ -24,7 +24,6 @@ from abc import ABC
 from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
-from copy import copy
 from pathlib import Path
 from pydoc import locate
 from types import NoneType
@@ -423,6 +422,10 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         for datasource in config_dict['datasources']:
             datasource.pop('http', None)
             datasource.pop('buffer_size', None)
+
+    @property
+    @abstractmethod
+    def handlers(self) -> tuple[HandlerConfig, ...]: ...
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -944,13 +947,15 @@ class DipDupConfig:
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
         """
+        print('hmmm')
         handler_config: HandlerConfig
 
         datasources = list(index_config.datasources)
-        for i, datasource in enumerate(copy(datasources)):
+        for i, datasource in enumerate(datasources):
             if isinstance(datasource, str):
                 datasources[i] = self.get_datasource(datasource)  # type: ignore[assignment]
         index_config.datasources = tuple(datasources)  # type: ignore[assignment]
+        print(index_config)
 
         if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:

@@ -1,10 +1,10 @@
 from collections import deque
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.evm_logs import EvmLogsHandlerConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.context import DipDupContext
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -12,7 +12,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
 from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
 from dipdup.indexes.evm_logs.matcher import match_logs
-from dipdup.indexes.evm_subsquid import SubsquidIndex
+from dipdup.indexes.evm_subsquid import EvmIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.evm import EvmLog
 from dipdup.models.evm import EvmLogData
@@ -20,18 +20,21 @@ from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmLogData, ...] | RollbackMessage
-Datasource = EvmSubsquidDatasource | EvmNodeDatasource
+EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
+
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
 
 
 class EvmLogsIndex(
-    SubsquidIndex[EvmLogsIndexConfig, QueueItem, Datasource],
+    EvmIndex[EvmLogsIndexConfig, QueueItem, EvmDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: EvmLogsIndexConfig,
-        datasources: tuple[Datasource, ...],
+        datasources: tuple[EvmDatasource, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
         self._topics: dict[str, dict[str, str]] | None = None

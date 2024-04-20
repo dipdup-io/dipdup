@@ -9,14 +9,10 @@ from contextlib import contextmanager
 from contextlib import suppress
 from pathlib import Path
 from pprint import pformat
-from types import UnionType
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TypeVar
-from typing import cast
-from typing import get_args
-from typing import get_origin
 
 from tortoise.exceptions import OperationalError
 
@@ -25,7 +21,6 @@ from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
@@ -59,6 +54,17 @@ from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
+from dipdup.index import Index as IndexCls
+from dipdup.indexes.evm_logs.index import EvmLogsIndex
+from dipdup.indexes.evm_subsquid import EvmIndex
+from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
+from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
+from dipdup.indexes.tezos_events.index import TezosEventsIndex
+from dipdup.indexes.tezos_head.index import TezosHeadIndex
+from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
+from dipdup.indexes.tezos_token_balances.index import TezosTokenBalancesIndex
+from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Head
@@ -298,79 +304,72 @@ class DipDupContext:
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
-    async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
-        # NOTE: Avoiding circular import
-        from dipdup.indexes.evm_logs.index import EvmLogsIndex
-        from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
-        from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
-        from dipdup.indexes.tezos_events.index import TezosEventsIndex
-        from dipdup.indexes.tezos_head.index import TezosHeadIndex
-        from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
-        from dipdup.indexes.tezos_token_balances.index import TezosTokenBalancesIndex
-        from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
+    async def _spawn_index(
+        self,
+        name: str,
+        state: Index | None = None,
+    ) -> IndexCls[Any, Any, Any]:
+        print('spawn', name)
 
-        index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: (
-            TezosOperationsIndex
-            | TezosBigMapsIndex
-            | TezosHeadIndex
-            | TezosTokenBalancesIndex
-            | TezosTokenTransfersIndex
-            | TezosEventsIndex
-            | EvmLogsIndex
-            | EvmTransactionsIndex
-        )
-        datasources: tuple[Datasource[Any], ...]
+        index_config = self.config.get_index(name)
 
-        if isinstance(index_config, TezosIndexConfig):
-            datasource_name = index_config.datasource.name
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-
-            if isinstance(index_config, TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig):
-                index = TezosOperationsIndex(self, index_config, datasource)
-            elif isinstance(index_config, TezosBigMapsIndexConfig):
-                index = TezosBigMapsIndex(self, index_config, datasource)
-            elif isinstance(index_config, TezosHeadIndexConfig):
-                index = TezosHeadIndex(self, index_config, datasource)
-            elif isinstance(index_config, TezosTokenBalancesIndexConfig):
-                index = TezosTokenBalancesIndex(self, index_config, datasource)
-            elif isinstance(index_config, TezosTokenTransfersIndexConfig):
-                index = TezosTokenTransfersIndex(self, index_config, datasource)
-            elif isinstance(index_config, TezosEventsIndexConfig):
-                index = TezosEventsIndex(self, index_config, datasource)
-            else:
-                raise NotImplementedError
-
-            datasources = (datasource,)
-
-        elif isinstance(index_config, EvmIndexConfig):
-            datasource_configs = index_config.datasources
-            datasources = tuple(self.datasources[c.name] for c in datasource_configs)
-
-            if isinstance(index_config, EvmLogsIndexConfig):
-                index = EvmLogsIndex(self, index_config, datasources)
-            elif isinstance(index_config, EvmTransactionsIndexConfig):
-                index = EvmTransactionsIndex(self, index_config, datasources)
-            else:
-                raise NotImplementedError
+        index: IndexCls[Any, Any, Any]
+        if isinstance(index_config, EvmIndexConfig):
+            index = self._create_evm_index(index_config)
+        elif isinstance(index_config, TezosIndexConfig):
+            index = self._create_tezos_index(index_config)
         else:
             raise NotImplementedError
 
-        for datasource in datasources:
-            if isinstance(datasource, IndexDatasource):
-                datasource.add_index(index_config)
-
-        handlers = (
-            (index_config.handler_config,)
-            if isinstance(index_config, TezosOperationsUnfilteredIndexConfig | TezosHeadIndexConfig)
-            else index_config.handlers
-        )
-        for handler_config in handlers:
+        for handler_config in index_config.handlers:
             self.register_handler(handler_config)
+
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         self._pending_indexes.put_nowait(index)
+
+        return index
+
+    def _create_evm_index(self, index_config: EvmIndexConfig) -> EvmIndex[Any, Any, Any]:
+        datasource_configs = index_config.datasources
+        datasources = tuple(self.get_evm_datasource(c.name) for c in datasource_configs)
+        index_datasources = tuple(d for d in datasources if isinstance(d, IndexDatasource))
+
+        for datasource in index_datasources:
+            datasource.attach_index(index_config)
+
+        index: EvmIndex[Any, Any, Any]
+        if isinstance(index_config, EvmTransactionsIndexConfig):
+            index = EvmTransactionsIndex(self, index_config, index_datasources)
+        elif isinstance(index_config, EvmLogsIndexConfig):
+            index = EvmLogsIndex(self, index_config, index_datasources)
+        else:
+            raise NotImplementedError
+
+        return index
+
+    def _create_tezos_index(self, index_config: TezosIndexConfig) -> TezosIndex[Any, Any]:
+        datasource = self.get_tezos_tzkt_datasource(index_config.datasource.name)
+
+        index: TezosIndex[Any, Any]
+        if isinstance(index_config, TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig):
+            index = TezosOperationsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosBigMapsIndexConfig):
+            index = TezosBigMapsIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosHeadIndexConfig):
+            index = TezosHeadIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTokenBalancesIndexConfig):
+            index = TezosTokenBalancesIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosTokenTransfersIndexConfig):
+            index = TezosTokenTransfersIndex(self, index_config, datasource)
+        elif isinstance(index_config, TezosEventsIndexConfig):
+            index = TezosEventsIndex(self, index_config, datasource)
+        else:
+            raise NotImplementedError
+
+        datasource.attach_index(index_config)
+
         return index
 
     # TODO: disable_index(name: str)
@@ -424,19 +423,18 @@ class DipDupContext:
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    def _get_datasource(self, name: str, type_: type[DatasourceT]) -> DatasourceT:
+    def _get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
 
-        if get_args(type_) and get_origin(type_) is UnionType:
-            types = get_args(type_)
+        for type_ in types:
+            if isinstance(datasource, type_):
+                break
         else:
-            types = (type_,)
+            raise ConfigurationError(f"Datasource `{name}` is not a `{types}, it's {datasource}`")
 
-        if not isinstance(datasource._config, types):
-            raise ConfigurationError(f"Datasource `{name}` is not a `{type_}, it's {datasource}`")
-        return datasource  # type: ignore[return-value]
+        return datasource
 
     def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
         """Get `tezos.tzkt` datasource by name"""
@@ -456,6 +454,10 @@ class DipDupContext:
         :param name: Name of the datasource
         """
         return self._get_datasource(name, AbiEtherscanDatasource)
+
+    def get_evm_datasource(self, name: str) -> EvmSubsquidDatasource | EvmNodeDatasource | AbiEtherscanDatasource:
+        """Get `evm` datasource by name"""
+        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, AbiEtherscanDatasource)  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name

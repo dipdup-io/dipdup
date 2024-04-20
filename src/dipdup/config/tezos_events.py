@@ -10,8 +10,8 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos_tzkt import EventSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -85,7 +85,7 @@ class TezosEventsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.events']
-    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosEventsHandlerConfigU, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

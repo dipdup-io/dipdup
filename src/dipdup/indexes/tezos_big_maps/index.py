@@ -9,7 +9,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.indexes.tezos_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_big_maps.matcher import match_big_maps
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
 from dipdup.models.tezos import TezosBigMapAction
@@ -21,7 +21,7 @@ QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 
 
 class TezosBigMapsIndex(
-    TezosTzktIndex[TezosBigMapsIndexConfig, QueueItem],
+    TezosIndex[TezosBigMapsIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.big_map,
 ):
     async def _synchronize(self, sync_level: int) -> None:

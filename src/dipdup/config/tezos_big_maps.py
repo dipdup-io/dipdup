@@ -7,11 +7,12 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
@@ -32,7 +33,7 @@ class TezosBigMapsHandlerConfig(HandlerConfig):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
     path: str
 
     @classmethod
@@ -79,7 +80,7 @@ class TezosBigMapsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.big_maps']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never

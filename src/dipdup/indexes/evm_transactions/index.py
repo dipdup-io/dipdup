@@ -7,7 +7,7 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_subsquid import SubsquidIndex
+from dipdup.indexes.evm_subsquid import EvmIndex
 from dipdup.indexes.evm_subsquid import get_sighash
 from dipdup.indexes.evm_transactions.fetcher import EvmEvmTransactionFetcher
 from dipdup.indexes.evm_transactions.fetcher import EvmNodeTransactionFetcher
@@ -20,11 +20,11 @@ from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmTransactionData, ...] | RollbackMessage
-Datasource = EvmSubsquidDatasource | EvmNodeDatasource
+EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
 
 
 class EvmTransactionsIndex(
-    SubsquidIndex[EvmTransactionsIndexConfig, QueueItem, Datasource],
+    EvmIndex[EvmTransactionsIndexConfig, QueueItem, EvmDatasource],
     message_type=SubsquidMessageType.transactions,
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:

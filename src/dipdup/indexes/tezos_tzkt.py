@@ -1,18 +1,22 @@
 from abc import ABC
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 
-from dipdup.context import DipDupContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.index import Index
 from dipdup.index import IndexConfigT
 from dipdup.index import IndexQueueItemT
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
+
+
 TZKT_READAHEAD_LIMIT = 10000
 
 
-class TezosTzktIndex(
+class TezosIndex(
     Generic[IndexConfigT, IndexQueueItemT],
     Index[Any, Any, TezosTzktDatasource],
     ABC,
@@ -20,7 +24,7 @@ class TezosTzktIndex(
 ):
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: Any,
         datasource: TezosTzktDatasource,
     ) -> None:

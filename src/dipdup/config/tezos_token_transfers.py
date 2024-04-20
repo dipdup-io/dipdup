@@ -11,8 +11,8 @@ from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos_tzkt import TokenTransferSubscription
 
 if TYPE_CHECKING:
@@ -32,11 +32,11 @@ class TezosTokenTransfersHandlerConfig(HandlerConfig):
     :param to: Filter by recipient
     """
 
-    contract: TezosContractConfig | None = None
+    contract: Alias[TezosContractConfig] | None = None
     token_id: int | None = None
     # FIXME: Can't use `from_` field alias in dataclasses
-    from_: TezosContractConfig | None = None
-    to: TezosContractConfig | None = None
+    from_: Alias[TezosContractConfig] | None = None
+    to: Alias[TezosContractConfig] | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -61,7 +61,7 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_transfers']
-    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
 
     first_level: int = 0

@@ -6,7 +6,7 @@ from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_token_transfers.matcher import match_token_transfers
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
@@ -15,7 +15,7 @@ QueueItem = tuple[TezosTokenTransferData, ...] | RollbackMessage
 
 
 class TezosTokenTransfersIndex(
-    TezosTzktIndex[TezosTokenTransfersIndexConfig, QueueItem],
+    TezosIndex[TezosTokenTransfersIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.token_transfer,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:

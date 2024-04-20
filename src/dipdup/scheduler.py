@@ -58,7 +58,7 @@ class SchedulerManager:
         self._exception_event: asyncio.Event = asyncio.Event()
         self._daemons: set[str] = set()
 
-    async def run(self, ctx: DipDupContext, event: asyncio.Event) -> None:
+    async def run(self, ctx: 'DipDupContext', event: asyncio.Event) -> None:
         if not event.is_set():
             self._logger.info('Job scheduler is waiting for an event')
         await event.wait()
@@ -79,7 +79,7 @@ class SchedulerManager:
         finally:
             self._scheduler.shutdown()
 
-    def add_job(self, ctx: DipDupContext, job_config: JobConfig) -> Job:
+    def add_job(self, ctx: 'DipDupContext', job_config: JobConfig) -> Job:
         if job_config.daemon:
             self._daemons.add(job_config.name)
 
@@ -91,7 +91,7 @@ class SchedulerManager:
         )
 
         async def _job_wrapper(
-            ctx: DipDupContext,
+            ctx: 'DipDupContext',
             *args: Any,
             **kwargs: Any,
         ) -> None:

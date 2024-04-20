@@ -92,7 +92,7 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     @abstractmethod
     async def initialize(self) -> None: ...
 
-    def add_index(self, index_config: IndexConfig) -> None:
+    def attach_index(self, index_config: IndexConfig) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.get_subscriptions():
             self._subscriptions.add(subscription)

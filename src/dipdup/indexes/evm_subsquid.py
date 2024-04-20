@@ -1,6 +1,7 @@
 import random
 from abc import ABC
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 from typing import Generic
 from typing import TypeVar
 from typing import cast
@@ -9,7 +10,6 @@ from web3 import Web3
 
 from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
-from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
@@ -21,6 +21,9 @@ from dipdup.index import IndexQueueItemT
 from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
+
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
 
 SUBSQUID_READAHEAD_LIMIT = 10000
 
@@ -46,7 +49,7 @@ def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | Non
     return _sighashes[key]
 
 
-class SubsquidIndex(
+class EvmIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],
     ABC,
@@ -54,7 +57,7 @@ class SubsquidIndex(
 ):
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: IndexConfigT,
         datasources: tuple[DatasourceT, ...],
     ) -> None:

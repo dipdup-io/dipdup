@@ -6,9 +6,10 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -42,7 +43,7 @@ class TezosHeadIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.head']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     callback: str
 
     @property

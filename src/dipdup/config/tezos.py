@@ -18,8 +18,6 @@ SMART_CONTRACT_PREFIX = 'KT1'
 SMART_ROLLUP_PREFIX = 'sr1'
 WALLET_PREFIXES = ('tz1', 'tz2', 'tz3')
 
-TezosDatasourceConfigU = TezosTzktDatasourceConfig
-
 
 def is_contract_address(address: str) -> bool:
     return len(address) == ADDRESS_LENGTH and address.startswith(SMART_CONTRACT_PREFIX)
@@ -80,12 +78,16 @@ class TezosIndexConfig(IndexConfig):
     :param datasources: `tezos` datasources to use
     """
 
-    datasources: tuple[Alias[TezosDatasourceConfigU], ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         if len(self.datasources) != 1:
             raise ConfigurationError('Tezos indexes currently do not support multiple datasources')
-        self.datasource = self.datasources[0]
 
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}
+
+    @property
+    def datasource(self) -> Alias[TezosTzktDatasourceConfig]:
+        return self.datasources[0]

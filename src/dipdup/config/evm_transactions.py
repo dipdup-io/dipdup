@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Literal
 
@@ -33,8 +32,8 @@ class EvmTransactionsHandlerConfig(HandlerConfig, CodegenMixin):
     """
 
     # FIXME: Can't use `from_` field alias in dataclasses
-    from_: EvmContractConfig | None = None
-    to: EvmContractConfig | None = None
+    from_: Alias[EvmContractConfig] | None = None
+    to: Alias[EvmContractConfig] | None = None
     method: str | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -79,8 +78,8 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
 
     kind: Literal['evm.transactions']
 
-    datasources: tuple[Alias[EvmDatasourceConfigU], ...] = field(default_factory=tuple)
-    handlers: tuple[EvmTransactionsHandlerConfig, ...] = field(default_factory=tuple)
+    datasources: tuple[Alias[EvmDatasourceConfigU], ...]
+    handlers: tuple[EvmTransactionsHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0

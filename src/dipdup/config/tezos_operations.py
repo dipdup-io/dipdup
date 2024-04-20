@@ -9,11 +9,12 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
-from dipdup.config.tezos import TezosDatasourceConfigU
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
@@ -201,8 +202,8 @@ class TezosOperationsHandlerOriginationPatternConfig(TezosOperationsPatternConfi
     """
 
     type: Literal['origination'] = 'origination'
-    source: TezosContractConfig | None = None
-    originated_contract: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    originated_contract: Alias[TezosContractConfig] | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
@@ -288,9 +289,9 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosOperationsHandlerConfig, ...]
-    contracts: list[TezosContractConfig] = Field(default_factory=list)
+    contracts: list[Alias[TezosContractConfig]] = Field(default_factory=list)
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 
     first_level: int = 0
@@ -402,7 +403,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations_unfiltered']
-    datasources: tuple[TezosDatasourceConfigU, ...]
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     callback: str
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 

@@ -144,7 +144,7 @@ class TezosCodeGenerator(CodeGenerator):
             datasource_name = template_config.datasource
             if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
                 datasource_config = self._config.get_tezos_tzkt_datasource(datasource_name)
-                template_config.datasource = datasource_config
+                template_config.datasources = (datasource_config,)
                 await self._fetch_operation_index_schema(template_config)
             else:
                 self._logger.info('Unresolved `datasource` field, trying to guess it.')
@@ -152,7 +152,7 @@ class TezosCodeGenerator(CodeGenerator):
                     if not isinstance(possible_datasource_config, TezosTzktDatasourceConfig):
                         continue
                     # NOTE: Do not modify config without necessity
-                    template_config.datasource = possible_datasource_config
+                    template_config.datasources = (possible_datasource_config,)
                     template_config.contracts = [
                         c for c in self._config.contracts.values() if isinstance(c, TezosContractConfig)
                     ]

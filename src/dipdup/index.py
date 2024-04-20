@@ -2,6 +2,7 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -9,7 +10,6 @@ from typing import cast
 
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
@@ -19,6 +19,9 @@ from dipdup.performance import metrics
 from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
+
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
@@ -39,7 +42,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: IndexConfigT,
         datasources: tuple[IndexDatasourceT, ...],
     ) -> None:
@@ -113,8 +116,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._logger.debug('Processing data of level %s', batch_level)
         started_at = time.time()
 
-        # FIXME: TezosHeadIndexConfig, TezosOperationsUnfilteredIndexConfig still use own methods; see FIXMEs
-        matched_handlers = self._match_level_data(self._config.handlers, level_data)  # type: ignore[union-attr]
+        matched_handlers = self._match_level_data(self._config.handlers, level_data)
 
         total_matched = len(matched_handlers)
         Metrics.set_index_handlers_matched(total_matched)
