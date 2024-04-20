@@ -137,9 +137,8 @@ class IndexDispatcher:
                     await datasource.subscribe()
 
             tasks: deque[Awaitable[bool]] = deque()
-            for name, index in copy(self._indexes).items():
+            for _, index in copy(self._indexes).items():
                 if index.state.status == IndexStatus.disabled:
-                    del self._indexes[name]
                     continue
 
                 tasks.append(index.process())
@@ -155,7 +154,7 @@ class IndexDispatcher:
                 if isinstance(index, TezosOperationsIndex):
                     await self._apply_filters(index)
 
-            if not indexes_spawned and self.is_oneshot():
+            if not indexes_spawned and self.is_oneshot():  # fix check ot order
                 _logger.info('No indexes left, exiting')
                 await self._on_synchronized()
                 [t.cancel() for t in asyncio.all_tasks() if t is not asyncio.current_task()]
