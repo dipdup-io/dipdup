@@ -5,7 +5,6 @@ from typing import Literal
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from pydantic.fields import Field
 
 from dipdup.config import Alias
 from dipdup.config import ContractConfig
@@ -59,7 +58,7 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
 
     kind: Literal['tezos.token_balances']
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
-    handlers: tuple[TezosTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosTokenBalancesHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0

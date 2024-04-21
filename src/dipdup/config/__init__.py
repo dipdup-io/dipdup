@@ -23,6 +23,7 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
+from collections import defaultdict
 from contextlib import suppress
 from pathlib import Path
 from pydoc import locate
@@ -423,10 +424,6 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
             datasource.pop('http', None)
             datasource.pop('buffer_size', None)
 
-    @property
-    @abstractmethod
-    def handlers(self) -> tuple[HandlerConfig, ...]: ...
-
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HasuraConfig:
@@ -482,7 +479,7 @@ class JobConfig(NameMixin):
     :param daemon: Run hook as a daemon (never stops)
     """
 
-    hook: HookConfig
+    hook: Alias[HookConfig]
     args: dict[str, Any] = Field(default_factory=dict)
     crontab: str | None = None
     interval: int | None = None
@@ -707,12 +704,27 @@ class DipDupConfig:
             raise
         except ValidationError as e:
             msgs = []
+            errors_by_path = defaultdict(list)
             for error in e.errors():
-                if error['loc'][-1] == 'kind':
-                    continue
-                path = '.'.join(str(e) for e in error['loc'])
-                msgs.append(f'- {path}: {error["msg"]}')
+                loc = error['loc']
+                index = 2 if isinstance(loc[-2], int) else 1
+                path = '.'.join(str(e) for e in loc[:-index])
+                errors_by_path[path].append(error)
 
+            for path, errors in errors_by_path.items():
+                fields = {error['loc'][-1] for error in errors}
+                # print(fields)
+
+                if 'kind' in fields or 'type' in fields:
+                    continue
+
+                # print(path, len(errors))
+
+                for error in errors:
+                    path = '.'.join(str(e) for e in error['loc'])
+                    msgs.append(f'- {path}: {error["msg"]}')
+
+            # quit()
             msg = 'Config validation failed:\n\n' + '\n'.join(msgs)
             raise ConfigurationError(msg) from e
         except Exception as e:
@@ -947,7 +959,6 @@ class DipDupConfig:
 
         WARNING: str type checks are intentional! See `dipdup.config.patch_annotations`.
         """
-        print('hmmm')
         handler_config: HandlerConfig
 
         datasources = list(index_config.datasources)
@@ -955,7 +966,7 @@ class DipDupConfig:
             if isinstance(datasource, str):
                 datasources[i] = self.get_datasource(datasource)  # type: ignore[assignment]
         index_config.datasources = tuple(datasources)  # type: ignore[assignment]
-        print(index_config)
+        # print(index_config)
 
         if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:
@@ -995,7 +1006,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TezosHeadIndexConfig):
-            index_config.handler_config.parent = index_config
+            index_config.handlers[0].parent = index_config
 
         elif isinstance(index_config, TezosTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:
@@ -1018,7 +1029,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TezosOperationsUnfilteredIndexConfig):
-            index_config.handler_config.parent = index_config
+            index_config.handlers[0].parent = index_config
 
         elif isinstance(index_config, TezosEventsIndexConfig):
             for handler_config in index_config.handlers:
@@ -1158,7 +1169,7 @@ def _patch_annotations() -> None:
                     unwrapped = f'{before}str | {body}{after}'
 
                 if annotation != unwrapped:
-                    print(annotation, ' -> ', unwrapped)
+                    # print(annotation, ' -> ', unwrapped)
                     value.__annotations__[name] = unwrapped
                     reload = True
 

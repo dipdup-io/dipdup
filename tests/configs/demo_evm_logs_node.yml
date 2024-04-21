@@ -13,7 +13,6 @@ datasources:
   subsquid:
     kind: evm.subsquid
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
-    node: evm_node
     http:
       replay_path: ${DIPDUP_REPLAY_PATH:-}
 
@@ -26,7 +25,8 @@ contracts:
 indexes:
   eth_usdt_events:
     kind: evm.logs
-    datasource: evm_node
+    datasources:
+      - evm_node
     handlers:
       - callback: on_transfer
         contract: eth_usdt

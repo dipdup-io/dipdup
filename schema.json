@@ -269,22 +269,30 @@
       "additionalProperties": false,
       "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
-          "$ref": "#/$defs/EvmContractConfig"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/EvmContractConfig"
+            }
+          ],
+          "title": "Contract"
         },
         "name": {
           "title": "Name",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "name"
+        "name",
+        "callback"
       ],
       "title": "EvmLogsHandlerConfig",
       "type": "object"
@@ -293,13 +301,6 @@
       "additionalProperties": false,
       "description": "Subsquid datasource config\n\n:param kind: Always 'evm.logs'\n:param datasources: `evm` datasources to use\n:param handlers: Event handlers\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
       "properties": {
-        "handlers": {
-          "items": {
-            "$ref": "#/$defs/EvmLogsHandlerConfig"
-          },
-          "title": "Handlers",
-          "type": "array"
-        },
         "kind": {
           "const": "evm.logs",
           "enum": [
@@ -312,6 +313,9 @@
           "items": {
             "anyOf": [
               {
+                "type": "string"
+              },
+              {
                 "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
               },
               {
@@ -323,6 +327,13 @@
             ]
           },
           "title": "Datasources",
+          "type": "array"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/EvmLogsHandlerConfig"
+          },
+          "title": "Handlers",
           "type": "array"
         },
         "first_level": {
@@ -338,7 +349,8 @@
       },
       "required": [
         "kind",
-        "datasources"
+        "datasources",
+        "handlers"
       ],
       "title": "EvmLogsIndexConfig",
       "type": "object"
@@ -397,7 +409,7 @@
     },
     "EvmSubsquidDatasourceConfig": {
       "additionalProperties": false,
-      "description": "Subsquid datasource config\n\n:param kind: always 'evm.subsquid'\n:param url: URL of Subsquid Network API\n:param node: One or more `evm.node` datasource(s) for the same network\n:param http: HTTP client configuration",
+      "description": "Subsquid datasource config\n\n:param kind: always 'evm.subsquid'\n:param url: URL of Subsquid Network API\n:param http: HTTP client configuration",
       "properties": {
         "kind": {
           "const": "evm.subsquid",
@@ -410,24 +422,6 @@
         "url": {
           "title": "Url",
           "type": "string"
-        },
-        "node": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/EvmNodeDatasourceConfig"
-            },
-            {
-              "items": {
-                "$ref": "#/$defs/EvmNodeDatasourceConfig"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Node"
         },
         "http": {
           "anyOf": [
@@ -452,12 +446,11 @@
       "additionalProperties": false,
       "description": "Subsquid transaction handler\n\n:param callback: Callback name\n:param from_: Transaction sender\n:param to: Transaction receiver\n:param method: Method name",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "from_": {
           "anyOf": [
+            {
+              "type": "string"
+            },
             {
               "$ref": "#/$defs/EvmContractConfig"
             },
@@ -465,18 +458,23 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "From "
         },
         "to": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/EvmContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "To"
         },
         "method": {
           "anyOf": [
@@ -489,6 +487,10 @@
           ],
           "default": null,
           "title": "Method"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -512,6 +514,9 @@
         "datasources": {
           "items": {
             "anyOf": [
+              {
+                "type": "string"
+              },
               {
                 "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
               },
@@ -545,7 +550,9 @@
         }
       },
       "required": [
-        "kind"
+        "kind",
+        "datasources",
+        "handlers"
       ],
       "title": "EvmTransactionsIndexConfig",
       "type": "object"
@@ -921,12 +928,20 @@
       "additionalProperties": false,
       "description": "Job schedule config\n\n:param hook: Name of hook to run\n:param args: Arguments to pass to the hook\n:param crontab: Schedule with crontab syntax (`* * * * *`)\n:param interval: Schedule with interval in seconds\n:param daemon: Run hook as a daemon (never stops)",
       "properties": {
+        "hook": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/HookConfig"
+            }
+          ],
+          "title": "Hook"
+        },
         "args": {
           "title": "Args",
           "type": "object"
-        },
-        "hook": {
-          "$ref": "#/$defs/HookConfig"
         },
         "crontab": {
           "anyOf": [
@@ -1175,22 +1190,30 @@
       "additionalProperties": false,
       "description": "Big map handler config\n\n:param callback: Callback name\n:param contract: Contract to fetch big map from\n:param path: Path to big map (alphanumeric string with dots)",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
-          "$ref": "#/$defs/TezosContractConfig"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            }
+          ],
+          "title": "Contract"
         },
         "path": {
           "title": "Path",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "path"
+        "path",
+        "callback"
       ],
       "title": "TezosBigMapsHandlerConfig",
       "type": "object"
@@ -1209,7 +1232,14 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
           "type": "array"
@@ -1310,22 +1340,30 @@
       "additionalProperties": false,
       "description": "Event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event\n:param tag: Event tag",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
-          "$ref": "#/$defs/TezosContractConfig"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            }
+          ],
+          "title": "Contract"
         },
         "tag": {
           "title": "Tag",
           "type": "string"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
-        "callback",
         "contract",
-        "tag"
+        "tag",
+        "callback"
       ],
       "title": "TezosEventsHandlerConfig",
       "type": "object"
@@ -1334,6 +1372,28 @@
       "additionalProperties": false,
       "description": "Event index config\n\n:param kind: always 'tezos.events'\n:param datasources: `evm` datasources to use\n:param handlers: Event handlers\n:param first_level: First block level to index\n:param last_level: Last block level to index",
       "properties": {
+        "kind": {
+          "const": "tezos.events",
+          "enum": [
+            "tezos.events"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "datasources": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
+          },
+          "title": "Datasources",
+          "type": "array"
+        },
         "handlers": {
           "items": {
             "anyOf": [
@@ -1346,21 +1406,6 @@
             ]
           },
           "title": "Handlers",
-          "type": "array"
-        },
-        "kind": {
-          "const": "tezos.events",
-          "enum": [
-            "tezos.events"
-          ],
-          "title": "Kind",
-          "type": "string"
-        },
-        "datasources": {
-          "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
-          },
-          "title": "Datasources",
           "type": "array"
         },
         "first_level": {
@@ -1376,7 +1421,8 @@
       },
       "required": [
         "kind",
-        "datasources"
+        "datasources",
+        "handlers"
       ],
       "title": "TezosEventsIndexConfig",
       "type": "object"
@@ -1385,24 +1431,32 @@
       "additionalProperties": false,
       "description": "Unknown event handler config\n\n:param callback: Callback name\n:param contract: Contract which emits event",
       "properties": {
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            }
+          ],
+          "title": "Contract"
+        },
         "callback": {
           "title": "Callback",
           "type": "string"
-        },
-        "contract": {
-          "$ref": "#/$defs/TezosContractConfig"
         }
       },
       "required": [
-        "callback",
-        "contract"
+        "contract",
+        "callback"
       ],
       "title": "TezosEventsUnknownEventHandlerConfig",
       "type": "object"
     },
     "TezosHeadIndexConfig": {
       "additionalProperties": false,
-      "description": "Head block index config\n\n:param kind: always 'tezos.head'\n:param callback: Callback name\n:param datasources: `tezos` datasources to use\n:param handlers: Mapping of head block handlers",
+      "description": "Head block index config\n\n:param kind: always 'tezos.head'\n:param callback: Callback name\n:param datasources: `tezos` datasources to use",
       "properties": {
         "kind": {
           "const": "tezos.head",
@@ -1414,7 +1468,14 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
           "type": "array"
@@ -1492,24 +1553,32 @@
         "source": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Source"
         },
         "originated_contract": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Originated Contract"
         },
         "optional": {
           "default": false,
@@ -1553,24 +1622,32 @@
         "source": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Source"
         },
         "destination": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Destination"
         },
         "optional": {
           "default": false,
@@ -1609,24 +1686,32 @@
         "source": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Source"
         },
         "destination": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Destination"
         },
         "entrypoint": {
           "anyOf": [
@@ -1665,13 +1750,6 @@
       "additionalProperties": false,
       "description": "Operation index config\n\n:param kind: always 'tezos.operations'\n:param datasources: `tezos` datasources to use\n:param handlers: List of indexer handlers\n:param types: Types of transaction to fetch\n:param contracts: Aliases of contracts being indexed in `contracts` section\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
-        "contracts": {
-          "items": {
-            "$ref": "#/$defs/TezosContractConfig"
-          },
-          "title": "Contracts",
-          "type": "array"
-        },
         "kind": {
           "const": "tezos.operations",
           "enum": [
@@ -1682,7 +1760,14 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
           "type": "array"
@@ -1692,6 +1777,20 @@
             "$ref": "#/$defs/TezosOperationsHandlerConfig"
           },
           "title": "Handlers",
+          "type": "array"
+        },
+        "contracts": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosContractConfig"
+              }
+            ]
+          },
+          "title": "Contracts",
           "type": "array"
         },
         "types": {
@@ -1737,7 +1836,14 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
           "type": "array"
@@ -1779,12 +1885,11 @@
       "additionalProperties": false,
       "description": "Token balance handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
+            {
+              "type": "string"
+            },
             {
               "$ref": "#/$defs/TezosContractConfig"
             },
@@ -1792,7 +1897,8 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Contract"
         },
         "token_id": {
           "anyOf": [
@@ -1805,6 +1911,10 @@
           ],
           "default": null,
           "title": "Token Id"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -1817,13 +1927,6 @@
       "additionalProperties": false,
       "description": "Token balance index config\n\n:param kind: always 'tezos.token_balances'\n:param datasources: `tezos` datasources to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
-        "handlers": {
-          "items": {
-            "$ref": "#/$defs/TezosTokenBalancesHandlerConfig"
-          },
-          "title": "Handlers",
-          "type": "array"
-        },
         "kind": {
           "const": "tezos.token_balances",
           "enum": [
@@ -1834,9 +1937,23 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
+          "type": "array"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/TezosTokenBalancesHandlerConfig"
+          },
+          "title": "Handlers",
           "type": "array"
         },
         "first_level": {
@@ -1852,7 +1969,8 @@
       },
       "required": [
         "kind",
-        "datasources"
+        "datasources",
+        "handlers"
       ],
       "title": "TezosTokenBalancesIndexConfig",
       "type": "object"
@@ -1861,12 +1979,11 @@
       "additionalProperties": false,
       "description": "Token transfer handler config\n\n:param callback: Callback name\n:param contract: Filter by contract\n:param token_id: Filter by token ID\n:param from_: Filter by sender\n:param to: Filter by recipient",
       "properties": {
-        "callback": {
-          "title": "Callback",
-          "type": "string"
-        },
         "contract": {
           "anyOf": [
+            {
+              "type": "string"
+            },
             {
               "$ref": "#/$defs/TezosContractConfig"
             },
@@ -1874,7 +1991,8 @@
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "Contract"
         },
         "token_id": {
           "anyOf": [
@@ -1891,24 +2009,36 @@
         "from_": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "From "
         },
         "to": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
               "$ref": "#/$defs/TezosContractConfig"
             },
             {
               "type": "null"
             }
           ],
-          "default": null
+          "default": null,
+          "title": "To"
+        },
+        "callback": {
+          "title": "Callback",
+          "type": "string"
         }
       },
       "required": [
@@ -1921,13 +2051,6 @@
       "additionalProperties": false,
       "description": "Token transfer index config\n\n:param kind: always 'tezos.token_transfers'\n:param datasources: `tezos` datasources to use\n:param handlers: Mapping of token transfer handlers\n\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
-        "handlers": {
-          "items": {
-            "$ref": "#/$defs/TezosTokenTransfersHandlerConfig"
-          },
-          "title": "Handlers",
-          "type": "array"
-        },
         "kind": {
           "const": "tezos.token_transfers",
           "enum": [
@@ -1938,9 +2061,23 @@
         },
         "datasources": {
           "items": {
-            "$ref": "#/$defs/TezosTzktDatasourceConfig"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/TezosTzktDatasourceConfig"
+              }
+            ]
           },
           "title": "Datasources",
+          "type": "array"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/TezosTokenTransfersHandlerConfig"
+          },
+          "title": "Handlers",
           "type": "array"
         },
         "first_level": {
@@ -1956,7 +2093,8 @@
       },
       "required": [
         "kind",
-        "datasources"
+        "datasources",
+        "handlers"
       ],
       "title": "TezosTokenTransfersIndexConfig",
       "type": "object"

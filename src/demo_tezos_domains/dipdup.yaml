@@ -15,7 +15,8 @@ datasources:
 templates:
   tezos_domains_big_map:
     kind: tezos.big_maps
-    datasource: <datasource>
+    datasources:
+      - <datasource>
     handlers:
       - callback: on_update_records
         contract: <name_registry>

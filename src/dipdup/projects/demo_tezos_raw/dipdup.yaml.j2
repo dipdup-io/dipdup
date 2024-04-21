@@ -11,7 +11,8 @@ datasources:
 indexes:
   mainnet_operations:
     kind: tezos.operations_unfiltered
-    datasource: tzkt_mainnet
+    datasources:
+      - tzkt_mainnet
     types:
       - origination
       - transaction

@@ -26,12 +26,10 @@ from dipdup.config.tezos import is_rollup_address
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
-from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerPatternConfigU as PatternConfigU
 from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
-from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
@@ -165,10 +163,6 @@ class TezosCodeGenerator(CodeGenerator):
         """Generate handler stubs with typehints from templates if not exist"""
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
-                continue
-            # NOTE: Always single handler
-            if isinstance(index_config, TezosOperationsUnfilteredIndexConfig | TezosHeadIndexConfig):
-                await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
             for handler_config in index_config.handlers:

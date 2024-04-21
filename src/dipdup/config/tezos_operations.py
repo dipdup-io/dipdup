@@ -142,8 +142,8 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: TezosContractConfig | None = None
-    destination: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    destination: Alias[TezosContractConfig] | None = None
     entrypoint: str | None = None
     optional: bool = False
     alias: str | None = None
@@ -250,8 +250,8 @@ class TezosOperationsHandlerSmartRollupExecutePatternConfig(TezosOperationsPatte
     """
 
     type: Literal['sr_execute'] = 'sr_execute'
-    source: TezosContractConfig | None = None
-    destination: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    destination: Alias[TezosContractConfig] | None = None
     optional: bool = False
     alias: str | None = None
 
@@ -412,7 +412,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = TezosOperationsUnfilteredHandlerConfig(callback=self.callback)
+        self.handlers = (TezosOperationsUnfilteredHandlerConfig(callback=self.callback),)
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()

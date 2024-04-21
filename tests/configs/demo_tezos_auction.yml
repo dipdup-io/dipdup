@@ -22,7 +22,8 @@ contracts:
 templates:
   tzcolors_auction:
     kind: tezos.operations
-    datasource: <datasource>
+    datasources:
+      - <datasource>
     contracts:
       - <auction>
     handlers:
@@ -48,8 +49,7 @@ indexes:
   tzcolors_auction:
     template: tzcolors_auction
     values:
-      datasources:
-      - tzkt
+      datasource: tzkt
       minter: tzcolors_minter
       auction: tzcolors_auction
 

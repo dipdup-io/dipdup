@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic import ConfigDict
-from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import Alias
@@ -86,7 +85,7 @@ class TezosEventsIndexConfig(TezosIndexConfig):
 
     kind: Literal['tezos.events']
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
-    handlers: tuple[TezosEventsHandlerConfigU, ...] = Field(default_factory=tuple)
+    handlers: tuple[TezosEventsHandlerConfigU, ...]
 
     first_level: int = 0
     last_level: int = 0

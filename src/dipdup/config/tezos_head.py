@@ -39,7 +39,6 @@ class TezosHeadIndexConfig(TezosIndexConfig):
     :param kind: always 'tezos.head'
     :param callback: Callback name
     :param datasources: `tezos` datasources to use
-    :param handlers: Mapping of head block handlers
     """
 
     kind: Literal['tezos.head']
@@ -56,4 +55,4 @@ class TezosHeadIndexConfig(TezosIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = TezosTzktHeadHandlerConfig(callback=self.callback)
+        self.handlers = (TezosTzktHeadHandlerConfig(callback=self.callback),)

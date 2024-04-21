@@ -5,7 +5,6 @@ datasources:
   subsquid:
     kind: evm.subsquid
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
-    node: evm_node
   etherscan:
     kind: abi.etherscan
     url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
@@ -24,7 +23,10 @@ contracts:
 indexes:
   eth_usdt_events:
     kind: evm.logs
-    datasource: subsquid
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
     handlers:
       - callback: on_transfer
         contract: eth_usdt

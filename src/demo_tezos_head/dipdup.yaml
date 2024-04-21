@@ -9,5 +9,6 @@ datasources:
 indexes:
   mainnet_head:
     kind: tezos.head
-    datasource: tzkt_mainnet
+    datasources:
+      - tzkt_mainnet
     callback: on_mainnet_head
