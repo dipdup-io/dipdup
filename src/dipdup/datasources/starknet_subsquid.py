@@ -1,23 +1,48 @@
+from collections import deque
 from typing import Any, AsyncIterator
 
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
+from dipdup.models.starknet import StarknetTransactionData
+from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 
 # ----------------
 
+# from dipdup.models.starknet_subsquid import FieldSelection
 # from dipdup.models.starknet_subsquid import Query
-# from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
-# from dipdup.models.starknet import StarknetTransactionData
 # from dipdup.models.starknet import StarknetEventData
 # from dipdup.models.starknet_subsquid import TransactionRequest
 
 from dipdup.config import DatasourceConfig
 
+
+FieldSelection = dict
 Query = dict
-StarknetSubsquidDatasourceConfig = DatasourceConfig
-StarknetTransactionData = dict
 StarknetEventData = dict
-TransactionRequest = dict
+TransactionRequest = dict[str, Any]
+
+
+TRANSACTION_FIELDS: FieldSelection = {
+    'block': {
+        'timestamp': True,
+    },
+    'transaction': {
+        'transactionHash': True,
+        'contractAddress': True,
+        'entryPointSelector': True,
+        'calldata': True,
+        'maxFee': True,
+        'type': True,
+        'senderAddress': True,
+        'version': True,
+        'signature': True,
+        'nonce': True,
+        'classHash': True,
+        'compiledClassHash': True,
+        'contractAddressSalt': True,
+        'constructorCalldata': True,
+    },
+}
 
 
 class _StarknetSubsquidWorker(AbstractSubsquidWorker):
@@ -48,4 +73,25 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
         last_level: int,
         filters: tuple[TransactionRequest, ...],
     ) -> AsyncIterator[tuple[StarknetTransactionData, ...]]:
-        raise NotImplementedError()
+        current_level = first_level
+
+        while current_level <= last_level:
+            query: Query = {
+                'fields': TRANSACTION_FIELDS,
+                'fromBlock': current_level,
+                'toBlock': last_level,
+                'transactions': list(filters),
+                'type': 'starknet'
+            }
+            response = await self.query_worker(query, current_level)
+
+            for level_item in response:
+                current_level = level_item['header']['number'] + 1
+                transactions: deque[StarknetTransactionData] = deque()
+                # NOTE: level_item don't have 'transactions' when no filter is applied
+                for raw_transaction in level_item['transactions']:
+                    transaction = StarknetTransactionData.from_subsquid_json(
+                        transaction_json=raw_transaction
+                    )
+                    transactions.append(transaction)
+                yield tuple(transactions)
