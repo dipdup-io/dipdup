@@ -721,7 +721,6 @@ class DipDupConfig:
                     path = '.'.join(str(e) for e in error['loc'])
                     msgs.append(f'- {path}: {error["msg"]}')
 
-            # quit()
             msg = 'Config validation failed:\n\n' + '\n'.join(msgs)
             raise ConfigurationError(msg) from e
         except Exception as e:

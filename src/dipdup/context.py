@@ -55,8 +55,8 @@ from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.index import Index as IndexCls
+from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm_logs.index import EvmLogsIndex
-from dipdup.indexes.evm_subsquid import EvmIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
 from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
 from dipdup.indexes.tezos_events.index import TezosEventsIndex

@@ -9,10 +9,10 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
+from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
+from dipdup.indexes.evm_logs.fetcher import EvmSubsquidLogFetcher
 from dipdup.indexes.evm_logs.matcher import match_logs
-from dipdup.indexes.evm_subsquid import EvmIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.evm import EvmLog
 from dipdup.models.evm import EvmLogData
@@ -66,7 +66,7 @@ class EvmLogsIndex(
             await self._process_level_data(logs, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
-    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmLogFetcher:
+    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidLogFetcher:
         addresses = set()
         topics: deque[tuple[str | None, str]] = deque()
 
@@ -87,7 +87,7 @@ class EvmLogsIndex(
         except IndexError:
             raise FrameworkException('Creating subsquid fetcher with no subsquid datasources') from None
 
-        return EvmLogFetcher(
+        return EvmSubsquidLogFetcher(
             datasource=datasource,
             first_level=first_level,
             last_level=last_level,

@@ -205,9 +205,6 @@ class EvmCodeGenerator(CodeGenerator):
                 raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
 
             for datasource_config in datasource_configs:
-                # # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
-                # if not isinstance(datasource_config, AbiDatasourceConfig):
-                #     raise ConfigurationError('`abi` must be a list of ABI datasources')
 
                 datasource = cast(AbiDatasource[Any], self._datasources[datasource_config.name])
                 try:

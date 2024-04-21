@@ -25,7 +25,7 @@ from dipdup.prometheus import Metrics
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
 
-SUBSQUID_READAHEAD_LIMIT = 10000
+EVM_SUBSQUID_READAHEAD_LIMIT = 10000
 
 IndexConfigT = TypeVar('IndexConfigT', bound=EvmIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource | EvmNodeDatasource)
@@ -62,13 +62,8 @@ class EvmIndex(
         datasources: tuple[DatasourceT, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
-
-        self.subsquid_datasources = tuple(
-            datasource for datasource in datasources if isinstance(datasource, EvmSubsquidDatasource)
-        )
-        self.node_datasources = tuple(
-            datasource for datasource in datasources if isinstance(datasource, EvmNodeDatasource)
-        )
+        self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, EvmSubsquidDatasource))
+        self.node_datasources = tuple(d for d in datasources if isinstance(d, EvmNodeDatasource))
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...

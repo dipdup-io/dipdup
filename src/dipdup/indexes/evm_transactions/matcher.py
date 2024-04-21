@@ -9,7 +9,7 @@ from eth_utils.hexadecimal import decode_hex
 
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_subsquid import get_sighash
+from dipdup.indexes.evm import get_sighash
 from dipdup.models.evm import EvmTransaction
 from dipdup.models.evm import EvmTransactionData
 from dipdup.package import DipDupPackage

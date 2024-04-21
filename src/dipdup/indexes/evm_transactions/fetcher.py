@@ -6,15 +6,15 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
+from dipdup.indexes.evm import EVM_SUBSQUID_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
-from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 
 
-class EvmEvmTransactionFetcher(DataFetcher[EvmTransactionData]):
+class EvmSubsquidTransactionFetcher(DataFetcher[EvmTransactionData]):
     """Fetches transactions from REST API, merges them and yields by level."""
 
     _datasource: EvmSubsquidDatasource
@@ -35,7 +35,7 @@ class EvmEvmTransactionFetcher(DataFetcher[EvmTransactionData]):
             self._last_level,
             self._filters,
         )
-        async for level, batch in readahead_by_level(transaction_iter, limit=SUBSQUID_READAHEAD_LIMIT):
+        async for level, batch in readahead_by_level(transaction_iter, limit=EVM_SUBSQUID_READAHEAD_LIMIT):
             yield level, batch
 
 
