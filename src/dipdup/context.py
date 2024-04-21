@@ -309,7 +309,6 @@ class DipDupContext:
         name: str,
         state: Index | None = None,
     ) -> IndexCls[Any, Any, Any]:
-        print('spawn', name)
 
         index_config = self.config.get_index(name)
 

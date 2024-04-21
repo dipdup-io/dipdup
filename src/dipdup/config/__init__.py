@@ -273,7 +273,7 @@ class DatasourceConfig(ABC, NameMixin):
 
     kind: str
     url: str
-    http: HttpConfig | None
+    http: HttpConfig | None = None
 
 
 class AbiDatasourceConfig(DatasourceConfig):
@@ -713,12 +713,9 @@ class DipDupConfig:
 
             for path, errors in errors_by_path.items():
                 fields = {error['loc'][-1] for error in errors}
-                # print(fields)
 
                 if 'kind' in fields or 'type' in fields:
                     continue
-
-                # print(path, len(errors))
 
                 for error in errors:
                     path = '.'.join(str(e) for e in error['loc'])
@@ -966,7 +963,6 @@ class DipDupConfig:
             if isinstance(datasource, str):
                 datasources[i] = self.get_datasource(datasource)  # type: ignore[assignment]
         index_config.datasources = tuple(datasources)  # type: ignore[assignment]
-        # print(index_config)
 
         if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:
@@ -1169,7 +1165,6 @@ def _patch_annotations() -> None:
                     unwrapped = f'{before}str | {body}{after}'
 
                 if annotation != unwrapped:
-                    # print(annotation, ' -> ', unwrapped)
                     value.__annotations__[name] = unwrapped
                     reload = True
 
