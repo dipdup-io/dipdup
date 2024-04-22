@@ -45,7 +45,7 @@ class TezosBigMapsIndex(
 
         fetcher = BigMapFetcher.create(
             self._config,
-            self._datasource,
+            self._datasources,
             first_level,
             sync_level,
         )
@@ -62,7 +62,7 @@ class TezosBigMapsIndex(
         big_map_ids: set[tuple[int, str, str]] = set()
 
         for address, path in big_map_pairs:
-            async for contract_big_maps in self._datasource.iter_contract_big_maps(address):
+            async for contract_big_maps in self.random_datasource.iter_contract_big_maps(address):
                 for contract_big_map in contract_big_maps:
                     if contract_big_map['path'] == path:
                         big_map_ids.add((int(contract_big_map['ptr']), address, path))
@@ -70,7 +70,7 @@ class TezosBigMapsIndex(
         # NOTE: Do not use `_process_level_data` here; we want to maintain transaction manually.
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             for big_map_id, address, path in big_map_ids:
-                async for big_map_keys in self._datasource.iter_big_map(big_map_id, head_level):
+                async for big_map_keys in self.random_datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
                         TezosBigMapData(
                             id=big_map_key['id'],

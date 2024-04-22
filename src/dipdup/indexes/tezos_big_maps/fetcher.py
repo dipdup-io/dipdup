@@ -4,9 +4,9 @@ import logging
 from typing import TYPE_CHECKING
 
 from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
-from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
+from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosBigMapData
 
 if TYPE_CHECKING:
@@ -46,20 +46,18 @@ def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[tupl
     return pairs
 
 
-class BigMapFetcher(DataFetcher[TezosBigMapData]):
+class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
     """Fetches bigmap diffs from REST API, merges them and yields by level."""
-
-    _datasource: TezosTzktDatasource
 
     def __init__(
         self,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],
         big_map_paths: set[str],
     ) -> None:
-        super().__init__(datasource, first_level, last_level)
+        super().__init__(datasources, first_level, last_level)
         self._logger = logging.getLogger('dipdup.fetcher')
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
@@ -68,7 +66,7 @@ class BigMapFetcher(DataFetcher[TezosBigMapData]):
     def create(
         cls,
         config: TezosBigMapsIndexConfig,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
     ) -> BigMapFetcher:
@@ -76,7 +74,7 @@ class BigMapFetcher(DataFetcher[TezosBigMapData]):
         big_map_paths = get_big_map_paths(config.handlers)
 
         return BigMapFetcher(
-            datasource=datasource,
+            datasources=datasources,
             first_level=first_level,
             last_level=last_level,
             big_map_addresses=big_map_addresses,
@@ -84,7 +82,7 @@ class BigMapFetcher(DataFetcher[TezosBigMapData]):
         )
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosBigMapData, ...]], None]:
-        big_map_iter = self._datasource.iter_big_maps(
+        big_map_iter = self.random_datasource.iter_big_maps(
             self._big_map_addresses,
             self._big_map_paths,
             self._first_level,

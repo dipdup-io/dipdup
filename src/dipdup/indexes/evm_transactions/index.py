@@ -6,7 +6,6 @@ from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
-from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm import get_sighash
 from dipdup.indexes.evm_transactions.fetcher import EvmNodeTransactionFetcher
@@ -76,13 +75,8 @@ class EvmTransactionsIndex(
                 raise NotImplementedError
             filters.append(query)
 
-        try:
-            datasource = self.subsquid_datasources[0]
-        except IndexError:
-            raise FrameworkException('Creating subsquid fetcher without subsquid datasource') from None
-
         return EvmSubsquidTransactionFetcher(
-            datasource=datasource,
+            datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
             filters=tuple(filters),

@@ -414,7 +414,7 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, TezosHeadIndex) and index.datasource == datasource:
+            if isinstance(index, TezosHeadIndex) and datasource in index.datasources:
                 index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
@@ -474,24 +474,24 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, TezosOperationsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosOperationsIndex) and datasource in index.datasources:
                 index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
         self, datasource: TezosTzktDatasource, token_transfers: tuple[TezosTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosTokenTransfersIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTokenTransfersIndex) and datasource in index.datasources:
                 index.push_realtime_message(token_transfers)
 
     async def _on_tzkt_big_maps(self, datasource: TezosTzktDatasource, big_maps: tuple[TezosBigMapData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosBigMapsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosBigMapsIndex) and datasource in index.datasources:
                 index.push_realtime_message(big_maps)
 
     async def _on_tzkt_events(self, datasource: TezosTzktDatasource, events: tuple[TezosEventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosEventsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosEventsIndex) and datasource in index.datasources:
                 index.push_realtime_message(events)
 
     async def _on_rollback(

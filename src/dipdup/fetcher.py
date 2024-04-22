@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import random
 from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
     from collections.abc import AsyncIterator
 
-    from dipdup.datasources import IndexDatasource
+from dipdup.datasources import IndexDatasource
 
 
 class HasLevel(Protocol):
@@ -30,14 +31,15 @@ class HasLevel(Protocol):
 
 
 Level = int
-FetcherBufferT = TypeVar('FetcherBufferT', bound=HasLevel)
-FetcherFilterT = TypeVar('FetcherFilterT')
+BufferT = TypeVar('BufferT', bound=HasLevel)
+FilterT = TypeVar('FilterT')
+DatasourceT = TypeVar('DatasourceT', bound=IndexDatasource[Any])
 
 
 async def yield_by_level(
-    iterable: AsyncIterator[tuple[FetcherBufferT, ...]]
-) -> AsyncGenerator[tuple[Level, tuple[FetcherBufferT, ...]], None]:
-    items: tuple[FetcherBufferT, ...] = ()
+    iterable: AsyncIterator[tuple[BufferT, ...]]
+) -> AsyncGenerator[tuple[Level, tuple[BufferT, ...]], None]:
+    items: tuple[BufferT, ...] = ()
 
     async for item_batch in iterable:
         items = items + item_batch
@@ -60,11 +62,11 @@ async def yield_by_level(
 
 
 async def readahead_by_level(
-    fetcher_iter: AsyncIterator[tuple[FetcherBufferT, ...]],
+    fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
     limit: int,
-) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
     queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
-    queue: deque[tuple[int, tuple[FetcherBufferT, ...]]] = deque()
+    queue: deque[tuple[int, tuple[BufferT, ...]]] = deque()
     queues.add_queue(
         queue,
         name=queue_name,
@@ -102,21 +104,21 @@ async def readahead_by_level(
     queues.remove_queue(queue_name)
 
 
-class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
+class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
     def __init__(
         self,
-        buffer: defaultdict[Level, deque[FetcherBufferT]],
-        filter: set[FetcherFilterT],
+        buffer: defaultdict[Level, deque[BufferT]],
+        filter: set[FilterT],
         first_level: int,
         last_level: int,
-        datasource: IndexDatasource[Any],
+        datasources: tuple[DatasourceT, ...],
     ) -> None:
         super().__init__()
         self._buffer = buffer
         self._filter = filter
         self._first_level = first_level
         self._last_level = last_level
-        self._datasource = datasource
+        self._datasources = datasources
 
         self._head: int = 0
         self._offset: int = 0
@@ -129,29 +131,37 @@ class FetcherChannel(ABC, Generic[FetcherBufferT, FetcherFilterT]):
     def fetched(self) -> bool:
         return self._head >= self._last_level
 
+    @property
+    def random_datasource(self) -> DatasourceT:
+        return random.choice(self._datasources)
+
     @abstractmethod
     async def fetch(self) -> None:
         """Fetch a single `requets_limit` batch of items, bump channel offset"""
         ...
 
 
-class DataFetcher(ABC, Generic[FetcherBufferT]):
+class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
     """Fetches contract data from REST API, merges them and yields by level."""
 
     def __init__(
         self,
-        datasource: IndexDatasource[Any],
+        datasources: tuple[DatasourceT, ...],
         first_level: int,
         last_level: int,
     ) -> None:
-        self._datasource = datasource
+        self._datasources = datasources
         self._first_level = first_level
         self._last_level = last_level
-        self._buffer: defaultdict[Level, deque[FetcherBufferT]] = defaultdict(deque)
+        self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
+    @property
+    def random_datasource(self) -> DatasourceT:
+        return random.choice(self._datasources)
+
     @abstractmethod
-    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[FetcherBufferT, ...]]]:
+    def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
         """Iterate over events data from REST.
 
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.

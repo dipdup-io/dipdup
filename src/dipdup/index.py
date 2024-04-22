@@ -144,6 +144,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         return self._datasources
 
     @property
+    def random_datasource(self) -> IndexDatasourceT:
+        return self._datasources[0]
+
+    @property
     def state(self) -> models.Index:
         if self._state is None:
             raise FrameworkException('Index state is not initialized')

@@ -26,7 +26,7 @@ class TezosEventsIndex(
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()
         return EventFetcher(
-            datasource=self._datasource,
+            datasources=self._datasources,
             first_level=first_level,
             last_level=last_level,
             event_addresses=event_addresses,

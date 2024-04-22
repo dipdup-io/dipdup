@@ -161,9 +161,9 @@ class TezosOperationsIndex(
         self,
         ctx: 'DipDupContext',
         config: TezosOperationsIndexConfigU,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
     ) -> None:
-        super().__init__(ctx, config, datasource)
+        super().__init__(ctx, config, datasources)
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
@@ -214,14 +214,14 @@ class TezosOperationsIndex(
         if isinstance(self._config, TezosOperationsIndexConfig):
             return await OperationsFetcher.create(
                 self._config,
-                self._datasource,
+                self._datasources,
                 first_level,
                 sync_level,
             )
         if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
             return await OperationsUnfilteredFetcher.create(
                 self._config,
-                self._datasource,
+                self._datasources,
                 first_level,
                 sync_level,
             )

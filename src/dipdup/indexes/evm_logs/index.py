@@ -82,13 +82,11 @@ class EvmLogsIndex(
             ]
             topics.append((address, event_abi['topic0']))
 
-        try:
-            datasource = self.subsquid_datasources[0]
-        except IndexError:
-            raise FrameworkException('Creating subsquid fetcher with no subsquid datasources') from None
+        if not self.subsquid_datasources:
+            raise FrameworkException('Creating EvmSubsquidLogFetcher, but no `evm.subsquid` datasources available')
 
         return EvmSubsquidLogFetcher(
-            datasource=datasource,
+            datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
             topics=tuple(topics),
@@ -96,7 +94,8 @@ class EvmLogsIndex(
 
     def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeLogFetcher:
         if not self.node_datasources:
-            raise FrameworkException('Creating node fetcher with no node datasources')
+            raise FrameworkException('Creating EvmNodeLogFetcher, but no `evm.node` datasources available')
+
         return EvmNodeLogFetcher(
             datasources=self.node_datasources,
             first_level=first_level,

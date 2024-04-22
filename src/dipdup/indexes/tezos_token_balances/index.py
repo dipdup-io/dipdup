@@ -35,7 +35,7 @@ class TezosTokenBalancesIndex(
 
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             # NOTE: If index is out of date fetch balances as of the current head.
-            async for balances_batch in self._datasource.iter_token_balances(
+            async for balances_batch in self.random_datasource.iter_token_balances(
                 addresses, token_ids, last_level=head_level
             ):
                 matched_handlers = match_token_balances(self._config.handlers, balances_batch)

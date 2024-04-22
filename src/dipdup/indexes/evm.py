@@ -64,6 +64,7 @@ class EvmIndex(
         super().__init__(ctx, config, datasources)
         self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, EvmSubsquidDatasource))
         self.node_datasources = tuple(d for d in datasources if isinstance(d, EvmNodeDatasource))
+        self._subsquid_started: bool = False
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...
@@ -133,5 +134,11 @@ class EvmIndex(
         else:
             sync_level = min(sync_level, subsquid_sync_level)
             await self._synchronize_subsquid(sync_level)
+
+        if not self.node_datasources and not self._subsquid_started:
+            self._subsquid_started = True
+            self._logger.info('No `evm.node` datasources available; polling Subsquid')
+            for datasource in self.subsquid_datasources:
+                await datasource.start()
 
         await self._exit_sync_state(sync_level)

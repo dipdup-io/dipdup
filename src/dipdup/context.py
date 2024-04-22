@@ -349,25 +349,26 @@ class DipDupContext:
         return index
 
     def _create_tezos_index(self, index_config: TezosIndexConfig) -> TezosIndex[Any, Any]:
-        datasource = self.get_tezos_tzkt_datasource(index_config.datasource.name)
+        datasources = tuple(self.get_tezos_tzkt_datasource(c.name) for c in index_config.datasources)
 
         index: TezosIndex[Any, Any]
         if isinstance(index_config, TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig):
-            index = TezosOperationsIndex(self, index_config, datasource)
+            index = TezosOperationsIndex(self, index_config, datasources)
         elif isinstance(index_config, TezosBigMapsIndexConfig):
-            index = TezosBigMapsIndex(self, index_config, datasource)
+            index = TezosBigMapsIndex(self, index_config, datasources)
         elif isinstance(index_config, TezosHeadIndexConfig):
-            index = TezosHeadIndex(self, index_config, datasource)
+            index = TezosHeadIndex(self, index_config, datasources)
         elif isinstance(index_config, TezosTokenBalancesIndexConfig):
-            index = TezosTokenBalancesIndex(self, index_config, datasource)
+            index = TezosTokenBalancesIndex(self, index_config, datasources)
         elif isinstance(index_config, TezosTokenTransfersIndexConfig):
-            index = TezosTokenTransfersIndex(self, index_config, datasource)
+            index = TezosTokenTransfersIndex(self, index_config, datasources)
         elif isinstance(index_config, TezosEventsIndexConfig):
-            index = TezosEventsIndex(self, index_config, datasource)
+            index = TezosEventsIndex(self, index_config, datasources)
         else:
             raise NotImplementedError
 
-        datasource.attach_index(index_config)
+        for datasource in datasources:
+            datasource.attach_index(index_config)
 
         return index
 

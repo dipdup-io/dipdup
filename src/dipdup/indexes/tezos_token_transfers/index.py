@@ -34,7 +34,7 @@ class TezosTokenTransfersIndex(
                 to_addresses.add(handler_config.to.get_address())
 
         return TokenTransferFetcher(
-            datasource=self._datasource,
+            datasources=self._datasources,
             token_addresses=token_addresses,
             token_ids=token_ids,
             from_addresses=from_addresses,

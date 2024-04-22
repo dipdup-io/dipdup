@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
-from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
+from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosEventData
 
 if TYPE_CHECKING:
@@ -14,26 +13,21 @@ if TYPE_CHECKING:
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-class EventFetcher(DataFetcher[TezosEventData]):
-    _datasource: TezosTzktDatasource
-
+class EventFetcher(TezosTzktFetcher[TezosEventData]):
     def __init__(
         self,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
         event_addresses: set[str],
         event_tags: set[str],
     ) -> None:
-        self._logger = logging.getLogger('dipdup.fetcher')
-        self._datasource = datasource
-        self._first_level = first_level
-        self._last_level = last_level
+        super().__init__(datasources, first_level, last_level)
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 
     async def fetch_by_level(self) -> AsyncGenerator[tuple[int, tuple[TezosEventData, ...]], None]:
-        event_iter = self._datasource.iter_events(
+        event_iter = self.random_datasource.iter_events(
             self._event_addresses,
             self._event_tags,
             self._first_level,

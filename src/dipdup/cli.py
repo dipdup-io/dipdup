@@ -659,7 +659,7 @@ async def new(
     """Create a new project interactively."""
     import os
 
-    from survey._widgets import Escape
+    from survey._widgets import Escape  # type: ignore[import-untyped]
 
     from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
