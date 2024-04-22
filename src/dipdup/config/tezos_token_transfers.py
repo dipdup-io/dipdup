@@ -68,7 +68,7 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(TokenTransferSubscription())  # type: ignore[call-arg]
         else:
             for handler_config in self.handlers:

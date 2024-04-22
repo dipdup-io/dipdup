@@ -301,7 +301,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
         subs = super().get_subscriptions()
 
         if TezosOperationType.transaction in self.types:
-            if self.datasource.merge_subscriptions:
+            if self.merge_subscriptions:
                 subs.add(TransactionSubscription())
             else:
                 for contract_config in self.contracts:
@@ -313,7 +313,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
             subs.add(OriginationSubscription())
 
         if TezosOperationType.sr_execute in self.types:
-            if self.datasource.merge_subscriptions:
+            if self.merge_subscriptions:
                 subs.add(SmartRollupExecuteSubscription())
             else:
                 for contract_config in self.contracts:

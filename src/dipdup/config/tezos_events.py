@@ -92,7 +92,7 @@ class TezosEventsIndexConfig(TezosIndexConfig):
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(EventSubscription())
         else:
             for handler_config in self.handlers:

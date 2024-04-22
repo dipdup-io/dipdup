@@ -1,3 +1,4 @@
+import random
 from typing import Literal
 
 from pydantic import ConfigDict
@@ -80,14 +81,13 @@ class TezosIndexConfig(IndexConfig):
 
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
-        if len(self.datasources) != 1:
-            raise ConfigurationError('Tezos indexes currently do not support multiple datasources')
+    @property
+    def merge_subscriptions(self) -> bool:
+        return any(d.merge_subscriptions for d in self.datasources)
+
+    @property
+    def random_datasource(self) -> TezosTzktDatasourceConfig:
+        return random.choice(self.datasources)
 
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}
-
-    @property
-    def datasource(self) -> Alias[TezosTzktDatasourceConfig]:
-        return self.datasources[0]
