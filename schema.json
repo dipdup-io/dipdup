@@ -48,7 +48,7 @@
       "type": "object"
     },
     "AdvancedConfig": {
-      "additionalProperties": false,
+      "additionalProperties": true,
       "description": "This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.\n\n:param reindex: Mapping of reindexing reasons and actions DipDup performs.\n:param scheduler: `apscheduler` scheduler config.\n:param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.\n:param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).\n:param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.\n:param rollback_depth: A number of levels to keep for rollback.\n:param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.\n:param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.\n:param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)",
       "properties": {
         "reindex": {
@@ -446,21 +446,6 @@
       "additionalProperties": false,
       "description": "Subsquid transaction handler\n\n:param callback: Callback name\n:param from_: Transaction sender\n:param to: Transaction receiver\n:param method: Method name",
       "properties": {
-        "from_": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/EvmContractConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "From "
-        },
         "to": {
           "anyOf": [
             {
@@ -491,6 +476,21 @@
         "callback": {
           "title": "Callback",
           "type": "string"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/EvmContractConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From "
         }
       },
       "required": [
@@ -1156,7 +1156,7 @@
     },
     "SqliteDatabaseConfig": {
       "additionalProperties": false,
-      "description": "SQLite connection config\n\n:param kind: always 'sqlite'\n:param path: Path to .sqlite3 file, leave default for in-memory database (`:memory:`)\n:param immune_tables: List of tables to preserve during reindexing",
+      "description": "SQLite connection config\n\n:param kind: always 'sqlite'\n:param path: Path to .sqlite file, leave default for in-memory database (`:memory:`)\n:param immune_tables: List of tables to preserve during reindexing",
       "properties": {
         "immune_tables": {
           "items": {
@@ -2006,21 +2006,6 @@
           "default": null,
           "title": "Token Id"
         },
-        "from_": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/TezosContractConfig"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "From "
-        },
         "to": {
           "anyOf": [
             {
@@ -2039,6 +2024,21 @@
         "callback": {
           "title": "Callback",
           "type": "string"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "From "
         }
       },
       "required": [
@@ -2201,23 +2201,9 @@
       "type": "string"
     }
   },
-  "description": "Main indexer config\n\n:param spec_version: Version of config specification, currently always `2.0`\n:param package: Name of indexer's Python package, existing or not\n:param datasources: Mapping of datasource aliases and datasource configs\n:param database: Database config\n:param contracts: Mapping of contract aliases and contract configs\n:param indexes: Mapping of index aliases and index configs\n:param templates: Mapping of template aliases and index templates\n:param jobs: Mapping of job aliases and job configs\n:param hooks: Mapping of hook aliases and hook configs\n:param hasura: Hasura integration config\n:param sentry: Sentry integration config\n:param prometheus: Prometheus integration config\n:param api: Management API config\n:param advanced: Advanced config\n:param custom: User-defined configuration to use in callbacks\n:param logging: Modify logging verbosity",
+  "additionalProperties": false,
+  "description": "Main indexer config\n\n:param spec_version: Version of config specification, currently always `3.0`\n:param package: Name of indexer's Python package, existing or not\n:param datasources: Mapping of datasource aliases and datasource configs\n:param database: Database config\n:param contracts: Mapping of contract aliases and contract configs\n:param indexes: Mapping of index aliases and index configs\n:param templates: Mapping of template aliases and index templates\n:param jobs: Mapping of job aliases and job configs\n:param hooks: Mapping of hook aliases and hook configs\n:param hasura: Hasura integration config\n:param sentry: Sentry integration config\n:param prometheus: Prometheus integration config\n:param api: Management API config\n:param advanced: Advanced config\n:param custom: User-defined configuration to use in callbacks\n:param logging: Modify logging verbosity",
   "properties": {
-    "spec_version": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "number"
-        }
-      ],
-      "title": "Spec Version"
-    },
-    "package": {
-      "title": "Package",
-      "type": "string"
-    },
     "datasources": {
       "additionalProperties": {
         "anyOf": [
@@ -2362,6 +2348,28 @@
       "title": "Hooks",
       "type": "object"
     },
+    "advanced": {
+      "$ref": "#/$defs/AdvancedConfig"
+    },
+    "custom": {
+      "title": "Custom",
+      "type": "object"
+    },
+    "spec_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "title": "Spec Version"
+    },
+    "package": {
+      "title": "Package",
+      "type": "string"
+    },
     "hasura": {
       "anyOf": [
         {
@@ -2405,13 +2413,6 @@
         }
       ],
       "default": null
-    },
-    "advanced": {
-      "$ref": "#/$defs/AdvancedConfig"
-    },
-    "custom": {
-      "title": "Custom",
-      "type": "object"
     },
     "logging": {
       "anyOf": [

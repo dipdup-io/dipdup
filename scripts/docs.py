@@ -482,6 +482,14 @@ def dump_jsonschema() -> None:
     # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
     schema_dict['required'] = []
 
+    # NOTE: `from_` fields should be passed without underscore
+    fields_with_from = (
+        schema_dict['$defs']['EvmTransactionsHandlerConfig']['properties'],
+        schema_dict['$defs']['TezosTokenTransfersHandlerConfig']['properties'],
+    )
+    for fields in fields_with_from:
+        fields['from'] = fields.pop('from_')
+
     # NOTE: Dump to the project root
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
@@ -587,6 +595,14 @@ def dump_references() -> None:
         # from: <section id="dipdup-config-env">
         # to: none
         out = re.sub(r'<section id=".*">', '', out)
+
+        # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
+        if 'config' in page['md_path']:
+            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)

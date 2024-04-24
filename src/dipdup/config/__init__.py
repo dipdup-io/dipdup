@@ -80,7 +80,7 @@ class SqliteDatabaseConfig:
     SQLite connection config
 
     :param kind: always 'sqlite'
-    :param path: Path to .sqlite3 file, leave default for in-memory database (`:memory:`)
+    :param path: Path to .sqlite file, leave default for in-memory database (`:memory:`)
     :param immune_tables: List of tables to preserve during reindexing
     """
 
@@ -600,7 +600,8 @@ class ApiConfig:
     port: int = 46339  # dial INDEX 😎
 
 
-@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+# NOTE: Should be the only place where extras are allowed
+@dataclass(config=ConfigDict(extra='allow'), kw_only=True)
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
@@ -625,15 +626,13 @@ class AdvancedConfig:
     unsafe_sqlite: bool = False
     alt_operation_matcher: bool = False
 
-    class Config:
-        extra = 'allow'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of config specification, currently always `2.0`
+    :param spec_version: Version of config specification, currently always `3.0`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -714,6 +713,7 @@ class DipDupConfig:
             for path, errors in errors_by_path.items():
                 fields = {error['loc'][-1] for error in errors}
 
+                # NOTE: If `kind` or `type` don't match the expected value, skip this class; it's a wrong Union member. 
                 if 'kind' in fields or 'type' in fields:
                     continue
 
@@ -1133,8 +1133,6 @@ def _patch_annotations() -> None:
     aliases are resolved to actual configs from corresponding sections and never become strings again.
     This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
     checks everywhere.
-
-    You can revert these changes by calling `patch_annotations(orinal_annotations)`, but tests will fail.
     """
     self = importlib.import_module(__name__)
     submodules = tuple(inspect.getmembers(self, inspect.ismodule))
