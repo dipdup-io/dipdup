@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Added
-
-- evm.subsquid: `evm.node` datasources can be used as index datasources.
-
 ### Changed
 
 - config: Index kinds have been renamed removing the index datasource part.
@@ -22,6 +18,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - config: `node_only` index config flag has been removed; add `evm.node` datasource to the `datasources` list instead.
 - config: `abi` index config field has been removed; add `abi.etherscan` to the `datasources` list instead.
+
+## [7.5.5] - 2024-04-17
+
+### Added
+
+- evm.subsquid: `evm.node` datasources can be used as index datasources.
 
 ## [7.5.4] - 2024-04-09
 
