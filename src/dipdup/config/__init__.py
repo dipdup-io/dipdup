@@ -46,6 +46,7 @@ from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core import to_jsonable_python
 
+from dipdup import __spec_version__
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -627,7 +628,6 @@ class AdvancedConfig:
     alt_operation_matcher: bool = False
 
 
-
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class DipDupConfig:
     """Main indexer config
@@ -713,7 +713,7 @@ class DipDupConfig:
             for path, errors in errors_by_path.items():
                 fields = {error['loc'][-1] for error in errors}
 
-                # NOTE: If `kind` or `type` don't match the expected value, skip this class; it's a wrong Union member. 
+                # NOTE: If `kind` or `type` don't match the expected value, skip this class; it's a wrong Union member.
                 if 'kind' in fields or 'type' in fields:
                     continue
 
@@ -857,6 +857,13 @@ class DipDupConfig:
         index_config._name = name
 
     def _validate(self) -> None:
+        # NOTE: Spec version
+        if self.spec_version != __spec_version__:
+            raise ConfigurationError(
+                f'Incompatible spec version: expected {__spec_version__}, got {self.spec_version}. '
+                'See https://dipdup.io/docs/config/spec_version'
+            )
+
         # NOTE: Hasura and metadata interface
         if self.hasura:
             if isinstance(self.database, SqliteDatabaseConfig):

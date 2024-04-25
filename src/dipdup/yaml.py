@@ -23,7 +23,6 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
 from dipdup.utils import json_dumps
 
@@ -76,7 +75,7 @@ def read_config_yaml(path: Path) -> str:
 def dump(value: Any) -> str:
     yaml = YAML()
     yaml.default_flow_style = False
-    yaml.indent = 2
+    yaml.indent(mapping=2, sequence=4, offset=2)
 
     config_json = json_dumps(value)
     config_yaml = exclude_none(yaml.load(config_json))
@@ -131,6 +130,7 @@ class DipDupYAMLConfig(dict[str, Any]):
         cls,
         paths: list[Path],
         environment: bool = True,
+        raw: bool = False,
     ) -> tuple[DipDupYAMLConfig, dict[str, Any]]:
         yaml = YAML(typ='base')
 
@@ -140,7 +140,9 @@ class DipDupYAMLConfig(dict[str, Any]):
         for path in paths:
             path_yaml = read_config_yaml(path)
 
-            if environment:
+            if raw:
+                pass
+            elif environment:
                 path_yaml, path_environment = substitute_env_variables(path_yaml)
                 config_environment.update(path_environment)
             else:
@@ -148,22 +150,11 @@ class DipDupYAMLConfig(dict[str, Any]):
 
             config.update(yaml.load(path_yaml))
 
-        config._post_load_hooks()
+        if not raw:
+            # FIXME: Can't use `from_` field alias in dataclasses
+            fix_dataclass_field_aliases(config)
 
         return config, config_environment
 
     def dump(self) -> str:
         return dump(self)
-
-    def validate_version(self) -> None:
-        config_spec_version = self['spec_version']
-        if config_spec_version != __spec_version__:
-            raise ConfigurationError(
-                f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See'
-                ' https://dipdup.io/docs/config/spec_version'
-            )
-
-    def _post_load_hooks(self) -> None:
-        self.validate_version()
-        # FIXME: Can't use `from_` field alias in dataclasses
-        fix_dataclass_field_aliases(self)

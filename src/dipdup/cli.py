@@ -51,12 +51,7 @@ ROOT_CONFIG = 'dipdup.yaml'
 CONFIG_RE = r'dipdup.*\.ya?ml'
 
 # NOTE: Do not try to load config for these commands as they don't need it
-NO_CONFIG_CMDS = {
-    'new',
-    'install',
-    'uninstall',
-    'update',
-}
+NO_CONFIG_CMDS = {'new', 'install', 'uninstall', 'update', 'migrate'}
 # NOTE: Our signal handler conflicts with Click's one in prompt mode
 NO_SIGNALS_CMDS = {
     *NO_CONFIG_CMDS,
@@ -323,15 +318,23 @@ async def init(
 
 
 @cli.command()
+@click.option('--dry-run', '-n', is_flag=True, help='Print changes without applying them.')
 @click.pass_context
 @_cli_wrapper
-async def migrate(ctx: click.Context) -> None:
+async def migrate(ctx: click.Context, dry_run: bool) -> None:
     """
     Migrate project to the new spec version.
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    _logger.info('Project is already at the latest version, no further actions required')
+    from dipdup.migrations.three_zero import ThreeZeroProjectMigration
+
+    # NOTE: Extract paths from arguments since we can't load config with old spec version
+    assert ctx.parent
+    config_paths: list[Path] = [Path(file) for file in ctx.parent.params['config']]
+
+    migration = ThreeZeroProjectMigration(tuple(config_paths), dry_run)
+    migration.migrate()
 
 
 @cli.group()
@@ -869,6 +872,10 @@ async def package_tree(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
     package.create()
+
+    # FIXME: Enable after implementing code migrations for 3.0
+    # package.verify()
+
     tree = package.tree()
     echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
     for line in draw_package_tree(package.root, tree):

@@ -334,3 +334,7 @@ class UnsupportedAPIError(Error):
 
             {self.reason}
         """
+
+
+class MigrationError(Exception):
+    pass
