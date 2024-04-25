@@ -9,15 +9,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Changed
 
 - config: Index kinds have been renamed removing the index datasource part.
-- config: Index configs accepts any number of datasources in `datasources` field instead of a single one in `datasource`.
+- config: Index configs accept any number of datasources in `datasources` field instead of a single one in `datasource`.
 - demos: Demo projects have been renamed to include the network name.
 - deps: Python 3.12 is now required to run DipDup.
 - deps: Pydantic v2 migration.
 
 ### Removed
 
-- config: `node_only` index config flag has been removed; add `evm.node` datasource to the `datasources` list instead.
-- config: `abi` index config field has been removed; add `abi.etherscan` to the `datasources` list instead.
+- config: `node_only` index config flag has been removed; add `evm.node` datasource(s) to the `datasources` list instead.
+- config: `abi` index config field has been removed; add `abi.etherscan` datasource(s) to the `datasources` list instead.
 
 ## [7.5.5] - 2024-04-17
 

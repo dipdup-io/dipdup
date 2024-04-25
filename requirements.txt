@@ -14,14 +14,14 @@ asyncclick==8.1.7.2
 asyncpg==0.29.0
 attrs==23.2.0
 bitarray==2.9.2
-black==24.4.0
+black==24.4.1
 certifi==2024.2.2
 charset-normalizer==3.3.2
 ckzg==1.0.0
 click==8.1.7
 colorama==0.4.6; platform_system == "Windows" or sys_platform == "win32"
 cytoolz==0.12.3; implementation_name == "cpython"
-datamodel-code-generator==0.25.5
+datamodel-code-generator==0.25.6
 dnspython==2.6.1; python_version ~= "3.11"
 email-validator==2.1.1; python_version ~= "3.11"
 eth-abi==5.1.0
@@ -57,8 +57,8 @@ prometheus-client==0.20.0
 protobuf==5.26.1
 pyarrow==14.0.2
 pycryptodome==3.20.0
-pydantic==2.7.0
-pydantic-core==2.18.1
+pydantic==2.7.1
+pydantic-core==2.18.2
 pyhumps==3.8.0
 pypika-tortoise==0.1.6
 pysignalr==1.0.0

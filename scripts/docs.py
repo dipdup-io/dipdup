@@ -515,7 +515,6 @@ def dump_references() -> None:
                     package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
                 classes_in_package.add(f'dipdup.{ref}{package_path_str}.{match.group(1)}')
 
-        # diff = (classes_in_package ^ classes_in_ref) - ignore
         to_add = classes_in_package - classes_in_ref - ignore
         to_remove = classes_in_ref - classes_in_package - ignore
 
