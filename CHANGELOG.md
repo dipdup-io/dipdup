@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Changed
 
 - config: Index kinds have been renamed and grouped by the network.
-- config: index configs accept `datasources` list instead of `datasource` field.
+- config: Index configs accept `datasources` list instead of `datasource` field.
 
 ### Removed
 
