@@ -1,11 +1,11 @@
 from demo_evm_uniswap import models as models
-from demo_evm_uniswap.types.pool.evm_logs.flash import FlashPayload
+from demo_evm_uniswap.types.pool.evm_events.flash import FlashPayload
 from dipdup.context import HandlerContext
-from dipdup.models.evm import EvmLog
+from dipdup.models.evm import EvmEvent
 
 
 async def flash(
     ctx: HandlerContext,
-    log: EvmLog[FlashPayload],
+    event: EvmEvent[FlashPayload],
 ) -> None:
     ...

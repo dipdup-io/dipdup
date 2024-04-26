@@ -11,7 +11,7 @@ from dipdup.fetcher import HasLevel
 
 
 @dataclass(frozen=True)
-class EvmLogData(HasLevel):
+class EvmEventData(HasLevel):
     address: str
     block_hash: str
     data: str
@@ -24,37 +24,37 @@ class EvmLogData(HasLevel):
     transaction_index: int
 
     @classmethod
-    def from_node_json(cls, log_json: dict[str, Any], timestamp: int) -> 'EvmLogData':
+    def from_node_json(cls, event_json: dict[str, Any], timestamp: int) -> 'EvmEventData':
         # NOTE: Skale Nebula
-        if 'removed' not in log_json:
-            log_json['removed'] = False
+        if 'removed' not in event_json:
+            event_json['removed'] = False
 
         return cls(
-            address=log_json['address'],
-            block_hash=log_json['blockHash'],
-            data=log_json['data'],
-            level=int(log_json['blockNumber'], 16),
-            log_index=int(log_json['logIndex'], 16),
-            topics=log_json['topics'],
-            transaction_hash=log_json['transactionHash'],
-            transaction_index=int(log_json['transactionIndex'], 16),
-            removed=log_json['removed'],
+            address=event_json['address'],
+            block_hash=event_json['blockHash'],
+            data=event_json['data'],
+            level=int(event_json['blockNumber'], 16),
+            log_index=int(event_json['logIndex'], 16),
+            topics=event_json['topics'],
+            transaction_hash=event_json['transactionHash'],
+            transaction_index=int(event_json['transactionIndex'], 16),
+            removed=event_json['removed'],
             timestamp=timestamp,
         )
 
     @classmethod
-    def from_subsquid_json(cls, log_json: dict[str, Any], header: dict[str, Any]) -> Self:
+    def from_subsquid_json(cls, event_json: dict[str, Any], header: dict[str, Any]) -> Self:
         return cls(
-            address=log_json['address'],
+            address=event_json['address'],
             block_hash=header['hash'],
-            data=log_json['data'],
+            data=event_json['data'],
             level=header['number'],
-            log_index=log_json['logIndex'],
+            log_index=event_json['logIndex'],
             timestamp=header['timestamp'],
-            topics=tuple(log_json['topics']),
+            topics=tuple(event_json['topics']),
             removed=False,
-            transaction_hash=log_json['transactionHash'],
-            transaction_index=log_json['transactionIndex'],
+            transaction_hash=event_json['transactionHash'],
+            transaction_index=event_json['transactionIndex'],
         )
 
 
@@ -190,8 +190,8 @@ InputT = TypeVar('InputT', bound=BaseModel)
 
 
 @dataclass(frozen=True)
-class EvmLog(Generic[PayloadT]):
-    data: EvmLogData
+class EvmEvent(Generic[PayloadT]):
+    data: EvmEventData
     payload: PayloadT
 
 

@@ -25,7 +25,7 @@ from dipdup.datasources import EvmRealtimeProvider
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeHeadSubscription
@@ -48,7 +48,7 @@ NODE_LAST_MILE = 128
 
 
 HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
-LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmLogData, ...]], Awaitable[None]]
+LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmEventData, ...]], Awaitable[None]]
 TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
 
@@ -69,7 +69,7 @@ class MagicWeb3Provider(AsyncJSONBaseProvider):
 @dataclass
 class LevelData:
     head: dict[str, Any] | None = None
-    logs: deque[dict[str, Any]] = field(default_factory=deque)
+    events: deque[dict[str, Any]] = field(default_factory=deque)
     fetch_transactions: bool = False
 
     created_at: float = field(default_factory=time.time)
@@ -104,7 +104,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
         self._watchdog: Watchdog = Watchdog(self._http_config.connection_timeout)
 
         self._on_head_callbacks: set[HeadCallback] = set()
-        self._on_logs_callbacks: set[LogsCallback] = set()
+        self._on_events_callbacks: set[LogsCallback] = set()
         self._on_transactions_callbacks: set[TransactionsCallback] = set()
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
@@ -170,11 +170,13 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
 
             known_level = head.level
 
-            if raw_logs := level_data.logs:
-                logs = tuple(EvmLogData.from_node_json(log, head.timestamp) for log in raw_logs if not log['removed'])
-                if logs:
-                    self._logger.debug('Emitting %s logs', len(logs))
-                    await self.emit_logs(logs)
+            if raw_events := level_data.events:
+                events = tuple(
+                    EvmEventData.from_node_json(event, head.timestamp) for event in raw_events if not event['removed']
+                )
+                if events:
+                    self._logger.debug('Emitting %s events', len(events))
+                    await self.emit_events(events)
             if level_data.fetch_transactions:
                 full_block = await self.get_block_by_level(
                     block_number=head.level,
@@ -227,9 +229,9 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
         for fn in self._on_head_callbacks:
             await fn(self, head)
 
-    async def emit_logs(self, logs: tuple[EvmLogData, ...]) -> None:
-        for fn in self._on_logs_callbacks:
-            await fn(self, logs)
+    async def emit_events(self, events: tuple[EvmEventData, ...]) -> None:
+        for fn in self._on_events_callbacks:
+            await fn(self, events)
 
     async def emit_syncing(self, syncing: EvmNodeSyncingData) -> None:
         for fn in self._on_syncing_callbacks:
@@ -242,8 +244,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
 
-    def call_on_logs(self, fn: LogsCallback) -> None:
-        self._on_logs_callbacks.add(fn)
+    def call_on_events(self, fn: LogsCallback) -> None:
+        self._on_events_callbacks.add(fn)
 
     def call_on_transactions(self, fn: TransactionsCallback) -> None:
         self._on_transactions_callbacks.add(fn)
@@ -257,7 +259,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
     async def get_block_by_level(self, block_number: int, full_transactions: bool = False) -> dict[str, Any]:
         return await self._jsonrpc_request('eth_getBlockByNumber', [hex(block_number), full_transactions])  # type: ignore[no-any-return]
 
-    async def get_logs(self, params: dict[str, Any]) -> list[dict[str, Any]]:
+    async def get_events(self, params: dict[str, Any]) -> list[dict[str, Any]]:
         return await self._jsonrpc_request('eth_getLogs', [params])  # type: ignore[no-any-return]
 
     async def get_head_level(self) -> int:
@@ -365,7 +367,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
             self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level_data = self._level_data[data['blockHash']]
-            level_data.logs.append(data)
+            level_data.events.append(data)
         elif isinstance(subscription, EvmNodeSyncingSubscription):
             syncing = EvmNodeSyncingData.from_json(data)
             await self.emit_syncing(syncing)

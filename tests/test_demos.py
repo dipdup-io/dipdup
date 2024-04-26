@@ -142,10 +142,10 @@ async def assert_run_raw() -> None:
     assert migrations == 2
 
 
-async def assert_run_evm_logs() -> None:
-    import demo_evm_logs.models
+async def assert_run_evm_events() -> None:
+    import demo_evm_events.models
 
-    holders = await demo_evm_logs.models.Holder.filter().count()
+    holders = await demo_evm_events.models.Holder.filter().count()
     assert holders == 26
 
 
@@ -153,7 +153,7 @@ async def assert_run_evm_transactions() -> None:
     import demo_evm_transactions.models
 
     holders = await demo_evm_transactions.models.Holder.filter().count()
-    # NOTE: Another 4 holders covered by `demo_evm_logs` index are from non-`Transfer` calls.
+    # NOTE: Another 4 holders covered by `demo_evm_events` index are from non-`Transfer` calls.
     assert holders == 22
 
 
@@ -218,14 +218,14 @@ test_params = (
     ('demo_tezos_events.yml', 'demo_tezos_events', 'init', None),
     ('demo_tezos_raw.yml', 'demo_tezos_raw', 'run', assert_run_raw),
     ('demo_tezos_raw.yml', 'demo_tezos_raw', 'init', None),
-    ('demo_evm_logs.yml', 'demo_evm_logs', 'run', assert_run_evm_logs),
-    ('demo_evm_logs.yml', 'demo_evm_logs', 'init', None),
+    ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
     ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'run', None),
     ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'init', None),
     # NOTE: Indexes with `evm.node` as index datasource
-    ('demo_evm_logs_node.yml', 'demo_evm_logs', 'run', assert_run_evm_logs),
+    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Smoke tests for small tools.
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'env', '--compose', '--internal'), None),

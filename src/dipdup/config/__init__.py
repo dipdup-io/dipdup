@@ -1040,7 +1040,7 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
-        elif isinstance(index_config, EvmLogsIndexConfig):
+        elif isinstance(index_config, EvmEventsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
 
@@ -1086,7 +1086,7 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
-from dipdup.config.evm_logs import EvmLogsIndexConfig
+from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
@@ -1127,7 +1127,7 @@ TezosIndexConfigU = (
     | TezosTokenTransfersIndexConfig
     | TezosTokenBalancesIndexConfig
 )
-EvmIndexConfigU = EvmLogsIndexConfig | EvmTransactionsIndexConfig
+EvmIndexConfigU = EvmEventsIndexConfig | EvmTransactionsIndexConfig
 
 ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig

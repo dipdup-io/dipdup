@@ -38,8 +38,8 @@ EVM
 
 .. autoclass:: dipdup.models.evm.EvmTransaction
 .. autoclass:: dipdup.models.evm.EvmTransactionData
-.. autoclass:: dipdup.models.evm.EvmLog
-.. autoclass:: dipdup.models.evm.EvmLogData
+.. autoclass:: dipdup.models.evm.EvmEvent
+.. autoclass:: dipdup.models.evm.EvmEventData
 
 -------------------------------------------------------------------------------
 Tezos
