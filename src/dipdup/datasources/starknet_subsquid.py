@@ -1,26 +1,16 @@
 from collections import deque
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
+from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
+from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet import StarknetTransactionData
-from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
-
-# ----------------
-
-# from dipdup.models.starknet_subsquid import FieldSelection
-# from dipdup.models.starknet_subsquid import Query
-# from dipdup.models.starknet import StarknetEventData
-# from dipdup.models.starknet_subsquid import TransactionRequest
-
-from dipdup.config import DatasourceConfig
-
-
-FieldSelection = dict
-Query = dict
-StarknetEventData = dict
-TransactionRequest = dict[str, Any]
-
+from dipdup.models.starknet_subsquid import EventRequest
+from dipdup.models.starknet_subsquid import FieldSelection
+from dipdup.models.starknet_subsquid import Query
+from dipdup.models.starknet_subsquid import TransactionRequest
 
 TRANSACTION_FIELDS: FieldSelection = {
     'block': {
@@ -44,6 +34,17 @@ TRANSACTION_FIELDS: FieldSelection = {
     },
 }
 
+EVENT_FIELDS: FieldSelection = {
+    'block': {
+        'timestamp': True,
+    },
+    'event': {
+        'fromAddress': True,
+        'keys': True,
+        'data': True,
+    },
+}
+
 
 class _StarknetSubsquidWorker(AbstractSubsquidWorker):
     async def query(self, query: Query) -> list[dict[str, Any]]:  # TODO: fix typing
@@ -60,12 +61,35 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
     async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:  # TODO: fix typing
         return await super().query_worker(query, current_level)
 
-    async def iter_event_logs(
+    async def iter_events(
         self,
         first_level: int,
         last_level: int,
+        filters: tuple[EventRequest, ...],
     ) -> AsyncIterator[tuple[StarknetEventData, ...]]:
-        raise NotImplementedError()
+        current_level = first_level
+
+        while current_level <= last_level:
+            query: Query = {
+                'fields': EVENT_FIELDS,
+                'fromBlock': current_level,
+                'toBlock': last_level,
+                'events': list(filters),
+                'type': 'starknet',
+            }
+            response = await self.query_worker(query, current_level)
+
+            for level_item in response:
+                current_level = level_item['header']['number'] + 1
+                logs: deque[StarknetEventData] = deque()
+                for raw_event in level_item['events']:
+                    logs.append(
+                        StarknetEventData.from_subsquid_json(
+                            event_json=raw_event,
+                            header=level_item['header']
+                        ),
+                    )
+                yield tuple(logs)
 
     async def iter_transactions(
         self,
@@ -81,7 +105,7 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'transactions': list(filters),
-                'type': 'starknet'
+                'type': 'starknet',
             }
             response = await self.query_worker(query, current_level)
 

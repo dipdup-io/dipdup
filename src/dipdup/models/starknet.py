@@ -61,7 +61,8 @@ class StarknetTransactionData(HasLevel, ABC):
 class StarknetEventData(HasLevel, ABC):
     level: int
     block_hash: str
-    transaction_hash: str
+    transaction_index: int
+    # TODO: transaction hash
     timestamp: int
 
     from_address: str
@@ -77,10 +78,10 @@ class StarknetEventData(HasLevel, ABC):
         return cls(
             level=header['number'],
             block_hash=header['hash'],
-            transaction_hash=event_json['transactionHash'],
+            transaction_index=event_json['transactionIndex'],
             timestamp=header['timestamp'],
 
-            from_address=event_json['from'],
+            from_address=event_json['fromAddress'],
             keys=tuple(event_json['keys']),
             data=tuple(event_json['data']),
         )
