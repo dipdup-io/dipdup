@@ -91,7 +91,8 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
                 # NOTE: level_item don't have 'transactions' when no filter is applied
                 for raw_transaction in level_item['transactions']:
                     transaction = StarknetTransactionData.from_subsquid_json(
-                        transaction_json=raw_transaction
+                        transaction_json=raw_transaction,
+                        header=level_item['header'],
                     )
                     transactions.append(transaction)
                 yield tuple(transactions)
