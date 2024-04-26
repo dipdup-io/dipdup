@@ -136,9 +136,9 @@ class IndexDispatcher:
                     await datasource.subscribe()
 
             tasks: deque[Awaitable[bool]] = deque()
-            for name, index in copy(self._indexes).items():
+            for _, index in copy(self._indexes).items():
+                # NOTE: Do not remove disabled indexes from the mapping or is_oneshot() check will fail
                 if index.state.status == IndexStatus.disabled:
-                    del self._indexes[name]
                     continue
 
                 tasks.append(index.process())
