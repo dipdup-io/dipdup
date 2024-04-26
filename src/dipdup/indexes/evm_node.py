@@ -62,20 +62,20 @@ class EvmNodeFetcher(Generic[BufferT], DataFetcher[BufferT, EvmNodeDatasource], 
         await asyncio.gather(*tasks)
         return blocks
 
-    async def get_logs_batch(
+    async def get_events_batch(
         self,
         first_level: int,
         last_level: int,
         node: EvmNodeDatasource | None = None,
     ) -> dict[int, list[dict[str, Any]]]:
-        grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
+        grouped_events: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
         node = node or self.get_random_node()
-        logs = await node.get_logs(
+        logs = await node.get_events(
             {
                 'fromBlock': hex(first_level),
                 'toBlock': hex(last_level),
             },
         )
         for log in logs:
-            grouped_logs[int(log['blockNumber'], 16)].append(log)
-        return grouped_logs
+            grouped_events[int(log['blockNumber'], 16)].append(log)
+        return grouped_events

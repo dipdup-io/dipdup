@@ -598,10 +598,22 @@ def dump_references() -> None:
 
         # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
         if 'config' in page['md_path']:
-            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
-            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
-            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
-            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace(
+                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
+                '',
+            )
+            out = out.replace(
+                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
+                '',
+            )
+            out = out.replace(
+                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
+                '',
+            )
+            out = out.replace(
+                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
+                '',
+            )
             out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)

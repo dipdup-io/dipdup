@@ -18,7 +18,7 @@ from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
-from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
@@ -142,12 +142,12 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig], EvmHis
                 attempt += 1
                 retry_sleep *= self._http_config.retry_multiplier
 
-    async def iter_event_logs(
+    async def iter_event_events(
         self,
         topics: tuple[tuple[str | None, str], ...],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[EvmLogData, ...]]:
+    ) -> AsyncIterator[tuple[EvmEventData, ...]]:
         current_level = first_level
 
         # TODO: Smarter query optimizator
@@ -173,11 +173,11 @@ class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig], EvmHis
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
-                logs: deque[EvmLogData] = deque()
+                logs: deque[EvmEventData] = deque()
                 for raw_log in level_item['logs']:
                     logs.append(
-                        EvmLogData.from_subsquid_json(
-                            log_json=raw_log,
+                        EvmEventData.from_subsquid_json(
+                            event_json=raw_log,
                             header=level_item['header'],
                         ),
                     )

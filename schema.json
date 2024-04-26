@@ -265,7 +265,7 @@
       "title": "EvmContractConfig",
       "type": "object"
     },
-    "EvmLogsHandlerConfig": {
+    "EvmEventsHandlerConfig": {
       "additionalProperties": false,
       "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: EVM contract\n:param name: Event name",
       "properties": {
@@ -294,17 +294,17 @@
         "name",
         "callback"
       ],
-      "title": "EvmLogsHandlerConfig",
+      "title": "EvmEventsHandlerConfig",
       "type": "object"
     },
-    "EvmLogsIndexConfig": {
+    "EvmEventsIndexConfig": {
       "additionalProperties": false,
-      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.logs'\n:param datasources: `evm` datasources to use\n:param handlers: Event handlers\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
+      "description": "Subsquid datasource config\n\n:param kind: Always 'evm.events'\n:param datasources: `evm` datasources to use\n:param handlers: Event handlers\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing and disable this index",
       "properties": {
         "kind": {
-          "const": "evm.logs",
+          "const": "evm.events",
           "enum": [
-            "evm.logs"
+            "evm.events"
           ],
           "title": "Kind",
           "type": "string"
@@ -331,7 +331,7 @@
         },
         "handlers": {
           "items": {
-            "$ref": "#/$defs/EvmLogsHandlerConfig"
+            "$ref": "#/$defs/EvmEventsHandlerConfig"
           },
           "title": "Handlers",
           "type": "array"
@@ -352,7 +352,7 @@
         "datasources",
         "handlers"
       ],
-      "title": "EvmLogsIndexConfig",
+      "title": "EvmEventsIndexConfig",
       "type": "object"
     },
     "EvmNodeDatasourceConfig": {
@@ -2286,7 +2286,7 @@
             "$ref": "#/$defs/TezosTokenBalancesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmLogsIndexConfig"
+            "$ref": "#/$defs/EvmEventsIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmTransactionsIndexConfig"
@@ -2324,7 +2324,7 @@
             "$ref": "#/$defs/TezosTokenBalancesIndexConfig"
           },
           {
-            "$ref": "#/$defs/EvmLogsIndexConfig"
+            "$ref": "#/$defs/EvmEventsIndexConfig"
           },
           {
             "$ref": "#/$defs/EvmTransactionsIndexConfig"
