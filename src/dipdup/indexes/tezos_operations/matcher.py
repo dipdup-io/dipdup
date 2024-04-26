@@ -167,7 +167,7 @@ def match_operation_unfiltered_subgroup(
 
     for operation in operation_subgroup.operations:
         if TezosOperationType[operation.type] in index.types:
-            matched_handlers.append((operation_subgroup, index.handler_config, deque([operation])))
+            matched_handlers.append((operation_subgroup, index.handlers[0], deque([operation])))
 
     return matched_handlers
 

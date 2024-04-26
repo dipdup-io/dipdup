@@ -5,8 +5,8 @@ from typing import Literal
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -29,7 +29,7 @@ class TezosTokenBalancesHandlerConfig(HandlerConfig):
     :param token_id: Filter by token ID
     """
 
-    contract: TezosContractConfig | None = None
+    contract: Alias[TezosContractConfig] | None = None
     token_id: int | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -49,7 +49,7 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """Token balance index config
 
     :param kind: always 'tezos.token_balances'
-    :param datasource: Index datasource to use
+    :param datasources: `tezos` datasources to use
     :param handlers: Mapping of token transfer handlers
 
     :param first_level: Level to start indexing from
@@ -57,15 +57,15 @@ class TezosTokenBalancesIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_balances']
-    datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTokenBalancesHandlerConfig, ...] = Field(default_factory=tuple)
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
+    handlers: tuple[TezosTokenBalancesHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(TokenBalanceSubscription())
         else:
             for handler_config in self.handlers:

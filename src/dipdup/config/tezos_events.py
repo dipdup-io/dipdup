@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic import ConfigDict
-from pydantic import Field
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
@@ -30,7 +30,7 @@ class TezosEventsHandlerConfig(HandlerConfig):
     :param tag: Event tag
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
     tag: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -57,7 +57,7 @@ class TezosEventsUnknownEventHandlerConfig(HandlerConfig):
     :param contract: Contract which emits event
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -77,22 +77,22 @@ class TezosEventsIndexConfig(TezosIndexConfig):
     """Event index config
 
     :param kind: always 'tezos.events'
-    :param datasource: Datasource config
+    :param datasources: `evm` datasources to use
     :param handlers: Event handlers
     :param first_level: First block level to index
     :param last_level: Last block level to index
     """
 
     kind: Literal['tezos.events']
-    datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosEventsHandlerConfigU, ...] = Field(default_factory=tuple)
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
+    handlers: tuple[TezosEventsHandlerConfigU, ...]
 
     first_level: int = 0
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(EventSubscription())
         else:
             for handler_config in self.handlers:

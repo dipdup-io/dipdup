@@ -1,38 +1,35 @@
-import random
 import time
 from collections.abc import AsyncIterator
 
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
-from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
+from dipdup.indexes.evm import EVM_SUBSQUID_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
-from dipdup.indexes.evm_subsquid import SUBSQUID_READAHEAD_LIMIT
+from dipdup.indexes.evm_subsquid import EvmSubsquidFetcher
 from dipdup.models.evm import EvmLogData
 
 
-class EvmLogFetcher(DataFetcher[EvmLogData]):
-    _datasource: EvmSubsquidDatasource
-
+class EvmSubsquidLogFetcher(EvmSubsquidFetcher[EvmLogData]):
     def __init__(
         self,
-        datasource: EvmSubsquidDatasource,
+        datasources: tuple[EvmSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
         topics: tuple[tuple[str | None, str], ...],
     ) -> None:
-        super().__init__(datasource, first_level, last_level)
+        super().__init__(datasources, first_level, last_level)
         self._topics = topics
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmLogData, ...]]]:
-        event_iter = self._datasource.iter_event_logs(
+        event_iter = self.random_datasource.iter_event_logs(
             self._topics,
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter, limit=SUBSQUID_READAHEAD_LIMIT):
+        async for level, batch in readahead_by_level(event_iter, limit=EVM_SUBSQUID_READAHEAD_LIMIT):
             yield level, batch
 
 
@@ -50,7 +47,7 @@ class EvmNodeLogFetcher(EvmNodeFetcher[EvmLogData]):
         ratelimited: bool = False
 
         while batch_first_level <= self._last_level:
-            node = random.choice(self._datasources)
+            node = self.random_datasource
             batch_size = self.get_next_batch_size(batch_size, ratelimited)
             ratelimited = False
 

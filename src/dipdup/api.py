@@ -13,7 +13,7 @@ from dipdup.utils import json_dumps
 
 
 def _method_wrapper(
-    ctx: DipDupContext,
+    ctx: 'DipDupContext',
     method: Callable[[DipDupContext, web.Request], Awaitable[web.Response]],
 ) -> Callable[[web.Request], Awaitable[web.Response]]:
     @functools.wraps(method)
@@ -32,17 +32,17 @@ def _method_wrapper(
     return resolved_method
 
 
-async def _add_index(ctx: DipDupContext, request: web.Request) -> web.Response:
+async def _add_index(ctx: 'DipDupContext', request: web.Request) -> web.Response:
     await ctx.add_index(**(await request.json()))
     return web.Response()
 
 
-async def _add_contract(ctx: DipDupContext, request: web.Request) -> web.Response:
+async def _add_contract(ctx: 'DipDupContext', request: web.Request) -> web.Response:
     await ctx.add_contract(**(await request.json()))
     return web.Response()
 
 
-async def _performance(ctx: DipDupContext, request: web.Request) -> web.Response:
+async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Response:
     return web.json_response(
         dipdup.performance.get_stats(),
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),

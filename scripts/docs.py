@@ -128,8 +128,6 @@ IGNORED_CONFIG_CLASSES = {
     'dipdup.config.CallbackMixin',
     'dipdup.config.CodegenMixin',
     'dipdup.config.Config',
-    'dipdup.config.evm_traces.EvmTracesHandlerConfig',
-    'dipdup.config.evm_traces.EvmTracesIndexConfig',
     'dipdup.config.NameMixin',
     'dipdup.config.ParentMixin',
     'dipdup.config.tezos_operations.SubgroupIndexMixin',
@@ -138,8 +136,6 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.BulkCreateQuery',
     'dipdup.models.BulkUpdateQuery',
     'dipdup.models.DeleteQuery',
-    'dipdup.models.evm.EvmTrace',
-    'dipdup.models.evm.EvmTraceData',
     'dipdup.models.evm_node.EvmNodeHeadData',
     'dipdup.models.evm_node.EvmNodeHeadSubscription',
     'dipdup.models.evm_node.EvmNodeLogsSubscription',
@@ -184,12 +180,28 @@ IMAGE_EXTENSIONS = (
     '.jpg',
 )
 
-# Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
+# NOTE: Global markdownlint ignore list. We have to duplicate H1's due to how our NextJS frontend works.
 MARKDOWNLINT_IGNORE = (
     'line-length',
     'single-title',
     'single-h1',
 )
+
+
+# NOTE: As in Keep a Changelog spec
+CHANGELOG_GROUP_ORDER = (
+    'Added',
+    'Fixed',
+    'Changed',
+    'Deprecated',
+    'Removed',
+    'Performance',
+    'Security',
+    'Other',
+)
+
+# NOTE: Don't process older versions
+CHANGELOG_FIRST_VERSION = 7
 
 
 class ScriptObserver(FileSystemEventHandler):
@@ -470,6 +482,14 @@ def dump_jsonschema() -> None:
     # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
     schema_dict['required'] = []
 
+    # NOTE: `from_` fields should be passed without underscore
+    fields_with_from = (
+        schema_dict['$defs']['EvmTransactionsHandlerConfig']['properties'],
+        schema_dict['$defs']['TezosTokenTransfersHandlerConfig']['properties'],
+    )
+    for fields in fields_with_from:
+        fields['from'] = fields.pop('from_')
+
     # NOTE: Dump to the project root
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
@@ -479,47 +499,34 @@ def dump_jsonschema() -> None:
 def dump_references() -> None:
     green_echo('=> Dumping Sphinx references')
 
-    green_echo('=> Verifying that config reference is up to date')
-    config_rst = Path('docs/config.rst').read_text().splitlines()
-    classes_in_rst = {line.split(' ')[2] for line in config_rst if line.startswith('.. autoclass::')}
-    classes_in_package = set()
-    for file in Path('src/dipdup/config').glob('*.py'):
-        for match in re.finditer(CLASS_REGEX, file.read_text()):
-            package_path = file.relative_to('src/dipdup/config')
-            if package_path == Path('__init__.py'):
-                package_path = package_path.parent
-            if package_path == Path():
-                package_path_str = ''
-            else:
-                package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
-            classes_in_package.add(f'dipdup.config{package_path_str}.{match.group(1)}')
+    def _compare(ref: str, ignore: set[str]) -> None:
+        green_echo(f'=> Verifying that {ref} reference is up to date')
+        ref_rst = Path(f'docs/{ref}.rst').read_text().splitlines()
+        classes_in_ref = {line.split(' ')[2] for line in ref_rst if line.startswith('.. autoclass::')}
+        classes_in_package = set()
+        for file in Path(f'src/dipdup/{ref}').glob('*.py'):
+            for match in re.finditer(CLASS_REGEX, file.read_text()):
+                package_path = file.relative_to(f'src/dipdup/{ref}')
+                if package_path == Path('__init__.py'):
+                    package_path = package_path.parent
+                if package_path == Path():
+                    package_path_str = ''
+                else:
+                    package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
+                classes_in_package.add(f'dipdup.{ref}{package_path_str}.{match.group(1)}')
 
-    diff = (classes_in_package ^ classes_in_rst) - IGNORED_CONFIG_CLASSES
-    if diff:
-        red_echo('=> Config reference is outdated! Update `docs/config.rst` and try again.')
-        red_echo(f'=> Add or remove classes: {diff}')
-        exit(1)
+        # diff = (classes_in_package ^ classes_in_ref) - ignore
+        to_add = classes_in_package - classes_in_ref - ignore
+        to_remove = classes_in_ref - classes_in_package - ignore
 
-    green_echo('=> Verifying that models reference is up to date')
-    models_rst = Path('docs/models.rst').read_text().splitlines()
-    classes_in_rst = {line.split(' ')[2] for line in models_rst if line.startswith('.. autoclass::')}
-    classes_in_package = set()
-    for file in Path('src/dipdup/models').glob('*.py'):
-        for match in re.finditer(CLASS_REGEX, file.read_text()):
-            package_path = file.relative_to('src/dipdup/models')
-            if package_path == Path('__init__.py'):
-                package_path = package_path.parent
-            if package_path == Path():
-                package_path_str = ''
-            else:
-                package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
-            classes_in_package.add(f'dipdup.models{package_path_str}.{match.group(1)}')
+        if to_add or to_remove:
+            red_echo(f'=> Reference is outdated! Update `docs/{ref}.rst` and try again.')
+            red_echo(f'=> Add: {to_add}')
+            red_echo(f'=> Remove: {to_remove}')
+            exit(1)
 
-    diff = (classes_in_package ^ classes_in_rst) - IGNORED_MODEL_CLASSES
-    if diff:
-        red_echo('=> Models reference is outdated! Update `docs/models.rst` and try again.')
-        red_echo(f'=> Add or remove classes: {diff}')
-        exit(1)
+    _compare('config', IGNORED_CONFIG_CLASSES)
+    _compare('models', IGNORED_MODEL_CLASSES)
 
     green_echo('=> Building Sphinx docs')
     rmtree('docs/_build', ignore_errors=True)
@@ -589,6 +596,14 @@ def dump_references() -> None:
         # to: none
         out = re.sub(r'<section id=".*">', '', out)
 
+        # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
+        if 'config' in page['md_path']:
+            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ', '')
+            out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
+
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
 
@@ -609,17 +624,6 @@ def markdownlint() -> None:
 # FIXME: It's a full-copilot script to fix the changelog once, quickly. Rewrite or remove it.
 @main.command('merge-changelog', help='Print changelog grouped by minor versions')
 def merge_changelog() -> None:
-    group_order = (
-        'Added',
-        'Fixed',
-        'Changed',
-        'Deprecated',
-        'Removed',
-        'Performance',
-        'Security',
-        'Other',
-    )
-
     changelog_path = Path('CHANGELOG.md')
     changelog = changelog_path.read_text().split('<!-- Links -->')[0].strip()
 
@@ -630,6 +634,9 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
+            # FIXME: Remove after the first 8.0 release
+            line = line.replace('## [Unreleased]', '## [8.0.0]')
+
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:
@@ -641,14 +648,21 @@ def merge_changelog() -> None:
             changelog_tree[curr_version][curr_group].append(line)
 
     for version in sorted(changelog_tree.keys()):
-        if not version.startswith('7.'):
+        major = int(version.split('.')[0])
+        minor = int(version.split('.')[1])
+
+        if major < CHANGELOG_FIRST_VERSION:
             continue
 
         version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')
         lines: list[str] = ['<!-- markdownlint-disable first-line-h1 -->']
 
-        lines.append(f'## Changes since 7.{int(version[2]) - 1}\n')
-        for group in group_order:
+        if minor:
+            lines.append(f'## Changes since {major}.{minor - 1}\n')
+        else:
+            lines.append(f'## Changes since {major - 1}.x\n')
+
+        for group in CHANGELOG_GROUP_ORDER:
             if not changelog_tree[version][group]:
                 continue
 

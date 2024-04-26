@@ -185,10 +185,6 @@ class EvmTransactionData(HasLevel, ABC):
         )
 
 
-@dataclass(frozen=True)
-class EvmTraceData(HasLevel): ...
-
-
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 InputT = TypeVar('InputT', bound=BaseModel)
 
@@ -197,10 +193,6 @@ InputT = TypeVar('InputT', bound=BaseModel)
 class EvmLog(Generic[PayloadT]):
     data: EvmLogData
     payload: PayloadT
-
-
-@dataclass(frozen=True)
-class EvmTrace(Generic[PayloadT]): ...
 
 
 @dataclass(frozen=True)

@@ -26,12 +26,10 @@ from dipdup.config.tezos import is_rollup_address
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_events import TezosEventsUnknownEventHandlerConfig
-from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerPatternConfigU as PatternConfigU
 from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
-from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
@@ -141,34 +139,30 @@ class TezosCodeGenerator(CodeGenerator):
             self._logger.warning(
                 'Unused operation template `%s`. Ignore this warning if it is used in a factory.', template_config.name
             )
-            datasource_name = template_config.datasource
-            if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
-                datasource_config = self._config.get_tezos_tzkt_datasource(datasource_name)
-                template_config.datasource = datasource_config
-                await self._fetch_operation_index_schema(template_config)
-            else:
-                self._logger.info('Unresolved `datasource` field, trying to guess it.')
-                for possible_datasource_config in self._config.datasources.values():
-                    if not isinstance(possible_datasource_config, TezosTzktDatasourceConfig):
-                        continue
-                    # NOTE: Do not modify config without necessity
-                    template_config.datasource = possible_datasource_config
-                    template_config.contracts = [
-                        c for c in self._config.contracts.values() if isinstance(c, TezosContractConfig)
-                    ]
-                    try:
-                        await self._fetch_operation_index_schema(template_config)
-                    except FrameworkException:
-                        continue
+            for datasource_name in template_config.datasources:
+                if isinstance(datasource_name, str) and datasource_name in self._config.datasources:
+                    datasource_config = self._config.get_tezos_tzkt_datasource(datasource_name)
+                    template_config.datasources = (datasource_config,)
+                    await self._fetch_operation_index_schema(template_config)
+                else:
+                    self._logger.info('Unresolved `datasource` field, trying to guess it.')
+                    for possible_datasource_config in self._config.datasources.values():
+                        if not isinstance(possible_datasource_config, TezosTzktDatasourceConfig):
+                            continue
+                        # NOTE: Do not modify config without necessity
+                        template_config.datasources = (possible_datasource_config,)
+                        template_config.contracts = [
+                            c for c in self._config.contracts.values() if isinstance(c, TezosContractConfig)
+                        ]
+                        try:
+                            await self._fetch_operation_index_schema(template_config)
+                        except FrameworkException:
+                            continue
 
     async def generate_handlers(self) -> None:
         """Generate handler stubs with typehints from templates if not exist"""
         for index_config in self._config.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
-                continue
-            # NOTE: Always single handler
-            if isinstance(index_config, TezosOperationsUnfilteredIndexConfig | TezosHeadIndexConfig):
-                await self._generate_callback(index_config.handler_config, 'handlers')
                 continue
 
             for handler_config in index_config.handlers:
@@ -320,14 +314,14 @@ class TezosCodeGenerator(CodeGenerator):
             for operation_pattern_config in handler_config.pattern:
                 await self._fetch_operation_pattern_schema(
                     operation_pattern_config,
-                    index_config.datasource,
+                    index_config.datasources[0],
                 )
 
     async def _fetch_big_map_index_schema(self, index_config: TezosBigMapsIndexConfig) -> None:
         for handler_config in index_config.handlers:
             contract_config = handler_config.contract
 
-            contract_schemas = await self._get_schema(index_config.datasource, contract_config)
+            contract_schemas = await self._get_schema(index_config.datasources[0], contract_config)
 
             contract_schemas_path = self._package.schemas / contract_config.module_name
             big_map_schemas_path = contract_schemas_path / 'tezos_big_maps'
@@ -359,7 +353,7 @@ class TezosCodeGenerator(CodeGenerator):
 
             contract_config = handler_config.contract
             contract_schemas = await self._get_schema(
-                index_config.datasource,
+                index_config.random_datasource,
                 contract_config,
             )
             contract_schemas_path = self._package.schemas / contract_config.module_name

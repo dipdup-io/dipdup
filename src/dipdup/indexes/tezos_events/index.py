@@ -8,7 +8,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_events.matcher import match_events
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosEvent
 from dipdup.models.tezos import TezosEventData
@@ -19,14 +19,14 @@ QueueItem = tuple[TezosEventData, ...] | RollbackMessage
 
 
 class TezosEventsIndex(
-    TezosTzktIndex[TezosEventsIndexConfig, QueueItem],
+    TezosIndex[TezosEventsIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.event,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> EventFetcher:
         event_addresses = self._get_event_addresses()
         event_tags = self._get_event_tags()
         return EventFetcher(
-            datasource=self._datasource,
+            datasources=self._datasources,
             first_level=first_level,
             last_level=last_level,
             event_addresses=event_addresses,
@@ -60,7 +60,6 @@ class TezosEventsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             str(level_data.data.transaction_id),
             level_data,
         )

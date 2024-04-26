@@ -11,7 +11,8 @@ datasources:
 indexes:
   mainnet_operations:
     kind: tezos.operations_unfiltered
-    datasource: tzkt
+    datasources:
+      - tzkt
     types:
       - transaction
       - migration
@@ -21,7 +22,8 @@ indexes:
 
   mainnet_originations:
     kind: tezos.operations_unfiltered
-    datasource: tzkt
+    datasources:
+      - tzkt
     types:
       - origination
     callback: on_operation

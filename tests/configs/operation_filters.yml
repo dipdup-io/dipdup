@@ -22,7 +22,8 @@ datasources:
 indexes:
   test:
     kind: tezos.operations
-    datasource: tzkt_replay
+    datasources:
+      - tzkt_replay
     types:
       - origination
       - transaction

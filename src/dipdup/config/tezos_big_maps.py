@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -32,7 +33,7 @@ class TezosBigMapsHandlerConfig(HandlerConfig):
     :param path: Path to big map (alphanumeric string with dots)
     """
 
-    contract: TezosContractConfig
+    contract: Alias[TezosContractConfig]
     path: str
 
     @classmethod
@@ -71,7 +72,7 @@ class TezosBigMapsIndexConfig(TezosIndexConfig):
     """Big map index config
 
     :param kind: always 'tezos.big_maps'
-    :param datasource: Index datasource to fetch big maps with
+    :param datasources: Tezos datasources to use
     :param handlers: Mapping of big map diff handlers
     :param skip_history: Fetch only current big map keys ignoring historical changes
     :param first_level: Level to start indexing from
@@ -79,7 +80,7 @@ class TezosBigMapsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.big_maps']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosBigMapsHandlerConfig, ...]
 
     skip_history: SkipHistory = SkipHistory.never
@@ -93,7 +94,7 @@ class TezosBigMapsIndexConfig(TezosIndexConfig):
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(BigMapSubscription())
         else:
             for handler_config in self.handlers:

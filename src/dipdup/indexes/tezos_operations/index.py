@@ -4,6 +4,7 @@ from collections import deque
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
@@ -16,7 +17,6 @@ from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatt
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfigU
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
-from dipdup.context import DipDupContext
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
@@ -27,14 +27,18 @@ from dipdup.indexes.tezos_operations.matcher import OperationSubgroup
 from dipdup.indexes.tezos_operations.matcher import TezosOperationsHandlerArgumentU
 from dipdup.indexes.tezos_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_operations.matcher import match_operation_unfiltered_subgroup
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.prometheus import Metrics
 
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
+
 _logger = logging.getLogger('dipdup.matcher')
+
 
 QueueItem = tuple[OperationSubgroup, ...] | RollbackMessage
 
@@ -150,16 +154,16 @@ def extract_operation_subgroups(
 
 
 class TezosOperationsIndex(
-    TezosTzktIndex[TezosOperationsIndexConfigU, QueueItem],
+    TezosIndex[TezosOperationsIndexConfigU, QueueItem],
     message_type=TezosTzktMessageType.operation,
 ):
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: TezosOperationsIndexConfigU,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
     ) -> None:
-        super().__init__(ctx, config, datasource)
+        super().__init__(ctx, config, datasources)
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
@@ -210,14 +214,14 @@ class TezosOperationsIndex(
         if isinstance(self._config, TezosOperationsIndexConfig):
             return await OperationsFetcher.create(
                 self._config,
-                self._datasource,
+                self._datasources,
                 first_level,
                 sync_level,
             )
         if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
             return await OperationsUnfilteredFetcher.create(
                 self._config,
-                self._datasource,
+                self._datasources,
                 first_level,
                 sync_level,
             )
@@ -313,7 +317,6 @@ class TezosOperationsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             operation_subgroup.hash + ': {}',
             *args,
         )

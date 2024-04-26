@@ -15,7 +15,8 @@ datasources:
 templates:
   big_maps:
     kind: tezos.big_maps
-    datasource: <datasource>
+    datasources:
+      - <datasource>
     skip_history: once
     handlers:
       - callback: on_update_records

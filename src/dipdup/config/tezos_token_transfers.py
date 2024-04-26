@@ -5,8 +5,8 @@ from typing import Literal
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
-from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -31,11 +31,11 @@ class TezosTokenTransfersHandlerConfig(HandlerConfig):
     :param to: Filter by recipient
     """
 
-    contract: TezosContractConfig | None = None
+    contract: Alias[TezosContractConfig] | None = None
     token_id: int | None = None
     # FIXME: Can't use `from_` field alias in dataclasses
-    from_: TezosContractConfig | None = None
-    to: TezosContractConfig | None = None
+    from_: Alias[TezosContractConfig] | None = None
+    to: Alias[TezosContractConfig] | None = None
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
         yield 'dipdup.context', 'HandlerContext'
@@ -52,7 +52,7 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     """Token transfer index config
 
     :param kind: always 'tezos.token_transfers'
-    :param datasource: Index datasource to use
+    :param datasources: `tezos` datasources to use
     :param handlers: Mapping of token transfer handlers
 
     :param first_level: Level to start indexing from
@@ -60,15 +60,15 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.token_transfers']
-    datasource: TezosTzktDatasourceConfig
-    handlers: tuple[TezosTokenTransfersHandlerConfig, ...] = Field(default_factory=tuple)
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
+    handlers: tuple[TezosTokenTransfersHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()
-        if self.datasource.merge_subscriptions:
+        if self.merge_subscriptions:
             subs.add(TokenTransferSubscription())  # type: ignore[call-arg]
         else:
             for handler_config in self.handlers:

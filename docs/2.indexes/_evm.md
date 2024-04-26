@@ -9,5 +9,6 @@ For testing purposes, you can enforce DipDup to use only data from EVM node.
 indexes:
   evm_index:
     kind: evm.<index>
-    datasource: evm_node
+    datasources:
+      - evm_node
 ```

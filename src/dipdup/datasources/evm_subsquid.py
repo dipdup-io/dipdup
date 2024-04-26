@@ -13,6 +13,7 @@ import pyarrow.ipc  # type: ignore[import-untyped]
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources import Datasource
+from dipdup.datasources import EvmHistoryProvider
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -95,21 +96,25 @@ class _EvmSubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig]):
+class EvmSubsquidDatasource(IndexDatasource[EvmSubsquidDatasourceConfig], EvmHistoryProvider):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )
 
     def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
+        self._started = asyncio.Event()
         super().__init__(config, False)
 
     async def run(self) -> None:
-        if self._config.node:
-            return
+        await self._started.wait()
+
         # NOTE: If node datasource is missing, just poll API in reasonable intervals.
         while True:
             await asyncio.sleep(self._http_config.polling_interval)
             await self.initialize()
+
+    async def start(self) -> None:
+        self._started.set()
 
     async def subscribe(self) -> None:
         pass

@@ -24,6 +24,30 @@ EmptyCallback = Callable[[], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 
 
+class EvmHistoryProvider:
+    pass
+
+
+class EvmRealtimeProvider:
+    pass
+
+
+class EvmAbiProvider:
+    pass
+
+
+class TezosHistoryProvider:
+    pass
+
+
+class TezosRealtimeProvider:
+    pass
+
+
+class TezosAbiProvider:
+    pass
+
+
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
     _default_http_config = HttpConfig()
 
@@ -68,7 +92,7 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
     @abstractmethod
     async def initialize(self) -> None: ...
 
-    def add_index(self, index_config: IndexConfig) -> None:
+    def attach_index(self, index_config: IndexConfig) -> None:
         """Register index config in internal mappings and matchers. Find and register subscriptions."""
         for subscription in index_config.get_subscriptions():
             self._subscriptions.add(subscription)

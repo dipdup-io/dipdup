@@ -7,15 +7,13 @@ import orjson
 from web3 import Web3
 
 from dipdup.codegen import CodeGenerator
-from dipdup.config import AbiDatasourceConfig
 from dipdup.config import EvmIndexConfigU
 from dipdup.config import HandlerConfig
+from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_logs import EvmLogsHandlerConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.config.evm_traces import EvmTracesHandlerConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
@@ -166,8 +164,6 @@ class EvmCodeGenerator(CodeGenerator):
             if isinstance(index_config, EvmLogsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
-            elif isinstance(index_config, EvmTracesIndexConfig):
-                raise NotImplementedError
             elif isinstance(index_config, EvmTransactionsIndexConfig):
                 for handler_config in index_config.handlers:
                     if handler_config.method:
@@ -185,20 +181,15 @@ class EvmCodeGenerator(CodeGenerator):
         pass
 
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
-        if isinstance(index_config.abi, tuple):
-            datasource_configs = index_config.abi
-        elif index_config.abi:
-            datasource_configs = (index_config.abi,)
-        else:
-            datasource_configs = self._config.abi_datasources
+        datasource_configs = tuple(c for c in index_config.datasources if isinstance(c, AbiEtherscanDatasourceConfig))
+        if not datasource_configs:
+            raise ConfigurationError('No EVM ABI datasources found')
 
         contract: EvmContractConfig | None = None
 
         for handler_config in index_config.handlers:
             if isinstance(handler_config, EvmLogsHandlerConfig):
                 contract = handler_config.contract
-            elif isinstance(handler_config, EvmTracesHandlerConfig):
-                raise NotImplementedError
             elif isinstance(handler_config, EvmTransactionsHandlerConfig):
                 contract = handler_config.typed_contract
 
@@ -214,9 +205,6 @@ class EvmCodeGenerator(CodeGenerator):
                 raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
 
             for datasource_config in datasource_configs:
-                # NOTE: Pydantic won't catch this cause we resolve datasource aliases after validation.
-                if not isinstance(datasource_config, AbiDatasourceConfig):
-                    raise ConfigurationError('`abi` must be a list of ABI datasources')
 
                 datasource = cast(AbiDatasource[Any], self._datasources[datasource_config.name])
                 try:

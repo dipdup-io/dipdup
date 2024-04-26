@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
@@ -37,12 +38,11 @@ class TezosHeadIndexConfig(TezosIndexConfig):
 
     :param kind: always 'tezos.head'
     :param callback: Callback name
-    :param datasource: Index datasource to receive head blocks
-    :param handlers: Mapping of head block handlers
+    :param datasources: `tezos` datasources to use
     """
 
     kind: Literal['tezos.head']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     callback: str
 
     @property
@@ -55,4 +55,4 @@ class TezosHeadIndexConfig(TezosIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = TezosTzktHeadHandlerConfig(callback=self.callback)
+        self.handlers = (TezosTzktHeadHandlerConfig(callback=self.callback),)

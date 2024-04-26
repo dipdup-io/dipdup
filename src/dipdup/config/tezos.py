@@ -1,9 +1,11 @@
+import random
 from typing import Literal
 
 from pydantic import ConfigDict
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import IndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
@@ -74,10 +76,18 @@ class TezosIndexConfig(IndexConfig):
     """TzKT index config
 
     :param kind: starts with 'tezos'
-    :param datasource: `tezos.tzkt` datasource to use
+    :param datasources: `tezos` datasources to use
     """
 
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
+
+    @property
+    def merge_subscriptions(self) -> bool:
+        return any(d.merge_subscriptions for d in self.datasources)
+
+    @property
+    def random_datasource(self) -> TezosTzktDatasourceConfig:
+        return random.choice(self.datasources)
 
     def get_subscriptions(self) -> set[Subscription]:
         return {HeadSubscription()}

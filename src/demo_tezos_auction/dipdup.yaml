@@ -19,7 +19,8 @@ datasources:
 templates:
   auction:
     kind: tezos.operations
-    datasource: <datasource>
+    datasources:
+      - <datasource>
     contracts:
       - <auction>
     handlers:

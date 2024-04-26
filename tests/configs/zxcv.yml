@@ -17,7 +17,8 @@ datasources:
 indexes:
   zxcv:
     kind: tezos.operations
-    datasource: tzkt
+    datasources:
+      - tzkt
     contracts:
       - zxcv
     handlers:

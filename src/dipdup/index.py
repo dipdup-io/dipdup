@@ -2,6 +2,7 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -9,7 +10,6 @@ from typing import cast
 
 import dipdup.models as models
 from dipdup.config import ResolvedIndexConfigU
-from dipdup.context import DipDupContext
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.models import IndexStatus
@@ -19,6 +19,9 @@ from dipdup.performance import metrics
 from dipdup.performance import queues
 from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
+
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
 
 IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
@@ -39,22 +42,18 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: IndexConfigT,
-        datasource: IndexDatasourceT,
+        datasources: tuple[IndexDatasourceT, ...],
     ) -> None:
         self._ctx = ctx
         self._config = config
-        self._datasource = datasource
+        self._datasources = datasources
         self._queue: deque[IndexQueueItemT] = deque()
         queues.add_queue(self._queue, f'index_realtime:{config.name}:{id(self)})')
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
-
-    @property
-    def datasources(self) -> tuple[IndexDatasource[Any], ...]:
-        return (self.datasource,)
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
@@ -117,8 +116,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._logger.debug('Processing data of level %s', batch_level)
         started_at = time.time()
 
-        # FIXME: TezosHeadIndexConfig, TezosOperationsUnfilteredIndexConfig still use own methods; see FIXMEs
-        matched_handlers = self._match_level_data(self._config.handlers, level_data)  # type: ignore[union-attr]
+        matched_handlers = self._match_level_data(self._config.handlers, level_data)
 
         total_matched = len(matched_handlers)
         Metrics.set_index_handlers_matched(total_matched)
@@ -142,8 +140,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         return self._config.name
 
     @property
-    def datasource(self) -> IndexDatasourceT:
-        return self._datasource
+    def datasources(self) -> tuple[IndexDatasourceT, ...]:
+        return self._datasources
+
+    @property
+    def random_datasource(self) -> IndexDatasourceT:
+        return self._datasources[0]
 
     @property
     def state(self) -> models.Index:
@@ -162,7 +164,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
         subs = self._config.get_subscriptions()
-        sync_levels = {self.datasource.get_sync_level(s) for s in subs}
+        sync_levels = {d.get_sync_level(s) for s in subs for d in self.datasources}
         if not sync_levels:
             raise FrameworkException('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:

@@ -41,11 +41,11 @@ async def test_ignored_type_filter(
     index_config: TezosOperationsIndexConfig,
 ) -> None:
     index_config.types = ()
-    addresses, hashes = await get_origination_filters(index_config, tzkt)
+    addresses, hashes = await get_origination_filters(index_config, (tzkt,))
     assert not addresses
     assert not hashes
 
-    addresses, hashes = await get_transaction_filters(index_config, tzkt)
+    addresses, hashes = await get_transaction_filters(index_config)
     assert not addresses
     assert not hashes
 
@@ -65,7 +65,7 @@ async def test_get_origination_filters(
             ),
         ),
     )
-    addresses, hashes = await get_origination_filters(index_config, tzkt)
+    addresses, hashes = await get_origination_filters(index_config, (tzkt,))
     assert addresses == {'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}
     assert not hashes
 
@@ -79,7 +79,7 @@ async def test_get_origination_filters(
             ),
         ),
     )
-    addresses, hashes = await get_origination_filters(index_config, tzkt)
+    addresses, hashes = await get_origination_filters(index_config, (tzkt,))
     assert not addresses
     assert hashes == {-1585533315}
 
@@ -95,7 +95,7 @@ async def test_get_origination_filters(
     )
     # NOTE: Resolved earlier
     with pytest.raises(FrameworkException):
-        await get_origination_filters(index_config, tzkt)
+        await get_origination_filters(index_config, (tzkt,))
 
     index_config.handlers = (
         TezosOperationsHandlerConfig(
@@ -107,7 +107,7 @@ async def test_get_origination_filters(
             ),
         ),
     )
-    addresses, hashes = await get_origination_filters(index_config, tzkt)
+    addresses, hashes = await get_origination_filters(index_config, (tzkt,))
     assert not addresses
     assert hashes == set()
 
@@ -117,11 +117,11 @@ async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: 
     index_config.types = (TezosOperationType.transaction,)
     index_config.contracts[2].code_hash = -680664524
 
-    filters = await get_transaction_filters(index_config, tzkt)
+    filters = await get_transaction_filters(index_config)
     assert filters == ({'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'}, {-680664524, -1585533315})
 
     index_config.types = ()
-    filters = await get_transaction_filters(index_config, tzkt)
+    filters = await get_transaction_filters(index_config)
     assert filters == (set(), set())
 
 
@@ -134,7 +134,7 @@ async def test_get_sync_level() -> None:
         with pytest.raises(FrameworkException):
             index.get_sync_level()
 
-        index.datasource.set_sync_level(None, 0)
+        index.datasources[0].set_sync_level(None, 0)
         assert index.get_sync_level() == 0
 
         subs = index._config.get_subscriptions()
@@ -144,7 +144,7 @@ async def test_get_sync_level() -> None:
         }
 
         for i, sub in enumerate(subs):
-            index.datasource.set_sync_level(sub, i + 1)
+            index.datasources[0].set_sync_level(sub, i + 1)
             assert index.get_sync_level() == i + 1
 
 
@@ -172,7 +172,7 @@ async def test_realtime() -> None:
         # NOTE: Fill the queue while index is IndexStatus.new
         for _, operations in all_operations.items():
             await dispatcher._on_tzkt_operations(
-                datasource=index.datasource,
+                datasource=index.datasources[0],
                 operations=operations,
             )
 

@@ -5,7 +5,7 @@ from dipdup.config.tezos_token_balances import TezosTokenBalancesHandlerConfig
 from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_token_balances.matcher import match_token_balances
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosTokenBalanceData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
@@ -14,7 +14,7 @@ QueueItem = tuple[TezosTokenBalanceData, ...] | RollbackMessage
 
 
 class TezosTokenBalancesIndex(
-    TezosTzktIndex[TezosTokenBalancesIndexConfig, QueueItem],
+    TezosIndex[TezosTokenBalancesIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.token_balance,
 ):
     async def _synchronize(self, sync_level: int) -> None:
@@ -35,7 +35,7 @@ class TezosTokenBalancesIndex(
 
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             # NOTE: If index is out of date fetch balances as of the current head.
-            async for balances_batch in self._datasource.iter_token_balances(
+            async for balances_batch in self.random_datasource.iter_token_balances(
                 addresses, token_ids, last_level=head_level
             ):
                 matched_handlers = match_token_balances(self._config.handlers, balances_batch)
@@ -53,7 +53,6 @@ class TezosTokenBalancesIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             # NOTE: missing `operation_id` field in API to identify operation
             None,
             token_balance,

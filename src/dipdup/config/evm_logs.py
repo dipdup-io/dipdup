@@ -4,15 +4,13 @@ from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic import ConfigDict
-from pydantic import Field
 from pydantic.dataclasses import dataclass
 
-from dipdup.config import AbiDatasourceConfig
+from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmDatasourceConfigU
 from dipdup.config.evm import EvmIndexConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
@@ -33,7 +31,7 @@ class EvmLogsHandlerConfig(HandlerConfig):
     :param name: Event name
     """
 
-    contract: EvmContractConfig
+    contract: Alias[EvmContractConfig]
     name: str
 
     def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
@@ -57,17 +55,15 @@ class EvmLogsIndexConfig(EvmIndexConfig):
     """Subsquid datasource config
 
     :param kind: Always 'evm.logs'
-    :param datasource: Subsquid datasource
+    :param datasources: `evm` datasources to use
     :param handlers: Event handlers
-    :param abi: One or more `evm.abi` datasource(s) for the same network
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing and disable this index
     """
 
     kind: Literal['evm.logs']
-    datasource: EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig
-    handlers: tuple[EvmLogsHandlerConfig, ...] = Field(default_factory=tuple)
-    abi: AbiDatasourceConfig | tuple[AbiDatasourceConfig, ...] | None = None
+    datasources: tuple[Alias[EvmDatasourceConfigU], ...]
+    handlers: tuple[EvmLogsHandlerConfig, ...]
 
     first_level: int = 0
     last_level: int = 0

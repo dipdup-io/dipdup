@@ -9,6 +9,7 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
+from dipdup.config import Alias
 from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -141,8 +142,8 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
     """
 
     type: Literal['transaction'] = 'transaction'
-    source: TezosContractConfig | None = None
-    destination: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    destination: Alias[TezosContractConfig] | None = None
     entrypoint: str | None = None
     optional: bool = False
     alias: str | None = None
@@ -201,8 +202,8 @@ class TezosOperationsHandlerOriginationPatternConfig(TezosOperationsPatternConfi
     """
 
     type: Literal['origination'] = 'origination'
-    source: TezosContractConfig | None = None
-    originated_contract: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    originated_contract: Alias[TezosContractConfig] | None = None
     optional: bool = False
     strict: bool = False
     alias: str | None = None
@@ -249,8 +250,8 @@ class TezosOperationsHandlerSmartRollupExecutePatternConfig(TezosOperationsPatte
     """
 
     type: Literal['sr_execute'] = 'sr_execute'
-    source: TezosContractConfig | None = None
-    destination: TezosContractConfig | None = None
+    source: Alias[TezosContractConfig] | None = None
+    destination: Alias[TezosContractConfig] | None = None
     optional: bool = False
     alias: str | None = None
 
@@ -279,7 +280,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations'
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: `tezos` datasources to use
     :param handlers: List of indexer handlers
     :param types: Types of transaction to fetch
     :param contracts: Aliases of contracts being indexed in `contracts` section
@@ -288,9 +289,9 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosOperationsHandlerConfig, ...]
-    contracts: list[TezosContractConfig] = Field(default_factory=list)
+    contracts: list[Alias[TezosContractConfig]] = Field(default_factory=list)
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 
     first_level: int = 0
@@ -300,7 +301,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
         subs = super().get_subscriptions()
 
         if TezosOperationType.transaction in self.types:
-            if self.datasource.merge_subscriptions:
+            if self.merge_subscriptions:
                 subs.add(TransactionSubscription())
             else:
                 for contract_config in self.contracts:
@@ -312,7 +313,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
             subs.add(OriginationSubscription())
 
         if TezosOperationType.sr_execute in self.types:
-            if self.datasource.merge_subscriptions:
+            if self.merge_subscriptions:
                 subs.add(SmartRollupExecuteSubscription())
             else:
                 for contract_config in self.contracts:
@@ -393,7 +394,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """Operation index config
 
     :param kind: always 'tezos.operations_unfiltered'
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: `tezos` datasources to use
     :param callback: Callback name
     :param types: Types of transaction to fetch
 
@@ -402,7 +403,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     """
 
     kind: Literal['tezos.operations_unfiltered']
-    datasource: TezosTzktDatasourceConfig
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     callback: str
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)
 
@@ -411,7 +412,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.handler_config = TezosOperationsUnfilteredHandlerConfig(callback=self.callback)
+        self.handlers = (TezosOperationsUnfilteredHandlerConfig(callback=self.callback),)
 
     def get_subscriptions(self) -> set[Subscription]:
         subs = super().get_subscriptions()

@@ -659,6 +659,8 @@ async def new(
     """Create a new project interactively."""
     import os
 
+    from survey._widgets import Escape  # type: ignore[import-untyped]
+
     from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
@@ -670,7 +672,10 @@ async def new(
     elif replay:
         answers = answers_from_replay(replay)
     else:
-        answers = answers_from_terminal(template)
+        try:
+            answers = answers_from_terminal(template)
+        except Escape:
+            return
 
     _logger.info('Rendering project')
     render_project(answers, force)

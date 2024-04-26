@@ -94,7 +94,7 @@ async def test_reserved_keywords() -> None:
     assert raw_config['indexes']['tzbtc_holders_mainnet']['handlers'][1]['from_'] == 'tzbtc_mainnet'
 
     config = DipDupConfig.load([Path(__file__).parent.parent / 'configs' / 'demo_tezos_token_transfers_4.yml'])
-    assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[union-attr]
+    assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[misc,union-attr]
 
 
 async def test_dump() -> None:

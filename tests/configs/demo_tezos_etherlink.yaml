@@ -23,7 +23,8 @@ contracts:
 indexes:
   rollup_operations:
     kind: tezos.operations
-    datasource: tzkt
+    datasources:
+      - tzkt
     contracts:
       - ticketer
       - ticket_helper

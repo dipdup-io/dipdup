@@ -21,7 +21,8 @@ datasources:
 indexes:
   hen_mainnet:
     kind: tezos.operations
-    datasource: tzkt_mainnet
+    datasources:
+      - tzkt_mainnet
     contracts:
       - HEN_minter
     handlers:

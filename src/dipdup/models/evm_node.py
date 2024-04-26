@@ -5,9 +5,6 @@ from typing import Literal
 from pydantic.dataclasses import dataclass
 
 from dipdup.fetcher import HasLevel
-from dipdup.models.evm import EvmLogData
-from dipdup.models.evm import EvmTraceData
-from dipdup.models.evm import EvmTransactionData
 from dipdup.subscriptions import Subscription
 
 
@@ -106,9 +103,3 @@ class EvmNodeSyncingData:
             highest_block=int(syncing_json['highestBlock'], 16),
             starting_block=int(syncing_json['startingBlock'], 16),
         )
-
-
-# NOTE: Compatibility aliases; remove in 9.0
-EvmNodeTraceData = EvmTraceData
-EvmNodeLogData = EvmNodeEventData = EvmLogData
-EvmNodeTransactionData = EvmTransactionData

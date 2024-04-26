@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from dipdup.fetcher import DataFetcher
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
+from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosTokenTransferData
 
 if TYPE_CHECKING:
@@ -14,12 +14,11 @@ if TYPE_CHECKING:
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
-class TokenTransferFetcher(DataFetcher[TezosTokenTransferData]):
-    _datasource: TezosTzktDatasource
+class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
 
     def __init__(
         self,
-        datasource: TezosTzktDatasource,
+        datasources: tuple[TezosTzktDatasource, ...],
         token_addresses: set[str],
         token_ids: set[int],
         from_addresses: set[str],
@@ -27,7 +26,7 @@ class TokenTransferFetcher(DataFetcher[TezosTokenTransferData]):
         first_level: int,
         last_level: int,
     ) -> None:
-        super().__init__(datasource, first_level, last_level)
+        super().__init__(datasources, first_level, last_level)
         self._logger = logging.getLogger('dipdup.fetcher')
         self._token_addresses = token_addresses
         self._token_ids = token_ids
@@ -35,7 +34,7 @@ class TokenTransferFetcher(DataFetcher[TezosTokenTransferData]):
         self._to_addresses = to_addresses
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[TezosTokenTransferData, ...]]]:
-        token_transfer_iter = self._datasource.iter_token_transfers(
+        token_transfer_iter = self.random_datasource.iter_token_transfers(
             self._token_addresses,
             self._token_ids,
             self._from_addresses,

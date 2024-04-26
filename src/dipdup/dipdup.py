@@ -66,7 +66,6 @@ from dipdup.models.evm import EvmLogData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeSyncingData
-from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.tezos import TezosBigMapData
 from dipdup.models.tezos import TezosEventData
 from dipdup.models.tezos import TezosHeadBlockData
@@ -398,7 +397,6 @@ class IndexDispatcher:
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
-                datasource.call_on_traces(self._on_evm_node_traces)
                 datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
@@ -416,7 +414,7 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
-            if isinstance(index, TezosHeadIndex) and index.datasource == datasource:
+            if isinstance(index, TezosHeadIndex) and datasource in index.datasources:
                 index.push_realtime_message(head)
 
     async def _on_evm_node_head(self, datasource: EvmNodeDatasource, head: EvmNodeHeadData) -> None:
@@ -444,13 +442,6 @@ class IndexDispatcher:
             if datasource not in index.node_datasources:
                 continue
             index.push_realtime_message(logs)
-
-    async def _on_evm_node_traces(
-        self,
-        datasource: EvmNodeDatasource,
-        traces: tuple[EvmNodeTraceData, ...],
-    ) -> None:
-        raise NotImplementedError
 
     async def _on_evm_node_transactions(
         self,
@@ -483,24 +474,24 @@ class IndexDispatcher:
             return
 
         for index in self._indexes.values():
-            if isinstance(index, TezosOperationsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosOperationsIndex) and datasource in index.datasources:
                 index.push_realtime_message(operation_subgroups)
 
     async def _on_tzkt_token_transfers(
         self, datasource: TezosTzktDatasource, token_transfers: tuple[TezosTokenTransferData, ...]
     ) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosTokenTransfersIndex) and index.datasource == datasource:
+            if isinstance(index, TezosTokenTransfersIndex) and datasource in index.datasources:
                 index.push_realtime_message(token_transfers)
 
     async def _on_tzkt_big_maps(self, datasource: TezosTzktDatasource, big_maps: tuple[TezosBigMapData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosBigMapsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosBigMapsIndex) and datasource in index.datasources:
                 index.push_realtime_message(big_maps)
 
     async def _on_tzkt_events(self, datasource: TezosTzktDatasource, events: tuple[TezosEventData, ...]) -> None:
         for index in self._indexes.values():
-            if isinstance(index, TezosEventsIndex) and index.datasource == datasource:
+            if isinstance(index, TezosEventsIndex) and datasource in index.datasources:
                 index.push_realtime_message(events)
 
     async def _on_rollback(

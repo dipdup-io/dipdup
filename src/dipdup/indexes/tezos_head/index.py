@@ -5,7 +5,7 @@ from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.config.tezos_head import TezosTzktHeadHandlerConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosHeadBlockData
@@ -15,7 +15,7 @@ HeadQueueItem = TezosHeadBlockData | RollbackMessage
 
 
 class TezosHeadIndex(
-    TezosTzktIndex[TezosHeadIndexConfig, HeadQueueItem],
+    TezosIndex[TezosHeadIndexConfig, HeadQueueItem],
     message_type=TezosTzktMessageType.head,
 ):
     async def _synchronize(self, sync_level: int) -> None:
@@ -56,7 +56,6 @@ class TezosHeadIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             level_data.hash,
             level_data,
         )

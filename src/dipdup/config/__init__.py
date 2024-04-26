@@ -23,10 +23,13 @@ import re
 from abc import ABC
 from abc import abstractmethod
 from collections import Counter
+from collections import defaultdict
 from contextlib import suppress
 from pathlib import Path
 from pydoc import locate
+from types import NoneType
 from typing import TYPE_CHECKING
+from typing import Annotated
 from typing import Any
 from typing import Generic
 from typing import Literal
@@ -46,7 +49,6 @@ from pydantic_core import to_jsonable_python
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
@@ -66,6 +68,9 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
+_T = TypeVar('_T')
+Alias = Annotated[_T, NoneType]
+
 _logger = logging.getLogger(__name__)
 
 
@@ -75,7 +80,7 @@ class SqliteDatabaseConfig:
     SQLite connection config
 
     :param kind: always 'sqlite'
-    :param path: Path to .sqlite3 file, leave default for in-memory database (`:memory:`)
+    :param path: Path to .sqlite file, leave default for in-memory database (`:memory:`)
     :param immune_tables: List of tables to preserve during reindexing
     """
 
@@ -268,7 +273,7 @@ class DatasourceConfig(ABC, NameMixin):
 
     kind: str
     url: str
-    http: HttpConfig | None
+    http: HttpConfig | None = None
 
 
 class AbiDatasourceConfig(DatasourceConfig):
@@ -386,11 +391,11 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     """Index config
 
     :param kind: Defined by child class
-    :param datasource: Alias of index datasource in `datasources` section
+    :param datasources: Aliases of index datasources in `datasources` section
     """
 
     kind: str
-    datasource: DatasourceConfig
+    datasources: tuple[Alias[DatasourceConfig], ...]
 
     def __post_init__(self) -> None:
         NameMixin.__post_init__(self)
@@ -415,8 +420,9 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     @classmethod
     def strip(cls, config_dict: dict[str, Any]) -> None:
         """Strip config from tunables that are not needed for hash calculation."""
-        config_dict['datasource'].pop('http', None)
-        config_dict['datasource'].pop('buffer_size', None)
+        for datasource in config_dict['datasources']:
+            datasource.pop('http', None)
+            datasource.pop('buffer_size', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -473,7 +479,7 @@ class JobConfig(NameMixin):
     :param daemon: Run hook as a daemon (never stops)
     """
 
-    hook: HookConfig
+    hook: Alias[HookConfig]
     args: dict[str, Any] = Field(default_factory=dict)
     crontab: str | None = None
     interval: int | None = None
@@ -594,7 +600,8 @@ class ApiConfig:
     port: int = 46339  # dial INDEX 😎
 
 
-@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+# NOTE: Should be the only place where extras are allowed
+@dataclass(config=ConfigDict(extra='allow'), kw_only=True)
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
@@ -619,15 +626,13 @@ class AdvancedConfig:
     unsafe_sqlite: bool = False
     alt_operation_matcher: bool = False
 
-    class Config:
-        extra = 'allow'
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class DipDupConfig:
     """Main indexer config
 
-    :param spec_version: Version of config specification, currently always `2.0`
+    :param spec_version: Version of config specification, currently always `3.0`
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
@@ -698,11 +703,23 @@ class DipDupConfig:
             raise
         except ValidationError as e:
             msgs = []
+            errors_by_path = defaultdict(list)
             for error in e.errors():
-                if error['loc'][-1] == 'kind':
+                loc = error['loc']
+                index = 2 if isinstance(loc[-2], int) else 1
+                path = '.'.join(str(e) for e in loc[:-index])
+                errors_by_path[path].append(error)
+
+            for path, errors in errors_by_path.items():
+                fields = {error['loc'][-1] for error in errors}
+
+                # NOTE: If `kind` or `type` don't match the expected value, skip this class; it's a wrong Union member. 
+                if 'kind' in fields or 'type' in fields:
                     continue
-                path = '.'.join(str(e) for e in error['loc'])
-                msgs.append(f'- {path}: {error["msg"]}')
+
+                for error in errors:
+                    path = '.'.join(str(e) for e in error['loc'])
+                    msgs.append(f'- {path}: {error["msg"]}')
 
             msg = 'Config validation failed:\n\n' + '\n'.join(msgs)
             raise ConfigurationError(msg) from e
@@ -920,18 +937,6 @@ class DipDupConfig:
                 self._resolve_template(index_config)
 
     def _resolve_links(self) -> None:
-        for datasource_config in self.datasources.values():
-            if not isinstance(datasource_config, EvmSubsquidDatasourceConfig):
-                continue
-            node_field = datasource_config.node
-            if isinstance(node_field, str):
-                datasource_config.node = self.datasources[node_field]
-            elif isinstance(node_field, tuple):
-                nodes = []
-                for node in node_field:
-                    nodes.append(self.get_evm_node_datasource(node) if isinstance(node, str) else node)
-                datasource_config.node = tuple(nodes)
-
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException('Index templates must be resolved first')
@@ -952,18 +957,11 @@ class DipDupConfig:
         """
         handler_config: HandlerConfig
 
-        # NOTE: Each index must have a corresponding index datasource
-        if isinstance(index_config.datasource, str):
-            name = index_config.datasource
-            if index_config.kind.startswith('tezos'):
-                index_config.datasource = self.get_tezos_tzkt_datasource(name)
-            elif index_config.kind.startswith('evm'):
-                try:
-                    index_config.datasource = self.get_evm_subsquid_datasource(name)
-                except ConfigurationError:
-                    index_config.datasource = self.get_evm_node_datasource(name)
-            else:
-                raise FrameworkException(f'Unknown datasource type for index `{index_config.name}`')
+        datasources = list(index_config.datasources)
+        for i, datasource in enumerate(datasources):
+            if isinstance(datasource, str):
+                datasources[i] = self.get_datasource(datasource)  # type: ignore[assignment]
+        index_config.datasources = tuple(datasources)  # type: ignore[assignment]
 
         if isinstance(index_config, TezosOperationsIndexConfig):
             if index_config.contracts is not None:
@@ -1003,7 +1001,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TezosHeadIndexConfig):
-            index_config.handler_config.parent = index_config
+            index_config.handlers[0].parent = index_config
 
         elif isinstance(index_config, TezosTokenTransfersIndexConfig):
             for handler_config in index_config.handlers:
@@ -1026,7 +1024,7 @@ class DipDupConfig:
                     handler_config.contract = self.get_tezos_contract(handler_config.contract)
 
         elif isinstance(index_config, TezosOperationsUnfilteredIndexConfig):
-            index_config.handler_config.parent = index_config
+            index_config.handlers[0].parent = index_config
 
         elif isinstance(index_config, TezosEventsIndexConfig):
             for handler_config in index_config.handlers:
@@ -1041,9 +1039,6 @@ class DipDupConfig:
 
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
-
-        elif isinstance(index_config, EvmTracesIndexConfig):
-            raise NotImplementedError
 
         elif isinstance(index_config, EvmTransactionsIndexConfig):
             for handler_config in index_config.handlers:
@@ -1087,7 +1082,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -1126,21 +1120,19 @@ TezosIndexConfigU = (
     | TezosTokenTransfersIndexConfig
     | TezosTokenBalancesIndexConfig
 )
-EvmIndexConfigU = EvmLogsIndexConfig | EvmTracesIndexConfig | EvmTransactionsIndexConfig
+EvmIndexConfigU = EvmLogsIndexConfig | EvmTransactionsIndexConfig
 
 ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
-def _patch_annotations(replace_table: dict[str, str]) -> None:
+def _patch_annotations() -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
     DipDup YAML config uses string aliases for contracts and datasources. During `DipDupConfig.load` these
     aliases are resolved to actual configs from corresponding sections and never become strings again.
     This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
     checks everywhere.
-
-    You can revert these changes by calling `patch_annotations(orinal_annotations)`, but tests will fail.
     """
     self = importlib.import_module(__name__)
     submodules = tuple(inspect.getmembers(self, inspect.ismodule))
@@ -1158,8 +1150,19 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
             reload = False
             for name, annotation in value.__annotations__.items():
                 # NOTE: All annotations are strings now
-                if new_annotation := replace_table.get(annotation):
-                    value.__annotations__[name] = new_annotation
+                if not isinstance(annotation, str):
+                    continue
+
+                # NOTE: Unwrap `Alias[...]` to 'str | ...' to allow using aliases in config files
+                unwrapped = annotation
+
+                while match := re.match(r'(.*)Alias\[(.*)', unwrapped):
+                    before, body = match.groups()
+                    body, after = body.split(']', 1)
+                    unwrapped = f'{before}str | {body}{after}'
+
+                if annotation != unwrapped:
+                    value.__annotations__[name] = unwrapped
                     reload = True
 
             if not reload:
@@ -1175,22 +1178,4 @@ def _patch_annotations(replace_table: dict[str, str]) -> None:
             setattr(submodule, attr, value)
 
 
-_original_to_aliased = {
-    'TezosTzktDatasourceConfig': 'str | TezosTzktDatasourceConfig',
-    'EvmSubsquidDatasourceConfig': 'str | EvmSubsquidDatasourceConfig',
-    'EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig': 'str | EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig',
-    'ContractConfig': 'str | ContractConfig',
-    'ContractConfig | None': 'str | ContractConfig | None',
-    'TezosContractConfig': 'str | TezosContractConfig',
-    'TezosContractConfig | None': 'str | TezosContractConfig | None',
-    'EvmContractConfig': 'str | EvmContractConfig',
-    'EvmContractConfig | None': 'str | EvmContractConfig | None',
-    'list[TezosContractConfig]': 'list[str | TezosContractConfig]',
-    'HookConfig': 'str | HookConfig',
-    'EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None': (
-        'str | tuple[str, ...] | EvmNodeDatasourceConfig | tuple[EvmNodeDatasourceConfig, ...] | None'
-    ),
-}
-
-
-_patch_annotations(_original_to_aliased)
+_patch_annotations()

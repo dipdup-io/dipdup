@@ -8,8 +8,8 @@ from typing import Generic
 
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.exceptions import FrameworkException
+from dipdup.fetcher import BufferT
 from dipdup.fetcher import DataFetcher
-from dipdup.fetcher import FetcherBufferT
 
 EVM_NODE_READAHEAD_LIMIT = 5000
 MIN_BATCH_SIZE = 10
@@ -18,15 +18,7 @@ BATCH_SIZE_UP = 1.1
 BATCH_SIZE_DOWN = 0.5
 
 
-class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
-    def __init__(
-        self,
-        datasources: tuple[EvmNodeDatasource, ...],
-        first_level: int,
-        last_level: int,
-    ) -> None:
-        super().__init__(datasources[0], first_level, last_level)
-        self._datasources = datasources
+class EvmNodeFetcher(Generic[BufferT], DataFetcher[BufferT, EvmNodeDatasource], ABC):
 
     def get_next_batch_size(self, batch_size: int, ratelimited: bool) -> int:
         if ratelimited:

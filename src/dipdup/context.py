@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import TypeVar
-from typing import cast
 
 from tortoise.exceptions import OperationalError
 
@@ -22,14 +21,12 @@ from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
-from dipdup.config import ResolvedIndexConfigU
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.config.evm_node import EvmNodeDatasourceConfig
-from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.config.evm_traces import EvmTracesIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
 from dipdup.config.tezos_head import TezosHeadIndexConfig
@@ -57,6 +54,17 @@ from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
+from dipdup.index import Index as IndexCls
+from dipdup.indexes.evm import EvmIndex
+from dipdup.indexes.evm_logs.index import EvmLogsIndex
+from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
+from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
+from dipdup.indexes.tezos_events.index import TezosEventsIndex
+from dipdup.indexes.tezos_head.index import TezosHeadIndex
+from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
+from dipdup.indexes.tezos_token_balances.index import TezosTokenBalancesIndex
+from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import Contract
 from dipdup.models import ContractMetadata
 from dipdup.models import Head
@@ -296,92 +304,72 @@ class DipDupContext:
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
-    async def _spawn_index(self, name: str, state: Index | None = None) -> Any:
-        # NOTE: Avoiding circular import
-        from dipdup.indexes.evm_logs.index import EvmLogsIndex
-        from dipdup.indexes.evm_traces.index import EvmTracesIndex
-        from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
-        from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
-        from dipdup.indexes.tezos_events.index import TezosEventsIndex
-        from dipdup.indexes.tezos_head.index import TezosHeadIndex
-        from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
-        from dipdup.indexes.tezos_token_balances.index import TezosTokenBalancesIndex
-        from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
+    async def _spawn_index(
+        self,
+        name: str,
+        state: Index | None = None,
+    ) -> IndexCls[Any, Any, Any]:
 
-        index_config = cast(ResolvedIndexConfigU, self.config.get_index(name))
-        index: (
-            TezosOperationsIndex
-            | TezosBigMapsIndex
-            | TezosHeadIndex
-            | TezosTokenBalancesIndex
-            | TezosTokenTransfersIndex
-            | TezosEventsIndex
-            | EvmLogsIndex
-            | EvmTracesIndex
-            | EvmTransactionsIndex
-        )
+        index_config = self.config.get_index(name)
 
-        datasource_name = index_config.datasource.name
-        datasource: TezosTzktDatasource | EvmSubsquidDatasource | EvmNodeDatasource
-
-        if isinstance(index_config, TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosOperationsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosBigMapsIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosBigMapsIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosHeadIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosHeadIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTokenBalancesIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosTokenBalancesIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosTokenTransfersIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosTokenTransfersIndex(self, index_config, datasource)
-        elif isinstance(index_config, TezosEventsIndexConfig):
-            datasource = self.get_tezos_tzkt_datasource(datasource_name)
-            index = TezosEventsIndex(self, index_config, datasource)
-        elif isinstance(index_config, EvmLogsIndexConfig):
-            datasource_config = index_config.datasource
-            if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
-                datasource = self.get_evm_subsquid_datasource(datasource_name)
-            elif isinstance(datasource_config, EvmNodeDatasourceConfig):
-                datasource = self.get_evm_node_datasource(datasource_name)
-            else:
-                raise NotImplementedError
-            index = EvmLogsIndex(self, index_config, datasource)
-            for node_datasource in index.node_datasources:
-                node_datasource.add_index(index_config)
-        elif isinstance(index_config, EvmTracesIndexConfig):
-            raise NotImplementedError
-        elif isinstance(index_config, EvmTransactionsIndexConfig):
-            datasource_config = index_config.datasource
-            if isinstance(datasource_config, EvmSubsquidDatasourceConfig):
-                datasource = self.get_evm_subsquid_datasource(datasource_name)
-            elif isinstance(datasource_config, EvmNodeDatasourceConfig):
-                datasource = self.get_evm_node_datasource(datasource_name)
-            else:
-                raise NotImplementedError
-            index = EvmTransactionsIndex(self, index_config, datasource)
-            for node_datasource in index.node_datasources:
-                node_datasource.add_index(index_config)
+        index: IndexCls[Any, Any, Any]
+        if isinstance(index_config, EvmIndexConfig):
+            index = self._create_evm_index(index_config)
+        elif isinstance(index_config, TezosIndexConfig):
+            index = self._create_tezos_index(index_config)
         else:
             raise NotImplementedError
 
-        datasource.add_index(index_config)
-
-        handlers = (
-            (index_config.handler_config,)
-            if isinstance(index_config, TezosOperationsUnfilteredIndexConfig | TezosHeadIndexConfig)
-            else index_config.handlers
-        )
-        for handler_config in handlers:
+        for handler_config in index_config.handlers:
             self.register_handler(handler_config)
+
         await index.initialize_state(state)
 
         # NOTE: IndexDispatcher will handle further initialization when it's time
         self._pending_indexes.put_nowait(index)
+
+        return index
+
+    def _create_evm_index(self, index_config: EvmIndexConfig) -> EvmIndex[Any, Any, Any]:
+        datasource_configs = index_config.datasources
+        datasources = tuple(self.get_evm_datasource(c.name) for c in datasource_configs)
+        index_datasources = tuple(d for d in datasources if isinstance(d, IndexDatasource))
+
+        for datasource in index_datasources:
+            datasource.attach_index(index_config)
+
+        index: EvmIndex[Any, Any, Any]
+        if isinstance(index_config, EvmTransactionsIndexConfig):
+            index = EvmTransactionsIndex(self, index_config, index_datasources)
+        elif isinstance(index_config, EvmLogsIndexConfig):
+            index = EvmLogsIndex(self, index_config, index_datasources)
+        else:
+            raise NotImplementedError
+
+        return index
+
+    def _create_tezos_index(self, index_config: TezosIndexConfig) -> TezosIndex[Any, Any]:
+        datasources = tuple(self.get_tezos_tzkt_datasource(c.name) for c in index_config.datasources)
+
+        index: TezosIndex[Any, Any]
+        if isinstance(index_config, TezosOperationsIndexConfig | TezosOperationsUnfilteredIndexConfig):
+            index = TezosOperationsIndex(self, index_config, datasources)
+        elif isinstance(index_config, TezosBigMapsIndexConfig):
+            index = TezosBigMapsIndex(self, index_config, datasources)
+        elif isinstance(index_config, TezosHeadIndexConfig):
+            index = TezosHeadIndex(self, index_config, datasources)
+        elif isinstance(index_config, TezosTokenBalancesIndexConfig):
+            index = TezosTokenBalancesIndex(self, index_config, datasources)
+        elif isinstance(index_config, TezosTokenTransfersIndexConfig):
+            index = TezosTokenTransfersIndex(self, index_config, datasources)
+        elif isinstance(index_config, TezosEventsIndexConfig):
+            index = TezosEventsIndex(self, index_config, datasources)
+        else:
+            raise NotImplementedError
+
+        for datasource in datasources:
+            datasource.attach_index(index_config)
+
         return index
 
     # TODO: disable_index(name: str)
@@ -435,12 +423,17 @@ class DipDupContext:
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    def _get_datasource(self, name: str, type_: type[DatasourceT]) -> DatasourceT:
+    def _get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
-        if not isinstance(datasource, type_):
-            raise ConfigurationError(f'Datasource `{name}` is not a `{type_.__name__}`')
+
+        for type_ in types:
+            if isinstance(datasource, type_):
+                break
+        else:
+            raise ConfigurationError(f"Datasource `{name}` is not a `{types}, it's {datasource}`")
+
         return datasource
 
     def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
@@ -452,17 +445,8 @@ class DipDupContext:
         return self._get_datasource(name, EvmSubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
-        """Get `evm.node` datasource by name or by linked `evm.subsquid` datasource name"""
-        with suppress(ConfigurationError):
-            return self._get_datasource(name, EvmNodeDatasource)
-        with suppress(ConfigurationError):
-            subsquid = self._get_datasource(name, EvmSubsquidDatasource)
-            # NOTE: Multiple nodes can be linked to a single subsquid. Network is the same, so grab any.
-            random_node = subsquid._config.random_node
-            if random_node is None:
-                raise ConfigurationError(f'No `evm.node` datasources linked to `{name}`')
-            return self._get_datasource(random_node.name, EvmNodeDatasource)
-        raise ConfigurationError(f'`{name}` datasource is neither `evm.node` nor `evm.subsquid`')
+        """Get `evm.node` datasource by name"""
+        return self._get_datasource(name, EvmNodeDatasource)
 
     def get_abi_etherscan_datasource(self, name: str) -> AbiEtherscanDatasource:
         """Get `abi.etherscan` datasource by name
@@ -470,6 +454,10 @@ class DipDupContext:
         :param name: Name of the datasource
         """
         return self._get_datasource(name, AbiEtherscanDatasource)
+
+    def get_evm_datasource(self, name: str) -> EvmSubsquidDatasource | EvmNodeDatasource | AbiEtherscanDatasource:
+        """Get `evm` datasource by name"""
+        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, AbiEtherscanDatasource)  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name
@@ -561,7 +549,6 @@ class DipDupContext:
         self,
         name: str,
         index: str,
-        datasource: IndexDatasource[Any],
         fmt: str | None = None,
         *args: Any,
         **kwargs: Any,
@@ -570,7 +557,6 @@ class DipDupContext:
 
         :param name: Handler name
         :param index: Index name
-        :param datasource: An instance of datasource that triggered the handler
         :param fmt: Format string for `ctx.logger` messages
         """
         module = f'{self.package.name}.handlers.{name}'
@@ -579,7 +565,6 @@ class DipDupContext:
             self,
             logger=FormattedLogger(module, fmt),
             handler_config=handler_config,
-            datasource=datasource,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
@@ -761,7 +746,6 @@ class HandlerContext(DipDupContext):
     :param transactions: Transaction manager (don't use it directly)
     :param logger: Context-aware logger instance
     :param handler_config: Configuration of the current handler
-    :param datasource: Index datasource instance
     """
 
     def __init__(
@@ -772,7 +756,6 @@ class HandlerContext(DipDupContext):
         transactions: TransactionManager,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: IndexDatasource[Any],
     ) -> None:
         super().__init__(
             config=config,
@@ -782,7 +765,6 @@ class HandlerContext(DipDupContext):
         )
         self.logger = logger
         self.handler_config = handler_config
-        self.datasource = datasource
         self.template_values = _TemplateValues(
             handler_config.parent.name if handler_config.parent else 'unknown',
             handler_config.parent._template_values if handler_config.parent else {},
@@ -794,7 +776,6 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: FormattedLogger,
         handler_config: HandlerConfig,
-        datasource: IndexDatasource[Any],
     ) -> HandlerContext:
         new_ctx = cls(
             config=ctx.config,
@@ -803,7 +784,6 @@ class HandlerContext(DipDupContext):
             transactions=ctx.transactions,
             logger=logger,
             handler_config=handler_config,
-            datasource=datasource,
         )
         ctx._link(new_ctx)
         return new_ctx

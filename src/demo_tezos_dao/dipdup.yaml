@@ -15,7 +15,8 @@ datasources:
 indexes:
   registry_dao:
     kind: tezos.operations
-    datasource: tzkt
+    datasources:
+      - tzkt
     types:
       - transaction
       - origination

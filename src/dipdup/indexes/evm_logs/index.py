@@ -1,18 +1,18 @@
 from collections import deque
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.evm_logs import EvmLogsHandlerConfig
 from dipdup.config.evm_logs import EvmLogsIndexConfig
-from dipdup.context import DipDupContext
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.indexes.evm_logs.fetcher import EvmLogFetcher
+from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm_logs.fetcher import EvmNodeLogFetcher
+from dipdup.indexes.evm_logs.fetcher import EvmSubsquidLogFetcher
 from dipdup.indexes.evm_logs.matcher import match_logs
-from dipdup.indexes.evm_subsquid import SubsquidIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.evm import EvmLog
 from dipdup.models.evm import EvmLogData
@@ -20,20 +20,23 @@ from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmLogData, ...] | RollbackMessage
-Datasource = EvmSubsquidDatasource | EvmNodeDatasource
+EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
+
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
 
 
 class EvmLogsIndex(
-    SubsquidIndex[EvmLogsIndexConfig, QueueItem, Datasource],
+    EvmIndex[EvmLogsIndexConfig, QueueItem, EvmDatasource],
     message_type=SubsquidMessageType.logs,
 ):
     def __init__(
         self,
-        ctx: DipDupContext,
+        ctx: 'DipDupContext',
         config: EvmLogsIndexConfig,
-        datasource: Datasource,
+        datasources: tuple[EvmDatasource, ...],
     ) -> None:
-        super().__init__(ctx, config, datasource)
+        super().__init__(ctx, config, datasources)
         self._topics: dict[str, dict[str, str]] | None = None
 
     @property
@@ -63,7 +66,7 @@ class EvmLogsIndex(
             await self._process_level_data(logs, sync_level)
             Metrics.set_sqd_processor_last_block(_level)
 
-    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmLogFetcher:
+    def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidLogFetcher:
         addresses = set()
         topics: deque[tuple[str | None, str]] = deque()
 
@@ -79,17 +82,20 @@ class EvmLogsIndex(
             ]
             topics.append((address, event_abi['topic0']))
 
-        if not isinstance(self._datasource, EvmSubsquidDatasource):
-            raise FrameworkException('Creating subsquid fetcher with non-subsquid datasource')
+        if not self.subsquid_datasources:
+            raise FrameworkException('Creating EvmSubsquidLogFetcher, but no `evm.subsquid` datasources available')
 
-        return EvmLogFetcher(
-            datasource=self._datasource,
+        return EvmSubsquidLogFetcher(
+            datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
             topics=tuple(topics),
         )
 
     def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeLogFetcher:
+        if not self.node_datasources:
+            raise FrameworkException('Creating EvmNodeLogFetcher, but no `evm.node` datasources available')
+
         return EvmNodeLogFetcher(
             datasources=self.node_datasources,
             first_level=first_level,
@@ -115,7 +121,6 @@ class EvmLogsIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             None,
             log,
         )

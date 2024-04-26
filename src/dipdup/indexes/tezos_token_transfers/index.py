@@ -6,7 +6,7 @@ from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_token_transfers.matcher import match_token_transfers
-from dipdup.indexes.tezos_tzkt import TezosTzktIndex
+from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
@@ -15,7 +15,7 @@ QueueItem = tuple[TezosTokenTransferData, ...] | RollbackMessage
 
 
 class TezosTokenTransfersIndex(
-    TezosTzktIndex[TezosTokenTransfersIndexConfig, QueueItem],
+    TezosIndex[TezosTokenTransfersIndexConfig, QueueItem],
     message_type=TezosTzktMessageType.token_transfer,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
@@ -34,7 +34,7 @@ class TezosTokenTransfersIndex(
                 to_addresses.add(handler_config.to.get_address())
 
         return TokenTransferFetcher(
-            datasource=self._datasource,
+            datasources=self._datasources,
             token_addresses=token_addresses,
             token_ids=token_ids,
             from_addresses=from_addresses,
@@ -67,7 +67,6 @@ class TezosTokenTransfersIndex(
         await self._ctx.fire_handler(
             handler_config.callback,
             handler_config.parent.name,
-            self.datasource,
             # NOTE: missing `operation_id` field in API to identify operation
             None,
             token_transfer,
