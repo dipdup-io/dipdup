@@ -6,22 +6,31 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
-### Added
-
-- evm.subsquid: `evm.node` datasources can be used as index datasources.
-
 ### Changed
 
-- config: Index kinds have been renamed removing the index datasource part.
-- config: Index configs accepts any number of datasources in `datasources` field instead of a single one in `datasource`.
-- demos: Demo projects have been renamed to include the network name.
-- deps: Python 3.12 is now required to run DipDup.
-- deps: Pydantic v2 migration.
+- config: Index kinds have been renamed and grouped by the network.
+- config: index configs accept `datasources` list instead of `datasource` field.
 
 ### Removed
 
-- config: `node_only` index config flag has been removed; add `evm.node` datasource to the `datasources` list instead.
-- config: `abi` index config field has been removed; add `abi.etherscan` to the `datasources` list instead.
+- config: `node_only` index config flag has been removed; add `evm.node` datasource(s) to the `datasources` list instead.
+- config: `abi` index config field has been removed; add `abi.etherscan` datasource(s) to the `datasources` list instead.
+
+### Other
+
+- deps: Python 3.12 is now required to run DipDup.
+- deps: `datamodel-code-generator` updated to 0.25.
+- deps: `pyarrow` updated to 16.0.
+- deps: `pydantic`updated to 2.2.
+- deps: `sentry-sdk`updated to 2.0.
+- deps: `tortoise-orm` updated to 0.20.1.
+- deps: `web3` updated to 6.17.
+
+## [7.5.5] - 2024-04-17
+
+### Added
+
+- evm.subsquid: `evm.node` datasources can be used as index datasources.
 
 ## [7.5.4] - 2024-04-09
 
