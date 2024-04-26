@@ -2,20 +2,20 @@ from decimal import Decimal
 
 from {{ project.package }} import models
 from {{ project.package }}.models.token import token_derive_eth
-from {{ project.package }}.types.pool.evm_logs.initialize import InitializePayload
+from {{ project.package }}.types.pool.evm_events.initialize import InitializePayload
 from dipdup.context import HandlerContext
-from dipdup.models.evm import EvmLog
+from dipdup.models.evm import EvmEvent
 
 
 async def initialize(
     ctx: HandlerContext,
-    log: EvmLog[InitializePayload],
+    event: EvmEvent[InitializePayload],
 ) -> None:
-    pool = await models.Pool.cached_get_or_none(log.data.address)
+    pool = await models.Pool.cached_get_or_none(event.data.address)
     if not pool:
         return
-    pool.sqrt_price = Decimal(log.payload.sqrtPriceX96)
-    pool.tick = log.payload.tick
+    pool.sqrt_price = Decimal(event.payload.sqrtPriceX96)
+    pool.tick = event.payload.tick
     await pool.save()
 
     token0 = await models.Token.cached_get(pool.token0_id)

@@ -30,7 +30,7 @@ contracts:
 
 templates:
   uniswap_v3_factory:
-    kind: evm.logs
+    kind: evm.events
     datasources:
       - <datasource>
       - etherscan

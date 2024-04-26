@@ -11,8 +11,8 @@
 .. autoclass:: dipdup.config.DatasourceConfig
 .. autoclass:: dipdup.config.evm.EvmContractConfig
 .. autoclass:: dipdup.config.evm_node.EvmNodeDatasourceConfig
-.. autoclass:: dipdup.config.evm_logs.EvmLogsHandlerConfig
-.. autoclass:: dipdup.config.evm_logs.EvmLogsIndexConfig
+.. autoclass:: dipdup.config.evm_events.EvmEventsHandlerConfig
+.. autoclass:: dipdup.config.evm_events.EvmEventsIndexConfig
 .. autoclass:: dipdup.config.evm_subsquid.EvmSubsquidDatasourceConfig
 .. autoclass:: dipdup.config.evm.EvmIndexConfig
 .. autoclass:: dipdup.config.evm_transactions.EvmTransactionsHandlerConfig

@@ -45,7 +45,7 @@ from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
-from dipdup.indexes.evm_logs.index import EvmLogsIndex
+from dipdup.indexes.evm_events.index import EvmEventsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
 from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
 from dipdup.indexes.tezos_events.index import TezosEventsIndex
@@ -62,7 +62,7 @@ from dipdup.models import MessageType
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
-from dipdup.models.evm import EvmLogData
+from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeSyncingData
@@ -396,7 +396,7 @@ class IndexDispatcher:
                 datasource.call_on_events(self._on_tzkt_events)
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
-                datasource.call_on_logs(self._on_evm_node_logs)
+                datasource.call_on_events(self._on_evm_node_events)
                 datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
@@ -431,13 +431,13 @@ class IndexDispatcher:
         )
         Metrics.set_datasource_head_updated(datasource.name)
 
-    async def _on_evm_node_logs(
+    async def _on_evm_node_events(
         self,
         datasource: EvmNodeDatasource,
-        logs: tuple[EvmLogData, ...],
+        logs: tuple[EvmEventData, ...],
     ) -> None:
         for index in self._indexes.values():
-            if not isinstance(index, EvmLogsIndex):
+            if not isinstance(index, EvmEventsIndex):
                 continue
             if datasource not in index.node_datasources:
                 continue

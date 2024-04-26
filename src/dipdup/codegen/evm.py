@@ -12,8 +12,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
-from dipdup.config.evm_logs import EvmLogsHandlerConfig
-from dipdup.config.evm_logs import EvmLogsIndexConfig
+from dipdup.config.evm_events import EvmEventsHandlerConfig
+from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
@@ -123,7 +123,7 @@ def abi_to_jsonschemas(
                 if name not in events:
                     continue
                 schema = jsonschema_from_abi(abi_item)
-                schema_path = package.schemas / abi_path.parent.stem / 'evm_logs' / f'{name}.json'
+                schema_path = package.schemas / abi_path.parent.stem / 'evm_events' / f'{name}.json'
             else:
                 continue
 
@@ -161,7 +161,7 @@ class EvmCodeGenerator(CodeGenerator):
         methods: set[str] = set()
 
         for index_config in self._config.indexes.values():
-            if isinstance(index_config, EvmLogsIndexConfig):
+            if isinstance(index_config, EvmEventsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
             elif isinstance(index_config, EvmTransactionsIndexConfig):
@@ -188,7 +188,7 @@ class EvmCodeGenerator(CodeGenerator):
         contract: EvmContractConfig | None = None
 
         for handler_config in index_config.handlers:
-            if isinstance(handler_config, EvmLogsHandlerConfig):
+            if isinstance(handler_config, EvmEventsHandlerConfig):
                 contract = handler_config.contract
             elif isinstance(handler_config, EvmTransactionsHandlerConfig):
                 contract = handler_config.typed_contract
@@ -223,7 +223,7 @@ class EvmCodeGenerator(CodeGenerator):
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
-        if schema_path.parent.name == 'evm_logs':
+        if schema_path.parent.name == 'evm_events':
             class_name = f'{module_name}_payload'
         elif schema_path.parent.name == 'evm_transactions':
             class_name = f'{module_name}_input'
@@ -233,7 +233,7 @@ class EvmCodeGenerator(CodeGenerator):
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
         markers = {
-            'evm_logs',
+            'evm_events',
             'evm_transactions',
         }
         if not set(schema_path.parts).intersection(markers):

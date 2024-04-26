@@ -23,7 +23,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
-from dipdup.config.evm_logs import EvmLogsIndexConfig
+from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
@@ -56,7 +56,7 @@ from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.index import Index as IndexCls
 from dipdup.indexes.evm import EvmIndex
-from dipdup.indexes.evm_logs.index import EvmLogsIndex
+from dipdup.indexes.evm_events.index import EvmEventsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
 from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
 from dipdup.indexes.tezos_events.index import TezosEventsIndex
@@ -341,8 +341,8 @@ class DipDupContext:
         index: EvmIndex[Any, Any, Any]
         if isinstance(index_config, EvmTransactionsIndexConfig):
             index = EvmTransactionsIndex(self, index_config, index_datasources)
-        elif isinstance(index_config, EvmLogsIndexConfig):
-            index = EvmLogsIndex(self, index_config, index_datasources)
+        elif isinstance(index_config, EvmEventsIndexConfig):
+            index = EvmEventsIndex(self, index_config, index_datasources)
         else:
             raise NotImplementedError
 
