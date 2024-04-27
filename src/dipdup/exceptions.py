@@ -336,5 +336,6 @@ class UnsupportedAPIError(Error):
         """
 
 
-class MigrationError(Exception):
+# TODO: Human-readable Error
+class MigrationError(FrameworkException):
     pass

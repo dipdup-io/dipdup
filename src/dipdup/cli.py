@@ -360,7 +360,7 @@ async def config(ctx: click.Context) -> None:
 @config.command(name='export')
 @click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
-@click.option('--raw', '-r', is_flag=True, help='Do not resolve links and templates; preserve structure.')
+@click.option('--raw', '-r', is_flag=True, help='Do not initialize config; preserve file structure.')
 @click.pass_context
 @_cli_wrapper
 async def config_export(
@@ -909,10 +909,21 @@ async def package_tree(ctx: click.Context) -> None:
     package = DipDupPackage(config.package_path)
     package.create()
 
-    # FIXME: Enable after implementing code migrations for 3.0
-    # package.verify()
-
     tree = package.tree()
-    echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
+    echo(f'{package.name} [{package.root}]')
     for line in draw_package_tree(package.root, tree):
         echo(line)
+
+
+@package.command(name='verify')
+@click.pass_context
+@_cli_wrapper
+async def package_verify(ctx: click.Context) -> None:
+    """Verify project package."""
+    from dipdup.package import DipDupPackage
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.create()
+
+    package.verify()

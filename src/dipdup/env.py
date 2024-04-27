@@ -1,6 +1,7 @@
 import importlib
 import importlib.util
 import platform
+import sys
 import tomllib
 from contextlib import suppress
 from os import environ as env
@@ -24,6 +25,17 @@ def get_pyproject_name() -> str | None:
 
 def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
+
+    if PACKAGE_PATH:
+        spec = importlib.util.spec_from_file_location(package, PACKAGE_PATH / '__init__.py')
+        if spec is None:
+            raise ImportError(f'Failed to import `{package}` package from `{PACKAGE_PATH}`')
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[package] = module
+        if spec.loader is None:
+            raise ImportError(f'Failed to import `{package}` package from `{PACKAGE_PATH}`')
+        spec.loader.exec_module(module)
+        return PACKAGE_PATH
 
     # NOTE: Integration tests run in isolated environment
     if TEST:
@@ -75,6 +87,7 @@ DOCKER: bool
 NEXT: bool
 NO_SYMLINK: bool
 NO_VERSION_CHECK: bool
+PACKAGE_PATH: Path | None
 REPLAY_PATH: Path | None
 TEST: bool
 
@@ -87,19 +100,21 @@ def dump() -> dict[str, str]:
         'DIPDUP_NEXT': get('DIPDUP_NEXT') or '',
         'DIPDUP_NO_SYMLINK': get('DIPDUP_NO_SYMLINK') or '',
         'DIPDUP_NO_VERSION_CHECK': get('DIPDUP_NO_VERSION_CHECK') or '',
+        'DIPDUP_PACKAGE_PATH': get('DIPDUP_PACKAGE_PATH') or '',
         'DIPDUP_REPLAY_PATH': get('DIPDUP_REPLAY_PATH') or '',
         'DIPDUP_TEST': get('DIPDUP_TEST') or '',
     }
 
 
 def read() -> None:
-    global CI, DEBUG, DOCKER, NEXT, NO_SYMLINK, NO_VERSION_CHECK, REPLAY_PATH, TEST
+    global CI, DEBUG, DOCKER, NEXT, NO_SYMLINK, NO_VERSION_CHECK, PACKAGE_PATH, REPLAY_PATH, TEST
     CI = get_bool('DIPDUP_CI')
     DEBUG = get_bool('DIPDUP_DEBUG')
     DOCKER = get_bool('DIPDUP_DOCKER')
     NEXT = get_bool('DIPDUP_NEXT')
     NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
     NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
+    PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
     REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
     TEST = get_bool('DIPDUP_TEST')
 
