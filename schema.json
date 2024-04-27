@@ -2353,8 +2353,15 @@
       "type": "object"
     },
     "spec_version": {
-      "title": "Spec Version",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "title": "Spec Version"
     },
     "package": {
       "title": "Package",

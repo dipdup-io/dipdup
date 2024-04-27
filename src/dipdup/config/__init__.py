@@ -75,8 +75,7 @@ _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
 Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
-Str = Annotated[str, BeforeValidator(lambda v: str(v))]
-Int = Annotated[int, BeforeValidator(lambda v: int(v))]
+ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
 
 
 _logger = logging.getLogger(__name__)
@@ -657,7 +656,7 @@ class DipDupConfig:
     :param logging: Modify logging verbosity
     """
 
-    spec_version: Str
+    spec_version: ToStr
     package: str
     datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
