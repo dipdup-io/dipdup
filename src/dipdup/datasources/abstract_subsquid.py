@@ -1,4 +1,3 @@
-
 # TODO: implement and move models
 import asyncio
 from copy import copy
@@ -9,12 +8,11 @@ from dipdup.config import HttpConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import DatasourceConfigT
 from dipdup.datasources import IndexDatasource
+from dipdup.datasources import IndexDatasourceConfigT
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
-
-AbstractSubsquidQuery = dict[str, Any]  # TODO: from dipdup.models.subsquid import AbstractSubsquidQuery
-FieldSelection = dict[str, dict[str, bool]]
+from dipdup.models.subsquid import AbstractSubsquidQuery
 
 
 class AbstractSubsquidWorker(Datasource[Any]):
@@ -31,7 +29,7 @@ class AbstractSubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class AbstractSubsquidDatasource(IndexDatasource):
+class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )
@@ -86,7 +84,6 @@ class AbstractSubsquidDatasource(IndexDatasource):
 
         self.set_sync_level(None, level)
 
-
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')
         return int(response)
@@ -112,4 +109,3 @@ class AbstractSubsquidDatasource(IndexDatasource):
 
     async def _get_worker(self, level: int) -> AbstractSubsquidWorker:
         return AbstractSubsquidWorker(await self._fetch_worker(level))
-    

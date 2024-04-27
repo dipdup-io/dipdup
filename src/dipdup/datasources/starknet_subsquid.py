@@ -50,6 +50,7 @@ class _StarknetSubsquidWorker(AbstractSubsquidWorker):
     async def query(self, query: Query) -> list[dict[str, Any]]:  # TODO: fix typing
         return await super().query(query)
 
+
 class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
 
     def __init__(self, config: StarknetSubsquidDatasourceConfig) -> None:
@@ -84,10 +85,7 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
                 logs: deque[StarknetEventData] = deque()
                 for raw_event in level_item['events']:
                     logs.append(
-                        StarknetEventData.from_subsquid_json(
-                            event_json=raw_event,
-                            header=level_item['header']
-                        ),
+                        StarknetEventData.from_subsquid_json(event_json=raw_event, header=level_item['header']),
                     )
                 yield tuple(logs)
 

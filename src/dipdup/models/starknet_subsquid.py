@@ -1,6 +1,8 @@
 from typing import NotRequired
 from typing import TypedDict
 
+from dipdup.models.subsquid import AbstractSubsquidQuery
+
 
 class BlockFieldSelection(TypedDict, total=False):
     parentHash: bool
@@ -38,6 +40,7 @@ class FieldSelection(TypedDict, total=False):
     transaction: TransactionFieldSelection
     event: EventFieldSelection
 
+
 class TransactionRequest(TypedDict, total=False):
     contractAddress: list[str]
     senderAddress: list[str]
@@ -45,6 +48,7 @@ class TransactionRequest(TypedDict, total=False):
     firstNonce: int
     lastNonce: int
     events: bool
+
 
 class EventRequest(TypedDict, total=False):
     fromAddress: list[str]
@@ -54,12 +58,9 @@ class EventRequest(TypedDict, total=False):
     key3: list[str]
     transaction: bool
 
-class Query(TypedDict):
+class Query(AbstractSubsquidQuery):
     type: NotRequired[str]  # NOTE: should always be starknet
-    fromBlock: int
-    toBlock: int
-    includeAllBlocks: NotRequired[bool]
 
-    fields: NotRequired[FieldSelection]
     transactions: NotRequired[list[TransactionRequest]]
     events: NotRequired[list[EventRequest]]
+    fields: NotRequired[FieldSelection]

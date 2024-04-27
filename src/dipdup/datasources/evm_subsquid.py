@@ -8,18 +8,11 @@ from typing import Any
 import pyarrow.ipc  # type: ignore[import-untyped]
 
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
-from dipdup.datasources import Datasource
 from dipdup.datasources import EvmHistoryProvider
-from dipdup.datasources import IndexDatasource
-from dipdup.exceptions import DatasourceError
-from dipdup.exceptions import FrameworkException
-from dipdup.http import safe_exceptions
-from dipdup.models.evm import EvmEventData
-from dipdup.models.evm import EvmTransactionData
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
-from dipdup.models.evm_subsquid import EvmSubsquidEventData
-from dipdup.models.evm_subsquid import EvmSubsquidTransactionData
+from dipdup.models.evm import EvmEventData
+from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
 from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
@@ -83,7 +76,7 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
 
 
 class _EvmSubsquidWorker(AbstractSubsquidWorker):
-    async def query(self, query: Query) -> list[dict[str, Any]]:  # TODO: fix typing
+    async def query(self, query: Query) -> list[dict[str, Any]]:  
         return await super().query(query)
 
 

@@ -29,18 +29,13 @@ class StarknetTransactionData(HasLevel, ABC):
     constructor_calldata: tuple[str, ...] | None
 
     @classmethod
-    def from_subsquid_json(
-        cls,
-        transaction_json: dict[str, Any],
-        header: dict[str, Any]
-    ) -> Self:
+    def from_subsquid_json(cls, transaction_json: dict[str, Any], header: dict[str, Any]) -> Self:
         return cls(
             level=header['number'],
             block_hash=header['hash'],
             transaction_index=transaction_json['transactionIndex'],
             transaction_hash=transaction_json['transactionHash'],
             timestamp=header['timestamp'],
-
             contract_address=transaction_json['contractAddress'],
             entry_point_selector=transaction_json.get('entryPointSelector'),
             calldata=tuple(transaction_json.get('calldata', []) or []),
@@ -70,17 +65,12 @@ class StarknetEventData(HasLevel, ABC):
     data: tuple[str, ...]
 
     @classmethod
-    def from_subsquid_json(
-        cls,
-        event_json: dict[str, Any],
-        header: dict[str, Any]
-    ) -> Self:
+    def from_subsquid_json(cls, event_json: dict[str, Any], header: dict[str, Any]) -> Self:
         return cls(
             level=header['number'],
             block_hash=header['hash'],
             transaction_index=event_json['transactionIndex'],
             timestamp=header['timestamp'],
-
             from_address=event_json['fromAddress'],
             keys=tuple(event_json['keys']),
             data=tuple(event_json['data']),
