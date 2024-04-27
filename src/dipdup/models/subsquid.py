@@ -11,9 +11,11 @@ class SubsquidMessageType(MessageType, Enum):
     traces = 'traces'
     transactions = 'transactions'
 
+
 FieldSelection = dict[str, dict[str, bool]]
 
-class AbstractSubsquidQuery(TypedDict, total=False):
+
+class AbstractSubsquidQuery(TypedDict):
     fromBlock: int
     toBlock: NotRequired[int]
     includeAllBlocks: NotRequired[bool]

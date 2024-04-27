@@ -75,12 +75,11 @@ def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
-class _EvmSubsquidWorker(AbstractSubsquidWorker):
-    async def query(self, query: Query) -> list[dict[str, Any]]:  
-        return await super().query(query)
+class _EvmSubsquidWorker(AbstractSubsquidWorker[Query]):
+    pass
 
 
-class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig], EvmHistoryProvider):
+class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig, Query], EvmHistoryProvider):
 
     def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
         super().__init__(config)

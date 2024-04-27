@@ -58,6 +58,7 @@ class EventRequest(TypedDict, total=False):
     key3: list[str]
     transaction: bool
 
+
 class Query(AbstractSubsquidQuery):
     type: NotRequired[str]  # NOTE: should always be starknet
 

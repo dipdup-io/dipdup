@@ -46,15 +46,14 @@ EVENT_FIELDS: FieldSelection = {
 }
 
 
-class _StarknetSubsquidWorker(AbstractSubsquidWorker):
-    async def query(self, query: Query) -> list[dict[str, Any]]:  # TODO: fix typing
-        return await super().query(query)
+class _StarknetSubsquidWorker(AbstractSubsquidWorker[Query]):
+    pass
 
 
-class StarknetSubsquidDatasource(AbstractSubsquidDatasource):
+class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidDatasourceConfig, Query]):
 
     def __init__(self, config: StarknetSubsquidDatasourceConfig) -> None:
-        super().__init__(config, False)
+        super().__init__(config)
 
     async def _get_worker(self, level: int) -> _StarknetSubsquidWorker:
         return _StarknetSubsquidWorker(await self._fetch_worker(level))

@@ -2,11 +2,12 @@
 import asyncio
 from copy import copy
 from typing import Any
+from typing import Generic
+from typing import TypeVar
 from typing import cast
 
 from dipdup.config import HttpConfig
 from dipdup.datasources import Datasource
-from dipdup.datasources import DatasourceConfigT
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources import IndexDatasourceConfigT
 from dipdup.exceptions import DatasourceError
@@ -14,12 +15,14 @@ from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
 from dipdup.models.subsquid import AbstractSubsquidQuery
 
+QueryT = TypeVar('QueryT', bound=AbstractSubsquidQuery)
 
-class AbstractSubsquidWorker(Datasource[Any]):
+
+class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
     async def run(self) -> None:
         raise FrameworkException('Subsquid worker datasource should not be run')
 
-    async def query(self, query: AbstractSubsquidQuery) -> list[dict[str, Any]]:
+    async def query(self, query: QueryT) -> list[dict[str, Any]]:
         self._logger.debug('Worker query: %s', query)
         response = await self.request(
             'post',
@@ -29,7 +32,10 @@ class AbstractSubsquidWorker(Datasource[Any]):
         return cast(list[dict[str, Any]], response)
 
 
-class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
+class AbstractSubsquidDatasource(
+    IndexDatasource[IndexDatasourceConfigT],
+    Generic[IndexDatasourceConfigT, QueryT],
+):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
     )
@@ -53,7 +59,7 @@ class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
         pass
 
     # FIXME: Heavily copy-pasted from `HTTPGateway._retry_request`
-    async def query_worker(self, query: AbstractSubsquidQuery, current_level: int) -> list[dict[str, Any]]:
+    async def query_worker(self, query: QueryT, current_level: int) -> list[dict[str, Any]]:
         retry_sleep = self._http_config.retry_sleep
         attempt = 1
         last_attempt = self._http_config.retry_count + 1
@@ -88,7 +94,7 @@ class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
         response = await self.request('get', 'height')
         return int(response)
 
-    async def _fetch_worker(self, level: int) -> DatasourceConfigT:
+    async def _fetch_worker(self, level: int) -> IndexDatasourceConfigT:
         worker_url = (
             await self._http.request(
                 'get',
@@ -96,7 +102,7 @@ class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
             )
         ).decode()
 
-        worker_config: DatasourceConfigT = copy(self._config)
+        worker_config: IndexDatasourceConfigT = copy(self._config)
         worker_config.url = worker_url
         if not worker_config.http:
             worker_config.http = self._default_http_config
@@ -107,5 +113,5 @@ class AbstractSubsquidDatasource(IndexDatasource[IndexDatasourceConfigT]):
 
         return worker_config
 
-    async def _get_worker(self, level: int) -> AbstractSubsquidWorker:
+    async def _get_worker(self, level: int) -> AbstractSubsquidWorker[Any]:
         return AbstractSubsquidWorker(await self._fetch_worker(level))
