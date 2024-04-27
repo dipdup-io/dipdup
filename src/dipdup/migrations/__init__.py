@@ -45,7 +45,7 @@ class ProjectMigration:
             raise MigrationError('Missing config header (package, spec_version fields)')
 
         spec_version = root_config['spec_version']
-        if spec_version not in self.from_spec:
+        if str(spec_version) not in self.from_spec:
             raise MigrationError(f'Unsupported spec version: {spec_version}')
 
         package_path = env.get_package_path(root_config['package'])

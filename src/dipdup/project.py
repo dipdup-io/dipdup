@@ -7,6 +7,7 @@ import logging
 import re
 from pathlib import Path
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from tabulate import tabulate
 from typing_extensions import TypedDict
@@ -107,7 +108,7 @@ def get_package_answers(package: str | None = None) -> Answers | None:
     return answers_from_replay(replay_path)
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class ReplayConfig:
     spec_version: Str
     replay: Answers

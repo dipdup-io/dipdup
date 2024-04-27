@@ -35,7 +35,7 @@ class EvmContractConfig(ContractConfig):
 
     kind: Literal['evm']
     address: Hex | None = None
-    abi: str | None = None
+    abi: Hex | None = None
     typename: str | None = None
 
     @field_validator('address', 'abi')
