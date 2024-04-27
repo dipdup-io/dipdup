@@ -14,6 +14,7 @@ from typing_extensions import TypedDict
 from dipdup import __version__
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
+from dipdup.config import Str
 from dipdup.env import get_package_path
 from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
@@ -108,7 +109,7 @@ def get_package_answers(package: str | None = None) -> Answers | None:
 
 @dataclass
 class ReplayConfig:
-    spec_version: str | float
+    spec_version: Str
     replay: Answers
 
 

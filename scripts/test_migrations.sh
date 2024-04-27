@@ -23,5 +23,6 @@ for name in $(ls); do
 
     echo "Verifying $name"
     DIPDUP_TEST=1 dipdup -c $name package tree
+    DIPDUP_TEST=1 dipdup -c $name config export --unsafe
 
 done

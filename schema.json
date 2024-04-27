@@ -865,9 +865,6 @@
           "type": "string"
         },
         "values": {
-          "additionalProperties": {
-            "type": "string"
-          },
           "title": "Values",
           "type": "object"
         },
@@ -2356,15 +2353,8 @@
       "type": "object"
     },
     "spec_version": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "number"
-        }
-      ],
-      "title": "Spec Version"
+      "title": "Spec Version",
+      "type": "string"
     },
     "package": {
       "title": "Package",

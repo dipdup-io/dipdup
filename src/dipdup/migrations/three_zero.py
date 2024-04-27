@@ -70,7 +70,7 @@ from dipdup.yaml import DipDupYAMLConfig
 # }
 
 INDEX_KINDS = {
-    'evm.subsquid.events': 'evm.logs',
+    'evm.subsquid.events': 'evm.events',
     'evm.subsquid.transactions': 'evm.transactions',
     'tezos.tzkt.big_maps': 'tezos.big_maps',
     'tezos.tzkt.events': 'tezos.events',
