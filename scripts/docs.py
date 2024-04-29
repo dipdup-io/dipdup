@@ -515,7 +515,6 @@ def dump_references() -> None:
                     package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
                 classes_in_package.add(f'dipdup.{ref}{package_path_str}.{match.group(1)}')
 
-        # diff = (classes_in_package ^ classes_in_ref) - ignore
         to_add = classes_in_package - classes_in_ref - ignore
         to_remove = classes_in_ref - classes_in_package - ignore
 
@@ -598,22 +597,14 @@ def dump_references() -> None:
 
         # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
         if 'config' in page['md_path']:
-            out = out.replace(
-                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
-                '',
-            )
+            template = '<em class="sig-param"><span class="{}"><span class="pre">*</span></span><span class="{}"><span class="pre">args</span></span></em>, '
+            for i, j in (
+                ('n', 'n'),
+                ('n', 'o'),
+                ('o', 'n'),
+                ('o', 'o'),
+            ):
+                out = out.replace(template.format(i, j), '')
             out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)

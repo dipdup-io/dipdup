@@ -23,9 +23,7 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from dipdup import __spec_version__
 from dipdup.exceptions import ConfigurationError
-from dipdup.utils import json_dumps
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -35,6 +33,12 @@ ENV_VARIABLE_REGEX = r'\$\{(?P<var_name>[\w]+)(?:\:\-(?P<default_value>.*?))?\}'
 
 
 _logger = logging.getLogger(__name__)
+
+yaml_loader = YAML()
+
+yaml_dumper = YAML()
+yaml_dumper.default_flow_style = False
+yaml_dumper.indent(mapping=2, sequence=4, offset=2)
 
 
 def exclude_none(config_json: Any) -> Any:
@@ -73,31 +77,34 @@ def read_config_yaml(path: Path) -> str:
         raise ConfigurationError(f'Config file `{path}` is not readable: {e}') from e
 
 
-def dump(value: Any) -> str:
-    yaml = YAML()
-    yaml.default_flow_style = False
-    yaml.indent = 2
-
-    config_json = json_dumps(value)
-    config_yaml = exclude_none(yaml.load(config_json))
+def dump(value: dict[str, Any]) -> str:
+    value = exclude_none(value)
     buffer = StringIO()
-    yaml.dump(config_yaml, buffer)
+    yaml_dumper.dump(value, buffer)
     return buffer.getvalue()
 
 
-def substitute_env_variables(config_yaml: str) -> tuple[str, dict[str, str]]:
+def substitute_env_variables(
+    config_yaml: str,
+    unsafe: bool,
+) -> tuple[str, dict[str, str]]:
     _logger.debug('Substituting environment variables')
     environment: dict[str, str] = {}
 
     for match in re.finditer(ENV_VARIABLE_REGEX, config_yaml):
         variable, default_value = match.group('var_name'), match.group('default_value')
-        value = env.get(variable, default_value)
-        # NOTE: Don't fail on ''
-        if value is None:
-            raise ConfigurationError(f'Environment variable `{variable}` is not set')
+
+        if unsafe:
+            value = env.get(variable, default_value)
+            # NOTE: Don't fail on ''
+            if value is None:
+                raise ConfigurationError(f'Environment variable `{variable}` is not set')
+        else:
+            value = default_value or ''
+
         environment[variable] = value
         placeholder = match.group(0)
-        config_yaml = config_yaml.replace(placeholder, value or default_value or '')
+        config_yaml = config_yaml.replace(placeholder, value)
 
     return config_yaml, environment
 
@@ -131,8 +138,9 @@ class DipDupYAMLConfig(dict[str, Any]):
         cls,
         paths: list[Path],
         environment: bool = True,
+        raw: bool = False,
+        unsafe: bool = False,
     ) -> tuple[DipDupYAMLConfig, dict[str, Any]]:
-        yaml = YAML(typ='base')
 
         config = cls()
         config_environment: dict[str, str] = {}
@@ -140,30 +148,19 @@ class DipDupYAMLConfig(dict[str, Any]):
         for path in paths:
             path_yaml = read_config_yaml(path)
 
-            if environment:
-                path_yaml, path_environment = substitute_env_variables(path_yaml)
+            if raw:
+                pass
+            elif environment:
+                path_yaml, path_environment = substitute_env_variables(path_yaml, unsafe)
                 config_environment.update(path_environment)
-            else:
-                config_environment |= get_default_env_variables(path_yaml)
 
-            config.update(yaml.load(path_yaml))
+            config.update(yaml_loader.load(path_yaml))
 
-        config._post_load_hooks()
+        if not raw:
+            # FIXME: Can't use `from_` field alias in dataclasses
+            fix_dataclass_field_aliases(config)
 
         return config, config_environment
 
     def dump(self) -> str:
         return dump(self)
-
-    def validate_version(self) -> None:
-        config_spec_version = self['spec_version']
-        if config_spec_version != __spec_version__:
-            raise ConfigurationError(
-                f'Incompatible spec version: expected {__spec_version__}, got {config_spec_version}. See'
-                ' https://dipdup.io/docs/config/spec_version'
-            )
-
-    def _post_load_hooks(self) -> None:
-        self.validate_version()
-        # FIXME: Can't use `from_` field alias in dataclasses
-        fix_dataclass_field_aliases(self)

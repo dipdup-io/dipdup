@@ -144,17 +144,22 @@ async def tmp_project(
     """Create a temporary isolated DipDup project."""
     with tempfile.TemporaryDirectory() as tmp_package_path:
         # NOTE: Dump config
-        config, _ = DipDupYAMLConfig.load(config_paths, environment=False)
+        config, _ = DipDupYAMLConfig.load(
+            config_paths,
+            environment=False,
+            raw=True,
+            unsafe=False,
+        )
         tmp_config_path = Path(tmp_package_path) / 'dipdup.yaml'
         tmp_config_path.write_text(config.dump())
 
         # NOTE: Symlink packages and executables
         tmp_bin_path = Path(tmp_package_path) / 'bin'
         tmp_bin_path.mkdir()
-        for executable in ('dipdup', 'datamodel-codegen'):
-            if (executable_path := which(executable)) is None:
-                raise FrameworkException(f'Executable `{executable}` not found')  # pragma: no cover
-            os.symlink(executable_path, tmp_bin_path / executable)
+
+        if (dipdup_path := which('dipdup')) is None:
+            raise FrameworkException('Executable `dipdup` not found')
+        os.symlink(dipdup_path, tmp_bin_path / 'dipdup')
 
         os.symlink(
             Path(__file__).parent.parent / 'dipdup',
@@ -170,7 +175,6 @@ async def tmp_project(
 
         # NOTE: Prepare environment
         env = {
-            **os.environ,
             **(env or {}),
             'PATH': str(tmp_bin_path),
             'PYTHONPATH': str(tmp_package_path),
@@ -193,7 +197,10 @@ async def run_in_tmp(
         f'dipdup -c {tmp_config_path} {" ".join(args)}',
         cwd=tmp_path,
         shell=True,
-        env=env,
+        env={
+            **os.environ,
+            **env,
+        },
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )

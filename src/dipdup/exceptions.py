@@ -334,3 +334,8 @@ class UnsupportedAPIError(Error):
 
             {self.reason}
         """
+
+
+# TODO: Human-readable Error
+class MigrationError(FrameworkException):
+    pass

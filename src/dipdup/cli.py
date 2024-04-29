@@ -56,6 +56,8 @@ NO_CONFIG_CMDS = {
     'install',
     'uninstall',
     'update',
+    'migrate',
+    'config',
 }
 # NOTE: Our signal handler conflicts with Click's one in prompt mode
 NO_SIGNALS_CMDS = {
@@ -243,7 +245,12 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
 
-    _config = DipDupConfig.load(config_paths)
+    _config = DipDupConfig.load(
+        paths=config_paths,
+        environment=True,
+        raw=False,
+        unsafe=True,
+    )
     _config.set_up_logging()
 
     if _config.sentry:
@@ -323,15 +330,23 @@ async def init(
 
 
 @cli.command()
+@click.option('--dry-run', '-n', is_flag=True, help='Print changes without applying them.')
 @click.pass_context
 @_cli_wrapper
-async def migrate(ctx: click.Context) -> None:
+async def migrate(ctx: click.Context, dry_run: bool) -> None:
     """
     Migrate project to the new spec version.
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    _logger.info('Project is already at the latest version, no further actions required')
+    from dipdup.migrations.three_zero import ThreeZeroProjectMigration
+
+    # NOTE: Extract paths from arguments since we can't load config with old spec version
+    assert ctx.parent
+    config_paths: list[Path] = [Path(file) for file in ctx.parent.params['config']]
+
+    migration = ThreeZeroProjectMigration(tuple(config_paths), dry_run)
+    migration.migrate()
 
 
 @cli.group()
@@ -343,30 +358,50 @@ async def config(ctx: click.Context) -> None:
 
 
 @config.command(name='export')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
+@click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
+@click.option('--raw', '-r', is_flag=True, help='Do not initialize config; preserve file structure.')
 @click.pass_context
 @_cli_wrapper
-async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
+async def config_export(
+    ctx: click.Context,
+    unsafe: bool,
+    full: bool,
+    raw: bool,
+) -> None:
     """
     Print config after resolving all links and, optionally, templates.
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
     from dipdup.config import DipDupConfig
+    from dipdup.yaml import DipDupYAMLConfig
 
-    config = DipDupConfig.load(
-        paths=ctx.obj.config._paths,
-        environment=unsafe,
-    )
-    if full:
-        config.initialize()
-    echo(config.dump())
+    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+    if raw:
+        raw_config, _ = DipDupYAMLConfig.load(
+            paths=config_paths,
+            environment=False,
+            raw=True,
+            unsafe=unsafe,
+        )
+        echo(raw_config.dump())
+
+    else:
+        config = DipDupConfig.load(
+            paths=config_paths,
+            environment=True,
+            raw=False,
+            unsafe=unsafe,
+        )
+        if full:
+            config.initialize()
+        echo(config.dump())
 
 
 @config.command(name='env')
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from the config.')
+@click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--compose', '-c', is_flag=True, help='Output in docker-compose format.')
 @click.option('--internal', '-i', is_flag=True, help='Include internal variables.')
 @click.pass_context
@@ -384,9 +419,13 @@ async def config_env(
     """
     from dipdup.yaml import DipDupYAMLConfig
 
+    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+
     _, environment = DipDupYAMLConfig.load(
-        paths=ctx.obj.config._paths,
-        environment=unsafe,
+        paths=config_paths,
+        environment=True,
+        raw=False,
+        unsafe=unsafe,
     )
     if internal:
         environment.update(env.dump())
@@ -799,14 +838,14 @@ async def report(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report_ls(ctx: click.Context) -> None:
     """List reports."""
-    from ruamel.yaml import YAML
     from tabulate import tabulate
 
-    yaml = YAML(typ='base')
+    from dipdup.yaml import yaml_loader
+
     header = tuple(ReportHeader.__annotations__.keys())
     rows = []
     for path in get_reports():
-        event = yaml.load(path)
+        event = yaml_loader.load(path)
         row = [event.get(key, 'none')[:80] for key in header]
         rows.append(row)
 
@@ -869,7 +908,22 @@ async def package_tree(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
     package.create()
+
     tree = package.tree()
-    echo(f'{package.name} [{package.root.relative_to(Path.cwd())}]')
+    echo(f'{package.name} [{package.root}]')
     for line in draw_package_tree(package.root, tree):
         echo(line)
+
+
+@package.command(name='verify')
+@click.pass_context
+@_cli_wrapper
+async def package_verify(ctx: click.Context) -> None:
+    """Verify project package."""
+    from dipdup.package import DipDupPackage
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.create()
+
+    package.verify()
