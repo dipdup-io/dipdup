@@ -865,9 +865,6 @@
           "type": "string"
         },
         "values": {
-          "additionalProperties": {
-            "type": "string"
-          },
           "title": "Values",
           "type": "object"
         },

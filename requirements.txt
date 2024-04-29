@@ -8,7 +8,7 @@ aiosqlite==0.17.0
 annotated-types==0.6.0
 anyio==4.3.0
 apscheduler==3.10.4
-argcomplete==3.2.3
+argcomplete==3.3.0
 async-lru==2.0.4
 asyncclick==8.1.7.2
 asyncpg==0.29.0
@@ -17,7 +17,7 @@ bitarray==2.9.2
 black==24.4.2
 certifi==2024.2.2
 charset-normalizer==3.3.2
-ckzg==1.0.0
+ckzg==1.0.1
 click==8.1.7
 colorama==0.4.6; platform_system == "Windows" or sys_platform == "win32"
 cytoolz==0.12.3; implementation_name == "cpython"
@@ -27,15 +27,15 @@ email-validator==2.1.1; python_version ~= "3.11"
 eth-abi==5.1.0
 eth-account==0.11.2
 eth-hash==0.7.0
-eth-keyfile==0.8.0
-eth-keys==0.5.0
+eth-keyfile==0.8.1
+eth-keys==0.5.1
 eth-rlp==1.0.1
-eth-typing==4.1.0
+eth-typing==4.2.1
 eth-utils==4.1.0
 frozenlist==1.4.1
 genson==1.2.2
 hexbytes==0.3.1
-idna==3.6
+idna==3.7
 inflect==5.6.2
 iso8601==1.1.0
 isort==5.13.2
@@ -52,7 +52,7 @@ orjson==3.10.1
 packaging==24.0
 parsimonious==0.10.0
 pathspec==0.12.1
-platformdirs==4.2.0
+platformdirs==4.2.1
 prometheus-client==0.20.0
 protobuf==5.26.1
 pyarrow==16.0.0
@@ -67,10 +67,10 @@ pytz==2024.1
 pyunormalize==15.1.0
 pywin32==306; platform_system == "Windows" or sys_platform == "win32"
 pyyaml==6.0.1
-referencing==0.34.0
-regex==2023.12.25
+referencing==0.35.0
+regex==2024.4.16
 requests==2.31.0
-rlp==4.0.0
+rlp==4.0.1
 rpds-py==0.18.0
 ruamel-yaml==0.18.6
 ruamel-yaml-clib==0.2.8; platform_python_implementation == "CPython" and python_version < "3.13"

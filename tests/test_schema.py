@@ -119,16 +119,15 @@ async def test_schema_postgres() -> None:
     env_config_path = TEST_CONFIGS / 'test_postgres.yaml'
 
     async with AsyncExitStack() as stack:
+        database_config = await run_postgres_container()
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
                 [config_path, env_config_path],
                 package,
                 exists=True,
+                env={'POSTGRES_HOST': database_config.host},
             ),
         )
-
-        database_config = await run_postgres_container()
-        env['POSTGRES_HOST'] = database_config.host
 
         def tortoise() -> AbstractAsyncContextManager[None]:
             return tortoise_wrapper(
@@ -161,16 +160,15 @@ async def test_schema_postgres_immune() -> None:
     env_config_path = TEST_CONFIGS / 'test_postgres_immune.yaml'
 
     async with AsyncExitStack() as stack:
+        database_config = await run_postgres_container()
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
                 [config_path, env_config_path],
                 package,
                 exists=True,
+                env={'POSTGRES_HOST': database_config.host},
             ),
         )
-
-        database_config = await run_postgres_container()
-        env['POSTGRES_HOST'] = database_config.host
 
         def tortoise() -> AbstractAsyncContextManager[None]:
             return tortoise_wrapper(

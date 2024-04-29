@@ -6,10 +6,24 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- cli: Added spec_version 3.0 support to `migrate` command.
+- cli: Added `package verify` command to check the package consistency.
+- cli: Added `--raw` option to `config export` command to dump config preserving the original structure.
+- env: Added `DIPDUP_PACKAGE_PATH` environment variable to override discovered package path.
+
+### Fixed
+
+- config: Fixed (de)serialization of hex strings in config.
+- yaml: Fixed indentation and formatting of generated YAML files.
+
 ### Changed
 
 - config: Index kinds have been renamed and grouped by the network.
 - config: Index configs accept `datasources` list instead of `datasource` field.
+- config: Index template values now can be any JSON-serializable object.
+- deps: Python 3.12 is now required to run DipDup.
 
 ### Removed
 
@@ -18,7 +32,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- deps: Python 3.12 is now required to run DipDup.
+- demos: Demo projects have been renamed to reflect the new config structure.
 - deps: `datamodel-code-generator` updated to 0.25.
 - deps: `pyarrow` updated to 16.0.
 - deps: `pydantic`updated to 2.2.
