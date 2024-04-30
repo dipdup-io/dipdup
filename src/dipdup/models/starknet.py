@@ -57,7 +57,7 @@ class StarknetEventData(HasLevel, ABC):
     level: int
     block_hash: str
     transaction_index: int
-    # TODO: transaction hash
+    transaction_hash: str
     timestamp: int
 
     from_address: str
@@ -65,11 +65,14 @@ class StarknetEventData(HasLevel, ABC):
     data: tuple[str, ...]
 
     @classmethod
-    def from_subsquid_json(cls, event_json: dict[str, Any], header: dict[str, Any]) -> Self:
+    def from_subsquid_json(
+        cls, event_json: dict[str, Any], transaction_json: dict[str, Any], header: dict[str, Any]
+    ) -> Self:
         return cls(
             level=header['number'],
             block_hash=header['hash'],
-            transaction_index=event_json['transactionIndex'],
+            transaction_index=transaction_json['transactionIndex'],
+            transaction_hash=transaction_json['transactionHash'],
             timestamp=header['timestamp'],
             from_address=event_json['fromAddress'],
             keys=tuple(event_json['keys']),

@@ -43,6 +43,9 @@ EVENT_FIELDS: FieldSelection = {
         'keys': True,
         'data': True,
     },
+    'transaction': {
+        'transactionHash': True,
+    },
 }
 
 
@@ -69,6 +72,9 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidData
     ) -> AsyncIterator[tuple[StarknetEventData, ...]]:
         current_level = first_level
 
+        for f in filters:
+            f['transaction'] = True
+
         while current_level <= last_level:
             query: Query = {
                 'fields': EVENT_FIELDS,
@@ -82,9 +88,20 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidData
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
                 logs: deque[StarknetEventData] = deque()
+                transaction_index = 0
                 for raw_event in level_item['events']:
+                    # TODO: should we raise more meaningful error if subsquid data is not correct?
+                    while (
+                        level_item['transactions'][transaction_index]['transactionIndex']
+                        != raw_event['transactionIndex']
+                    ):
+                        transaction_index += 1
                     logs.append(
-                        StarknetEventData.from_subsquid_json(event_json=raw_event, header=level_item['header']),
+                        StarknetEventData.from_subsquid_json(
+                            event_json=raw_event,
+                            transaction_json=level_item['transactions'][transaction_index],
+                            header=level_item['header'],
+                        ),
                     )
                 yield tuple(logs)
 
