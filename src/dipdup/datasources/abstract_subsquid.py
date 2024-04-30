@@ -1,4 +1,3 @@
-# TODO: implement and move models
 import asyncio
 from copy import copy
 from typing import Any
@@ -66,7 +65,6 @@ class AbstractSubsquidDatasource(
 
         while True:
             try:
-                # TODO: What is the logic here?
                 # NOTE: Request a fresh worker after each failed attempt
                 worker_datasource = await self._get_worker(current_level)
                 async with worker_datasource:
