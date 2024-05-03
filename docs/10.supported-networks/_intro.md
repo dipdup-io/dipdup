@@ -1,3 +1,5 @@
+<!-- markdownlint-disable first-line-h1 -->
+
 ## Getting started
 
 Any network.
