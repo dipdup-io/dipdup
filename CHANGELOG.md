@@ -38,7 +38,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - deps: `pydantic`updated to 2.2.
 - deps: `sentry-sdk`updated to 2.0.
 - deps: `tortoise-orm` updated to 0.20.1.
-- deps: `web3` updated to 6.17.
+- deps: `web3` updated to 6.18.
 
 ## [7.5.5] - 2024-04-17
 
