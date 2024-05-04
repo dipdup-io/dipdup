@@ -712,7 +712,7 @@ def dump_demos() -> None:
     Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
 
 
-@main.command('move-pages', help='Insert or remove pages to/from the ToC')
+@main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')
 @click.option(
     '--path',
     type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
