@@ -712,5 +712,59 @@ def dump_demos() -> None:
     Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
 
 
+@main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')
+@click.option(
+    '--path',
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
+    help='docs/ directory path to use.',
+)
+@click.option('--insert', type=int, help='Page index to insert')
+@click.option('--pop', type=int, help='Page index to pop')
+def move_pages(path: Path, insert: int, pop: int) -> None:
+    files = list(path.glob('*.md'))
+    if not files:
+        red_echo('=> No pages found')
+        exit(1)
+
+    toc = {}
+    for file in files:
+        if not file.stem[0].isdigit():
+            continue
+
+        index = int(file.stem.split('.')[0])
+        if index in toc:
+            red_echo(f'=> Duplicate index {index}')
+            exit(1)
+        toc[index] = file
+
+    if insert:
+        for index in sorted(toc.keys(), reverse=True):
+            if index < insert:
+                break
+
+            file = toc[index]
+            new_name = path / f'{index + 1}.{file.name.split(".")[1]}.md'
+            file.rename(new_name)
+            toc[index + 1] = new_name
+
+        new_file = path / f'{insert}.md'
+        new_file.touch()
+        toc[insert] = new_file
+
+    if pop:
+        if pop not in toc:
+            red_echo(f'=> No page with index {pop}')
+            exit(1)
+        file = toc.pop(pop)
+        file.rename(path / f'_{file.name}')
+
+        for index in sorted(toc.keys()):
+            if index > pop:
+                file = toc.pop(index)
+                new_name = path / f'{index - 1}.{file.name.split(".")[1]}.md'
+                file.rename(new_name)
+                toc[index - 1] = new_name
+
+
 if __name__ == '__main__':
     main()

@@ -216,7 +216,7 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
         ]
         _, environment = DipDupYAMLConfig.load(
             paths=config_chain,
-            environment=False,
+            environment=True,
         )
         env_lines = (f'{k}={v}' for k, v in sorted(environment.items()))
         lines: tuple[str, ...] = (
