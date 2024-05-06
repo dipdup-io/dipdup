@@ -14,13 +14,13 @@ asyncclick==8.1.7.2
 asyncpg==0.29.0
 attrs==23.2.0
 bitarray==2.9.2
-black==24.4.0
+black==24.4.2
 certifi==2024.2.2
 charset-normalizer==3.3.2
 click==8.1.7
 colorama==0.4.6; platform_system == "Windows" or sys_platform == "win32"
 cytoolz==0.12.3; implementation_name == "cpython"
-datamodel-code-generator==0.25.5
+datamodel-code-generator==0.25.6
 dnspython==2.5.0; python_version ~= "3.11"
 email-validator==2.1.0.post1; python_version ~= "3.11"
 eth-abi==5.1.0
@@ -47,7 +47,7 @@ msgpack==1.0.7
 multidict==6.0.5
 mypy-extensions==1.0.0
 numpy==1.26.4
-orjson==3.10.1
+orjson==3.10.3
 packaging==23.2
 parsimonious==0.10.0
 pathspec==0.12.1
