@@ -133,6 +133,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             for handler_config, data in matched_handlers:
                 await self._call_matched_handler(handler_config, data)
             await self._update_state(level=batch_level)
+
+        metrics.inc(f'{self.name}_objects_total', len(level_data))
+        metrics.set(f'{self.name}_timestamp', time.time())
         metrics[f'{self.name}:time_in_callbacks'] += (time.time() - started_at) / 60
 
     @property

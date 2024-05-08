@@ -104,6 +104,8 @@ class IndexDispatcher:
         self._started_at: float = 0.0
         self._metrics_at: float = 0.0
 
+        self._speed_measure_window: defaultdict[str, list[tuple[float, float]]] = defaultdict(list)
+
     async def run(
         self,
         spawn_datasources_event: Event,
@@ -207,6 +209,7 @@ class IndexDispatcher:
     async def _update_prometheus(self) -> None:
         active, synced, realtime = 0, 0, 0
         for index in copy(self._indexes).values():
+            # TODO: we arent deleting inactive indexes any more
             active += 1
             if index.synchronized:
                 synced += 1
@@ -261,6 +264,22 @@ class IndexDispatcher:
         if levels_total:
             progress = levels_indexed / levels_total
 
+        ops = []
+        for index in self._indexes.values():
+            if not metrics.get(f'{index.name}_objects_total') or not metrics.get(f'{index.name}_timestamp'):
+                continue
+            speed_measure_window = self._speed_measure_window[index.name]
+            speed_measure_window.append((metrics[f'{index.name}_objects_total'], metrics[f'{index.name}_timestamp']))
+
+            if speed_measure_window[-1][1] - speed_measure_window[0][1] > METRICS_INTERVAL * 20:
+                ops.append((speed_measure_window[-1][0] - speed_measure_window[0][0]) / (speed_measure_window[-1][1] - speed_measure_window[0][1]))
+                while speed_measure_window[-1][1] - speed_measure_window[0][1] > METRICS_INTERVAL * 20:
+                    speed_measure_window.pop(0)
+            elif not metrics.get('objects_speed'):
+                ops.append(speed_measure_window[-1][0])
+
+        metrics.set('objects_speed', sum(ops))
+
         metrics.set('levels_indexed', levels_indexed)
         metrics.set('levels_total', levels_total)
         metrics.set('current_speed', current_speed)
@@ -282,11 +301,12 @@ class IndexDispatcher:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
-                '%s: %.2f%%: %s levels left (%s lps)',
+                '%s: %.2f%%: %s levels left (%s lps, %s ops)',
                 'last mile' if metrics['synchronized_at'] else 'indexing',
                 metrics['progress'] * 100,
                 total - indexed,
                 current_speed,
+                int(metrics['objects_speed'])
             )
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
