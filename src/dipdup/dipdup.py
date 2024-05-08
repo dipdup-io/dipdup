@@ -255,38 +255,36 @@ class IndexDispatcher:
         update_interval = time.time() - self._metrics_at
         self._metrics_at = time.time()
 
-        current_speed = levels_interval / update_interval
-        average_speed = levels_indexed / (time.time() - self._started_at)
+        last_object_levels, last_objects_total = metrics['last_object_levels'], metrics['last_objects_total']
+        batch_object_levels = metrics['object_levels'] - last_object_levels
+        batch_objects = metrics['objects_total'] - last_objects_total
+
+        level_speed = levels_interval / update_interval
+        average_level_speed = levels_indexed / (time.time() - self._started_at)
         time_passed = (time.time() - self._started_at) / 60
         time_left, progress = 0.0, 0.0
-        if average_speed:
-            time_left = (levels_total - levels_indexed) / average_speed / 60
+        if average_level_speed:
+            time_left = (levels_total - levels_indexed) / average_level_speed / 60
         if levels_total:
             progress = levels_indexed / levels_total
 
-        ops = []
-        for index in self._indexes.values():
-            if not metrics.get(f'{index.name}_objects_total') or not metrics.get(f'{index.name}_timestamp'):
-                continue
-            speed_measure_window = self._speed_measure_window[index.name]
-            speed_measure_window.append((metrics[f'{index.name}_objects_total'], metrics[f'{index.name}_timestamp']))
-
-            if speed_measure_window[-1][1] - speed_measure_window[0][1] > METRICS_INTERVAL * 20:
-                ops.append((speed_measure_window[-1][0] - speed_measure_window[0][0]) / (speed_measure_window[-1][1] - speed_measure_window[0][1]))
-                while speed_measure_window[-1][1] - speed_measure_window[0][1] > METRICS_INTERVAL * 20:
-                    speed_measure_window.pop(0)
-            elif not metrics.get('objects_speed'):
-                ops.append(speed_measure_window[-1][0])
-
-        metrics.set('objects_speed', sum(ops))
-
         metrics.set('levels_indexed', levels_indexed)
         metrics.set('levels_total', levels_total)
-        metrics.set('current_speed', current_speed)
-        metrics.set('average_speed', average_speed)
+
+        metrics.set('level_speed', level_speed)
+        metrics.set('average_level_speed', average_level_speed)
+
+        metrics.set('objects_speed', batch_objects / update_interval)
+        metrics.set('object_levels_speed', batch_object_levels / update_interval)
+
+        average_objects_per_level = last_objects_total / last_object_levels if last_object_levels else 0
+        metrics.set('estimated_level_speed', batch_objects / average_objects_per_level if average_objects_per_level else 0)
+
         metrics.set('time_passed', time_passed)
         metrics.set('time_left', time_left)
         metrics.set('progress', progress)
+
+        metrics['last_object_levels'], metrics['last_objects_total'] = metrics['object_levels'], metrics['objects_total']
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
@@ -296,17 +294,18 @@ class IndexDispatcher:
     async def _log_status(self) -> None:
         await self._update_metrics()
         total, indexed = metrics['levels_total'], metrics['levels_indexed']
-        current_speed = int(metrics['current_speed'])
         if metrics['realtime_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
-                '%s: %.2f%%: %s levels left (%s lps, %s ops)',
+                '%s: %.2f%%: %s levels left (speed r/n/e = %s/%s/%s lps %s ops)',
                 'last mile' if metrics['synchronized_at'] else 'indexing',
                 metrics['progress'] * 100,
                 total - indexed,
-                current_speed,
-                int(metrics['objects_speed'])
+                int(metrics['level_speed']),
+                int(metrics['object_levels_speed']),
+                int(metrics['estimated_level_speed']),
+                int(metrics['objects_speed']),
             )
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:

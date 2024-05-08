@@ -89,11 +89,11 @@ class TezosBigMapsIndex(
                         )
                         for big_map_key in big_map_keys
                     )
+                    metrics.inc('objects_total', len(big_map_data))
+
                     matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
                     for handler_config, big_map_diff in matched_handlers:
                         await self._call_matched_handler(handler_config, big_map_diff)
-                    metrics.inc(f'{self.name}_objects_total', len(big_map_data))
-                    metrics.set(f'{self.name}_timestamp', time.time())
 
             await self._update_state(level=head_level)
 
