@@ -82,8 +82,8 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 1.0 if env.DEBUG else 2.0
-STATUS_INTERVAL = 1.0 if env.DEBUG else 10.0
+METRICS_INTERVAL = 1.0 if env.DEBUG else 5.0
+STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
 
@@ -277,14 +277,14 @@ class IndexDispatcher:
         metrics.set('objects_speed', batch_objects / update_interval)
         metrics.set('object_levels_speed', batch_object_levels / update_interval)
 
-        average_objects_per_level = last_objects_total / last_object_levels if last_object_levels else 0
-        metrics.set('estimated_level_speed', batch_objects / average_objects_per_level if average_objects_per_level else 0)
-
         metrics.set('time_passed', time_passed)
         metrics.set('time_left', time_left)
         metrics.set('progress', progress)
 
-        metrics['last_object_levels'], metrics['last_objects_total'] = metrics['object_levels'], metrics['objects_total']
+        metrics['last_object_levels'], metrics['last_objects_total'] = (
+            metrics['object_levels'],
+            metrics['objects_total'],
+        )
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
@@ -292,19 +292,16 @@ class IndexDispatcher:
             await self._log_status()
 
     async def _log_status(self) -> None:
-        await self._update_metrics()
         total, indexed = metrics['levels_total'], metrics['levels_indexed']
         if metrics['realtime_at']:
             _logger.info('realtime: %s levels and counting', indexed)
         else:
             _logger.info(
-                '%s: %.2f%%: %s levels left (speed r/n/e = %s/%s/%s lps %s ops)',
+                '%s: %.1f%% done, %s levels left %21s L %5s O',
                 'last mile' if metrics['synchronized_at'] else 'indexing',
                 metrics['progress'] * 100,
                 total - indexed,
-                int(metrics['level_speed']),
                 int(metrics['object_levels_speed']),
-                int(metrics['estimated_level_speed']),
                 int(metrics['objects_speed']),
             )
 
