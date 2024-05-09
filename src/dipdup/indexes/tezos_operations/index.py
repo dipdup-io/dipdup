@@ -32,6 +32,7 @@ from dipdup.models import RollbackMessage
 from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 
 if TYPE_CHECKING:
@@ -270,6 +271,8 @@ class TezosOperationsIndex(
             raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
 
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
+        metrics.inc('objects_total', sum(len(subgroup.operations) for subgroup in operation_subgroups))
+        metrics.inc('object_levels', 1)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
             if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
