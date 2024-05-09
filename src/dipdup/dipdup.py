@@ -289,21 +289,23 @@ class IndexDispatcher:
     async def _status_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
-            await self._log_status()
+            self._log_status()
 
-    async def _log_status(self) -> None:
+    def _log_status(self) -> None:
         total, indexed = metrics['levels_total'], metrics['levels_indexed']
         if metrics['realtime_at']:
-            _logger.info('realtime: %s levels and counting', indexed)
-        else:
-            _logger.info(
-                '%s: %.1f%% done, %s levels left %21s L %5s O',
-                'last mile' if metrics['synchronized_at'] else 'indexing',
-                metrics['progress'] * 100,
-                total - indexed,
-                int(metrics['object_levels_speed']),
-                int(metrics['objects_speed']),
-            )
+            _logger.info('realtime: %s levels indexed and counting', indexed)
+            return
+
+        progress, left = metrics['progress'] * 100, int(total - indexed)
+        level_speed, object_speed = int(metrics['object_levels_speed']), int(metrics['objects_speed'])
+        msg = 'last mile' if metrics['synchronized_at'] else 'indexing'
+        msg += f': {progress:5.1f}% done, {left} levels left'
+
+        # NOTE: Resulting message is about 80 chars with the current logging format
+        msg += ' ' * (48 - len(msg))
+        msg += f' {level_speed:5} L {object_speed:5} O'
+        _logger.info(msg)
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
