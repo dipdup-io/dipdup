@@ -23,6 +23,8 @@ from typing import Any
 from typing import cast
 
 from async_lru import alru_cache
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import FrameworkException
 
@@ -172,21 +174,51 @@ class _QueueManager:
         return stats
 
 
-class _MetricManager(defaultdict[str, float]):
-    """Usage:
+@dataclass
+class _MetricManager:
+    # NOTE: General metrics
+    levels_indexed: int = 0
+    levels_nonempty: int = 0
+    levels_total: int = 0
+    objects_indexed: int = 0
 
-    metrics.inc('metric', 0.1)
-    metrics.set('metric', 0.1)
-    """
+    # NOTE: Index metrics
+    handlers_matched: defaultdict[str, int] = Field(default_factory=lambda: defaultdict(int))
+    time_in_matcher: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
+    time_in_callbacks: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
 
-    def __init__(self) -> None:
-        super().__init__(float)
+    # NOTE: Datasource metrics
+    time_in_requests: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
+    requests_total: defaultdict[str, int] = Field(default_factory=lambda: defaultdict(int))
 
-    def set(self, name: str, value: float) -> None:
-        self[name] = value
+    # NOTE: Various timestamps
+    started_at: float = 0.0
+    synchronized_at: float = 0.0
+    realtime_at: float = 0.0
+    metrics_updated_at: float = 0.0
 
-    def inc(self, name: str, value: float) -> None:
-        self[name] += value
+    # NOTE: Speed estimates
+    levels_speed: float = 0.0
+    levels_speed_average: float = 0.0
+    levels_nonempty_speed: float = 0.0
+    objects_speed: float = 0.0
+
+    # NOTE: Time estimates
+    time_passed: float = 0.0
+    time_left: float = 0.0
+    progress: float = 0.0
+
+    def stats(self) -> dict[str, Any]:
+        result = {}
+        for k, v in self.__dict__.items():
+            if k.startswith('_'):
+                continue
+            if isinstance(v, defaultdict):
+                for kk, vv in v.items():
+                    result[f'{k}:{kk}'] = vv
+            else:
+                result[k] = v
+        return result
 
 
 caches = _CacheManager()
@@ -198,5 +230,5 @@ def get_stats() -> dict[str, Any]:
     return {
         'caches': caches.stats(),
         'queues': queues.stats(),
-        'metrics': metrics,
+        'metrics': metrics.stats(),
     }

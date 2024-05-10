@@ -101,10 +101,8 @@ class IndexDispatcher:
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
-        self._started_at: float = 0.0
-        self._metrics_at: float = 0.0
-
-        self._speed_measure_window: defaultdict[str, list[tuple[float, float]]] = defaultdict(list)
+        self._last_levels_nonempty: int = 0
+        self._last_objects_indexed: int = 0
 
     async def run(
         self,
@@ -114,7 +112,7 @@ class IndexDispatcher:
     ) -> None:
         _logger.info('Starting index dispatcher')
         self._started_at = time.time()
-        metrics.set('started_at', self._started_at)
+        metrics.started_at = self._started_at
 
         await self._subscribe_to_datasource_events()
         await self._load_index_state()
@@ -173,8 +171,8 @@ class IndexDispatcher:
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
-                metrics.set('synchronized_at', 0)
-                metrics.set('realtime_at', 0)
+                metrics.synchronized_at = 0
+                metrics.realtime_at = 0
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
                 on_realtime_fired = False
@@ -252,39 +250,37 @@ class IndexDispatcher:
 
             self._previous_levels[index.name] = index.state.level
 
-        update_interval = time.time() - self._metrics_at
-        self._metrics_at = time.time()
+        update_interval = time.time() - metrics.metrics_updated_at
+        metrics.metrics_updated_at = time.time()
 
-        last_object_levels, last_objects_total = metrics['last_object_levels'], metrics['last_objects_total']
-        batch_object_levels = metrics['object_levels'] - last_object_levels
-        batch_objects = metrics['objects_total'] - last_objects_total
+        last_levels_nonempty, last_objects_indexed = self._last_levels_nonempty, self._last_objects_indexed
+        batch_levels_nonempty = metrics.levels_nonempty - last_levels_nonempty
+        batch_objects = metrics.objects_indexed - last_objects_indexed
 
-        level_speed = levels_interval / update_interval
-        average_level_speed = levels_indexed / (time.time() - self._started_at)
-        time_passed = (time.time() - self._started_at) / 60
+        levels_speed = levels_interval / update_interval
+        levels_speed_average = levels_indexed / (time.time() - self._started_at)
+        time_passed = time.time() - self._started_at
         time_left, progress = 0.0, 0.0
-        if average_level_speed:
-            time_left = (levels_total - levels_indexed) / average_level_speed / 60
+        if levels_speed_average:
+            time_left = (levels_total - levels_indexed) / levels_speed_average
         if levels_total:
             progress = levels_indexed / levels_total
 
-        metrics.set('levels_indexed', levels_indexed)
-        metrics.set('levels_total', levels_total)
+        metrics.levels_indexed = levels_indexed
+        metrics.levels_total = levels_total
 
-        metrics.set('level_speed', level_speed)
-        metrics.set('average_level_speed', average_level_speed)
+        metrics.levels_speed = levels_speed
+        metrics.levels_speed_average = levels_speed_average
 
-        metrics.set('objects_speed', batch_objects / update_interval)
-        metrics.set('object_levels_speed', batch_object_levels / update_interval)
+        metrics.objects_speed = batch_objects / update_interval
+        metrics.levels_nonempty_speed = batch_levels_nonempty / update_interval
 
-        metrics.set('time_passed', time_passed)
-        metrics.set('time_left', time_left)
-        metrics.set('progress', progress)
+        metrics.time_passed = time_passed
+        metrics.time_left = time_left
+        metrics.progress = progress
 
-        metrics['last_object_levels'], metrics['last_objects_total'] = (
-            metrics['object_levels'],
-            metrics['objects_total'],
-        )
+        self._last_levels_nonempty = metrics.levels_nonempty
+        self._last_objects_indexed = metrics.objects_indexed
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
@@ -292,19 +288,19 @@ class IndexDispatcher:
             self._log_status()
 
     def _log_status(self) -> None:
-        total, indexed = metrics['levels_total'], metrics['levels_indexed']
-        if metrics['realtime_at']:
+        total, indexed = metrics.levels_total, metrics.levels_indexed
+        if metrics.realtime_at:
             _logger.info('realtime: %s levels indexed and counting', indexed)
             return
 
-        progress, left = metrics['progress'] * 100, int(total - indexed)
-        level_speed, object_speed = int(metrics['object_levels_speed']), int(metrics['objects_speed'])
-        msg = 'last mile' if metrics['synchronized_at'] else 'indexing'
+        progress, left = metrics.progress * 100, int(total - indexed)
+        levels_speed, objects_speed = int(metrics.levels_nonempty_speed), int(metrics.objects_speed)
+        msg = 'last mile' if metrics.synchronized_at else 'indexing'
         msg += f': {progress:5.1f}% done, {left} levels left'
 
         # NOTE: Resulting message is about 80 chars with the current logging format
         msg += ' ' * (48 - len(msg))
-        msg += f' {level_speed:5} L {object_speed:5} O'
+        msg += f' {levels_speed:5} L {objects_speed:5} O'
         _logger.info(msg)
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
@@ -552,14 +548,14 @@ class IndexDispatcher:
     async def _on_synchronized(self) -> None:
         await self._ctx.fire_hook('on_synchronized')
 
-        metrics.set('synchronized_at', time.time())
+        metrics.synchronized_at = time.time()
 
     async def _on_realtime(self) -> None:
         # NOTE: We don't have system hook for this event!
         # await self._ctx.fire_hook('on_realtime')
         caches.clear()
 
-        metrics.set('realtime_at', time.time())
+        metrics.realtime_at = time.time()
 
 
 class DipDup:

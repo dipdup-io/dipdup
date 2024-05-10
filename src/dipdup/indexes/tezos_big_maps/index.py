@@ -88,7 +88,7 @@ class TezosBigMapsIndex(
                         )
                         for big_map_key in big_map_keys
                     )
-                    metrics.inc('objects_total', len(big_map_data))
+                    metrics.objects_indexed += len(big_map_data)
 
                     matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
                     for handler_config, big_map_diff in matched_handlers:

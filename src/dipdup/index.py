@@ -120,8 +120,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         total_matched = len(matched_handlers)
         Metrics.set_index_handlers_matched(total_matched)
-        metrics[f'{self.name}:handlers_matched'] += total_matched
-        metrics[f'{self.name}:time_in_matcher'] += (time.time() - started_at) / 60
+        metrics.handlers_matched[self.name] += total_matched
+        metrics.time_in_matcher[self.name] += time.time() - started_at
 
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
@@ -134,9 +134,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
                 await self._call_matched_handler(handler_config, data)
             await self._update_state(level=batch_level)
 
-        metrics.inc('objects_total', len(level_data))
-        metrics.inc('object_levels', 1)
-        metrics[f'{self.name}:time_in_callbacks'] += (time.time() - started_at) / 60
+        metrics.objects_indexed += len(level_data)
+        metrics.levels_nonempty += 1
+        metrics.time_in_callbacks[self.name] += time.time() - started_at
 
     @property
     def name(self) -> str:
