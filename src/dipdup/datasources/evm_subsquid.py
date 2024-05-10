@@ -87,7 +87,7 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
     async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
         return _EvmSubsquidWorker(await self._fetch_worker(level))
 
-    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:  # TODO: fix typing
+    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
         return await super().query_worker(query, current_level)
 
     async def iter_event_events(

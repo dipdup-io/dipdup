@@ -60,7 +60,8 @@ class EventRequest(TypedDict, total=False):
 
 
 class Query(AbstractSubsquidQuery):
-    type: NotRequired[str]  # NOTE: should always be starknet
+    # NOTE: should always be starknet
+    type: NotRequired[str]
 
     transactions: NotRequired[list[TransactionRequest]]
     events: NotRequired[list[EventRequest]]

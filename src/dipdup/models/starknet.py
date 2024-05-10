@@ -14,14 +14,16 @@ class StarknetTransactionData(HasLevel, ABC):
     transaction_hash: str
     timestamp: int
 
-    contract_address: str | None  # Address of the contract for contract-related transactions
+    # Address of the contract for contract-related transactions
+    contract_address: str | None
     entry_point_selector: str | None
     calldata: tuple[str, ...] | None
     max_fee: str | None
     version: str
     signature: tuple[str, ...] | None
     nonce: str | None
-    type: str  # transaction type enum
+    # transaction type enum
+    type: str
     sender_address: str | None
     class_hash: str | None
     compiled_class_hash: str | None
