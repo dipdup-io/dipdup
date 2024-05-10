@@ -55,7 +55,7 @@ dependencies = [
     "pydantic~=2.2",
     "sentry-sdk~=2.0",
     "tortoise-orm==0.20.1",
-    "web3~=6.17",
+    "web3~=6.18",
     #
     "aiohttp~=3.9",
     "aiolimiter~=1.0",

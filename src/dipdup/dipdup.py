@@ -207,7 +207,7 @@ class IndexDispatcher:
     async def _update_prometheus(self) -> None:
         active, synced, realtime = 0, 0, 0
         for index in copy(self._indexes).values():
-            # TODO: we arent deleting inactive indexes any more
+            # FIXME: We don't remove disabled indexes from dispatcher anymore
             active += 1
             if index.synchronized:
                 synced += 1
