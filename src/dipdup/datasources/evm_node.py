@@ -300,7 +300,6 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
 
         if ws:
             started_at = time.time()
-            namespace = f'{self._config.name}.ws'
             event = asyncio.Event()
             self._requests[request_id] = (event, None)
 
@@ -318,8 +317,8 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig]):
             data = self._requests[request_id][1]
             del self._requests[request_id]
 
-            metrics.inc(f'{namespace}:time_in_requests', (time.time() - started_at) / 60)
-            metrics.inc(f'{namespace}:requests_total', 1.0)
+            metrics.time_in_requests[self.name] += time.time() - started_at
+            metrics.requests_total[self.name] += 1
         else:
             data = await self.request(
                 method='post',

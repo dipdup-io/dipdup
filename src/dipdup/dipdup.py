@@ -83,8 +83,8 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 1.0 if env.DEBUG else 2.0
-STATUS_INTERVAL = 1.0 if env.DEBUG else 10.0
+METRICS_INTERVAL = 1.0 if env.DEBUG else 5.0
+STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
 
@@ -102,8 +102,8 @@ class IndexDispatcher:
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
-        self._started_at: float = 0.0
-        self._metrics_at: float = 0.0
+        self._last_levels_nonempty: int = 0
+        self._last_objects_indexed: int = 0
 
     async def run(
         self,
@@ -113,7 +113,7 @@ class IndexDispatcher:
     ) -> None:
         _logger.info('Starting index dispatcher')
         self._started_at = time.time()
-        metrics.set('started_at', self._started_at)
+        metrics.started_at = self._started_at
 
         await self._subscribe_to_datasource_events()
         await self._load_index_state()
@@ -172,8 +172,8 @@ class IndexDispatcher:
                 if not start_scheduler_event.is_set():
                     start_scheduler_event.set()
             else:
-                metrics.set('synchronized_at', 0)
-                metrics.set('realtime_at', 0)
+                metrics.synchronized_at = 0
+                metrics.realtime_at = 0
                 # NOTE: Fire `on_synchronized` hook when indexes will reach realtime state again
                 on_synchronized_fired = False
                 on_realtime_fired = False
@@ -208,6 +208,7 @@ class IndexDispatcher:
     async def _update_prometheus(self) -> None:
         active, synced, realtime = 0, 0, 0
         for index in copy(self._indexes).values():
+            # FIXME: We don't remove disabled indexes from dispatcher anymore
             active += 1
             if index.synchronized:
                 synced += 1
@@ -250,45 +251,58 @@ class IndexDispatcher:
 
             self._previous_levels[index.name] = index.state.level
 
-        update_interval = time.time() - self._metrics_at
-        self._metrics_at = time.time()
+        update_interval = time.time() - metrics.metrics_updated_at
+        metrics.metrics_updated_at = time.time()
 
-        current_speed = levels_interval / update_interval
-        average_speed = levels_indexed / (time.time() - self._started_at)
-        time_passed = (time.time() - self._started_at) / 60
+        last_levels_nonempty, last_objects_indexed = self._last_levels_nonempty, self._last_objects_indexed
+        batch_levels_nonempty = metrics.levels_nonempty - last_levels_nonempty
+        batch_objects = metrics.objects_indexed - last_objects_indexed
+
+        levels_speed = levels_interval / update_interval
+        levels_speed_average = levels_indexed / (time.time() - self._started_at)
+        time_passed = time.time() - self._started_at
         time_left, progress = 0.0, 0.0
-        if average_speed:
-            time_left = (levels_total - levels_indexed) / average_speed / 60
+        if levels_speed_average:
+            time_left = (levels_total - levels_indexed) / levels_speed_average
         if levels_total:
             progress = levels_indexed / levels_total
 
-        metrics.set('levels_indexed', levels_indexed)
-        metrics.set('levels_total', levels_total)
-        metrics.set('current_speed', current_speed)
-        metrics.set('average_speed', average_speed)
-        metrics.set('time_passed', time_passed)
-        metrics.set('time_left', time_left)
-        metrics.set('progress', progress)
+        metrics.levels_indexed = levels_indexed
+        metrics.levels_total = levels_total
+
+        metrics.levels_speed = levels_speed
+        metrics.levels_speed_average = levels_speed_average
+
+        metrics.objects_speed = batch_objects / update_interval
+        metrics.levels_nonempty_speed = batch_levels_nonempty / update_interval
+
+        metrics.time_passed = time_passed
+        metrics.time_left = time_left
+        metrics.progress = progress
+
+        self._last_levels_nonempty = metrics.levels_nonempty
+        self._last_objects_indexed = metrics.objects_indexed
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
-            await self._log_status()
+            self._log_status()
 
-    async def _log_status(self) -> None:
-        await self._update_metrics()
-        total, indexed = metrics['levels_total'], metrics['levels_indexed']
-        current_speed = int(metrics['current_speed'])
-        if metrics['realtime_at']:
-            _logger.info('realtime: %s levels and counting', indexed)
-        else:
-            _logger.info(
-                '%s: %.2f%%: %s levels left (%s lps)',
-                'last mile' if metrics['synchronized_at'] else 'indexing',
-                metrics['progress'] * 100,
-                total - indexed,
-                current_speed,
-            )
+    def _log_status(self) -> None:
+        total, indexed = metrics.levels_total, metrics.levels_indexed
+        if metrics.realtime_at:
+            _logger.info('realtime: %s levels indexed and counting', indexed)
+            return
+
+        progress, left = metrics.progress * 100, int(total - indexed)
+        levels_speed, objects_speed = int(metrics.levels_nonempty_speed), int(metrics.objects_speed)
+        msg = 'last mile' if metrics.synchronized_at else 'indexing'
+        msg += f': {progress:5.1f}% done, {left} levels left'
+
+        # NOTE: Resulting message is about 80 chars with the current logging format
+        msg += ' ' * (48 - len(msg))
+        msg += f' {levels_speed:5} L {objects_speed:5} O'
+        _logger.info(msg)
 
     async def _apply_filters(self, index: TzktOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -541,14 +555,14 @@ class IndexDispatcher:
     async def _on_synchronized(self) -> None:
         await self._ctx.fire_hook('on_synchronized')
 
-        metrics.set('synchronized_at', time.time())
+        metrics.synchronized_at = time.time()
 
     async def _on_realtime(self) -> None:
         # NOTE: We don't have system hook for this event!
         # await self._ctx.fire_hook('on_realtime')
         caches.clear()
 
-        metrics.set('realtime_at', time.time())
+        metrics.realtime_at = time.time()
 
 
 class DipDup:
