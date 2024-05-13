@@ -51,7 +51,7 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Install dev dependencies
-        run: cd dipdup_indexer; poetry remove dipdup; poetry add ..; poetry install
+        run: cd dipdup_indexer; poetry remove dipdup; poetry add ../; poetry install
 
       - name: make all
         run: cd dipdup_indexer; poetry run make all
