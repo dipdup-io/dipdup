@@ -54,14 +54,14 @@ jobs:
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
           cache: 'poetry'
-
-      - name: Install Poetry
-        run: pipx install poetry
 
       - name: Run install
         run: poetry install

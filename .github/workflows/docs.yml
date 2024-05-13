@@ -38,14 +38,14 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
           cache: 'poetry'
-
-      - name: Install Poetry
-        run: pip install poetry
 
       - name: Install markdownlint-cli
         run: npm install -g markdownlint-cli
