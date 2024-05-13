@@ -2,6 +2,8 @@ from typing import NotRequired
 
 from typing_extensions import TypedDict
 
+from dipdup.models.subsquid import AbstractSubsquidQuery
+
 
 class BlockFieldSelection(TypedDict, total=False):
     baseFeePerGas: bool
@@ -162,13 +164,10 @@ class StateDiffRequest(TypedDict, total=False):
     transaction: bool
 
 
-class Query(TypedDict):
-    fields: NotRequired[FieldSelection]
-    fromBlock: int
-    includeAllBlocks: NotRequired[bool]
+class Query(AbstractSubsquidQuery):
     logs: NotRequired[list[LogRequest]]
     stateDiffs: NotRequired[list[StateDiffRequest]]
-    toBlock: int
     traces: NotRequired[list[TraceRequest]]
     transactions: NotRequired[list[TransactionRequest]]
     type: NotRequired[str]
+    fields: NotRequired[FieldSelection]
