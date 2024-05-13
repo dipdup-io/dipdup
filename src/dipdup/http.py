@@ -214,7 +214,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
-        metrics.inc(f'{self._alias}:requests_total', 1.0)
+        metrics.requests_total[self._alias] += 1
         if not url:
             url = self._path or '/'
         elif url.startswith('http'):
@@ -243,7 +243,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             **kwargs,
         ) as response:
             await response.read()
-            metrics.inc(f'{self._alias}:time_in_requests', (time.time() - started_at) / 60)
+            metrics.time_in_requests[self._alias] += time.time() - started_at
             if raw:
                 return response
 
