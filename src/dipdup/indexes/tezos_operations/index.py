@@ -32,6 +32,7 @@ from dipdup.models import RollbackMessage
 from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 
 if TYPE_CHECKING:
@@ -272,6 +273,7 @@ class TezosOperationsIndex(
         self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
         matched_handlers: deque[MatchedOperationsT] = deque()
         for operation_subgroup in operation_subgroups:
+            metrics.objects_indexed += len(operation_subgroup.operations)
             if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
                     index=self._config,
@@ -298,12 +300,14 @@ class TezosOperationsIndex(
         # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
         if not matched_handlers:
             await self._update_state(level=batch_level)
+            metrics.levels_nonempty += 1
             return
 
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
             for operation_subgroup, handler_config, args in matched_handlers:
                 await self._call_matched_handler(handler_config, (operation_subgroup, args))
             await self._update_state(level=batch_level)
+            metrics.levels_nonempty += 1
 
     async def _call_matched_handler(
         self,
