@@ -69,9 +69,9 @@ fixme:          ## Find FIXME and TODO comments
 	grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color
 
 update:         ## Update dependencies and dump requirements.txt
-	pdm update
-	pdm export --without-hashes -f requirements --prod -o requirements.txt
-	pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
+	poetry update
+	poetry export --without-hashes -o requirements.txt
+	poetry export --without-hashes --with dev,docs -o requirements.dev.txt
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format

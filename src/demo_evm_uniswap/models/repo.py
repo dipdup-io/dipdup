@@ -4,7 +4,7 @@ from typing import cast
 
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
-from lru import LRU
+from lru import LRU  # type: ignore[import-not-found]
 
 import demo_evm_uniswap.models as models
 
@@ -32,7 +32,7 @@ class ModelsRepo:
         self._pending_positions[idx] = position
 
     def get_pending_position(self, idx: str) -> dict[str, Any] | None:
-        return self._pending_positions.get(idx, None)
+        return self._pending_positions.get(idx, None)  # type: ignore[no-any-return]
 
 
 async def get_ctx_factory(ctx: HandlerContext) -> models.Factory:

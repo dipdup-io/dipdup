@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'pdm.lock'
+      - '*.lock'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -30,23 +30,23 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Install PDM
-        run: pipx install pdm
+      - name: Install Poetry
+        run: pipx install poetry
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-          cache: 'pip'
+          cache: 'poetry'
 
       - name: Run install
-        run: pdm sync
+        run: poetry install
 
       - name: Run lint
-        run: pdm run lint
+        run: poetry run make lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
 
       - name: Run tests
-        run: pdm run test
+        run: poetry run make test
         env:
           NODE_API_KEY: ${{ secrets.ALCHEMY_KEY }}

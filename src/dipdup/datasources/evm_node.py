@@ -14,7 +14,8 @@ import pysignalr
 import pysignalr.exceptions
 from pysignalr.messages import CompletionMessage
 from web3 import AsyncWeb3
-from web3.middleware.async_cache import async_construct_simple_cache_middleware
+
+# from web3.middleware.async_cache import async_construct_simple_cache_middleware
 from web3.providers.async_base import AsyncJSONBaseProvider
 from web3.utils.caching import SimpleCache
 
@@ -121,10 +122,11 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
         self._web3_client = AsyncWeb3(
             provider=MagicWeb3Provider(self),
         )
-        self._web3_client.middleware_onion.add(
-            await async_construct_simple_cache_middleware(web3_cache),
-            'cache',
-        )
+        # FIXME: Reenable after fixing imports
+        # self._web3_client.middleware_onion.add(
+        #     await async_construct_simple_cache_middleware(web3_cache),
+        #     'cache',
+        # )
 
         level = await self.get_head_level()
         self.set_sync_level(None, level)

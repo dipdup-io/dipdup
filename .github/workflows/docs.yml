@@ -42,16 +42,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-          cache: 'pip'
+          cache: 'poetry'
 
-      - name: Install PDM
-        run: pip install pdm
+      - name: Install Poetry
+        run: pip install poetry
 
       - name: Install markdownlint-cli
         run: npm install -g markdownlint-cli
 
       - name: Install project
-        run: pdm sync
+        run: poetry install
 
       - name: Clone frontend
         run: |
@@ -59,7 +59,7 @@ jobs:
           gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
 
       - name: Build docs
-        run: pdm run docs_build
+        run: poetry run make docs_build
 
       - name: Commit and push frontend
         if: github.ref_type == 'tag'

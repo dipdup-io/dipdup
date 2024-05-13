@@ -42,8 +42,8 @@ docker-compose up
 To set up the development environment:
 
 ```shell
-pdm install
-$(pdm venv activate)
+poetry install
+poetry shell
 ```
 
 Run `make all` to run full CI check or `make help` to see other available commands.

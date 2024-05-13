@@ -16,7 +16,7 @@ from typing import cast
 
 import tortoise
 import tortoise.queryset
-from lru import LRU
+from lru import LRU  # type: ignore[import-not-found]
 from pydantic.dataclasses import dataclass
 from tortoise.exceptions import OperationalError
 from tortoise.fields import relational
@@ -574,7 +574,7 @@ class CachedModel(Model):
             cls._cache[pk] = await cls.get(pk=pk)
         else:
             cls._hits += 1
-        return cls._cache[pk]  # type: ignore[return-value]
+        return cls._cache[pk]  # type: ignore[no-any-return]
 
     @classmethod
     async def cached_get_or_none(
@@ -583,10 +583,10 @@ class CachedModel(Model):
     ) -> Self | None:
         if pk not in cls._cache:
             cls._misses += 1
-            cls._cache[pk] = await cls.get_or_none(pk=pk)  # type: ignore[assignment]
+            cls._cache[pk] = await cls.get_or_none(pk=pk)
         else:
             cls._hits += 1
-        return cls._cache[pk]  # type: ignore[return-value]
+        return cls._cache[pk]  # type: ignore[no-any-return]
 
     def cache(self) -> None:
         if self.pk is None:
