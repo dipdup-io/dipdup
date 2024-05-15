@@ -296,7 +296,7 @@ class IndexDispatcher:
         progress, left = metrics.progress * 100, int(total - indexed)
         if not progress:
             scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
-            msg = f'indexing: {scanned_levels:5} levels, estimating...'
+            msg = f'indexing: {scanned_levels:6} levels, estimating...'
             _logger.info(msg)
             return
 
