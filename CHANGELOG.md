@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - config: Fixed (de)serialization of hex strings in config.
-- performance: Fixed estimating indexing speed in levels per second.
+- performance: Fixed estimation of indexing speed in levels per second.
 - yaml: Fixed indentation and formatting of generated YAML files.
 
 ### Changed
@@ -27,8 +27,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Index configs accept `datasources` list instead of `datasource` field.
 - config: Index template values now can be any JSON-serializable object.
 - deps: Python 3.12 is now required to run DipDup.
-- performance: All time intervals are measured in seconds now.
-- performance: Several metrics have been renamed and new ones added.
+- performance: All time intervals are now measured in seconds.
+- performance: Several metrics have been renamed and new ones have been added.
 
 ### Removed
 
