@@ -294,6 +294,12 @@ class IndexDispatcher:
             return
 
         progress, left = metrics.progress * 100, int(total - indexed)
+        if not progress:
+            scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
+            msg = f'indexing: {scanned_levels:5} levels, estimating...'
+            _logger.info(msg)
+            return
+
         levels_speed, objects_speed = int(metrics.levels_nonempty_speed), int(metrics.objects_speed)
         msg = 'last mile' if metrics.synchronized_at else 'indexing'
         msg += f': {progress:5.1f}% done, {left} levels left'
