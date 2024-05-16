@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [7.5.6] - 2024-05-16
+
+### Fixed
+
+- cli: Improved logging of indexer status.
+- performance: Fixed estimation indexing speed in levels per second.
+
+### Changed
+
+- api: `/performance` endpoint response format has been changed.
+- performance: All time intervals are now measured in seconds.
+- performance: Several metrics have been renamed and new ones have been added.
+
 ## [8.0.0a1] - 2024-05-06
 
 ### Added
@@ -15,14 +28,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- cli: Improved logging of indexer status.
 - config: Fixed (de)serialization of hex strings in config.
-- performance: Fixed estimation of indexing speed in levels per second.
+- performance: Fixed estimation indexing speed in levels per second.
 - yaml: Fixed indentation and formatting of generated YAML files.
 
 ### Changed
 
 - api: `/performance` endpoint response format have been changed.
-- cli: Improved logging for indexer status.
 - config: Index kinds have been renamed and grouped by the network.
 - config: Index configs accept `datasources` list instead of `datasource` field.
 - config: Index template values now can be any JSON-serializable object.
