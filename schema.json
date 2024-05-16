@@ -840,7 +840,8 @@
         "ghostnet",
         "mumbainet",
         "nairobinet",
-        "oxfordnet"
+        "oxfordnet",
+        "parisnet"
       ]
     },
     "TzipMetadataDatasourceConfig": {

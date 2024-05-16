@@ -108,7 +108,7 @@ docs = [
     # NOTE: Patched to support nested Pydantic dataclasses.
     "git+https://github.com/dipdup-io/dc_schema.git@pydantic-dc",
     "Sphinx",
-    "sphinx-click",
+    "sphinx-click==5.2.2",
     "sphinx-markdown-builder",
     "watchdog",
 ]
