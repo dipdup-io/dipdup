@@ -106,7 +106,8 @@ dev = [
 ]
 docs = [
     "Sphinx",
-    "sphinx-click",
+    # FIXME: 6.0 fails with `<class 'asyncclick.core.Group'>" of type "dipdup.cli:cli" is not click.Command or click.Group."click.BaseCommand"`
+    "sphinx-click==5.2.2",
     "sphinx-markdown-builder",
     "watchdog",
 ]

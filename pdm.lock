@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:770e869b5cfc98df4f0afa5751b0b26f8fa090347b9d30255eab267114f67be3"
+content_hash = "sha256:7b18b398a8048b2c2b0a278cc23a72000c739b531aafab08e0a1222e18d567da"
 
 [[package]]
 name = "aiohttp"
@@ -1121,7 +1121,7 @@ files = [
 
 [[package]]
 name = "pyarrow"
-version = "16.0.0"
+version = "16.1.0"
 requires_python = ">=3.8"
 summary = "Python library for Apache Arrow"
 groups = ["default"]
@@ -1129,14 +1129,14 @@ dependencies = [
     "numpy>=1.16.6",
 ]
 files = [
-    {file = "pyarrow-16.0.0-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:fb8065dbc0d051bf2ae2453af0484d99a43135cadabacf0af588a3be81fbbb9b"},
-    {file = "pyarrow-16.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:20ce707d9aa390593ea93218b19d0eadab56390311cb87aad32c9a869b0e958c"},
-    {file = "pyarrow-16.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5823275c8addbbb50cd4e6a6839952682a33255b447277e37a6f518d6972f4e1"},
-    {file = "pyarrow-16.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1ab8b9050752b16a8b53fcd9853bf07d8daf19093533e990085168f40c64d978"},
-    {file = "pyarrow-16.0.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:42e56557bc7c5c10d3e42c3b32f6cff649a29d637e8f4e8b311d334cc4326730"},
-    {file = "pyarrow-16.0.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:2a7abdee4a4a7cfa239e2e8d721224c4b34ffe69a0ca7981354fe03c1328789b"},
-    {file = "pyarrow-16.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:ef2f309b68396bcc5a354106741d333494d6a0d3e1951271849787109f0229a6"},
-    {file = "pyarrow-16.0.0.tar.gz", hash = "sha256:59bb1f1edbbf4114c72415f039f1359f1a57d166a331c3229788ccbfbb31689a"},
+    {file = "pyarrow-16.1.0-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:2e51ca1d6ed7f2e9d5c3c83decf27b0d17bb207a7dea986e8dc3e24f80ff7d6f"},
+    {file = "pyarrow-16.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:06ebccb6f8cb7357de85f60d5da50e83507954af617d7b05f48af1621d331c9a"},
+    {file = "pyarrow-16.1.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b04707f1979815f5e49824ce52d1dceb46e2f12909a48a6a753fe7cafbc44a0c"},
+    {file = "pyarrow-16.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0d32000693deff8dc5df444b032b5985a48592c0697cb6e3071a5d59888714e2"},
+    {file = "pyarrow-16.1.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:8785bb10d5d6fd5e15d718ee1d1f914fe768bf8b4d1e5e9bf253de8a26cb1628"},
+    {file = "pyarrow-16.1.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:e1369af39587b794873b8a307cc6623a3b1194e69399af0efd05bb202195a5a7"},
+    {file = "pyarrow-16.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:febde33305f1498f6df85e8020bca496d0e9ebf2093bab9e0f65e2b4ae2b3444"},
+    {file = "pyarrow-16.1.0.tar.gz", hash = "sha256:15fbb22ea96d11f0b5768504a3f961edab25eaf4197c341720c4a387f6c60315"},
 ]
 
 [[package]]
@@ -1618,7 +1618,7 @@ files = [
 
 [[package]]
 name = "sentry-sdk"
-version = "2.1.1"
+version = "2.2.0"
 requires_python = ">=3.6"
 summary = "Python client for Sentry (https://sentry.io)"
 groups = ["default"]
@@ -1627,8 +1627,8 @@ dependencies = [
     "urllib3>=1.26.11",
 ]
 files = [
-    {file = "sentry_sdk-2.1.1-py2.py3-none-any.whl", hash = "sha256:99aeb78fb76771513bd3b2829d12613130152620768d00cd3e45ac00cb17950f"},
-    {file = "sentry_sdk-2.1.1.tar.gz", hash = "sha256:95d8c0bb41c8b0bc37ab202c2c4a295bb84398ee05f4cdce55051cd75b926ec1"},
+    {file = "sentry_sdk-2.2.0-py2.py3-none-any.whl", hash = "sha256:674f58da37835ea7447fe0e34c57b4a4277fad558b0a7cb4a6c83bcb263086be"},
+    {file = "sentry_sdk-2.2.0.tar.gz", hash = "sha256:70eca103cf4c6302365a9d7cf522e7ed7720828910eb23d43ada8e50d1ecda9d"},
 ]
 
 [[package]]
@@ -1694,7 +1694,7 @@ files = [
 
 [[package]]
 name = "sphinx-click"
-version = "5.1.0"
+version = "5.2.2"
 requires_python = ">=3.8"
 summary = "Sphinx extension that automatically documents click applications"
 groups = ["docs"]
@@ -1704,8 +1704,8 @@ dependencies = [
     "sphinx>=2.0",
 ]
 files = [
-    {file = "sphinx-click-5.1.0.tar.gz", hash = "sha256:6812c2db62d3fae71a4addbe5a8a0a16c97eb491f3cd63fe34b4ed7e07236f33"},
-    {file = "sphinx_click-5.1.0-py3-none-any.whl", hash = "sha256:ae97557a4e9ec646045089326c3b90e026c58a45e083b8f35f17d5d6558d08a0"},
+    {file = "sphinx_click-5.2.2-py3-none-any.whl", hash = "sha256:52be92a53e04de98b7228617a35008a4949910a70a597256c62ea4276c6a066d"},
+    {file = "sphinx_click-5.2.2.tar.gz", hash = "sha256:191a36dd5b61f2036592a0b36a6ba037ae97b3dd7e8ce9a056588c5605ac7833"},
 ]
 
 [[package]]
@@ -1960,7 +1960,7 @@ files = [
 
 [[package]]
 name = "web3"
-version = "6.18.0"
+version = "6.19.0"
 requires_python = ">=3.7.2"
 summary = "web3.py"
 groups = ["default"]
@@ -1982,8 +1982,8 @@ dependencies = [
     "websockets>=10.0.0",
 ]
 files = [
-    {file = "web3-6.18.0-py3-none-any.whl", hash = "sha256:86484a3d390a0a024002d1c1b79af27034488c470ea07693ff0f5bf109d3540b"},
-    {file = "web3-6.18.0.tar.gz", hash = "sha256:2e626a4bf151171f5dc8ad7f30c373f0416dc2aca9d8d102a63578a2413efa26"},
+    {file = "web3-6.19.0-py3-none-any.whl", hash = "sha256:fb39683d6aa7586ce0ab0be4be392f8acb62c2503958079d61b59f2a0b883718"},
+    {file = "web3-6.19.0.tar.gz", hash = "sha256:d27fbd4ac5aa70d0e0c516bd3e3b802fbe74bc159b407c34052d9301b400f757"},
 ]
 
 [[package]]
