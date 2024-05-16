@@ -53,8 +53,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - demos: Demo projects have been renamed to reflect the new config structure.
 - deps: `datamodel-code-generator` updated to 0.25.
 - deps: `pyarrow` updated to 16.0.
-- deps: `pydantic`updated to 2.2.
-- deps: `sentry-sdk`updated to 2.1.
+- deps: `pydantic` updated to 2.2.
+- deps: `sentry-sdk` updated to 2.1.
 - deps: `tortoise-orm` updated to 0.20.1.
 - deps: `web3` updated to 6.18.
 
