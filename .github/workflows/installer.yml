@@ -8,6 +8,7 @@ on:
       - 'src/**'
       - 'pyproject.toml'
       - 'pdm.lock'
+      - '.github/workflows/docs.yml'
       - '.github/workflows/installer.yml'
 
 jobs:
@@ -53,14 +54,4 @@ jobs:
       - name: make all
         run: cd dipdup_indexer; $(pdm venv activate); make all
 
-      - name: Copy installer to scripts
-        if: contains(github.ref, 'current')
-        run: cp src/dipdup/install.py scripts/install.py
-
-      - name: Publish scripts to GitHub Pages
-        if: contains(github.ref, 'current')
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./scripts
-          keep_files: true
+      # NOTE: Installer is published in `docs` workflow
