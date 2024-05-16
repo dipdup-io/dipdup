@@ -15,6 +15,7 @@ on:
       - 'docs/**'
       - 'scripts/**'
       - '.github/workflows/docs.yml'
+      - '.github/workflows/installer.yml'
 
 env:
   FRONTEND_BRANCH: master
@@ -61,9 +62,11 @@ jobs:
       - name: Build docs
         run: pdm run docs_build
 
+      # NOTE: Installer is tested in `installer` workflow
       - name: Commit and push frontend
         if: github.ref_type == 'tag'
         run: |
+          cp src/dipdup/install.py ../interface/public/install.py
           cd ../interface
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
