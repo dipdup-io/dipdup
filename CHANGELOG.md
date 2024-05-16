@@ -4,16 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.5.6] - 2024-05-16
 
 ### Fixed
 
+- cli: Improved logging of indexer status.
 - performance: Fixed estimation indexing speed in levels per second.
 
 ### Changed
 
-- api: `/performance` endpoint response format have been changed.
-- cli: Improved logging of indexer status.
+- api: `/performance` endpoint response format has been changed.
 - performance: All time intervals are now measured in seconds.
 - performance: Several metrics have been renamed and new ones have been added.
 
