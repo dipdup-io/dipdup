@@ -747,6 +747,12 @@ class DipDupConfig:
         if not isinstance(contract, EvmContractConfig):
             raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
         return contract
+    
+    def get_starknet_contract(self, name: str) -> StarknetContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, StarknetContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
+        return contract
 
     def get_datasource(self, name: str) -> DatasourceConfigU:
         try:
@@ -1048,6 +1054,12 @@ class DipDupConfig:
 
                 if isinstance(handler_config.from_, str):
                     handler_config.from_ = self.get_evm_contract(handler_config.from_)
+        elif isinstance(index_config, StarknetEventsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_starknet_contract(handler_config.contract)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1084,6 +1096,9 @@ from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.starknet import StarknetContractConfig
+from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
@@ -1099,7 +1114,7 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
-ContractConfigU = EvmContractConfig | TezosContractConfig
+ContractConfigU = EvmContractConfig | TezosContractConfig | StarknetContractConfig
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
     | AbiEtherscanDatasourceConfig
@@ -1109,6 +1124,7 @@ DatasourceConfigU = (
     | EvmNodeDatasourceConfig
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
+    | StarknetSubsquidDatasourceConfig
 )
 TezosIndexConfigU = (
     TezosBigMapsIndexConfig
@@ -1120,8 +1136,9 @@ TezosIndexConfigU = (
     | TezosTokenBalancesIndexConfig
 )
 EvmIndexConfigU = EvmEventsIndexConfig | EvmTransactionsIndexConfig
+StarknetIndexConfigU = StarknetEventsIndexConfig
 
-ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
+ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU | StarknetIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

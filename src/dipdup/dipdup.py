@@ -579,6 +579,7 @@ class DipDup:
     ) -> None:
         """Create new or update existing dipdup project"""
         from dipdup.codegen.evm import EvmCodeGenerator
+        from dipdup.codegen.starknet import StarknetCodeGenerator
         from dipdup.codegen.tezos import TezosCodeGenerator
 
         await self._create_datasources()
@@ -592,6 +593,7 @@ class DipDup:
             codegen_classes: tuple[type[CodeGenerator], ...] = (
                 TezosCodeGenerator,
                 EvmCodeGenerator,
+                StarknetCodeGenerator,
             )
             for codegen_cls in codegen_classes:
                 codegen = codegen_cls(

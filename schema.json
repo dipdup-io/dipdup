@@ -1186,6 +1186,165 @@
       "title": "SqliteDatabaseConfig",
       "type": "object"
     },
+    "StarknetContractConfig": {
+      "additionalProperties": false,
+      "description": "Starknet contract config\n\n:param kind: Always `starknet`\n:param address: Contract address\n:param abi: Contract ABI\n:param typename: Alias for the contract script",
+      "properties": {
+        "kind": {
+          "const": "starknet",
+          "enum": [
+            "starknet"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Address"
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Abi"
+        },
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Typename"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "StarknetContractConfig",
+      "type": "object"
+    },
+    "StarknetEventsHandlerConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid event handler\n\n:param callback: Callback name\n:param contract: Starknet contract\n:param name: Event name",
+      "properties": {
+        "callback": {
+          "title": "Callback",
+          "type": "string"
+        },
+        "contract": {
+          "$ref": "#/$defs/StarknetContractConfig"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "name"
+      ],
+      "title": "StarknetEventsHandlerConfig",
+      "type": "object"
+    },
+    "StarknetEventsIndexConfig": {
+      "additionalProperties": false,
+      "description": "Starknet events index config\n\n:param kind: Always 'starknet.events'\n:param handlers: Event handlers",
+      "properties": {
+        "kind": {
+          "const": "starknet.events",
+          "enum": [
+            "starknet.events"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "datasources": {
+          "items": {
+            "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
+          },
+          "title": "Datasources",
+          "type": "array"
+        },
+        "first_level": {
+          "default": 0,
+          "title": "First Level",
+          "type": "integer"
+        },
+        "last_level": {
+          "default": 0,
+          "title": "Last Level",
+          "type": "integer"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/StarknetEventsHandlerConfig"
+          },
+          "title": "Handlers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "datasources",
+        "handlers"
+      ],
+      "title": "StarknetEventsIndexConfig",
+      "type": "object"
+    },
+    "StarknetSubsquidDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid datasource config\n\n:param kind: always 'starknet.subsquid'\n:param url: URL of Subsquid Network API\n:param http: HTTP client configuration",
+      "properties": {
+        "kind": {
+          "const": "starknet.subsquid",
+          "enum": [
+            "starknet.subsquid"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "title": "StarknetSubsquidDatasourceConfig",
+      "type": "object"
+    },
     "TezosBigMapsHandlerConfig": {
       "additionalProperties": false,
       "description": "Big map handler config\n\n:param callback: Callback name\n:param contract: Contract to fetch big map from\n:param path: Path to big map (alphanumeric string with dots)",
@@ -2230,6 +2389,9 @@
           },
           {
             "$ref": "#/$defs/TezosTzktDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
           }
         ]
       },
@@ -2255,6 +2417,9 @@
           },
           {
             "$ref": "#/$defs/TezosContractConfig"
+          },
+          {
+            "$ref": "#/$defs/StarknetContractConfig"
           }
         ]
       },
@@ -2290,6 +2455,9 @@
           },
           {
             "$ref": "#/$defs/EvmTransactionsIndexConfig"
+          },
+          {
+            "$ref": "#/$defs/StarknetEventsIndexConfig"
           },
           {
             "$ref": "#/$defs/IndexTemplateConfig"
@@ -2328,6 +2496,9 @@
           },
           {
             "$ref": "#/$defs/EvmTransactionsIndexConfig"
+          },
+          {
+            "$ref": "#/$defs/StarknetEventsIndexConfig"
           }
         ]
       },

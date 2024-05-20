@@ -182,8 +182,6 @@ class EvmCodeGenerator(CodeGenerator):
 
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
         datasource_configs = tuple(c for c in index_config.datasources if isinstance(c, AbiEtherscanDatasourceConfig))
-        if not datasource_configs:
-            raise ConfigurationError('No EVM ABI datasources found')
 
         contract: EvmContractConfig | None = None
 
@@ -199,6 +197,8 @@ class EvmCodeGenerator(CodeGenerator):
             abi_path = self._package.abi / contract.module_name / 'abi.json'
             if abi_path.exists():
                 continue
+            if not datasource_configs:
+                raise ConfigurationError('No EVM ABI datasources found')
 
             address = contract.address or contract.abi
             if not address:

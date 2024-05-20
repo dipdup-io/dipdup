@@ -1,7 +1,11 @@
 from abc import ABC
 from dataclasses import dataclass
 from typing import Any
+from typing import Generic
 from typing import Self
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from dipdup.fetcher import HasLevel
 
@@ -80,3 +84,12 @@ class StarknetEventData(HasLevel, ABC):
             keys=tuple(event_json['keys']),
             data=tuple(event_json['data']),
         )
+
+
+PayloadT = TypeVar('PayloadT', bound=BaseModel)
+
+
+@dataclass(frozen=True)
+class StarknetEvent(Generic[PayloadT]):
+    data: StarknetEventData
+    payload: PayloadT

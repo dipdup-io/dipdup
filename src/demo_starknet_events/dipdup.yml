@@ -1,0 +1,23 @@
+spec_version: 3.0
+package: demo_starknet_events
+
+datasources:
+  subsquid:
+    kind: starknet.subsquid
+    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/starknet-mainnet}
+
+contracts:
+  stark_usdc:
+    kind: starknet
+    address: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8'
+    typename: stark_usdc
+
+indexes:
+  starknet_usdc_events:
+    kind: starknet.events
+    datasources:
+      - subsquid
+    handlers:
+      - callback: on_transfer
+        contract: stark_usdc
+        name: Transfer
