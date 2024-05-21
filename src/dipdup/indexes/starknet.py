@@ -21,6 +21,7 @@ DatasourceT = TypeVar('DatasourceT', bound=StarknetSubsquidDatasource)
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
 
+
 class StarknetIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],

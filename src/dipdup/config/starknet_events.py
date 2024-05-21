@@ -1,6 +1,6 @@
+from __future__ import annotations
 
-
-from collections.abc import Iterator
+from typing import TYPE_CHECKING
 from typing import Literal
 
 from pydantic import ConfigDict
@@ -10,8 +10,12 @@ from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet import StarknetIndexConfig
+from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -52,3 +56,6 @@ class StarknetEventsIndexConfig(StarknetIndexConfig):
 
     kind: Literal['starknet.events']
     handlers: tuple[StarknetEventsHandlerConfig, ...]
+
+    def get_subscriptions(self) -> set[Subscription]:
+        raise NotImplementedError

@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Any
 
 import orjson
-from starknet_py.abi.v2 import AbiParser
+from starknet_py.abi.v2 import AbiParser  # type: ignore[import-not-found]
 from starknet_py.abi.v2 import AbiParsingError
-from starknet_py.cairo.data_types import CairoType
+from starknet_py.cairo.data_types import CairoType  # type: ignore[import-not-found]
 from starknet_py.cairo.data_types import EventType
 from starknet_py.cairo.data_types import FeltType
 from starknet_py.cairo.data_types import UintType
@@ -23,6 +23,7 @@ _abi_type_map = {FeltType: 'string', UintType: 'integer'}
 def _convert_type(type_: CairoType) -> str:
     return _abi_type_map[type(type_)]
 
+
 def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
     return {
         '$schema': 'http://json-schema.org/draft/2019-09/schema#',
@@ -35,7 +36,7 @@ def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
 
 def abi_to_jsonschemas(
     package: DipDupPackage,
-    events: set[str]
+    events: set[str],
 ) -> None:
     # load abi to json and then parse with starknet.py
     # select objects to generate types
@@ -49,7 +50,7 @@ def abi_to_jsonschemas(
         except AbiParsingError as e:
             # TODO: try pass with  different version of protocol
             raise e
-        
+
         parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events}
 
         for ev_name in events:
@@ -60,7 +61,6 @@ def abi_to_jsonschemas(
             schema_path = package.schemas / abi_path.parent.stem / 'starknet_events' / f'{ev_name}.json'
             touch(schema_path)
             schema_path.write_bytes(json_dumps(schema))
-
 
 
 class StarknetCodeGenerator(CodeGenerator):

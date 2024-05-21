@@ -44,6 +44,7 @@ from pydantic import Field
 from pydantic import ValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
+from pydantic.dataclasses import is_pydantic_dataclass
 from pydantic_core import to_jsonable_python
 
 from dipdup import env
@@ -747,7 +748,7 @@ class DipDupConfig:
         if not isinstance(contract, EvmContractConfig):
             raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
         return contract
-    
+
     def get_starknet_contract(self, name: str) -> StarknetContractConfig:
         contract = self.get_contract(name)
         if not isinstance(contract, StarknetContractConfig):
@@ -1142,6 +1143,15 @@ ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU | StarknetIndexConfig
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 
+def _reload_dataclass(cls: type[Any]) -> type[Any]:
+    """Reload dataclass to apply new annotations"""
+    try:
+        return dataclass(cls, config=cls.__pydantic_config__, kw_only=True)
+    # NOTE: The first attempt fails with "dictionary changed size" due to how deeply fucked up this hack is.
+    except RuntimeError:
+        return dataclass(cls, config=cls.__pydantic_config__, kw_only=True)
+
+
 def _patch_annotations() -> None:
     """Patch dataclass annotations in runtime to allow using aliases in config files.
 
@@ -1150,9 +1160,12 @@ def _patch_annotations() -> None:
     This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
     checks everywhere.
     """
+
     self = importlib.import_module(__name__)
-    submodules = tuple(inspect.getmembers(self, inspect.ismodule))
-    submodules += ((__name__, self),)
+    submodules = (
+        *tuple(inspect.getmembers(self, inspect.ismodule)),
+        (self.__name__, self),
+    )
 
     for name, submodule in submodules:
         if not submodule.__name__.startswith('dipdup.config'):
@@ -1160,14 +1173,13 @@ def _patch_annotations() -> None:
 
         for attr in dir(submodule):
             value = getattr(submodule, attr)
-            if not hasattr(value, '__annotations__'):
+            if not is_pydantic_dataclass(value) or 'Config' not in value.__name__:
                 continue
 
-            reload = False
             for name, annotation in value.__annotations__.items():
-                # NOTE: All annotations are strings now
+                # NOTE: All annotations must be strings for aliases to work
                 if not isinstance(annotation, str):
-                    continue
+                    raise RuntimeError(f'Add `from __future__ import annotations` to `{submodule.__name__}` module')
 
                 # NOTE: Unwrap `Alias[...]` to 'str | ...' to allow using aliases in config files
                 unwrapped = annotation
@@ -1179,19 +1191,11 @@ def _patch_annotations() -> None:
 
                 if annotation != unwrapped:
                     value.__annotations__[name] = unwrapped
-                    reload = True
 
-            if not reload:
-                continue
+            setattr(submodule, attr, _reload_dataclass(value),)
 
-            # NOTE: Wrap dataclass again to recreate magic methods.
-            # NOTE: We need to trick Pydantic that it's a native dataclass.
-            delattr(value, '__pydantic_validator__')
-            try:
-                value = dataclass(value)
-            except RuntimeError:
-                value = dataclass(value)
-            setattr(submodule, attr, value)
+    # NOTE: Finally, reload the root config itself.
+    self.DipDupConfig = _reload_dataclass(DipDupConfig)  # type: ignore[attr-defined]
 
 
 _patch_annotations()

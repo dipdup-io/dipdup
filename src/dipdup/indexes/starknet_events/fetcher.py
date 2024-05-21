@@ -22,7 +22,7 @@ class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
         event_iter = self.random_datasource.iter_events(
             self._first_level,
             self._last_level,
-            ()
+            (),
         )
         async for level, batch in readahead_by_level(event_iter, limit=STARKNET_SUBSQUID_READAHEAD_LIMIT):
             yield level, batch

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from abc import ABC
 from typing import Literal
@@ -18,6 +20,7 @@ StarknetDatasourceConfigU: TypeAlias = StarknetSubsquidDatasourceConfig
 
 _HEX_ADDRESS_REGEXP = re.compile(r'(0x)?[0-9a-f]{1,64}', re.IGNORECASE | re.ASCII)
 
+
 def is_starknet_address(value: str) -> bool:
     """
     Checks if the given value is a valid StarkNet address within the range [0, 2**251).
@@ -26,7 +29,7 @@ def is_starknet_address(value: str) -> bool:
         return False
     if _HEX_ADDRESS_REGEXP.fullmatch(value) is None:
         return False
-    
+
     # Convert hex to decimal and check if it's less than 2**251
     numeric_value = int(value, 16)
     return numeric_value < 2**251
@@ -56,7 +59,7 @@ class StarknetContractConfig(ContractConfig):
 
         if not is_starknet_address(value):
             raise ValueError(f'{value} is not a valid Starknet contract address')
-        
+
         return value
 
     def get_address(self) -> str:
@@ -68,7 +71,7 @@ class StarknetContractConfig(ContractConfig):
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class StarknetIndexConfig(IndexConfig, ABC):
     """Starknet index that use Subsquid Network as a datasource
-    
+
     :param datasources: `starknet` datasources to use
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing and disable this index

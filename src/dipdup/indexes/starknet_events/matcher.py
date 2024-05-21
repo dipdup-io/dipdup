@@ -16,7 +16,7 @@ MatchedEventsT = tuple[StarknetEventsHandlerConfig, StarknetEvent[Any]]
 def match_events(
     package: DipDupPackage,
     handlers: Iterable[StarknetEventsHandlerConfig],
-    events: Iterable[StarknetEventData]
+    events: Iterable[StarknetEventData],
 ) -> deque[MatchedEventsT]:
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
@@ -43,6 +43,6 @@ def match_events(
     return matched_handlers
 
 
-def prepare_event_handler_args(*args, **kwargs) -> StarknetEvent[Any]:
+def prepare_event_handler_args(*args, **kwargs) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
     # TODO: construct event
     raise NotImplementedError

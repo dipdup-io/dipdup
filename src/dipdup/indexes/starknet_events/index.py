@@ -1,4 +1,3 @@
-
 from collections import deque
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
@@ -49,7 +48,7 @@ class StarknetEventsIndex(
         return StarknetSubsquidEventFetcher(
             datasources=self.subsquid_datasources,
             first_level=first_level,
-            last_level=last_level
+            last_level=last_level,
         )
 
     def _match_level_data(
