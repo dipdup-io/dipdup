@@ -50,7 +50,7 @@ class CodeGenerator(ABC):
         force: bool = False,
         base: bool = False,
     ) -> None:
-        self._package.create()
+        self._package.initialize()
 
         replay = self._package.replay
         if base or self._include:

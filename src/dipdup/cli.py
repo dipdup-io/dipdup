@@ -268,7 +268,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
         # NOTE: `ConfigurationError` will be raised later with more details.
-        DipDupPackage(_config.package_path).create()
+        DipDupPackage(_config.package_path).initialize()
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
@@ -339,6 +339,7 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
+    from dipdup.config import DipDupConfig
     from dipdup.migrations.three_zero import ThreeZeroProjectMigration
 
     # NOTE: Extract paths from arguments since we can't load config with old spec version
@@ -347,6 +348,19 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
 
     migration = ThreeZeroProjectMigration(tuple(config_paths), dry_run)
     migration.migrate()
+
+    config = DipDupConfig.load(
+        paths=config_paths,
+        environment=True,
+        raw=False,
+        unsafe=True,
+    )
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=ctx.parent.params['config'],
+        config=config,
+    )
+    await ctx.invoke(init, base=True, force=True)
 
 
 @cli.group()
@@ -907,7 +921,7 @@ async def package_tree(ctx: click.Context) -> None:
 
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
-    package.create()
+    package.initialize()
 
     tree = package.tree()
     echo(f'{package.name} [{package.root}]')
@@ -924,6 +938,6 @@ async def package_verify(ctx: click.Context) -> None:
 
     config: DipDupConfig = ctx.obj.config
     package = DipDupPackage(config.package_path)
-    package.create()
+    package.initialize()
 
     package.verify()

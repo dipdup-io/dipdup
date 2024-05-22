@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- cli: Added full project migration support for 3.0 spec.
+
+### Fixed
+
+- cli: Fixed errors raised when project package is invalid.
+
 ## [7.5.6] - 2024-05-16
 
 ### Fixed
