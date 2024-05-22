@@ -35,6 +35,19 @@ class StarknetEventsIndex(
         datasources: tuple[StarknetDatasource, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
+        self._event_identifiers: dict[str, dict[str, str]] | None = None
+
+    @property
+    def event_identifiers(self) -> dict[str, dict[str, str]]:
+        # TODO: fix
+        if self._event_identifiers is None:
+            self._event_identifiers = {}
+            for handler_config in self._config.handlers:
+                typename = handler_config.contract.module_name
+                event_abi = self._ctx.package.get_converted_evm_abi(typename)['events']
+                self._event_identifiers[typename] = {k: v['event_identifier'] for k, v in event_abi.items()}
+
+        return self._event_identifiers
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -45,10 +58,13 @@ class StarknetEventsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> StarknetSubsquidEventFetcher:
+        # TODO: prepare array of event identifiers (key0)
+        event_ids = ...
         return StarknetSubsquidEventFetcher(
             datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
+            event_ids=event_ids,
         )
 
     def _match_level_data(

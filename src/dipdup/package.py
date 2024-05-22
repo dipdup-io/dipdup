@@ -65,9 +65,18 @@ class ConvertedMethodAbi(TypedDict):
     outputs: tuple[dict[str, str], ...]
 
 
-class ConvertedAbi(TypedDict):
+class ConvertedEVMAbi(TypedDict):
     events: dict[str, ConvertedEventAbi]
     methods: dict[str, ConvertedMethodAbi]
+
+
+class ConvertedEventCairoAbi(TypedDict):
+    name: str
+    event_identifier: str
+    members: tuple[tuple[str, bool], ...]
+
+class ConvertedCairoAbi(TypedDict):
+    events: dict[str, ConvertedEventCairoAbi]
 
 
 class DipDupPackage:
@@ -96,7 +105,8 @@ class DipDupPackage:
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
-        self._converted_abis: dict[str, ConvertedAbi] = {}
+        self._converted_evm_abis: dict[str, ConvertedEVMAbi] = {}
+        self._converted_cairo_abis: dict[str, ConvertedCairoAbi] = {}
 
     @property
     def replay(self) -> Answers | None:
@@ -195,9 +205,16 @@ class DipDupPackage:
             self._evm_abis[typename] = orjson.loads(path.read_bytes())
         return self._evm_abis[typename]
 
-    def get_converted_abi(self, typename: str) -> ConvertedAbi:
-        if not self._converted_abis:
+    def get_converted_evm_abi(self, typename: str) -> ConvertedEVMAbi:
+        if not self._converted_evm_abis:
             from dipdup.codegen.evm import convert_abi
 
-            self._converted_abis = convert_abi(self)
-        return self._converted_abis[typename]
+            self._converted_evm_abis = convert_abi(self)
+        return self._converted_evm_abis[typename]
+
+    def get_converted_starknet_abi(self, typename: str) -> ConvertedCairoAbi:
+        if not self._converted_cairo_abis:
+            from dipdup.codegen.starknet import convert_abi
+
+            self._converted_cairo_abis = convert_abi(self)
+        return self._converted_cairo_abis[typename]

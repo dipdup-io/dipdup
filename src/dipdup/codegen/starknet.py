@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import orjson
+from Crypto.Hash import keccak
 from starknet_py.abi.v2 import AbiParser  # type: ignore[import-not-found]
 from starknet_py.abi.v2 import AbiParsingError
 from starknet_py.cairo.data_types import CairoType  # type: ignore[import-not-found]
@@ -12,6 +13,8 @@ from starknet_py.cairo.data_types import UintType
 from dipdup.codegen import CodeGenerator
 from dipdup.config import HandlerConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.package import ConvertedCairoAbi
+from dipdup.package import ConvertedEventCairoAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
 from dipdup.utils import snake_to_pascal
@@ -32,6 +35,33 @@ def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
         'required': tuple(event.types.keys()),
         'additionalProperties': False,
     }
+
+def sn_keccak(x: str) -> str:
+    return f'0x{int.from_bytes(keccak.new(data=x.encode("ascii"), digest_bits=256).digest(), "big") & (1 << 248) - 1:x}'
+
+def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
+    abi_by_typename: dict[str, ConvertedCairoAbi] = {}
+
+    for abi_path in package.abi.glob('**/abi.json'):
+        abi = orjson.loads(abi_path.read_bytes())
+        converted_abi: ConvertedCairoAbi = {
+            'events': {},
+        }
+
+        for abi_item in abi:
+            if abi_item['type'] == 'event':
+                name = abi_item['name']
+                if name in converted_abi['events']:
+                    raise NotImplementedError('Multiple events with the same name are not supported')
+                members = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
+                converted_abi['events'][name] = ConvertedEventCairoAbi(
+                    name=name,
+                    event_identifier=sn_keccak(name),
+                    members=members,
+                )
+        abi_by_typename[abi_path.parent.stem] = converted_abi
+
+    return abi_by_typename
 
 
 def abi_to_jsonschemas(
