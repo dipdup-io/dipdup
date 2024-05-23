@@ -14,14 +14,13 @@ class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
         datasources: tuple[StarknetSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
-        event_ids: tuple[tuple[str | None, str], ...],
+        event_ids: list[str],
     ) -> None:
         super().__init__(datasources, first_level, last_level)
         self._event_ids = event_ids
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[StarknetEventData, ...]]]:
         # key0 contains the event identifier
-        # TODO: fix usage, then fix filter
         event_iter = self.random_datasource.iter_events(
             self._first_level,
             self._last_level,

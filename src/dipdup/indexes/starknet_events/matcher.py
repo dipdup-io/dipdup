@@ -7,6 +7,9 @@ from dipdup.config.starknet_events import StarknetEventsHandlerConfig
 from dipdup.models.starknet import StarknetEvent
 from dipdup.models.starknet import StarknetEventData
 from dipdup.package import DipDupPackage
+from dipdup.utils import parse_object
+from dipdup.utils import pascal_to_snake
+from dipdup.utils import snake_to_pascal
 
 _logger = logging.getLogger(__name__)
 
@@ -17,21 +20,21 @@ def match_events(
     package: DipDupPackage,
     handlers: Iterable[StarknetEventsHandlerConfig],
     events: Iterable[StarknetEventData],
+    event_identifiers: dict[str, dict[str, str]]
 ) -> deque[MatchedEventsT]:
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
+
+    # this could be prepared before function call
+    matching_data = [(handler_config, event_identifiers[handler_config.contract.module_name][handler_config.name], handler_config.contract.address) for handler_config in handlers]
 
     for event in events:
         if not event.keys:
             continue
 
-        for handler_config in handlers:
-            name = handler_config.name
-            # TODO: store cached event name or match from key0?
-            if name != event.keys[0]:
+        for handler_config, identifier, address in matching_data:
+            if identifier != event.keys[0]:
                 continue
-
-            address = handler_config.contract.address
             if address and address != event.from_address:
                 continue
 
@@ -43,6 +46,28 @@ def match_events(
     return matched_handlers
 
 
-def prepare_event_handler_args(*args, **kwargs) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
-    # TODO: construct event
-    raise NotImplementedError
+def prepare_event_handler_args(package: DipDupPackage,
+    handler_config: StarknetEventsHandlerConfig,
+    matched_event: StarknetEventData) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
+    typename = handler_config.contract.module_name
+    inputs = package.get_converted_starknet_abi(typename)['events'][handler_config.name]['members']
+
+    type_ = package.get_type(
+        typename=typename,
+        module=f'starknet_events.{pascal_to_snake(handler_config.name)}',
+        name=snake_to_pascal(handler_config.name) + 'Payload',
+    )
+
+    # TODO: decode
+    #raise NotImplementedError
+    data = None
+
+    typed_payload = parse_object(
+        type_=type_,
+        data=data,
+        plain=True,
+    )
+    return StarknetEvent(
+        data=matched_event,
+        payload=typed_payload,
+    )
