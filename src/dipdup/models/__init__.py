@@ -20,7 +20,6 @@ from lru import LRU
 from pydantic.dataclasses import dataclass
 from tortoise.exceptions import OperationalError
 from tortoise.fields import relational
-from tortoise.models import MODEL
 from tortoise.models import Model as TortoiseModel
 from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
 from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
@@ -321,7 +320,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
 
 
 class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
-    async def _execute(self) -> list[MODEL]:
+    async def _execute(self) -> None:
         for model in self.objects:
             if update := ModelUpdate.from_model(
                 cast(Model, model),
@@ -329,11 +328,11 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
             ):
                 get_pending_updates().append(update)
 
+        await super()._execute()
+
         # NOTE: A bug; raises "You should first call .save()..." otherwise
-        models: list[MODEL] = await super()._execute()
-        for model in models:
+        for model in self.objects:
             model._saved_in_db = True
-        return models
 
 
 class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
