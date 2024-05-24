@@ -5,7 +5,7 @@ from dipdup.models import Model
 
 
 class ExampleModel(Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     array = fields.ArrayField()
     big_int = fields.BigIntField()
     binary = fields.BinaryField()

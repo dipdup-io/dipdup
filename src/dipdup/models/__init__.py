@@ -606,7 +606,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 
 
 class Schema(TortoiseModel):
-    name = fields.TextField(pk=True)
+    name = fields.TextField(primary_key=True)
     hash = fields.TextField(null=True)
     reindex = fields.EnumField(ReindexingReason, null=True)
 
@@ -618,7 +618,7 @@ class Schema(TortoiseModel):
 
 
 class Head(TortoiseModel):
-    name = fields.TextField(pk=True)
+    name = fields.TextField(primary_key=True)
     level = fields.IntField()
     hash = fields.TextField(null=True)
     timestamp = fields.DatetimeField()
@@ -631,7 +631,7 @@ class Head(TortoiseModel):
 
 
 class Index(TortoiseModel):
-    name = fields.TextField(pk=True)
+    name = fields.TextField(primary_key=True)
     type = fields.EnumField(IndexType)
     status = fields.EnumField(IndexStatus, default=IndexStatus.new)
 
@@ -656,7 +656,7 @@ class ContractKind(Enum):
 
 
 class Contract(TortoiseModel):
-    name = fields.TextField(pk=True)
+    name = fields.TextField(primary_key=True)
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
     typename = fields.TextField(null=True)
@@ -670,7 +670,7 @@ class Contract(TortoiseModel):
 
 
 class Meta(TortoiseModel):
-    key = fields.TextField(pk=True)
+    key = fields.TextField(primary_key=True)
     value = fields.JSONField(encoder=json_dumps_plain, null=True)
 
     created_at = fields.DatetimeField(auto_now_add=True)
