@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Other
+
+- deps: `tortoise-orm` updated to 0.21.0.
+
 ## [7.5.6] - 2024-05-16
 
 ### Fixed
