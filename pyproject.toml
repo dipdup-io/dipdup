@@ -54,7 +54,7 @@ dependencies = [
     "pyarrow~=16.0",
     "pydantic~=2.2",
     "sentry-sdk~=2.0",
-    "tortoise-orm==0.21.0",
+    "tortoise-orm==0.21.1",
     "web3~=6.18",
     #
     "aiohttp~=3.9",

@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:a50d0967a5229b726c97cf9effec8a91ba1e40c9e445c2bff40a68fb02c141e5"
+content_hash = "sha256:c374b20be1640516027e5b0b1dd4b2825359e8ba4a23be9a9f52d59b0cbe1d31"
 
 [[package]]
 name = "aiohttp"
@@ -1845,7 +1845,7 @@ files = [
 
 [[package]]
 name = "tortoise-orm"
-version = "0.21.0"
+version = "0.21.1"
 requires_python = "<4.0,>=3.8"
 summary = "Easy async ORM for python, built with relations in mind"
 groups = ["default"]
@@ -1857,8 +1857,8 @@ dependencies = [
     "pytz",
 ]
 files = [
-    {file = "tortoise_orm-0.21.0-py3-none-any.whl", hash = "sha256:f2252855989756193c18f145226852b74d867754c3b2e3b76e2aa3e010f4ccd0"},
-    {file = "tortoise_orm-0.21.0.tar.gz", hash = "sha256:75150a6c802c3a2ca661f7c9d1928c05543e4b77f667eef9b97f2c0ac83ecae6"},
+    {file = "tortoise_orm-0.21.1-py3-none-any.whl", hash = "sha256:0ae79dd3975f722f3e191d687bd793230aff992c63d4a964185f363497effd6e"},
+    {file = "tortoise_orm-0.21.1.tar.gz", hash = "sha256:591dbd636749b60470725157cbd4fc8de27af094adef9c4526c2ac2fd397484f"},
 ]
 
 [[package]]

@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- deps: `tortoise-orm` updated to 0.21.0.
+- deps: `tortoise-orm` updated to 0.21.1.
 
 ## [7.5.6] - 2024-05-16
 
