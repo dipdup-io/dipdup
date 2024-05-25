@@ -58,4 +58,4 @@ class StarknetEventsIndexConfig(StarknetIndexConfig):
     handlers: tuple[StarknetEventsHandlerConfig, ...]
 
     def get_subscriptions(self) -> set[Subscription]:
-        raise NotImplementedError
+        return {}

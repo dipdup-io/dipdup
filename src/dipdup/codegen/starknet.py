@@ -28,10 +28,11 @@ def _convert_type(type_: CairoType) -> str:
 
 
 def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
+    # TODO: unpack nested
     return {
         '$schema': 'http://json-schema.org/draft/2019-09/schema#',
         'type': 'object',
-        'properties': {key: _convert_type(value) for key, value in event.types.items()},
+        'properties': {key: {'type': _convert_type(value)} for key, value in event.types.items()},
         'required': tuple(event.types.keys()),
         'additionalProperties': False,
     }
@@ -81,7 +82,7 @@ def abi_to_jsonschemas(
             # TODO: try pass with  different version of protocol
             raise e
 
-        parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events}
+        parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events.items()}
 
         for ev_name in events:
             if ev_name not in parsed_abi.events:
