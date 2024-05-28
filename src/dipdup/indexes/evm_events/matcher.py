@@ -93,7 +93,7 @@ def match_events(
 
     for event in events:
         if not event.topics:
-            continue
+            continue    
 
         for handler_config in handlers:
             typename = handler_config.contract.module_name

@@ -10,6 +10,7 @@ from dipdup.config import Alias
 from dipdup.config import HandlerConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet import StarknetIndexConfig
+from dipdup.models.starknet import StarknetSubscription
 from dipdup.subscriptions import Subscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -58,4 +59,5 @@ class StarknetEventsIndexConfig(StarknetIndexConfig):
     handlers: tuple[StarknetEventsHandlerConfig, ...]
 
     def get_subscriptions(self) -> set[Subscription]:
-        return {}
+        # TODO: return custom subscription class
+        return {StarknetSubscription()}

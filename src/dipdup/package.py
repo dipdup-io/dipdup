@@ -10,6 +10,7 @@ from typing import cast
 
 import orjson
 from pydantic import BaseModel
+from starknet_py.serialization import PayloadSerializer
 
 from dipdup import env
 from dipdup.exceptions import InitializationRequiredError
@@ -73,7 +74,7 @@ class ConvertedEVMAbi(TypedDict):
 class ConvertedEventCairoAbi(TypedDict):
     name: str
     event_identifier: str
-    members: tuple[tuple[str, bool], ...]
+    serializer: PayloadSerializer
 
 class ConvertedCairoAbi(TypedDict):
     events: dict[str, ConvertedEventCairoAbi]

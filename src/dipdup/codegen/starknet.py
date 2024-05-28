@@ -9,6 +9,7 @@ from starknet_py.cairo.data_types import CairoType  # type: ignore[import-not-fo
 from starknet_py.cairo.data_types import EventType
 from starknet_py.cairo.data_types import FeltType
 from starknet_py.cairo.data_types import UintType
+from starknet_py.serialization import serializer_for_event
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import HandlerConfig
@@ -45,21 +46,26 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
 
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
+
+        try:
+            parsed_abi = AbiParser(abi).parse()
+        except AbiParsingError as e:
+            # TODO: try pass with  different version of protocol
+            raise e
+
         converted_abi: ConvertedCairoAbi = {
             'events': {},
         }
 
-        for abi_item in abi:
-            if abi_item['type'] == 'event':
-                name = abi_item['name']
-                if name in converted_abi['events']:
-                    raise NotImplementedError('Multiple events with the same name are not supported')
-                members = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
-                converted_abi['events'][name] = ConvertedEventCairoAbi(
-                    name=name,
-                    event_identifier=sn_keccak(name),
-                    members=members,
-                )
+        for name, event_type in parsed_abi.events.items():
+            name = name.split('::')[-1]
+            if name in converted_abi['events']:
+                raise NotImplementedError('Multiple events with the same name are not supported')
+            converted_abi['events'][name] = ConvertedEventCairoAbi(
+                name=name,
+                event_identifier=sn_keccak(name),
+                serializer=serializer_for_event(event_type),
+            )
         abi_by_typename[abi_path.parent.stem] = converted_abi
 
     return abi_by_typename

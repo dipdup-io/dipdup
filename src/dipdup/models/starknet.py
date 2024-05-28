@@ -2,13 +2,22 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 from typing import Generic
+from typing import Literal
 from typing import Self
 from typing import TypeVar
 
 from pydantic import BaseModel
 
 from dipdup.fetcher import HasLevel
+from dipdup.subscriptions import Subscription
 
+
+@dataclass(frozen=True)
+class StarknetSubscription(Subscription):
+    name: Literal['starknet'] = 'starknet'
+
+    def get_params(self) -> list[Any]:
+        return [self.name]
 
 @dataclass(frozen=True)
 class StarknetTransactionData(HasLevel, ABC):

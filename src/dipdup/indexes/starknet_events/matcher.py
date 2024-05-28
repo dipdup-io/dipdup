@@ -11,6 +11,7 @@ from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
+
 _logger = logging.getLogger(__name__)
 
 MatchedEventsT = tuple[StarknetEventsHandlerConfig, StarknetEvent[Any]]
@@ -50,7 +51,7 @@ def prepare_event_handler_args(package: DipDupPackage,
     handler_config: StarknetEventsHandlerConfig,
     matched_event: StarknetEventData) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
     typename = handler_config.contract.module_name
-    inputs = package.get_converted_starknet_abi(typename)['events'][handler_config.name]['members']
+    
 
     type_ = package.get_type(
         typename=typename,
@@ -60,7 +61,9 @@ def prepare_event_handler_args(package: DipDupPackage,
 
     # TODO: decode
     #raise NotImplementedError
-    data = None
+    serializer = package.get_converted_starknet_abi(typename)['events'][handler_config.name]['serializer']
+    source = matched_event.data
+    data = serializer.deserialize([int(s, 16) for s in source])
 
     typed_payload = parse_object(
         type_=type_,
