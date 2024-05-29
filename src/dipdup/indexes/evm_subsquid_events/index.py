@@ -4,7 +4,6 @@ from typing import Any
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.context import DipDupContext
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import SubsquidDatasource
 from dipdup.exceptions import ConfigInitializationException
@@ -28,25 +27,6 @@ class SubsquidEventsIndex(
     SubsquidIndex[SubsquidEventsIndexConfig, QueueItem, Datasource],
     message_type=SubsquidMessageType.logs,
 ):
-    def __init__(
-        self,
-        ctx: DipDupContext,
-        config: SubsquidEventsIndexConfig,
-        datasource: Datasource,
-    ) -> None:
-        super().__init__(ctx, config, datasource)
-        self._topics: dict[str, dict[str, str]] | None = None
-
-    @property
-    def topics(self) -> dict[str, dict[str, str]]:
-        if self._topics is None:
-            self._topics = {}
-            for handler_config in self._config.handlers:
-                typename = handler_config.contract.module_name
-                event_abi = self._ctx.package.get_converted_abi(typename)['events']
-                self._topics[typename] = {k: v['topic0'] for k, v in event_abi.items()}
-
-        return self._topics
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -102,7 +82,11 @@ class SubsquidEventsIndex(
         handlers: tuple[SubsquidEventsHandlerConfig, ...],
         level_data: Iterable[SubsquidEventData | EvmNodeLogData],
     ) -> deque[Any]:
-        return match_events(self._ctx.package, handlers, level_data, self.topics)
+        event_abis = {
+            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
+            for handler in handlers
+        }
+        return match_events(self._ctx.package, handlers, level_data, event_abis)
 
     async def _call_matched_handler(
         self,

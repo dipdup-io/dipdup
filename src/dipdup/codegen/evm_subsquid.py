@@ -96,8 +96,9 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
                 inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
                 converted_abi['events'][name] = ConvertedEventAbi(
                     name=name,
-                    topic0=topic_from_abi(abi_item),
+                    topic0=topic0_from_abi(abi_item),
                     inputs=inputs,
+                    topic_count=len([i for i in inputs if i[1]]),
                 )
         abi_by_typename[abi_path.parent.stem] = converted_abi
 
@@ -140,7 +141,7 @@ def sighash_from_abi(abi_item: dict[str, Any]) -> str:
     return Web3.keccak(text=signature).hex()[:10]
 
 
-def topic_from_abi(event: dict[str, Any]) -> str:
+def topic0_from_abi(event: dict[str, Any]) -> str:
     if event.get('type') != 'event':
         raise FrameworkException(f'`{event["name"]}` is not an event')
 
