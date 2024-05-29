@@ -1,5 +1,6 @@
 from collections import deque
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
@@ -22,11 +23,26 @@ from dipdup.prometheus import Metrics
 QueueItem = tuple[EvmNodeLogData, ...] | RollbackMessage
 Datasource = SubsquidDatasource | EvmNodeDatasource
 
+if TYPE_CHECKING:
+    from dipdup.context import DipDupContext
+
 
 class SubsquidEventsIndex(
     SubsquidIndex[SubsquidEventsIndexConfig, QueueItem, Datasource],
     message_type=SubsquidMessageType.logs,
 ):
+
+    def __init__(
+        self,
+        ctx: 'DipDupContext',
+        config: SubsquidEventsIndexConfig,
+        datasource: Datasource,
+    ) -> None:
+        super().__init__(ctx, config, datasource)
+        self._event_abis = {
+            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
+            for handler in self._config.handlers
+        }
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -82,11 +98,7 @@ class SubsquidEventsIndex(
         handlers: tuple[SubsquidEventsHandlerConfig, ...],
         level_data: Iterable[SubsquidEventData | EvmNodeLogData],
     ) -> deque[Any]:
-        event_abis = {
-            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
-            for handler in handlers
-        }
-        return match_events(self._ctx.package, handlers, level_data, event_abis)
+        return match_events(self._ctx.package, handlers, level_data, self._event_abis)
 
     async def _call_matched_handler(
         self,
