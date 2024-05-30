@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Fixed setting logging levels according to the config.
 - evm.events: Fixed matching logs when filtering by topic0.
 
+## [7.5.7] - 2024-05-30
+
+### Fixed
+
+- config: Fixed setting logging levels according to the config.
+- evm.subsquid.events: Fixed matching logs when filtering by topic0.
+
 ## [7.5.6] - 2024-05-16
 
 ### Fixed
@@ -1473,7 +1480,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.4...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0a1...HEAD
+[7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
+[7.5.6]: https://github.com/dipdup-io/dipdup/compare/7.5.5...7.5.6
+[8.0.0a1]: https://github.com/dipdup-io/dipdup/compare/7.5.7...8.0.0a1
+[7.5.5]: https://github.com/dipdup-io/dipdup/compare/7.5.4...7.5.5
 [7.5.4]: https://github.com/dipdup-io/dipdup/compare/7.5.3...7.5.4
 [7.5.3]: https://github.com/dipdup-io/dipdup/compare/7.5.2...7.5.3
 [7.5.2]: https://github.com/dipdup-io/dipdup/compare/7.5.1...7.5.2
