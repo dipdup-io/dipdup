@@ -25,6 +25,7 @@ abi = ConvertedEventAbi(
         ('uint256', False),
         ('uint256', False),
     ),
+    topic_count=3,
 )
 
 prof = pprofile.Profile()

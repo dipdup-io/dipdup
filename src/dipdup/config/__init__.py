@@ -764,10 +764,13 @@ class DipDupConfig:
 
     def set_up_logging(self) -> None:
         loglevels = {}
-        if not isinstance(self.logging, dict):
+        if isinstance(self.logging, dict):
+            loglevels = {**self.logging}
+        else:
             loglevels['dipdup'] = self.logging
             loglevels[self.package] = self.logging
 
+        # NOTE: Environment vars have higher priority
         if env.DEBUG:
             loglevels['dipdup'] = 'DEBUG'
             loglevels[self.package] = 'DEBUG'
