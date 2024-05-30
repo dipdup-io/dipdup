@@ -56,6 +56,7 @@ class ConvertedEventAbi(TypedDict):
     name: str
     topic0: str
     inputs: tuple[tuple[str, bool], ...]
+    topic_count: int
 
 
 class ConvertedMethodAbi(TypedDict):
