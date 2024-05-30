@@ -7,17 +7,17 @@ datasources:
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/starknet-mainnet}
 
 contracts:
-  stark_usdc:
+  stark_usdt:
     kind: starknet
-    address: '0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8'
-    typename: stark_usdc
+    address: '0x68f5c6a61780768455de69077e07e89787839bf8166decfbf92b645209c0fb8'
+    typename: stark_usdt
 
 indexes:
-  starknet_usdc_events:
+  starknet_usdt_events:
     kind: starknet.events
     datasources:
       - subsquid
     handlers:
       - callback: on_transfer
-        contract: stark_usdc
+        contract: stark_usdt
         name: Transfer

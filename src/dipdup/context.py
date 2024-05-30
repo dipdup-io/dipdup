@@ -481,7 +481,7 @@ class DipDupContext:
     def get_evm_datasource(self, name: str) -> EvmSubsquidDatasource | EvmNodeDatasource | AbiEtherscanDatasource:
         """Get `evm` datasource by name"""
         return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, AbiEtherscanDatasource)  # type: ignore[return-value]
-    
+
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource:
         """Get `evm` datasource by name"""
         return self._get_datasource(name, StarknetSubsquidDatasource)  # type: ignore[return-value]

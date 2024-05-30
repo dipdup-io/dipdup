@@ -9,6 +9,6 @@ class TransferPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    from_: str = Field(..., alias='from')
-    to: str
+    from_: int = Field(..., alias='from')
+    to: int
     value: int

@@ -1192,7 +1192,11 @@ def _patch_annotations() -> None:
                 if annotation != unwrapped:
                     value.__annotations__[name] = unwrapped
 
-            setattr(submodule, attr, _reload_dataclass(value),)
+            setattr(
+                submodule,
+                attr,
+                _reload_dataclass(value),
+            )
 
     # NOTE: Finally, reload the root config itself.
     self.DipDupConfig = _reload_dataclass(DipDupConfig)  # type: ignore[attr-defined]

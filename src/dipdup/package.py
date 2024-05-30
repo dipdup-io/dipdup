@@ -10,6 +10,7 @@ from typing import cast
 
 import orjson
 from pydantic import BaseModel
+from starknet_py.cairo.data_types import CairoType
 from starknet_py.serialization import PayloadSerializer
 
 from dipdup import env
@@ -74,7 +75,9 @@ class ConvertedEVMAbi(TypedDict):
 class ConvertedEventCairoAbi(TypedDict):
     name: str
     event_identifier: str
+    members: dict[str, CairoType]
     serializer: PayloadSerializer
+
 
 class ConvertedCairoAbi(TypedDict):
     events: dict[str, ConvertedEventCairoAbi]

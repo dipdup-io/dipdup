@@ -21,7 +21,8 @@ from dipdup.utils import json_dumps
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 
-_abi_type_map = {FeltType: 'string', UintType: 'integer'}
+# TODO: support all types
+_abi_type_map = {FeltType: 'integer', UintType: 'integer'}
 
 
 def _convert_type(type_: CairoType) -> str:
@@ -29,7 +30,7 @@ def _convert_type(type_: CairoType) -> str:
 
 
 def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
-    # TODO: unpack nested
+    # TODO: unpack nested (starknet.py could unpack types)
     return {
         '$schema': 'http://json-schema.org/draft/2019-09/schema#',
         'type': 'object',
@@ -50,7 +51,6 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
         try:
             parsed_abi = AbiParser(abi).parse()
         except AbiParsingError as e:
-            # TODO: try pass with  different version of protocol
             raise e
 
         converted_abi: ConvertedCairoAbi = {
@@ -64,6 +64,7 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
             converted_abi['events'][name] = ConvertedEventCairoAbi(
                 name=name,
                 event_identifier=sn_keccak(name),
+                members=event_type.types,
                 serializer=serializer_for_event(event_type),
             )
         abi_by_typename[abi_path.parent.stem] = converted_abi
@@ -85,7 +86,6 @@ def abi_to_jsonschemas(
         try:
             parsed_abi = AbiParser(abi).parse()
         except AbiParsingError as e:
-            # TODO: try pass with  different version of protocol
             raise e
 
         parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events.items()}

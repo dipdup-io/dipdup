@@ -48,7 +48,7 @@ class StarknetEventsIndex(
                 self._event_identifiers_dict[typename] = {k: v['event_identifier'] for k, v in event_abi.items()}
 
         return self._event_identifiers_dict
-    
+
     @property
     def event_identifiers_list(self) -> list[str]:
         if self._event_identifiers_list is None:

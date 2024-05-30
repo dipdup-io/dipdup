@@ -20,11 +20,12 @@ class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
         self._event_ids = event_ids
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[StarknetEventData, ...]]]:
+        # TODO: probably add from_address filter on this level?
         # key0 contains the event identifier
         event_iter = self.random_datasource.iter_events(
             self._first_level,
             self._last_level,
-            ({'key0': self._event_ids}, ),
+            ({'key0': self._event_ids},),
         )
         async for level, batch in readahead_by_level(event_iter, limit=STARKNET_SUBSQUID_READAHEAD_LIMIT):
             yield level, batch

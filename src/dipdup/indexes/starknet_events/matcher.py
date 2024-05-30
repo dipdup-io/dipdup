@@ -3,6 +3,9 @@ from collections import deque
 from collections.abc import Iterable
 from typing import Any
 
+from starknet_py.serialization._context import DeserializationContext
+from starknet_py.serialization.data_serializers._common import deserialize_to_dict
+
 from dipdup.config.starknet_events import StarknetEventsHandlerConfig
 from dipdup.models.starknet import StarknetEvent
 from dipdup.models.starknet import StarknetEventData
@@ -10,7 +13,6 @@ from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
-
 
 _logger = logging.getLogger(__name__)
 
@@ -21,22 +23,29 @@ def match_events(
     package: DipDupPackage,
     handlers: Iterable[StarknetEventsHandlerConfig],
     events: Iterable[StarknetEventData],
-    event_identifiers: dict[str, dict[str, str]]
+    event_identifiers: dict[str, dict[str, str]],
 ) -> deque[MatchedEventsT]:
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
 
-    # this could be prepared before function call
-    matching_data = [(handler_config, event_identifiers[handler_config.contract.module_name][handler_config.name], handler_config.contract.address) for handler_config in handlers]
+    # TODO: prepare matching parameters before function call
+    matching_data = [
+        (
+            handler_config,
+            event_identifiers[handler_config.contract.module_name][handler_config.name],
+            handler_config.contract.address,
+        )
+        for handler_config in handlers
+    ]
 
     for event in events:
         if not event.keys:
             continue
 
         for handler_config, identifier, address in matching_data:
-            if identifier != event.keys[0]:
-                continue
             if address and address != event.from_address:
+                continue
+            if identifier != event.keys[0]:
                 continue
 
             arg = prepare_event_handler_args(package, handler_config, event)
@@ -47,11 +56,10 @@ def match_events(
     return matched_handlers
 
 
-def prepare_event_handler_args(package: DipDupPackage,
-    handler_config: StarknetEventsHandlerConfig,
-    matched_event: StarknetEventData) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
+def prepare_event_handler_args(
+    package: DipDupPackage, handler_config: StarknetEventsHandlerConfig, matched_event: StarknetEventData
+) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
     typename = handler_config.contract.module_name
-    
 
     type_ = package.get_type(
         typename=typename,
@@ -59,16 +67,17 @@ def prepare_event_handler_args(package: DipDupPackage,
         name=snake_to_pascal(handler_config.name) + 'Payload',
     )
 
-    # TODO: decode
-    #raise NotImplementedError
+    # TODO: probably to rewrite later
     serializer = package.get_converted_starknet_abi(typename)['events'][handler_config.name]['serializer']
-    source = matched_event.data
-    data = serializer.deserialize([int(s, 16) for s in source])
+    data = [int(s, 16) for s in matched_event.data]
+
+    # holding context for error building
+    with DeserializationContext.create(data) as context:
+        data_dict = deserialize_to_dict(serializer.serializers, context)
 
     typed_payload = parse_object(
         type_=type_,
-        data=data,
-        plain=True,
+        data=data_dict
     )
     return StarknetEvent(
         data=matched_event,

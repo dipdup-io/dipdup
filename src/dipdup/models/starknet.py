@@ -19,6 +19,7 @@ class StarknetSubscription(Subscription):
     def get_params(self) -> list[Any]:
         return [self.name]
 
+
 @dataclass(frozen=True)
 class StarknetTransactionData(HasLevel, ABC):
     level: int
