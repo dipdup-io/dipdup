@@ -1,0 +1,5 @@
+spec_version: 3.0
+replay:
+  description: ERC-20 token transfers (from events)
+  package: demo_starknet_events
+  template: demo_starknet_events

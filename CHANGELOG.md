@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- starknet.subsquid.events: Added `starknet.subsquid.events` index kind to process Starknet events.
+- starknet.subsquid: Added `starknet.subsquid` datasource to fetch historical data from Subsquid Archives.
+
 ### Fixed
 
 - config: Fixed setting logging levels according to the config.

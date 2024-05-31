@@ -38,7 +38,9 @@ class EvmEventsIndex(
     ) -> None:
         super().__init__(ctx, config, datasources)
         self._event_abis = {
-            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
+            handler.contract.module_name: self._ctx.package.get_converted_evm_abi(handler.contract.module_name)[
+                'events'
+            ]
             for handler in self._config.handlers
         }
 
@@ -69,7 +71,7 @@ class EvmEventsIndex(
             elif handler_config.contract.abi is None:
                 raise NotImplementedError('Either contract address or ABI must be specified')
 
-            event_abi = self._ctx.package.get_converted_abi(handler_config.contract.module_name)['events'][
+            event_abi = self._ctx.package.get_converted_evm_abi(handler_config.contract.module_name)['events'][
                 handler_config.name
             ]
             topics.append((address, event_abi['topic0']))

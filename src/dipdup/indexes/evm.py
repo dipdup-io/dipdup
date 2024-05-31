@@ -43,7 +43,7 @@ def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | Non
     if {'(', ')'} <= set(method) and not to:
         _sighashes[key] = Web3.keccak(text=method).hex()[:10]
     elif to:
-        _sighashes[key] = package.get_converted_abi(to.module_name)['methods'][method]['sighash']
+        _sighashes[key] = package.get_converted_evm_abi(to.module_name)['methods'][method]['sighash']
     else:
         raise ConfigurationError('`to` field is missing; `method` is expected to be a full signature')
     return _sighashes[key]

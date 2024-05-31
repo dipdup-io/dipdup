@@ -58,7 +58,7 @@ def prepare_event_handler_args(
     matched_event: EvmEventData,
 ) -> EvmEvent[Any]:
     typename = handler_config.contract.module_name
-    inputs = package.get_converted_abi(typename)['events'][handler_config.name]['inputs']
+    inputs = package.get_converted_evm_abi(typename)['events'][handler_config.name]['inputs']
 
     type_ = package.get_type(
         typename=typename,

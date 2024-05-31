@@ -21,8 +21,8 @@ from dipdup.exceptions import AbiNotAvailableError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
-from dipdup.package import ConvertedAbi
 from dipdup.package import ConvertedEventAbi
+from dipdup.package import ConvertedEvmAbi
 from dipdup.package import ConvertedMethodAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
@@ -67,12 +67,12 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def convert_abi(package: DipDupPackage) -> dict[str, ConvertedAbi]:
-    abi_by_typename: dict[str, ConvertedAbi] = {}
+def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
+    abi_by_typename: dict[str, ConvertedEvmAbi] = {}
 
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
-        converted_abi: ConvertedAbi = {
+        converted_abi: ConvertedEvmAbi = {
             'events': {},
             'methods': {},
         }
@@ -183,8 +183,6 @@ class EvmCodeGenerator(CodeGenerator):
 
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
         datasource_configs = tuple(c for c in index_config.datasources if isinstance(c, AbiEtherscanDatasourceConfig))
-        if not datasource_configs:
-            raise ConfigurationError('No EVM ABI datasources found')
 
         contract: EvmContractConfig | None = None
 
@@ -200,6 +198,8 @@ class EvmCodeGenerator(CodeGenerator):
             abi_path = self._package.abi / contract.module_name / 'abi.json'
             if abi_path.exists():
                 continue
+            if not datasource_configs:
+                raise ConfigurationError('No EVM ABI datasources found')
 
             address = contract.address or contract.abi
             if not address:

@@ -156,6 +156,7 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.RollbackMessage',
     'dipdup.models.subsquid.AbstractSubsquidQuery',
     'dipdup.models.subsquid.SubsquidMessageType',
+    'dipdup.models.starknet.StarknetSubscription',
     'dipdup.models.starknet_subsquid.Query',
     'dipdup.models.starknet_subsquid.TransactionFieldSelection',
     'dipdup.models.starknet_subsquid.EventRequest',
