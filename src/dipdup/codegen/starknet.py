@@ -41,6 +41,7 @@ def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
 
 
 def sn_keccak(x: str) -> str:
+    # make keccak256 hash in bytes and return hex representation of first 250 bits
     return f'0x{int.from_bytes(keccak.new(data=x.encode("ascii"), digest_bits=256).digest(), "big") & (1 << 248) - 1:x}'
 
 

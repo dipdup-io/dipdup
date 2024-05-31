@@ -22,7 +22,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.package import ConvertedEventAbi
-from dipdup.package import ConvertedEVMAbi
+from dipdup.package import ConvertedEvmAbi
 from dipdup.package import ConvertedMethodAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import json_dumps
@@ -67,12 +67,12 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEVMAbi]:
-    abi_by_typename: dict[str, ConvertedEVMAbi] = {}
+def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
+    abi_by_typename: dict[str, ConvertedEvmAbi] = {}
 
     for abi_path in package.abi.glob('**/abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
-        converted_abi: ConvertedEVMAbi = {
+        converted_abi: ConvertedEvmAbi = {
             'events': {},
             'methods': {},
         }

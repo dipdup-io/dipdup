@@ -60,6 +60,7 @@ class StarknetContractConfig(ContractConfig):
         if not is_starknet_address(value):
             raise ValueError(f'{value} is not a valid Starknet contract address')
 
+        # TODO: probably need to normalize
         return value
 
     def get_address(self) -> str:

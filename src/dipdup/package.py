@@ -68,7 +68,7 @@ class ConvertedMethodAbi(TypedDict):
     outputs: tuple[dict[str, str], ...]
 
 
-class ConvertedEVMAbi(TypedDict):
+class ConvertedEvmAbi(TypedDict):
     events: dict[str, ConvertedEventAbi]
     methods: dict[str, ConvertedMethodAbi]
 
@@ -112,7 +112,7 @@ class DipDupPackage:
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
-        self._converted_evm_abis: dict[str, ConvertedEVMAbi] = {}
+        self._converted_evm_abis: dict[str, ConvertedEvmAbi] = {}
         self._converted_cairo_abis: dict[str, ConvertedCairoAbi] = {}
 
     @property
@@ -212,7 +212,7 @@ class DipDupPackage:
             self._evm_abis[typename] = orjson.loads(path.read_bytes())
         return self._evm_abis[typename]
 
-    def get_converted_evm_abi(self, typename: str) -> ConvertedEVMAbi:
+    def get_converted_evm_abi(self, typename: str) -> ConvertedEvmAbi:
         if not self._converted_evm_abis:
             from dipdup.codegen.evm import convert_abi
 
