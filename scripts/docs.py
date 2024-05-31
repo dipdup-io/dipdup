@@ -156,6 +156,7 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.RollbackMessage',
     'dipdup.models.subsquid.AbstractSubsquidQuery',
     'dipdup.models.subsquid.SubsquidMessageType',
+    'dipdup.models.starknet.StarknetSubscription',
     'dipdup.models.starknet_subsquid.Query',
     'dipdup.models.starknet_subsquid.TransactionFieldSelection',
     'dipdup.models.starknet_subsquid.EventRequest',
@@ -718,6 +719,39 @@ def dump_demos() -> None:
     ]
 
     Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
+
+    # NOTE: Another fun script. Create a `launch.json` in the project root containing debug configurations for all demo projects.
+    green_echo('=> Dumping `launch.json`')
+    launch_json_path = Path('.vscode/launch.json')
+    launch_json = {
+        'version': '0.2.0',
+        'configurations': [],
+    }
+    for name, _, _ in demos:
+        for args in (
+            ('run',),
+            ('init',),
+        ):
+            launch_json['configurations'].append(  # type: ignore[attr-defined]
+                {
+                    'name': f'{name}: {" ".join(args)}',
+                    'type': 'debugpy',
+                    'request': 'launch',
+                    'module': 'dipdup',
+                    'args': ('-e', '.env', *args),
+                    'console': 'integratedTerminal',
+                    'cwd': '${workspaceFolder}/src/' + name,
+                    'env': {
+                        'DIPDUP_DEBUG': '1',
+                    },
+                }
+            )
+    launch_json_path.write_bytes(
+        orjson.dumps(
+            launch_json,
+            option=orjson.OPT_INDENT_2,
+        )
+    )
 
 
 @main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')

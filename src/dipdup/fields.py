@@ -157,7 +157,7 @@ class DecimalField(Field[Decimal], Decimal):
     #         return functions.Cast(term, SqlTypes.NUMERIC)
 
 
-# NOTE: Tortoise forbids index=True on TextField, and shows warning when it's pk=True. We only support SQLite and
+# NOTE: Tortoise forbids db_index=True on TextField, and shows warning when it's pk=True. We only support SQLite and
 # PostgreSQL and have no plans for others. For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference
 # between TEXT and VARCHAR except for length constraint. So we can safely use TEXT for both to avoid schema changes.
 class TextField(Field[str], str):  # type: ignore[misc]

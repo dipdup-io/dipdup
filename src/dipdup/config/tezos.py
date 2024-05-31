@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import random
+from typing import Annotated
 from typing import Literal
 
 from pydantic import ConfigDict
-from pydantic import field_validator
 from pydantic.dataclasses import dataclass
+from pydantic.functional_validators import AfterValidator
 
 from dipdup.config import Alias
 from dipdup.config import ContractConfig
@@ -32,6 +35,20 @@ def is_wallet_address(address: str) -> bool:
     return len(address) == ADDRESS_LENGTH and address.startswith(WALLET_PREFIXES)
 
 
+def _validate_tezos_address(v: str) -> str:
+    # NOTE: It's a `config export` call with environment variable substitution disabled
+    if '${' in v:
+        return v
+
+    if not (is_contract_address(v) or is_rollup_address(v) or is_wallet_address(v)):
+        raise ValueError(f'`{v}` is not a valid Tezos address')
+
+    return v
+
+
+TezosAddress = Annotated[str, AfterValidator(_validate_tezos_address)]
+
+
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosContractConfig(ContractConfig):
     """Tezos contract config.
@@ -43,21 +60,9 @@ class TezosContractConfig(ContractConfig):
     """
 
     kind: Literal['tezos']
-    address: str | None = None
-    code_hash: int | str | None = None
+    address: TezosAddress | None = None
+    code_hash: int | TezosAddress | None = None
     typename: str | None = None
-
-    @field_validator('address')
-    @classmethod
-    def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: It's a `config export` call with environment variable substitution disabled
-        if not v or '$' in v:
-            return v
-
-        if not any((is_contract_address(v), is_rollup_address(v), is_wallet_address(v))):
-            raise ValueError(f'`{v}` is not a valid Tezos address')
-
-        return v
 
     def get_address(self) -> str:
         if self.address is None:

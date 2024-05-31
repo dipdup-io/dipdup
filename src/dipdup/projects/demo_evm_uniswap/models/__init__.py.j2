@@ -6,7 +6,7 @@ ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 
 
 class Factory(CachedModel):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # amount of pools created
     pool_count = fields.BigIntField(default=0)
     # amount of transactions all time
@@ -34,7 +34,7 @@ class Factory(CachedModel):
 
 
 class Token(CachedModel):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # token symbol
     symbol = fields.TextField()
     # token name
@@ -46,7 +46,7 @@ class Token(CachedModel):
     # volume in token units
     volume = fields.DecimalField(decimal_places=18, max_digits=96, default=0)
     # volume in derived USD
-    volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0, index=True)
+    volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0, db_index=True)
     # volume in USD even on pools with less reliable USD values
     untracked_volume_usd = fields.DecimalField(decimal_places=18, max_digits=96, default=0)
     # fees in USD
@@ -68,7 +68,7 @@ class Token(CachedModel):
 
 
 class Pool(CachedModel):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # creation
     created_at_timestamp = fields.BigIntField()
     # block pool was created at
@@ -132,7 +132,7 @@ class Pool(CachedModel):
 
 
 class Tick(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # tick index
     tick_idx = fields.BigIntField()
     # pointer to pool
@@ -175,7 +175,7 @@ class Tick(Model):
 
 # NOTE: Cached, but with custom logic; see `demo_evm_uniswap.utils.position`
 class Position(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     # owner of the NFT
     owner = fields.CharField(max_length=42, default=ADDRESS_ZERO)
     # pool position is within
@@ -235,7 +235,7 @@ class Position(Model):
 
 
 class PositionSnapshot(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # owner of the NFT
     owner = fields.CharField(max_length=42)
     # pool the position is within
@@ -266,7 +266,7 @@ class PositionSnapshot(Model):
 
 
 class Mint(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # which txn the mint was included in
     transaction_hash = fields.TextField()
     # time of txn
@@ -300,7 +300,7 @@ class Mint(Model):
 
 
 class Burn(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # txn burn was included in
     transaction_hash = fields.TextField()
     # pool position is within
@@ -332,11 +332,11 @@ class Burn(Model):
 
 
 class Swap(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # pointer to transaction
     transaction_hash = fields.TextField()
     # timestamp of transaction
-    timestamp = fields.DatetimeField(index=True)
+    timestamp = fields.DatetimeField(db_index=True)
     # pool swap occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='swaps')
     # allow indexing by tokens
@@ -364,7 +364,7 @@ class Swap(Model):
 
 
 class Collect(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # pointer to txn
     transaction_hash = fields.TextField()
     # timestamp of event
@@ -388,7 +388,7 @@ class Collect(Model):
 
 
 class Flash(Model):
-    id = fields.TextField(pk=True)
+    id = fields.TextField(primary_key=True)
     # pointer to txn
     transaction_hash = fields.TextField()
     # timestamp of event
