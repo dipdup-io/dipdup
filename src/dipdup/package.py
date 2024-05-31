@@ -10,8 +10,8 @@ from typing import cast
 
 import orjson
 from pydantic import BaseModel
-from starknet_py.cairo.data_types import CairoType
-from starknet_py.serialization import PayloadSerializer
+from starknet_py.cairo.data_types import CairoType  # type: ignore
+from starknet_py.serialization import PayloadSerializer  # type: ignore
 
 from dipdup import env
 from dipdup.exceptions import InitializationRequiredError

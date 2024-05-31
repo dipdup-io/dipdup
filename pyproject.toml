@@ -91,6 +91,7 @@ Repository = "https://github.com/dipdup-io/dipdup"
 dipdup = "dipdup.cli:cli"
 
 
+
 [tool.pdm.dev-dependencies]
 dev = [
     "black",

@@ -484,7 +484,7 @@ class DipDupContext:
 
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource:
         """Get `evm` datasource by name"""
-        return self._get_datasource(name, StarknetSubsquidDatasource)  # type: ignore[return-value]
+        return self._get_datasource(name, StarknetSubsquidDatasource)
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name

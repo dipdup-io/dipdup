@@ -1,10 +1,11 @@
 from decimal import Decimal
 
-from demo_evm_events import models as models
-from demo_evm_events.types.eth_usdt.evm_events.transfer import TransferPayload
+from tortoise.exceptions import DoesNotExist
+
+from {{ project.package }} import models as models
+from {{ project.package }}.types.stark_usdt.starknet_events.transfer import TransferPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
-from tortoise.exceptions import DoesNotExist
 
 
 async def on_transfer(
@@ -15,17 +16,19 @@ async def on_transfer(
     if not amount:
         return
 
+    address_from = f'0x{event.payload.from_:x}'
     await on_balance_update(
-        address=event.payload.from_,
+        address=address_from,
         balance_update=-amount,
         level=event.data.level,
     )
+    address_to = f'0x{event.payload.to:x}'
     await on_balance_update(
-        address=event.payload.to,
+        address=address_to,
         balance_update=amount,
         level=event.data.level,
     )
-    
+
 
 async def on_balance_update(
     address: str,

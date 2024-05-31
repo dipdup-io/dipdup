@@ -3,8 +3,8 @@ from collections import deque
 from collections.abc import Iterable
 from typing import Any
 
-from starknet_py.serialization._context import DeserializationContext
-from starknet_py.serialization.data_serializers._common import deserialize_to_dict
+from starknet_py.serialization._context import DeserializationContext  # type: ignore
+from starknet_py.serialization.data_serializers._common import deserialize_to_dict  # type: ignore
 
 from dipdup.config.starknet_events import StarknetEventsHandlerConfig
 from dipdup.models.starknet import StarknetEvent
@@ -58,7 +58,7 @@ def match_events(
 
 def prepare_event_handler_args(
     package: DipDupPackage, handler_config: StarknetEventsHandlerConfig, matched_event: StarknetEventData
-) -> StarknetEvent[Any]:  # type: ignore[no-untyped-def]
+) -> StarknetEvent[Any]:
     typename = handler_config.contract.module_name
 
     type_ = package.get_type(
@@ -75,10 +75,7 @@ def prepare_event_handler_args(
     with DeserializationContext.create(data) as context:
         data_dict = deserialize_to_dict(serializer.serializers, context)
 
-    typed_payload = parse_object(
-        type_=type_,
-        data=data_dict
-    )
+    typed_payload = parse_object(type_=type_, data=data_dict)
     return StarknetEvent(
         data=matched_event,
         payload=typed_payload,

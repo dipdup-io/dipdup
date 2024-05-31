@@ -77,6 +77,7 @@ def init(package: str | None) -> None:
 @main.command(help='Render demo projects from templates')
 @click.argument('package', required=False)
 def render(package: str | None) -> None:
+    # TODO: abi for starknet demo not copied for some reason
     demos = {package: SRC_PATH / package} if package else _get_demos()
     projects = {package: PROJECTS_PATH / package} if package else _get_projects()
 

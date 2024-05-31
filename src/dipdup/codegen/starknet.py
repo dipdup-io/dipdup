@@ -3,13 +3,13 @@ from typing import Any
 
 import orjson
 from Crypto.Hash import keccak
-from starknet_py.abi.v2 import AbiParser  # type: ignore[import-not-found]
+from starknet_py.abi.v2 import AbiParser  # type: ignore
 from starknet_py.abi.v2 import AbiParsingError
-from starknet_py.cairo.data_types import CairoType  # type: ignore[import-not-found]
+from starknet_py.cairo.data_types import CairoType  # type: ignore
 from starknet_py.cairo.data_types import EventType
 from starknet_py.cairo.data_types import FeltType
 from starknet_py.cairo.data_types import UintType
-from starknet_py.serialization import serializer_for_event
+from starknet_py.serialization import serializer_for_event  # type: ignore
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import HandlerConfig
@@ -39,13 +39,15 @@ def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
         'additionalProperties': False,
     }
 
+
 def sn_keccak(x: str) -> str:
     return f'0x{int.from_bytes(keccak.new(data=x.encode("ascii"), digest_bits=256).digest(), "big") & (1 << 248) - 1:x}'
+
 
 def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
     abi_by_typename: dict[str, ConvertedCairoAbi] = {}
 
-    for abi_path in package.abi.glob('**/abi.json'):
+    for abi_path in package.abi.glob('**/cairo_abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
 
         try:
@@ -80,7 +82,7 @@ def abi_to_jsonschemas(
     # select objects to generate types
     # convert types in to schema
     # write schema
-    for abi_path in package.abi.glob('**/abi.json'):
+    for abi_path in package.abi.glob('**/cairo_abi.json'):
         abi = orjson.loads(abi_path.read_bytes())
 
         try:
