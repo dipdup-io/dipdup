@@ -731,9 +731,8 @@ def dump_demos() -> None:
         for args in (
             ('run',),
             ('init',),
-            ('init', '--base', '--force'),
         ):
-            launch_json['configurations'].append(
+            launch_json['configurations'].append(  # type: ignore[attr-defined]
                 {
                     'name': f'{name}: {" ".join(args)}',
                     'type': 'debugpy',
@@ -747,7 +746,13 @@ def dump_demos() -> None:
                     },
                 }
             )
-    launch_json_path.write_bytes(orjson.dumps(launch_json, option=orjson.OPT_INDENT_2,))
+    launch_json_path.write_bytes(
+        orjson.dumps(
+            launch_json,
+            option=orjson.OPT_INDENT_2,
+        )
+    )
+
 
 @main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')
 @click.option(

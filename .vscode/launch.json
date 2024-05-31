@@ -34,24 +34,6 @@
       }
     },
     {
-      "name": "demo_blank: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_blank",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_evm_events: run",
       "type": "debugpy",
       "request": "launch",
@@ -76,24 +58,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_evm_events",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_evm_events: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_evm_events",
@@ -134,24 +98,6 @@
       }
     },
     {
-      "name": "demo_evm_transactions: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_evm_transactions",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_evm_uniswap: run",
       "type": "debugpy",
       "request": "launch",
@@ -184,19 +130,33 @@
       }
     },
     {
-      "name": "demo_evm_uniswap: init --base --force",
+      "name": "demo_starknet_events: run",
       "type": "debugpy",
       "request": "launch",
       "module": "dipdup",
       "args": [
         "-e",
         ".env",
-        "init",
-        "--base",
-        "--force"
+        "run"
       ],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_evm_uniswap",
+      "cwd": "${workspaceFolder}/src/demo_starknet_events",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_starknet_events: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_starknet_events",
       "env": {
         "DIPDUP_DEBUG": "1"
       }
@@ -226,24 +186,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_auction",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_auction: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_auction",
@@ -284,24 +226,6 @@
       }
     },
     {
-      "name": "demo_tezos_big_maps: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_big_maps",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_dao: run",
       "type": "debugpy",
       "request": "launch",
@@ -326,24 +250,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_dao",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_dao: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_dao",
@@ -384,24 +290,6 @@
       }
     },
     {
-      "name": "demo_tezos_dex: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_dex",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_domains: run",
       "type": "debugpy",
       "request": "launch",
@@ -426,24 +314,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_domains",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_domains: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_domains",
@@ -484,24 +354,6 @@
       }
     },
     {
-      "name": "demo_tezos_etherlink: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_etherlink",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_events: run",
       "type": "debugpy",
       "request": "launch",
@@ -526,24 +378,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_events",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_events: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_events",
@@ -584,24 +418,6 @@
       }
     },
     {
-      "name": "demo_tezos_factories: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_factories",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_head: run",
       "type": "debugpy",
       "request": "launch",
@@ -626,24 +442,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_head",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_head: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_head",
@@ -684,24 +482,6 @@
       }
     },
     {
-      "name": "demo_tezos_nft_marketplace: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_nft_marketplace",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_raw: run",
       "type": "debugpy",
       "request": "launch",
@@ -726,24 +506,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_raw",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_raw: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_raw",
@@ -784,24 +546,6 @@
       }
     },
     {
-      "name": "demo_tezos_token: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_token",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_token_balances: run",
       "type": "debugpy",
       "request": "launch",
@@ -834,24 +578,6 @@
       }
     },
     {
-      "name": "demo_tezos_token_balances: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_token_balances",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_token_transfers: run",
       "type": "debugpy",
       "request": "launch",
@@ -876,24 +602,6 @@
         "-e",
         ".env",
         "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_token_transfers",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_token_transfers: init --base --force",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init",
-        "--base",
-        "--force"
       ],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/src/demo_tezos_token_transfers",
