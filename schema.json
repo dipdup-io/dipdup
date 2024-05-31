@@ -1272,7 +1272,7 @@
     },
     "StarknetEventsIndexConfig": {
       "additionalProperties": false,
-      "description": "Starknet events index config\n\n:param kind: Always 'starknet.events'\n:param handlers: Event handlers",
+      "description": "Starknet events index config\n\n:param kind: Always 'starknet.events'\n:param datasources: Aliases of index datasources in `datasources` section\n:param handlers: Event handlers\n:param first_level: Level to start indexing from\n:param last_level: Level to stop indexing at",
       "properties": {
         "kind": {
           "const": "starknet.events",
