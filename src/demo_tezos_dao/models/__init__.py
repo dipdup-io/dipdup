@@ -4,16 +4,16 @@ from dipdup.models import Model
 
 
 class DAO(Model):
-    address = fields.TextField(pk=True)
+    address = fields.TextField(primary_key=True)
 
 
 class User(Model):
-    address = fields.TextField(pk=True)
+    address = fields.TextField(primary_key=True)
     balance = fields.IntField()
 
 
 class Proposal(Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     dao: fields.ForeignKeyField[DAO] = fields.ForeignKeyField('models.DAO', 'proposals')
     # upvotes = fields.IntField(default=0)
     # downvotes = fields.IntField(default=0)
@@ -23,6 +23,6 @@ class Proposal(Model):
 
 
 class Vote(Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     proposal: fields.ForeignKeyField[Proposal] = fields.ForeignKeyField('models.Proposal', 'votes')
     amount = fields.IntField()

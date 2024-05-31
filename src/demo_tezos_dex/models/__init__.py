@@ -10,7 +10,7 @@ class TradeSide(IntEnum):
 
 
 class Trade(Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     symbol = fields.TextField()
     trader = fields.TextField()
     side = fields.IntEnumField(enum_type=TradeSide)
@@ -22,7 +22,7 @@ class Trade(Model):
 
 
 class Position(Model):
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
     symbol = fields.TextField()
     trader = fields.TextField()
     shares_qty = fields.BigIntField(default=0)

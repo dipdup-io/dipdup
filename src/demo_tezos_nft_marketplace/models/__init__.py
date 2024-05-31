@@ -11,11 +11,11 @@ class SwapStatus(IntEnum):
 
 
 class Holder(Model):
-    address = fields.TextField(pk=True)
+    address = fields.TextField(primary_key=True)
 
 
 class Token(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     creator: fields.ForeignKeyField[Holder] = fields.ForeignKeyField('models.Holder', 'tokens')
     supply = fields.BigIntField()
     level = fields.BigIntField()
@@ -23,7 +23,7 @@ class Token(Model):
 
 
 class Swap(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     creator: fields.ForeignKeyField[Holder] = fields.ForeignKeyField('models.Holder', 'swaps')
     price = fields.BigIntField()
     amount = fields.BigIntField()
@@ -34,7 +34,7 @@ class Swap(Model):
 
 
 class Trade(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     swap: fields.ForeignKeyField[Swap] = fields.ForeignKeyField('models.Swap', 'trades')
     seller: fields.ForeignKeyField[Holder] = fields.ForeignKeyField('models.Holder', 'sales')
     buyer: fields.ForeignKeyField[Holder] = fields.ForeignKeyField('models.Holder', 'purchases')

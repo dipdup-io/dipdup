@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - config: Fixed setting logging levels according to the config.
 - evm.events: Fixed matching logs when filtering by topic0.
 
+### Other
+
+- deps: `tortoise-orm` updated to 0.21.2.
+
 ## [7.5.7] - 2024-05-30
 
 ### Fixed
