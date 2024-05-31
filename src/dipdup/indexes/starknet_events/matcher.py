@@ -28,15 +28,15 @@ def match_events(
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
 
-    # TODO: prepare matching parameters before function call
-    matching_data = [
+    # TODO: Prepare matching parameters before the function call
+    matching_data = (
         (
             handler_config,
             event_identifiers[handler_config.contract.module_name][handler_config.name],
             handler_config.contract.address,
         )
         for handler_config in handlers
-    ]
+    )
 
     for event in events:
         if not event.keys:
@@ -57,7 +57,9 @@ def match_events(
 
 
 def prepare_event_handler_args(
-    package: DipDupPackage, handler_config: StarknetEventsHandlerConfig, matched_event: StarknetEventData
+    package: DipDupPackage,
+    handler_config: StarknetEventsHandlerConfig,
+    matched_event: StarknetEventData,
 ) -> StarknetEvent[Any]:
     typename = handler_config.contract.module_name
 

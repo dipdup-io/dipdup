@@ -766,7 +766,7 @@ class DipDupConfig:
     def get_starknet_contract(self, name: str) -> StarknetContractConfig:
         contract = self.get_contract(name)
         if not isinstance(contract, StarknetContractConfig):
-            raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
+            raise ConfigurationError(f'Contract `{name}` is not an Starknet contract')
         return contract
 
     def get_datasource(self, name: str) -> DatasourceConfigU:

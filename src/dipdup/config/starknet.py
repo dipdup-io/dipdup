@@ -15,7 +15,7 @@ from dipdup.config import IndexConfig
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
-# NOTE: Probably will be extended with abi datasource and node datasource
+# NOTE: Likely to be extended with ABI and node datasources
 StarknetDatasourceConfigU: TypeAlias = StarknetSubsquidDatasourceConfig
 
 _HEX_ADDRESS_REGEXP = re.compile(r'(0x)?[0-9a-f]{1,64}', re.IGNORECASE | re.ASCII)
@@ -60,7 +60,7 @@ class StarknetContractConfig(ContractConfig):
         if not is_starknet_address(value):
             raise ValueError(f'{value} is not a valid Starknet contract address')
 
-        # TODO: probably need to normalize
+        # TODO: Probably needs to be to normalized as in EVM case
         return value
 
     def get_address(self) -> str:
