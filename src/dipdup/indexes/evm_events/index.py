@@ -38,7 +38,7 @@ class EvmEventsIndex(
     ) -> None:
         super().__init__(ctx, config, datasources)
         self._event_abis = {
-            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
+            handler.contract.module_name: self._ctx.package.get_converted_evm_abi(handler.contract.module_name)['events']
             for handler in self._config.handlers
         }
 

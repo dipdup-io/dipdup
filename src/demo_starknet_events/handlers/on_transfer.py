@@ -1,11 +1,10 @@
 from decimal import Decimal
 
+from demo_starknet_events import models as models
+from demo_starknet_events.types.stark_usdt.starknet_events.transfer import TransferPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
 from tortoise.exceptions import DoesNotExist
-
-from demo_starknet_events import models as models
-from demo_starknet_events.types.stark_usdt.starknet_events.transfer import TransferPayload
 
 
 async def on_transfer(
