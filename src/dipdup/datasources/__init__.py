@@ -132,6 +132,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
+    from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
     from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
     from dipdup.datasources.abi_etherscan import AbiEtherscanDatasource
@@ -140,6 +141,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
+    from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
     from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
     from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 
@@ -152,6 +154,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
         IpfsDatasourceConfig: IpfsDatasource,
         EvmSubsquidDatasourceConfig: EvmSubsquidDatasource,
         EvmNodeDatasourceConfig: EvmNodeDatasource,
+        StarknetSubsquidDatasourceConfig: StarknetSubsquidDatasource,
     }
 
     try:

@@ -45,6 +45,7 @@ EVM
 Starknet
 -------------------------------------------------------------------------------
 
+.. autoclass:: dipdup.models.starknet.StarknetEvent
 .. autoclass:: dipdup.models.starknet.StarknetEventData
 .. autoclass:: dipdup.models.starknet.StarknetTransactionData
 
