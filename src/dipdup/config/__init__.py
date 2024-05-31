@@ -39,14 +39,17 @@ from urllib.parse import quote_plus
 from urllib.parse import urlparse
 
 import orjson
+from pydantic import BeforeValidator
 from pydantic import ConfigDict
 from pydantic import Field
+from pydantic import TypeAdapter
 from pydantic import ValidationError
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from pydantic.dataclasses import is_pydantic_dataclass
 from pydantic_core import to_jsonable_python
 
+from dipdup import __spec_version__
 from dipdup import env
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
@@ -71,6 +74,10 @@ DEFAULT_SQLITE_PATH = ':memory:'
 
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
+
+Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
+ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
+
 
 _logger = logging.getLogger(__name__)
 
@@ -382,7 +389,7 @@ class IndexTemplateConfig(NameMixin):
 
     kind = 'template'
     template: str
-    values: dict[str, str]
+    values: dict[str, Any]
     first_level: int = 0
     last_level: int = 0
 
@@ -650,7 +657,7 @@ class DipDupConfig:
     :param logging: Modify logging verbosity
     """
 
-    spec_version: str | float
+    spec_version: ToStr
     package: str
     datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
@@ -694,11 +701,18 @@ class DipDupConfig:
         cls,
         paths: list[Path],
         environment: bool = True,
+        raw: bool = False,
+        unsafe: bool = False,
     ) -> DipDupConfig:
-        config_json, config_environment = DipDupYAMLConfig.load(paths, environment)
+        config_json, config_environment = DipDupYAMLConfig.load(
+            paths=paths,
+            environment=environment,
+            raw=raw,
+            unsafe=unsafe,
+        )
 
         try:
-            config = cls(**config_json)
+            config = TypeAdapter(cls).validate_python(config_json)
         except ConfigurationError:
             raise
         except ValidationError as e:
@@ -706,7 +720,7 @@ class DipDupConfig:
             errors_by_path = defaultdict(list)
             for error in e.errors():
                 loc = error['loc']
-                index = 2 if isinstance(loc[-2], int) else 1
+                index = 2 if isinstance(loc[-1], int) else 1
                 path = '.'.join(str(e) for e in loc[:-index])
                 errors_by_path[path].append(error)
 
@@ -805,10 +819,13 @@ class DipDupConfig:
 
     def set_up_logging(self) -> None:
         loglevels = {}
-        if not isinstance(self.logging, dict):
+        if isinstance(self.logging, dict):
+            loglevels = {**self.logging}
+        else:
             loglevels['dipdup'] = self.logging
             loglevels[self.package] = self.logging
 
+        # NOTE: Environment variables have higher priority
         if env.DEBUG:
             loglevels['dipdup'] = 'DEBUG'
             loglevels[self.package] = 'DEBUG'
@@ -844,7 +861,7 @@ class DipDupConfig:
         self,
         name: str,
         template: str,
-        values: dict[str, str],
+        values: dict[str, Any],
         first_level: int = 0,
         last_level: int = 0,
     ) -> None:
@@ -863,6 +880,13 @@ class DipDupConfig:
         index_config._name = name
 
     def _validate(self) -> None:
+        # NOTE: Spec version
+        if self.spec_version != __spec_version__:
+            raise ConfigurationError(
+                f'Incompatible spec version: expected {__spec_version__}, got {self.spec_version}. '
+                'See https://dipdup.io/docs/config/spec_version'
+            )
+
         # NOTE: Hasura and metadata interface
         if self.hasura:
             if isinstance(self.database, SqliteDatabaseConfig):
@@ -920,7 +944,11 @@ class DipDupConfig:
         raw_template = orjson.dumps(template, default=to_jsonable_python).decode()
         for key, value in template_config.values.items():
             value_regex = r'<[ ]*' + key + r'[ ]*>'
-            raw_template = re.sub(value_regex, value, raw_template)
+            raw_template = re.sub(
+                pattern=value_regex,
+                repl=str(value),
+                string=raw_template,
+            )
 
         if missing_value := re.search(r'<*>', raw_template):
             raise ConfigurationError(

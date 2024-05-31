@@ -12,6 +12,7 @@ from pydantic.dataclasses import dataclass
 
 from dipdup.config import Alias
 from dipdup.config import ContractConfig
+from dipdup.config import Hex
 from dipdup.config import IndexConfig
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -35,8 +36,8 @@ class EvmContractConfig(ContractConfig):
     """
 
     kind: Literal['evm']
-    address: str | None = None
-    abi: str | None = None
+    address: Hex | None = None
+    abi: Hex | None = None
     typename: str | None = None
 
     @field_validator('address', 'abi')

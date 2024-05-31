@@ -10,6 +10,7 @@ from eth_utils.hexadecimal import decode_hex
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.models.evm import EvmEvent
 from dipdup.models.evm import EvmEventData
+from dipdup.package import ConvertedEventAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
@@ -86,7 +87,7 @@ def match_events(
     package: DipDupPackage,
     handlers: Iterable[EvmEventsHandlerConfig],
     events: Iterable[EvmEventData],
-    topics: dict[str, dict[str, str]],
+    abis: dict[str, dict[str, ConvertedEventAbi]],
 ) -> deque[MatchedEventsT]:
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
@@ -97,8 +98,10 @@ def match_events(
 
         for handler_config in handlers:
             typename = handler_config.contract.module_name
-            name = handler_config.name
-            if topics[typename][name] != event.topics[0]:
+            abi = abis[typename][handler_config.name]
+            if event.topics[0] != abi['topic0']:
+                continue
+            if len(event.topics) != abi['topic_count'] + 1:
                 continue
 
             address = handler_config.contract.address

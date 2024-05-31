@@ -154,7 +154,15 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.MessageType',
     'dipdup.models.QuerySet',
     'dipdup.models.RollbackMessage',
+    'dipdup.models.subsquid.AbstractSubsquidQuery',
     'dipdup.models.subsquid.SubsquidMessageType',
+    'dipdup.models.starknet_subsquid.Query',
+    'dipdup.models.starknet_subsquid.TransactionFieldSelection',
+    'dipdup.models.starknet_subsquid.EventRequest',
+    'dipdup.models.starknet_subsquid.EventFieldSelection',
+    'dipdup.models.starknet_subsquid.FieldSelection',
+    'dipdup.models.starknet_subsquid.TransactionRequest',
+    'dipdup.models.starknet_subsquid.BlockFieldSelection',
     'dipdup.models.tezos_tzkt.BigMapSubscription',
     'dipdup.models.tezos_tzkt.EventSubscription',
     'dipdup.models.tezos_tzkt.HeadSubscription',
@@ -515,7 +523,6 @@ def dump_references() -> None:
                     package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
                 classes_in_package.add(f'dipdup.{ref}{package_path_str}.{match.group(1)}')
 
-        # diff = (classes_in_package ^ classes_in_ref) - ignore
         to_add = classes_in_package - classes_in_ref - ignore
         to_remove = classes_in_ref - classes_in_package - ignore
 
@@ -598,22 +605,14 @@ def dump_references() -> None:
 
         # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
         if 'config' in page['md_path']:
-            out = out.replace(
-                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="n"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, ',
-                '',
-            )
-            out = out.replace(
-                '<em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="o"><span class="pre">args</span></span></em>, ',
-                '',
-            )
+            template = '<em class="sig-param"><span class="{}"><span class="pre">*</span></span><span class="{}"><span class="pre">args</span></span></em>, '
+            for i, j in (
+                ('n', 'n'),
+                ('n', 'o'),
+                ('o', 'n'),
+                ('o', 'o'),
+            ):
+                out = out.replace(template.format(i, j), '')
             out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
@@ -719,6 +718,60 @@ def dump_demos() -> None:
     ]
 
     Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
+
+
+@main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')
+@click.option(
+    '--path',
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
+    help='docs/ directory path to use.',
+)
+@click.option('--insert', type=int, help='Page index to insert')
+@click.option('--pop', type=int, help='Page index to pop')
+def move_pages(path: Path, insert: int, pop: int) -> None:
+    files = list(path.glob('*.md'))
+    if not files:
+        red_echo('=> No pages found')
+        exit(1)
+
+    toc = {}
+    for file in files:
+        if not file.stem[0].isdigit():
+            continue
+
+        index = int(file.stem.split('.')[0])
+        if index in toc:
+            red_echo(f'=> Duplicate index {index}')
+            exit(1)
+        toc[index] = file
+
+    if insert:
+        for index in sorted(toc.keys(), reverse=True):
+            if index < insert:
+                break
+
+            file = toc[index]
+            new_name = path / f'{index + 1}.{file.name.split(".")[1]}.md'
+            file.rename(new_name)
+            toc[index + 1] = new_name
+
+        new_file = path / f'{insert}.md'
+        new_file.touch()
+        toc[insert] = new_file
+
+    if pop:
+        if pop not in toc:
+            red_echo(f'=> No page with index {pop}')
+            exit(1)
+        file = toc.pop(pop)
+        file.rename(path / f'_{file.name}')
+
+        for index in sorted(toc.keys()):
+            if index > pop:
+                file = toc.pop(index)
+                new_name = path / f'{index - 1}.{file.name.split(".")[1]}.md'
+                file.rename(new_name)
+                toc[index - 1] = new_name
 
 
 if __name__ == '__main__':

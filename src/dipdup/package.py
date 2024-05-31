@@ -58,6 +58,7 @@ class ConvertedEventAbi(TypedDict):
     name: str
     topic0: str
     inputs: tuple[tuple[str, bool], ...]
+    topic_count: int
 
 
 class ConvertedMethodAbi(TypedDict):
@@ -85,6 +86,8 @@ class ConvertedCairoAbi(TypedDict):
 
 class DipDupPackage:
     def __init__(self, root: Path) -> None:
+        _logger.info('Loading package `%s` from `%s`', root.name, root)
+
         self.root = root
         self.name = root.name
 

@@ -11,10 +11,56 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - starknet.subsquid.events: Added `starknet.subsquid.events` index kind to process Starknet events.
 - starknet.subsquid: Added `starknet.subsquid` datasource to fetch historical data from Subsquid Archives.
 
+### Fixed
+
+- config: Fixed setting logging levels according to the config.
+- evm.events: Fixed matching logs when filtering by topic0.
+
+## [7.5.7] - 2024-05-30
+
+### Fixed
+
+- config: Fixed setting logging levels according to the config.
+- evm.subsquid.events: Fixed matching logs when filtering by topic0.
+
+## [7.5.6] - 2024-05-16
+
+### Fixed
+
+- cli: Improved logging of indexer status.
+- performance: Fixed estimation indexing speed in levels per second.
+
 ### Changed
 
+- api: `/performance` endpoint response format has been changed.
+- performance: All time intervals are now measured in seconds.
+- performance: Several metrics have been renamed and new ones have been added.
+
+## [8.0.0a1] - 2024-05-06
+
+### Added
+
+- cli: Added spec_version 3.0 support to `migrate` command.
+- cli: Added `package verify` command to check the package consistency.
+- cli: Added `--raw` option to `config export` command to dump config preserving the original structure.
+- env: Added `DIPDUP_PACKAGE_PATH` environment variable to override discovered package path.
+
+### Fixed
+
+- cli: Improved logging of indexer status.
+- config: Fixed (de)serialization of hex strings in config.
+- performance: Fixed estimation indexing speed in levels per second.
+- yaml: Fixed indentation and formatting of generated YAML files.
+
+### Changed
+
+- api: `/performance` endpoint response format have been changed.
 - config: Index kinds have been renamed and grouped by the network.
 - config: Index configs accept `datasources` list instead of `datasource` field.
+- config: Index template values now can be any JSON-serializable object.
+- deps: Python 3.12 is now required to run DipDup.
+- performance: All time intervals are now measured in seconds.
+- performance: Several metrics have been renamed and new ones have been added.
 
 ### Removed
 
@@ -23,13 +69,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Other
 
-- deps: Python 3.12 is now required to run DipDup.
+- demos: Demo projects have been renamed to reflect the new config structure.
 - deps: `datamodel-code-generator` updated to 0.25.
 - deps: `pyarrow` updated to 16.0.
-- deps: `pydantic`updated to 2.2.
-- deps: `sentry-sdk`updated to 2.0.
+- deps: `pydantic` updated to 2.2.
+- deps: `sentry-sdk` updated to 2.1.
 - deps: `tortoise-orm` updated to 0.20.1.
-- deps: `web3` updated to 6.17.
+- deps: `web3` updated to 6.18.
 
 ## [7.5.5] - 2024-04-17
 
@@ -1439,7 +1485,11 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.4...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0a1...HEAD
+[7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
+[7.5.6]: https://github.com/dipdup-io/dipdup/compare/7.5.5...7.5.6
+[8.0.0a1]: https://github.com/dipdup-io/dipdup/compare/7.5.7...8.0.0a1
+[7.5.5]: https://github.com/dipdup-io/dipdup/compare/7.5.4...7.5.5
 [7.5.4]: https://github.com/dipdup-io/dipdup/compare/7.5.3...7.5.4
 [7.5.3]: https://github.com/dipdup-io/dipdup/compare/7.5.2...7.5.3
 [7.5.2]: https://github.com/dipdup-io/dipdup/compare/7.5.1...7.5.2

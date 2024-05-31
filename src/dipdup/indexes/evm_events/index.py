@@ -37,18 +37,10 @@ class EvmEventsIndex(
         datasources: tuple[EvmDatasource, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
-        self._topics: dict[str, dict[str, str]] | None = None
-
-    @property
-    def topics(self) -> dict[str, dict[str, str]]:
-        if self._topics is None:
-            self._topics = {}
-            for handler_config in self._config.handlers:
-                typename = handler_config.contract.module_name
-                event_abi = self._ctx.package.get_converted_evm_abi(typename)['events']
-                self._topics[typename] = {k: v['topic0'] for k, v in event_abi.items()}
-
-        return self._topics
+        self._event_abis = {
+            handler.contract.module_name: self._ctx.package.get_converted_abi(handler.contract.module_name)['events']
+            for handler in self._config.handlers
+        }
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -107,7 +99,7 @@ class EvmEventsIndex(
         handlers: tuple[EvmEventsHandlerConfig, ...],
         level_data: Iterable[EvmEventData],
     ) -> deque[Any]:
-        return match_events(self._ctx.package, handlers, level_data, self.topics)
+        return match_events(self._ctx.package, handlers, level_data, self._event_abis)
 
     async def _call_matched_handler(
         self,

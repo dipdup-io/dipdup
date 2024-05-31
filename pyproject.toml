@@ -55,7 +55,7 @@ dependencies = [
     "pydantic~=2.2",
     "sentry-sdk~=2.0",
     "tortoise-orm==0.20.1",
-    "web3~=6.17",
+    "web3~=6.18",
     #
     "aiohttp~=3.9",
     "aiolimiter~=1.0",
@@ -80,6 +80,7 @@ dependencies = [
 ]
 
 [tool.pdm.resolution.overrides]
+# NOTE: Update blocked by web3; safe to override.
 lru-dict = "1.3.0"
 
 [project.urls]
@@ -108,7 +109,8 @@ dev = [
 ]
 docs = [
     "Sphinx",
-    "sphinx-click",
+    # FIXME: 6.0 fails with `<class 'asyncclick.core.Group'>" of type "dipdup.cli:cli" is not click.Command or click.Group."click.BaseCommand"`
+    "sphinx-click==5.2.2",
     "sphinx-markdown-builder",
     "watchdog",
 ]
@@ -148,7 +150,7 @@ ignore = [
     "E402",   # module level import not at top of file
     "E501",   # line too long
     "TCH001", # breaks our runtime Pydantic magic
-    "UP040",  # PEP 695 type aliases are not yet supported
+    "UP040",  # PEP 695 type aliases are not yet supported by mypy
 ]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
 flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }

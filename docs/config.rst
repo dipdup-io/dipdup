@@ -55,4 +55,5 @@
 .. autoclass:: dipdup.config.tezos_token_balances.TezosTokenBalancesIndexConfig
 .. autoclass:: dipdup.config.tezos_token_transfers.TezosTokenTransfersHandlerConfig
 .. autoclass:: dipdup.config.tezos_token_transfers.TezosTokenTransfersIndexConfig
+.. autoclass:: dipdup.config.starknet_subsquid.StarknetSubsquidDatasourceConfig
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig
