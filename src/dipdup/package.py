@@ -8,11 +8,11 @@ from typing import Any
 from typing import TypedDict
 from typing import cast
 
-import orjson
 from pydantic import BaseModel
+from starknet_py.cairo.data_types import CairoType  # type: ignore
+from starknet_py.serialization import PayloadSerializer  # type: ignore
 
 from dipdup import env
-from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ProjectImportError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -28,6 +28,7 @@ DEFAULT_ENV = '.env.default'
 
 
 EVM_ABI_JSON = 'abi.json'
+CAIRO_ABI_JSON = 'cairo_abi.json'
 
 _branch = '│   '
 _tee = '├── '
@@ -56,6 +57,7 @@ class ConvertedEventAbi(TypedDict):
     name: str
     topic0: str
     inputs: tuple[tuple[str, bool], ...]
+    topic_count: int
 
 
 class ConvertedMethodAbi(TypedDict):
@@ -65,9 +67,20 @@ class ConvertedMethodAbi(TypedDict):
     outputs: tuple[dict[str, str], ...]
 
 
-class ConvertedAbi(TypedDict):
+class ConvertedEvmAbi(TypedDict):
     events: dict[str, ConvertedEventAbi]
     methods: dict[str, ConvertedMethodAbi]
+
+
+class ConvertedEventCairoAbi(TypedDict):
+    name: str
+    event_identifier: str
+    members: dict[str, CairoType]
+    serializer: PayloadSerializer
+
+
+class ConvertedCairoAbi(TypedDict):
+    events: dict[str, ConvertedEventCairoAbi]
 
 
 class DipDupPackage:
@@ -97,8 +110,8 @@ class DipDupPackage:
         self._replay: Answers | None = None
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
-        self._evm_abis: dict[str, dict[str, dict[str, Any]]] = {}
-        self._converted_abis: dict[str, ConvertedAbi] = {}
+        self._converted_evm_abis: dict[str, ConvertedEvmAbi] = {}
+        self._converted_cairo_abis: dict[str, ConvertedCairoAbi] = {}
 
     @property
     def replay(self) -> Answers | None:
@@ -189,17 +202,16 @@ class DipDupPackage:
             self._callbacks[key] = callback
         return cast(Callable[..., Awaitable[None]], callback)
 
-    def get_evm_abi(self, typename: str) -> dict[str, Any]:
-        if typename not in self._evm_abis:
-            path = self.abi / typename / EVM_ABI_JSON
-            if not path.exists():
-                raise InitializationRequiredError(f'`{path}` does not exist')
-            self._evm_abis[typename] = orjson.loads(path.read_bytes())
-        return self._evm_abis[typename]
-
-    def get_converted_abi(self, typename: str) -> ConvertedAbi:
-        if not self._converted_abis:
+    def get_converted_evm_abi(self, typename: str) -> ConvertedEvmAbi:
+        if not self._converted_evm_abis:
             from dipdup.codegen.evm import convert_abi
 
-            self._converted_abis = convert_abi(self)
-        return self._converted_abis[typename]
+            self._converted_evm_abis = convert_abi(self)
+        return self._converted_evm_abis[typename]
+
+    def get_converted_starknet_abi(self, typename: str) -> ConvertedCairoAbi:
+        if not self._converted_cairo_abis:
+            from dipdup.codegen.starknet import convert_abi
+
+            self._converted_cairo_abis = convert_abi(self)
+        return self._converted_cairo_abis[typename]

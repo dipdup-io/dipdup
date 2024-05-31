@@ -36,7 +36,6 @@ from typing import Literal
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
-from urllib.parse import urlparse
 
 import orjson
 from pydantic import BeforeValidator
@@ -44,8 +43,8 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import TypeAdapter
 from pydantic import ValidationError
-from pydantic import field_validator
 from pydantic.dataclasses import dataclass
+from pydantic.dataclasses import is_pydantic_dataclass
 from pydantic_core import to_jsonable_python
 
 from dipdup import __spec_version__
@@ -71,11 +70,21 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
+def _valid_url(v: str, ws: bool) -> str:
+    if not ws and not v.startswith(('http://', 'https://')):
+        raise ConfigurationError(f'`{v}` is not a valid HTTP URL')
+    if ws and not v.startswith(('ws://', 'wss://')):
+        raise ConfigurationError(f'`{v}` is not a valid WebSocket URL')
+    return v.rstrip('/')
+
+
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
 Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
 ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
+Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]
+WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
 
 
 _logger = logging.getLogger(__name__)
@@ -140,12 +149,15 @@ class PostgresDatabaseConfig:
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
 
+    def __post_init__(self) -> None:
+        for table in self.immune_tables:
+            if table.startswith('dipdup'):
+                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
+
     @property
     def connection_string(self) -> str:
-        # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
-        # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
         connection_string = (
-            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
+            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}'
         )
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
@@ -160,14 +172,6 @@ class PostgresDatabaseConfig:
             'host': self.host,
             'port': self.port,
         }
-
-    @field_validator('immune_tables')
-    @classmethod
-    def _valid_immune_tables(cls, v: set[str]) -> set[str]:
-        for table in v:
-            if table.startswith('dipdup'):
-                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
-        return v
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -448,7 +452,7 @@ class HasuraConfig:
     :param http: HTTP connection tunables
     """
 
-    url: str
+    url: Url
     admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
@@ -458,14 +462,6 @@ class HasuraConfig:
     camel_case: bool = False
     rest: bool = True
     http: HttpConfig | None = None
-
-    @field_validator('url')
-    @classmethod
-    def _valid_url(cls, v: str) -> str:
-        parsed_url = urlparse(v)
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
-        return v.rstrip('/')
 
     @property
     def headers(self) -> dict[str, str]:
@@ -762,6 +758,12 @@ class DipDupConfig:
             raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
         return contract
 
+    def get_starknet_contract(self, name: str) -> StarknetContractConfig:
+        contract = self.get_contract(name)
+        if not isinstance(contract, StarknetContractConfig):
+            raise ConfigurationError(f'Contract `{name}` is not an Starknet contract')
+        return contract
+
     def get_datasource(self, name: str) -> DatasourceConfigU:
         try:
             return self.datasources[name]
@@ -812,10 +814,13 @@ class DipDupConfig:
 
     def set_up_logging(self) -> None:
         loglevels = {}
-        if not isinstance(self.logging, dict):
+        if isinstance(self.logging, dict):
+            loglevels = {**self.logging}
+        else:
             loglevels['dipdup'] = self.logging
             loglevels[self.package] = self.logging
 
+        # NOTE: Environment variables have higher priority
         if env.DEBUG:
             loglevels['dipdup'] = 'DEBUG'
             loglevels[self.package] = 'DEBUG'
@@ -1073,6 +1078,12 @@ class DipDupConfig:
 
                 if isinstance(handler_config.from_, str):
                     handler_config.from_ = self.get_evm_contract(handler_config.from_)
+        elif isinstance(index_config, StarknetEventsIndexConfig):
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
+                if isinstance(handler_config.contract, str):
+                    handler_config.contract = self.get_starknet_contract(handler_config.contract)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1109,6 +1120,9 @@ from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
+from dipdup.config.starknet import StarknetContractConfig
+from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
@@ -1124,7 +1138,7 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
-ContractConfigU = EvmContractConfig | TezosContractConfig
+ContractConfigU = EvmContractConfig | TezosContractConfig | StarknetContractConfig
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
     | AbiEtherscanDatasourceConfig
@@ -1134,6 +1148,7 @@ DatasourceConfigU = (
     | EvmNodeDatasourceConfig
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
+    | StarknetSubsquidDatasourceConfig
 )
 TezosIndexConfigU = (
     TezosBigMapsIndexConfig
@@ -1145,9 +1160,19 @@ TezosIndexConfigU = (
     | TezosTokenBalancesIndexConfig
 )
 EvmIndexConfigU = EvmEventsIndexConfig | EvmTransactionsIndexConfig
+StarknetIndexConfigU = StarknetEventsIndexConfig
 
-ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU
+ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU | StarknetIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
+
+
+def _reload_dataclass(cls: type[Any]) -> type[Any]:
+    """Reload dataclass to apply new annotations"""
+    try:
+        return dataclass(cls, config=cls.__pydantic_config__, kw_only=True)
+    # NOTE: The first attempt fails with "dictionary changed size" due to how deeply fucked up this hack is.
+    except RuntimeError:
+        return dataclass(cls, config=cls.__pydantic_config__, kw_only=True)
 
 
 def _patch_annotations() -> None:
@@ -1158,9 +1183,12 @@ def _patch_annotations() -> None:
     This hack allows to add `str` in Unions before loading config so we don't need to write `isinstance(...)`
     checks everywhere.
     """
+
     self = importlib.import_module(__name__)
-    submodules = tuple(inspect.getmembers(self, inspect.ismodule))
-    submodules += ((__name__, self),)
+    submodules = (
+        *tuple(inspect.getmembers(self, inspect.ismodule)),
+        (self.__name__, self),
+    )
 
     for name, submodule in submodules:
         if not submodule.__name__.startswith('dipdup.config'):
@@ -1168,14 +1196,13 @@ def _patch_annotations() -> None:
 
         for attr in dir(submodule):
             value = getattr(submodule, attr)
-            if not hasattr(value, '__annotations__'):
+            if not is_pydantic_dataclass(value) or 'Config' not in value.__name__:
                 continue
 
-            reload = False
             for name, annotation in value.__annotations__.items():
-                # NOTE: All annotations are strings now
+                # NOTE: All annotations must be strings for aliases to work
                 if not isinstance(annotation, str):
-                    continue
+                    raise RuntimeError(f'Add `from __future__ import annotations` to `{submodule.__name__}` module')
 
                 # NOTE: Unwrap `Alias[...]` to 'str | ...' to allow using aliases in config files
                 unwrapped = annotation
@@ -1187,19 +1214,15 @@ def _patch_annotations() -> None:
 
                 if annotation != unwrapped:
                     value.__annotations__[name] = unwrapped
-                    reload = True
 
-            if not reload:
-                continue
+            setattr(
+                submodule,
+                attr,
+                _reload_dataclass(value),
+            )
 
-            # NOTE: Wrap dataclass again to recreate magic methods.
-            # NOTE: We need to trick Pydantic that it's a native dataclass.
-            delattr(value, '__pydantic_validator__')
-            try:
-                value = dataclass(value)
-            except RuntimeError:
-                value = dataclass(value)
-            setattr(submodule, attr, value)
+    # NOTE: Finally, reload the root config itself.
+    self.DipDupConfig = _reload_dataclass(DipDupConfig)  # type: ignore[attr-defined]
 
 
 _patch_annotations()

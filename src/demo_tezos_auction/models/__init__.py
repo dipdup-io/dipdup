@@ -10,11 +10,11 @@ class AuctionStatus(IntEnum):
 
 
 class User(Model):
-    address = fields.TextField(pk=True)
+    address = fields.TextField(primary_key=True)
 
 
 class Token(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     address = fields.TextField()
     amount = fields.BigIntField()
     level = fields.BigIntField()
@@ -25,7 +25,7 @@ class Token(Model):
 
 
 class Auction(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     token: fields.ForeignKeyField[Token] = fields.ForeignKeyField('models.Token', 'auctions')
     bid_amount = fields.BigIntField()
     bidder: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'winning_auctions')
@@ -39,7 +39,7 @@ class Auction(Model):
 
 
 class Bid(Model):
-    id = fields.BigIntField(pk=True)
+    id = fields.BigIntField(primary_key=True)
     auction: fields.ForeignKeyField[Auction] = fields.ForeignKeyField('models.Auction', 'bids')
     bid_amount = fields.BigIntField()
     bidder: fields.ForeignKeyField[User] = fields.ForeignKeyField('models.User', 'bids')

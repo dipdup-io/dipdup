@@ -54,7 +54,7 @@ dependencies = [
     "pyarrow~=16.0",
     "pydantic~=2.2",
     "sentry-sdk~=2.0",
-    "tortoise-orm==0.20.1",
+    "tortoise-orm==0.21.2",
     "web3~=6.18",
     #
     "aiohttp~=3.9",
@@ -76,6 +76,7 @@ dependencies = [
     "strict-rfc3339~=0.7",
     "survey~=5.3",
     "tabulate~=0.9",
+    "starknet-py>=0.22.0",
 ]
 
 [tool.pdm.resolution.overrides]
@@ -89,6 +90,8 @@ Repository = "https://github.com/dipdup-io/dipdup"
 
 [project.scripts]
 dipdup = "dipdup.cli:cli"
+
+
 
 [tool.pdm.dev-dependencies]
 dev = [

@@ -43,7 +43,7 @@ def prepare_transaction_handler_args(
         raise FrameworkException('`method` and `to` are required for typed transaction handler')
     typename = contract.module_name
 
-    inputs = package.get_converted_abi(typename)['methods'][method]['inputs']
+    inputs = package.get_converted_evm_abi(typename)['methods'][method]['inputs']
     data = decode_abi(
         types=tuple(input['type'] for input in inputs),
         data=decode_hex(matched_transaction.input[10:]),

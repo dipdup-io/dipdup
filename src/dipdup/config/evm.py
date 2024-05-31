@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 from abc import ABC
+from typing import Annotated
 from typing import Literal
 from typing import TypeAlias
 
 from eth_utils.address import is_address
 from eth_utils.address import to_normalized_address
+from pydantic import AfterValidator
 from pydantic import ConfigDict
-from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import Alias
@@ -23,6 +26,24 @@ EVM_ADDRESS_LENGTH = 42
 EvmDatasourceConfigU: TypeAlias = EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig | AbiEtherscanDatasourceConfig
 
 
+def _validate_evm_address(v: str) -> str:
+    """
+    Checks if the given value is a valid StarkNet address within the range [0, 2**251).
+    """
+    # NOTE: It's a `config export` call with environment variable substitution disabled
+    if '${' in v:
+        return v
+
+    if not is_address(v):
+        raise ValueError(f'{v} is not a valid EVM contract address')
+    # NOTE: Normalizing is converting address to a non-checksum form.
+    # See https://coincodex.com/article/2078/ethereum-address-checksum-explained/
+    return to_normalized_address(v)
+
+
+EvmAddress = Annotated[Hex, AfterValidator(_validate_evm_address)]
+
+
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class EvmContractConfig(ContractConfig):
     """EVM contract config
@@ -34,22 +55,9 @@ class EvmContractConfig(ContractConfig):
     """
 
     kind: Literal['evm']
-    address: Hex | None = None
-    abi: Hex | None = None
+    address: EvmAddress | None = None
+    abi: EvmAddress | None = None
     typename: str | None = None
-
-    @field_validator('address', 'abi')
-    @classmethod
-    def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: It's a `config export` call with environment variable substitution disabled
-        if not v or '$' in v:
-            return v
-
-        if not is_address(v):
-            raise ValueError(f'{v} is not a valid EVM contract address')
-        # NOTE: Normalizing is converting address to a non-checksum form.
-        # See https://coincodex.com/article/2078/ethereum-address-checksum-explained/
-        return to_normalized_address(v)
 
     def get_address(self) -> str:
         if self.address is None:
