@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from typing import Literal
-from urllib.parse import urlparse
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import HttpConfig
 from dipdup.config import IndexDatasourceConfig
+from dipdup.config import Url
 from dipdup.exceptions import ConfigurationError
 
 TZKT_API_URLS: dict[str, str] = {
@@ -35,7 +35,7 @@ class TezosTzktDatasourceConfig(IndexDatasourceConfig):
     """
 
     kind: Literal['tezos.tzkt']
-    url: str = DEFAULT_TZKT_URL
+    url: Url = DEFAULT_TZKT_URL
     http: HttpConfig | None = None
     buffer_size: int = 0
     merge_subscriptions: bool = False
@@ -43,14 +43,7 @@ class TezosTzktDatasourceConfig(IndexDatasourceConfig):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        self.url = self.url.rstrip('/')
 
         limit = MAX_BATCH_SIZE
         if self.http and self.http.batch_size and self.http.batch_size > limit:
             raise ConfigurationError(f'`batch_size` must be less than {limit}')
-        # NOTE: It's a `config export` call with environment variable substitution disabled
-        if '$' in self.url:
-            return
-        parsed_url = urlparse(self.url)
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{self.url}` is not a valid TzKT API URL')

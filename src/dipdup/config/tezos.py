@@ -35,9 +35,9 @@ def is_wallet_address(address: str) -> bool:
     return len(address) == ADDRESS_LENGTH and address.startswith(WALLET_PREFIXES)
 
 
-def _is_tezos_address(v: str) -> str:
+def _validate_tezos_address(v: str) -> str:
     # NOTE: It's a `config export` call with environment variable substitution disabled
-    if not v or '$' in v:
+    if '${' in v:
         return v
 
     if not (is_contract_address(v) or is_rollup_address(v) or is_wallet_address(v)):
@@ -46,7 +46,7 @@ def _is_tezos_address(v: str) -> str:
     return v
 
 
-TezosAddress = Annotated[str, AfterValidator(_is_tezos_address)]
+TezosAddress = Annotated[str, AfterValidator(_validate_tezos_address)]
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
