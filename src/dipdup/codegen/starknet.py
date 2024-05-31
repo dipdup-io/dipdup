@@ -21,8 +21,11 @@ from dipdup.utils import json_dumps
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
 
-# TODO: support all types
-_abi_type_map = {FeltType: 'integer', UintType: 'integer'}
+# TODO: Support all types
+_abi_type_map = {
+    FeltType: 'integer',
+    UintType: 'integer',
+}
 
 
 def _convert_type(type_: CairoType) -> str:
@@ -30,7 +33,7 @@ def _convert_type(type_: CairoType) -> str:
 
 
 def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
-    # TODO: unpack nested (starknet.py could unpack types)
+    # TODO: Unpack nested types (starknet.py could do that)
     return {
         '$schema': 'http://json-schema.org/draft/2019-09/schema#',
         'type': 'object',
@@ -41,8 +44,9 @@ def _jsonschema_from_event(event: EventType) -> dict[str, Any]:
 
 
 def sn_keccak(x: str) -> str:
-    # make keccak256 hash in bytes and return hex representation of first 250 bits
-    return f'0x{int.from_bytes(keccak.new(data=x.encode("ascii"), digest_bits=256).digest(), "big") & (1 << 248) - 1:x}'
+    # NOTE: Create keccak256 hash in bytes and return hex representation of the first 250 bits.
+    keccak_hash = keccak.new(data=x.encode('ascii'), digest_bits=256).digest()
+    return f'0x{int.from_bytes(keccak_hash, "big") & (1 << 248) - 1:x}'
 
 
 def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
@@ -93,20 +97,19 @@ def abi_to_jsonschemas(
 
         parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events.items()}
 
-        for ev_name in events:
-            if ev_name not in parsed_abi.events:
+        for event_name in events:
+            if event_name not in parsed_abi.events:
                 continue
 
-            schema = _jsonschema_from_event(parsed_abi.events[ev_name])
-            schema_path = package.schemas / abi_path.parent.stem / 'starknet_events' / f'{ev_name}.json'
+            schema = _jsonschema_from_event(parsed_abi.events[event_name])
+            schema_path = package.schemas / abi_path.parent.stem / 'starknet_events' / f'{event_name}.json'
             touch(schema_path)
             schema_path.write_bytes(json_dumps(schema))
 
 
 class StarknetCodeGenerator(CodeGenerator):
-    async def generate_abi(self) -> None:
-        # for now abi can only be put manually
-        ...
+    # NOTE: For now ABIs need to be provided manually
+    async def generate_abi(self) -> None: ...
 
     async def generate_schemas(self) -> None:
         self._cleanup_schemas()

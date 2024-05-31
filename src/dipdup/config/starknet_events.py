@@ -52,7 +52,12 @@ class StarknetEventsIndexConfig(StarknetIndexConfig):
     """Starknet events index config
 
     :param kind: Always 'starknet.events'
+    :param datasources: Aliases of index datasources in `datasources` section
     :param handlers: Event handlers
+    :param first_level: Level to start indexing from
+    :param last_level: Level to stop indexing at
+
+
     """
 
     kind: Literal['starknet.events']

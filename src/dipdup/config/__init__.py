@@ -36,7 +36,6 @@ from typing import Literal
 from typing import TypeVar
 from typing import cast
 from urllib.parse import quote_plus
-from urllib.parse import urlparse
 
 import orjson
 from pydantic import BeforeValidator
@@ -44,7 +43,6 @@ from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import TypeAdapter
 from pydantic import ValidationError
-from pydantic import field_validator
 from pydantic.dataclasses import dataclass
 from pydantic.dataclasses import is_pydantic_dataclass
 from pydantic_core import to_jsonable_python
@@ -72,11 +70,21 @@ DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
 
 
+def _valid_url(v: str, ws: bool) -> str:
+    if not ws and not v.startswith(('http://', 'https://')):
+        raise ConfigurationError(f'`{v}` is not a valid HTTP URL')
+    if ws and not v.startswith(('ws://', 'wss://')):
+        raise ConfigurationError(f'`{v}` is not a valid WebSocket URL')
+    return v.rstrip('/')
+
+
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
 Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
 ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
+Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]
+WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
 
 
 _logger = logging.getLogger(__name__)
@@ -141,6 +149,11 @@ class PostgresDatabaseConfig:
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
 
+    def __post_init__(self) -> None:
+        for table in self.immune_tables:
+            if table.startswith('dipdup'):
+                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
+
     @property
     def connection_string(self) -> str:
         # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
@@ -161,14 +174,6 @@ class PostgresDatabaseConfig:
             'host': self.host,
             'port': self.port,
         }
-
-    @field_validator('immune_tables')
-    @classmethod
-    def _valid_immune_tables(cls, v: set[str]) -> set[str]:
-        for table in v:
-            if table.startswith('dipdup'):
-                raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
-        return v
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -449,7 +454,7 @@ class HasuraConfig:
     :param http: HTTP connection tunables
     """
 
-    url: str
+    url: Url
     admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
@@ -459,14 +464,6 @@ class HasuraConfig:
     camel_case: bool = False
     rest: bool = True
     http: HttpConfig | None = None
-
-    @field_validator('url')
-    @classmethod
-    def _valid_url(cls, v: str) -> str:
-        parsed_url = urlparse(v)
-        if not (parsed_url.scheme and parsed_url.netloc):
-            raise ConfigurationError(f'`{v}` is not a valid Hasura URL')
-        return v.rstrip('/')
 
     @property
     def headers(self) -> dict[str, str]:
@@ -766,7 +763,7 @@ class DipDupConfig:
     def get_starknet_contract(self, name: str) -> StarknetContractConfig:
         contract = self.get_contract(name)
         if not isinstance(contract, StarknetContractConfig):
-            raise ConfigurationError(f'Contract `{name}` is not an EVM contract')
+            raise ConfigurationError(f'Contract `{name}` is not an Starknet contract')
         return contract
 
     def get_datasource(self, name: str) -> DatasourceConfigU:

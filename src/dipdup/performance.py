@@ -40,7 +40,7 @@ class _CacheManager:
         self._plain: dict[str, dict[Any, Any]] = {}
         self._lru: dict[str, Callable[..., Any]] = {}
         self._alru: dict[str, Callable[..., Coroutine[Any, Any, None]]] = {}
-        self._models: set['type[CachedModel]'] = set()
+        self._models: set[type[CachedModel]] = set()
 
     def add_plain(
         self,
