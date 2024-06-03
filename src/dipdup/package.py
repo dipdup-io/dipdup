@@ -13,7 +13,7 @@ from starknet_py.cairo.data_types import CairoType  # type: ignore
 from starknet_py.serialization import PayloadSerializer  # type: ignore
 
 from dipdup import env
-from dipdup.exceptions import ProjectImportError
+from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
 from dipdup.utils import import_from
@@ -139,17 +139,23 @@ class DipDupPackage:
             Path(PACKAGE_MARKER): None,
         }
 
+    def in_migration(self) -> bool:
+        for path in self.root.iterdir():
+            if path.name.endswith('.old'):
+                return True
+        return False
+
     def tree(self) -> dict[str, tuple[Path, ...]]:
         tree = {}
         for path, exp in self.skel.items():
             tree[path.name] = tuple(path.glob(exp)) if exp else ()
         return tree
 
-    def create(self) -> None:
+    def initialize(self) -> None:
         """Create Python package skeleton if not exists"""
-        _logger.debug('Updating `%s` package structure', self.name)
         self._pre_init()
 
+        _logger.debug('Updating `%s` package structure', self.name)
         for path, glob in self.skel.items():
             if glob:
                 touch(path / KEEP_MARKER)
@@ -161,9 +167,9 @@ class DipDupPackage:
 
     def _pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):
-            raise ProjectImportError(f'`{self.name}` is not a valid Python package name')
+            raise ProjectPackageError(f'`{self.name}` is not a valid Python package name')
         if self.root.exists() and not self.root.is_dir():
-            raise ProjectImportError(f'`{self.root}` exists and not a directory')
+            raise ProjectPackageError(f'`{self.root}` exists and not a directory')
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
@@ -172,7 +178,7 @@ class DipDupPackage:
 
         symlink_path = self.root.joinpath(self.name)
         if symlink_path.exists() and not symlink_path.is_symlink():
-            raise ProjectImportError(f'`{symlink_path}` exists and not a symlink')
+            raise ProjectPackageError(f'`{symlink_path}` exists and not a symlink')
         if not symlink_path.exists():
             symlink_path.symlink_to('.', True)
 
@@ -188,7 +194,7 @@ class DipDupPackage:
             path = f'{self.name}.types.{typename}.{module}'
             type_ = import_from(path, name)
             if not isinstance(type_, type):
-                raise ProjectImportError(f'`{path}.{name}` is not a valid type')
+                raise ProjectPackageError(f'`{path}.{name}` is not a valid type')
             self._types[key] = type_
         return type_
 
@@ -198,7 +204,7 @@ class DipDupPackage:
             path = f'{self.name}.{kind}.{module}'
             callback = import_from(path, name)
             if not callable(callback):
-                raise ProjectImportError(f'`{path}.{name}` is not a valid callback')
+                raise ProjectPackageError(f'`{path}.{name}` is not a valid callback')
             self._callbacks[key] = callback
         return cast(Callable[..., Awaitable[None]], callback)
 

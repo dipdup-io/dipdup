@@ -2,6 +2,7 @@ import logging
 from abc import abstractmethod
 from collections import deque
 from pathlib import Path
+from shutil import rmtree
 
 from dipdup import env
 from dipdup.exceptions import MigrationError
@@ -23,13 +24,27 @@ class ProjectMigration:
         self._config_paths = config_paths
         self._dry_run = dry_run
 
+    # TODO: Move to utils
     def _safe_write(self, path: Path, text: str) -> None:
         if self._dry_run:
-            _logger.info('Would write to %s:', path)
-            _logger.debug(print(text))
+            _logger.info('Would write to %s', path)
         else:
-            _logger.info('Writing to %s:', path)
+            _logger.info('Writing to %s', path)
             path.write_text(text)
+
+    def _safe_remove(self, path: Path) -> None:
+        if self._dry_run:
+            _logger.info('Would remove %s', path)
+        else:
+            _logger.info('Removing %s', path)
+            rmtree(path)
+
+    def _safe_rename(self, path: Path, new_path: Path) -> None:
+        if self._dry_run:
+            _logger.info('Would rename %s to %s', path, new_path)
+        else:
+            _logger.info('Renaming %s to %s', path, new_path)
+            path.rename(new_path)
 
     def migrate(self) -> None:
         root_config_path = self._config_paths[0]
@@ -44,12 +59,15 @@ class ProjectMigration:
         if 'package' not in root_config or 'spec_version' not in root_config:
             raise MigrationError('Missing config header (package, spec_version fields)')
 
+        package_path = env.get_package_path(root_config['package'])
+        package = DipDupPackage(package_path)
+
+        if package.in_migration():
+            raise MigrationError('Project is already in migration')
+
         spec_version = root_config['spec_version']
         if str(spec_version) not in self.from_spec:
             raise MigrationError(f'Unsupported spec version: {spec_version}')
-
-        package_path = env.get_package_path(root_config['package'])
-        package = DipDupPackage(package_path)
 
         _logger.info('Migrating project `%s`: %s -> %s', package.name, self.from_spec, self.to_spec)
 
@@ -79,5 +97,18 @@ class ProjectMigration:
 
             self._safe_write(path, config.dump())
 
+        self.migrate_code(package)
+
     @abstractmethod
     def migrate_config(self, config: DipDupYAMLConfig) -> DipDupYAMLConfig: ...
+
+    def migrate_code(self, package: DipDupPackage) -> None:
+        if package.in_migration():
+            raise MigrationError('Project is already in migration')
+
+        if package.handlers.exists():
+            self._safe_rename(package.handlers, package.root / 'handlers.old')
+        if package.hooks.exists():
+            self._safe_rename(package.hooks, package.root / 'hooks.old')
+        if package.types.exists():
+            self._safe_remove(package.types)

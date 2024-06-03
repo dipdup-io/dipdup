@@ -217,6 +217,24 @@ class ProjectImportError(Error):
 
 
 @dataclass(repr=False)
+class ProjectPackageError(Error):
+    """Project package is invalid"""
+
+    msg: str
+
+    def _help(self) -> str:
+        return f"""
+            Project package is invalid:
+
+              {self.msg}
+
+            Make sure that package structure is correct and all required files are present.
+
+            See https://dipdup.io/docs/getting-started/package
+        """
+
+
+@dataclass(repr=False)
 class ContractAlreadyExistsError(Error):
     """Attempt to add a contract with alias or address already in use"""
 

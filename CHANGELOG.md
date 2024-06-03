@@ -8,11 +8,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- cli: Added full project migration support for 3.0 spec.
 - starknet.subsquid.events: Added `starknet.subsquid.events` index kind to process Starknet events.
 - starknet.subsquid: Added `starknet.subsquid` datasource to fetch historical data from Subsquid Archives.
 
 ### Fixed
 
+- cli: Fixed errors raised when project package is invalid.
 - config: Fixed setting logging levels according to the config.
 - evm.events: Fixed matching logs when filtering by topic0.
 
