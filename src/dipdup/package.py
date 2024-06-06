@@ -2,6 +2,7 @@ import logging
 from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
+from collections.abc import Generator
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -112,6 +113,14 @@ class DipDupPackage:
         self._types: dict[str, type[BaseModel]] = {}
         self._converted_evm_abis: dict[str, ConvertedEvmAbi] = {}
         self._converted_cairo_abis: dict[str, ConvertedCairoAbi] = {}
+
+    @property
+    def cairo_abi_paths(self) -> Generator[Any, None, None]:
+        return self.abi.glob(f'**/{CAIRO_ABI_JSON}')
+
+    @property
+    def evm_abi_paths(self) -> Generator[Any, None, None]:
+        return self.abi.glob(f'**/{EVM_ABI_JSON}')
 
     @property
     def replay(self) -> Answers | None:
