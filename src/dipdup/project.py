@@ -50,7 +50,12 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_token',
         'demo_tezos_token_transfers',
     ),
-    'other': ('demo_blank',),
+    'starknet': (
+        'demo_starknet_events',
+    ),
+    'other': (
+        'demo_blank',
+    ),
 }
 
 # TODO: demo_jobs
@@ -82,7 +87,7 @@ def get_default_answers() -> Answers:
     return Answers(
         dipdup_version=__version__.split('.')[0],
         template='demo_blank',
-        package='dipdup_indexer',
+        package='dipdup_indexer',   
         version='0.0.1',
         description='A blockchain indexer built with DipDup',
         license='MIT',
@@ -141,18 +146,21 @@ def template_from_terminal() -> str:
         question='What blockchain are you going to index?',
         options=(
             'EVM',
+            'Starknet',
             'Tezos',
             '[none]',
         ),
         comments=(
             'EVM-compatible blockchains',
+            'Starknet',
             'Tezos',
-            'Create project from scratch or learn advanced DipDup features',
+            'Create project from scratch',
         ),
         default=0,
     )
     template_group = (
         TEMPLATES['evm'],
+        TEMPLATES['starknet'],
         TEMPLATES['tezos'],
         TEMPLATES['other'],
     )[group_index]
