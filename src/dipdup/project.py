@@ -50,12 +50,8 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_token',
         'demo_tezos_token_transfers',
     ),
-    'starknet': (
-        'demo_starknet_events',
-    ),
-    'other': (
-        'demo_blank',
-    ),
+    'starknet': ('demo_starknet_events',),
+    'other': ('demo_blank',),
 }
 
 # TODO: demo_jobs
@@ -87,7 +83,7 @@ def get_default_answers() -> Answers:
     return Answers(
         dipdup_version=__version__.split('.')[0],
         template='demo_blank',
-        package='dipdup_indexer',   
+        package='dipdup_indexer',
         version='0.0.1',
         description='A blockchain indexer built with DipDup',
         license='MIT',
