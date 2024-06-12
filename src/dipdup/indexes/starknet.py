@@ -3,13 +3,10 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Generic
 from typing import TypeVar
-from typing import cast
 
 from dipdup.config import StarknetIndexConfigU
-from dipdup.datasources import IndexDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.exceptions import ConfigurationError
-from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
 from dipdup.models.subsquid import SubsquidMessageType
@@ -40,24 +37,6 @@ class StarknetIndex(
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...
-
-    def get_sync_level(self) -> int:
-        """Get level index needs to be synchronized to depending on its subscription status"""
-        sync_levels = set()
-        for sub in self._config.get_subscriptions():
-            for datasource in self._datasources:
-                if not isinstance(datasource, IndexDatasource):
-                    continue
-                sync_levels.add(datasource.get_sync_level(sub))
-
-        if None in sync_levels:
-            sync_levels.remove(None)
-        if not sync_levels:
-            raise FrameworkException('Initialize config before starting `IndexDispatcher`')
-
-        # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
-        # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        return max(cast(set[int], sync_levels))
 
     async def _synchronize(self, sync_level: int) -> None:
         """Fetch event logs via Fetcher and pass to message callback"""

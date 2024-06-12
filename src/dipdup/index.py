@@ -166,12 +166,18 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
-        subs = self._config.get_subscriptions()
-        sync_levels = {d.get_sync_level(s) for s in subs for d in self.datasources}
+        sync_levels = set()
+        for sub in self._config.get_subscriptions():
+            for datasource in self._datasources:
+                if not isinstance(datasource, IndexDatasource):
+                    continue
+                sync_levels.add(datasource.get_sync_level(sub))
+
+        if None in sync_levels:
+            sync_levels.remove(None)
         if not sync_levels:
             raise FrameworkException('Initialize config before starting `IndexDispatcher`')
-        if None in sync_levels:
-            raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
+
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
         return max(cast(set[int], sync_levels))
