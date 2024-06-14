@@ -37,6 +37,7 @@ if TYPE_CHECKING:
 
     from tortoise.backends.base.client import BaseDBAsyncClient
     from tortoise.expressions import Q
+    from tortoise.filters import FilterInfoDict
 
 _logger = logging.getLogger(__name__)
 
@@ -249,7 +250,7 @@ class UpdateQuery(TortoiseUpdateQuery):
         db: BaseDBAsyncClient,
         q_objects: list[Q],
         annotations: dict[str, Any],
-        custom_filters: dict[str, dict[str, Any]],
+        custom_filters: dict[str, FilterInfoDict],
         limit: int | None,
         orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
@@ -288,7 +289,7 @@ class DeleteQuery(TortoiseDeleteQuery):
         db: BaseDBAsyncClient,
         q_objects: list[Q],
         annotations: dict[str, Any],
-        custom_filters: dict[str, dict[str, Any]],
+        custom_filters: dict[str, FilterInfoDict],
         limit: int | None,
         orderings: list[tuple[str, str]],
         filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
