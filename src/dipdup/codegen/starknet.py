@@ -1,11 +1,14 @@
+from functools import cache
 from pathlib import Path
 from typing import Any
 
 import orjson
 from Crypto.Hash import keccak
-from starknet_py.abi.v2 import AbiParser  # type: ignore
+from starknet_py.abi.v2 import Abi  # type: ignore
+from starknet_py.abi.v2 import AbiParser
 from starknet_py.abi.v2 import AbiParsingError
-from starknet_py.cairo.data_types import CairoType  # type: ignore
+from starknet_py.cairo.data_types import BoolType  # type: ignore
+from starknet_py.cairo.data_types import CairoType
 from starknet_py.cairo.data_types import EventType
 from starknet_py.cairo.data_types import FeltType
 from starknet_py.cairo.data_types import UintType
@@ -25,6 +28,7 @@ from dipdup.utils import touch
 _abi_type_map = {
     FeltType: 'integer',
     UintType: 'integer',
+    BoolType: 'boolean',
 }
 
 
@@ -49,10 +53,10 @@ def sn_keccak(x: str) -> str:
     return f'0x{int.from_bytes(keccak_hash, "big") & (1 << 248) - 1:x}'
 
 
-def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
-    abi_by_typename: dict[str, ConvertedCairoAbi] = {}
-
-    for abi_path in package.abi.glob('**/cairo_abi.json'):
+@cache
+def _loaded_abis(package: DipDupPackage) -> dict[str, Abi]:
+    result = {}
+    for abi_path in package.cairo_abi_paths:
         abi = orjson.loads(abi_path.read_bytes())
 
         try:
@@ -60,12 +64,20 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
         except AbiParsingError as e:
             raise e
 
+        parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events.items()}
+        result[abi_path.parent.stem] = parsed_abi
+    return result
+
+
+def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
+    abi_by_typename: dict[str, ConvertedCairoAbi] = {}
+
+    for contract_typename, parsed_abi in _loaded_abis(package).items():
         converted_abi: ConvertedCairoAbi = {
             'events': {},
         }
 
         for name, event_type in parsed_abi.events.items():
-            name = name.split('::')[-1]
             if name in converted_abi['events']:
                 raise NotImplementedError('Multiple events with the same name are not supported')
             converted_abi['events'][name] = ConvertedEventCairoAbi(
@@ -74,7 +86,7 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedCairoAbi]:
                 members=event_type.types,
                 serializer=serializer_for_event(event_type),
             )
-        abi_by_typename[abi_path.parent.stem] = converted_abi
+        abi_by_typename[contract_typename] = converted_abi
 
     return abi_by_typename
 
@@ -87,22 +99,13 @@ def abi_to_jsonschemas(
     # select objects to generate types
     # convert types in to schema
     # write schema
-    for abi_path in package.abi.glob('**/cairo_abi.json'):
-        abi = orjson.loads(abi_path.read_bytes())
-
-        try:
-            parsed_abi = AbiParser(abi).parse()
-        except AbiParsingError as e:
-            raise e
-
-        parsed_abi.events = {k.split('::')[-1]: v for k, v in parsed_abi.events.items()}
-
+    for contract_typename, parsed_abi in _loaded_abis(package).items():
         for event_name in events:
             if event_name not in parsed_abi.events:
                 continue
 
             schema = _jsonschema_from_event(parsed_abi.events[event_name])
-            schema_path = package.schemas / abi_path.parent.stem / 'starknet_events' / f'{event_name}.json'
+            schema_path = package.schemas / contract_typename / 'starknet_events' / f'{event_name}.json'
             touch(schema_path)
             schema_path.write_bytes(json_dumps(schema))
 

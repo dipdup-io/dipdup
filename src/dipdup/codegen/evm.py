@@ -70,7 +70,7 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
 def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
     abi_by_typename: dict[str, ConvertedEvmAbi] = {}
 
-    for abi_path in package.abi.glob('**/abi.json'):
+    for abi_path in package.evm_abi_paths:
         abi = orjson.loads(abi_path.read_bytes())
         converted_abi: ConvertedEvmAbi = {
             'events': {},
@@ -109,7 +109,8 @@ def abi_to_jsonschemas(
     events: set[str],
     methods: set[str],
 ) -> None:
-    for abi_path in package.abi.glob('**/abi.json'):
+    # NOTE: path used only for contract name receiving, indicating design problem
+    for abi_path in package.evm_abi_paths:
         abi = orjson.loads(abi_path.read_bytes())
 
         for abi_item in abi:
