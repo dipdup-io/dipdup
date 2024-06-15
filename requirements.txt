@@ -16,7 +16,7 @@ asyncpg==0.29.0
 attrs==23.2.0
 bitarray==2.9.2
 black==24.4.2
-certifi==2024.2.2
+certifi==2024.6.2
 charset-normalizer==3.3.2
 ckzg==1.0.2
 click==8.1.7
@@ -33,7 +33,7 @@ eth-hash==0.7.0
 eth-keyfile==0.8.1
 eth-keys==0.5.1
 eth-rlp==1.0.1
-eth-typing==4.2.3
+eth-typing==4.3.0
 eth-utils==4.1.1
 frozenlist==1.4.1
 genson==1.3.0
@@ -48,7 +48,7 @@ jsonschema-specifications==2023.12.1
 lark==1.1.9
 lru-dict==1.3.0
 markupsafe==2.1.5
-marshmallow==3.21.2
+marshmallow==3.21.3
 marshmallow-dataclass==8.6.1
 marshmallow-oneofschema==3.0.1
 mpmath==1.3.0
@@ -56,14 +56,14 @@ msgpack==1.0.8
 multidict==6.0.5
 mypy-extensions==1.0.0
 numpy==1.26.4
-orjson==3.10.4
-packaging==24.0
+orjson==3.10.5
+packaging==24.1
 parsimonious==0.10.0
 pathspec==0.12.1
 platformdirs==4.2.2
 poseidon-py==0.1.4
 prometheus-client==0.20.0
-protobuf==5.27.0
+protobuf==5.27.1
 pyarrow==16.1.0
 pycryptodome==3.20.0
 pydantic==2.7.4
@@ -94,7 +94,7 @@ sympy==1.11.1
 tabulate==0.9.0
 toolz==0.12.1; implementation_name == "pypy" or implementation_name == "cpython"
 tortoise-orm==0.21.3
-typing-extensions==4.12.0
+typing-extensions==4.12.2
 typing-inspect==0.9.0
 tzdata==2024.1; platform_system == "Windows"
 tzlocal==5.2
