@@ -50,6 +50,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_token',
         'demo_tezos_token_transfers',
     ),
+    'starknet': ('demo_starknet_events',),
     'other': ('demo_blank',),
 }
 
@@ -141,18 +142,21 @@ def template_from_terminal() -> str:
         question='What blockchain are you going to index?',
         options=(
             'EVM',
+            'Starknet',
             'Tezos',
             '[none]',
         ),
         comments=(
             'EVM-compatible blockchains',
+            'Starknet',
             'Tezos',
-            'Create project from scratch or learn advanced DipDup features',
+            'Create project from scratch',
         ),
         default=0,
     )
     template_group = (
         TEMPLATES['evm'],
+        TEMPLATES['starknet'],
         TEMPLATES['tezos'],
         TEMPLATES['other'],
     )[group_index]

@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- cli: Fixed errors raised when project package is invalid.
+- cli: Fixed errors raised when the project package is invalid.
 - config: Fixed setting logging levels according to the config.
 - evm.events: Fixed matching logs when filtering by topic0.
 
@@ -60,7 +60,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Changed
 
-- api: `/performance` endpoint response format have been changed.
+- api: `/performance` endpoint response format has been changed.
 - config: Index kinds have been renamed and grouped by the network.
 - config: Index configs accept `datasources` list instead of `datasource` field.
 - config: Index template values now can be any JSON-serializable object.
