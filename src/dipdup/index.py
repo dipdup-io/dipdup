@@ -173,10 +173,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
                     continue
                 sync_levels.add(datasource.get_sync_level(sub))
 
-        if None in sync_levels:
-            sync_levels.remove(None)
         if not sync_levels:
             raise FrameworkException('Initialize config before starting `IndexDispatcher`')
+        if None in sync_levels:
+            sync_levels.pop(None)
+        if not sync_levels:
+            raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
 
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
