@@ -13,6 +13,10 @@ FRONTEND_PATH=../interface
 help:           ## Show this help (default)
 	@grep -Fh "##" $(MAKEFILE_LIST) | grep -Fv grep -F | sed -e 's/\\$$//' | sed -e 's/##//'
 
+##
+##-- CI
+##
+
 all:            ## Run an entire CI pipeline
 	make format lint test
 
@@ -24,6 +28,9 @@ lint:           ## Lint with all tools
 
 test:           ## Run tests
 	COVERAGE_CORE=sysmon pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
+
+image:          ## Build Docker image
+	docker buildx build . -t ${PACKAGE}:${TAG}
 
 ##
 
@@ -37,20 +44,11 @@ mypy:           ## Lint with mypy
 	mypy ${SOURCE}
 
 ##
-
-image:          ## Build Docker image
-	docker buildx build . -t ${PACKAGE}:${TAG}
-
+##-- Docs
 ##
 
-demos:          ## Recreate demo projects from templates
-	python scripts/demos.py render ${DEMO}
-	python scripts/demos.py init ${DEMO}
-	make format lint
-
-docs: docs_build
-
-docs_build:     ## Build docs
+docs_build: docs
+docs:           ## Build docs
 	python scripts/docs.py check-links --source docs
 	python scripts/docs.py dump-references
 	python scripts/docs.py dump-demos
@@ -65,8 +63,18 @@ docs_serve:     ## Build docs and start frontend server
 docs_watch:     ## Build docs and watch for changes
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs --watch
 
-fixme:          ## Find FIXME and TODO comments
-	grep -r -e 'FIXME: ' -e 'TODO: ' -e 'type: ignore' -n src/dipdup --color
+##
+
+fixme: todo
+todo:           ## Find FIXME and TODO comments
+	grep -r -e 'FIXME: ' -e 'TODO: ' -n src/dipdup --color
+
+typeignore:     ## Find type:ignore comments
+	grep -r -e 'type: ignore' -n src/dipdup --color
+
+##
+##-- Release
+##
 
 update:         ## Update dependencies and dump requirements.txt
 	pdm update
@@ -80,5 +88,5 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make demos
 	make test
 	make docs_build
-	echo "🎉 Commit changes, merge aux/X.Y.Z branch, tag release on next"
+
 ##
