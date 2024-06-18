@@ -50,16 +50,16 @@ classifiers = [
 
 dependencies = [
     # NOTE: Core dependencies; keep pinned between major versions.
-    "datamodel-code-generator~=0.25.0",
-    "pyarrow~=16.0",
-    "pydantic~=2.2",
-    "sentry-sdk~=2.0",
-    "tortoise-orm==0.21.2",
-    "web3~=6.18",
+    "datamodel-code-generator~=0.25.7",
+    "pyarrow~=16.1",
+    "pydantic~=2.7",
+    "sentry-sdk~=2.5",
+    "tortoise-orm==0.21.3",
+    "web3~=6.19",
     #
     "aiohttp~=3.9",
     "aiolimiter~=1.0",
-    "anyio>=4.1.0",
+    "anyio~=4.1",
     "APScheduler~=3.8",
     "async-lru~=2.0",
     "asyncclick~=8.0",
@@ -73,14 +73,14 @@ dependencies = [
     "python-dotenv~=1.0",
     "ruamel.yaml~=0.17",
     "sqlparse~=0.4",
+    "starknet-py~=0.22",
     "strict-rfc3339~=0.7",
     "survey~=5.3",
     "tabulate~=0.9",
-    "starknet-py>=0.22.0",
 ]
 
 [tool.pdm.resolution.overrides]
-# NOTE: Update blocked by web3; safe to override.
+# NOTE: Update blocked by web3; safe to override (see https://github.com/ethereum/web3.py/pull/3144)
 lru-dict = "1.3.0"
 
 [project.urls]
@@ -90,8 +90,6 @@ Repository = "https://github.com/dipdup-io/dipdup"
 
 [project.scripts]
 dipdup = "dipdup.cli:cli"
-
-
 
 [tool.pdm.dev-dependencies]
 dev = [
