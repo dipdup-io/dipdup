@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [8.0.0b1] - 2024-06-18
+## [8.0.0b1] - 2024-06-19
 
 ### Added
 
