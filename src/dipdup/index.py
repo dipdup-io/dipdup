@@ -176,7 +176,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         if not sync_levels:
             raise FrameworkException('Initialize config before starting `IndexDispatcher`')
         if None in sync_levels:
-            sync_levels.pop(None)
+            sync_levels.remove(None)
         if not sync_levels:
             raise FrameworkException('Call `set_sync_level` before starting `IndexDispatcher`')
 
