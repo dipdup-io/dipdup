@@ -35,28 +35,18 @@ class StarknetEventsIndex(
         datasources: tuple[StarknetDatasource, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
-        self._event_identifiers_dict: dict[str, dict[str, str]] | None = None
-        self._event_identifiers_list: list[str] | None = None
+        self._event_identifiers: dict[str, dict[str, str]] | None = None
 
     @property
-    def event_identifiers_dict(self) -> dict[str, dict[str, str]]:
-        if self._event_identifiers_dict is None:
-            self._event_identifiers_dict = {}
+    def event_identifiers(self) -> dict[str, dict[str, str]]:
+        if self._event_identifiers is None:
+            self._event_identifiers = {}
             for handler_config in self._config.handlers:
                 typename = handler_config.contract.module_name
                 event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events']
-                self._event_identifiers_dict[typename] = {k: v['event_identifier'] for k, v in event_abi.items()}
+                self._event_identifiers[typename] = {k: v['event_identifier'] for k, v in event_abi.items()}
 
-        return self._event_identifiers_dict
-
-    @property
-    def event_identifiers_list(self) -> list[str]:
-        if self._event_identifiers_list is None:
-            result = set()
-            for _, map_ in self.event_identifiers_dict.items():
-                for _, identifier in map_.items():
-                    result.add(identifier)
-        return list(result)
+        return self._event_identifiers
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -67,7 +57,11 @@ class StarknetEventsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> StarknetSubsquidEventFetcher:
-        event_ids = self.event_identifiers_list
+        event_ids = set()
+        for map_ in self.event_identifiers.values():
+            for identifier in map_.values():
+                event_ids.add(identifier)
+
         return StarknetSubsquidEventFetcher(
             datasources=self.subsquid_datasources,
             first_level=first_level,
@@ -80,7 +74,12 @@ class StarknetEventsIndex(
         handlers: tuple[StarknetEventsHandlerConfig, ...],
         level_data: Iterable[StarknetEventData],
     ) -> deque[Any]:
-        return match_events(self._ctx.package, handlers, level_data, self.event_identifiers_dict)
+        return match_events(
+            package=self._ctx.package,
+            handlers=handlers,
+            events=level_data,
+            event_identifiers=self.event_identifiers,
+        )
 
     async def _call_matched_handler(
         self,
