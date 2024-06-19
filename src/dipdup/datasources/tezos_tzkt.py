@@ -1073,7 +1073,7 @@ class TezosTzktDatasource(
         await event.wait()
 
     async def _request_values_dict(self, *args: Any, **kwargs: Any) -> tuple[dict[str, Any], ...]:
-        # NOTE: basicaly this function create dict from list of tuples request
+        # NOTE: basically this function create dict from list of tuples request
         # NOTE: this is necessary because for TZKT API cursor iteration is more efficient and asking only values is more efficient too """
         try:
             fields = kwargs.get('params', {})['select.values'].split(',')
