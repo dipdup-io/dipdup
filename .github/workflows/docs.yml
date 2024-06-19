@@ -58,6 +58,7 @@ jobs:
         run: |
           gh auth setup-git
           gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
+          rm -r ../interface/content/*
 
       - name: Build docs
         run: pdm run docs_build
