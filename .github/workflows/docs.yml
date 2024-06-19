@@ -58,10 +58,9 @@ jobs:
         run: |
           gh auth setup-git
           gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
-          rm -r ../interface/content/*
 
       - name: Build docs
-        run: pdm run docs_build
+        run: pdm run make docs
 
       # NOTE: Installer is tested in `installer` workflow
       - name: Commit and push frontend
@@ -71,6 +70,6 @@ jobs:
           cd ../interface
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add .
+          git add -A
           git diff-index --quiet HEAD || git commit -m "${{ github.event.head_commit.message }}"
           git push origin $FRONTEND_BRANCH
