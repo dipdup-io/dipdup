@@ -1078,8 +1078,16 @@
       "description": "Config for Sentry integration.\n\n:param dsn: DSN of the Sentry instance\n:param environment: Environment; if not set, guessed from docker/ci/gha/local.\n:param server_name: Server name; defaults to obfuscated hostname.\n:param release: Release version; defaults to DipDup package version.\n:param user_id: User ID; defaults to obfuscated package/environment.\n:param debug: Catch warning messages, increase verbosity.",
       "properties": {
         "dsn": {
-          "title": "Dsn",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dsn"
         },
         "environment": {
           "anyOf": [
@@ -1135,9 +1143,6 @@
           "type": "boolean"
         }
       },
-      "required": [
-        "dsn"
-      ],
       "title": "SentryConfig",
       "type": "object"
     },

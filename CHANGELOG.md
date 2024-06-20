@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - env: Added `DIPDUP_JSON_LOG` environment variable to enable JSON logging.
 
+### Fixed
+
+- config: Allow `sentry.dsn` to be empty string.
+
 ## [8.0.0b1] - 2024-06-19
 
 ### Added

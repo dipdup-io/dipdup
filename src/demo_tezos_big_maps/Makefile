@@ -33,9 +33,9 @@ mypy:           ## Lint with mypy
 ##
 
 image:          ## Build Docker image
-	docker buildx build . -t ${PACKAGE}:${TAG}
+	docker buildx build . -t ${PACKAGE}:${TAG} --load
 
-up:             ## Run Compose stack
+up:             ## Start Compose stack
 	docker-compose -f ${COMPOSE} up -d --build
 	docker-compose -f ${COMPOSE} logs -f
 
