@@ -8,6 +8,9 @@ from collections.abc import Awaitable
 from pathlib import Path
 from typing import Any
 
+import orjson
+from pydantic_core import to_jsonable_python
+
 from dipdup import env
 
 _is_shutting_down = False
@@ -35,7 +38,19 @@ def is_shutting_down() -> bool:
 def set_up_logging() -> None:
     root = logging.getLogger()
     handler = logging.StreamHandler(stream=sys.stdout)
-    formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
+    formatter: logging.Formatter
+
+    if env.JSON_LOG:
+        from pythonjsonlogger import jsonlogger
+
+        formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
+            json_default=orjson.dumps,
+            json_serializer=lambda *a, **kw: orjson.dumps(*a, default=to_jsonable_python).decode(),  # type: ignore[misc]
+            reserved_attrs=(),
+        )
+    else:
+        formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')
+
     handler.setFormatter(formatter)
     root.addHandler(handler)
 

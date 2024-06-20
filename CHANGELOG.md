@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- env: Added `DIPDUP_JSON_LOG` environment variable to enable JSON logging.
+
 ## [8.0.0b1] - 2024-06-19
 
 ### Added

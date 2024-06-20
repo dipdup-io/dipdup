@@ -71,6 +71,7 @@ dependencies = [
     "pyhumps~=3.0",
     "pysignalr~=1.0",
     "python-dotenv~=1.0",
+    "python-json-logger>=2.0.7",
     "ruamel.yaml~=0.17",
     "sqlparse~=0.4",
     "starknet-py~=0.22",
