@@ -75,7 +75,7 @@ class Answers(TypedDict):
     postgres_image: str
     postgres_data_path: str
     hasura_image: str
-    line_length: int
+    line_length: str
     package_manager: str
 
 
@@ -92,7 +92,7 @@ def get_default_answers() -> Answers:
         postgres_image='postgres:15',
         postgres_data_path='/var/lib/postgresql/data',
         hasura_image='hasura/graphql-engine:latest',
-        line_length=120,
+        line_length='120',
         package_manager='pdm',
     )
 
