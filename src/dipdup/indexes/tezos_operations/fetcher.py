@@ -403,7 +403,7 @@ class OperationsUnfilteredFetcherChannel(FetcherChannel[TezosOperationData, Tezo
 class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
     """Fetches operations from multiple REST API endpoints, merges them and yields by level.
 
-    Offet of every endpoint is tracked separately.
+    Offset of every endpoint is tracked separately.
     """
 
     def __init__(

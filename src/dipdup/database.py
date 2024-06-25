@@ -425,7 +425,7 @@ async def preload_cached_models(package: str | None) -> None:
 def guess_decimal_precision(package: str | None) -> int:
     """Guess decimal precision from project models.
 
-    Doesn't work for realy big numbers.
+    Doesn't work for really big numbers.
     """
     prec = 0
     for _, model in iter_models(package):
