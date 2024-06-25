@@ -43,9 +43,10 @@ class StarknetEventsIndex(
             self._event_identifiers = {}
             for handler_config in self._config.handlers:
                 typename = handler_config.contract.module_name
-                event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events']
-                self._event_identifiers[typename] = {k: v['event_identifier'] for k, v in event_abi.items()}
-
+                event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events'][handler_config.name]
+                if typename not in self._event_identifiers:
+                    self._event_identifiers[typename] = {}
+                self._event_identifiers[typename][handler_config.name] = event_abi['event_identifier']
         return self._event_identifiers
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
@@ -57,10 +58,16 @@ class StarknetEventsIndex(
             Metrics.set_sqd_processor_last_block(_level)
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> StarknetSubsquidEventFetcher:
-        event_ids = set()
-        for map_ in self.event_identifiers.values():
-            for identifier in map_.values():
-                event_ids.add(identifier)
+        event_ids: dict[str, set[str]] = {}
+        for handler_config in self._config.handlers:
+            if not handler_config.contract.address:
+                raise ConfigInitializationException
+            typename = handler_config.contract.module_name
+            event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events'][handler_config.name]
+
+            if handler_config.contract.address not in event_ids:
+                event_ids[handler_config.contract.address] = set()
+            event_ids[handler_config.contract.address].add(event_abi['event_identifier'])
 
         return StarknetSubsquidEventFetcher(
             datasources=self.subsquid_datasources,

@@ -28,6 +28,7 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import system_hooks
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
@@ -331,17 +332,23 @@ class IndexDispatcher:
             if contract.name in self._ctx.config.contracts:
                 continue
 
-            contract_config: TezosContractConfig | EvmContractConfig
-            if contract.kind == ContractKind.TEZOS:
+            contract_config: TezosContractConfig | EvmContractConfig | StarknetContractConfig
+            if contract.kind == ContractKind.tezos:
                 contract_config = TezosContractConfig(
                     kind='tezos',
                     address=contract.address,
                     code_hash=contract.code_hash,
                     typename=contract.typename,
                 )
-            elif contract.kind == ContractKind.EVM:
+            elif contract.kind == ContractKind.evm:
                 contract_config = EvmContractConfig(
                     kind='evm',
+                    address=contract.address,
+                    typename=contract.typename,
+                )
+            elif contract.kind == ContractKind.starknet:
+                contract_config = StarknetContractConfig(
+                    kind='starknet',
                     address=contract.address,
                     typename=contract.typename,
                 )

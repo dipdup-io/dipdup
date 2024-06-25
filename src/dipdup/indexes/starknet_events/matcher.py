@@ -29,7 +29,7 @@ def match_events(
     matched_handlers: deque[MatchedEventsT] = deque()
 
     # TODO: Prepare matching parameters before the function call
-    matching_data = (
+    matching_data = tuple(
         (
             handler_config,
             event_identifiers[handler_config.contract.module_name][handler_config.name],
