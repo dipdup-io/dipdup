@@ -1,3 +1,5 @@
+from datetime import UTC
+from datetime import datetime
 from decimal import Decimal
 
 from demo_evm_uniswap import models as models
@@ -154,7 +156,7 @@ async def swap(
         sender=event.payload.sender,
         recipient=event.payload.recipient,
         origin=event.payload.sender,  # FIXME: transaction origin
-        timestamp=event.data.timestamp,
+        timestamp=datetime.fromtimestamp(event.data.timestamp, UTC),
         amount0=amount0,
         amount1=amount1,
         amount_usd=amount_total_usd_tracked,

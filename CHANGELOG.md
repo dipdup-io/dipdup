@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- starknet.subsquid.events: Fixed filtering events by key.
+- models: Fixed setting default value for `Meta.maxsize`.
+
 ## [8.0.0b1] - 2024-06-19
 
 ### Added
