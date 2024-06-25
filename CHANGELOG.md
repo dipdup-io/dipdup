@@ -6,10 +6,15 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- env: Added `DIPDUP_JSON_LOG` environment variable to enable JSON logging.
+
 ### Fixed
 
-- starknet.subsquid.events: Fixed filtering events by key.
+- config: Allow `sentry.dsn` to be empty string.
 - models: Fixed setting default value for `Meta.maxsize`.
+- starknet.subsquid.events: Fixed filtering events by key.
 
 ## [8.0.0b1] - 2024-06-19
 

@@ -4,10 +4,18 @@ import platform
 import sys
 import tomllib
 from contextlib import suppress
-from os import environ as env
+from os import getenv
 from pathlib import Path
 
 from dipdup.exceptions import FrameworkException
+
+
+def dump() -> dict[str, str]:
+    result: dict[str, str] = {}
+    for key in globals().keys():
+        if key.isupper():
+            result[key] = getenv(f'DIPDUP_{key}') or ''
+    return result
 
 
 def get_pyproject_name() -> str | None:
@@ -56,20 +64,16 @@ def get_package_path(package: str) -> Path:
     return Path.cwd() / package
 
 
-def get(key: str, default: str | None = None) -> str | None:
-    return env.get(key, default)
-
-
 def get_bool(key: str) -> bool:
-    return (get(key) or '').lower() in ('1', 'y', 'yes', 't', 'true', 'on')
+    return (getenv(key) or '').lower() in ('1', 'y', 'yes', 't', 'true', 'on')
 
 
 def get_int(key: str, default: int) -> int:
-    return int(get(key) or default)
+    return int(getenv(key) or default)
 
 
 def get_path(key: str) -> Path | None:
-    value = get(key)
+    value = getenv(key)
     if value is None:
         return None
     return Path(value)
@@ -81,47 +85,18 @@ def set_test() -> None:
     REPLAY_PATH = Path(__file__).parent.parent.parent / 'tests' / 'replays'
 
 
-CI: bool
-DEBUG: bool
-DOCKER: bool
-NEXT: bool
-NO_SYMLINK: bool
-NO_VERSION_CHECK: bool
-PACKAGE_PATH: Path | None
-REPLAY_PATH: Path | None
-TEST: bool
+CI: bool = get_bool('DIPDUP_CI')
+DEBUG: bool = get_bool('DIPDUP_DEBUG')
+DOCKER: bool = get_bool('DIPDUP_DOCKER')
+JSON_LOG: bool = get_bool('DIPDUP_JSON_LOG')
+NEXT: bool = get_bool('DIPDUP_NEXT')
+NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
+NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
+PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
+REPLAY_PATH: Path | None = get_path('DIPDUP_REPLAY_PATH')
+TEST: bool = get_bool('DIPDUP_TEST')
 
-
-def dump() -> dict[str, str]:
-    return {
-        'DIPDUP_CI': get('DIPDUP_CI') or '',
-        'DIPDUP_DEBUG': get('DIPDUP_DEBUG') or '',
-        'DIPDUP_DOCKER': get('DIPDUP_DOCKER') or '',
-        'DIPDUP_NEXT': get('DIPDUP_NEXT') or '',
-        'DIPDUP_NO_SYMLINK': get('DIPDUP_NO_SYMLINK') or '',
-        'DIPDUP_NO_VERSION_CHECK': get('DIPDUP_NO_VERSION_CHECK') or '',
-        'DIPDUP_PACKAGE_PATH': get('DIPDUP_PACKAGE_PATH') or '',
-        'DIPDUP_REPLAY_PATH': get('DIPDUP_REPLAY_PATH') or '',
-        'DIPDUP_TEST': get('DIPDUP_TEST') or '',
-    }
-
-
-def read() -> None:
-    global CI, DEBUG, DOCKER, NEXT, NO_SYMLINK, NO_VERSION_CHECK, PACKAGE_PATH, REPLAY_PATH, TEST
-    CI = get_bool('DIPDUP_CI')
-    DEBUG = get_bool('DIPDUP_DEBUG')
-    DOCKER = get_bool('DIPDUP_DOCKER')
-    NEXT = get_bool('DIPDUP_NEXT')
-    NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
-    NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
-    PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
-    REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
-    TEST = get_bool('DIPDUP_TEST')
-
-    if get('CI') == 'true':
-        CI = True
-    if platform.system() == 'Linux' and Path('/.dockerenv').exists():
-        DOCKER = True
-
-
-read()
+if getenv('CI') == 'true':
+    CI = True
+if platform.system() == 'Linux' and Path('/.dockerenv').exists():
+    DOCKER = True

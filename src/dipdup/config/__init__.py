@@ -510,7 +510,7 @@ class SentryConfig:
     :param debug: Catch warning messages, increase verbosity.
     """
 
-    dsn: str
+    dsn: str | None = None
     environment: str | None = None
     server_name: str | None = None
     release: str | None = None

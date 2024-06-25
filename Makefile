@@ -30,7 +30,7 @@ test:           ## Run tests
 	COVERAGE_CORE=sysmon pytest --cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v tests
 
 image:          ## Build Docker image
-	docker buildx build . -t ${PACKAGE}:${TAG}
+	docker buildx build . -t ${PACKAGE}:${TAG} --load
 
 ##
 

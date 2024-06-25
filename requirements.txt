@@ -72,6 +72,7 @@ pyhumps==3.8.0
 pypika-tortoise==0.1.6
 pysignalr==1.0.0
 python-dotenv==1.0.1
+python-json-logger==2.0.7
 pytz==2024.1
 pyunormalize==15.1.0
 pywin32==306; platform_system == "Windows" or sys_platform == "win32" or os_name == "nt"
