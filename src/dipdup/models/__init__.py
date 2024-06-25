@@ -529,7 +529,7 @@ class CachedModel(Model):
     _cache: LRU[int | str, CachedModel]
 
     def __init_subclass__(cls) -> None:
-        cls._maxsize = getattr(cls.Meta, 'maxsize', 0)
+        cls._maxsize = getattr(cls.Meta, 'maxsize', None) or 10_000
         cls._hits = 0
         cls._misses = 0
         cls._cache = LRU(cls._maxsize)
@@ -652,8 +652,9 @@ class Index(TortoiseModel):
 class ContractKind(Enum):
     """Mapping for contract kind in"""
 
-    TEZOS = 'tezos'
-    EVM = 'evm'
+    tezos = 'tezos'
+    evm = 'evm'
+    starknet = 'starknet'
 
 
 class Contract(TortoiseModel):

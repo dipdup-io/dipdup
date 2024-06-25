@@ -84,6 +84,11 @@ update:         ## Update dependencies and dump requirements.txt
 	pdm export --without-hashes -f requirements --prod -o requirements.txt
 	pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
 
+demos:          ## Recreate demo projects from templates
+	python scripts/demos.py render ${DEMO}
+	python scripts/demos.py init ${DEMO}
+	make format lint
+
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format
 	make lint

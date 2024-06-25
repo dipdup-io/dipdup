@@ -62,7 +62,7 @@ marshmallow-oneofschema==3.0.1
 mpmath==1.3.0
 msgpack==1.0.8
 multidict==6.0.5
-mypy==1.10.0
+mypy==1.10.1
 mypy-extensions==1.0.0
 numpy==1.26.4
 orjson==3.10.5

@@ -80,8 +80,8 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
         for abi_item in abi:
             if abi_item['type'] == 'function':
                 name = abi_item['name']
-                if name in converted_abi['methods']:
-                    raise NotImplementedError('Multiple methods with the same name are not supported')
+                # if name in converted_abi['methods']:
+                #     raise NotImplementedError('Multiple methods with the same name are not supported')
                 converted_abi['methods'][name] = ConvertedMethodAbi(
                     name=name,
                     sighash=sighash_from_abi(abi_item),
@@ -90,8 +90,8 @@ def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
                 )
             elif abi_item['type'] == 'event':
                 name = abi_item['name']
-                if name in converted_abi['events']:
-                    raise NotImplementedError('Multiple events with the same name are not supported')
+                # if name in converted_abi['events']:
+                #     raise NotImplementedError('Multiple events with the same name are not supported')
                 inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
                 converted_abi['events'][name] = ConvertedEventAbi(
                     name=name,

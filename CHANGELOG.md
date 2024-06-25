@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Fixed
 
 - config: Allow `sentry.dsn` to be empty string.
+- models: Fixed setting default value for `Meta.maxsize`.
+- starknet.subsquid.events: Fixed filtering events by key.
 
 ## [8.0.0b1] - 2024-06-19
 

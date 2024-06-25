@@ -3,7 +3,6 @@ from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
-from contextlib import suppress
 from pathlib import Path
 from typing import Any
 from typing import TypedDict
@@ -124,9 +123,8 @@ class DipDupPackage:
 
     @property
     def replay(self) -> Answers | None:
-        if not self._replay:
-            with suppress(Exception):
-                self._replay = answers_from_replay(self.root / 'configs' / 'replay.yaml')
+        if not self._replay and (self.root / 'configs' / 'replay.yaml').exists():
+            self._replay = answers_from_replay(self.root / 'configs' / 'replay.yaml')
         return self._replay
 
     @property

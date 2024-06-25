@@ -20,7 +20,7 @@ async def create_token(ctx: HandlerContext, address: str, pool_id: str) -> None:
         await models.Token.cached_get(address)
         return None
 
-    web3 = ctx.get_evm_node_datasource('subsquid').web3
+    web3 = ctx.get_evm_node_datasource('evm_node').web3
     erc20_iface = ERC20Token.from_address(web3, address)
     token = models.Token(
         id=address,
