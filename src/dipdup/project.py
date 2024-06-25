@@ -75,7 +75,7 @@ class Answers(TypedDict):
     postgres_image: str
     postgres_data_path: str
     hasura_image: str
-    line_length: str
+    line_length: ToStr
     package_manager: str
 
 
