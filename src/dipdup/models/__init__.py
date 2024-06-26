@@ -27,7 +27,6 @@ from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
-from dipdup import env
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps_plain
@@ -599,7 +598,7 @@ class CachedModel(Model):
 
     class Meta:
         abstract = True
-        maxsize: int | None = env.CACHED_MODELS_NUM
+        maxsize: int | None = None
 
 
 ModelT = TypeVar('ModelT', bound=Model)

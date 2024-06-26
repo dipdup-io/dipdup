@@ -95,7 +95,6 @@ NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
 PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
 REPLAY_PATH: Path | None = get_path('DIPDUP_REPLAY_PATH')
 TEST: bool = get_bool('DIPDUP_TEST')
-CACHED_MODELS_NUM: int = get_int('DIPDUP_CACHED_MODELS_NUM', 10_000)
 
 if getenv('CI') == 'true':
     CI = True
