@@ -6,7 +6,6 @@ class TzipMetadataNetwork(Enum):
 
     :param mainnet: mainnet
     :param ghostnet: ghostnet
-    :param mumbainet: mumbainet
     :param nairobinet: nairobinet
     :param oxfordnet: oxfordnet
     :param parisnet: parisnet
@@ -14,7 +13,6 @@ class TzipMetadataNetwork(Enum):
 
     mainnet = 'mainnet'
     ghostnet = 'ghostnet'
-    mumbainet = 'mumbainet'
     nairobinet = 'nairobinet'
     oxfordnet = 'oxfordnet'
     parisnet = 'parisnet'

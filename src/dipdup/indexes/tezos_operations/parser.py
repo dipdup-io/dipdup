@@ -36,7 +36,7 @@ def extract_root_outer_type(storage_type: type[BaseModel]) -> type[BaseModel]:
 def is_array_type(storage_type: type[Any]) -> bool:
     """TzKT can return bigmaps as objects or as arrays of key-value objects. Guess it from storage type."""
     # NOTE: list[...]
-    if get_origin(storage_type) == list:
+    if get_origin(storage_type) == list:  # noqa: E721
         return True
 
     # NOTE: Pydantic model with root field subclassing List
@@ -51,7 +51,7 @@ def is_array_type(storage_type: type[Any]) -> bool:
 def get_list_elt_type(list_type: type[Any]) -> type[Any]:
     """Extract list item type from list type"""
     # NOTE: regular list
-    if get_origin(list_type) == list:
+    if get_origin(list_type) == list:  # noqa: E721
         return get_args(list_type)[0]  # type: ignore[no-any-return]
 
     # NOTE: Pydantic model with root field subclassing List
@@ -62,7 +62,7 @@ def get_list_elt_type(list_type: type[Any]) -> type[Any]:
 def get_dict_value_type(dict_type: type[Any], key: str | None = None) -> type[Any]:
     """Extract dict value types from field type"""
     # NOTE: Regular dict
-    if get_origin(dict_type) == dict:
+    if get_origin(dict_type) == dict:  # noqa: E721
         return get_args(dict_type)[1]  # type: ignore[no-any-return]
 
     # NOTE: Pydantic model with root field subclassing Dict

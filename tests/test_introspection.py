@@ -15,9 +15,9 @@ NoneType = type(None)
 
 
 def test_list_simple_args() -> None:
-    assert get_list_elt_type(list[str]) == str
-    assert get_list_elt_type(list[int]) == int
-    assert get_list_elt_type(list[bool]) == bool
+    assert get_list_elt_type(list[str]) == str  # noqa: E721
+    assert get_list_elt_type(list[int]) == int  # noqa: E721
+    assert get_list_elt_type(list[bool]) == bool  # noqa: E721
     assert get_list_elt_type(list[str | None]) == str | None
     assert get_list_elt_type(list[str | int]) == str | int
     assert get_list_elt_type(list[tuple[str]]) == tuple[str]
@@ -56,9 +56,9 @@ def test_pydantic_list_arg() -> None:
 
 
 def test_dict_simple_args() -> None:
-    assert get_dict_value_type(dict[str, str]) == str
-    assert get_dict_value_type(dict[str, int]) == int
-    assert get_dict_value_type(dict[str, bool]) == bool
+    assert get_dict_value_type(dict[str, str]) == str  # noqa: E721
+    assert get_dict_value_type(dict[str, int]) == int  # noqa: E721
+    assert get_dict_value_type(dict[str, bool]) == bool  # noqa: E721
     assert get_dict_value_type(dict[str, str | None]) == str | None
     assert get_dict_value_type(dict[str, str | int]) == str | int
     assert get_dict_value_type(dict[str, tuple[str]]) == tuple[str]
@@ -103,7 +103,7 @@ def test_pydantic_object_key() -> None:
         optional_str: str | None
         union_arg: str | int
 
-    assert get_dict_value_type(Storage, 'plain_str') == str
+    assert get_dict_value_type(Storage, 'plain_str') == str  # noqa: E721
     assert get_dict_value_type(Storage, 'list_str') == list[str]
     assert get_dict_value_type(Storage, 'dict_of_lists') == dict[str, list[str]]
     assert get_dict_value_type(Storage, 'optional_str') == str | None
