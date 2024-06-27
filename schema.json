@@ -2365,11 +2365,10 @@
       "type": "object"
     },
     "TzipMetadataNetwork": {
-      "description": "Tezos network enum for TZIP-16 metadata.\n\n:param mainnet: mainnet\n:param ghostnet: ghostnet\n:param mumbainet: mumbainet\n:param nairobinet: nairobinet\n:param oxfordnet: oxfordnet\n:param parisnet: parisnet",
+      "description": "Tezos network enum for TZIP-16 metadata.\n\n:param mainnet: mainnet\n:param ghostnet: ghostnet\n:param nairobinet: nairobinet\n:param oxfordnet: oxfordnet\n:param parisnet: parisnet",
       "enum": [
         "mainnet",
         "ghostnet",
-        "mumbainet",
         "nairobinet",
         "oxfordnet",
         "parisnet"

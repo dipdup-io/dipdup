@@ -46,7 +46,7 @@ def set_up_logging() -> None:
         formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
             json_default=orjson.dumps,
             json_serializer=lambda *a, **kw: orjson.dumps(*a, default=to_jsonable_python).decode(),  # type: ignore[misc]
-            reserved_attrs=set(jsonlogger.RESERVED_ATTRS) - {'message', 'name', 'levelname', 'created'} | {'taskName'}
+            reserved_attrs=set(jsonlogger.RESERVED_ATTRS) - {'message', 'name', 'levelname', 'created'} | {'taskName'},
         )
     else:
         formatter = logging.Formatter('%(levelname)-8s %(name)-20s %(message)s')

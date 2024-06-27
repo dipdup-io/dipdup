@@ -95,6 +95,6 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make update
 	make demos
 	make test
-	make docs_build
+	make docs
 
 ##

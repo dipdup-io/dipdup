@@ -48,6 +48,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_nft_marketplace',
         'demo_tezos_raw',
         'demo_tezos_token',
+        'demo_tezos_token_balances',
         'demo_tezos_token_transfers',
     ),
     'starknet': ('demo_starknet_events',),

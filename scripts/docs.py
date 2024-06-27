@@ -696,12 +696,14 @@ def dump_demos() -> None:
     for replay_path in replays:
         replay = answers_from_replay(replay_path)
         package, description = replay['package'], replay['description']
-        if package in TEMPLATES['other']:
-            network = ''
-        elif package in TEMPLATES['evm']:
+        if package in TEMPLATES['evm']:
             network = 'EVM'
         elif package in TEMPLATES['tezos']:
             network = 'Tezos'
+        elif package in TEMPLATES['starknet']:
+            network = 'Starknet'
+        else:
+            network = ''
         demos.append((package, network, description))
 
     # NOTE: Sort by blockchain first, then by package name

@@ -763,6 +763,7 @@ async def self(ctx: click.Context) -> None:
 @click.option('--version', '-v', default=None, help='Install DipDup from specific version.')
 @click.option('--ref', '-r', default=None, help='Install DipDup from specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from local path.')
+@click.option('--pre', is_flag=True, help='Include pre-release versions.')
 @_cli_wrapper
 async def self_install(
     ctx: click.Context,
@@ -771,6 +772,7 @@ async def self_install(
     version: str | None,
     ref: str | None,
     path: str | None,
+    pre: bool,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
@@ -783,6 +785,7 @@ async def self_install(
         version=version,
         ref=ref,
         path=path,
+        pre=pre,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )
@@ -806,11 +809,13 @@ async def self_uninstall(
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@click.option('--pre', is_flag=True, help='Include pre-release versions.')
 @_cli_wrapper
 async def self_update(
     ctx: click.Context,
     quiet: bool,
     force: bool,
+    pre: bool,
 ) -> None:
     """Update DipDup for the current user."""
     import dipdup.install
@@ -823,6 +828,7 @@ async def self_update(
         version=None,
         ref=None,
         path=None,
+        pre=pre,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )
