@@ -529,7 +529,7 @@ class CachedModel(Model):
     _cache: LRU[int | str, CachedModel]
 
     def __init_subclass__(cls) -> None:
-        cls._maxsize = getattr(cls.Meta, 'maxsize', None) or 10_000
+        cls._maxsize = getattr(cls.Meta, 'maxsize', None) or 2**14
         cls._hits = 0
         cls._misses = 0
         cls._cache = LRU(cls._maxsize)

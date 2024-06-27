@@ -4,11 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [8.0.0b2] - 2024-06-26
+## [8.0.0b2] - 2024-06-27
 
 ### Added
 
 - env: Added `DIPDUP_JSON_LOG` environment variable to enable JSON logging.
+- cli: Added `--pre` flag to `self` group commands to install pre-release versions.
 
 ### Fixed
 
