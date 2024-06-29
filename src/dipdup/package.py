@@ -4,12 +4,12 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypedDict
 from typing import cast
 
 from pydantic import BaseModel
-from starknet_py.cairo.data_types import CairoType  # type: ignore
 
 from dipdup import env
 from dipdup.exceptions import ProjectPackageError
@@ -19,6 +19,11 @@ from dipdup.utils import import_from
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
+
+if TYPE_CHECKING:
+    from starknet_py.cairo.data_types import CairoType
+    from starknet_py.serialization import PayloadSerializer
+
 
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
@@ -74,8 +79,8 @@ class ConvertedEvmAbi(TypedDict):
 class ConvertedEventCairoAbi(TypedDict):
     name: str
     event_identifier: str
-    members: dict[str, CairoType]
-    serializer: 'PayloadSerializer'  # type: ignore # noqa: F821
+    members: dict[str, 'CairoType']
+    serializer: 'PayloadSerializer'
 
 
 class ConvertedCairoAbi(TypedDict):
