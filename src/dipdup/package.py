@@ -10,7 +10,6 @@ from typing import cast
 
 from pydantic import BaseModel
 from starknet_py.cairo.data_types import CairoType  # type: ignore
-from starknet_py.serialization import PayloadSerializer  # type: ignore
 
 from dipdup import env
 from dipdup.exceptions import ProjectPackageError
@@ -76,7 +75,7 @@ class ConvertedEventCairoAbi(TypedDict):
     name: str
     event_identifier: str
     members: dict[str, CairoType]
-    serializer: PayloadSerializer
+    serializer: 'PayloadSerializer'  # type: ignore # noqa: F821
 
 
 class ConvertedCairoAbi(TypedDict):
