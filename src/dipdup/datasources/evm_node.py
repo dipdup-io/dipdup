@@ -7,16 +7,13 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 from uuid import uuid4
 
 import pysignalr
 import pysignalr.exceptions
 from pysignalr.messages import CompletionMessage
-from web3 import AsyncWeb3
-from web3.middleware.async_cache import async_construct_simple_cache_middleware
-from web3.providers.async_base import AsyncJSONBaseProvider
-from web3.utils.caching import SimpleCache
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
@@ -42,6 +39,10 @@ from dipdup.pysignalr import WebsocketProtocol
 from dipdup.pysignalr import WebsocketTransport
 from dipdup.utils import Watchdog
 
+if TYPE_CHECKING:
+    from web3 import AsyncWeb3
+
+
 WEB3_CACHE_SIZE = 256
 NODE_LEVEL_TIMEOUT = 0.1
 NODE_LAST_MILE = 128
@@ -51,19 +52,6 @@ HeadCallback = Callable[['EvmNodeDatasource', EvmNodeHeadData], Awaitable[None]]
 LogsCallback = Callable[['EvmNodeDatasource', tuple[EvmEventData, ...]], Awaitable[None]]
 TransactionsCallback = Callable[['EvmNodeDatasource', tuple[EvmTransactionData, ...]], Awaitable[None]]
 SyncingCallback = Callable[['EvmNodeDatasource', EvmNodeSyncingData], Awaitable[None]]
-
-
-class MagicWeb3Provider(AsyncJSONBaseProvider):
-    def __init__(self, datasource: 'EvmNodeDatasource') -> None:
-        self._datasource = datasource
-
-    async def make_request(self, method: str, params: list[Any]) -> Any:
-        return await self._datasource._jsonrpc_request(
-            method,
-            params,
-            raw=True,
-            ws=False,
-        )
 
 
 @dataclass
@@ -109,17 +97,31 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
     @property
-    def web3(self) -> AsyncWeb3:
+    def web3(self) -> 'AsyncWeb3':
         if not self._web3_client:
             raise FrameworkException('web3 client is not initialized; is datasource running?')
         return self._web3_client
 
     async def initialize(self) -> None:
+        from web3 import AsyncWeb3
+        from web3.middleware.async_cache import async_construct_simple_cache_middleware
+        from web3.providers.async_base import AsyncJSONBaseProvider
+        from web3.utils.caching import SimpleCache
+
         web3_cache = SimpleCache(WEB3_CACHE_SIZE)
         caches.add_plain(web3_cache._data, f'{self.name}:web3_cache')
 
+        class MagicWeb3Provider(AsyncJSONBaseProvider):
+            async def make_request(_, method: str, params: list[Any]) -> Any:
+                return await self._jsonrpc_request(
+                    method,
+                    params,
+                    raw=True,
+                    ws=False,
+                )
+
         self._web3_client = AsyncWeb3(
-            provider=MagicWeb3Provider(self),
+            provider=MagicWeb3Provider(),
         )
         self._web3_client.middleware_onion.add(
             await async_construct_simple_cache_middleware(web3_cache),
