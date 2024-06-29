@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
-import eth_utils
 import orjson
 
 from dipdup.codegen import CodeGenerator
@@ -143,6 +142,8 @@ def sighash_from_abi(abi_item: dict[str, Any]) -> str:
 
 
 def topic0_from_abi(event: dict[str, Any]) -> str:
+    import eth_utils
+
     if event.get('type') != 'event':
         raise FrameworkException(f'`{event["name"]}` is not an event')
 

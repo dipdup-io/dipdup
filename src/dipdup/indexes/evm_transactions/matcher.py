@@ -5,7 +5,6 @@ from typing import Any
 
 import eth_abi.decoding
 from eth_abi.abi import decode as decode_abi
-from eth_utils.hexadecimal import decode_hex
 
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.exceptions import FrameworkException
@@ -38,6 +37,8 @@ def prepare_transaction_handler_args(
     handler_config: EvmTransactionsHandlerConfig,
     matched_transaction: EvmTransactionData,
 ) -> EvmTransaction[Any]:
+    from eth_utils.hexadecimal import decode_hex
+
     method, contract = handler_config.method, handler_config.to
     if not method or not contract:
         raise FrameworkException('`method` and `to` are required for typed transaction handler')

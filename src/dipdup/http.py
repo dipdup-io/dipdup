@@ -17,7 +17,6 @@ from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
 
 import aiohttp
-import aiohttp.test_utils
 import orjson
 from aiolimiter import AsyncLimiter
 
@@ -126,6 +125,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     @property
     def _session(self) -> aiohttp.ClientSession:
         """Get an aiohttp session from inside of it's context manager"""
+        import aiohttp.test_utils
+
         if isinstance(self.__session, aiohttp.test_utils.TestClient):
             return self.__session
         if self.__session is None:

@@ -5,8 +5,6 @@ from collections.abc import AsyncIterator
 from io import BytesIO
 from typing import Any
 
-import pyarrow.ipc  # type: ignore[import-untyped]
-
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources import EvmHistoryProvider
 from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
@@ -66,6 +64,8 @@ TRANSACTION_FIELDS: FieldSelection = {
 
 def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
     """Extract data from Subsquid zip+pyarrow archives"""
+    import pyarrow.ipc  # type: ignore[import-untyped]
+
     data = {}
     with zipfile.ZipFile(BytesIO(content), 'r') as arch:
         for item in arch.filelist:
