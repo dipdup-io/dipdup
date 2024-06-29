@@ -4,7 +4,6 @@ from typing import cast
 
 import eth_utils
 import orjson
-from web3 import Web3
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import EvmIndexConfigU
@@ -134,6 +133,8 @@ def abi_to_jsonschemas(
 
 
 def sighash_from_abi(abi_item: dict[str, Any]) -> str:
+    from web3 import Web3
+
     if abi_item.get('type') != 'function':
         raise FrameworkException(f"`{abi_item['name']}` is not a function; can't get sighash")
 

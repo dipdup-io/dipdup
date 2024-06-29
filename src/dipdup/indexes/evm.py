@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 from typing import Generic
 from typing import TypeVar
 
-from web3 import Web3
-
 from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.datasources.evm_node import NODE_LAST_MILE
@@ -33,11 +31,14 @@ _sighashes: dict[str, str] = {}
 
 def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | None = None) -> str:
     """Method in config is either a full signature or a method name. We need to convert it to a sighash first."""
+
     key = method + (to.module_name if to else '')
     if key in _sighashes:
         return _sighashes[key]
 
     if {'(', ')'} <= set(method) and not to:
+        from web3 import Web3
+
         _sighashes[key] = Web3.keccak(text=method).hex()[:10]
     elif to:
         _sighashes[key] = package.get_converted_evm_abi(to.module_name)['methods'][method]['sighash']

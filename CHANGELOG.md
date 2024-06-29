@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Fixed
+
+- cli: Import `web3` on demand to reduce memory footprint.
+
 ## [8.0.0b2] - 2024-06-27
 
 ### Added
