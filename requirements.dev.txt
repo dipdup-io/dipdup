@@ -64,7 +64,6 @@ msgpack==1.0.8
 multidict==6.0.5
 mypy==1.10.1
 mypy-extensions==1.0.0
-numpy==1.26.4
 orjson==3.10.5
 packaging==24.1
 parsimonious==0.10.0
@@ -74,7 +73,6 @@ pluggy==1.5.0
 poseidon-py==0.1.4
 prometheus-client==0.20.0
 protobuf==5.27.1
-pyarrow==16.1.0
 pycryptodome==3.20.0
 pydantic-core==2.18.4
 pydantic[email]==2.7.4; python_version ~= "3.11"

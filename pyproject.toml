@@ -51,9 +51,7 @@ classifiers = [
 dependencies = [
     # NOTE: Core dependencies; keep pinned between major versions.
     "datamodel-code-generator~=0.25.7",
-    "pyarrow~=16.1",
     "pydantic~=2.7",
-    "sentry-sdk~=2.5",
     "tortoise-orm==0.21.3",
     "web3~=6.19",
     #
@@ -73,6 +71,7 @@ dependencies = [
     "python-dotenv~=1.0",
     "python-json-logger>=2.0.7",
     "ruamel.yaml~=0.17",
+    "sentry-sdk~=2.5",
     "sqlparse~=0.4",
     "starknet-py~=0.22",
     "strict-rfc3339~=0.7",
