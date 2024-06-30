@@ -20,7 +20,7 @@ from dipdup.prometheus import Metrics
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
 
-EVM_SUBSQUID_READAHEAD_LIMIT = 10000
+EVM_SUBSQUID_READAHEAD_LIMIT = 2500
 
 IndexConfigT = TypeVar('IndexConfigT', bound=EvmIndexConfigU)
 DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource | EvmNodeDatasource)

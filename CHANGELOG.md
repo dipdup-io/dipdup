@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- env: Added `DIPDUP_LOW_MEMORY` variable to reduce the size of caches and buffers.
+
 ### Fixed
 
-- cli: Import `web3` on demand to reduce memory footprint.
+- cli: Import some dependencies on demand to reduce memory footprint.
 
 ## [8.0.0b2] - 2024-06-27
 

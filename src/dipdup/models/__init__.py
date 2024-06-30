@@ -27,6 +27,7 @@ from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
 from tortoise.queryset import QuerySet as TortoiseQuerySet
 from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
+from dipdup import env
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps_plain
@@ -529,7 +530,10 @@ class CachedModel(Model):
     _cache: LRU[int | str, CachedModel]
 
     def __init_subclass__(cls) -> None:
-        cls._maxsize = getattr(cls.Meta, 'maxsize', None) or 2**14
+        cls._maxsize = getattr(cls.Meta, 'maxsize', None) or 2**16
+        if env.LOW_MEMORY:
+            cls._maxsize = min(cls._maxsize, 2**8)
+
         cls._hits = 0
         cls._misses = 0
         cls._cache = LRU(cls._maxsize)
