@@ -21,8 +21,8 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
 if TYPE_CHECKING:
-    from starknet_py.cairo.data_types import CairoType
-    from starknet_py.serialization import PayloadSerializer
+    from starknet_py.cairo.data_types import CairoType  # type: ignore[import-untyped]
+    from starknet_py.serialization import PayloadSerializer  # type: ignore[import-untyped]
 
 
 KEEP_MARKER = '.keep'
