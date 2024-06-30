@@ -16,8 +16,8 @@ from typing import TypeVar
 from dipdup.performance import queues
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncGenerator  # type: ignore[import-untyped]
+    from collections.abc import AsyncIterator  # type: ignore[import-untyped]
 
 from dipdup.datasources import IndexDatasource
 
