@@ -5,8 +5,6 @@ from typing import Annotated
 from typing import Literal
 from typing import TypeAlias
 
-from eth_utils.address import is_address
-from eth_utils.address import to_normalized_address
 from pydantic import AfterValidator
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
@@ -33,6 +31,9 @@ def _validate_evm_address(v: str) -> str:
     # NOTE: It's a `config export` call with environment variable substitution disabled
     if '${' in v:
         return v
+
+    from eth_utils.address import is_address
+    from eth_utils.address import to_normalized_address
 
     if not is_address(v):
         raise ValueError(f'{v} is not a valid EVM contract address')

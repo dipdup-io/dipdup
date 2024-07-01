@@ -13,6 +13,7 @@ from typing import Generic
 from typing import Protocol
 from typing import TypeVar
 
+from dipdup import env
 from dipdup.performance import queues
 
 if TYPE_CHECKING:
@@ -65,6 +66,8 @@ async def readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
     limit: int,
 ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
+    if env.LOW_MEMORY:
+        limit = min(limit, 1000)
     queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
     queue: deque[tuple[int, tuple[BufferT, ...]]] = deque()
     queues.add_queue(

@@ -5,7 +5,6 @@ from itertools import cycle
 from typing import Any
 
 from eth_abi.abi import decode as decode_abi
-from eth_utils.hexadecimal import decode_hex
 
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.models.evm import EvmEvent
@@ -22,6 +21,8 @@ MatchedEventsT = tuple[EvmEventsHandlerConfig, EvmEvent[Any]]
 
 
 def decode_indexed_topics(indexed_inputs: tuple[str, ...], topics: tuple[str, ...]) -> tuple[Any, ...]:
+    from eth_utils.hexadecimal import decode_hex
+
     indexed_bytes = b''.join(decode_hex(topic) for topic in topics[1:])
     return decode_abi(indexed_inputs, indexed_bytes)
 
@@ -32,6 +33,8 @@ def decode_event_data(
     inputs: tuple[tuple[str, bool], ...],
 ) -> tuple[Any, ...]:
     """Decode event data from hex string"""
+    from eth_utils.hexadecimal import decode_hex
+
     # NOTE: Indexed and non-indexed inputs can go in arbitrary order. We need
     # NOTE: to decode them separately and then merge back.
     indexed_values = iter(decode_indexed_topics(tuple(n for n, i in inputs if i), topics))
