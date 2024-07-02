@@ -24,7 +24,7 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
         self._topics = topics
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmEventData, ...]]]:
-        event_iter = self.random_datasource.iter_event_events(
+        event_iter = self.random_datasource.iter_events(
             self._topics,
             self._first_level,
             self._last_level,

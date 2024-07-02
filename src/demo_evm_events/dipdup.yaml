@@ -31,3 +31,5 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
+    first_level: 10000000
+api: {}
