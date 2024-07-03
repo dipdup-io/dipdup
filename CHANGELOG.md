@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
-- deps: Removed `pyarrow` from dependencies.
+- deps: Removed `pyarrow` from dependencies, bumped `web3`.
 - project: Fixed `make image` target command.
 
 ## [7.5.7] - 2024-05-30
