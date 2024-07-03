@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- cli: Fixed `--pre` installer flag.
 - cli: Import some dependencies on demand to reduce memory footprint.
 - evm.subsquid: Fixed typo in `iter_events` method name.
 
