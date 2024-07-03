@@ -1,14 +1,10 @@
 import asyncio
-import zipfile
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
 from copy import copy
-from io import BytesIO
 from typing import Any
 from typing import cast
-
-import pyarrow.ipc  # type: ignore[import-untyped]
 
 from dipdup.config import HttpConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
@@ -67,17 +63,6 @@ TRANSACTION_FIELDS: FieldSelection = {
         'yParity': True,
     },
 }
-
-
-def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
-    """Extract data from Subsquid zip+pyarrow archives"""
-    data = {}
-    with zipfile.ZipFile(BytesIO(content), 'r') as arch:
-        for item in arch.filelist:
-            with arch.open(item) as f, pyarrow.ipc.open_stream(f) as reader:
-                table: pyarrow.Table = reader.read_all()
-                data[item.filename] = table.to_pylist()
-    return data
 
 
 class _SubsquidWorker(Datasource[Any]):
