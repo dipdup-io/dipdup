@@ -143,6 +143,7 @@ class DipDupEnvironment:
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')
         args = (found_cmd, *tuple(a for a in args if a))
+        print(Colors.YELLOW, f'$ {" ".join(args)}', Colors.ENDC)
         try:
             return subprocess.run(
                 args,
@@ -297,6 +298,7 @@ def cli() -> None:
             version=args.version.strip() if args.version else None,
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
+            pre=args.pre,
             with_pdm=args.with_pdm,
             with_poetry=args.with_poetry,
         )
