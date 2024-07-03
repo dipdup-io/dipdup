@@ -49,7 +49,7 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Install dev dependencies
-        run: cd dipdup_indexer; pdm venv create; pdm install
+        run: cd dipdup_indexer; pdm venv create; pdm remove dipdup; pdm add ..; pdm install
 
       - name: make all
         run: cd dipdup_indexer; $(pdm venv activate); make all

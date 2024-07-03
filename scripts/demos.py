@@ -15,7 +15,6 @@ SRC_PATH = Path(__file__).parent.parent / 'src'
 PROJECTS_PATH = SRC_PATH / 'dipdup' / 'projects'
 DEFAULT_ENV = {
     **dict(os.environ),
-    'STACK': '',
     'POSTGRES_PASSWORD': '',
     'HASURA_SECRET': '',
 }
