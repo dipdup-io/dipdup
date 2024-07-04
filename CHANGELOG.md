@@ -16,6 +16,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Import some dependencies on demand to reduce memory footprint.
 - evm.subsquid: Fixed typo in `iter_events` method name.
 
+## [7.5.8] - 2024-07-04
+
+### Fixed
+
+- deps: Removed `pyarrow` from dependencies, bumped `web3`.
+- project: Fixed `make image` target command.
+
 ## [8.0.0b2] - 2024-06-27
 
 ### Added
