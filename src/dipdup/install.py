@@ -34,19 +34,26 @@ ENV_VARS = (
     'PYTHONPATH',
 )
 
-WELCOME_ASCII = """\0
+# NOTE: '\0' is to avoid truncating newlines by asyncclick
+WELCOME_ASCII = (
+    '\0'
+    + r"""
         ____   _         ____              
        / __ \ (_)____   / __ \ __  __ ____ 
-      / / / // // __ \ / / / // / / // __ \\
+      / / / // // __ \ / / / // / / // __ \
      / /_/ // // /_/ // /_/ // /_/ // /_/ /
     /_____//_// .___//_____/ \__,_// .___/ 
              /_/                  /_/      
 """
-EPILOG = """\0
+)
+EPILOG = (
+    '\0'
+    + """
 Documentation:         https://dipdup.io/docs
 GitHub:                https://github.com/dipdup-io/dipdup
 Discord:               https://discord.gg/aG8XKuwsQd
 """
+)
 
 
 class Colors:
@@ -136,6 +143,7 @@ class DipDupEnvironment:
         if (found_cmd := self._commands.get(cmd)) is None:
             fail(f'Command not found: {cmd}')
         args = (found_cmd, *tuple(a for a in args if a))
+        print(Colors.YELLOW, f'$ {" ".join(args)}', Colors.ENDC)
         try:
             return subprocess.run(
                 args,
@@ -170,6 +178,7 @@ def install(
     version: str | None,
     ref: str | None,
     path: str | None,
+    pre: bool = False,
     with_pdm: bool = False,
     with_poetry: bool = False,
 ) -> None:
@@ -182,7 +191,12 @@ def install(
     if not quiet:
         env.print()
 
-    force_str = '--force' if force else ''
+    pipx_args = []
+    if force:
+        pipx_args.append('--force')
+    if pre:
+        pipx_args.append('--pip-args="--pre"')
+
     pipx_packages = env._pipx_packages
 
     python_inter_pipx = cast(str, which('python3.11'))
@@ -199,18 +213,18 @@ def install(
 
     if 'dipdup' in pipx_packages and not force:
         echo('Updating DipDup')
-        env.run_cmd('pipx', 'upgrade', 'dipdup', force_str)
+        env.run_cmd('pipx', 'upgrade', 'dipdup', *pipx_args)
     elif path:
         echo(f'Installing DipDup from `{path}`')
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, *pipx_args)
     elif ref:
         url = f'git+{GITHUB}@{ref}'
         echo(f'Installing DipDup from `{url}`')
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, *pipx_args)
     else:
         echo('Installing DipDup from PyPI')
         pkg = 'dipdup' if not version else f'dipdup=={version}'
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, force_str)
+        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, *pipx_args)
 
     for pm, with_pm in (
         ('pdm', with_pdm),
@@ -218,10 +232,10 @@ def install(
     ):
         if pm in pipx_packages:
             echo(f'Updating `{pm}`')
-            env.run_cmd('pipx', 'upgrade', pm, force_str)
+            env.run_cmd('pipx', 'upgrade', pm, *pipx_args)
         elif with_pm or force or quiet or ask(f'Install `{pm}`?', False):
             echo(f'Installing `{pm}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pm, force_str)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pm, *pipx_args)
             env._commands[pm] = which(pm)
 
     done(
@@ -267,6 +281,7 @@ def cli() -> None:
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
+    parser.add_argument('--pre', action='store_true', help='Include pre-release versions')
     parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
     parser.add_argument('--with-poetry', action='store_true', help='Install Poetry')
     args = parser.parse_args()
@@ -283,6 +298,7 @@ def cli() -> None:
             version=args.version.strip() if args.version else None,
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
+            pre=args.pre,
             with_pdm=args.with_pdm,
             with_poetry=args.with_poetry,
         )
