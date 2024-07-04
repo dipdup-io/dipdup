@@ -15,18 +15,29 @@ SRC_PATH = Path(__file__).parent.parent / 'src'
 PROJECTS_PATH = SRC_PATH / 'dipdup' / 'projects'
 DEFAULT_ENV = {
     **dict(os.environ),
-    'STACK': '',
     'POSTGRES_PASSWORD': '',
     'HASURA_SECRET': '',
 }
 
 
 def _get_demos() -> dict[str, Path]:
-    return {p.name: p for p in SRC_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
+    return {
+        p.name: p
+        for p in SRC_PATH.iterdir()
+        if p.is_dir() and p.name.startswith(DEMO_PREFIX)
+        # FIXME: nairobinet is dead
+        if p.name != 'demo_etherlink'
+    }
 
 
 def _get_projects() -> dict[str, Path]:
-    return {p.name: p for p in PROJECTS_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
+    return {
+        p.name: p
+        for p in PROJECTS_PATH.iterdir()
+        if p.is_dir() and p.name.startswith(DEMO_PREFIX)
+        # FIXME: nairobinet is dead
+        if p.name != 'demo_etherlink'
+    }
 
 
 def _render_demo(path: Path) -> None:

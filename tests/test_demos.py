@@ -212,8 +212,9 @@ test_params = (
     ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
-    ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
-    ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
+    # FIXME: nairobinet is dead
+    # ('demo_etherlink.yml', 'demo_etherlink', 'run', None),
+    # ('demo_etherlink.yml', 'demo_etherlink', 'init', None),
     # NOTE: EVM indexes with `node_only`
     ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
