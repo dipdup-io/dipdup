@@ -1525,6 +1525,7 @@ This release contains no changes except for the version number.
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0b3...HEAD
 [8.0.0b3]: https://github.com/dipdup-io/dipdup/compare/8.0.0b2...8.0.0b3
+[7.5.8]: https://github.com/dipdup-io/dipdup/compare/7.5.7...7.5.8
 [8.0.0b2]: https://github.com/dipdup-io/dipdup/compare/8.0.0b1...8.0.0b2
 [8.0.0b1]: https://github.com/dipdup-io/dipdup/compare/8.0.0a1...8.0.0b1
 [7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
