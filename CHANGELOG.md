@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [8.0.0b3] - 2024-07-04
 
 ### Added
 
@@ -15,6 +15,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - cli: Fixed `--pre` installer flag.
 - cli: Import some dependencies on demand to reduce memory footprint.
 - evm.subsquid: Fixed typo in `iter_events` method name.
+
+## [7.5.8] - 2024-07-04
+
+### Fixed
+
+- deps: Removed `pyarrow` from dependencies, bumped `web3`.
+- project: Fixed `make image` target command.
 
 ## [8.0.0b2] - 2024-06-27
 
@@ -1516,7 +1523,9 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0b2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0b3...HEAD
+[8.0.0b3]: https://github.com/dipdup-io/dipdup/compare/8.0.0b2...8.0.0b3
+[7.5.8]: https://github.com/dipdup-io/dipdup/compare/7.5.7...7.5.8
 [8.0.0b2]: https://github.com/dipdup-io/dipdup/compare/8.0.0b1...8.0.0b2
 [8.0.0b1]: https://github.com/dipdup-io/dipdup/compare/8.0.0a1...8.0.0b1
 [7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
