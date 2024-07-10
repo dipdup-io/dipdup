@@ -20,6 +20,7 @@ from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources import EvmHistoryProvider
 from dipdup.datasources import EvmRealtimeProvider
 from dipdup.datasources import IndexDatasource
+from dipdup.datasources._web3 import create_web3_client
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.models.evm import EvmEventData
@@ -31,7 +32,6 @@ from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.models.subsquid import SubsquidMessageType
-from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from web3 import AsyncWeb3
 
 
-WEB3_CACHE_SIZE = 256
 NODE_LEVEL_TIMEOUT = 0.1
 NODE_LAST_MILE = 128
 
@@ -103,31 +102,7 @@ class EvmNodeDatasource(IndexDatasource[EvmNodeDatasourceConfig], EvmHistoryProv
         return self._web3_client
 
     async def initialize(self) -> None:
-        from web3 import AsyncWeb3
-        from web3.middleware.async_cache import async_construct_simple_cache_middleware
-        from web3.providers.async_base import AsyncJSONBaseProvider
-        from web3.utils.caching import SimpleCache
-
-        web3_cache = SimpleCache(WEB3_CACHE_SIZE)
-        caches.add_plain(web3_cache._data, f'{self.name}:web3_cache')
-
-        class MagicWeb3Provider(AsyncJSONBaseProvider):
-            async def make_request(_, method: str, params: list[Any]) -> Any:
-                return await self._jsonrpc_request(
-                    method,
-                    params,
-                    raw=True,
-                    ws=False,
-                )
-
-        self._web3_client = AsyncWeb3(
-            provider=MagicWeb3Provider(),
-        )
-        self._web3_client.middleware_onion.add(
-            await async_construct_simple_cache_middleware(web3_cache),
-            'cache',
-        )
-
+        self._web3_client = await create_web3_client(self)
         level = await self.get_head_level()
         self.set_sync_level(None, level)
 
