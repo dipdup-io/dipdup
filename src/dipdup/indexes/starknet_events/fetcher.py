@@ -1,24 +1,19 @@
-from collections.abc import AsyncIterator
 import time
+from collections import defaultdict
+from collections.abc import AsyncIterator
+from typing import Any
 
+from starknet_py.net.client_models import EmittedEvent
+
+from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.starknet_node import StarknetNodeFetcher
 from dipdup.indexes.starknet_subsquid import StarknetSubsquidFetcher
 from dipdup.models.starknet import StarknetEventData
-
-
-from collections import defaultdict
-from typing import Any
-from typing import Generic
-
-from starknet_py.net.client_models import EmittedEvent
-
-from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.models.starknet_subsquid import EventRequest
 
 STARKNET_SUBSQUID_READAHEAD_LIMIT = 10000
-
 
 
 STARKNET_NODE_READAHEAD_LIMIT = 100
@@ -100,13 +95,11 @@ class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
             if finished - started >= node._http_config.ratelimit_sleep:
                 ratelimited = True
 
-            for level, level_events in event_batch.items():
+            for _level, level_events in event_batch.items():
                 if not level_events:
                     continue
 
-                parsed_level_events = tuple(
-                    StarknetEventData.from_node_json(event.__dict__) for event in level_events
-                )
+                parsed_level_events = tuple(StarknetEventData.from_node_json(event.__dict__) for event in level_events)
 
                 yield parsed_level_events
 
@@ -130,5 +123,3 @@ class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
             for log in logs.events:
                 grouped_events[log.block_number].append(log)
         return grouped_events
-
-

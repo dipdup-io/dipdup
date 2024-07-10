@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-from typing import cast
 
-from marshmallow import EXCLUDE
 from starknet_py.net.client_models import BlockStatus
 from starknet_py.net.client_models import EmittedEvent
 from starknet_py.net.client_models import Hash
@@ -14,7 +12,6 @@ from starknet_py.net.client_models import Transaction
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.full_node_client import get_block_identifier
 
-from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
 
@@ -81,12 +78,12 @@ class StarknetNodeDatasource(EvmNodeDatasource):
         return await self._client.get_block(block_number=block_number)
 
     async def get_events(
-            self,
-            address: str | None,
-            keys: list[list[str]] | None,
-            first_level: int,
-            last_level: int,
-        ) -> list[EmittedEvent]:
+        self,
+        address: str | None,
+        keys: list[list[str]] | None,
+        first_level: int,
+        last_level: int,
+    ) -> list[EmittedEvent]:
         return await self._client.get_events(
             address=address,
             keys=keys,

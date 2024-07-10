@@ -1,22 +1,17 @@
 from collections import deque
-from collections.abc import AsyncIterator, Iterable
-import time
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.starknet_events import StarknetEventsHandlerConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
-from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.evm_events.fetcher import EvmNodeEventFetcher
-from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.starknet import StarknetDatasource
 from dipdup.indexes.starknet import StarknetIndex
-from dipdup.indexes.starknet_events.fetcher import StarknetNodeEventFetcher, StarknetSubsquidEventFetcher
+from dipdup.indexes.starknet_events.fetcher import StarknetNodeEventFetcher
+from dipdup.indexes.starknet_events.fetcher import StarknetSubsquidEventFetcher
 from dipdup.indexes.starknet_events.matcher import match_events
-from dipdup.indexes.starknet_node import StarknetNodeFetcher
 from dipdup.models import RollbackMessage
 from dipdup.models.starknet import StarknetEvent
 from dipdup.models.starknet import StarknetEventData
@@ -27,8 +22,6 @@ QueueItem = tuple[StarknetEventData, ...] | RollbackMessage
 
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
-
-
 
 
 class StarknetEventsIndex(
@@ -105,7 +98,6 @@ class StarknetEventsIndex(
             if handler_config.contract.address not in event_ids:
                 event_ids[handler_config.contract.address] = set()
             event_ids[handler_config.contract.address].add(event_abi['event_identifier'])
-
 
         return StarknetNodeEventFetcher(
             datasources=self.node_datasources,

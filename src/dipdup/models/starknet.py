@@ -110,6 +110,7 @@ class StarknetEventData(HasLevel, ABC):
             data=tuple(hex(i) for i in event_json['data']),
         )
 
+
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 
 
