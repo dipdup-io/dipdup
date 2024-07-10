@@ -95,6 +95,20 @@ class StarknetEventData(HasLevel, ABC):
             data=tuple(event_json['data']),
         )
 
+    @classmethod
+    def from_node_json(cls, event_json: dict[str, Any]) -> Self:
+        return cls(
+            level=event_json['block_number'],
+            block_hash=hex(event_json['block_hash']),
+            # FIXME:
+            transaction_index=0,
+            transaction_hash=hex(event_json['transaction_hash']),
+            # FIXME:
+            timestamp=0,
+            from_address=hex(event_json['from_address']),
+            keys=tuple(hex(i) for i in event_json['keys']),
+            data=tuple(hex(i) for i in event_json['data']),
+        )
 
 PayloadT = TypeVar('PayloadT', bound=BaseModel)
 

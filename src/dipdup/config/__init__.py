@@ -1122,6 +1122,7 @@ from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.config.starknet_node import StarknetNodeDatasourceConfig
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
@@ -1149,6 +1150,7 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
     | StarknetSubsquidDatasourceConfig
+    | StarknetNodeDatasourceConfig
 )
 TezosIndexConfigU = (
     TezosBigMapsIndexConfig

@@ -2,10 +2,10 @@ import random
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 
-from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 
 EVM_SUBSQUID_READAHEAD_LIMIT = 2500
 
-IndexConfigT = TypeVar('IndexConfigT', bound=EvmIndexConfigU)
-DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource | EvmNodeDatasource)
+IndexConfigT = TypeVar('IndexConfigT', bound=Any)
+DatasourceT = TypeVar('DatasourceT', bound=Any)
 
 
 _sighashes: dict[str, str] = {}
@@ -53,6 +53,9 @@ class EvmIndex(
     ABC,
     message_type=SubsquidMessageType,  # type: ignore[arg-type]
 ):
+    subsquid_datasources: tuple[Any, ...]
+    node_datasources: tuple[Any, ...]
+
     def __init__(
         self,
         ctx: 'DipDupContext',
