@@ -1,0 +1,5 @@
+spec_version: 3.0
+replay:
+  description: Deploying DipDup to Squid Cloud
+  package: demo_squid_cloud
+  template: demo_squid_cloud
