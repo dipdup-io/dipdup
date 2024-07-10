@@ -1,3 +1,4 @@
+import random
 import time
 from collections import defaultdict
 from collections.abc import AsyncIterator
@@ -7,6 +8,7 @@ from starknet_py.net.client_models import EmittedEvent
 
 from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
+from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.starknet_node import StarknetNodeFetcher
 from dipdup.indexes.starknet_subsquid import StarknetSubsquidFetcher
@@ -116,10 +118,15 @@ class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
         for address, ids in self._event_ids.items():
             logs = await node.get_events(
                 address=address,
-                keys=[[id] for id in ids],  # type: ignore[assignment
+                keys=[[id] for id in ids],
                 first_level=first_level,
                 last_level=last_level,
             )
             for log in logs.events:
                 grouped_events[log.block_number].append(log)
         return grouped_events
+
+    def get_random_node(self) -> StarknetNodeDatasource:
+        if not self._datasources:
+            raise FrameworkException('A node datasource requested, but none attached to this index')
+        return random.choice(self._datasources)
