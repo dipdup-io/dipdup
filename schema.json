@@ -1332,7 +1332,7 @@
     },
     "StarknetNodeDatasourceConfig": {
       "additionalProperties": false,
-      "description": "Subsquid datasource config\n\n:param kind: Always 'starknet.node'\n:param url: Starknet node URL\n:param ws_url: Starknet node WebSocket URL\n:param http: HTTP client configuration\n:param rollback_depth: A number of blocks to store in database for rollback",
+      "description": "Starknet node datasource config\n\n:param kind: Always 'starknet.node'\n:param url: Starknet node URL\n:param ws_url: Starknet node WebSocket URL\n:param http: HTTP client configuration\n:param rollback_depth: A number of blocks to store in database for rollback",
       "properties": {
         "kind": {
           "const": "starknet.node",

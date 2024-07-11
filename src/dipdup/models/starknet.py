@@ -1,4 +1,3 @@
-from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 from typing import Generic
@@ -21,7 +20,7 @@ class StarknetSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class StarknetTransactionData(HasLevel, ABC):
+class StarknetTransactionData(HasLevel):
     level: int
     block_hash: str
     transaction_index: int
@@ -69,7 +68,7 @@ class StarknetTransactionData(HasLevel, ABC):
 
 
 @dataclass(frozen=True)
-class StarknetEventData(HasLevel, ABC):
+class StarknetEventData(HasLevel):
     level: int
     block_hash: str
     transaction_index: int
@@ -100,10 +99,10 @@ class StarknetEventData(HasLevel, ABC):
         return cls(
             level=event_json['block_number'],
             block_hash=hex(event_json['block_hash']),
-            # FIXME:
+            # FIXME: No block header
             transaction_index=0,
             transaction_hash=hex(event_json['transaction_hash']),
-            # FIXME:
+            # FIXME: No block header
             timestamp=0,
             from_address=hex(event_json['from_address']),
             keys=tuple(hex(i) for i in event_json['keys']),

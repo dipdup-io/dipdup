@@ -12,14 +12,8 @@ from dipdup.indexes.starknet_subsquid import StarknetSubsquidFetcher
 from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet_subsquid import EventRequest
 
-STARKNET_SUBSQUID_READAHEAD_LIMIT = 10000
-
-
 STARKNET_NODE_READAHEAD_LIMIT = 100
-MIN_BATCH_SIZE = 10
-MAX_BATCH_SIZE = 10000
-BATCH_SIZE_UP = 1.1
-BATCH_SIZE_DOWN = 0.5
+STARKNET_SUBSQUID_READAHEAD_LIMIT = 10000
 
 
 class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):

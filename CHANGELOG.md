@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Added
+
+- starknet.node: Added Starknet node datasource for last mile indexing.
+
 ## [8.0.0b3] - 2024-07-04
 
 ### Added
@@ -34,14 +40,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - config: Allow `sentry.dsn` to be empty string.
 - models: Fixed setting default value for `Meta.maxsize`.
-- starknet.subsquid.events: Fixed filtering events by key.
+- starknet.events: Fixed filtering events by key.
 
 ## [8.0.0b1] - 2024-06-19
 
 ### Added
 
 - cli: Added full project migration support for 3.0 spec.
-- starknet.subsquid.events: Added `starknet.subsquid.events` index kind to process Starknet events.
+- starknet.events: Added `starknet.events` index kind to process Starknet events.
 - starknet.subsquid: Added `starknet.subsquid` datasource to fetch historical data from Subsquid Archives.
 
 ### Fixed

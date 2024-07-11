@@ -13,7 +13,7 @@ from dipdup.config import WsUrl
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class StarknetNodeDatasourceConfig(IndexDatasourceConfig):
-    """Subsquid datasource config
+    """Starknet node datasource config
 
     :param kind: Always 'starknet.node'
     :param url: Starknet node URL
@@ -26,6 +26,7 @@ class StarknetNodeDatasourceConfig(IndexDatasourceConfig):
     url: Url
     ws_url: WsUrl | None = None
     http: HttpConfig | None = None
+    # FIXME: Is default value correct?
     rollback_depth: int = 32
 
     @property
