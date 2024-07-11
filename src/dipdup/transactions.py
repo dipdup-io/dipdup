@@ -47,8 +47,8 @@ class TransactionManager:
             async with in_transaction() as conn:
                 set_connection(conn)
 
-                if self._transaction:
-                    raise ValueError('Transaction is already started')
+                # if self._transaction:
+                #     raise ValueError('Transaction is already started')
 
                 if level and index and self._depth:
                     if not sync_level or sync_level - level <= self._depth:
