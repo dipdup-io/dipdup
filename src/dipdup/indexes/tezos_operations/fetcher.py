@@ -29,12 +29,13 @@ if TYPE_CHECKING:
     from collections import defaultdict
     from collections import deque
     from collections.abc import AsyncIterator
+    from collections.abc import Iterable
 
 
 _logger = logging.getLogger('dipdup.fetcher')
 
 
-def dedup_operations(operations: tuple[TezosOperationData, ...]) -> tuple[TezosOperationData, ...]:
+def dedup_operations(operations: Iterable[TezosOperationData]) -> tuple[TezosOperationData, ...]:
     """Merge and sort operations fetched from multiple endpoints"""
     return tuple(
         sorted(
@@ -168,6 +169,8 @@ async def get_sr_execute_filters(
 
 class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, str]):
 
+    _offset: int | None
+
     async def fetch(self) -> None:
         if not self._filter:
             self._head = self._last_level
@@ -189,6 +192,8 @@ class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosT
 
 
 class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, int]):
+
+    _offset: int | None
 
     async def fetch(self) -> None:
         if not self._filter:
@@ -215,6 +220,8 @@ class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzkt
 
 
 class MigrationOriginationFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, None]):
+
+    _offset: int | None
 
     async def fetch(self) -> None:
         if self._filter:
@@ -261,6 +268,8 @@ class TransactionBaseFetcherChannel(FetcherChannel[TezosOperationData, TezosTzkt
         # FIXME: First datasource only
         self._datasource = self._datasources[0]
 
+    _offset: int | None
+
     @abstractmethod
     async def _get_transactions(self) -> tuple[TezosOperationData, ...]:
         raise NotImplementedError
@@ -284,6 +293,8 @@ class TransactionBaseFetcherChannel(FetcherChannel[TezosOperationData, TezosTzkt
 
 
 class TransactionAddressFetcherChannel(TransactionBaseFetcherChannel[str]):
+    _offset: int | None
+
     async def _get_transactions(self) -> tuple[TezosOperationData, ...]:
         return await self._datasource.get_transactions(
             field=self._field,
@@ -296,6 +307,8 @@ class TransactionAddressFetcherChannel(TransactionBaseFetcherChannel[str]):
 
 
 class TransactionHashFetcherChannel(TransactionBaseFetcherChannel[int]):
+    _offset: int | None
+
     async def _get_transactions(self) -> tuple[TezosOperationData, ...]:
         return await self._datasource.get_transactions(
             field=self._field,
@@ -308,6 +321,7 @@ class TransactionHashFetcherChannel(TransactionBaseFetcherChannel[int]):
 
 
 class SmartRollupExecuteAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, str]):
+    _offset: int | None
 
     def __init__(
         self,
@@ -347,6 +361,7 @@ class SmartRollupExecuteAddressFetcherChannel(FetcherChannel[TezosOperationData,
 
 
 class OperationsUnfilteredFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, None]):
+    _offset: int | None
 
     def __init__(
         self,
@@ -502,38 +517,11 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
             ),
         )
 
-        async def _merged_iter(
-            merging_channels: tuple[FetcherChannel[TezosOperationData, Any, Any], ...]
-        ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
-            while True:
-                min_channel = sorted(merging_channels, key=lambda x: x.head)[0]
-                await min_channel.fetch()
-
-                # NOTE: It's a different channel now, but with greater head level
-                next_min_channel = sorted(merging_channels, key=lambda x: x.head)[0]
-                next_min_head = next_min_channel.head
-
-                if self._head <= next_min_head:
-                    buffer_keys = sorted(self._buffer.keys())
-                    for key in buffer_keys:
-                        if key < self._head:
-                            continue
-                        if key > next_min_head:
-                            break
-
-                        self._head = key
-                        channel_operations = self._buffer.pop(self._head)
-                        yield dedup_operations(tuple(channel_operations))
-                    self._head += 1
-
-                if all(c.fetched for c in merging_channels):
-                    break
-
-            if self._buffer:
-                raise FrameworkException('Operations left in queue')
-
-        event_iter = _merged_iter(channels)
-        async for level, operations in readahead_by_level(event_iter, limit=TZKT_READAHEAD_LIMIT):
+        operations_iter = self._merged_iter(
+            channels=set(channels),
+            sort_fn=dedup_operations,
+        )
+        async for level, operations in readahead_by_level(operations_iter, limit=TZKT_READAHEAD_LIMIT):
             yield level, operations
 
 
@@ -580,45 +568,32 @@ class OperationsUnfilteredFetcher(TezosTzktFetcher[TezosOperationData]):
             'first_level': self._first_level,
             'last_level': self._last_level,
         }
-        channels: tuple[FetcherChannel[TezosOperationData, Any, Any], ...] = ()
+        channels: list[FetcherChannel[TezosOperationData, Any, Any]] = []
         if self._transactions:
-            channels += (
+            channels.append(
                 OperationsUnfilteredFetcherChannel(
                     type=TezosOperationType.transaction,
                     **channel_kwargs,  # type: ignore[arg-type]
                 ),
             )
         if self._originations:
-            channels += (
+            channels.append(
                 OperationsUnfilteredFetcherChannel(
                     type=TezosOperationType.origination,
                     **channel_kwargs,  # type: ignore[arg-type]
                 ),
             )
         if self._migration_originations:
-            channels += (
+            channels.append(
                 MigrationOriginationFetcherChannel(
                     filter=set(),
                     **channel_kwargs,  # type: ignore[arg-type]
                 ),
             )
 
-        while True:
-            min_channel = sorted(channels, key=lambda x: x.head)[0]
-            await min_channel.fetch()
-
-            # NOTE: It's a different channel now, but with greater head level
-            min_channel = sorted(channels, key=lambda x: x.head)[0]
-            min_head = min_channel.head
-
-            while self._head <= min_head:
-                if self._head in self._buffer:
-                    operations = self._buffer.pop(self._head)
-                    yield self._head, dedup_operations(tuple(operations))
-                self._head += 1
-
-            if all(c.fetched for c in channels):
-                break
-
-        if self._buffer:
-            raise FrameworkException('Operations left in queue')
+        operations_iter = self._merged_iter(
+            channels=set(channels),
+            sort_fn=dedup_operations,
+        )
+        async for level, operations in readahead_by_level(operations_iter, limit=TZKT_READAHEAD_LIMIT):
+            yield level, operations

@@ -14,11 +14,14 @@ from typing import Protocol
 from typing import TypeVar
 
 from dipdup import env
+from dipdup.exceptions import FrameworkException
 from dipdup.performance import queues
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
     from collections.abc import AsyncIterator
+    from collections.abc import Callable
+    from collections.abc import Iterable
 
 from dipdup.datasources import IndexDatasource
 
@@ -124,7 +127,7 @@ class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
         self._datasources = datasources
 
         self._head: int = 0
-        self._offset: int = 0
+        self._offset: int | str | None = None
 
     @property
     def head(self) -> int:
@@ -170,3 +173,35 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.
         """
         ...
+
+    async def _merged_iter(
+        self,
+        channels: set[FetcherChannel[Any, Any, Any]],
+        sort_fn: Callable[[Iterable[BufferT]], tuple[BufferT, ...]],
+    ) -> AsyncIterator[tuple[Any, ...]]:
+        while True:
+            min_channel = sorted(channels, key=lambda x: x.head)[0]
+            await min_channel.fetch()
+
+            # NOTE: It's a different channel now, but with greater head level
+            next_min_channel = sorted(channels, key=lambda x: x.head)[0]
+            next_min_head = next_min_channel.head
+
+            if self._head <= next_min_head:
+                buffer_keys = sorted(self._buffer.keys())
+                for key in buffer_keys:
+                    if key < self._head:
+                        continue
+                    if key > next_min_head:
+                        break
+
+                    self._head = key
+                    level_items = self._buffer.pop(self._head)
+                    yield sort_fn(level_items)
+                self._head += 1
+
+            if all(c.fetched for c in channels):
+                break
+
+        if self._buffer:
+            raise FrameworkException('Items left in queue')

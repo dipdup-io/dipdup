@@ -55,9 +55,6 @@ class _StarknetSubsquidWorker(AbstractSubsquidWorker[Query]):
 
 class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidDatasourceConfig, Query]):
 
-    def __init__(self, config: StarknetSubsquidDatasourceConfig) -> None:
-        super().__init__(config)
-
     async def _get_worker(self, level: int) -> _StarknetSubsquidWorker:
         return _StarknetSubsquidWorker(await self._fetch_worker(level))
 
