@@ -129,6 +129,9 @@ class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
         self._head: int = 0
         self._offset: int | str | None = None
 
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)} offset={self._offset}>'
+
     @property
     def head(self) -> int:
         return self._head
@@ -162,6 +165,9 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)}>'
+
     @property
     def random_datasource(self) -> DatasourceT:
         return random.choice(self._datasources)
@@ -191,14 +197,13 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
                 buffer_keys = sorted(self._buffer.keys())
                 for key in buffer_keys:
                     if key < self._head:
-                        continue
+                        raise FrameworkException('Invalid buffer state')
                     if key > next_min_head:
                         break
 
                     self._head = key
                     level_items = self._buffer.pop(self._head)
                     yield sort_fn(level_items)
-                self._head += 1
 
             if all(c.fetched for c in channels):
                 break

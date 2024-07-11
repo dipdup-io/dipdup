@@ -879,6 +879,13 @@ async def report_ls(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report_show(ctx: click.Context, id: str) -> None:
     """Show report."""
+    if id == 'latest':
+        reports = get_reports()
+        if not reports:
+            echo('No reports')
+            return
+        id = reports[-1].stem
+
     path = REPORTS_PATH / f'{id}.yaml'
     if not path.exists():
         echo('No such report')
