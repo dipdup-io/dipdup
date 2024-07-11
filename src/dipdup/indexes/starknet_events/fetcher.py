@@ -1,9 +1,6 @@
 import random
-from collections import defaultdict
 from collections.abc import AsyncIterator
 from typing import Any
-
-from starknet_py.net.client_models import EmittedEvent  # type: ignore[import-untyped]
 
 from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
@@ -110,25 +107,6 @@ class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
         )
         async for level, batch in readahead_by_level(events_iter, limit=STARKNET_NODE_READAHEAD_LIMIT):
             yield level, batch
-
-    async def get_events_batch(
-        self,
-        first_level: int,
-        last_level: int,
-        node: StarknetNodeDatasource | None = None,
-    ) -> dict[int, list[EmittedEvent]]:
-        grouped_events: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
-        node = node or self.get_random_node()
-        for address, ids in self._event_ids.items():
-            logs = await node.get_events(
-                address=address,
-                keys=[[id] for id in ids],
-                first_level=first_level,
-                last_level=last_level,
-            )
-            for log in logs.events:
-                grouped_events[log.block_number].append(log)
-        return grouped_events
 
     def get_random_node(self) -> StarknetNodeDatasource:
         if not self._datasources:
