@@ -164,7 +164,7 @@ class EvmTransactionData(HasLevel, ABC):
             from_=transaction_json['from'],
             gas=int(transaction_json['gas'], 16),
             gas_price=int(transaction_json['gasPrice'], 16),
-            gas_used=int(transaction_json['gasUsed'], 16),
+            gas_used=int(transaction_json['gasUsed'], 16) if transaction_json['gasUsed'] else None,
             hash=transaction_json['hash'],
             input=transaction_json['input'],
             level=header['number'],
