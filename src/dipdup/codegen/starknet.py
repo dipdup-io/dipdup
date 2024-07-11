@@ -112,7 +112,7 @@ def abi_to_jsonschemas(
 
 class StarknetCodeGenerator(CodeGenerator):
     # NOTE: For now ABIs need to be provided manually
-    async def generate_abi(self) -> None: ...
+    async def generate_abis(self) -> None: ...
 
     async def generate_schemas(self) -> None:
         self._cleanup_schemas()

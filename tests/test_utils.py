@@ -83,7 +83,7 @@ async def test_import_submodules() -> None:
         import_submodules('demo_tezos_token')
 
     submodules = import_submodules('demo_tezos_token.handlers')
-    assert len(submodules) == 3
+    assert len(submodules) == 4
 
 
 async def test_parse_object() -> None:

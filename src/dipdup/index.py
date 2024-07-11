@@ -9,6 +9,7 @@ from typing import TypeVar
 from typing import cast
 
 import dipdup.models as models
+from dipdup.config import HandlerConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
@@ -80,6 +81,17 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level_data: Any,
     ) -> None: ...
 
+    async def _call_batch_handler(
+        self,
+        handlers: tuple[tuple['Index[Any, Any, Any]', HandlerConfig, Any], ...],
+    ) -> None:
+        await self._ctx.fire_handler(
+            'batch',
+            self._config.name,
+            None,
+            handlers=handlers,
+        )
+
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
@@ -104,6 +116,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self,
         level_data: Any,
         sync_level: int,
+        batch: bool = True,
     ) -> None:
         if not level_data:
             return
@@ -130,8 +143,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         started_at = time.time()
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, data in matched_handlers:
-                await self._call_matched_handler(handler_config, data)
+            if batch:
+                index_handlers = tuple((self, handler_config, data) for handler_config, data in matched_handlers)
+                await self._call_batch_handler(index_handlers)
+            else:
+                for handler_config, data in matched_handlers:
+                    await self._call_matched_handler(handler_config, data)
             await self._update_state(level=batch_level)
 
         metrics.objects_indexed += len(level_data)
@@ -203,7 +220,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             defaults={
                 'level': index_level,
                 'config_hash': self._config.hash(),
-                'template': self._config.parent.name if self._config.parent else None,
+                'template': self._config._parent.name if self._config._parent else None,
                 'template_values': self._config._template_values,
             },
         )

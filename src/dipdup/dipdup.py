@@ -22,11 +22,12 @@ from tortoise.exceptions import OperationalError
 
 from dipdup import env
 from dipdup.codegen import CodeGenerator
+from dipdup.codegen import CommonCodeGenerator
 from dipdup.codegen import generate_environments
+from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import system_hooks
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -617,7 +618,8 @@ class DipDup:
 
             package = DipDupPackage(self._config.package_path)
 
-            codegen_classes: tuple[type[CodeGenerator], ...] = (
+            codegen_classes: tuple[type[CodeGenerator], ...] = (  # type: ignore[assignment]
+                CommonCodeGenerator,
                 TezosCodeGenerator,
                 EvmCodeGenerator,
                 StarknetCodeGenerator,
@@ -766,7 +768,7 @@ class DipDup:
         await preload_cached_models(self._config.package)
 
     async def _set_up_hooks(self) -> None:
-        for system_hook_config in system_hooks.values():
+        for system_hook_config in SYSTEM_HOOKS.values():
             self._ctx.register_hook(system_hook_config)
 
         for hook_config in self._config.hooks.values():

@@ -17,6 +17,7 @@ from typing import TypeVar
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.codegen import BatchHandlerConfig
 from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
@@ -329,6 +330,9 @@ class DipDupContext:
 
         for handler_config in index_config.handlers:
             self.register_handler(handler_config)
+            batch_handler = BatchHandlerConfig()
+            batch_handler.parent = index_config
+            self.register_handler(batch_handler)
 
         await index.initialize_state(state)
 
