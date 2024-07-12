@@ -44,6 +44,7 @@
 .. autoclass:: dipdup.config.tezos_head.TezosHeadIndexConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerOriginationPatternConfig
+.. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerSmartRollupCementPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerSmartRollupExecutePatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsIndexConfig

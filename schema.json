@@ -1725,12 +1725,13 @@
       "type": "object"
     },
     "TezosOperationType": {
-      "description": "Type of blockchain operation\n\n:param transaction: transaction\n:param origination: origination\n:param migration: migration\n:param sr_execute: sr_execute",
+      "description": "Type of blockchain operation\n\n:param transaction: transaction\n:param origination: origination\n:param migration: migration\n:param sr_execute: sr_execute\n:param sr_cement: sr_cement",
       "enum": [
         "transaction",
         "origination",
         "migration",
-        "sr_execute"
+        "sr_execute",
+        "sr_cement"
       ],
       "title": "TezosOperationType",
       "type": "string"
@@ -1751,6 +1752,9 @@
               },
               {
                 "$ref": "#/$defs/TezosOperationsHandlerOriginationPatternConfig"
+              },
+              {
+                "$ref": "#/$defs/TezosOperationsHandlerSmartRollupCementPatternConfig"
               },
               {
                 "$ref": "#/$defs/TezosOperationsHandlerSmartRollupExecutePatternConfig"
@@ -1835,6 +1839,70 @@
         }
       },
       "title": "TezosOperationsHandlerOriginationPatternConfig",
+      "type": "object"
+    },
+    "TezosOperationsHandlerSmartRollupCementPatternConfig": {
+      "additionalProperties": false,
+      "description": "Operation handler pattern config\n\n:param type: always 'sr_cement'\n:param source: Match operations by source contract alias\n:param destination: Match operations by destination contract alias\n:param optional: Whether can operation be missing in operation group\n:param alias: Alias for operation (helps to avoid duplicates)",
+      "properties": {
+        "type": {
+          "const": "sr_cement",
+          "default": "sr_cement",
+          "enum": [
+            "sr_cement"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/TezosContractConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Destination"
+        },
+        "optional": {
+          "default": false,
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alias"
+        }
+      },
+      "title": "TezosOperationsHandlerSmartRollupCementPatternConfig",
       "type": "object"
     },
     "TezosOperationsHandlerSmartRollupExecutePatternConfig": {

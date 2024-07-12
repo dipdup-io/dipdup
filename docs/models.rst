@@ -64,6 +64,7 @@ Tezos
 .. autoclass:: dipdup.models.tezos.TezosOperationType
 .. autoclass:: dipdup.models.tezos.TezosOrigination
 .. autoclass:: dipdup.models.tezos.TezosQuoteData
+.. autoclass:: dipdup.models.tezos.TezosSmartRollupCement
 .. autoclass:: dipdup.models.tezos.TezosSmartRollupCommitment
 .. autoclass:: dipdup.models.tezos.TezosSmartRollupExecute
 .. autoclass:: dipdup.models.tezos.TezosTokenBalanceData
