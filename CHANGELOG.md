@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Added
 
 - starknet.node: Added Starknet node datasource for last mile indexing.
-- Added `sr_cement` operation type in `tezos.operations` index to process Smart Rollup Cemented Commitments.
+- tezos.operations: Added `sr_cement` operation type to process Smart Rollup Cemented Commitments.
 
 ### Fixed
 
