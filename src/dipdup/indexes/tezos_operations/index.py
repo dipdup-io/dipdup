@@ -11,6 +11,9 @@ from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerConfigU
 from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import (
+    TezosOperationsHandlerSmartRollupCementPatternConfig as SmartRollupCementPatternConfig,
+)
+from dipdup.config.tezos_operations import (
     TezosOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
 from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -73,6 +76,10 @@ def address_filter(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> set[st
                     if address := pattern_config.originated_contract.address:
                         addresses.add(address)
             elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
+                if pattern_config.destination:
+                    if address := pattern_config.destination.address:
+                        addresses.add(address)
+            elif isinstance(pattern_config, SmartRollupCementPatternConfig):
                 if pattern_config.destination:
                     if address := pattern_config.destination.address:
                         addresses.add(address)

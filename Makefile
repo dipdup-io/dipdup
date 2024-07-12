@@ -82,7 +82,6 @@ typeignore:     ## Find type:ignore comments
 update:         ## Update dependencies and dump requirements.txt
 	pdm update
 	pdm export --without-hashes -f requirements --prod -o requirements.txt
-	pdm export --without-hashes -f requirements --dev -o requirements.dev.txt
 
 demos:          ## Recreate demo projects from templates
 	python scripts/demos.py render ${DEMO}

@@ -276,6 +276,44 @@ class TezosOperationsHandlerSmartRollupExecutePatternConfig(TezosOperationsPatte
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+class TezosOperationsHandlerSmartRollupCementPatternConfig(TezosOperationsPatternConfig, SubgroupIndexMixin):
+    """Operation handler pattern config
+
+    :param type: always 'sr_cement'
+    :param source: Match operations by source contract alias
+    :param destination: Match operations by destination contract alias
+    :param optional: Whether can operation be missing in operation group
+    :param alias: Alias for operation (helps to avoid duplicates)
+    """
+
+    type: Literal['sr_cement'] = 'sr_cement'
+    source: Alias[TezosContractConfig] | None = None
+    destination: Alias[TezosContractConfig] | None = None
+    optional: bool = False
+    alias: str | None = None
+
+    def __post_init__(self) -> None:
+        SubgroupIndexMixin.__post_init__(self)
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'dipdup.models.tezos', 'TezosSmartRollupCement'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        arg_name = pascal_to_snake(self.alias or f'sr_cement_{self.subgroup_index}')
+        if self.optional:
+            yield arg_name, 'TezosSmartRollupCement | None'
+        else:
+            yield arg_name, 'TezosSmartRollupCement'
+
+    @property
+    def typed_contract(self) -> TezosContractConfig | None:
+        if self.destination:
+            return self.destination
+        return None
+
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosOperationsIndexConfig(TezosIndexConfig):
     """Operation index config
 
@@ -335,6 +373,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
 TezosOperationsHandlerPatternConfigU = (
     TezosOperationsHandlerTransactionPatternConfig
     | TezosOperationsHandlerOriginationPatternConfig
+    | TezosOperationsHandlerSmartRollupCementPatternConfig
     | TezosOperationsHandlerSmartRollupExecutePatternConfig
 )
 
