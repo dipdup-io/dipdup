@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- Added `sr_cement` operation type in `tezos.operations` index to process Smart Rollup Cemented Commitments.
+
 ### Fixed
 
 - models: Fixed `CachedModel` preloading.
