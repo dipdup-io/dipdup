@@ -13,7 +13,6 @@ from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 
@@ -51,7 +50,6 @@ class EvmIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],
     ABC,
-    message_type=SubsquidMessageType,  # type: ignore[arg-type]
 ):
     subsquid_datasources: tuple[Any, ...]
     node_datasources: tuple[Any, ...]

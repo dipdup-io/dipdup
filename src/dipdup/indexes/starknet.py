@@ -8,7 +8,6 @@ from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.index import IndexQueueItemT
 from dipdup.indexes.evm import EvmIndex
-from dipdup.models.subsquid import SubsquidMessageType
 
 StarknetDatasource = StarknetSubsquidDatasource | StarknetNodeDatasource
 
@@ -23,7 +22,6 @@ class StarknetIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     EvmIndex[IndexConfigT, IndexQueueItemT, DatasourceT],
     ABC,
-    message_type=SubsquidMessageType.blocks,
 ):
     def __init__(
         self,
