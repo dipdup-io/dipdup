@@ -1341,6 +1341,9 @@
         "abi": {
           "anyOf": [
             {
+              "type": "integer"
+            },
+            {
               "type": "string"
             },
             {

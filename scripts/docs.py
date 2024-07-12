@@ -491,7 +491,7 @@ def dump_jsonschema() -> None:
     schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = fixed_anyof
     schema_dict['$defs']['EvmContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
     schema_dict['$defs']['StarknetContractConfig']['properties']['address']['anyOf'] = fixed_anyof
-    schema_dict['$defs']['EvmContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
+    schema_dict['$defs']['StarknetContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
 
     # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
     schema_dict['required'] = []

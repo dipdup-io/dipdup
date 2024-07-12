@@ -632,7 +632,7 @@ class AdvancedConfig:
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class DipDupConfig:
-    """Main indexer config
+    """DipDup project configuration file
 
     :param spec_version: Version of config specification, currently always `3.0`
     :param package: Name of indexer's Python package, existing or not
