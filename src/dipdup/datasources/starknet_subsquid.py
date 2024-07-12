@@ -3,8 +3,8 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
-from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
-from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
+from dipdup.datasources._subsquid import AbstractSubsquidDatasource
+from dipdup.datasources._subsquid import AbstractSubsquidWorker
 from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet import StarknetTransactionData
 from dipdup.models.starknet_subsquid import EventRequest
@@ -12,7 +12,7 @@ from dipdup.models.starknet_subsquid import FieldSelection
 from dipdup.models.starknet_subsquid import Query
 from dipdup.models.starknet_subsquid import TransactionRequest
 
-TRANSACTION_FIELDS: FieldSelection = {
+_TRANSACTION_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
     },
@@ -34,7 +34,7 @@ TRANSACTION_FIELDS: FieldSelection = {
     },
 }
 
-EVENT_FIELDS: FieldSelection = {
+_EVENT_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
     },
@@ -74,7 +74,7 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidData
 
         while current_level <= last_level:
             query: Query = {
-                'fields': EVENT_FIELDS,
+                'fields': _EVENT_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'events': list(filters),
@@ -112,7 +112,7 @@ class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidData
 
         while current_level <= last_level:
             query: Query = {
-                'fields': TRANSACTION_FIELDS,
+                'fields': _TRANSACTION_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'transactions': list(filters),
