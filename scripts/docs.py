@@ -21,7 +21,6 @@ from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import suppress
 from functools import partial
-from itertools import chain
 from pathlib import Path
 from shutil import rmtree
 from subprocess import Popen
@@ -30,7 +29,6 @@ from typing import TypedDict
 
 import click
 import orjson
-from pydantic import TypeAdapter
 from watchdog.events import EVENT_TYPE_CREATED
 from watchdog.events import EVENT_TYPE_DELETED
 from watchdog.events import EVENT_TYPE_MODIFIED
@@ -480,53 +478,7 @@ def check_links(source: Path, http: bool) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    schema_dict = TypeAdapter(DipDupConfig).json_schema()
-
-    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
-    fixed_anyof = [
-        {'type': 'integer'},
-        {'type': 'string'},
-        {'type': 'null'},
-    ]
-    schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = fixed_anyof
-    schema_dict['$defs']['EvmContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
-    schema_dict['$defs']['StarknetContractConfig']['properties']['address']['anyOf'] = fixed_anyof
-    schema_dict['$defs']['StarknetContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
-
-    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
-    schema_dict['required'] = []
-
-    # NOTE: `from_` fields should be passed without underscore
-    fields_with_from = (
-        schema_dict['$defs']['EvmTransactionsHandlerConfig']['properties'],
-        schema_dict['$defs']['TezosTokenTransfersHandlerConfig']['properties'],
-    )
-    for fields in fields_with_from:
-        fields['from'] = fields.pop('from_')
-
-    # NOTE: Add description to the root schema
-    schema_dict['description'] = DipDupConfig.__doc__
-
-    param_regex = r':param ([a-zA-Z_0-9]*): ([^\n]*)'
-    for def_dict in chain((schema_dict,), schema_dict['$defs'].values()):
-        if 'properties' not in def_dict:
-            continue
-        param_descriptions = {}
-        for match in re.finditer(param_regex, def_dict['description']):
-            key, value = match.group(1), match.group(2)
-            key = key if key != 'from_' else 'from'
-            param_descriptions[key] = value
-        def_dict['description'] = re.sub(param_regex, '', def_dict['description']).strip()
-        for field_name, field_dict in def_dict['properties'].items():
-            if field_name not in param_descriptions:
-                raise ValueError(f'Missing description for {field_name}')
-            field_dict['title'] = field_name
-            field_dict['description'] = param_descriptions[field_name]
-
-    # NOTE: Fix root title as a final step
-    schema_dict['title'] = 'DipDup'
-
-    # NOTE: Dump to the project root
+    schema_dict = DipDupConfig.json_schema()
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
