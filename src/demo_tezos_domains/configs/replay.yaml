@@ -14,6 +14,5 @@ replay:
   postgres_image: postgres:15
   postgres_data_path: /var/lib/postgresql/data
   hasura_image: hasura/graphql-engine:latest
-  package_manager: pdm
-  vscode: False
   line_length: 120
+  package_manager: pdm

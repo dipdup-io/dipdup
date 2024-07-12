@@ -47,12 +47,7 @@ class OperationSubgroup:
 
 
 TezosOperationsHandlerArgumentU = (
-    TezosTransaction[Any, Any]
-    | TezosOrigination[Any]
-    | TezosSmartRollupExecute
-    | TezosSmartRollupCement
-    | TezosOperationData
-    | None
+    TezosTransaction[Any, Any] | TezosOrigination[Any] | TezosSmartRollupExecute | TezosSmartRollupCement | TezosOperationData | None
 )
 MatchedOperationsT = tuple[OperationSubgroup, TezosOperationsHandlerConfigU, deque[TezosOperationsHandlerArgumentU]]
 

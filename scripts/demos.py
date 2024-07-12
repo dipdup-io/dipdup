@@ -43,10 +43,8 @@ def _get_projects() -> dict[str, Path]:
 def _render_demo(path: Path) -> None:
     package = path.name
     answers = answers_from_replay(path / 'replay.yaml')
-
     answers['package'] = package
     answers['template'] = package
-    answers['vscode'] = False
 
     render_project(answers, force=True)
 
