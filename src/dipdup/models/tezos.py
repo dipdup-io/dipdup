@@ -240,6 +240,7 @@ class TezosSmartRollupExecute:
             commitment=commitment,
         )
 
+
 @dataclass(frozen=True)
 class TezosSmartRollupCement:
     """Wrapper for matched smart rollup cement to the handler"""

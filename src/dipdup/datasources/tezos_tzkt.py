@@ -814,7 +814,6 @@ class TezosTzktDatasource(
         ):
             yield batch
 
-
     async def get_sr_cement(
         self,
         field: str,
@@ -865,7 +864,6 @@ class TezosTzktDatasource(
             last_level,
         ):
             yield batch
-
 
     async def get_big_maps(
         self,
