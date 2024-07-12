@@ -8,7 +8,7 @@ from dipdup.datasources import IndexDatasource
 if TYPE_CHECKING:
     from starknet_py.net.client_models import EventsChunk  # type: ignore[import-untyped]
 
-    from dipdup.datasources._starknetpy import FullNodeClient
+    from dipdup.datasources._starknetpy import StarknetpyClient
 
 
 class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
@@ -18,15 +18,15 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
 
     def __init__(self, config: StarknetNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
-        self._client: FullNodeClient | None = None
+        self._starknetpy: StarknetpyClient | None = None
 
     @property
-    def client(self) -> 'FullNodeClient':
-        from dipdup.datasources._starknetpy import FullNodeClient
+    def starknetpy(self) -> 'StarknetpyClient':
+        from dipdup.datasources._starknetpy import StarknetpyClient
 
-        if self._client is None:
-            self._client = FullNodeClient(self)
-        return self._client
+        if self._starknetpy is None:
+            self._starknetpy = StarknetpyClient(self)
+        return self._starknetpy
 
     async def initialize(self) -> None:
         level = await self.get_head_level()
@@ -50,7 +50,7 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
             raise NotImplementedError('Realtime mode is not supported yet; remove `ws_url` from datasource config')
 
     async def get_head_level(self) -> int:
-        return await self.client.get_block_number()  # type: ignore[no-any-return]
+        return await self.starknetpy.get_block_number()  # type: ignore[no-any-return]
 
     async def get_events(
         self,
@@ -60,7 +60,7 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
         last_level: int,
         continuation_token: str | None = None,
     ) -> 'EventsChunk':
-        return await self.client.get_events(
+        return await self.starknetpy.get_events(
             address=address,
             keys=keys,
             from_block_number=first_level,

@@ -1,14 +1,14 @@
 from typing import Any
 
-from starknet_py.net.full_node_client import FullNodeClient as OriginalFullNodeClient  # type: ignore[import-untyped]
+from starknet_py.net.full_node_client import FullNodeClient  # type: ignore[import-untyped]
 from starknet_py.net.http_client import HttpMethod  # type: ignore[import-untyped]
-from starknet_py.net.http_client import RpcHttpClient as OriginalRpcHttpClient
+from starknet_py.net.http_client import RpcHttpClient
 
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
 
 
-class RpcHttpClient(OriginalRpcHttpClient):  # type: ignore[misc]
+class ProxyHttpClient(RpcHttpClient):  # type: ignore[misc]
     def __init__(self, datasource: Datasource[Any]) -> None:
         super().__init__(datasource.url)
         self._datasource = datasource
@@ -30,10 +30,10 @@ class RpcHttpClient(OriginalRpcHttpClient):  # type: ignore[misc]
         )
 
 
-class FullNodeClient(OriginalFullNodeClient):  # type: ignore[misc]
+class StarknetpyClient(FullNodeClient):  # type: ignore[misc]
     def __init__(
         self,
         datasource: Datasource[Any],
     ):
         self.url = datasource.url
-        self._client = RpcHttpClient(datasource)
+        self._client = ProxyHttpClient(datasource)
