@@ -37,12 +37,14 @@ class TezosOperationType(Enum):
     :param origination: origination
     :param migration: migration
     :param sr_execute: sr_execute
+    :param sr_cement: sr_cement
     """
 
     transaction = 'transaction'
     origination = 'origination'
     migration = 'migration'
     sr_execute = 'sr_execute'
+    sr_cement = 'sr_cement'
 
 
 @dataclass(frozen=True)
@@ -100,7 +102,7 @@ class TezosOperationData(HasLevel):
             amount = operation_json.get('amount')
 
         commitment_json = operation_json.get('commitment') or {}
-        if type_ == 'sr_execute':
+        if operation_json['type'] in ['sr_execute', 'sr_cement']:
             target_json = operation_json.get('rollup') or {}
             initiator_json = commitment_json.get('initiator') or {}
 
@@ -232,6 +234,21 @@ class TezosSmartRollupExecute:
 
     @classmethod
     def create(cls, operation_data: TezosOperationData) -> 'TezosSmartRollupExecute':
+        commitment = TezosSmartRollupCommitment.create(operation_data)
+        return cls(
+            data=operation_data,
+            commitment=commitment,
+        )
+
+@dataclass(frozen=True)
+class TezosSmartRollupCement:
+    """Wrapper for matched smart rollup cement to the handler"""
+
+    data: TezosOperationData
+    commitment: TezosSmartRollupCommitment
+
+    @classmethod
+    def create(cls, operation_data: TezosOperationData) -> 'TezosSmartRollupCement':
         commitment = TezosSmartRollupCommitment.create(operation_data)
         return cls(
             data=operation_data,
