@@ -9,6 +9,9 @@ from typing import Generic
 
 from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import (
+    TezosOperationsHandlerSmartRollupCementPatternConfig as SmartRollupCementPatternConfig,
+)
+from dipdup.config.tezos_operations import (
     TezosOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePatternConfig,
 )
 from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPatternConfig
@@ -164,6 +167,42 @@ async def get_sr_execute_filters(
 
     addresses = {a for a in addresses if a.startswith('sr1')}
     _logger.info('Fetching smart rollup executions from %s addresses', len(addresses))
+    return addresses
+
+
+async def get_sr_cement_filters(
+    config: TezosOperationsIndexConfig,
+) -> set[str]:
+    """Get addresses to fetch smart rollup cement commitments from during initial synchronization"""
+    if TezosOperationType.sr_cement not in config.types:
+        return set()
+
+    addresses: set[str] = set()
+
+    if config.contracts:
+        for contract in config.contracts:
+            if contract.address:
+                addresses.add(contract.address)
+
+    for handler_config in config.handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, SmartRollupCementPatternConfig):
+                continue
+
+            if pattern_config.source:
+                if address := pattern_config.source.address:
+                    addresses.add(address)
+                if pattern_config.source.resolved_code_hash:
+                    raise ConfigurationError('Invalid `sr_cement` filter: `source.code_hash`')
+
+            if pattern_config.destination:
+                if address := pattern_config.destination.address:
+                    addresses.add(address)
+                if pattern_config.destination.resolved_code_hash:
+                    raise ConfigurationError('Invalid `sr_cement` filter: `destination.code_hash`')
+
+    addresses = {a for a in addresses if a.startswith('sr1')}
+    _logger.info('Fetching smart rollup cemented commitments from %s addresses', len(addresses))
     return addresses
 
 

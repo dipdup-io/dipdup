@@ -73,6 +73,19 @@ class SmartRollupExecuteSubscription(TezosTzktSubscription):
             request['address'] = self.address
         return [request]
 
+@dataclass(frozen=True)
+class SmartRollupCementSubscription(TezosTzktSubscription):
+    type: Literal['sr_cement'] = 'sr_cement'
+    method: Literal['SubscribeToOperations'] = 'SubscribeToOperations'
+    address: str | None = None
+
+    def get_request(self) -> list[dict[str, Any]]:
+        request: dict[str, Any] = {'types': 'sr_cement'}
+        if self.address:
+            request['address'] = self.address
+        return [request]
+
+
 
 # TODO: Add `ptr` and `tags` filters?
 @dataclass(frozen=True)

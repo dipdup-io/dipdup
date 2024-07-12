@@ -7,10 +7,12 @@ authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 maintainers = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -82,6 +84,8 @@ dependencies = [
 [tool.pdm.resolution.overrides]
 # NOTE: Update blocked by web3; safe to override (see https://github.com/ethereum/web3.py/pull/3144)
 lru-dict = "1.3.0"
+# NOTE: tortoise-orm
+aiosqlite = "0.20.0"
 
 [project.urls]
 Homepage = "https://dipdup.io/"
@@ -92,18 +96,20 @@ Repository = "https://github.com/dipdup-io/dipdup"
 dipdup = "dipdup.cli:cli"
 
 [tool.pdm.dev-dependencies]
-dev = [
+lint = [
     "black",
-    "docker",
     "mypy",
+    "ruff",
+    "types-pytz",
+    "types-tabulate",
+]
+test = [
+    "docker",
     "pytest~=7.4",
     "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-cov",
     "pytest-xdist",
-    "ruff",
-    "types-pytz",
-    "types-tabulate",
 ]
 docs = [
     "Sphinx",
@@ -111,6 +117,9 @@ docs = [
     "sphinx-click==5.2.2",
     "sphinx-markdown-builder",
     "watchdog",
+]
+perf = [
+    "scalene",
 ]
 
 [tool.pdm.scripts]

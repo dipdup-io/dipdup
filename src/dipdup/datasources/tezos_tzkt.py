@@ -90,7 +90,7 @@ TRANSACTION_OPERATION_FIELDS = (
     'parameter',
     'hasInternals',
 )
-SR_EXECUTE_OPERATION_FIELDS = (
+SR_OPERATION_FIELDS = (
     *OPERATION_FIELDS,
     'rollup',
     'commitment',
@@ -777,7 +777,7 @@ class TezosTzktDatasource(
             last_level=last_level,
             offset=None,
             limit=limit,
-            select=SR_EXECUTE_OPERATION_FIELDS,
+            select=SR_OPERATION_FIELDS,
             values=True,
             sort='level',
             status='applied',
@@ -813,6 +813,59 @@ class TezosTzktDatasource(
             last_level,
         ):
             yield batch
+
+
+    async def get_sr_cement(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TezosOperationData, ...]:
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=None,
+            limit=limit,
+            select=SR_OPERATION_FIELDS,
+            values=True,
+            sort='level',
+            status='applied',
+        )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
+        if addresses:
+            params[f'{field}.in'] = ','.join(addresses)
+
+        raw_transactions = await self._request_values_dict(
+            'get',
+            url='v1/operations/sr_cement',
+            params=params,
+        )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(TezosOperationData.from_json(op, type_='sr_cement') for op in raw_transactions)
+
+    async def iter_sr_cement(
+        self,
+        field: str,
+        addresses: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_sr_cement,
+            field,
+            addresses,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
 
     async def get_big_maps(
         self,
