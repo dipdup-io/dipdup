@@ -14,8 +14,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_subsquid import SubsquidIndexConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsHandlerConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesHandlerConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsHandlerConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
@@ -166,8 +164,6 @@ class SubsquidCodeGenerator(CodeGenerator):
             if isinstance(index_config, SubsquidEventsIndexConfig):
                 for handler_config in index_config.handlers:
                     events.add(handler_config.name)
-            elif isinstance(index_config, SubsquidTracesIndexConfig):
-                raise NotImplementedError
             elif isinstance(index_config, SubsquidTransactionsIndexConfig):
                 for handler_config in index_config.handlers:
                     if handler_config.method:
@@ -197,8 +193,6 @@ class SubsquidCodeGenerator(CodeGenerator):
         for handler_config in index_config.handlers:
             if isinstance(handler_config, SubsquidEventsHandlerConfig):
                 contract = handler_config.contract
-            elif isinstance(handler_config, SubsquidTracesHandlerConfig):
-                raise NotImplementedError
             elif isinstance(handler_config, SubsquidTransactionsHandlerConfig):
                 contract = handler_config.typed_contract
 

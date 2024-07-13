@@ -25,6 +25,7 @@ from abc import abstractmethod
 from collections import Counter
 from contextlib import suppress
 from dataclasses import field
+from itertools import chain
 from pathlib import Path
 from pydoc import locate
 from typing import TYPE_CHECKING
@@ -51,6 +52,7 @@ from dipdup.exceptions import IndexAlreadyExistsError
 from dipdup.models import ReindexingAction
 from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
+from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -623,7 +625,7 @@ class AdvancedConfig:
 
 @dataclass
 class DipDupConfig:
-    """Main indexer config
+    """DipDup project configuration file
 
     :param spec_version: Version of config specification, currently always `2.0`
     :param package: Name of indexer's Python package, existing or not
@@ -701,6 +703,69 @@ class DipDupConfig:
         config._json = config_json
         config._environment = config_environment
         return config
+
+    @classmethod
+    def json_schema(cls) -> dict[str, Any]:
+        dc_schema = importlib.import_module('dc_schema')
+        schema_dict = cast(dict[str, Any], dc_schema.get_schema(DipDupConfig))
+
+        # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
+        fixed_anyof = [
+            {'type': 'integer'},
+            {'type': 'string'},
+            {'type': 'null'},
+        ]
+        schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = fixed_anyof
+        schema_dict['$defs']['EvmContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
+
+        # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
+        schema_dict['required'] = []
+
+        # NOTE: `from_` fields should be passed without underscore
+        fields_with_from = (
+            schema_dict['$defs']['SubsquidTransactionsHandlerConfig']['properties'],
+            schema_dict['$defs']['TzktTokenTransfersHandlerConfig']['properties'],
+        )
+        for fields in fields_with_from:
+            fields['from'] = fields.pop('from_')
+
+        # NOTE: Add description to the root schema; skipped by Pydantic for some reason
+        schema_dict['description'] = cls.__doc__
+
+        # NOTE: Extract param descriptions from the class docstrings and apply them to the schema
+        config_modules = import_submodules('dipdup.config')
+        config_modules['dipdup.config'] = importlib.import_module('dipdup.config')
+        param_regex = r':param ([a-zA-Z_0-9]*): ([^\n]*)'
+        for def_dict in chain((schema_dict,), schema_dict['$defs'].values()):
+            if 'properties' not in def_dict:
+                continue
+            if 'description' not in def_dict:
+                class_name = def_dict['title']
+                for module in config_modules.values():
+                    if hasattr(module, class_name):
+                        class_obj = getattr(module, class_name)
+                        def_dict['description'] = class_obj.__doc__
+                        break
+                else:
+                    raise ValueError(f'Class `{class_name}` not found in dipdup.config')
+
+            param_descriptions = {}
+            for match in re.finditer(param_regex, def_dict['description']):
+                key, value = match.group(1), match.group(2)
+                key = key if key != 'from_' else 'from'
+                param_descriptions[key] = value
+            def_dict['description'] = re.sub(param_regex, '', def_dict['description']).strip()
+            for field_name, field_dict in def_dict['properties'].items():
+                if field_name not in param_descriptions:
+                    err = f'Missing `:param` description for `{def_dict["title"]}.{field_name}`'
+                    raise ValueError(err)
+                field_dict['title'] = field_name
+                field_dict['description'] = param_descriptions[field_name]
+
+        # NOTE: Fix root title as a final step
+        schema_dict['title'] = 'DipDup'
+
+        return schema_dict
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1027,9 +1092,6 @@ class DipDupConfig:
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_evm_contract(handler_config.contract)
 
-        elif isinstance(index_config, SubsquidTracesIndexConfig):
-            raise NotImplementedError
-
         elif isinstance(index_config, SubsquidTransactionsIndexConfig):
             for handler_config in index_config.handlers:
                 handler_config.parent = index_config
@@ -1072,7 +1134,6 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
 from dipdup.config.evm_subsquid_events import SubsquidEventsIndexConfig
-from dipdup.config.evm_subsquid_traces import SubsquidTracesIndexConfig
 from dipdup.config.evm_subsquid_transactions import SubsquidTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -1111,7 +1172,7 @@ TzktIndexConfigU = (
     | TzktTokenTransfersIndexConfig
     | TzktTokenBalancesIndexConfig
 )
-SubsquidIndexConfigU = SubsquidEventsIndexConfig | SubsquidTracesIndexConfig | SubsquidTransactionsIndexConfig
+SubsquidIndexConfigU = SubsquidEventsIndexConfig | SubsquidTransactionsIndexConfig
 
 ResolvedIndexConfigU = TzktIndexConfigU | SubsquidIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig

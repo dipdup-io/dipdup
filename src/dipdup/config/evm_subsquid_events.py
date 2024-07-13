@@ -63,6 +63,7 @@ class SubsquidEventsIndexConfig(SubsquidIndexConfig):
     :param abi: One or more `evm.abi` datasource(s) for the same network
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing and disable this index
+    :param node_only: Whether to use only node datasource
     """
 
     kind: Literal['evm.subsquid.events']

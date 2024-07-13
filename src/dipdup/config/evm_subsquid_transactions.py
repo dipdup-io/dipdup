@@ -79,6 +79,7 @@ class SubsquidTransactionsIndexConfig(SubsquidIndexConfig):
     :param abi: One or many ABI datasource(s)
     :param first_level: Level to start indexing from
     :param last_level: Level to stop indexing at
+    :param node_only: Whether to use only node datasource
     """
 
     kind: Literal['evm.subsquid.transactions']
