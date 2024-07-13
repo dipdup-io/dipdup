@@ -168,6 +168,7 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.tezos_tzkt.HeadSubscription',
     'dipdup.models.tezos_tzkt.OriginationSubscription',
     'dipdup.models.tezos_tzkt.SmartRollupExecuteSubscription',
+    'dipdup.models.tezos_tzkt.SmartRollupCementSubscription',
     'dipdup.models.tezos_tzkt.TezosTzktMessageType',
     'dipdup.models.tezos_tzkt.TezosTzktSubscription',
     'dipdup.models.tezos_tzkt.TokenBalanceSubscription',
