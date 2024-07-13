@@ -73,6 +73,7 @@ class SmartRollupExecuteSubscription(TezosTzktSubscription):
             request['address'] = self.address
         return [request]
 
+
 @dataclass(frozen=True)
 class SmartRollupCementSubscription(TezosTzktSubscription):
     type: Literal['sr_cement'] = 'sr_cement'
@@ -84,7 +85,6 @@ class SmartRollupCementSubscription(TezosTzktSubscription):
         if self.address:
             request['address'] = self.address
         return [request]
-
 
 
 # TODO: Add `ptr` and `tags` filters?
