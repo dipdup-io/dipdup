@@ -29,7 +29,6 @@ from typing import TypedDict
 
 import click
 import orjson
-from pydantic import TypeAdapter
 from watchdog.events import EVENT_TYPE_CREATED
 from watchdog.events import EVENT_TYPE_DELETED
 from watchdog.events import EVENT_TYPE_MODIFIED
@@ -480,27 +479,7 @@ def check_links(source: Path, http: bool) -> None:
 def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
-    schema_dict = TypeAdapter(DipDupConfig).json_schema()
-
-    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
-    schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = [
-        {'type': 'integer'},
-        {'type': 'string'},
-        {'type': 'null'},
-    ]
-
-    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
-    schema_dict['required'] = []
-
-    # NOTE: `from_` fields should be passed without underscore
-    fields_with_from = (
-        schema_dict['$defs']['EvmTransactionsHandlerConfig']['properties'],
-        schema_dict['$defs']['TezosTokenTransfersHandlerConfig']['properties'],
-    )
-    for fields in fields_with_from:
-        fields['from'] = fields.pop('from_')
-
-    # NOTE: Dump to the project root
+    schema_dict = DipDupConfig.json_schema()
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
