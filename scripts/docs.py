@@ -8,7 +8,6 @@
 #
 # To run `build --serve` command you need to clone and install frontend from private `dipdup-io/interface` repo first.
 #
-import importlib
 import logging
 import os
 import re
@@ -400,22 +399,10 @@ def check_links(source: Path, http: bool) -> None:
 
 @main.command('dump-jsonschema', help='Dump config JSON schema to schema.json')
 def dump_jsonschema() -> None:
+
     green_echo('=> Dumping JSON schema')
 
-    dc_schema = importlib.import_module('dc_schema')
-    schema_dict = dc_schema.get_schema(DipDupConfig)
-
-    # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
-    schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = [
-        {'type': 'integer'},
-        {'type': 'string'},
-        {'type': 'null'},
-    ]
-
-    # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
-    schema_dict['required'] = []
-
-    # NOTE: Dump to the project root
+    schema_dict = DipDupConfig.json_schema()
     schema_path = Path(__file__).parent.parent / 'schema.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 

@@ -65,7 +65,6 @@ from dipdup.models import Schema
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.models.evm_node import EvmNodeLogData
 from dipdup.models.evm_node import EvmNodeSyncingData
-from dipdup.models.evm_node import EvmNodeTraceData
 from dipdup.models.evm_node import EvmNodeTransactionData
 from dipdup.models.tezos_tzkt import TzktBigMapData
 from dipdup.models.tezos_tzkt import TzktEventData
@@ -418,7 +417,6 @@ class IndexDispatcher:
             elif isinstance(datasource, EvmNodeDatasource):
                 datasource.call_on_head(self._on_evm_node_head)
                 datasource.call_on_logs(self._on_evm_node_logs)
-                datasource.call_on_traces(self._on_evm_node_traces)
                 datasource.call_on_transactions(self._on_evm_node_transactions)
                 datasource.call_on_syncing(self._on_evm_node_syncing)
 
@@ -464,13 +462,6 @@ class IndexDispatcher:
             if datasource not in index.node_datasources:
                 continue
             index.push_realtime_message(logs)
-
-    async def _on_evm_node_traces(
-        self,
-        datasource: EvmNodeDatasource,
-        traces: tuple[EvmNodeTraceData, ...],
-    ) -> None:
-        raise NotImplementedError
 
     async def _on_evm_node_transactions(
         self,
