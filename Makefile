@@ -57,9 +57,6 @@ docs:           ## Build docs
 	python scripts/docs.py markdownlint
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs
 
-	git checkout current schema.json
-	mv schema.json schemas/dipdup-2.0.json
-
 docs_serve:     ## Build docs and start frontend server
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs --watch --serve
 
@@ -98,5 +95,10 @@ before_release: ## Prepare for a new release after updating version in pyproject
 	make demos
 	make test
 	make docs
+
+jsonschemas:    ## Dump config JSON schemas
+	python scripts/docs.py dump-jsonschema
+	git checkout current schema.json
+	mv schema.json schemas/dipdup-2.0.json
 
 ##
