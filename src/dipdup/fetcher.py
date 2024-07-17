@@ -14,11 +14,14 @@ from typing import Protocol
 from typing import TypeVar
 
 from dipdup import env
+from dipdup.exceptions import FrameworkException
 from dipdup.performance import queues
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
     from collections.abc import AsyncIterator
+    from collections.abc import Callable
+    from collections.abc import Iterable
 
 from dipdup.datasources import IndexDatasource
 
@@ -124,7 +127,10 @@ class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
         self._datasources = datasources
 
         self._head: int = 0
-        self._offset: int = 0
+        self._offset: int | str | None = None
+
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)} offset={self._offset}>'
 
     @property
     def head(self) -> int:
@@ -159,6 +165,9 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)}>'
+
     @property
     def random_datasource(self) -> DatasourceT:
         return random.choice(self._datasources)
@@ -170,3 +179,34 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.
         """
         ...
+
+    async def _merged_iter(
+        self,
+        channels: set[FetcherChannel[Any, Any, Any]],
+        sort_fn: Callable[[Iterable[BufferT]], tuple[BufferT, ...]],
+    ) -> AsyncIterator[tuple[Any, ...]]:
+        while True:
+            min_channel = sorted(channels, key=lambda x: x.head)[0]
+            await min_channel.fetch()
+
+            # NOTE: It's a different channel now, but with greater head level
+            next_min_channel = sorted(channels, key=lambda x: x.head)[0]
+            next_min_head = next_min_channel.head
+
+            if self._head <= next_min_head:
+                buffer_keys = sorted(self._buffer.keys())
+                for key in buffer_keys:
+                    if key < self._head:
+                        raise FrameworkException('Invalid buffer state')
+                    if key > next_min_head:
+                        break
+
+                    self._head = key
+                    level_items = self._buffer.pop(self._head)
+                    yield sort_fn(level_items)
+
+            if all(c.fetched for c in channels):
+                break
+
+        if self._buffer:
+            raise FrameworkException('Items left in queue')

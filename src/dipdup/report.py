@@ -54,6 +54,8 @@ def save_report(package: str, error: Exception | None) -> str:
     )
     event.update(header)
 
+    event.pop('_meta', None)
+
     crashdump_dir = REPORTS_PATH
     crashdump_dir.mkdir(parents=True, exist_ok=True)
     path = crashdump_dir / f'{report_id}.yaml'

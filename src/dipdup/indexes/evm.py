@@ -2,10 +2,10 @@ import random
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Generic
 from typing import TypeVar
 
-from dipdup.config import EvmIndexConfigU
 from dipdup.config.evm import EvmContractConfig
 from dipdup.datasources.evm_node import NODE_LAST_MILE
 from dipdup.datasources.evm_node import EvmNodeDatasource
@@ -13,7 +13,6 @@ from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.package import DipDupPackage
 from dipdup.prometheus import Metrics
 
@@ -22,8 +21,8 @@ if TYPE_CHECKING:
 
 EVM_SUBSQUID_READAHEAD_LIMIT = 2500
 
-IndexConfigT = TypeVar('IndexConfigT', bound=EvmIndexConfigU)
-DatasourceT = TypeVar('DatasourceT', bound=EvmSubsquidDatasource | EvmNodeDatasource)
+IndexConfigT = TypeVar('IndexConfigT', bound=Any)
+DatasourceT = TypeVar('DatasourceT', bound=Any)
 
 
 _sighashes: dict[str, str] = {}
@@ -51,8 +50,10 @@ class EvmIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],
     ABC,
-    message_type=SubsquidMessageType,  # type: ignore[arg-type]
 ):
+    subsquid_datasources: tuple[Any, ...]
+    node_datasources: tuple[Any, ...]
+
     def __init__(
         self,
         ctx: 'DipDupContext',

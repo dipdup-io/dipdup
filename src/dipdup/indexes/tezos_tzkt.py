@@ -8,7 +8,6 @@ from dipdup.fetcher import DataFetcher
 from dipdup.index import Index
 from dipdup.index import IndexConfigT
 from dipdup.index import IndexQueueItemT
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
 TZKT_READAHEAD_LIMIT = 10000
 
@@ -17,10 +16,13 @@ class TezosIndex(
     Generic[IndexConfigT, IndexQueueItemT],
     Index[Any, Any, TezosTzktDatasource],
     ABC,
-    message_type=TezosTzktMessageType,  # type: ignore[arg-type]
 ):
     pass
 
 
-class TezosTzktFetcher(Generic[BufferT], DataFetcher[BufferT, TezosTzktDatasource], ABC):
+class TezosTzktFetcher(
+    Generic[BufferT],
+    DataFetcher[BufferT, TezosTzktDatasource],
+    ABC,
+):
     pass

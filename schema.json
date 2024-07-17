@@ -394,7 +394,7 @@
     },
     "EvmNodeDatasourceConfig": {
       "additionalProperties": false,
-      "description": "Subsquid datasource config",
+      "description": "EVM node datasource config",
       "properties": {
         "kind": {
           "const": "evm.node",
@@ -408,7 +408,7 @@
         "url": {
           "title": "url",
           "type": "string",
-          "description": "Ethereum node URL"
+          "description": "EVM node URL"
         },
         "ws_url": {
           "anyOf": [
@@ -421,7 +421,7 @@
           ],
           "default": null,
           "title": "ws_url",
-          "description": "Ethereum node WebSocket URL"
+          "description": "EVM node WebSocket URL"
         },
         "http": {
           "anyOf": [
@@ -1430,6 +1430,9 @@
               },
               {
                 "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
+              },
+              {
+                "$ref": "#/$defs/StarknetNodeDatasourceConfig"
               }
             ]
           },
@@ -1464,6 +1467,64 @@
         "handlers"
       ],
       "title": "StarknetEventsIndexConfig",
+      "type": "object"
+    },
+    "StarknetNodeDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Starknet node datasource config",
+      "properties": {
+        "kind": {
+          "const": "starknet.node",
+          "enum": [
+            "starknet.node"
+          ],
+          "title": "kind",
+          "type": "string",
+          "description": "Always 'starknet.node'"
+        },
+        "url": {
+          "title": "url",
+          "type": "string",
+          "description": "Starknet node URL"
+        },
+        "ws_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ws_url",
+          "description": "Starknet node WebSocket URL"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        },
+        "rollback_depth": {
+          "default": 32,
+          "title": "rollback_depth",
+          "type": "integer",
+          "description": "A number of blocks to store in database for rollback"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "title": "StarknetNodeDatasourceConfig",
       "type": "object"
     },
     "StarknetSubsquidDatasourceConfig": {
@@ -2715,6 +2776,9 @@
           },
           {
             "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/StarknetNodeDatasourceConfig"
           }
         ]
       },

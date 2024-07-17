@@ -12,20 +12,21 @@ from dipdup.config import WsUrl
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class EvmNodeDatasourceConfig(IndexDatasourceConfig):
-    """EVM node datasource config
+class StarknetNodeDatasourceConfig(IndexDatasourceConfig):
+    """Starknet node datasource config
 
-    :param kind: Always 'evm.node'
-    :param url: EVM node URL
-    :param ws_url: EVM node WebSocket URL
+    :param kind: Always 'starknet.node'
+    :param url: Starknet node URL
+    :param ws_url: Starknet node WebSocket URL
     :param http: HTTP client configuration
     :param rollback_depth: A number of blocks to store in database for rollback
     """
 
-    kind: Literal['evm.node']
+    kind: Literal['starknet.node']
     url: Url
     ws_url: WsUrl | None = None
     http: HttpConfig | None = None
+    # FIXME: Is default value correct?
     rollback_depth: int = 32
 
     @property

@@ -5,8 +5,8 @@ from typing import Any
 
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources import EvmHistoryProvider
-from dipdup.datasources.abstract_subsquid import AbstractSubsquidDatasource
-from dipdup.datasources.abstract_subsquid import AbstractSubsquidWorker
+from dipdup.datasources._subsquid import AbstractSubsquidDatasource
+from dipdup.datasources._subsquid import AbstractSubsquidWorker
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
@@ -14,7 +14,7 @@ from dipdup.models.evm_subsquid import LogRequest
 from dipdup.models.evm_subsquid import Query
 from dipdup.models.evm_subsquid import TransactionRequest
 
-LOG_FIELDS: FieldSelection = {
+_LOG_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
     },
@@ -27,7 +27,7 @@ LOG_FIELDS: FieldSelection = {
         'topics': True,
     },
 }
-TRANSACTION_FIELDS: FieldSelection = {
+_TRANSACTION_FIELDS: FieldSelection = {
     'block': {
         'timestamp': True,
     },
@@ -98,7 +98,7 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
         while current_level <= last_level:
             query: Query = {
                 'logs': log_request,
-                'fields': LOG_FIELDS,
+                'fields': _LOG_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
@@ -126,7 +126,7 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
 
         while current_level <= last_level:
             query: Query = {
-                'fields': TRANSACTION_FIELDS,
+                'fields': _TRANSACTION_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
                 'transactions': list(filters),
