@@ -480,7 +480,7 @@ def dump_jsonschema() -> None:
     green_echo('=> Dumping JSON schema')
 
     schema_dict = DipDupConfig.json_schema()
-    schema_path = Path(__file__).parent.parent / 'schema.json'
+    schema_path = Path(__file__).parent.parent / 'schemas' / 'dipdup-3.0.json'
     schema_path.write_bytes(orjson.dumps(schema_dict, option=orjson.OPT_INDENT_2))
 
 

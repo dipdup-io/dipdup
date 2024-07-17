@@ -57,6 +57,9 @@ docs:           ## Build docs
 	python scripts/docs.py markdownlint
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs
 
+	git checkout current schema.json
+	mv schema.json schemas/dipdup-2.0.json
+
 docs_serve:     ## Build docs and start frontend server
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs --watch --serve
 

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Added
 
+- config: Publish JSON schemas for config validation and autocompletion.
 - starknet.node: Added Starknet node datasource for last mile indexing.
 - tezos.operations: Added `sr_cement` operation type to process Smart Rollup Cemented Commitments.
 

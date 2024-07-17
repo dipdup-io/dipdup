@@ -1,0 +1,3024 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "DipDup",
+  "properties": {
+    "spec_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "title": "spec_version",
+      "description": "Version of config specification, currently always `2.0`"
+    },
+    "package": {
+      "type": "string",
+      "title": "package",
+      "description": "Name of indexer's Python package, existing or not"
+    },
+    "datasources": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/CoinbaseDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EtherscanDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/HttpDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/IpfsDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EvmNodeDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzipMetadataDatasourceConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktDatasourceConfig"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "datasources",
+      "description": "Mapping of datasource aliases and datasource configs"
+    },
+    "database": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SqliteDatabaseConfig"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/PostgresDatabaseConfig"
+            }
+          ]
+        }
+      ],
+      "title": "database",
+      "description": "Database config"
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/EvmContractConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TezosContractConfig"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "contracts",
+      "description": "Mapping of contract aliases and contract configs"
+    },
+    "indexes": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktHeadIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/IndexTemplateConfig"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "indexes",
+      "description": "Mapping of index aliases and index configs"
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktHeadIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsUnfilteredIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsIndexConfig"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsIndexConfig"
+              }
+            ]
+          }
+        ]
+      },
+      "title": "templates",
+      "description": "Mapping of template aliases and index templates"
+    },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/JobConfig"
+          }
+        ]
+      },
+      "title": "jobs",
+      "description": "Mapping of job aliases and job configs"
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/HookConfig"
+          }
+        ]
+      },
+      "title": "hooks",
+      "description": "Mapping of hook aliases and hook configs"
+    },
+    "hasura": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/HasuraConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "hasura",
+      "description": "Hasura integration config"
+    },
+    "sentry": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SentryConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "sentry",
+      "description": "Sentry integration config"
+    },
+    "prometheus": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/PrometheusConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "prometheus",
+      "description": "Prometheus integration config"
+    },
+    "api": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/ApiConfig"
+            }
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "api",
+      "description": "Management API config"
+    },
+    "advanced": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/AdvancedConfig"
+        }
+      ],
+      "title": "advanced",
+      "description": "Advanced config"
+    },
+    "custom": {
+      "type": "object",
+      "additionalProperties": {},
+      "title": "custom",
+      "description": "User-defined configuration to use in callbacks"
+    },
+    "logging": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          }
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer"
+        }
+      ],
+      "default": "INFO",
+      "title": "logging",
+      "description": "Modify logging verbosity"
+    }
+  },
+  "required": [],
+  "$defs": {
+    "HttpConfig": {
+      "type": "object",
+      "title": "HttpConfig",
+      "properties": {
+        "retry_count": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "retry_count",
+          "description": "Number of retries after request failed before giving up"
+        },
+        "retry_sleep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "retry_sleep",
+          "description": "Sleep time between retries"
+        },
+        "retry_multiplier": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "retry_multiplier",
+          "description": "Multiplier for sleep time between retries"
+        },
+        "ratelimit_rate": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ratelimit_rate",
+          "description": "Number of requests per period (\"drops\" in leaky bucket)"
+        },
+        "ratelimit_period": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ratelimit_period",
+          "description": "Time period for rate limiting in seconds"
+        },
+        "ratelimit_sleep": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ratelimit_sleep",
+          "description": "Sleep time between requests when rate limit is reached"
+        },
+        "connection_limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "connection_limit",
+          "description": "Number of simultaneous connections"
+        },
+        "connection_timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "connection_timeout",
+          "description": "Connection timeout in seconds"
+        },
+        "request_timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "request_timeout",
+          "description": "Request timeout in seconds"
+        },
+        "batch_size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "batch_size",
+          "description": "Number of items fetched in a single paginated request (when applicable)"
+        },
+        "polling_interval": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "polling_interval",
+          "description": "Interval between polling requests in seconds (when applicable)"
+        },
+        "replay_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "replay_path",
+          "description": "Use cached HTTP responses instead of making real requests (dev only)"
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "alias",
+          "description": "Alias for this HTTP client (dev only)"
+        }
+      },
+      "description": "Advanced configuration of HTTP client"
+    },
+    "CoinbaseDatasourceConfig": {
+      "type": "object",
+      "title": "CoinbaseDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "coinbase"
+          ],
+          "title": "kind",
+          "description": "always 'coinbase'"
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "api_key",
+          "description": "API key"
+        },
+        "secret_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "secret_key",
+          "description": "API secret key"
+        },
+        "passphrase": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "passphrase",
+          "description": "API passphrase"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "Coinbase datasource config"
+    },
+    "EtherscanDatasourceConfig": {
+      "type": "object",
+      "title": "EtherscanDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "abi.etherscan"
+          ],
+          "title": "kind",
+          "description": "always 'abi.etherscan'"
+        },
+        "url": {
+          "type": "string",
+          "default": "https://api.etherscan.io/api",
+          "title": "url",
+          "description": "API URL"
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "api_key",
+          "description": "API key"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "Etherscan datasource config"
+    },
+    "HttpDatasourceConfig": {
+      "type": "object",
+      "title": "HttpDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "http"
+          ],
+          "title": "kind",
+          "description": "always 'http'"
+        },
+        "url": {
+          "type": "string",
+          "title": "url",
+          "description": "URL to fetch data from"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "description": "Generic HTTP datasource config"
+    },
+    "IpfsDatasourceConfig": {
+      "type": "object",
+      "title": "IpfsDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "ipfs"
+          ],
+          "title": "kind",
+          "description": "always 'ipfs'"
+        },
+        "url": {
+          "type": "string",
+          "default": "https://ipfs.io/ipfs",
+          "title": "url",
+          "description": "IPFS node URL, e.g. https://ipfs.io/ipfs/"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "IPFS datasource config"
+    },
+    "EvmNodeDatasourceConfig": {
+      "type": "object",
+      "title": "EvmNodeDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.node"
+          ],
+          "title": "kind",
+          "description": "Always 'evm.node'"
+        },
+        "url": {
+          "type": "string",
+          "title": "url",
+          "description": "Ethereum node URL"
+        },
+        "ws_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ws_url",
+          "description": "Ethereum node WebSocket URL"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        },
+        "rollback_depth": {
+          "type": "integer",
+          "default": 32,
+          "title": "rollback_depth",
+          "description": "A number of blocks to store in database for rollback"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "description": "Subsquid datasource config"
+    },
+    "SubsquidDatasourceConfig": {
+      "type": "object",
+      "title": "SubsquidDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid"
+          ],
+          "title": "kind",
+          "description": "always 'evm.subsquid'"
+        },
+        "url": {
+          "type": "string",
+          "title": "url",
+          "description": "URL of Subsquid Network API"
+        },
+        "node": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "node",
+          "description": "One or more `evm.node` datasource(s) for the same network"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "description": "Subsquid datasource config"
+    },
+    "TzipMetadataNetwork": {
+      "title": "TzipMetadataNetwork",
+      "enum": [
+        "mainnet",
+        "ghostnet",
+        "mumbainet",
+        "nairobinet",
+        "oxfordnet",
+        "parisnet"
+      ]
+    },
+    "TzipMetadataDatasourceConfig": {
+      "type": "object",
+      "title": "TzipMetadataDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tzip_metadata"
+          ],
+          "title": "kind",
+          "description": "always 'tzip_metadata'"
+        },
+        "network": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/TzipMetadataNetwork"
+            }
+          ],
+          "title": "network",
+          "description": "Network name, e.g. mainnet, ghostnet, etc."
+        },
+        "url": {
+          "type": "string",
+          "default": "https://metadata.dipdup.net",
+          "title": "url",
+          "description": "GraphQL API URL, e.g. https://metadata.dipdup.net"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "network"
+      ],
+      "description": "DipDup Metadata datasource config"
+    },
+    "TzktDatasourceConfig": {
+      "type": "object",
+      "title": "TzktDatasourceConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt'"
+        },
+        "url": {
+          "type": "string",
+          "default": "https://api.tzkt.io",
+          "title": "url",
+          "description": "Base API URL, e.g. https://api.tzkt.io/"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        },
+        "buffer_size": {
+          "type": "integer",
+          "default": 0,
+          "title": "buffer_size",
+          "description": "Number of levels to keep in FIFO buffer before processing"
+        },
+        "merge_subscriptions": {
+          "type": "boolean",
+          "default": false,
+          "title": "merge_subscriptions",
+          "description": "Whether to merge realtime subscriptions"
+        },
+        "rollback_depth": {
+          "type": "integer",
+          "default": 2,
+          "title": "rollback_depth",
+          "description": "Number of blocks to keep in the database to handle reorgs"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "TzKT datasource config"
+    },
+    "SqliteDatabaseConfig": {
+      "type": "object",
+      "title": "SqliteDatabaseConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "sqlite"
+          ],
+          "title": "kind",
+          "description": "always 'sqlite'"
+        },
+        "path": {
+          "type": "string",
+          "default": ":memory:",
+          "title": "path",
+          "description": "Path to .sqlite3 file, leave default for in-memory database (`:memory:`)"
+        },
+        "immune_tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "title": "immune_tables",
+          "description": "List of tables to preserve during reindexing"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "SQLite connection config"
+    },
+    "PostgresDatabaseConfig": {
+      "type": "object",
+      "title": "PostgresDatabaseConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "postgres"
+          ],
+          "title": "kind",
+          "description": "always 'postgres'"
+        },
+        "host": {
+          "type": "string",
+          "title": "host",
+          "description": "Host"
+        },
+        "user": {
+          "type": "string",
+          "default": "postgres",
+          "title": "user",
+          "description": "User"
+        },
+        "database": {
+          "type": "string",
+          "default": "postgres",
+          "title": "database",
+          "description": "Database name"
+        },
+        "port": {
+          "type": "integer",
+          "default": 5432,
+          "title": "port",
+          "description": "Port"
+        },
+        "schema_name": {
+          "type": "string",
+          "default": "public",
+          "title": "schema_name",
+          "description": "Schema name"
+        },
+        "password": {
+          "type": "string",
+          "default": "",
+          "title": "password",
+          "description": "Password"
+        },
+        "immune_tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "title": "immune_tables",
+          "description": "List of tables to preserve during reindexing"
+        },
+        "connection_timeout": {
+          "type": "integer",
+          "default": 60,
+          "title": "connection_timeout",
+          "description": "Connection timeout"
+        }
+      },
+      "required": [
+        "kind",
+        "host"
+      ],
+      "description": "Postgres database connection config"
+    },
+    "EvmContractConfig": {
+      "type": "object",
+      "title": "EvmContractConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm"
+          ],
+          "title": "kind",
+          "description": "Always `evm`"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "address",
+          "description": "Contract address"
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "abi",
+          "description": "Contract ABI"
+        },
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "typename",
+          "description": "Alias for the contract script"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "EVM contract config"
+    },
+    "TezosContractConfig": {
+      "type": "object",
+      "title": "TezosContractConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos"
+          ],
+          "title": "kind",
+          "description": "Always `tezos`"
+        },
+        "address": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "address",
+          "description": "Contract address"
+        },
+        "code_hash": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "code_hash",
+          "description": "Contract code hash or address to fetch it from"
+        },
+        "typename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "typename",
+          "description": "Alias for the contract script"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "description": "Tezos contract config."
+    },
+    "TzktBigMapsHandlerConfig": {
+      "type": "object",
+      "title": "TzktBigMapsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ],
+          "title": "contract",
+          "description": "Contract to fetch big map from"
+        },
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "Path to big map (alphanumeric string with dots)"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "path"
+      ],
+      "description": "Big map handler config"
+    },
+    "SkipHistory": {
+      "title": "SkipHistory",
+      "enum": [
+        "never",
+        "once",
+        "always"
+      ]
+    },
+    "TzktBigMapsIndexConfig": {
+      "type": "object",
+      "title": "TzktBigMapsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.big_maps"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.big_maps'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Index datasource to fetch big maps with"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktBigMapsHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Mapping of big map diff handlers"
+        },
+        "skip_history": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/SkipHistory"
+            }
+          ],
+          "default": "never",
+          "title": "skip_history",
+          "description": "Fetch only current big map keys ignoring historical changes"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ],
+      "description": "Big map index config"
+    },
+    "TzktEventsHandlerConfig": {
+      "type": "object",
+      "title": "TzktEventsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ],
+          "title": "contract",
+          "description": "Contract which emits event"
+        },
+        "tag": {
+          "type": "string",
+          "title": "tag",
+          "description": "Event tag"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "tag"
+      ],
+      "description": "Event handler config"
+    },
+    "TzktEventsUnknownEventHandlerConfig": {
+      "type": "object",
+      "title": "TzktEventsUnknownEventHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            }
+          ],
+          "title": "contract",
+          "description": "Contract which emits event"
+        }
+      },
+      "required": [
+        "callback",
+        "contract"
+      ],
+      "description": "Unknown event handler config"
+    },
+    "TzktEventsIndexConfig": {
+      "type": "object",
+      "title": "TzktEventsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.events"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.events'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Datasource config"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TzktEventsHandlerConfig"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TzktEventsUnknownEventHandlerConfig"
+                  }
+                ]
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Event handlers"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "First block level to index"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Last block level to index"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ],
+      "description": "Event index config"
+    },
+    "TzktHeadIndexConfig": {
+      "type": "object",
+      "title": "TzktHeadIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.head"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.head'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Index datasource to receive head blocks"
+        },
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "callback"
+      ],
+      "description": "Head block index config"
+    },
+    "OperationsHandlerTransactionPatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerTransactionPatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "transaction"
+          ],
+          "default": "transaction",
+          "title": "type",
+          "description": "always 'transaction'"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "source",
+          "description": "Match operations by source contract alias"
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "destination",
+          "description": "Match operations by destination contract alias"
+        },
+        "entrypoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "entrypoint",
+          "description": "Match operations by contract entrypoint"
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "title": "optional",
+          "description": "Whether can operation be missing in operation group"
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "alias",
+          "description": "Alias for operation (helps to avoid duplicates)"
+        }
+      },
+      "description": "Transaction handler pattern config"
+    },
+    "OperationsHandlerOriginationPatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerOriginationPatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "origination"
+          ],
+          "default": "origination",
+          "title": "type",
+          "description": "always 'origination'"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "source",
+          "description": "Match operations by source contract alias"
+        },
+        "originated_contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "originated_contract",
+          "description": "Match origination of exact contract"
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "title": "optional",
+          "description": "Whether can operation be missing in operation group"
+        },
+        "strict": {
+          "type": "boolean",
+          "default": false,
+          "title": "strict",
+          "description": "Match operations by storage only or by the whole code"
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "alias",
+          "description": "Alias for operation (helps to avoid duplicates)"
+        }
+      },
+      "description": "Origination handler pattern config"
+    },
+    "OperationsHandlerSmartRollupExecutePatternConfig": {
+      "type": "object",
+      "title": "OperationsHandlerSmartRollupExecutePatternConfig",
+      "properties": {
+        "type": {
+          "enum": [
+            "sr_execute"
+          ],
+          "default": "sr_execute",
+          "title": "type",
+          "description": "always 'sr_execute'"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "source",
+          "description": "Match operations by source contract alias"
+        },
+        "destination": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "destination",
+          "description": "Match operations by destination contract alias"
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "title": "optional",
+          "description": "Whether can operation be missing in operation group"
+        },
+        "alias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "alias",
+          "description": "Alias for operation (helps to avoid duplicates)"
+        }
+      },
+      "description": "Operation handler pattern config"
+    },
+    "TzktOperationsHandlerConfig": {
+      "type": "object",
+      "title": "TzktOperationsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "pattern": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerTransactionPatternConfig"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerOriginationPatternConfig"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/OperationsHandlerSmartRollupExecutePatternConfig"
+                  }
+                ]
+              }
+            ]
+          },
+          "title": "pattern",
+          "description": "Filters to match operation groups"
+        }
+      },
+      "required": [
+        "callback",
+        "pattern"
+      ],
+      "description": "Operation handler config"
+    },
+    "TzktOperationType": {
+      "title": "TzktOperationType",
+      "enum": [
+        "transaction",
+        "origination",
+        "migration",
+        "sr_execute"
+      ]
+    },
+    "TzktOperationsIndexConfig": {
+      "type": "object",
+      "title": "TzktOperationsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.operations"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.operations'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Alias of index datasource in `datasources` section"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationsHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "List of indexer handlers"
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/TezosContractConfig"
+                  }
+                ]
+              }
+            ]
+          },
+          "title": "contracts",
+          "description": "Aliases of contracts being indexed in `contracts` section"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationType"
+              }
+            ]
+          },
+          "default": [
+            "transaction"
+          ],
+          "title": "types",
+          "description": "Types of transaction to fetch"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers",
+        "contracts"
+      ],
+      "description": "Operation index config"
+    },
+    "TzktOperationsUnfilteredIndexConfig": {
+      "type": "object",
+      "title": "TzktOperationsUnfilteredIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.operations_unfiltered"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.operations_unfiltered'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Alias of index datasource in `datasources` section"
+        },
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktOperationType"
+              }
+            ]
+          },
+          "default": [
+            "transaction"
+          ],
+          "title": "types",
+          "description": "Types of transaction to fetch"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "callback"
+      ],
+      "description": "Operation index config"
+    },
+    "TzktTokenTransfersHandlerConfig": {
+      "type": "object",
+      "title": "TzktTokenTransfersHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "contract",
+          "description": "Filter by contract"
+        },
+        "token_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "token_id",
+          "description": "Filter by token ID"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "to",
+          "description": "Filter by recipient"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "from",
+          "description": "Filter by sender"
+        }
+      },
+      "required": [
+        "callback"
+      ],
+      "description": "Token transfer handler config"
+    },
+    "TzktTokenTransfersIndexConfig": {
+      "type": "object",
+      "title": "TzktTokenTransfersIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.token_transfers"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.token_transfers'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Index datasource to use"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenTransfersHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Mapping of token transfer handlers"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource"
+      ],
+      "description": "Token transfer index config"
+    },
+    "TzktTokenBalancesHandlerConfig": {
+      "type": "object",
+      "title": "TzktTokenBalancesHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TezosContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "contract",
+          "description": "Filter by contract"
+        },
+        "token_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "token_id",
+          "description": "Filter by token ID"
+        }
+      },
+      "required": [
+        "callback"
+      ],
+      "description": "Token balance handler config"
+    },
+    "TzktTokenBalancesIndexConfig": {
+      "type": "object",
+      "title": "TzktTokenBalancesIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "tezos.tzkt.token_balances"
+          ],
+          "title": "kind",
+          "description": "always 'tezos.tzkt.token_balances'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/TzktDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Index datasource to use"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/TzktTokenBalancesHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Mapping of token transfer handlers"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource"
+      ],
+      "description": "Token balance index config"
+    },
+    "SubsquidEventsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidEventsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "contract": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            }
+          ],
+          "title": "contract",
+          "description": "EVM contract"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Event name"
+        }
+      },
+      "required": [
+        "callback",
+        "contract",
+        "name"
+      ],
+      "description": "Subsquid event handler"
+    },
+    "AbiDatasourceConfig": {
+      "type": "object",
+      "title": "AbiDatasourceConfig",
+      "properties": {},
+      "description": "Provider of EVM contract ABIs. Datasource kind starts with 'abi.'"
+    },
+    "SubsquidEventsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidEventsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.events"
+          ],
+          "title": "kind",
+          "description": "Always 'evm.subsquid.events'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Subsquid datasource"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidEventsHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Event handlers"
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "abi",
+          "description": "One or more `evm.abi` datasource(s) for the same network"
+        },
+        "node_only": {
+          "type": "boolean",
+          "default": false,
+          "title": "node_only",
+          "description": "Whether to use only node datasource"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing and disable this index"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ],
+      "description": "Subsquid datasource config"
+    },
+    "SubsquidTransactionsHandlerConfig": {
+      "type": "object",
+      "title": "SubsquidTransactionsHandlerConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "to",
+          "description": "Transaction receiver"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "method",
+          "description": "Method name"
+        },
+        "from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmContractConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "from",
+          "description": "Transaction sender"
+        }
+      },
+      "required": [
+        "callback"
+      ],
+      "description": "Subsquid transaction handler"
+    },
+    "SubsquidTransactionsIndexConfig": {
+      "type": "object",
+      "title": "SubsquidTransactionsIndexConfig",
+      "properties": {
+        "kind": {
+          "enum": [
+            "evm.subsquid.transactions"
+          ],
+          "title": "kind",
+          "description": "always 'evm.subsquid.transactions'"
+        },
+        "datasource": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/SubsquidDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/EvmNodeDatasourceConfig"
+                }
+              ]
+            }
+          ],
+          "title": "datasource",
+          "description": "Subsquid datasource config"
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/SubsquidTransactionsHandlerConfig"
+              }
+            ]
+          },
+          "title": "handlers",
+          "description": "Transaction handlers"
+        },
+        "abi": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/AbiDatasourceConfig"
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/AbiDatasourceConfig"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "abi",
+          "description": "One or many ABI datasource(s)"
+        },
+        "node_only": {
+          "type": "boolean",
+          "default": false,
+          "title": "node_only",
+          "description": "Whether to use only node datasource"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "kind",
+        "datasource",
+        "handlers"
+      ],
+      "description": "Index that uses Subsquid Network as a datasource for transactions"
+    },
+    "IndexTemplateConfig": {
+      "type": "object",
+      "title": "IndexTemplateConfig",
+      "properties": {
+        "template": {
+          "type": "string",
+          "title": "template",
+          "description": "Template alias in `templates` section"
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "values",
+          "description": "Values to be substituted in template (`<key>` -> `value`)"
+        },
+        "first_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "first_level",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "type": "integer",
+          "default": 0,
+          "title": "last_level",
+          "description": "Level to stop indexing at"
+        }
+      },
+      "required": [
+        "template",
+        "values"
+      ],
+      "description": "Index template config"
+    },
+    "HookConfig": {
+      "type": "object",
+      "title": "HookConfig",
+      "properties": {
+        "callback": {
+          "type": "string",
+          "title": "callback",
+          "description": "Callback name"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "args",
+          "description": "Mapping of argument names and annotations (checked lazily when possible)"
+        },
+        "atomic": {
+          "type": "boolean",
+          "default": false,
+          "title": "atomic",
+          "description": "Wrap hook in a single database transaction"
+        }
+      },
+      "required": [
+        "callback"
+      ],
+      "description": "Hook config"
+    },
+    "JobConfig": {
+      "type": "object",
+      "title": "JobConfig",
+      "properties": {
+        "hook": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HookConfig"
+                }
+              ]
+            }
+          ],
+          "title": "hook",
+          "description": "Name of hook to run"
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {},
+          "title": "args",
+          "description": "Arguments to pass to the hook"
+        },
+        "crontab": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "crontab",
+          "description": "Schedule with crontab syntax (`* * * * *`)"
+        },
+        "interval": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "interval",
+          "description": "Schedule with interval in seconds"
+        },
+        "daemon": {
+          "type": "boolean",
+          "default": false,
+          "title": "daemon",
+          "description": "Run hook as a daemon (never stops)"
+        }
+      },
+      "required": [
+        "hook",
+        "args"
+      ],
+      "description": "Job schedule config"
+    },
+    "HasuraConfig": {
+      "type": "object",
+      "title": "HasuraConfig",
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "url",
+          "description": "URL of the Hasura instance."
+        },
+        "admin_secret": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "admin_secret",
+          "description": "Admin secret of the Hasura instance."
+        },
+        "create_source": {
+          "type": "boolean",
+          "default": false,
+          "title": "create_source",
+          "description": "Whether source should be added to Hasura if missing."
+        },
+        "source": {
+          "type": "string",
+          "default": "default",
+          "title": "source",
+          "description": "Hasura source for DipDup to configure, others will be left untouched."
+        },
+        "select_limit": {
+          "type": "integer",
+          "default": 1000,
+          "title": "select_limit",
+          "description": "Row limit for unauthenticated queries."
+        },
+        "allow_aggregations": {
+          "type": "boolean",
+          "default": true,
+          "title": "allow_aggregations",
+          "description": "Whether to allow aggregations in unauthenticated queries."
+        },
+        "allow_inconsistent_metadata": {
+          "type": "boolean",
+          "default": false,
+          "title": "allow_inconsistent_metadata",
+          "description": "Whether to ignore errors when applying Hasura metadata."
+        },
+        "camel_case": {
+          "type": "boolean",
+          "default": false,
+          "title": "camel_case",
+          "description": "Whether to use camelCase instead of default pascal_case for the field names."
+        },
+        "rest": {
+          "type": "boolean",
+          "default": true,
+          "title": "rest",
+          "description": "Enable REST API both for autogenerated and custom queries."
+        },
+        "http": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/HttpConfig"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP connection tunables"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "description": "Config for the Hasura integration."
+    },
+    "SentryConfig": {
+      "type": "object",
+      "title": "SentryConfig",
+      "properties": {
+        "dsn": {
+          "type": "string",
+          "title": "dsn",
+          "description": "DSN of the Sentry instance"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "environment",
+          "description": "Environment; if not set, guessed from docker/ci/gha/local."
+        },
+        "server_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "server_name",
+          "description": "Server name; defaults to obfuscated hostname."
+        },
+        "release": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "release",
+          "description": "Release version; defaults to DipDup package version."
+        },
+        "user_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "user_id",
+          "description": "User ID; defaults to obfuscated package/environment."
+        },
+        "debug": {
+          "type": "boolean",
+          "default": false,
+          "title": "debug",
+          "description": "Catch warning messages, increase verbosity."
+        }
+      },
+      "required": [
+        "dsn"
+      ],
+      "description": "Config for Sentry integration."
+    },
+    "PrometheusConfig": {
+      "type": "object",
+      "title": "PrometheusConfig",
+      "properties": {
+        "host": {
+          "type": "string",
+          "title": "host",
+          "description": "Host to bind to"
+        },
+        "port": {
+          "type": "integer",
+          "default": 8000,
+          "title": "port",
+          "description": "Port to bind to"
+        },
+        "update_interval": {
+          "type": "number",
+          "default": 1.0,
+          "title": "update_interval",
+          "description": "Interval to update some metrics in seconds"
+        }
+      },
+      "required": [
+        "host"
+      ],
+      "description": "Config for Prometheus integration."
+    },
+    "ApiConfig": {
+      "type": "object",
+      "title": "ApiConfig",
+      "properties": {
+        "host": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "title": "host",
+          "description": "Host to bind to"
+        },
+        "port": {
+          "type": "integer",
+          "default": 46339,
+          "title": "port",
+          "description": "Port to bind to"
+        }
+      },
+      "description": "Management API config"
+    },
+    "ReindexingAction": {
+      "title": "ReindexingAction",
+      "enum": [
+        "exception",
+        "wipe",
+        "ignore"
+      ]
+    },
+    "AdvancedConfig": {
+      "type": "object",
+      "title": "AdvancedConfig",
+      "properties": {
+        "reindex": {
+          "type": "object",
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/ReindexingAction"
+              }
+            ]
+          },
+          "title": "reindex",
+          "description": "Mapping of reindexing reasons and actions DipDup performs."
+        },
+        "scheduler": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "scheduler",
+          "description": "`apscheduler` scheduler config."
+        },
+        "postpone_jobs": {
+          "type": "boolean",
+          "default": false,
+          "title": "postpone_jobs",
+          "description": "Do not start job scheduler until all indexes reach the realtime state."
+        },
+        "early_realtime": {
+          "type": "boolean",
+          "default": false,
+          "title": "early_realtime",
+          "description": "Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM)."
+        },
+        "skip_version_check": {
+          "type": "boolean",
+          "default": false,
+          "title": "skip_version_check",
+          "description": "Disable warning about running unstable or out-of-date DipDup version."
+        },
+        "rollback_depth": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "rollback_depth",
+          "description": "A number of levels to keep for rollback."
+        },
+        "decimal_precision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "decimal_precision",
+          "description": "Overwrite precision if it's not guessed correctly based on project models."
+        },
+        "unsafe_sqlite": {
+          "type": "boolean",
+          "default": false,
+          "title": "unsafe_sqlite",
+          "description": "Disable journaling and data integrity checks. Use only for testing."
+        },
+        "alt_operation_matcher": {
+          "type": "boolean",
+          "default": false,
+          "title": "alt_operation_matcher",
+          "description": "Use different algorithm to match Tezos operations (dev only)"
+        }
+      },
+      "description": "This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations."
+    }
+  },
+  "description": "DipDup project configuration file"
+}
