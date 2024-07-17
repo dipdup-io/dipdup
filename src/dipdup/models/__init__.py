@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from contextlib import suppress
 from copy import copy
 from datetime import date
 from datetime import datetime
@@ -18,7 +17,6 @@ import tortoise
 import tortoise.queryset
 from lru import LRU
 from pydantic.dataclasses import dataclass
-from tortoise.exceptions import OperationalError
 from tortoise.fields import relational
 from tortoise.models import MODEL
 from tortoise.models import Model as TortoiseModel
@@ -555,14 +553,11 @@ class CachedModel(Model):
 
     @classmethod
     async def preload(cls) -> None:
-        _logger.info('Loading `%s` into memory', cls.__name__)
-        limit = getattr(cls.Meta, 'maxsize', 0)
-        query = cls.all() if not limit else cls.all().limit(limit)
+        _logger.info('Loading `%s` into memory, %s max', cls.__name__, cls._maxsize)
+        query = cls.filter().order_by(f'-{cls._meta.pk_attr}').limit(cls._maxsize)
 
-        # NOTE: Table can be missing
-        with suppress(OperationalError):
-            async for model in query:
-                model.cache()
+        async for model in query:
+            model.cache()
 
     @classmethod
     async def cached_get(

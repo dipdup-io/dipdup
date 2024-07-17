@@ -761,7 +761,6 @@ class DipDup:
                 unsafe_sqlite=self._config.advanced.unsafe_sqlite,
             )
         )
-        await preload_cached_models(self._config.package)
 
     async def _set_up_hooks(self) -> None:
         for system_hook_config in system_hooks.values():
@@ -865,6 +864,9 @@ class DipDup:
 
         # NOTE: Hooks called with `wait=False`
         _add_task(self._ctx._hooks_loop())
+
+        # NOTE: Preloading `CachedModel`
+        _add_task(preload_cached_models(self._config.package))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
