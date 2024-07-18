@@ -790,6 +790,7 @@ class DipDupConfig:
 
         # NOTE: Fix root title as a final step
         schema_dict['title'] = 'DipDup'
+        schema_dict['$schema'] = 'http://json-schema.org/draft-07/schema#'
 
         return schema_dict
 
