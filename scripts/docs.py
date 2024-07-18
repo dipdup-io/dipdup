@@ -450,8 +450,8 @@ def check_links(source: Path, http: bool) -> None:
     if http:
         green_echo('=> Checking HTTP links')
 
-        for link in http_links:
-            green_echo(f'checking link `{link}`')
+        for i, link in enumerate(http_links):
+            green_echo(f'{i+1}/{len(http_links)}: checking link `{link}`')
             try:
                 res = subprocess.run(
                     ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', link),
@@ -463,6 +463,8 @@ def check_links(source: Path, http: bool) -> None:
                     raise subprocess.CalledProcessError(status_code, 'curl')
             except subprocess.CalledProcessError:
                 red_echo(f'broken http link: `{status_code}`')
+                if 'subscan' in link:
+                    print("Subscan is known to block curl, so it's probably fine.")
                 bad_http += 1
 
     _logger.info('_' * 80)
@@ -533,55 +535,54 @@ def dump_references() -> None:
         lines = from_.read_text().split('\n')
         out = '\n'.join(lines[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
 
-        # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
-        # to: ## dipdup.config.DipDupConfig
+        # - <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
+        # + ## dipdup.config.DipDupConfig
         for match_ in re.finditer(r'<dt class="sig sig-object py" id="(.*)">', out):
             out = out.replace(match_.group(0), f'\n## {match_.group(1)}\n')
 
-        # from: <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
-        # to: # Enums
+        # - <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
+        # + # Enums
         for match_ in re.finditer(
             r'<h(\d)>(.*)<a class="headerlink" href="#.*" title="Link to this heading">¶</a></h\d>', out
         ):
             level = int(match_.group(1))
             out = out.replace(match_.group(0), f'\n{"#" * level} {match_.group(2)}\n')
 
-        # from: <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
-        # to: none
+        # - <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
+        # + none
         out = re.sub(r'<a class="headerlink" href="#.*" title="Link to this definition">¶</a>', '', out)
 
-        # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
-        # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        # - <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # + <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
         for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
             anchor = match_.group(2).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
-        # from: <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
-        # to: <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        # - <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # + <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
         for match_ in re.finditer(r'<a class="reference internal" href="([^"]*).html#([^"]*)" title="([^"]*)"', out):
             anchor = match_.group(3).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="{match_.group(1)}#{anchor}" title="{match_.group(3)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
-        # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
-        # to: <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
+        # - <dt class="field-even">Return type<span class="colon">:</span></dt>
+        # + <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
         for match_ in re.finditer(r'<dt class="field-even">(.*)<span class="colon">:</span></dt>', out):
             out = out.replace(
                 match_.group(0),
                 f'<dt class="field-even" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
             )
 
-        # from: <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-        # to: <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
+        # - <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+        # + <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
         for match_ in re.finditer(r'<dt class="field-odd">(.*)<span class="colon">:</span></dt>', out):
             out = out.replace(
                 match_.group(0),
                 f'<dt class="field-odd" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
             )
 
-        # from: <section id="dipdup-config-env">
-        # to: none
+        # - <section id="dipdup-config-env">
         out = re.sub(r'<section id=".*">', '', out)
 
         # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
