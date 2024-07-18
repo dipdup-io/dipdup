@@ -124,12 +124,7 @@ MD_HEADING_REGEX = r'\#\#* [\w ]*'
 CLASS_REGEX = r'class (\w*)[\(:]'
 
 IGNORED_CONFIG_CLASSES = {
-    'dipdup.config.CallbackMixin',
-    'dipdup.config.CodegenMixin',
     'dipdup.config.Config',
-    'dipdup.config.NameMixin',
-    'dipdup.config.ParentMixin',
-    'dipdup.config.tezos_operations.SubgroupIndexMixin',
 }
 IGNORED_MODEL_CLASSES = {
     'dipdup.models.BulkCreateQuery',
@@ -502,6 +497,9 @@ def dump_references() -> None:
                     package_path_str = ''
                 else:
                     package_path_str = '.' + package_path.with_suffix('').as_posix().replace('/', '.')
+                # NOTE: Skip private modules and classes
+                if '._' in package_path_str:
+                    continue
                 classes_in_package.add(f'dipdup.{ref}{package_path_str}.{match.group(1)}')
 
         to_add = classes_in_package - classes_in_ref - ignore

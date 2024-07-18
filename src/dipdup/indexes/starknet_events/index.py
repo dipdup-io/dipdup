@@ -13,9 +13,9 @@ from dipdup.indexes.starknet_events.fetcher import StarknetNodeEventFetcher
 from dipdup.indexes.starknet_events.fetcher import StarknetSubsquidEventFetcher
 from dipdup.indexes.starknet_events.matcher import match_events
 from dipdup.models import RollbackMessage
+from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.starknet import StarknetEvent
 from dipdup.models.starknet import StarknetEventData
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[StarknetEventData, ...] | RollbackMessage

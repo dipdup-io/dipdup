@@ -10,8 +10,9 @@ from pydantic.dataclasses import dataclass
 from pydantic.fields import Field
 
 from dipdup.config import Alias
-from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
+from dipdup.config._mixin import CodegenMixin
+from dipdup.config._mixin import SubgroupIndexMixin
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
@@ -28,27 +29,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from dipdup.subscriptions import Subscription
-
-
-@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
-class SubgroupIndexMixin:
-    """`subgroup_index` field to track index of operation in group
-
-    :param subgroup_index:
-    """
-
-    def __post_init__(self) -> None:
-        self._subgroup_index: int | None = None
-
-    @property
-    def subgroup_index(self) -> int:
-        if self._subgroup_index is None:
-            raise ConfigInitializationException
-        return self._subgroup_index
-
-    @subgroup_index.setter
-    def subgroup_index(self, value: int) -> None:
-        self._subgroup_index = value
 
 
 class TezosOperationsPatternConfig(CodegenMixin):
