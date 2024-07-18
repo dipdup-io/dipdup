@@ -1,5 +1,5 @@
-from abc import ABC
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Literal
@@ -11,6 +11,9 @@ from pydantic import BaseModel
 from dipdup.fetcher import HasLevel
 from dipdup.subscriptions import Subscription
 
+if TYPE_CHECKING:
+    from starknet_py.net.client_models import EmittedEvent  # type: ignore[import-untyped]
+
 
 @dataclass(frozen=True)
 class StarknetSubscription(Subscription):
@@ -21,7 +24,7 @@ class StarknetSubscription(Subscription):
 
 
 @dataclass(frozen=True)
-class StarknetTransactionData(HasLevel, ABC):
+class StarknetTransactionData(HasLevel):
     level: int
     block_hash: str
     transaction_index: int
@@ -69,12 +72,13 @@ class StarknetTransactionData(HasLevel, ABC):
 
 
 @dataclass(frozen=True)
-class StarknetEventData(HasLevel, ABC):
+class StarknetEventData(HasLevel):
     level: int
     block_hash: str
-    transaction_index: int
+    # FIXME: No block header without a separate request
+    transaction_index: int | None
     transaction_hash: str
-    timestamp: int
+    timestamp: int | None
 
     from_address: str
     keys: tuple[str, ...]
@@ -82,7 +86,10 @@ class StarknetEventData(HasLevel, ABC):
 
     @classmethod
     def from_subsquid_json(
-        cls, event_json: dict[str, Any], transaction_json: dict[str, Any], header: dict[str, Any]
+        cls,
+        event_json: dict[str, Any],
+        transaction_json: dict[str, Any],
+        header: dict[str, Any],
     ) -> Self:
         return cls(
             level=header['number'],
@@ -93,6 +100,42 @@ class StarknetEventData(HasLevel, ABC):
             from_address=event_json['fromAddress'],
             keys=tuple(event_json['keys']),
             data=tuple(event_json['data']),
+        )
+
+    @classmethod
+    def from_node_json(
+        cls,
+        event_json: dict[str, Any],
+        transaction_index: int | None,
+        timestamp: int | None,
+    ) -> Self:
+        return cls(
+            level=event_json['block_number'],
+            block_hash=hex(event_json['block_hash']),
+            transaction_index=transaction_index,
+            transaction_hash=hex(event_json['transaction_hash']),
+            timestamp=timestamp,
+            from_address=hex(event_json['from_address']),
+            keys=tuple(hex(i) for i in event_json['keys']),
+            data=tuple(hex(i) for i in event_json['data']),
+        )
+
+    @classmethod
+    def from_starknetpy(
+        cls,
+        event: 'EmittedEvent',
+        transaction_index: int | None,
+        timestamp: int | None,
+    ) -> Self:
+        return cls(
+            level=event.block_number,
+            block_hash=hex(event.block_hash),
+            transaction_index=transaction_index,
+            transaction_hash=hex(event.transaction_hash),
+            timestamp=timestamp,
+            from_address=hex(event.from_address),
+            keys=tuple(hex(i) for i in event.keys),
+            data=tuple(hex(i) for i in event.data),
         )
 
 

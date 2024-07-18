@@ -44,6 +44,7 @@
 .. autoclass:: dipdup.config.tezos_head.TezosHeadIndexConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerOriginationPatternConfig
+.. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerSmartRollupCementPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerSmartRollupExecutePatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsHandlerTransactionPatternConfig
 .. autoclass:: dipdup.config.tezos_operations.TezosOperationsIndexConfig
@@ -59,5 +60,6 @@
 .. autoclass:: dipdup.config.starknet.StarknetIndexConfig
 .. autoclass:: dipdup.config.starknet_events.StarknetEventsHandlerConfig
 .. autoclass:: dipdup.config.starknet_events.StarknetEventsIndexConfig
+.. autoclass:: dipdup.config.starknet_node.StarknetNodeDatasourceConfig
 .. autoclass:: dipdup.config.starknet_subsquid.StarknetSubsquidDatasourceConfig
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig

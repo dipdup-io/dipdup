@@ -35,9 +35,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     Provides common interface for managing index state and switching between sync and realtime modes.
     """
 
-    message_type: MessageType
+    message_type: MessageType | None
 
-    def __init_subclass__(cls, message_type: MessageType) -> None:
+    def __init_subclass__(cls, message_type: MessageType | None = None) -> None:
         cls.message_type = message_type
         return super().__init_subclass__()
 

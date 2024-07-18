@@ -312,7 +312,6 @@ class TezosOperationsHandlerSmartRollupCementPatternConfig(TezosOperationsPatter
         return None
 
 
-
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosOperationsIndexConfig(TezosIndexConfig):
     """Operation index config

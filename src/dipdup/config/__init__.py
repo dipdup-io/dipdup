@@ -25,6 +25,7 @@ from abc import abstractmethod
 from collections import Counter
 from collections import defaultdict
 from contextlib import suppress
+from itertools import chain
 from pathlib import Path
 from pydoc import locate
 from types import NoneType
@@ -634,7 +635,7 @@ class AdvancedConfig:
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class DipDupConfig:
-    """Main indexer config
+    """DipDup project configuration file
 
     :param spec_version: Version of config specification, currently always `3.0`
     :param package: Name of indexer's Python package, existing or not
@@ -741,6 +742,59 @@ class DipDupConfig:
         config._json = config_json
         config._environment = config_environment
         return config
+
+    @classmethod
+    def json_schema(cls) -> dict[str, Any]:
+        schema_dict = TypeAdapter(cls).json_schema()
+
+        # NOTE: EVM addresses correctly parsed by Pydantic even if specified as integers
+        fixed_anyof = [
+            {'type': 'integer'},
+            {'type': 'string'},
+            {'type': 'null'},
+        ]
+        schema_dict['$defs']['EvmContractConfig']['properties']['address']['anyOf'] = fixed_anyof
+        schema_dict['$defs']['EvmContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
+        schema_dict['$defs']['StarknetContractConfig']['properties']['address']['anyOf'] = fixed_anyof
+        schema_dict['$defs']['StarknetContractConfig']['properties']['abi']['anyOf'] = fixed_anyof
+
+        # NOTE: Environment configs don't have package/spec_version fields, but can't be loaded directly anyway.
+        schema_dict['required'] = []
+
+        # NOTE: `from_` fields should be passed without underscore
+        fields_with_from = (
+            schema_dict['$defs']['EvmTransactionsHandlerConfig']['properties'],
+            schema_dict['$defs']['TezosTokenTransfersHandlerConfig']['properties'],
+        )
+        for fields in fields_with_from:
+            fields['from'] = fields.pop('from_')
+
+        # NOTE: Add description to the root schema; skipped by Pydantic for some reason
+        schema_dict['description'] = cls.__doc__
+
+        # NOTE: Extract param descriptions from the class docstrings and apply them to the schema
+        param_regex = r':param ([a-zA-Z_0-9]*): ([^\n]*)'
+        for def_dict in chain((schema_dict,), schema_dict['$defs'].values()):
+            if 'properties' not in def_dict:
+                continue
+            param_descriptions = {}
+            for match in re.finditer(param_regex, def_dict['description']):
+                key, value = match.group(1), match.group(2)
+                key = key if key != 'from_' else 'from'
+                param_descriptions[key] = value
+            def_dict['description'] = re.sub(param_regex, '', def_dict['description']).strip()
+            for field_name, field_dict in def_dict['properties'].items():
+                if field_name not in param_descriptions:
+                    err = f'Missing `:param` description for `{def_dict["title"]}.{field_name}`'
+                    raise ValueError(err)
+                field_dict['title'] = field_name
+                field_dict['description'] = param_descriptions[field_name]
+
+        # NOTE: Fix root title as a final step
+        schema_dict['title'] = 'DipDup'
+        schema_dict['$schema'] = 'http://json-schema.org/draft-07/schema#'
+
+        return schema_dict
 
     def get_contract(self, name: str) -> ContractConfig:
         try:
@@ -1128,6 +1182,7 @@ from dipdup.config.http import HttpDatasourceConfig
 from dipdup.config.ipfs import IpfsDatasourceConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.config.starknet_node import StarknetNodeDatasourceConfig
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
@@ -1156,6 +1211,7 @@ DatasourceConfigU = (
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
     | StarknetSubsquidDatasourceConfig
+    | StarknetNodeDatasourceConfig
 )
 TezosIndexConfigU = (
     TezosBigMapsIndexConfig

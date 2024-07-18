@@ -49,6 +49,7 @@ from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
+from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
@@ -486,9 +487,9 @@ class DipDupContext:
         """Get `evm` datasource by name"""
         return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, AbiEtherscanDatasource)  # type: ignore[return-value]
 
-    def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource:
+    def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
-        return self._get_datasource(name, StarknetSubsquidDatasource)
+        return self._get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name
