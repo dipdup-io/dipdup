@@ -577,7 +577,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     if not force:
         try:
-            assert sys.__stdin__.isatty()
+            assert sys.__stdin__.isatty()  # type: ignore[union-attr]
             click.confirm(
                 f"You're about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?",
                 abort=True,
