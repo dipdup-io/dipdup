@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [8.0.0b4] - 2024-07-20
 
 ### Added
 
@@ -1535,7 +1535,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0b3...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0b4...HEAD
+[8.0.0b4]: https://github.com/dipdup-io/dipdup/compare/8.0.0b3...8.0.0b4
 [8.0.0b3]: https://github.com/dipdup-io/dipdup/compare/8.0.0b2...8.0.0b3
 [7.5.8]: https://github.com/dipdup-io/dipdup/compare/7.5.7...7.5.8
 [8.0.0b2]: https://github.com/dipdup-io/dipdup/compare/8.0.0b1...8.0.0b2
