@@ -43,10 +43,10 @@ jobs:
         run: pdm sync
 
       - name: Run lint
-        run: pdm run lint
+        run: pdm run make lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
 
       - name: Run tests
-        run: pdm run test
+        run: pdm run make test
         env:
           NODE_API_KEY: ${{ secrets.ALCHEMY_KEY }}
