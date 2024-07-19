@@ -23,6 +23,7 @@ from dipdup.datasources import IndexDatasource
 from dipdup.datasources._web3 import create_web3_client
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
+from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
@@ -31,7 +32,6 @@ from dipdup.models.evm_node import EvmNodeLogsSubscription
 from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
 from dipdup.models.evm_node import EvmNodeSyncingSubscription
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.performance import metrics
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage

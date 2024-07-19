@@ -12,7 +12,7 @@ from dipdup.datasources import IndexDatasourceConfigT
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
-from dipdup.models.subsquid import AbstractSubsquidQuery
+from dipdup.models._subsquid import AbstractSubsquidQuery
 
 QueryT = TypeVar('QueryT', bound=AbstractSubsquidQuery)
 

@@ -14,9 +14,9 @@ from dipdup.indexes.evm_events.fetcher import EvmNodeEventFetcher
 from dipdup.indexes.evm_events.fetcher import EvmSubsquidEventFetcher
 from dipdup.indexes.evm_events.matcher import match_events
 from dipdup.models import RollbackMessage
+from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmEvent
 from dipdup.models.evm import EvmEventData
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmEventData, ...] | RollbackMessage
