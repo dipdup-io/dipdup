@@ -788,6 +788,10 @@ class DipDupConfig:
                 field_dict['title'] = field_name
                 field_dict['description'] = param_descriptions[field_name]
 
+                # NOTE: Don't duplicate single enum value in const fields
+                if 'const' in field_dict:
+                    field_dict.pop('enum', None)
+
         # NOTE: Fix root title as a final step
         schema_dict['title'] = 'DipDup'
         schema_dict['$schema'] = 'http://json-schema.org/draft-07/schema#'

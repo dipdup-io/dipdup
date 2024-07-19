@@ -6,9 +6,6 @@
       "properties": {
         "kind": {
           "const": "abi.etherscan",
-          "enum": [
-            "abi.etherscan"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'abi.etherscan'"
@@ -163,9 +160,6 @@
       "properties": {
         "kind": {
           "const": "coinbase",
-          "enum": [
-            "coinbase"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'coinbase'"
@@ -235,9 +229,6 @@
       "properties": {
         "kind": {
           "const": "evm",
-          "enum": [
-            "evm"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always `evm`"
@@ -335,9 +326,6 @@
       "properties": {
         "kind": {
           "const": "evm.events",
-          "enum": [
-            "evm.events"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always 'evm.events'"
@@ -398,9 +386,6 @@
       "properties": {
         "kind": {
           "const": "evm.node",
-          "enum": [
-            "evm.node"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always 'evm.node'"
@@ -456,9 +441,6 @@
       "properties": {
         "kind": {
           "const": "evm.subsquid",
-          "enum": [
-            "evm.subsquid"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'evm.subsquid'"
@@ -556,9 +538,6 @@
       "properties": {
         "kind": {
           "const": "evm.transactions",
-          "enum": [
-            "evm.transactions"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'evm.transactions'"
@@ -910,9 +889,6 @@
       "properties": {
         "kind": {
           "const": "http",
-          "enum": [
-            "http"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'http'"
@@ -983,9 +959,6 @@
       "properties": {
         "kind": {
           "const": "ipfs",
-          "enum": [
-            "ipfs"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'ipfs'"
@@ -1091,9 +1064,6 @@
         },
         "kind": {
           "const": "postgres",
-          "enum": [
-            "postgres"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'postgres'"
@@ -1289,9 +1259,6 @@
         },
         "kind": {
           "const": "sqlite",
-          "enum": [
-            "sqlite"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'sqlite'"
@@ -1315,9 +1282,6 @@
       "properties": {
         "kind": {
           "const": "starknet",
-          "enum": [
-            "starknet"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always `starknet`"
@@ -1415,9 +1379,6 @@
       "properties": {
         "kind": {
           "const": "starknet.events",
-          "enum": [
-            "starknet.events"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always 'starknet.events'"
@@ -1475,9 +1436,6 @@
       "properties": {
         "kind": {
           "const": "starknet.node",
-          "enum": [
-            "starknet.node"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always 'starknet.node'"
@@ -1533,9 +1491,6 @@
       "properties": {
         "kind": {
           "const": "starknet.subsquid",
-          "enum": [
-            "starknet.subsquid"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'starknet.subsquid'"
@@ -1607,9 +1562,6 @@
       "properties": {
         "kind": {
           "const": "tezos.big_maps",
-          "enum": [
-            "tezos.big_maps"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.big_maps'"
@@ -1674,9 +1626,6 @@
       "properties": {
         "kind": {
           "const": "tezos",
-          "enum": [
-            "tezos"
-          ],
           "title": "kind",
           "type": "string",
           "description": "Always `tezos`"
@@ -1771,9 +1720,6 @@
       "properties": {
         "kind": {
           "const": "tezos.events",
-          "enum": [
-            "tezos.events"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.events'"
@@ -1864,9 +1810,6 @@
       "properties": {
         "kind": {
           "const": "tezos.head",
-          "enum": [
-            "tezos.head"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.head'"
@@ -1957,9 +1900,6 @@
         "type": {
           "const": "origination",
           "default": "origination",
-          "enum": [
-            "origination"
-          ],
           "title": "type",
           "type": "string",
           "description": "always 'origination'"
@@ -2032,9 +1972,6 @@
         "type": {
           "const": "sr_cement",
           "default": "sr_cement",
-          "enum": [
-            "sr_cement"
-          ],
           "title": "type",
           "type": "string",
           "description": "always 'sr_cement'"
@@ -2101,9 +2038,6 @@
         "type": {
           "const": "sr_execute",
           "default": "sr_execute",
-          "enum": [
-            "sr_execute"
-          ],
           "title": "type",
           "type": "string",
           "description": "always 'sr_execute'"
@@ -2170,9 +2104,6 @@
         "type": {
           "const": "transaction",
           "default": "transaction",
-          "enum": [
-            "transaction"
-          ],
           "title": "type",
           "type": "string",
           "description": "always 'transaction'"
@@ -2266,9 +2197,6 @@
         },
         "kind": {
           "const": "tezos.operations",
-          "enum": [
-            "tezos.operations"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.operations'"
@@ -2334,9 +2262,6 @@
       "properties": {
         "kind": {
           "const": "tezos.operations_unfiltered",
-          "enum": [
-            "tezos.operations_unfiltered"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.operations_unfiltered'"
@@ -2444,9 +2369,6 @@
       "properties": {
         "kind": {
           "const": "tezos.token_balances",
-          "enum": [
-            "tezos.token_balances"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.token_balances'"
@@ -2578,9 +2500,6 @@
       "properties": {
         "kind": {
           "const": "tezos.token_transfers",
-          "enum": [
-            "tezos.token_transfers"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.token_transfers'"
@@ -2635,9 +2554,6 @@
       "properties": {
         "kind": {
           "const": "tezos.tzkt",
-          "enum": [
-            "tezos.tzkt"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tezos.tzkt'"
@@ -2692,9 +2608,6 @@
       "properties": {
         "kind": {
           "const": "tzip_metadata",
-          "enum": [
-            "tzip_metadata"
-          ],
           "title": "kind",
           "type": "string",
           "description": "always 'tzip_metadata'"
