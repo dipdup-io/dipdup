@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.0.0b3"
+version = "8.0.0b4"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -54,7 +54,7 @@ dependencies = [
     # NOTE: Core dependencies; keep pinned between major versions.
     "datamodel-code-generator~=0.25.7",
     "pydantic~=2.7",
-    "tortoise-orm==0.21.4",
+    "tortoise-orm==0.21.5",
     "web3~=6.19",
     #
     "aiohttp~=3.9",

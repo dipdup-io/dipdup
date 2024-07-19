@@ -143,7 +143,7 @@ def _process_storage(
                 return _process_storage(storage, arg_type, bigmap_diffs)
 
     # NOTE: Value is a bigmap pointer; apply diffs according to array type
-    if isinstance(storage, int) and type(storage) != storage_type:
+    if isinstance(storage, int) and type(storage) != storage_type:  # noqa: E721
         is_array = is_array_type(storage_type)
         storage = _apply_bigmap_diffs(storage, bigmap_diffs, is_array)
 
