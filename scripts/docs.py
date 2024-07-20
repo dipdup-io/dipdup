@@ -372,8 +372,8 @@ def check_links(source: Path, http: bool) -> None:
     if http:
         green_echo('=> Checking HTTP links')
 
-        for link in http_links:
-            green_echo(f'checking link `{link}`')
+        for i, link in enumerate(http_links):
+            green_echo(f'{i+1}/{len(http_links)}: checking link `{link}`')
             try:
                 res = subprocess.run(
                     ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', link),
@@ -385,6 +385,8 @@ def check_links(source: Path, http: bool) -> None:
                     raise subprocess.CalledProcessError(status_code, 'curl')
             except subprocess.CalledProcessError:
                 red_echo(f'broken http link: `{status_code}`')
+                if 'subscan' in link:
+                    print("Subscan is known to block curl, so it's probably fine.")
                 bad_http += 1
 
     _logger.info('_' * 80)
@@ -443,56 +445,67 @@ def dump_references() -> None:
         lines = from_.read_text().split('\n')
         out = '\n'.join(lines[REFERENCE_STRIP_HEAD_LINES:-REFERENCE_STRIP_TAIL_LINES]).strip(' \n')
 
-        # from: <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
-        # to: ## dipdup.config.DipDupConfig
+        # - <dt class="sig sig-object py" id="dipdup.config.DipDupConfig">
+        # + ## dipdup.config.DipDupConfig
         for match_ in re.finditer(r'<dt class="sig sig-object py" id="(.*)">', out):
             out = out.replace(match_.group(0), f'\n## {match_.group(1)}\n')
 
-        # from: <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
-        # to: # Enums
+        # - <h1>Enums<a class="headerlink" href="#enums" title="Link to this heading">¶</a></h1>
+        # + # Enums
         for match_ in re.finditer(
             r'<h(\d)>(.*)<a class="headerlink" href="#.*" title="Link to this heading">¶</a></h\d>', out
         ):
             level = int(match_.group(1))
             out = out.replace(match_.group(0), f'\n{"#" * level} {match_.group(2)}\n')
 
-        # from: <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
-        # to: none
+        # - <a class="headerlink" href="#dipdup.config.AbiDatasourceConfig" title="Link to this definition">¶</a>
+        # + none
         out = re.sub(r'<a class="headerlink" href="#.*" title="Link to this definition">¶</a>', '', out)
 
-        # from: <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
-        # to: <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        # - <a class="reference internal" href="#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # + <a class="reference internal" href="#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
         for match_ in re.finditer(r'<a class="reference internal" href="#([^ ]*)" title="([^ ]*)"', out):
             anchor = match_.group(2).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="#{anchor}" title="{match_.group(2)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
-        # from: <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
-        # to: <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
+        # - <a class="reference internal" href="config.html#dipdup.config.HttpConfig" title="dipdup.config.HttpConfig">
+        # + <a class="reference internal" href="config#dipdupconfighttpconfig" title="dipdup.config.HttpConfig">
         for match_ in re.finditer(r'<a class="reference internal" href="([^"]*).html#([^"]*)" title="([^"]*)"', out):
             anchor = match_.group(3).replace('.', '').lower()
             fixed_link = f'<a class="reference internal" href="{match_.group(1)}#{anchor}" title="{match_.group(3)}" target="_self"'
             out = out.replace(match_.group(0), fixed_link)
 
-        # from: <dt class="field-even">Return type<span class="colon">:</span></dt>
-        # to: <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
+        # - <dt class="field-even">Return type<span class="colon">:</span></dt>
+        # + <dt class="field-even" style="color: var(--txt-primary);">Return type<span class="colon">:</span></dt>
         for match_ in re.finditer(r'<dt class="field-even">(.*)<span class="colon">:</span></dt>', out):
             out = out.replace(
                 match_.group(0),
                 f'<dt class="field-even" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
             )
 
-        # from: <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-        # to: <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
+        # - <dt class="field-odd">Parameters<span class="colon">:</span></dt>
+        # + <dt class="field-odd" style="color: var(--txt-primary);">Parameters<span class="colon">:</span></dt>
         for match_ in re.finditer(r'<dt class="field-odd">(.*)<span class="colon">:</span></dt>', out):
             out = out.replace(
                 match_.group(0),
                 f'<dt class="field-odd" style="color: var(--txt-primary);">{match_.group(1)}<span class="colon">:</span></dt>',
             )
 
-        # from: <section id="dipdup-config-env">
-        # to: none
+        # - <section id="dipdup-config-env">
         out = re.sub(r'<section id=".*">', '', out)
+
+        # NOTE: Remove empty "*args" generated for `kw_only` dataclasses
+        if 'config' in page['md_path']:
+            template = '<em class="sig-param"><span class="{}"><span class="pre">*</span></span><span class="{}"><span class="pre">args</span></span></em>, '
+            for i, j in (
+                ('n', 'n'),
+                ('n', 'o'),
+                ('o', 'n'),
+                ('o', 'o'),
+            ):
+                out = out.replace(template.format(i, j), '')
+            out = out.replace('<li><p><strong>args</strong> (<em>Any</em>)</p></li>', '')
 
         header = REFERENCE_HEADER_TEMPLATE.format(**page)
         to.write_text(header + REFERENCE_MARKDOWNLINT_HINT + out)
@@ -598,6 +611,93 @@ def dump_demos() -> None:
     ]
 
     Path('docs/8.examples/_demos_table.md').write_text('\n'.join(lines))
+
+    # NOTE: Another fun script. Create a `launch.json` in the project root containing debug configurations for all demo projects.
+    green_echo('=> Dumping `launch.json`')
+    launch_json_path = Path('.vscode/launch.json')
+    launch_json = {
+        'version': '0.2.0',
+        'configurations': [],
+    }
+    for name, _, _ in demos:
+        for args in (
+            ('run',),
+            ('init',),
+        ):
+            launch_json['configurations'].append(  # type: ignore[attr-defined]
+                {
+                    'name': f'{name}: {" ".join(args)}',
+                    'type': 'debugpy',
+                    'request': 'launch',
+                    'module': 'dipdup',
+                    'args': ('-e', '.env', *args),
+                    'console': 'integratedTerminal',
+                    'cwd': '${workspaceFolder}/src/' + name,
+                    'env': {
+                        'DIPDUP_DEBUG': '1',
+                    },
+                }
+            )
+    launch_json_path.write_bytes(
+        orjson.dumps(
+            launch_json,
+            option=orjson.OPT_INDENT_2,
+        )
+    )
+
+
+@main.command('move-pages', help='Insert or remove pages in the ToC shifting page indexes')
+@click.option(
+    '--path',
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, resolve_path=True, path_type=Path),
+    help='docs/ directory path to use.',
+)
+@click.option('--insert', type=int, help='Page index to insert')
+@click.option('--pop', type=int, help='Page index to pop')
+def move_pages(path: Path, insert: int, pop: int) -> None:
+    files = list(path.glob('*.md'))
+    if not files:
+        red_echo('=> No pages found')
+        exit(1)
+
+    toc = {}
+    for file in files:
+        if not file.stem[0].isdigit():
+            continue
+
+        index = int(file.stem.split('.')[0])
+        if index in toc:
+            red_echo(f'=> Duplicate index {index}')
+            exit(1)
+        toc[index] = file
+
+    if insert:
+        for index in sorted(toc.keys(), reverse=True):
+            if index < insert:
+                break
+
+            file = toc[index]
+            new_name = path / f'{index + 1}.{file.name.split(".")[1]}.md'
+            file.rename(new_name)
+            toc[index + 1] = new_name
+
+        new_file = path / f'{insert}.md'
+        new_file.touch()
+        toc[insert] = new_file
+
+    if pop:
+        if pop not in toc:
+            red_echo(f'=> No page with index {pop}')
+            exit(1)
+        file = toc.pop(pop)
+        file.rename(path / f'_{file.name}')
+
+        for index in sorted(toc.keys()):
+            if index > pop:
+                file = toc.pop(index)
+                new_name = path / f'{index - 1}.{file.name.split(".")[1]}.md'
+                file.rename(new_name)
+                toc[index - 1] = new_name
 
 
 if __name__ == '__main__':

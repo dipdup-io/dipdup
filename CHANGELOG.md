@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.5.9] - 2024-07-20
 
 ### Fixed
 
@@ -1447,6 +1447,7 @@ This release contains no changes except for the version number.
 
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.8...HEAD
+[7.5.9]: https://github.com/dipdup-io/dipdup/compare/7.5.8...7.5.9
 [7.5.8]: https://github.com/dipdup-io/dipdup/compare/7.5.7...7.5.8
 [7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
 [7.5.6]: https://github.com/dipdup-io/dipdup/compare/7.5.5...7.5.6

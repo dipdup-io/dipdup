@@ -329,7 +329,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):
 
         # NOTE: A bug; raises "You should first call .save()..." otherwise
         models: list[MODEL] = await super()._execute()
-        for model in models:
+        for model in models:  # type: ignore[assignment]
             model._saved_in_db = True
         return models
 
