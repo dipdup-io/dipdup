@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 from abc import ABC
 from collections import defaultdict
@@ -15,7 +16,10 @@ EVM_NODE_READAHEAD_LIMIT = 5000
 MIN_BATCH_SIZE = 10
 MAX_BATCH_SIZE = 10000
 BATCH_SIZE_UP = 1.1
-BATCH_SIZE_DOWN = 0.5
+BATCH_SIZE_DOWN = 0.65
+
+
+_logger = logging.getLogger(__name__)
 
 
 class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
@@ -29,13 +33,16 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
         self._datasources = datasources
 
     def get_next_batch_size(self, batch_size: int, ratelimited: bool) -> int:
+        old_batch_size = batch_size
         if ratelimited:
             batch_size = int(batch_size * BATCH_SIZE_DOWN)
         else:
             batch_size = int(batch_size * BATCH_SIZE_UP)
 
         batch_size = min(MAX_BATCH_SIZE, batch_size)
-        batch_size = max(MIN_BATCH_SIZE, batch_size)
+        batch_size = int(max(MIN_BATCH_SIZE, batch_size))
+        if batch_size != old_batch_size:
+            _logger.debug('Batch size updated: %s -> %s', old_batch_size, batch_size)
         return int(batch_size)
 
     def get_random_node(self) -> EvmNodeDatasource:
@@ -74,16 +81,18 @@ class EvmNodeFetcher(Generic[FetcherBufferT], DataFetcher[FetcherBufferT], ABC):
         self,
         first_level: int,
         last_level: int,
+        addresses: set[str] | None = None,
         node: EvmNodeDatasource | None = None,
     ) -> dict[int, list[dict[str, Any]]]:
         grouped_logs: defaultdict[int, list[dict[str, Any]]] = defaultdict(list)
         node = node or self.get_random_node()
-        logs = await node.get_logs(
-            {
-                'fromBlock': hex(first_level),
-                'toBlock': hex(last_level),
-            },
-        )
+        params: dict[str, Any] = {
+            'fromBlock': hex(first_level),
+            'toBlock': hex(last_level),
+        }
+        if addresses:
+            params['address'] = list(addresses)
+        logs = await node.get_logs(params)
         for log in logs:
             grouped_logs[int(log['blockNumber'], 16)].append(log)
         return grouped_logs

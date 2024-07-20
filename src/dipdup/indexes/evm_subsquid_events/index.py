@@ -87,10 +87,22 @@ class SubsquidEventsIndex(
         )
 
     def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeEventFetcher:
+        if not self.node_datasources:
+            raise FrameworkException('Creating EvmNodeEventFetcher, but no `evm.node` datasources available')
+
+        addresses = set()
+        for handler_config in self._config.handlers:
+            if handler_config.contract.address:
+                addresses.add(handler_config.contract.address)
+            else:
+                addresses.clear()
+                break
+
         return EvmNodeEventFetcher(
             datasources=self.node_datasources,
             first_level=first_level,
             last_level=last_level,
+            addresses=addresses,
         )
 
     def _match_level_data(
