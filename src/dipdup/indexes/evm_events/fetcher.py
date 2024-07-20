@@ -36,6 +36,16 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
 class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
     _datasource: EvmNodeDatasource
 
+    def __init__(
+        self,
+        datasources: tuple[EvmNodeDatasource, ...],
+        first_level: int,
+        last_level: int,
+        addresses: set[str],
+    ) -> None:
+        super().__init__(datasources, first_level, last_level)
+        self._addresses = addresses
+
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmEventData, ...]]]:
         event_iter = self._fetch_by_level()
         async for level, batch in readahead_by_level(event_iter, limit=EVM_NODE_READAHEAD_LIMIT):
@@ -58,9 +68,10 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
                 self._last_level,
             )
             event_batch = await self.get_events_batch(
-                batch_first_level,
-                batch_last_level,
-                node,
+                first_level=batch_first_level,
+                last_level=batch_last_level,
+                addresses=self._addresses,
+                node=node,
             )
 
             finished = time.time()
