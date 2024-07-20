@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.0.0b3"
+version = "8.0.0b4"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -54,7 +54,7 @@ dependencies = [
     # NOTE: Core dependencies; keep pinned between major versions.
     "datamodel-code-generator~=0.25.7",
     "pydantic~=2.7",
-    "tortoise-orm==0.21.4",
+    "tortoise-orm==0.21.5",
     "web3~=6.19",
     #
     "aiohttp~=3.9",
@@ -121,24 +121,6 @@ docs = [
 perf = [
     "scalene",
 ]
-
-[tool.pdm.scripts]
-help = { cmd = "make", help = "Show this help (default)" }
-all = { cmd = "make all", help = "Run an entire CI pipeline" }
-format = { cmd = "make format", help = "Format with all tools" }
-lint = { cmd = "make lint", help = "Lint with all tools" }
-test = { cmd = "make test", help = "Run tests" }
-black = { cmd = "make black", help = "Format with black" }
-ruff = { cmd = "make ruff", help = "Lint with ruff" }
-mypy = { cmd = "make mypy", help = "Lint with mypy" }
-image = { cmd = "make image", help = "Build Docker image" }
-demos = { cmd = "make demos", help = "Recreate demo projects from templates" }
-docs_build = { cmd = "make docs_build", help = "Build docs" }
-docs_serve = { cmd = "make docs_serve", help = "Build docs and start frontend server" }
-docs_watch = { cmd = "make docs_watch", help = "Build docs and watch for changes" }
-fixme = { cmd = "make fixme", help = "Find FIXME and TODO comments" }
-update = { cmd = "make update", help = "Update dependencies and dump requirements.txt" }
-before_release = { cmd = "make before_release", help = "Prepare for a new release after updating version in pyproject.toml" }
 
 [tool.pdm.build.targets.wheel]
 packages = ["src/dipdup"]

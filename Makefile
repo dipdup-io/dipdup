@@ -98,7 +98,7 @@ before_release: ## Prepare for a new release after updating version in pyproject
 
 jsonschemas:    ## Dump config JSON schemas
 	python scripts/docs.py dump-jsonschema
-	git checkout current schema.json
+	git checkout origin/current schema.json
 	mv schema.json schemas/dipdup-2.0.json
 
 ##
