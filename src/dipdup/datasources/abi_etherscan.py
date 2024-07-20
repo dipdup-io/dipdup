@@ -15,6 +15,7 @@ class EtherscanDatasource(AbiDatasource[EtherscanDatasourceConfig]):
         ratelimit_rate=1,
         ratelimit_period=5,
         ratelimit_sleep=15,
+        retry_count=5,
     )
 
     async def run(self) -> None:
