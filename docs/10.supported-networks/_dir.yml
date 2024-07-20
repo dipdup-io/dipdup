@@ -1,5 +1,5 @@
 navigation.title: "Supported Networks"
-navigation.icon: "zap"
+navigation.icon: "link"
 navigation.subdir: true
 navigation.pin: true
 navigation.network: "ethereum"

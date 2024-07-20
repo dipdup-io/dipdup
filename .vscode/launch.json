@@ -1,0 +1,581 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "demo_blank: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_blank",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_blank: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_blank",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_evm_events: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_evm_events",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_evm_events: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_evm_events",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_evm_transactions: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_evm_transactions",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_evm_transactions: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_evm_transactions",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_uniswap: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_uniswap",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_uniswap: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_uniswap",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_auction: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_auction",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_auction: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_auction",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_big_maps: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_big_maps",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_big_maps: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_big_maps",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_dao: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_dao",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_dao: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_dao",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_dex: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_dex",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_dex: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_dex",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_domains: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_domains",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_domains: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_domains",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_etherlink: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_etherlink",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_etherlink: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_etherlink",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_events: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_events",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_events: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_events",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_factories: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_factories",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_factories: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_factories",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_head: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_head",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_head: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_head",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_nft_marketplace: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_nft_marketplace",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_nft_marketplace: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_nft_marketplace",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_raw: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_raw",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_raw: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_raw",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token_balances: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token_balances",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token_balances: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token_balances",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token_transfers: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token_transfers",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_token_transfers: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_token_transfers",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    }
+  ]
+}
