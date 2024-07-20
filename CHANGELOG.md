@@ -17,6 +17,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - evm.events: Improve fetching event batches from node.
 - models: Fixed `CachedModel` preloading.
 
+## [7.5.9] - 2024-07-20
+
+### Fixed
+
+- evm.events: Improve fetching event batches from node.
+- models: Fixed `CachedModel` preloading.
+
 ## [8.0.0b3] - 2024-07-04
 
 ### Added
