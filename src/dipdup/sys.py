@@ -55,7 +55,7 @@ def set_up_logging() -> None:
     root.addHandler(handler)
 
     # NOTE: Nothing useful there
-    logging.getLogger('tortoise').setLevel(logging.WARNING)
+    logging.getLogger('kleinmann').setLevel(logging.WARNING)
 
     if env.DEBUG:
         logging.getLogger('dipdup').setLevel(logging.DEBUG)

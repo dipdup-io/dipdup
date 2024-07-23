@@ -16,15 +16,15 @@ from typing import cast
 
 import asyncpg.exceptions  # type: ignore[import-untyped]
 import sqlparse  # type: ignore[import-untyped]
-from tortoise import Tortoise
-from tortoise.backends.asyncpg.client import AsyncpgDBClient
-from tortoise.backends.base.client import BaseDBAsyncClient
-from tortoise.backends.base.executor import EXECUTOR_CACHE
-from tortoise.backends.sqlite.client import SqliteClient
-from tortoise.connection import connections
-from tortoise.fields import DecimalField
-from tortoise.models import Model as TortoiseModel
-from tortoise.utils import get_schema_sql
+from kleinmann import Kleinmann
+from kleinmann.backends.asyncpg.client import AsyncpgDBClient
+from kleinmann.backends.base.client import BaseDBAsyncClient
+from kleinmann.backends.base.executor import EXECUTOR_CACHE
+from kleinmann.backends.sqlite.client import SqliteClient
+from kleinmann.connection import connections
+from kleinmann.fields import DecimalField
+from kleinmann.models import Model as KleinmannModel
+from kleinmann.utils import get_schema_sql
 
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
@@ -54,14 +54,14 @@ def set_connection(conn: SupportedClient) -> None:
 
 
 @asynccontextmanager
-async def tortoise_wrapper(
+async def kleinmann_wrapper(
     url: str,
     models: str | None = None,
     timeout: int = 60,
     decimal_precision: int | None = None,
     unsafe_sqlite: bool = False,
 ) -> AsyncIterator[None]:
-    """Initialize Tortoise with internal and project models, close connections when done"""
+    """Initialize Kleinmann with internal and project models, close connections when done"""
     if ':memory' in url:
         _logger.warning('Using in-memory database; data will be lost on exit')
     if '/tmp/' in url:
@@ -75,7 +75,7 @@ async def tortoise_wrapper(
             models += '.models'
         model_modules['models'] = [models]
 
-    # NOTE: Must be called before entering Tortoise context
+    # NOTE: Must be called before entering Kleinmann context
     decimal_precision = decimal_precision or guess_decimal_precision(models)
     set_decimal_precision(decimal_precision)
     prepare_models(models)
@@ -83,7 +83,7 @@ async def tortoise_wrapper(
     try:
         for attempt in range(timeout):
             try:
-                await Tortoise.init(
+                await Kleinmann.init(
                     db_url=url,
                     modules=model_modules,
                 )
@@ -110,7 +110,7 @@ async def tortoise_wrapper(
                 break
         yield
     finally:
-        await Tortoise.close_connections()
+        await Kleinmann.close_connections()
 
 
 from dipdup.models import CachedModel
@@ -118,20 +118,20 @@ from dipdup.models import Model
 
 
 def is_model_class(obj: Any) -> bool:
-    """Is subclass of tortoise.Model, but not the base class"""
+    """Is subclass of kleinmann.Model, but not the base class"""
 
     if not isinstance(obj, type):
         return False
-    if not issubclass(obj, TortoiseModel):
+    if not issubclass(obj, KleinmannModel):
         return False
-    if obj in (TortoiseModel, Model):
+    if obj in (KleinmannModel, Model):
         return False
     if obj._meta.abstract:
         return False
     return True
 
 
-def iter_models(package: str | None) -> Iterator[tuple[str, type[TortoiseModel]]]:
+def iter_models(package: str | None) -> Iterator[tuple[str, type[KleinmannModel]]]:
     """Iterate over built-in and project's models"""
     modules = [
         ('int_models', importlib.import_module('dipdup.models')),
@@ -195,10 +195,10 @@ async def generate_schema(
     name: str,
 ) -> None:
     if isinstance(conn, SqliteClient):
-        await Tortoise.generate_schemas()
+        await Kleinmann.generate_schemas()
     elif isinstance(conn, AsyncpgClient):
         await _pg_create_schema(conn, name)
-        await Tortoise.generate_schemas()
+        await Kleinmann.generate_schemas()
         await _pg_create_functions(conn)
         await _pg_create_views(conn)
     else:
@@ -334,7 +334,7 @@ async def _pg_move_table(conn: AsyncpgClient, name: str, schema: str, new_schema
 
 
 def prepare_models(package: str | None) -> None:
-    """Prepare TortoiseORM models to use with DipDup.
+    """Prepare KleinmannORM models to use with DipDup.
     Generate missing table names, validate models, increase decimal precision if needed.
     """
     # NOTE: Circular imports
@@ -353,12 +353,12 @@ def prepare_models(package: str | None) -> None:
                 (
                     'Project models must be subclassed from `dipdup.models.Model`.'
                     '\n\n'
-                    'Replace `from tortoise import Model` import with `from dipdup.models import Model`.'
+                    'Replace `from kleinmann import Model` import with `from dipdup.models import Model`.'
                 ),
                 model,
             )
 
-        # NOTE: Generate missing table names before Tortoise does
+        # NOTE: Generate missing table names before Kleinmann does
         if not model._meta.db_table:
             model._meta.db_table = pascal_to_snake(model.__name__)
 

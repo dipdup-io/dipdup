@@ -38,7 +38,7 @@ async def create_dummy_dipdup(
 
     - Create datasources without spawning them
     - Register system hooks
-    - Initialize Tortoise ORM and create schema
+    - Initialize Kleinmann ORM and create schema
 
     You need to enter `AsyncExitStack` context manager prior to calling this method.
     """

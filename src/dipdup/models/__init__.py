@@ -13,17 +13,17 @@ from typing import Self
 from typing import TypeVar
 from typing import cast
 
-import tortoise
-import tortoise.queryset
+import kleinmann
+import kleinmann.queryset
+from kleinmann.fields import relational
+from kleinmann.models import Model as KleinmannModel
+from kleinmann.queryset import BulkCreateQuery as KleinmannBulkCreateQuery
+from kleinmann.queryset import BulkUpdateQuery as KleinmannBulkUpdateQuery
+from kleinmann.queryset import DeleteQuery as KleinmannDeleteQuery
+from kleinmann.queryset import QuerySet as KleinmannQuerySet
+from kleinmann.queryset import UpdateQuery as KleinmannUpdateQuery
 from lru import LRU
 from pydantic.dataclasses import dataclass
-from tortoise.fields import relational
-from tortoise.models import Model as TortoiseModel
-from tortoise.queryset import BulkCreateQuery as TortoiseBulkCreateQuery
-from tortoise.queryset import BulkUpdateQuery as TortoiseBulkUpdateQuery
-from tortoise.queryset import DeleteQuery as TortoiseDeleteQuery
-from tortoise.queryset import QuerySet as TortoiseQuerySet
-from tortoise.queryset import UpdateQuery as TortoiseUpdateQuery
 
 from dipdup import env
 from dipdup import fields
@@ -34,15 +34,15 @@ if TYPE_CHECKING:
     from collections import deque
     from collections.abc import Iterable
 
-    from tortoise.backends.base.client import BaseDBAsyncClient
-    from tortoise.expressions import Q
-    from tortoise.filters import FilterInfoDict
+    from kleinmann.backends.base.client import BaseDBAsyncClient
+    from kleinmann.expressions import Q
+    from kleinmann.filters import FilterInfoDict
 
 _logger = logging.getLogger(__name__)
 
 
 # NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
-tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
+kleinmann.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 
 class IndexType(Enum):
@@ -152,7 +152,7 @@ class ModelUpdateAction(Enum):
     DELETE = 'DELETE'
 
 
-class ModelUpdate(TortoiseModel):
+class ModelUpdate(KleinmannModel):
     """Model update created within versioned transactions"""
 
     model_name = fields.TextField()
@@ -197,7 +197,7 @@ class ModelUpdate(TortoiseModel):
             data=data,
         )
 
-    async def revert(self, model: type[TortoiseModel]) -> None:
+    async def revert(self, model: type[KleinmannModel]) -> None:
         """Revert a single model update"""
         data = copy(self.data)
         # NOTE: Deserialize non-JSON types
@@ -232,19 +232,19 @@ class ModelUpdate(TortoiseModel):
         )
         # NOTE: Do not version rollbacks, use unpatched querysets
         if self.action == ModelUpdateAction.INSERT:
-            await TortoiseQuerySet(model).filter(pk=self.model_pk).delete()
+            await KleinmannQuerySet(model).filter(pk=self.model_pk).delete()
         elif self.action == ModelUpdateAction.UPDATE:
-            await TortoiseQuerySet(model).filter(pk=self.model_pk).update(**data)
+            await KleinmannQuerySet(model).filter(pk=self.model_pk).update(**data)
         elif self.action == ModelUpdateAction.DELETE:
             await model.create(**data)
 
         await self.delete()
 
 
-class UpdateQuery(TortoiseUpdateQuery):
+class UpdateQuery(KleinmannUpdateQuery):
     def __init__(
         self,
-        model: type[TortoiseModel],
+        model: type[KleinmannModel],
         update_kwargs: dict[str, Any],
         db: BaseDBAsyncClient,
         q_objects: list[Q],
@@ -252,7 +252,7 @@ class UpdateQuery(TortoiseUpdateQuery):
         custom_filters: dict[str, FilterInfoDict],
         limit: int | None,
         orderings: list[tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
+        filter_queryset: KleinmannQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(
             model,
@@ -281,17 +281,17 @@ class UpdateQuery(TortoiseUpdateQuery):
         return await super()._execute()
 
 
-class DeleteQuery(TortoiseDeleteQuery):
+class DeleteQuery(KleinmannDeleteQuery):
     def __init__(
         self,
-        model: type[TortoiseModel],
+        model: type[KleinmannModel],
         db: BaseDBAsyncClient,
         q_objects: list[Q],
         annotations: dict[str, Any],
         custom_filters: dict[str, FilterInfoDict],
         limit: int | None,
         orderings: list[tuple[str, str]],
-        filter_queryset: TortoiseQuerySet,  # type: ignore[type-arg]
+        filter_queryset: KleinmannQuerySet,  # type: ignore[type-arg]
     ) -> None:
         super().__init__(model, db, q_objects, annotations, custom_filters, limit, orderings)
         self.filter_queryset = filter_queryset
@@ -308,7 +308,7 @@ class DeleteQuery(TortoiseDeleteQuery):
         return await super()._execute()
 
 
-class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
+class BulkUpdateQuery(KleinmannBulkUpdateQuery):  # type: ignore[type-arg]
     async def _execute(self) -> int:
         for model in self.objects:
             if update := ModelUpdate.from_model(
@@ -320,7 +320,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
         return await super()._execute()
 
 
-class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
+class BulkCreateQuery(KleinmannBulkCreateQuery):  # type: ignore[type-arg]
     async def _execute(self) -> None:
         for model in self.objects:
             if update := ModelUpdate.from_model(
@@ -336,7 +336,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
             model._saved_in_db = True
 
 
-class QuerySet(TortoiseQuerySet):  # type: ignore[type-arg]
+class QuerySet(KleinmannQuerySet):  # type: ignore[type-arg]
     def update(self, **kwargs: Any) -> UpdateQuery:
         return UpdateQuery(
             db=self._db,
@@ -388,7 +388,7 @@ def get_versioned_fields(model: type[Model]) -> frozenset[str]:
     return frozenset(field_names)
 
 
-class Model(TortoiseModel):
+class Model(KleinmannModel):
     """Base class for DipDup project models"""
 
     def __init__(self, **kwargs: Any) -> None:
@@ -420,7 +420,7 @@ class Model(TortoiseModel):
                 data[key] = value
         return data
 
-    # NOTE: Do not touch docstrings below this line to preserve Tortoise ones
+    # NOTE: Do not touch docstrings below this line to preserve Kleinmann ones
     async def delete(
         self,
         using_db: BaseDBAsyncClient | None = None,
@@ -449,7 +449,7 @@ class Model(TortoiseModel):
             get_pending_updates().append(update)
 
     @classmethod
-    def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:  # type: ignore[type-arg]
+    def filter(cls, *args: Any, **kwargs: Any) -> KleinmannQuerySet:  # type: ignore[type-arg]
         return QuerySet(cls).filter(*args, **kwargs)
 
     @classmethod
@@ -605,7 +605,7 @@ ModelT = TypeVar('ModelT', bound=Model)
 # ===> Built-in Models (not versioned)
 
 
-class Schema(TortoiseModel):
+class Schema(KleinmannModel):
     name = fields.TextField(primary_key=True)
     hash = fields.TextField(null=True)
     reindex = fields.EnumField(ReindexingReason, null=True)
@@ -617,7 +617,7 @@ class Schema(TortoiseModel):
         table = 'dipdup_schema'
 
 
-class Head(TortoiseModel):
+class Head(KleinmannModel):
     name = fields.TextField(primary_key=True)
     level = fields.IntField()
     hash = fields.TextField(null=True)
@@ -630,7 +630,7 @@ class Head(TortoiseModel):
         table = 'dipdup_head'
 
 
-class Index(TortoiseModel):
+class Index(KleinmannModel):
     name = fields.TextField(primary_key=True)
     type = fields.EnumField(IndexType)
     status = fields.EnumField(IndexStatus, default=IndexStatus.new)
@@ -656,7 +656,7 @@ class ContractKind(Enum):
     starknet = 'starknet'
 
 
-class Contract(TortoiseModel):
+class Contract(KleinmannModel):
     name = fields.TextField(primary_key=True)
     address = fields.TextField(null=True)
     code_hash = fields.BigIntField(null=True)
@@ -670,7 +670,7 @@ class Contract(TortoiseModel):
         table = 'dipdup_contract'
 
 
-class Meta(TortoiseModel):
+class Meta(KleinmannModel):
     key = fields.TextField(primary_key=True)
     value = fields.JSONField(encoder=json_dumps_plain, null=True)
 

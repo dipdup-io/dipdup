@@ -18,7 +18,7 @@ from copy import copy
 from typing import TYPE_CHECKING
 from typing import Any
 
-from tortoise.exceptions import OperationalError
+from kleinmann.exceptions import OperationalError
 
 from dipdup import env
 from dipdup.codegen import CodeGenerator
@@ -35,8 +35,8 @@ from dipdup.context import MetadataCursor
 from dipdup.database import generate_schema
 from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
+from dipdup.database import kleinmann_wrapper
 from dipdup.database import preload_cached_models
-from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources import create_datasource
@@ -755,7 +755,7 @@ class DipDup:
     async def _set_up_database(self, stack: AsyncExitStack) -> None:
         _logger.info('Setting up database')
         await stack.enter_async_context(
-            tortoise_wrapper(
+            kleinmann_wrapper(
                 url=self._config.database.connection_string,
                 models=self._config.package,
                 timeout=self._config.database.connection_timeout,

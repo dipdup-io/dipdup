@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 if TYPE_CHECKING:
-    from tortoise.models import Model
+    from kleinmann.models import Model
 
     from dipdup.models import ReindexingReason
 

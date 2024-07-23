@@ -7,12 +7,12 @@ import orjson as json
 import pytest
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
-from tortoise import Tortoise
+from kleinmann import Kleinmann
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.database import tortoise_wrapper
+from dipdup.database import kleinmann_wrapper
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.models import ReindexingAction
@@ -74,6 +74,6 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
 
     with pytest.raises(UnsupportedAPIError):
         async with hasura_gateway:
-            async with tortoise_wrapper('sqlite://:memory:', 'demo_tezos_nft_marketplace.models'):
-                await Tortoise.generate_schemas()
+            async with kleinmann_wrapper('sqlite://:memory:', 'demo_tezos_nft_marketplace.models'):
+                await Kleinmann.generate_schemas()
                 await hasura_gateway.configure()

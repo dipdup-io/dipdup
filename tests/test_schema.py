@@ -3,7 +3,7 @@ from contextlib import AsyncExitStack
 
 from dipdup.database import get_connection
 from dipdup.database import get_tables
-from dipdup.database import tortoise_wrapper
+from dipdup.database import kleinmann_wrapper
 from dipdup.test import run_in_tmp
 from dipdup.test import run_postgres_container
 from dipdup.test import tmp_project
@@ -35,19 +35,19 @@ async def test_schema_sqlite() -> None:
             ),
         )
 
-        def tortoise() -> AbstractAsyncContextManager[None]:
-            return tortoise_wrapper(
+        def kleinmann() -> AbstractAsyncContextManager[None]:
+            return kleinmann_wrapper(
                 f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry', 'sqlite_sequence'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
@@ -62,7 +62,7 @@ async def test_schema_sqlite() -> None:
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == set()
 
@@ -81,19 +81,19 @@ async def test_schema_sqlite_immune() -> None:
             ),
         )
 
-        def tortoise() -> AbstractAsyncContextManager[None]:
-            return tortoise_wrapper(
+        def kleinmann() -> AbstractAsyncContextManager[None]:
+            return kleinmann_wrapper(
                 f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry', 'sqlite_sequence'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
@@ -108,7 +108,7 @@ async def test_schema_sqlite_immune() -> None:
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == {'dipdup_meta', 'test', 'domain', 'tld'}
 
@@ -129,19 +129,19 @@ async def test_schema_postgres() -> None:
             ),
         )
 
-        def tortoise() -> AbstractAsyncContextManager[None]:
-            return tortoise_wrapper(
+        def kleinmann() -> AbstractAsyncContextManager[None]:
+            return kleinmann_wrapper(
                 database_config.connection_string,
                 f'{package}.models',
             )
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
@@ -149,7 +149,7 @@ async def test_schema_postgres() -> None:
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == {'dipdup_meta'}
 
@@ -170,19 +170,19 @@ async def test_schema_postgres_immune() -> None:
             ),
         )
 
-        def tortoise() -> AbstractAsyncContextManager[None]:
-            return tortoise_wrapper(
+        def kleinmann() -> AbstractAsyncContextManager[None]:
+            return kleinmann_wrapper(
                 database_config.connection_string,
                 f'{package}.models',
             )
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == set()
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'init')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
@@ -190,6 +190,6 @@ async def test_schema_postgres_immune() -> None:
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
-        async with tortoise():
+        async with kleinmann():
             conn = get_connection()
             assert await get_tables() == {'dipdup_meta', 'test', 'domain', 'tld'}

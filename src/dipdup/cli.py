@@ -477,7 +477,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
     """Configure Hasura GraphQL Engine to use with DipDup."""
     from dipdup.config import DipDupConfig
     from dipdup.config import PostgresDatabaseConfig
-    from dipdup.database import tortoise_wrapper
+    from dipdup.database import kleinmann_wrapper
     from dipdup.exceptions import ConfigurationError
     from dipdup.hasura import HasuraGateway
 
@@ -492,7 +492,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 
     async with AsyncExitStack() as stack:
         await stack.enter_async_context(
-            tortoise_wrapper(
+            kleinmann_wrapper(
                 url=config.database.connection_string,
                 models=config.package,
                 timeout=config.database.connection_timeout,
@@ -517,7 +517,7 @@ async def schema(ctx: click.Context) -> None:
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
 
-    from dipdup.database import tortoise_wrapper
+    from dipdup.database import kleinmann_wrapper
     from dipdup.models import Index
     from dipdup.models import Schema
 
@@ -527,7 +527,7 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Approving schema `%s`', url)
 
-    async with tortoise_wrapper(
+    async with kleinmann_wrapper(
         url=url,
         models=models,
         timeout=config.database.connection_timeout,
@@ -591,10 +591,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     _logger.info('Wiping schema `%s`', url)
 
     from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
+    from dipdup.database import kleinmann_wrapper
     from dipdup.database import wipe_schema
 
-    async with tortoise_wrapper(
+    async with kleinmann_wrapper(
         url=url,
         models=models,
         timeout=config.database.connection_timeout,
@@ -659,11 +659,11 @@ async def schema_export(ctx: click.Context) -> None:
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
 
-    from tortoise.utils import get_schema_sql
+    from kleinmann.utils import get_schema_sql
 
     from dipdup import env
     from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
+    from dipdup.database import kleinmann_wrapper
     from dipdup.utils import iter_files
 
     config: DipDupConfig = ctx.obj.config
@@ -671,7 +671,7 @@ async def schema_export(ctx: click.Context) -> None:
     models = f'{config.package}.models'
     package_path = env.get_package_path(config.package)
 
-    async with tortoise_wrapper(
+    async with kleinmann_wrapper(
         url=url,
         models=models,
         timeout=config.database.connection_timeout,
