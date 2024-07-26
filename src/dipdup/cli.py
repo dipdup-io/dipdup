@@ -60,13 +60,6 @@ NO_CONFIG_CMDS = {
     'migrate',
     'config',
 }
-# NOTE: Our signal handler conflicts with Click's one in prompt mode
-NO_SIGNALS_CMDS = {
-    *NO_CONFIG_CMDS,
-    None,
-    'schema',
-    'wipe',
-}
 
 
 _logger = logging.getLogger(__name__)
@@ -207,8 +200,7 @@ def _skip_cli_group() -> bool:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
-    set_up_process(signals)
+    set_up_process()
 
     if _skip_cli_group():
         return

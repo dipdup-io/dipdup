@@ -48,7 +48,7 @@ def fire_and_forget(aw: Awaitable[Any]) -> None:
     future.add_done_callback(lambda _: _futures.remove(future))
 
 
-def set_up_process(signals: bool) -> None:
+def set_up_process() -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
     if env.TEST:
