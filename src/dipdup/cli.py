@@ -3,8 +3,8 @@ import asyncio
 import atexit
 import logging
 import sys
-from collections.abc import Awaitable
 from collections.abc import Callable
+from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
@@ -15,7 +15,8 @@ from typing import Any
 from typing import TypeVar
 from typing import cast
 
-import asyncclick as click
+import click
+import uvloop
 
 from dipdup import __version__
 from dipdup import env
@@ -103,7 +104,7 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
     atexit.register(_print)
 
 
-WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Coroutine[Any, Any, None]])
 
 
 @dataclass
@@ -114,12 +115,9 @@ class CLIContext:
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
-    async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
-        set_up_process(signals)
-
+    def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
         try:
-            await fn(ctx, *args, **kwargs)
+            uvloop.run(fn(ctx, *args, **kwargs))
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
@@ -209,6 +207,9 @@ def _skip_cli_group() -> bool:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
+    signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
+    set_up_process(signals)
+
     if _skip_cli_group():
         return
 

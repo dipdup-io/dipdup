@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## [Unreleased]
+
+### Other
+
+- deps: Use `uvloop` to improve asyncio performance.
+
 ## [8.0.0b4] - 2024-07-20
 
 ### Added
