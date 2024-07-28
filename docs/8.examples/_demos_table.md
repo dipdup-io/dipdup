@@ -2,6 +2,7 @@
 | name | network | description | source |
 |-|-|-|-|
 | demo_blank |  | Empty config for a fresh start | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0b3/src/demo_blank) |
+| demo_squid_cloud |  | Deploying DipDup to Squid Cloud | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0b3/src/demo_squid_cloud) |
 | demo_evm_events | EVM | ERC-20 token transfers (from event logs) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0b3/src/demo_evm_events) |
 | demo_evm_transactions | EVM | ERC-20 token transfers (from transactions) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0b3/src/demo_evm_transactions) |
 | demo_evm_uniswap | EVM | Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0b3/src/demo_evm_uniswap) |

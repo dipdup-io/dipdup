@@ -34,6 +34,38 @@
       }
     },
     {
+      "name": "demo_squid_cloud: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_squid_cloud",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_squid_cloud: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_squid_cloud",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
       "name": "demo_evm_events: run",
       "type": "debugpy",
       "request": "launch",

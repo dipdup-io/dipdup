@@ -52,7 +52,10 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_token_transfers',
     ),
     'starknet': ('demo_starknet_events',),
-    'other': ('demo_blank',),
+    'other': (
+        'demo_blank',
+        'demo_squid_cloud',
+    ),
 }
 
 # TODO: demo_jobs
@@ -367,10 +370,17 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
     if output_path.exists() and not force:
         _logger.info('File `%s` already exists, skipping', output_path)
 
+    class Secrets:
+        """Helper for secrets in `squid.yaml`"""
+
+        def __getattr__(self, name: str) -> str:
+            return '{{ secrets.' + name + ' }}'
+
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
     content = template.render(
         project={k: str(v) for k, v in answers.items()},
         header=CODEGEN_HEADER,
+        secrets=Secrets() if template_path.name == 'squid.yaml.j2' else None,
     )
     write(output_path, content, overwrite=force)

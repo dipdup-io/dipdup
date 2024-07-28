@@ -1,0 +1,22 @@
+manifestVersion: subsquid.io/v0.1
+name: {{ project.package }}
+version: 1
+description: {{ project.description }}
+build:
+deploy:
+  env: 
+    HASURA_GRAPHQL_ADMIN_SECRET: "${{ secrets.HASURA_SECRET }}"
+    HASURA_GRAPHQL_UNAUTHORIZED_ROLE: user
+    HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+    # SENTRY_DSN: "${{ secrets.SENTRY_DSN }}"
+    # NODE_API_KEY: "${{ secrets.NODE_API_KEY }}"
+    #
+    # Only for free tier
+    DIPDUP_LOW_MEMORY: "1"
+  addons:
+    postgres:
+    hasura:
+  processor:
+    cmd: ["dipdup", "-c", "dipdup.yaml", "-c", "configs/dipdup.squid-cloud.yaml", "run"]
+  init:
+    cmd: ["echo", "dipdup"]
