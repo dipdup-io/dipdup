@@ -1,0 +1,12 @@
+datasources:
+  subsquid:
+    kind: evm.subsquid
+    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+  etherscan:
+    kind: abi.etherscan
+    url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
+    api_key: ${ETHERSCAN_API_KEY:-''}
+  evm_node:
+    kind: evm.node
+    url: ${NODE_URL:-https://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+    ws_url: ${NODE_WS_URL:-wss://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
