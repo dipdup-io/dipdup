@@ -1,3 +1,4 @@
+import os
 from collections.abc import Awaitable
 from collections.abc import Callable
 from contextlib import AsyncExitStack
@@ -218,16 +219,16 @@ test_params = (
     ('demo_tezos_events.yml', 'demo_tezos_events', 'init', None),
     ('demo_tezos_raw.yml', 'demo_tezos_raw', 'run', assert_run_raw),
     ('demo_tezos_raw.yml', 'demo_tezos_raw', 'init', None),
-    ('demo_evm_events.yml', 'demo_evm_events', 'run', assert_run_evm_events),
-    ('demo_evm_events.yml', 'demo_evm_events', 'init', None),
-    ('demo_evm_transactions.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
-    ('demo_evm_transactions.yml', 'demo_evm_transactions', 'init', None),
+    ('demo_evm_events.yml:test_evm.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_events.yml:test_evm.yml', 'demo_evm_events', 'init', None),
+    ('demo_evm_transactions.yml:test_evm.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
+    ('demo_evm_transactions.yml:test_evm.yml', 'demo_evm_transactions', 'init', None),
     # FIXME: nairobinet is dead
     # ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'run', None),
     # ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'init', None),
     # NOTE: Indexes with `evm.node` as index datasource
-    ('demo_evm_events_node.yml', 'demo_evm_events', 'run', assert_run_evm_events),
-    ('demo_evm_transactions_node.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
+    ('demo_evm_events_node.yml:test_evm.yml', 'demo_evm_events', 'run', assert_run_evm_events),
+    ('demo_evm_transactions_node.yml:test_evm.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Smoke tests for small tools.
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'env', '--compose', '--internal'), None),
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'export', '--full'), None),
@@ -245,13 +246,18 @@ async def test_run_init(
     cmd: str | tuple[str, ...],
     assert_fn: Callable[[], Awaitable[None]] | None,
 ) -> None:
-    config_path = TEST_CONFIGS / config
-    env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
+    config_paths = []
+    for path in config.split(':'):
+        config_paths.append(TEST_CONFIGS / path)
+    config_paths.append(TEST_CONFIGS / 'test_sqlite.yaml')
+
+    if 'evm' in config and not {'NODE_API_KEY', 'ETHERSCAN_API_KEY'} <= set(os.environ):
+        pytest.skip('EVM tests require NODE_API_KEY and ETHERSCAN_API_KEY environment variables')
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
-                [config_path, env_config_path],
+                config_paths,
                 package,
                 exists=cmd != 'init',
             ),
