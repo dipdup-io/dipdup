@@ -7,7 +7,7 @@ from functools import partial
 
 import pytest
 
-from dipdup.database import tortoise_wrapper
+from dipdup.database import kleinmann_wrapper
 from dipdup.models.tezos import TezosOperationType
 from dipdup.test import run_in_tmp
 from dipdup.test import tmp_project
@@ -94,7 +94,7 @@ async def assert_init(package: str) -> None:
 
 async def assert_run_dex() -> None:
     import demo_tezos_dex.models
-    from tortoise.transactions import in_transaction
+    from kleinmann.transactions import in_transaction
 
     trades = await demo_tezos_dex.models.Trade.filter().count()
     positions = await demo_tezos_dex.models.Position.filter().count()
@@ -267,7 +267,7 @@ async def test_run_init(
             return
 
         await stack.enter_async_context(
-            tortoise_wrapper(
+            kleinmann_wrapper(
                 f'sqlite://{tmp_package_path}/db.sqlite3',
                 f'{package}.models',
             )

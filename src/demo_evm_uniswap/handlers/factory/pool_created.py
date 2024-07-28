@@ -8,7 +8,7 @@ from demo_evm_uniswap.types.factory.evm_events.pool_created import PoolCreatedPa
 from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
-from tortoise.exceptions import OperationalError
+from kleinmann.exceptions import OperationalError
 
 POOL_BLACKLIST = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'

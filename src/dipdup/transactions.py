@@ -2,7 +2,7 @@ from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from tortoise.transactions import in_transaction
+from kleinmann.transactions import in_transaction
 
 import dipdup.models
 from dipdup.database import get_connection

@@ -4,7 +4,7 @@ from demo_evm_events import models as models
 from demo_evm_events.types.eth_usdt.evm_events.transfer import TransferPayload
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
-from tortoise.exceptions import DoesNotExist
+from kleinmann.exceptions import DoesNotExist
 
 
 async def on_transfer(

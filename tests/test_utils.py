@@ -1,10 +1,10 @@
 from contextlib import suppress
 
+from kleinmann import Kleinmann
 from pytest import raises
-from tortoise import Tortoise
 
 from dipdup.database import iter_models
-from dipdup.database import tortoise_wrapper
+from dipdup.database import kleinmann_wrapper
 from dipdup.exceptions import FrameworkException
 from dipdup.models import Index
 from dipdup.models import IndexType
@@ -23,8 +23,8 @@ class SomeException(Exception): ...
 
 async def test_in_global_transaction() -> None:
     transactions = TransactionManager()
-    async with tortoise_wrapper('sqlite://:memory:'):
-        await Tortoise.generate_schemas()
+    async with kleinmann_wrapper('sqlite://:memory:'):
+        await Kleinmann.generate_schemas()
 
         # 1. Success query without transaction
         await Index(name='1', type=IndexType.tezos_operations, config_hash='').save()

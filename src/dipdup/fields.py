@@ -9,45 +9,45 @@ from typing import Any
 from typing import TypeVar
 
 import orjson
-from tortoise.exceptions import ConfigurationError as TortoiseConfigurationError
-from tortoise.fields import relational as relational
-from tortoise.fields.base import CASCADE as CASCADE
-from tortoise.fields.base import NO_ACTION as NO_ACTION
-from tortoise.fields.base import RESTRICT as RESTRICT
-from tortoise.fields.base import SET_DEFAULT as SET_DEFAULT
-from tortoise.fields.base import SET_NULL as SET_NULL
-from tortoise.fields.base import Field as Field
-from tortoise.fields.data import BigIntField as BigIntField
-from tortoise.fields.data import BinaryField as BinaryField
-from tortoise.fields.data import BooleanField as BooleanField
-from tortoise.fields.data import CharField as CharField
-from tortoise.fields.data import DateField as DateField
-from tortoise.fields.data import DatetimeField as DatetimeField
-from tortoise.fields.data import FloatField as FloatField
-from tortoise.fields.data import IntEnumFieldInstance as IntEnumFieldInstance
-from tortoise.fields.data import IntField as IntField
-from tortoise.fields.data import JSONField as JSONField
-from tortoise.fields.data import SmallIntField as SmallIntField
-from tortoise.fields.data import TimeDeltaField as TimeDeltaField
-from tortoise.fields.data import TimeField as TimeField
-from tortoise.fields.data import UUIDField as UUIDField
-from tortoise.fields.relational import BackwardFKRelation as BackwardFKRelation
-from tortoise.fields.relational import BackwardOneToOneRelation as BackwardOneToOneRelation
-from tortoise.fields.relational import ForeignKeyFieldInstance as ForeignKeyFieldInstance
-from tortoise.fields.relational import ForeignKeyNullableRelation as ForeignKeyNullableRelation
-from tortoise.fields.relational import ForeignKeyRelation as ForeignKeyRelation
-from tortoise.fields.relational import ManyToManyFieldInstance as ManyToManyFieldInstance
-from tortoise.fields.relational import ManyToManyRelation as ManyToManyRelation
-from tortoise.fields.relational import OneToOneField as OneToOneField
-from tortoise.fields.relational import OneToOneNullableRelation as OneToOneNullableRelation
-from tortoise.fields.relational import OneToOneRelation as OneToOneRelation
-from tortoise.fields.relational import ReverseRelation as ReverseRelation
+from kleinmann.exceptions import ConfigurationError as KleinmannConfigurationError
+from kleinmann.fields import relational as relational
+from kleinmann.fields.base import CASCADE as CASCADE
+from kleinmann.fields.base import NO_ACTION as NO_ACTION
+from kleinmann.fields.base import RESTRICT as RESTRICT
+from kleinmann.fields.base import SET_DEFAULT as SET_DEFAULT
+from kleinmann.fields.base import SET_NULL as SET_NULL
+from kleinmann.fields.base import Field as Field
+from kleinmann.fields.data import BigIntField as BigIntField
+from kleinmann.fields.data import BinaryField as BinaryField
+from kleinmann.fields.data import BooleanField as BooleanField
+from kleinmann.fields.data import CharField as CharField
+from kleinmann.fields.data import DateField as DateField
+from kleinmann.fields.data import DatetimeField as DatetimeField
+from kleinmann.fields.data import FloatField as FloatField
+from kleinmann.fields.data import IntEnumFieldInstance as IntEnumFieldInstance
+from kleinmann.fields.data import IntField as IntField
+from kleinmann.fields.data import JSONField as JSONField
+from kleinmann.fields.data import SmallIntField as SmallIntField
+from kleinmann.fields.data import TimeDeltaField as TimeDeltaField
+from kleinmann.fields.data import TimeField as TimeField
+from kleinmann.fields.data import UUIDField as UUIDField
+from kleinmann.fields.relational import BackwardFKRelation as BackwardFKRelation
+from kleinmann.fields.relational import BackwardOneToOneRelation as BackwardOneToOneRelation
+from kleinmann.fields.relational import ForeignKeyFieldInstance as ForeignKeyFieldInstance
+from kleinmann.fields.relational import ForeignKeyNullableRelation as ForeignKeyNullableRelation
+from kleinmann.fields.relational import ForeignKeyRelation as ForeignKeyRelation
+from kleinmann.fields.relational import ManyToManyFieldInstance as ManyToManyFieldInstance
+from kleinmann.fields.relational import ManyToManyRelation as ManyToManyRelation
+from kleinmann.fields.relational import OneToOneField as OneToOneField
+from kleinmann.fields.relational import OneToOneNullableRelation as OneToOneNullableRelation
+from kleinmann.fields.relational import OneToOneRelation as OneToOneRelation
+from kleinmann.fields.relational import ReverseRelation as ReverseRelation
 
 from dipdup import fields
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
-    from tortoise.models import Model as _TortoiseModel
+    from kleinmann.models import Model as _KleinmannModel
 
 IntEnumField = IntEnumFieldInstance
 ForeignKeyField = ForeignKeyFieldInstance
@@ -73,7 +73,7 @@ class EnumField(fields.Field[_EnumFieldT]):
     def to_db_value(
         self,
         value: Enum | str | None,
-        instance: type[_TortoiseModel] | _TortoiseModel,
+        instance: type[_KleinmannModel] | _KleinmannModel,
     ) -> str | None:
         if isinstance(value, self.enum_type):
             return value.value  # type: ignore[no-any-return]
@@ -103,7 +103,7 @@ class ArrayField(Field[list[str]]):
     def to_db_value(
         self,
         value: list[str],
-        instance: type[_TortoiseModel] | _TortoiseModel,
+        instance: type[_KleinmannModel] | _KleinmannModel,
     ) -> str | None:
         return orjson.dumps(value).decode()
 
@@ -130,9 +130,9 @@ class DecimalField(Field[Decimal], Decimal):
 
     def __init__(self, max_digits: int, decimal_places: int, **kwargs: Any) -> None:
         if int(max_digits) < 1:
-            raise TortoiseConfigurationError("'max_digits' must be >= 1")
+            raise KleinmannConfigurationError("'max_digits' must be >= 1")
         if int(decimal_places) < 0:
-            raise TortoiseConfigurationError("'decimal_places' must be >= 0")
+            raise KleinmannConfigurationError("'decimal_places' must be >= 0")
         super().__init__(**kwargs)
         self.max_digits = max_digits
         self.decimal_places = decimal_places
@@ -157,7 +157,7 @@ class DecimalField(Field[Decimal], Decimal):
     #         return functions.Cast(term, SqlTypes.NUMERIC)
 
 
-# NOTE: Tortoise forbids db_index=True on TextField, and shows warning when it's pk=True. We only support SQLite and
+# NOTE: Kleinmann forbids db_index=True on TextField, and shows warning when it's pk=True. We only support SQLite and
 # PostgreSQL and have no plans for others. For SQLite, there's only TEXT type. For PosrgreSQL, there's no difference
 # between TEXT and VARCHAR except for length constraint. So we can safely use TEXT for both to avoid schema changes.
 class TextField(Field[str], str):  # type: ignore[misc]
@@ -169,12 +169,12 @@ class TextField(Field[str], str):  # type: ignore[misc]
     SQL_TYPE = 'TEXT'
 
 
-# NOTE: Finally, attach processed fields back to `tortoise.fields` to verify them later
+# NOTE: Finally, attach processed fields back to `kleinmann.fields` to verify them later
 # in `validate_models`. Also it magically fixes incorrect imports if any.
-import tortoise.fields
+import kleinmann.fields
 
 for name, item in copy(locals()).items():
-    setattr(tortoise.fields, name, item)
+    setattr(kleinmann.fields, name, item)
     with suppress(Exception):
         item.__module__ = __name__
 

@@ -14,7 +14,7 @@ from typing import Any
 from typing import Literal
 from typing import TypeVar
 
-from tortoise.exceptions import OperationalError
+from kleinmann.exceptions import OperationalError
 
 from dipdup import env
 from dipdup.config import ContractConfigU
