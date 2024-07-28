@@ -1129,7 +1129,6 @@ extras = ["email"]
 requires_python = ">=3.7"
 summary = "Data validation and settings management using python type hints"
 groups = ["default"]
-marker = "python_version ~= \"3.11\""
 dependencies = [
     "email-validator>=1.0.3",
     "pydantic==1.10.17",

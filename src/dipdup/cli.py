@@ -654,7 +654,6 @@ async def new(
     template: str | None,
 ) -> None:
     """Create a new project interactively."""
-    import os
 
     from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
