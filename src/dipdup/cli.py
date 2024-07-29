@@ -125,6 +125,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     return cast(WrappedCommandT, wrapper)
 
 
+def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
+    return cmd.callback.__wrapped__.__wrapped__  # type: ignore[no-any-return,union-attr]
+
+
 async def _check_version() -> None:
     if '+editable' in __version__:
         return
@@ -675,9 +679,12 @@ async def new(
         config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
         config=config,
     )
-    # NOTE: datamodel-codegen fails otherwise
-    os.chdir(answers['package'])
-    await ctx.invoke(init, base=True, force=force)
+    await _cli_unwrapper(init)(
+        ctx=ctx,
+        base=False,
+        force=force,
+        include=[],
+    )
 
     green_echo('Project created successfully!')
     green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
