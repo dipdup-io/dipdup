@@ -16,7 +16,6 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from dipdup import __version__
 from dipdup import env
 from dipdup.sys import fire_and_forget
-from dipdup.sys import is_shutting_down
 
 HEARTBEAT_INTERVAL = 60 * 60 * 24
 
@@ -50,10 +49,6 @@ def before_send(
     event: 'Event',
     hint: dict[str, Any],
 ) -> 'Event | None':
-    # NOTE: Terminated connections, cancelled tasks, etc.
-    if is_shutting_down():
-        return None
-
     # NOTE: Dark magic ahead. Merge `CallbackError` and its cause when possible.
     with suppress(KeyError, IndexError):
         exceptions = event['exception']['values']

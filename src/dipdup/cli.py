@@ -3,8 +3,8 @@ import asyncio
 import atexit
 import logging
 import sys
-from collections.abc import Awaitable
 from collections.abc import Callable
+from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
@@ -15,7 +15,8 @@ from typing import Any
 from typing import TypeVar
 from typing import cast
 
-import asyncclick as click
+import click
+import uvloop
 
 from dipdup import __version__
 from dipdup import env
@@ -57,13 +58,6 @@ NO_CONFIG_CMDS = {
     'uninstall',
     'update',
 }
-# NOTE: Our signal handler conflicts with Click's one in prompt mode
-NO_SIGNALS_CMDS = {
-    *NO_CONFIG_CMDS,
-    None,
-    'schema',
-    'wipe',
-}
 
 
 _logger = logging.getLogger(__name__)
@@ -101,7 +95,7 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
     atexit.register(_print)
 
 
-WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Coroutine[Any, Any, None]])
 
 
 @dataclass
@@ -112,12 +106,9 @@ class CLIContext:
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
-    async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        signals = ctx.invoked_subcommand not in NO_SIGNALS_CMDS
-        set_up_process(signals)
-
+    def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
         try:
-            await fn(ctx, *args, **kwargs)
+            uvloop.run(fn(ctx, *args, **kwargs))
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
@@ -132,6 +123,10 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             save_report(package, None)
 
     return cast(WrappedCommandT, wrapper)
+
+
+def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
+    return cmd.callback.__wrapped__.__wrapped__  # type: ignore[no-any-return,union-attr]
 
 
 async def _check_version() -> None:
@@ -207,6 +202,8 @@ def _skip_cli_group() -> bool:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
+    set_up_process()
+
     if _skip_cli_group():
         return
 
@@ -657,7 +654,6 @@ async def new(
     template: str | None,
 ) -> None:
     """Create a new project interactively."""
-    import os
 
     from dipdup.config import DipDupConfig
     from dipdup.project import answers_from_replay
@@ -682,9 +678,12 @@ async def new(
         config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
         config=config,
     )
-    # NOTE: datamodel-codegen fails otherwise
-    os.chdir(answers['package'])
-    await ctx.invoke(init, base=True, force=force)
+    await _cli_unwrapper(init)(
+        ctx=ctx,
+        base=False,
+        force=force,
+        include=[],
+    )
 
     green_echo('Project created successfully!')
     green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
