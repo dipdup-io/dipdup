@@ -20,6 +20,7 @@ from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
 from dipdup.models.tezos_tzkt import OriginationSubscription
+from dipdup.models.tezos_tzkt import SmartRollupCementSubscription
 from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
 from dipdup.models.tezos_tzkt import TransactionSubscription
 from dipdup.utils import pascal_to_snake
@@ -338,6 +339,17 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
                         raise ConfigInitializationException
                     if contract_config.address and contract_config.address.startswith('sr1'):
                         subs.add(SmartRollupExecuteSubscription(address=contract_config.address))
+
+        if TezosOperationType.sr_cement in self.types:
+            if self.merge_subscriptions:
+                subs.add(SmartRollupCementSubscription())
+            else:
+                for contract_config in self.contracts:
+                    if not isinstance(contract_config, TezosContractConfig):
+                        raise ConfigInitializationException
+                    if contract_config.address and contract_config.address.startswith('sr1'):
+                        subs.add(SmartRollupCementSubscription(address=contract_config.address))
+
 
         return subs
 

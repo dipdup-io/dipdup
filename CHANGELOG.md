@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Fixed
+
+- tezos.operations: Fixed `sr_cement` operation index subscription.
+
 ### Other
 
 - deps: Use `uvloop` to improve asyncio performance.
