@@ -13,10 +13,10 @@ from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import SYSTEM_HOOKS
-from dipdup.config import CallbackMixin
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexTemplateConfig
+from dipdup.config._mixin import CallbackMixin
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DEFAULT_ENV

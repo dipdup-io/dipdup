@@ -67,7 +67,7 @@ jobs:
         run: pdm install
 
       - name: Run all checks
-        run: pdm run all
+        run: pdm run make all
         env:
           NODE_API_KEY: ${{ secrets.ALCHEMY_KEY }}
 

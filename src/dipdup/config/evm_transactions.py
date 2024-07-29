@@ -7,8 +7,8 @@ from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import Alias
-from dipdup.config import CodegenMixin
 from dipdup.config import HandlerConfig
+from dipdup.config._mixin import CodegenMixin
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmDatasourceConfigU
 from dipdup.config.evm import EvmIndexConfig

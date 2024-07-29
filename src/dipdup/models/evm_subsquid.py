@@ -2,7 +2,7 @@ from typing import NotRequired
 
 from typing_extensions import TypedDict
 
-from dipdup.models.subsquid import AbstractSubsquidQuery
+from dipdup.models._subsquid import AbstractSubsquidQuery
 
 
 class BlockFieldSelection(TypedDict, total=False):

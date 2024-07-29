@@ -12,10 +12,10 @@ from dipdup.indexes.evm_transactions.fetcher import EvmNodeTransactionFetcher
 from dipdup.indexes.evm_transactions.fetcher import EvmSubsquidTransactionFetcher
 from dipdup.indexes.evm_transactions.matcher import match_transactions
 from dipdup.models import RollbackMessage
+from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmTransaction
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
-from dipdup.models.subsquid import SubsquidMessageType
 from dipdup.prometheus import Metrics
 
 QueueItem = tuple[EvmTransactionData, ...] | RollbackMessage
