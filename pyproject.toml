@@ -62,8 +62,8 @@ dependencies = [
     "anyio~=4.1",
     "APScheduler~=3.8",
     "async-lru~=2.0",
-    "asyncclick~=8.0",
     "asyncpg~=0.29",
+    "click~=8.0",
     "eth-abi>=5.0.1,<6",
     "orjson~=3.9",
     "prometheus-client~=0.17",
@@ -79,6 +79,7 @@ dependencies = [
     "strict-rfc3339~=0.7",
     "survey~=5.3",
     "tabulate~=0.9",
+    "uvloop>=0.19.0",
 ]
 
 [tool.pdm.resolution.overrides]
@@ -113,8 +114,7 @@ test = [
 ]
 docs = [
     "Sphinx",
-    # FIXME: 6.0 fails with `<class 'asyncclick.core.Group'>" of type "dipdup.cli:cli" is not click.Command or click.Group."click.BaseCommand"`
-    "sphinx-click==5.2.2",
+    "sphinx-click",
     "sphinx-markdown-builder",
     "watchdog",
 ]
