@@ -350,7 +350,6 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
                     if contract_config.address and contract_config.address.startswith('sr1'):
                         subs.add(SmartRollupCementSubscription(address=contract_config.address))
 
-
         return subs
 
     @classmethod
