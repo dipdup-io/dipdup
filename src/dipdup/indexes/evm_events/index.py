@@ -1,6 +1,5 @@
 from collections import deque
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.evm_events import EvmEventsHandlerConfig
@@ -22,27 +21,11 @@ from dipdup.prometheus import Metrics
 QueueItem = tuple[EvmEventData, ...] | RollbackMessage
 EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
 
-if TYPE_CHECKING:
-    from dipdup.context import DipDupContext
-
 
 class EvmEventsIndex(
     EvmIndex[EvmEventsIndexConfig, QueueItem, EvmDatasource],
     message_type=SubsquidMessageType.logs,
 ):
-    def __init__(
-        self,
-        ctx: 'DipDupContext',
-        config: EvmEventsIndexConfig,
-        datasources: tuple[EvmDatasource, ...],
-    ) -> None:
-        super().__init__(ctx, config, datasources)
-        self._event_abis = {
-            handler.contract.module_name: self._ctx.package.get_converted_evm_abi(handler.contract.module_name)[
-                'events'
-            ]
-            for handler in self._config.handlers
-        }
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -71,9 +54,10 @@ class EvmEventsIndex(
             elif handler_config.contract.abi is None:
                 raise NotImplementedError('Either contract address or ABI must be specified')
 
-            event_abi = self._ctx.package.get_converted_evm_abi(handler_config.contract.module_name)['events'][
-                handler_config.name
-            ]
+            event_abi = self._abis.get_event_abi(
+                typename=handler_config.contract.module_name,
+                name=handler_config.name,
+            )
             topics.append((address, event_abi['topic0']))
 
         if not self.subsquid_datasources:
@@ -110,7 +94,11 @@ class EvmEventsIndex(
         handlers: tuple[EvmEventsHandlerConfig, ...],
         level_data: Iterable[EvmEventData],
     ) -> deque[Any]:
-        return match_events(self._ctx.package, handlers, level_data, self._event_abis)
+        return match_events(
+            package=self._ctx.package,
+            handlers=handlers,
+            events=level_data,
+        )
 
     async def _call_matched_handler(
         self,

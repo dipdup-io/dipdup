@@ -616,6 +616,7 @@ class DipDup:
                 await stack.enter_async_context(datasource)
 
             package = DipDupPackage(self._config.package_path)
+            package.load_abis()
 
             codegen_classes: tuple[type[CodeGenerator], ...] = (
                 TezosCodeGenerator,
@@ -645,6 +646,7 @@ class DipDup:
 
         # NOTE: Verify package before indexing to ensure that all modules are importable
         self._ctx.package.verify()
+        self._ctx.package.load_abis()
 
         async with AsyncExitStack() as stack:
             stack.enter_context(suppress(KeyboardInterrupt, CancelledError))

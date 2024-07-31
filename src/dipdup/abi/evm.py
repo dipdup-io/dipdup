@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+from collections import defaultdict
+from functools import cache
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypedDict
 
 import orjson
 
+from dipdup.abi import AbiManager
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps
 from dipdup.utils import touch
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from dipdup.package import DipDupPackage
 
 _abi_type_map: dict[str, str] = {
@@ -51,60 +57,67 @@ def jsonschema_from_abi(abi: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class ConvertedEventAbi(TypedDict):
+class EvmEventAbi(TypedDict):
     name: str
     topic0: str
     inputs: tuple[tuple[str, bool], ...]
     topic_count: int
 
 
-class ConvertedMethodAbi(TypedDict):
+class EvmMethodAbi(TypedDict):
     name: str
     sighash: str
+    signature: str
     inputs: tuple[dict[str, str], ...]
     outputs: tuple[dict[str, str], ...]
 
 
-class ConvertedEvmAbi(TypedDict):
-    events: dict[str, ConvertedEventAbi]
-    methods: dict[str, ConvertedMethodAbi]
+class EvmAbi(TypedDict):
+    events: list[EvmEventAbi]
+    methods: list[EvmMethodAbi]
 
 
-def convert_abi(package: DipDupPackage) -> dict[str, ConvertedEvmAbi]:
-    abi_by_typename: dict[str, ConvertedEvmAbi] = {}
+def convert_abi(package: DipDupPackage) -> dict[str, EvmAbi]:
+    abi_by_typename: dict[str, EvmAbi] = {}
 
     for abi_path in package.evm_abi_paths:
-        abi = orjson.loads(abi_path.read_bytes())
-        converted_abi: ConvertedEvmAbi = {
-            'events': {},
-            'methods': {},
-        }
+        converted_abi = _convert_abi(abi_path)
+        abi_by_typename[abi_path.parent.stem] = converted_abi
 
-        for abi_item in abi:
-            if abi_item['type'] == 'function':
-                name = abi_item['name']
-                # if name in converted_abi['methods']:
-                #     raise NotImplementedError('Multiple methods with the same name are not supported')
-                converted_abi['methods'][name] = ConvertedMethodAbi(
-                    name=name,
+    return abi_by_typename
+
+
+def _convert_abi(abi_path: Path) -> EvmAbi:
+    abi = orjson.loads(abi_path.read_bytes())
+    events: list[EvmEventAbi] = []
+    methods: list[EvmMethodAbi] = []
+
+    for abi_item in abi:
+        if abi_item['type'] == 'function':
+            methods.append(
+                EvmMethodAbi(
+                    name=abi_item['name'],
                     sighash=sighash_from_abi(abi_item),
+                    signature=signature_from_abi(abi_item),
                     inputs=abi_item['inputs'],
                     outputs=abi_item['outputs'],
                 )
-            elif abi_item['type'] == 'event':
-                name = abi_item['name']
-                # if name in converted_abi['events']:
-                #     raise NotImplementedError('Multiple events with the same name are not supported')
-                inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
-                converted_abi['events'][name] = ConvertedEventAbi(
-                    name=name,
+            )
+        elif abi_item['type'] == 'event':
+            inputs = tuple((i['type'], i['indexed']) for i in abi_item['inputs'])
+            events.append(
+                EvmEventAbi(
+                    name=abi_item['name'],
                     topic0=topic0_from_abi(abi_item),
                     inputs=inputs,
                     topic_count=len([i for i in inputs if i[1]]),
                 )
-        abi_by_typename[abi_path.parent.stem] = converted_abi
+            )
 
-    return abi_by_typename
+    return EvmAbi(
+        events=events,
+        methods=methods,
+    )
 
 
 def abi_to_jsonschemas(
@@ -115,10 +128,20 @@ def abi_to_jsonschemas(
     # NOTE: path used only for contract name receiving, indicating design problem
     for abi_path in package.evm_abi_paths:
         abi = orjson.loads(abi_path.read_bytes())
+        method_count: defaultdict[str, int] = defaultdict(int)
 
         for abi_item in abi:
             if abi_item['type'] == 'function':
-                name = abi_item['name']
+                method_count[abi_item['name']] += 1
+
+        for abi_item in abi:
+            if abi_item['type'] == 'function':
+                method_count[abi_item['name']] += 1
+                is_unique = sum(1 for i in abi if i['type'] == 'function' and i['name'] == abi_item['name']) == 1
+                if is_unique:
+                    name = abi_item['name']
+                else:
+                    name = f'{abi_item["name"]}_{abi_item["stateMutability"]}'
                 if name not in methods:
                     continue
                 schema = jsonschema_from_abi(abi_item)
@@ -154,3 +177,59 @@ def topic0_from_abi(event: dict[str, Any]) -> str:
 
     signature = f'{event["name"]}({",".join([i["type"] for i in event["inputs"]])})'
     return '0x' + eth_utils.crypto.keccak(text=signature).hex()
+
+
+def signature_from_abi(
+    abi_item: dict[str, Any],
+    abi_type: str = 'function',
+) -> str:
+    if abi_item.get('type') != abi_type:
+        raise FrameworkException(f'`{abi_item["name"]}` is not a {abi_type}')
+    return f'{abi_item["name"]}({",".join([i["name"] for i in abi_item["inputs"]])})'
+
+
+class EvmAbiManager(AbiManager):
+    def __init__(self, package: DipDupPackage) -> None:
+        super().__init__(package)
+        self._abis: dict[str, EvmAbi] = {}
+        self.get_event_abi = cache(self.get_event_abi)  # type: ignore[method-assign]
+        self.get_method_abi = cache(self.get_method_abi)  # type: ignore[method-assign]
+
+    def load(self) -> None:
+        self._abis = convert_abi(self._package)
+
+    def get_event_abi(
+        self,
+        typename: str,
+        name: str,
+    ) -> EvmEventAbi:
+        typename_abi = self._abis[typename]
+        for event_abi in typename_abi['events']:
+            if name != event_abi['name']:
+                continue
+            return event_abi
+
+        raise FrameworkException(f'Event `{name}` not found in `{typename}`')
+
+    def get_method_abi(
+        self,
+        typename: str,
+        name: str | None = None,
+        signature: str | None = None,
+    ) -> EvmMethodAbi:
+        typename_abi = self._abis[typename]
+
+        if name:
+            name_count = sum(1 for i in typename_abi['methods'] if i['name'] == name)
+            if name_count > 1:
+                msg = f'Method with name `{name}` is not unique in `{typename}`. Use `signature` filter instead.'
+                raise ConfigurationError(msg)
+
+        for method_abi in typename_abi['methods']:
+            if name and name != method_abi['name']:
+                continue
+            if signature and signature != method_abi['signature']:
+                continue
+            return method_abi
+
+        raise FrameworkException(f'Method `{name}` not found in `{typename}`')

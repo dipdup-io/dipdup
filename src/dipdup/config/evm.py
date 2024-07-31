@@ -60,6 +60,9 @@ class EvmContractConfig(ContractConfig):
     abi: EvmAddress | None = None
     typename: str | None = None
 
+    def __hash__(self) -> int:
+        return hash(self.module_name)
+
     def get_address(self) -> str:
         if self.address is None:
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')

@@ -44,7 +44,11 @@ def prepare_transaction_handler_args(
         raise FrameworkException('`method` and `to` are required for typed transaction handler')
     typename = contract.module_name
 
-    inputs = package.get_converted_evm_abi(typename)['methods'][method]['inputs']
+    inputs = package._evm_abis.get_method_abi(
+        typename=typename,
+        name=handler_config.method,
+        signature=handler_config.signature,
+    )['inputs']
     data = decode_abi(
         types=tuple(input['type'] for input in inputs),
         data=decode_hex(matched_transaction.input[10:]),
@@ -82,8 +86,13 @@ def match_transactions(
                 continue
             if (to := handler_config.to) and to.address not in (transaction.to, None):
                 continue
-            if method := handler_config.method:
-                sighash = get_sighash(package, method, to)
+            if handler_config.method or handler_config.signature:
+                sighash = get_sighash(
+                    package=package,
+                    method=handler_config.method,
+                    signature=handler_config.signature,
+                    to=to,
+                )
                 if sighash != transaction.sighash:
                     continue
 

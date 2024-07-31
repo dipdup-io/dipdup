@@ -10,8 +10,8 @@ from typing import cast
 from pydantic import BaseModel
 
 from dipdup import env
-from dipdup.abi.cairo import ConvertedCairoAbi
-from dipdup.abi.evm import ConvertedEvmAbi
+from dipdup.abi.cairo import CairoAbiManager
+from dipdup.abi.evm import EvmAbiManager
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -79,8 +79,8 @@ class DipDupPackage:
         self._replay: Answers | None = None
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
-        self._converted_evm_abis: dict[str, ConvertedEvmAbi] = {}
-        self._converted_cairo_abis: dict[str, ConvertedCairoAbi] = {}
+        self._evm_abis = EvmAbiManager(self)
+        self._cairo_abis = CairoAbiManager(self)
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:
@@ -141,6 +141,10 @@ class DipDupPackage:
 
         self._post_init()
 
+    def load_abis(self) -> None:
+        self._evm_abis.load()
+        self._cairo_abis.load()
+
     def _pre_init(self) -> None:
         if self.name != pascal_to_snake(self.name):
             raise ProjectPackageError(f'`{self.name}` is not a valid Python package name')
@@ -183,17 +187,3 @@ class DipDupPackage:
                 raise ProjectPackageError(f'`{path}.{name}` is not a valid callback')
             self._callbacks[key] = callback
         return cast(Callable[..., Awaitable[None]], callback)
-
-    def get_converted_evm_abi(self, typename: str) -> ConvertedEvmAbi:
-        if not self._converted_evm_abis:
-            from dipdup.abi.evm import convert_abi
-
-            self._converted_evm_abis = convert_abi(self)
-        return self._converted_evm_abis[typename]
-
-    def get_converted_starknet_abi(self, typename: str) -> ConvertedCairoAbi:
-        if not self._converted_cairo_abis:
-            from dipdup.abi.cairo import convert_abi
-
-            self._converted_cairo_abis = convert_abi(self)
-        return self._converted_cairo_abis[typename]

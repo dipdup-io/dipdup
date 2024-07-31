@@ -30,5 +30,6 @@ class StarknetIndex(
         datasources: tuple[DatasourceT, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
+        self._cairo_abis = ctx.package._cairo_abis
         self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, StarknetSubsquidDatasource))
         self.node_datasources = tuple(d for d in datasources if isinstance(d, StarknetNodeDatasource))

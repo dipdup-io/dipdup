@@ -43,7 +43,10 @@ class StarknetEventsIndex(
             self._event_identifiers = {}
             for handler_config in self._config.handlers:
                 typename = handler_config.contract.module_name
-                event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events'][handler_config.name]
+                event_abi = self._cairo_abis.get_event_abi(
+                    typename=typename,
+                    name=handler_config.name,
+                )
                 if typename not in self._event_identifiers:
                     self._event_identifiers[typename] = {}
                 self._event_identifiers[typename][handler_config.name] = event_abi['event_identifier']
@@ -71,7 +74,10 @@ class StarknetEventsIndex(
             if not handler_config.contract.address:
                 raise ConfigInitializationException
             typename = handler_config.contract.module_name
-            event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events'][handler_config.name]
+            event_abi = self._cairo_abis.get_event_abi(
+                typename=typename,
+                name=handler_config.name,
+            )
 
             if handler_config.contract.address not in event_ids:
                 event_ids[handler_config.contract.address] = set()
@@ -93,7 +99,10 @@ class StarknetEventsIndex(
             if not handler_config.contract.address:
                 raise ConfigInitializationException
             typename = handler_config.contract.module_name
-            event_abi = self._ctx.package.get_converted_starknet_abi(typename)['events'][handler_config.name]
+            event_abi = self._cairo_abis.get_event_abi(
+                typename=typename,
+                name=handler_config.name,
+            )
 
             if handler_config.contract.address not in event_ids:
                 event_ids[handler_config.contract.address] = set()

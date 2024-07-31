@@ -27,7 +27,11 @@ class EvmTransactionsIndex(
     message_type=SubsquidMessageType.transactions,
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
-        return match_transactions(self._ctx.package, handlers, level_data)
+        return match_transactions(
+            package=self._ctx.package,
+            handlers=handlers,
+            transactions=level_data,
+        )
 
     async def _call_matched_handler(
         self,
@@ -69,8 +73,14 @@ class EvmTransactionsIndex(
                 query['from'] = [from_.address]
             if (to_ := handler_config.to) and to_.address:
                 query['to'] = [to_.address]
-            if method := handler_config.method:
-                query['sighash'] = [get_sighash(self._ctx.package, method, to_)]
+            if handler_config.method or handler_config.signature:
+                sighash = get_sighash(
+                    package=self._ctx.package,
+                    method=handler_config.method,
+                    signature=handler_config.signature,
+                    to=to_,
+                )
+                query['sighash'] = [sighash]
             if not query:
                 raise NotImplementedError
             filters.append(query)
