@@ -509,6 +509,19 @@
           "title": "method",
           "description": "Method name"
         },
+        "signature": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "signature",
+          "description": "Method signature"
+        },
         "from": {
           "anyOf": [
             {

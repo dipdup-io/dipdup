@@ -6,9 +6,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Changed
+
+- config: When filtering EVM transactions by signature, use `signature` field instead of `method`.
+
 ### Fixed
 
 - tezos.operations: Fixed `sr_cement` operation index subscription.
+- evm: Fixed crash when contract ABI contains overloaded methods.
 
 ### Other
 
