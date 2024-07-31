@@ -6,10 +6,10 @@ from typing import Any
 
 from eth_abi.abi import decode as decode_abi
 
+from dipdup.abi.evm import ConvertedEventAbi
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.models.evm import EvmEvent
 from dipdup.models.evm import EvmEventData
-from dipdup.package import ConvertedEventAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake

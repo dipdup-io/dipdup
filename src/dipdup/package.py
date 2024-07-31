@@ -4,14 +4,14 @@ from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypedDict
 from typing import cast
 
 from pydantic import BaseModel
 
 from dipdup import env
+from dipdup.abi.cairo import ConvertedCairoAbi
+from dipdup.abi.evm import ConvertedEvmAbi
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -19,11 +19,6 @@ from dipdup.utils import import_from
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
-
-if TYPE_CHECKING:
-    from starknet_py.cairo.data_types import CairoType  # type: ignore[import-untyped]
-    from starknet_py.serialization import PayloadSerializer  # type: ignore[import-untyped]
-
 
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
@@ -55,36 +50,6 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
             lines.append(_branch + inner_pointer + relative_path.as_posix())
 
     return tuple(lines)
-
-
-class ConvertedEventAbi(TypedDict):
-    name: str
-    topic0: str
-    inputs: tuple[tuple[str, bool], ...]
-    topic_count: int
-
-
-class ConvertedMethodAbi(TypedDict):
-    name: str
-    sighash: str
-    inputs: tuple[dict[str, str], ...]
-    outputs: tuple[dict[str, str], ...]
-
-
-class ConvertedEvmAbi(TypedDict):
-    events: dict[str, ConvertedEventAbi]
-    methods: dict[str, ConvertedMethodAbi]
-
-
-class ConvertedEventCairoAbi(TypedDict):
-    name: str
-    event_identifier: str
-    members: dict[str, 'CairoType']
-    serializer: 'PayloadSerializer'
-
-
-class ConvertedCairoAbi(TypedDict):
-    events: dict[str, ConvertedEventCairoAbi]
 
 
 class DipDupPackage:
@@ -221,14 +186,14 @@ class DipDupPackage:
 
     def get_converted_evm_abi(self, typename: str) -> ConvertedEvmAbi:
         if not self._converted_evm_abis:
-            from dipdup.codegen.evm import convert_abi
+            from dipdup.abi.evm import convert_abi
 
             self._converted_evm_abis = convert_abi(self)
         return self._converted_evm_abis[typename]
 
     def get_converted_starknet_abi(self, typename: str) -> ConvertedCairoAbi:
         if not self._converted_cairo_abis:
-            from dipdup.codegen.starknet import convert_abi
+            from dipdup.abi.cairo import convert_abi
 
             self._converted_cairo_abis = convert_abi(self)
         return self._converted_cairo_abis[typename]

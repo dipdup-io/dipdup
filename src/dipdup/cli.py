@@ -711,7 +711,6 @@ async def new(
     template: str | None,
 ) -> None:
     """Create a new project interactively."""
-    import os
 
     from survey._widgets import Escape  # type: ignore[import-untyped]
 
