@@ -110,10 +110,6 @@ def abi_to_jsonschemas(
     package: DipDupPackage,
     events: set[str],
 ) -> None:
-    # load abi to json and then parse with starknet.py
-    # select objects to generate types
-    # convert types in to schema
-    # write schema
     for contract_typename, parsed_abi in _loaded_abis(package).items():
         for event_name in events:
             if event_name not in parsed_abi.events:

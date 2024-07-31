@@ -42,8 +42,9 @@ class EvmCodeGenerator(CodeGenerator):
                     events.add(handler_config.name)
             elif isinstance(index_config, EvmTransactionsIndexConfig):
                 for handler_config in index_config.handlers:
-                    if handler_config.method:
-                        methods.add(handler_config.method)
+                    if handler_config.typed_contract:
+                        # FIXME: Can break when there are multiple signatures for the same method. Forbidden in validation.
+                        methods.add(handler_config.cropped_method)
 
         abi_to_jsonschemas(self._package, events, methods)
 
