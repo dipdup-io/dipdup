@@ -1,0 +1,12 @@
+indexes:
+  starknet_usdt_events:
+    kind: starknet.events
+    datasources:
+      - subsquid
+      - node
+    handlers:
+      - callback: on_transfer
+        contract: stark_usdt
+        name: Transfer
+    first_level: 500000
+    last_level: 600000
