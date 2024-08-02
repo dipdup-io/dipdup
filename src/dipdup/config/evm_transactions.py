@@ -105,7 +105,6 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
         super().__post_init__()
         method_names = set()
         for handler in self.handlers:
-            # FIXME: Can break when there are multiple signatures for the same method. Forbidden in validation.
             if not (handler.method or handler.signature):
                 continue
 
