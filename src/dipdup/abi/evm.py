@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from functools import cache
 from typing import TYPE_CHECKING
@@ -32,6 +33,9 @@ _abi_type_map: dict[str, str] = {
     # https://docs.soliditylang.org/en/develop/abi-spec.html#types
     'tuple': 'object',
 }
+
+
+_logger = logging.getLogger(__name__)
 
 
 def _convert_type(abi_type: str) -> str:
@@ -132,18 +136,17 @@ def abi_to_jsonschemas(
 
         for abi_item in abi:
             if abi_item['type'] == 'function':
-                method_count[abi_item['name']] += 1
-
-        for abi_item in abi:
-            if abi_item['type'] == 'function':
-                method_count[abi_item['name']] += 1
-                is_unique = sum(1 for i in abi if i['type'] == 'function' and i['name'] == abi_item['name']) == 1
-                if is_unique:
-                    name = abi_item['name']
-                else:
-                    name = f'{abi_item["name"]}_{abi_item["stateMutability"]}'
+                name = abi_item['name']
                 if name not in methods:
                     continue
+
+                if count := method_count[name]:
+                    _logger.warning('Method `%s` is not unique, typeclass renamed to `%s`', name, f'{name}_{count}')
+                    method_count[name] += 1
+                    abi_item[name] = name = f'{name}_{count}'
+                else:
+                    method_count[name] += 1
+
                 schema = jsonschema_from_abi(abi_item)
                 schema_path = package.schemas / abi_path.parent.stem / 'evm_transactions' / f'{name}.json'
             elif abi_item['type'] == 'event':
