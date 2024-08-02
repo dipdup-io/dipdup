@@ -1,0 +1,9 @@
+database:
+  kind: postgres
+  host: localhost
+  port: ${POSTGRES_PORT}
+  user: ${POSTGRES_USER:-dipdup}
+  password: test
+  database: ${POSTGRES_DB:-dipdup}
+
+hasura: null
