@@ -110,9 +110,10 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
                 continue
 
             if handler.cropped_method in method_names:
-                msg = 'Multiple handlers for overloaded methods are not supported yet'
+                msg = 'Multiple typed handlers for overloaded methods are not supported yet'
                 raise ConfigurationError(msg)
-            method_names.add(handler.cropped_method)
+            if handler.typed_contract:
+                method_names.add(handler.cropped_method)
 
     def get_subscriptions(self) -> set[Subscription]:
         return {EvmNodeHeadSubscription(transactions=True)}
