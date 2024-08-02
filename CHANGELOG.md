@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [7.5.10] - 2024-08-02
+
+### Fixed
+
+- cli: Fixed progress estimation when there are indexes with `last_level` option set.
+- cli: Don't save reports for successful test runs.
 
 ### Other
 
@@ -1452,7 +1457,8 @@ This release contains no changes except for the version number.
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.8...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/7.5.10...HEAD
+[7.5.10]: https://github.com/dipdup-io/dipdup/compare/7.5.9...7.5.10
 [7.5.9]: https://github.com/dipdup-io/dipdup/compare/7.5.8...7.5.9
 [7.5.8]: https://github.com/dipdup-io/dipdup/compare/7.5.7...7.5.8
 [7.5.7]: https://github.com/dipdup-io/dipdup/compare/7.5.6...7.5.7
