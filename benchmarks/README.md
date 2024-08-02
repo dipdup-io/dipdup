@@ -4,6 +4,11 @@ This directory contains scripts and configs to run various DipDup benchmarks. Th
 
 When performed correctly these benchmarks show excellent consistency, with a multiple-second skew between 10+ minute runs.
 
+## TODO
+
+- [ ] A shorter version for CI
+- [ ] Extract metrics from reports
+
 ## Configuration
 
 All runs were performed on the @droserasprout laptop.
@@ -26,7 +31,7 @@ sudo cpupower frequency-info -g performance
 ## Running tests
 
 ```shell
-make run_in_memory run_in_postgres down DEMO=demo_evm_events
+make run_in_memory run_in_postgres down shortstat DEMO=demo_evm_events
 ```
 
 See the Makefile for details.
@@ -36,7 +41,7 @@ See the Makefile for details.
 ### evm.events
 
 - project: `demo_evm_events`
-- interval: 10,000,000 to 10,100,000 (100,000)
+- interval: 10,000,000 to 10,100,000 (100,000 levels, 93,745 non-empty)
 - database: in-memory sqlite
 
 | run              | time                                                 | bps | vs. asyncio | vs. 7.5 |

@@ -23,7 +23,6 @@ from dipdup import env
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
 from dipdup.report import REPORTS_PATH
-from dipdup.report import ReportHeader
 from dipdup.report import cleanup_reports
 from dipdup.report import get_reports
 from dipdup.report import save_report
@@ -120,7 +119,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             raise e
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
-        if fn.__name__ == 'run':
+        if fn.__name__ == 'run' and not env.TEST:
             package = ctx.obj.config.package
             save_report(package, None)
 
@@ -865,14 +864,19 @@ async def report_ls(ctx: click.Context) -> None:
 
     from dipdup.yaml import yaml_loader
 
-    header = tuple(ReportHeader.__annotations__.keys())
+    header = ['id', 'date', 'package', 'reason']
     rows = []
     for path in get_reports():
         event = yaml_loader.load(path)
-        row = [event.get(key, 'none')[:80] for key in header]
+        row = [
+            event['id'],
+            event['date'][:-7],
+            event['package'],
+            event['reason'][:80],
+        ]
         rows.append(row)
 
-    rows.sort(key=lambda row: str(row[3]))
+    rows.sort(key=lambda row: str(row[1]))
     echo(tabulate(rows, headers=header))
 
 

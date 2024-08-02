@@ -241,6 +241,9 @@ class IndexDispatcher:
             except FrameworkException:
                 return
 
+            if index._config.last_level:
+                sync_level = min(sync_level, index._config.last_level)
+
             initial_level = self._initial_levels[index.name]
             if not initial_level:
                 self._initial_levels[index.name] |= index.state.level

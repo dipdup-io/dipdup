@@ -1,9 +1,7 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_token_transfers import TezosTokenTransfersHandlerConfig
 from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_token_transfers.fetcher import TokenTransferFetcher
 from dipdup.indexes.tezos_token_transfers.matcher import match_token_transfers
 from dipdup.indexes.tezos_tzkt import TezosIndex
@@ -57,20 +55,6 @@ class TezosTokenTransfersIndex(
             await self._process_level_data(token_transfers, sync_level)
 
         await self._exit_sync_state(sync_level)
-
-    async def _call_matched_handler(
-        self, handler_config: TezosTokenTransfersHandlerConfig, token_transfer: TezosTokenTransferData
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            # NOTE: missing `operation_id` field in API to identify operation
-            None,
-            token_transfer,
-        )
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_token_transfers(handlers, level_data)
