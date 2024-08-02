@@ -6,7 +6,6 @@ from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm_events.fetcher import EvmNodeEventFetcher
@@ -14,7 +13,6 @@ from dipdup.indexes.evm_events.fetcher import EvmSubsquidEventFetcher
 from dipdup.indexes.evm_events.matcher import match_events
 from dipdup.models import RollbackMessage
 from dipdup.models._subsquid import SubsquidMessageType
-from dipdup.models.evm import EvmEvent
 from dipdup.models.evm import EvmEventData
 from dipdup.prometheus import Metrics
 
@@ -98,20 +96,4 @@ class EvmEventsIndex(
             package=self._ctx.package,
             handlers=handlers,
             events=level_data,
-        )
-
-    async def _call_matched_handler(
-        self,
-        handler_config: EvmEventsHandlerConfig,
-        event: EvmEvent[Any],
-    ) -> None:
-
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            None,
-            event,
         )

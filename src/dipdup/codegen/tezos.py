@@ -18,8 +18,6 @@ import orjson
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import TypeClass
 from dipdup.config import DipDupConfig
-from dipdup.config import IndexTemplateConfig
-from dipdup.config import system_hooks
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import is_contract_address
 from dipdup.config.tezos import is_rollup_address
@@ -102,7 +100,7 @@ class TezosCodeGenerator(CodeGenerator):
         self._contract_schemas: dict[str, dict[str, dict[str, Any]]] = {}
         self._rollup_schemas: dict[str, dict[str, Any]] = {}
 
-    async def generate_abi(self) -> None:
+    async def generate_abis(self) -> None:
         pass
 
     async def generate_schemas(self) -> None:
@@ -123,7 +121,7 @@ class TezosCodeGenerator(CodeGenerator):
         for index_config in self._config.indexes.values():
             if isinstance(index_config, TezosOperationsIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-                template = cast(TezosOperationsIndexConfig, index_config.parent)
+                template = cast(TezosOperationsIndexConfig, index_config._parent)
                 if template in unused_operation_templates:
                     unused_operation_templates.remove(template)
             elif isinstance(index_config, TezosBigMapsIndexConfig):
@@ -158,23 +156,6 @@ class TezosCodeGenerator(CodeGenerator):
                             await self._fetch_operation_index_schema(template_config)
                         except FrameworkException:
                             continue
-
-    async def generate_handlers(self) -> None:
-        """Generate handler stubs with typehints from templates if not exist"""
-        for index_config in self._config.indexes.values():
-            if isinstance(index_config, IndexTemplateConfig):
-                continue
-
-            for handler_config in index_config.handlers:
-                await self._generate_callback(handler_config, 'handlers')
-
-    async def generate_hooks(self) -> None:
-        for hook_configs in self._config.hooks.values(), system_hooks.values():
-            for hook_config in hook_configs:
-                await self._generate_callback(hook_config, 'hooks', sql=True)
-
-    async def generate_system_hooks(self) -> None:
-        pass
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem

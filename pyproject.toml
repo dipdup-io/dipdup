@@ -151,8 +151,13 @@ plugins = ["pydantic.mypy"]
 strict = true
 
 [tool.pytest.ini_options]
+addopts="--cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v"
 asyncio_mode = "auto"
 log_cli_level = "WARNING"
+filterwarnings = [
+    'ignore:RemovedInMarshmallow4Warning',
+    'ignore:has no models',
+]
 
 [tool.coverage.report]
 precision = 2

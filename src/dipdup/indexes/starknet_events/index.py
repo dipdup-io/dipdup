@@ -14,7 +14,6 @@ from dipdup.indexes.starknet_events.fetcher import StarknetSubsquidEventFetcher
 from dipdup.indexes.starknet_events.matcher import match_events
 from dipdup.models import RollbackMessage
 from dipdup.models._subsquid import SubsquidMessageType
-from dipdup.models.starknet import StarknetEvent
 from dipdup.models.starknet import StarknetEventData
 from dipdup.prometheus import Metrics
 
@@ -125,19 +124,4 @@ class StarknetEventsIndex(
             handlers=handlers,
             events=level_data,
             event_identifiers=self.event_identifiers,
-        )
-
-    async def _call_matched_handler(
-        self,
-        handler_config: StarknetEventsHandlerConfig,
-        event: StarknetEvent[Any],
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            None,
-            event,
         )

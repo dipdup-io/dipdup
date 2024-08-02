@@ -2,17 +2,12 @@ from collections import deque
 from typing import Any
 
 from dipdup.config.tezos_events import TezosEventsHandlerConfig
-from dipdup.config.tezos_events import TezosEventsHandlerConfigU
 from dipdup.config.tezos_events import TezosEventsIndexConfig
-from dipdup.exceptions import ConfigInitializationException
-from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_events.fetcher import EventFetcher
 from dipdup.indexes.tezos_events.matcher import match_events
 from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
-from dipdup.models.tezos import TezosEvent
 from dipdup.models.tezos import TezosEventData
-from dipdup.models.tezos import TezosUnknownEvent
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 
 QueueItem = tuple[TezosEventData, ...] | RollbackMessage
@@ -47,22 +42,6 @@ class TezosEventsIndex(
             await self._process_level_data(events, sync_level)
 
         await self._exit_sync_state(sync_level)
-
-    async def _call_matched_handler(
-        self, handler_config: TezosEventsHandlerConfigU, level_data: TezosEvent[Any] | TezosUnknownEvent
-    ) -> None:
-        if isinstance(handler_config, TezosEventsHandlerConfig) != isinstance(level_data, TezosEvent):
-            raise FrameworkException(f'Invalid handler config and event types: {handler_config}, {level_data}')
-
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            str(level_data.data.transaction_id),
-            level_data,
-        )
 
     def _get_event_addresses(self) -> set[str]:
         """Get addresses to fetch events during initial synchronization"""

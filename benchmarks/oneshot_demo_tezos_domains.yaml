@@ -1,0 +1,10 @@
+indexes:
+  tezos_domains_big_map_mainnet:
+    template: tezos_domains_big_map
+    values:
+      datasource: mainnet
+      name_registry: mainnet_name_registry
+    first_level: 1417362
+    last_level: 6417362
+
+jobs: {}

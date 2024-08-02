@@ -2,9 +2,7 @@ from collections import deque
 from datetime import datetime
 from typing import Any
 
-from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.indexes.tezos_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_big_maps.fetcher import get_big_map_pairs
@@ -14,7 +12,6 @@ from dipdup.models import RollbackMessage
 from dipdup.models import SkipHistory
 from dipdup.models.tezos import TezosBigMapAction
 from dipdup.models.tezos import TezosBigMapData
-from dipdup.models.tezos import TezosBigMapDiff
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
 
@@ -92,23 +89,13 @@ class TezosBigMapsIndex(
 
                     matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
                     for handler_config, big_map_diff in matched_handlers:
-                        await self._call_matched_handler(handler_config, big_map_diff)
+                        await self._ctx.fire_handler(
+                            name=handler_config.callback,
+                            index=handler_config.parent.name,
+                            args=(big_map_diff,),
+                        )
 
             await self._update_state(level=head_level)
-
-    async def _call_matched_handler(
-        self, handler_config: TezosBigMapsHandlerConfig, level_data: TezosBigMapDiff[Any, Any]
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            # NOTE: missing `operation_id` field in API to identify operation
-            None,
-            level_data,
-        )
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_big_maps(self._ctx.package, handlers, level_data)

@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-# NOTE: Skip expensive copy() calls on each queryset update. Doesn't affect us. Definitely will be in Kleinmann officially.
+# NOTE: Querysets made mutable to skip expensive copy() calls for every update in chain.
 tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 
