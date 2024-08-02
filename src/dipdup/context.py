@@ -7,6 +7,8 @@ import sys
 from contextlib import AsyncExitStack
 from contextlib import contextmanager
 from contextlib import suppress
+from logging import Logger
+from logging import getLogger
 from pathlib import Path
 from pprint import pformat
 from typing import TYPE_CHECKING
@@ -17,6 +19,7 @@ from typing import TypeVar
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.codegen import BatchHandlerConfig
 from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
@@ -59,6 +62,7 @@ from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
 from dipdup.index import Index as IndexCls
+from dipdup.index import MatchedHandler
 from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm_events.index import EvmEventsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
@@ -86,16 +90,18 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
-from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
+    from collections.abc import Iterable
     from collections.abc import Iterator
     from types import ModuleType
 
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
+
+_logger = getLogger(__name__)
 
 DatasourceT = TypeVar('DatasourceT', bound=Datasource[Any])
 
@@ -150,7 +156,7 @@ class DipDupContext:
         self.datasources = datasources
         self.transactions = transactions
 
-        self.logger = FormattedLogger('dipdup.context')
+        self.logger = _logger
         self._pending_indexes: asyncio.Queue[Any] = asyncio.Queue()
         self._pending_hooks: asyncio.Queue[Awaitable[None]] = asyncio.Queue()
         self._rolled_back_indexes: set[str] = set()
@@ -330,6 +336,9 @@ class DipDupContext:
 
         for handler_config in index_config.handlers:
             self.register_handler(handler_config)
+            batch_handler = BatchHandlerConfig()
+            batch_handler.parent = index_config
+            self.register_handler(batch_handler)
 
         await index.initialize_state(state)
 
@@ -560,9 +569,6 @@ class DipDupContext:
             await self._pending_hooks.get()
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
-        if not handler_config.parent:
-            raise FrameworkException('Handler must have a parent index')
-
         # NOTE: Same handlers can be linked to different indexes, we need to use exact config
         key = (handler_config.callback, handler_config.parent.name)
         if key not in self._handlers:
@@ -573,54 +579,58 @@ class DipDupContext:
         if key not in self._hooks:
             self._hooks[key] = hook_config
 
+    async def fire_matched_handler(
+        self,
+        handler: MatchedHandler,
+    ) -> None:
+        await self.fire_handler(
+            name=handler.config.callback,
+            index=handler.config.parent.name,
+            args=handler.args,
+        )
+
     async def fire_handler(
         self,
         name: str,
         index: str,
-        fmt: str | None = None,
-        *args: Any,
-        **kwargs: Any,
+        args: Iterable[Any],
     ) -> None:
         """Fire handler with given name and arguments.
 
         :param name: Handler name
         :param index: Index name
-        :param fmt: Format string for `ctx.logger` messages
+        :param args: Handler arguments without `ctx`
         """
         module = f'{self.package.name}.handlers.{name}'
         handler_config = self._get_handler(name, index)
         new_ctx = HandlerContext._wrap(
             self,
-            logger=FormattedLogger(module, fmt),
+            logger=getLogger(module),
             handler_config=handler_config,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
         with self._callback_wrapper(module):
             fn = self.package.get_callback('handlers', name, name.split('.')[-1])
-            await fn(new_ctx, *args, **kwargs)
+            await fn(new_ctx, *args)
 
     async def fire_hook(
         self,
         name: str,
-        fmt: str | None = None,
         wait: bool = True,
-        *args: Any,
         **kwargs: Any,
     ) -> None:
         """Fire hook with given name and arguments.
 
         :param name: Hook name
-        :param fmt: Format string for `ctx.logger` messages
         :param wait: Wait for hook to finish or fire and forget
-        :param args: Positional arguments to pass to the hook
-        :param kwargs: Keyword arguments to pass to the hook
+        :param kwargs: Hook arguments
         """
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
         new_ctx = HookContext._wrap(
             self,
-            logger=FormattedLogger(module, fmt),
+            logger=getLogger(module),
             hook_config=hook_config,
         )
 
@@ -632,7 +642,7 @@ class DipDupContext:
                     await stack.enter_async_context(new_ctx.transactions.in_transaction())
 
                 fn = self.package.get_callback('hooks', name, name)
-                await fn(new_ctx, *args, **kwargs)
+                await fn(new_ctx, **kwargs)
 
         coro = _wrapper()
         await coro if wait else self._pending_hooks.put_nowait(coro)
@@ -722,7 +732,7 @@ class HookContext(DipDupContext):
         package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
         transactions: TransactionManager,
-        logger: FormattedLogger,
+        logger: Logger,
         hook_config: HookConfig,
     ) -> None:
         super().__init__(
@@ -738,7 +748,7 @@ class HookContext(DipDupContext):
     def _wrap(
         cls,
         ctx: DipDupContext,
-        logger: FormattedLogger,
+        logger: Logger,
         hook_config: HookConfig,
     ) -> HookContext:
         new_ctx = cls(
@@ -782,7 +792,7 @@ class HandlerContext(DipDupContext):
         package: DipDupPackage,
         datasources: dict[str, Datasource[Any]],
         transactions: TransactionManager,
-        logger: FormattedLogger,
+        logger: Logger,
         handler_config: HandlerConfig,
     ) -> None:
         super().__init__(
@@ -802,7 +812,7 @@ class HandlerContext(DipDupContext):
     def _wrap(
         cls,
         ctx: DipDupContext,
-        logger: FormattedLogger,
+        logger: Logger,
         handler_config: HandlerConfig,
     ) -> HandlerContext:
         new_ctx = cls(

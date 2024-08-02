@@ -78,7 +78,9 @@ class ParentMixin(Generic[ParentT]):
         self._parent: ParentT | None = None
 
     @property
-    def parent(self) -> ParentT | None:
+    def parent(self) -> ParentT:
+        if not self._parent:
+            raise ConfigInitializationException(f'{self.__class__.__name__} parent is not set')
         return self._parent
 
     @parent.setter

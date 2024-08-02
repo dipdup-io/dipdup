@@ -1,11 +1,9 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm import get_sighash
 from dipdup.indexes.evm_transactions.fetcher import EvmNodeTransactionFetcher
@@ -13,7 +11,6 @@ from dipdup.indexes.evm_transactions.fetcher import EvmSubsquidTransactionFetche
 from dipdup.indexes.evm_transactions.matcher import match_transactions
 from dipdup.models import RollbackMessage
 from dipdup.models._subsquid import SubsquidMessageType
-from dipdup.models.evm import EvmTransaction
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
 from dipdup.prometheus import Metrics
@@ -28,21 +25,6 @@ class EvmTransactionsIndex(
 ):
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_transactions(self._ctx.package, handlers, level_data)
-
-    async def _call_matched_handler(
-        self,
-        handler_config: EvmTransactionsHandlerConfig,
-        transaction: EvmTransaction[Any],
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            None,
-            transaction,
-        )
 
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1

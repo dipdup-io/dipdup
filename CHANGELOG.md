@@ -6,9 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+### Added
+
+- package: Added built-in `batch` handler to modify higher-level indexing logic.
+
 ### Fixed
 
+- cli: Fixed progress estimation when there are indexes with `last_level` option set.
+- cli: Don't save reports for successful test runs.
 - tezos.operations: Fixed `sr_cement` operation index subscription.
+
+### Changed
+
+- ctx: Signatures of `fire_handler` and `fire_hook` methods have changed.
+- ctx: `ctx.logger` is a regular `logging.Logger` instead of pre-configured `FormattedLogger`.
 
 ### Other
 

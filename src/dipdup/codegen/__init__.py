@@ -1,15 +1,21 @@
 import logging
 from abc import ABC
 from abc import abstractmethod
+from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
+from collections.abc import Iterator
 from pathlib import Path
 from shutil import rmtree
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic.dataclasses import dataclass
 
+from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
+from dipdup.config import HandlerConfig
+from dipdup.config import IndexTemplateConfig
 from dipdup.config._mixin import CallbackMixin
 from dipdup.datasources import Datasource
 from dipdup.exceptions import FrameworkException
@@ -31,7 +37,22 @@ TypeClass = type[BaseModel]
 _logger = logging.getLogger(__name__)
 
 
-class CodeGenerator(ABC):
+@dataclass
+class BatchHandlerConfig(HandlerConfig, CallbackMixin):
+    name: str = 'batch'
+    callback: str = 'batch'
+
+    def iter_imports(self, package: str) -> Iterator[tuple[str, str]]:
+        yield 'collections.abc', 'Iterable'
+        yield 'dipdup.context', 'HandlerContext'
+        yield 'dipdup.index', 'MatchedHandler'
+
+    def iter_arguments(self) -> Iterator[tuple[str, str]]:
+        yield 'ctx', 'HandlerContext'
+        yield 'handlers', 'Iterable[MatchedHandler]'
+
+
+class _BaseCodeGenerator(ABC):
     def __init__(
         self,
         config: DipDupConfig,
@@ -45,13 +66,24 @@ class CodeGenerator(ABC):
         self._include = include or set()
         self._logger = _logger
 
+    @abstractmethod
+    async def generate_abis(self) -> None: ...
+
+    @abstractmethod
+    async def generate_schemas(self) -> None: ...
+
+    @abstractmethod
+    def get_typeclass_name(self, schema_path: Path) -> str: ...
+
     async def init(
         self,
         force: bool = False,
         base: bool = False,
     ) -> None:
+        # NOTE: Package structure
         self._package.initialize()
 
+        # NOTE: Common files
         replay = self._package.replay
         if base or self._include:
             if not replay:
@@ -62,32 +94,45 @@ class CodeGenerator(ABC):
         if self._include:
             force = any(str(path).startswith('types') for path in self._include)
 
-        await self.generate_abi()
+        # NOTE: ABIs and JSONSchemas
+        await self.generate_abis()
         await self.generate_schemas()
-        await self._generate_types(force)
 
+        # NOTE: Models and types
+        await self._generate_types(force)
         await self._generate_models()
+
+        # NOTE: Callback stubs
         await self.generate_hooks()
         await self.generate_system_hooks()
         await self.generate_handlers()
+        await self.generate_batch_handler()
 
-    @abstractmethod
-    async def generate_abi(self) -> None: ...
+    async def generate_hooks(self) -> None:
+        for hook_config in self._config.hooks.values():
+            await self._generate_callback(hook_config, 'hooks', sql=True)
 
-    @abstractmethod
-    async def generate_schemas(self) -> None: ...
+    async def generate_system_hooks(self) -> None:
+        for hook_config in SYSTEM_HOOKS.values():
+            await self._generate_callback(hook_config, 'hooks', sql=True)
 
-    @abstractmethod
-    async def generate_hooks(self) -> None: ...
+    async def generate_handlers(self) -> None:
+        for index_config in self._config.indexes.values():
+            if isinstance(index_config, IndexTemplateConfig):
+                continue
 
-    @abstractmethod
-    async def generate_system_hooks(self) -> None: ...
+            for handler_config in index_config.handlers:
+                await self._generate_callback(handler_config, 'handlers')
 
-    @abstractmethod
-    async def generate_handlers(self) -> None: ...
-
-    @abstractmethod
-    def get_typeclass_name(self, schema_path: Path) -> str: ...
+    async def generate_batch_handler(self) -> None:
+        await self._generate_callback(
+            callback_config=BatchHandlerConfig(),
+            kind='handlers',
+            code=(
+                'for handler in handlers:',
+                '    await ctx.fire_matched_handler(handler)',
+            ),
+        )
 
     async def _generate_types(self, force: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
@@ -129,7 +174,13 @@ class CodeGenerator(ABC):
             output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
         )
 
-    async def _generate_callback(self, callback_config: CallbackMixin, kind: str, sql: bool = False) -> None:
+    async def _generate_callback(
+        self,
+        callback_config: CallbackMixin,
+        kind: str,
+        sql: bool = False,
+        code: tuple[str, ...] = (),
+    ) -> None:
         original_callback = callback_config.callback
         subpackages = callback_config.callback.split('.')
         subpackages, callback = subpackages[:-1], subpackages[-1]
@@ -150,17 +201,19 @@ class CodeGenerator(ABC):
         arguments = callback_config.format_arguments()
         imports = set(callback_config.format_imports(self._config.package))
 
-        code: list[str] = []
+        code_deque: deque[str] = deque(code)
         if sql:
-            code.append(f"await ctx.execute_sql('{original_callback}')")
+            code_deque.append(f"await ctx.execute_sql('{original_callback}')")
+            # FIXME: move me
             if callback == 'on_index_rollback':
-                code.append('await ctx.rollback(')
-                code.append('    index=index.name,')
-                code.append('    from_level=from_level,')
-                code.append('    to_level=to_level,')
-                code.append(')')
-        else:
-            code.append('...')
+                code_deque.append('await ctx.rollback(')
+                code_deque.append('    index=index.name,')
+                code_deque.append('    from_level=from_level,')
+                code_deque.append('    to_level=to_level,')
+                code_deque.append(')')
+
+        if not code_deque:
+            code_deque.append('...')
 
         # FIXME: Missing generic type annotation to comply with `mypy --strict`
         processed_arguments = tuple(
@@ -171,7 +224,7 @@ class CodeGenerator(ABC):
             callback=callback,
             arguments=tuple(processed_arguments),
             imports=sorted(dict.fromkeys(imports)),
-            code=code,
+            code=code_deque,
         )
         write(callback_path, callback_code)
 
@@ -200,6 +253,36 @@ class CodeGenerator(ABC):
     def _cleanup_schemas(self) -> None:
         rmtree(self._package.schemas)
         self._package.schemas.mkdir()
+
+
+class CommonCodeGenerator(_BaseCodeGenerator):
+    async def generate_abis(self) -> None:
+        pass
+
+    async def generate_schemas(self) -> None:
+        pass
+
+    async def _generate_types(self, force: bool = False) -> None:
+        pass
+
+    def get_typeclass_name(self, schema_path: Path) -> str:
+        raise NotImplementedError
+
+
+class CodeGenerator(_BaseCodeGenerator):
+    async def _generate_models(self) -> None:
+        pass
+
+    async def generate_hooks(self) -> None: ...
+
+    async def generate_system_hooks(self) -> None:
+        pass
+
+    async def generate_handlers(self) -> None:
+        pass
+
+    async def _generate_batch_handler(self) -> None:
+        pass
 
 
 async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:

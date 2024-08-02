@@ -1,9 +1,7 @@
 from collections import deque
 from typing import Any
 
-from dipdup.config.tezos_token_balances import TezosTokenBalancesHandlerConfig
 from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.indexes.tezos_token_balances.matcher import match_token_balances
 from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
@@ -40,23 +38,13 @@ class TezosTokenBalancesIndex(
             ):
                 matched_handlers = match_token_balances(self._config.handlers, balances_batch)
                 for handler_config, matched_balance_data in matched_handlers:
-                    await self._call_matched_handler(handler_config, matched_balance_data)
+                    await self._ctx.fire_handler(
+                        name=handler_config.callback,
+                        index=handler_config.parent.name,
+                        args=(matched_balance_data,),
+                    )
 
             await self._update_state(level=head_level)
-
-    async def _call_matched_handler(
-        self, handler_config: TezosTokenBalancesHandlerConfig, token_balance: TezosTokenBalanceData
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            # NOTE: missing `operation_id` field in API to identify operation
-            None,
-            token_balance,
-        )
 
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
         return match_token_balances(handlers, level_data)

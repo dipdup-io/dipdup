@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import time
 from abc import ABC
 from abc import abstractmethod
 from collections import deque
+from collections.abc import Iterable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -9,6 +13,7 @@ from typing import TypeVar
 from typing import cast
 
 import dipdup.models as models
+from dipdup.config import HandlerConfig
 from dipdup.config import ResolvedIndexConfigU
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import FrameworkException
@@ -28,6 +33,14 @@ IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource[Any])
 
 
+@dataclass
+class MatchedHandler:
+    index: Index[Any, Any, Any]
+    level: int
+    config: HandlerConfig
+    args: Iterable[Any]
+
+
 class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     """Base class for index implementations
 
@@ -42,7 +55,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def __init__(
         self,
-        ctx: 'DipDupContext',
+        ctx: DipDupContext,
         config: IndexConfigT,
         datasources: tuple[IndexDatasourceT, ...],
     ) -> None:
@@ -73,13 +86,6 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level_data: Any,
     ) -> deque[Any]: ...
 
-    @abstractmethod
-    async def _call_matched_handler(
-        self,
-        handler_config: Any,
-        level_data: Any,
-    ) -> None: ...
-
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self._queue:
@@ -105,6 +111,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level_data: Any,
         sync_level: int,
     ) -> None:
+        from dipdup.index import MatchedHandler
+
         if not level_data:
             return
 
@@ -129,9 +137,25 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return
 
         started_at = time.time()
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for handler_config, data in matched_handlers:
-                await self._call_matched_handler(handler_config, data)
+        async with self._ctx.transactions.in_transaction(
+            level=batch_level,
+            sync_level=sync_level,
+            index=self.name,
+        ):
+            batch_handlers = (
+                MatchedHandler(
+                    index=self,
+                    level=batch_level,
+                    config=handler_config,
+                    args=data if isinstance(data, Iterable) else (data,),
+                )
+                for handler_config, data in matched_handlers
+            )
+            await self._ctx.fire_handler(
+                name='batch',
+                index=self._config.name,
+                args=(batch_handlers,),
+            )
             await self._update_state(level=batch_level)
 
         metrics.objects_indexed += len(level_data)
@@ -203,7 +227,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             defaults={
                 'level': index_level,
                 'config_hash': self._config.hash(),
-                'template': self._config.parent.name if self._config.parent else None,
+                'template': self._config._parent.name if self._config._parent else None,
                 'template_values': self._config._template_values,
             },
         )
@@ -282,9 +306,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         from_level: int,
         to_level: int,
     ) -> None:
-        hook_name = 'on_index_rollback'
         await self._ctx.fire_hook(
-            name=hook_name,
+            name='on_index_rollback',
             index=self,
             from_level=from_level,
             to_level=to_level,

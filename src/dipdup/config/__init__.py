@@ -484,7 +484,7 @@ class SystemHookConfig(HookConfig):
     __doc__ = HookConfig.__doc__
 
 
-system_hooks = {
+SYSTEM_HOOKS = {
     # NOTE: Fires on every run after datasources and schema are initialized.
     # NOTE: Default: nothing.
     'on_restart': SystemHookConfig(
@@ -870,7 +870,7 @@ class DipDupConfig:
         for name, hook_config in self.hooks.items():
             if name != hook_config.callback:
                 raise ConfigurationError(f'`{name}` hook name must be equal to `callback` value.')
-            if name in system_hooks:
+            if name in SYSTEM_HOOKS:
                 raise ConfigurationError(f'`{name}` hook name is reserved by system hook')
 
         # NOTE: Rollback depth euristics and validation

@@ -2,8 +2,6 @@ from collections import deque
 from typing import Any
 
 from dipdup.config.tezos_head import TezosHeadIndexConfig
-from dipdup.config.tezos_head import TezosTzktHeadHandlerConfig
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import IndexStatus
@@ -44,21 +42,12 @@ class TezosHeadIndex(
 
             async with self._ctx.transactions.in_transaction(batch_level, message_level, self.name):
                 self._logger.debug('Processing head info of level %s', batch_level)
-                await self._call_matched_handler(self._config.handler_config, message)
+                await self._ctx.fire_handler(
+                    name=self._config.callback,
+                    index=self._config.name,
+                    args=(message,),
+                )
                 await self._update_state(level=batch_level)
-
-    async def _call_matched_handler(
-        self, handler_config: TezosTzktHeadHandlerConfig, level_data: TezosHeadBlockData
-    ) -> None:
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            level_data.hash,
-            level_data,
-        )
 
     # FIXME: Use method from Index
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:

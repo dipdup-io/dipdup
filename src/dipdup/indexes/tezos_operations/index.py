@@ -3,12 +3,10 @@ from collections import defaultdict
 from collections import deque
 from collections.abc import Iterable
 from collections.abc import Iterator
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
-from dipdup.config.tezos_operations import TezosOperationsHandlerConfigU
 from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPatternConfig
 from dipdup.config.tezos_operations import (
     TezosOperationsHandlerSmartRollupCementPatternConfig as SmartRollupCementPatternConfig,
@@ -21,13 +19,11 @@ from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfigU
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
-from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_operations.fetcher import OperationsFetcher
 from dipdup.indexes.tezos_operations.fetcher import OperationsUnfilteredFetcher
 from dipdup.indexes.tezos_operations.matcher import MatchedOperationsT
 from dipdup.indexes.tezos_operations.matcher import OperationSubgroup
-from dipdup.indexes.tezos_operations.matcher import TezosOperationsHandlerArgumentU
 from dipdup.indexes.tezos_operations.matcher import match_operation_subgroup
 from dipdup.indexes.tezos_operations.matcher import match_operation_unfiltered_subgroup
 from dipdup.indexes.tezos_tzkt import TezosIndex
@@ -311,26 +307,14 @@ class TezosOperationsIndex(
             return
 
         async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for operation_subgroup, handler_config, args in matched_handlers:
-                await self._call_matched_handler(handler_config, (operation_subgroup, args))
+            for _operation_subgroup, handler_config, args in matched_handlers:
+                await self._ctx.fire_handler(
+                    name=handler_config.callback,
+                    index=handler_config.parent.name,
+                    args=args,
+                )
             await self._update_state(level=batch_level)
             metrics.levels_nonempty += 1
-
-    async def _call_matched_handler(
-        self,
-        handler_config: TezosOperationsHandlerConfigU,
-        level_data: tuple[OperationSubgroup, Sequence[TezosOperationsHandlerArgumentU]],
-    ) -> None:
-        operation_subgroup, args = level_data
-        if not handler_config.parent:
-            raise ConfigInitializationException
-
-        await self._ctx.fire_handler(
-            handler_config.callback,
-            handler_config.parent.name,
-            operation_subgroup.hash + ': {}',
-            *args,
-        )
 
     # FIXME: Use method from Index
     def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:

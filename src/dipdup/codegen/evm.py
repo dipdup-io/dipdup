@@ -152,7 +152,7 @@ def topic0_from_abi(event: dict[str, Any]) -> str:
 
 
 class EvmCodeGenerator(CodeGenerator):
-    async def generate_abi(self) -> None:
+    async def generate_abis(self) -> None:
         for index_config in self._config.indexes.values():
             if isinstance(index_config, EvmIndexConfig):
                 await self._fetch_abi(index_config)

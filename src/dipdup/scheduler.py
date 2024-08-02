@@ -92,7 +92,6 @@ class SchedulerManager:
 
         async def _job_wrapper(
             ctx: 'DipDupContext',
-            *args: Any,
             **kwargs: Any,
         ) -> None:
             nonlocal job_config, hook_config
@@ -103,8 +102,8 @@ class SchedulerManager:
             )
             with suppress(asyncio.CancelledError):
                 await job_ctx.fire_hook(
-                    hook_config.callback,
-                    *args,
+                    name=hook_config.callback,
+                    wait=True,
                     **kwargs,
                 )
 
