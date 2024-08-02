@@ -118,7 +118,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             raise e
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
-        if fn.__name__ == 'run':
+        if fn.__name__ == 'run' and not env.TEST:
             package = ctx.obj.config.package
             save_report(package, None)
 
