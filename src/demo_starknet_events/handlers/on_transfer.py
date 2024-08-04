@@ -3,13 +3,13 @@ from decimal import Decimal
 from demo_starknet_events import models as models
 from demo_starknet_events.types.stark_usdt.starknet_events.transfer import TransferPayload
 from dipdup.context import HandlerContext
-from dipdup.models.evm import EvmEvent
+from dipdup.models.starknet import StarknetEvent
 from tortoise.exceptions import DoesNotExist
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: EvmEvent[TransferPayload],
+    event: StarknetEvent[TransferPayload],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
     if not amount:
