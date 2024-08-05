@@ -5,12 +5,12 @@ from tortoise.exceptions import DoesNotExist
 from {{ project.package }} import models as models
 from {{ project.package }}.types.stark_usdt.starknet_events.transfer import TransferPayload
 from dipdup.context import HandlerContext
-from dipdup.models.evm import EvmEvent
+from dipdup.models.starknet import StarknetEvent
 
 
 async def on_transfer(
     ctx: HandlerContext,
-    event: EvmEvent[TransferPayload],
+    event: StarknetEvent[TransferPayload],
 ) -> None:
     amount = Decimal(event.payload.value) / (10**6)
     if not amount:
