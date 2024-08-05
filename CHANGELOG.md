@@ -14,10 +14,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed progress estimation when there are indexes with `last_level` option set.
 - cli: Don't save reports for successful test runs.
+- evm: Fixed crash when contract ABI contains overloaded methods.
 - tezos.operations: Fixed `sr_cement` operation index subscription.
 
 ### Changed
 
+- config: When filtering EVM transactions by signature, use `signature` field instead of `method`.
 - ctx: Signatures of `fire_handler` and `fire_hook` methods have changed.
 - ctx: `ctx.logger` is a regular `logging.Logger` instead of pre-configured `FormattedLogger`.
 

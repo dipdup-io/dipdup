@@ -1,6 +1,7 @@
 import random
 from abc import ABC
 from abc import abstractmethod
+from functools import cache
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
@@ -19,31 +20,34 @@ from dipdup.prometheus import Metrics
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
 
-EVM_SUBSQUID_READAHEAD_LIMIT = 2500
+EVM_SUBSQUID_READAHEAD_LIMIT = 10000
 
 IndexConfigT = TypeVar('IndexConfigT', bound=Any)
 DatasourceT = TypeVar('DatasourceT', bound=Any)
 
 
-_sighashes: dict[str, str] = {}
-
-
-def get_sighash(package: DipDupPackage, method: str, to: EvmContractConfig | None = None) -> str:
+@cache
+def get_sighash(
+    package: DipDupPackage,
+    method: str | None = None,
+    signature: str | None = None,
+    to: EvmContractConfig | None = None,
+) -> str:
     """Method in config is either a full signature or a method name. We need to convert it to a sighash first."""
 
-    key = method + (to.module_name if to else '')
-    if key in _sighashes:
-        return _sighashes[key]
+    if to and (method or signature):
+        return package._evm_abis.get_method_abi(
+            typename=to.module_name,
+            name=method,
+            signature=signature,
+        )['sighash']
 
-    if {'(', ')'} <= set(method) and not to:
+    if (not to) and signature:
         from web3 import Web3
 
-        _sighashes[key] = Web3.keccak(text=method).hex()[:10]
-    elif to:
-        _sighashes[key] = package.get_converted_evm_abi(to.module_name)['methods'][method]['sighash']
-    else:
-        raise ConfigurationError('`to` field is missing; `method` is expected to be a full signature')
-    return _sighashes[key]
+        return Web3.keccak(text=signature).hex()[:10]
+
+    raise ConfigurationError('Either `to` or `signature` filters are expected')
 
 
 class EvmIndex(
@@ -64,6 +68,7 @@ class EvmIndex(
         self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, EvmSubsquidDatasource))
         self.node_datasources = tuple(d for d in datasources if isinstance(d, EvmNodeDatasource))
         self._subsquid_started: bool = False
+        self._abis = ctx.package._evm_abis
 
     @abstractmethod
     async def _synchronize_subsquid(self, sync_level: int) -> None: ...

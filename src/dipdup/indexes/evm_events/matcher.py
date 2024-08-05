@@ -9,7 +9,6 @@ from eth_abi.abi import decode as decode_abi
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.models.evm import EvmEvent
 from dipdup.models.evm import EvmEventData
-from dipdup.package import ConvertedEventAbi
 from dipdup.package import DipDupPackage
 from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
@@ -61,7 +60,10 @@ def prepare_event_handler_args(
     matched_event: EvmEventData,
 ) -> EvmEvent[Any]:
     typename = handler_config.contract.module_name
-    inputs = package.get_converted_evm_abi(typename)['events'][handler_config.name]['inputs']
+    inputs = package._evm_abis.get_event_abi(
+        typename=typename,
+        name=handler_config.name,
+    )['inputs']
 
     type_ = package.get_type(
         typename=typename,
@@ -90,7 +92,6 @@ def match_events(
     package: DipDupPackage,
     handlers: Iterable[EvmEventsHandlerConfig],
     events: Iterable[EvmEventData],
-    abis: dict[str, dict[str, ConvertedEventAbi]],
 ) -> deque[MatchedEventsT]:
     """Try to match event events with all index handlers."""
     matched_handlers: deque[MatchedEventsT] = deque()
@@ -101,7 +102,10 @@ def match_events(
 
         for handler_config in handlers:
             typename = handler_config.contract.module_name
-            abi = abis[typename][handler_config.name]
+            abi = package._evm_abis.get_event_abi(
+                typename=typename,
+                name=handler_config.name,
+            )
             if event.topics[0] != abi['topic0']:
                 continue
             if len(event.topics) != abi['topic_count'] + 1:

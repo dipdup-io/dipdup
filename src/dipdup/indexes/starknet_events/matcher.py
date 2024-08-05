@@ -69,8 +69,10 @@ def prepare_event_handler_args(
         name=snake_to_pascal(handler_config.name) + 'Payload',
     )
 
-    # TODO: probably to rewrite later
-    serializer = package.get_converted_starknet_abi(typename)['events'][handler_config.name]['serializer']
+    serializer = package._cairo_abis.get_event_abi(
+        typename=typename,
+        name=handler_config.name,
+    )['serializer']
     data = [int(s, 16) for s in matched_event.data]
 
     # holding context for error building
