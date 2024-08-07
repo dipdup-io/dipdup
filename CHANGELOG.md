@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 - cli: Fixed progress estimation when there are indexes with `last_level` option set.
 - cli: Don't save reports for successful test runs.
+- database: Fixed concurrency issue when using `get_or_create` method.
 - evm: Fixed crash when contract ABI contains overloaded methods.
 - tezos.operations: Fixed `sr_cement` operation index subscription.
 
