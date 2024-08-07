@@ -157,8 +157,10 @@ class PostgresDatabaseConfig:
 
     @property
     def connection_string(self) -> str:
+        # NOTE: `maxsize=1` is important! Concurrency will be broken otherwise.
+        # NOTE: https://github.com/tortoise/tortoise-orm/issues/792
         connection_string = (
-            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}'
+            f'{self.kind}://{self.user}:{quote_plus(self.password)}@{self.host}:{self.port}/{self.database}?maxsize=1'
         )
         if self.schema_name != DEFAULT_POSTGRES_SCHEMA:
             connection_string += f'&schema={self.schema_name}'
