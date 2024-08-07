@@ -45,6 +45,13 @@ class OperationSubgroup:
     counter: int
     operations: tuple[TezosOperationData, ...]
 
+    @property
+    def level(self) -> int:
+        return self.operations[0].level
+
+    def __len__(self) -> int:
+        return len(self.operations)
+
 
 TezosOperationsHandlerArgumentU = (
     TezosTransaction[Any, Any]
@@ -54,7 +61,7 @@ TezosOperationsHandlerArgumentU = (
     | TezosOperationData
     | None
 )
-MatchedOperationsT = tuple[OperationSubgroup, TezosOperationsHandlerConfigU, deque[TezosOperationsHandlerArgumentU]]
+MatchedOperationsT = tuple[TezosOperationsHandlerConfigU, deque[TezosOperationsHandlerArgumentU]]
 
 
 def prepare_operation_handler_args(
@@ -194,7 +201,7 @@ def match_operation_unfiltered_subgroup(
 
     for operation in operation_subgroup.operations:
         if TezosOperationType[operation.type] in index.types:
-            matched_handlers.append((operation_subgroup, index.handlers[0], deque([operation])))
+            matched_handlers.append((index.handlers[0], deque([operation])))
 
     return matched_handlers
 
@@ -249,7 +256,7 @@ def match_operation_subgroup(
                 _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
                 args = prepare_operation_handler_args(package, handler_config, matched_operations)
-                matched_handlers.append((operation_subgroup, handler_config, args))
+                matched_handlers.append((handler_config, args))
 
                 matched_operations.clear()
                 pattern_index = 0
@@ -258,7 +265,7 @@ def match_operation_subgroup(
             _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
             args = prepare_operation_handler_args(package, handler_config, matched_operations)
-            matched_handlers.append((operation_subgroup, handler_config, args))
+            matched_handlers.append((handler_config, args))
 
     if not (alt and len(matched_handlers) in (0, 1)):
         return matched_handlers
@@ -267,7 +274,7 @@ def match_operation_subgroup(
     index_list = list(range(len(matched_handlers)))
     id_list = []
     for handler in matched_handlers:
-        last_operation = handler[2][-1]
+        last_operation = handler[1][-1]
         if isinstance(last_operation, TezosOperationData):
             id_list.append(last_operation.id)
         elif isinstance(last_operation, TezosOrigination):

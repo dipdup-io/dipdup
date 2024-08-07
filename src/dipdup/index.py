@@ -137,20 +137,20 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return
 
         started_at = time.time()
+        batch_handlers = (
+            MatchedHandler(
+                index=self,
+                level=batch_level,
+                config=handler_config,
+                args=data if isinstance(data, Iterable) else (data,),
+            )
+            for handler_config, data in matched_handlers
+        )
         async with self._ctx.transactions.in_transaction(
             level=batch_level,
             sync_level=sync_level,
             index=self.name,
         ):
-            batch_handlers = (
-                MatchedHandler(
-                    index=self,
-                    level=batch_level,
-                    config=handler_config,
-                    args=data if isinstance(data, Iterable) else (data,),
-                )
-                for handler_config, data in matched_handlers
-            )
             await self._ctx.fire_handler(
                 name='batch',
                 index=self._config.name,

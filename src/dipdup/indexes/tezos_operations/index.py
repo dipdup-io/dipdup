@@ -187,33 +187,10 @@ class TezosOperationsIndex(
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
-    # FIXME: Use method from Index
-    async def _process_queue(self) -> None:
-        """Process WebSocket queue"""
-        self._logger.debug('Processing %s realtime messages from queue', len(self._queue))
-
-        while self._queue:
-            message = self._queue.popleft()
-            if isinstance(message, RollbackMessage):
-                await self._rollback(message.from_level, message.to_level)
-                continue
-
-            messages_left = len(self._queue)
-            Metrics.set_levels_to_realtime(self._config.name, messages_left)
-
-            message_level = message[0].operations[0].level
-
-            if message_level <= self.state.level:
-                self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
-                continue
-
-            await self._process_level_operations(message, message_level)
-
-        else:
-            Metrics.set_levels_to_realtime(self._config.name, 0)
-
     async def _create_fetcher(
-        self, first_level: int, sync_level: int
+        self,
+        first_level: int,
+        sync_level: int,
     ) -> OperationsFetcher | OperationsUnfilteredFetcher:
         if isinstance(self._config, TezosOperationsIndexConfig):
             return await OperationsFetcher.create(
@@ -255,27 +232,17 @@ class TezosOperationsIndex(
             )
             if operation_subgroups:
                 self._logger.debug('Processing operations of level %s', level)
-                await self._process_level_operations(operation_subgroups, sync_level)
+                await self._process_level_data(operation_subgroups, sync_level)
 
         await self._exit_sync_state(sync_level)
 
-    # FIXME: Use method from Index
-    async def _process_level_operations(
+    def _match_level_data(
         self,
-        operation_subgroups: tuple[OperationSubgroup, ...],
-        sync_level: int,
-    ) -> None:
-        if not operation_subgroups:
-            return
-
-        batch_level = operation_subgroups[0].operations[0].level
-        index_level = self.state.level
-        if batch_level <= index_level:
-            raise FrameworkException(f'Batch level is lower than index level: {batch_level} <= {index_level}')
-
-        self._logger.debug('Processing %s operation subgroups of level %s', len(operation_subgroups), batch_level)
+        handlers: Iterable[TezosOperationsHandlerConfig],
+        level_data: Iterable[OperationSubgroup],
+    ) -> deque[Any]:
         matched_handlers: deque[MatchedOperationsT] = deque()
-        for operation_subgroup in operation_subgroups:
+        for operation_subgroup in level_data:
             metrics.objects_indexed += len(operation_subgroup.operations)
             if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
                 subgroup_handlers = match_operation_unfiltered_subgroup(
@@ -285,37 +252,17 @@ class TezosOperationsIndex(
             else:
                 subgroup_handlers = match_operation_subgroup(
                     self._ctx.package,
-                    handlers=self._config.handlers,
+                    handlers=handlers,
                     operation_subgroup=operation_subgroup,
                     alt=self._ctx.config.advanced.alt_operation_matcher,
                 )
 
             if subgroup_handlers:
                 self._logger.debug(
-                    '%s: `%s` handler matched!',
+                    '%s: %s handlers matched!',
                     operation_subgroup.hash,
-                    subgroup_handlers[0][1].callback,
+                    len(subgroup_handlers),
                 )
             matched_handlers += subgroup_handlers
 
-        Metrics.set_index_handlers_matched(len(matched_handlers))
-
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
-        if not matched_handlers:
-            await self._update_state(level=batch_level)
-            metrics.levels_nonempty += 1
-            return
-
-        async with self._ctx.transactions.in_transaction(batch_level, sync_level, self.name):
-            for _operation_subgroup, handler_config, args in matched_handlers:
-                await self._ctx.fire_handler(
-                    name=handler_config.callback,
-                    index=handler_config.parent.name,
-                    args=args,
-                )
-            await self._update_state(level=batch_level)
-            metrics.levels_nonempty += 1
-
-    # FIXME: Use method from Index
-    def _match_level_data(self, handlers: Any, level_data: Any) -> deque[Any]:
-        raise NotImplementedError
+        return matched_handlers
