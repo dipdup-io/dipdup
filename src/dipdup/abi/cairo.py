@@ -38,7 +38,7 @@ def _convert_type(type_: CairoType) -> str:
         'FeltType': 'integer',
         'UintType': 'integer',
         'BoolType': 'boolean',
-    }[type.__class__.__name__]
+    }[type_.__class__.__name__]
 
 
 def _jsonschema_from_event(event: EventType) -> dict[str, Any]:

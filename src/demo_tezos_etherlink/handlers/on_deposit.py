@@ -14,5 +14,4 @@ async def on_deposit(
     deposit: TezosTransaction[DepositParameter, TicketerStorage],
     default: TezosTransaction[DefaultParameter, TicketHelperStorage],
     rollup_default: TezosTransaction[RollupDefaultParameter, RollupStorage],
-) -> None:
-    ...
+) -> None: ...

@@ -7,7 +7,10 @@ from demo_evm_uniswap.models.abi import get_abi
 
 
 async def position_validate(
-    ctx: HandlerContext, contract_address: str, position_id: int, position: models.Position,
+    ctx: HandlerContext,
+    contract_address: str,
+    position_id: int,
+    position: models.Position,
 ) -> None:
     web3 = ctx.get_evm_node_datasource('evm_node').web3
     manager = web3.eth.contract(

@@ -6,5 +6,4 @@ from dipdup.models.tezos import TezosUnknownEvent
 async def on_other_event(
     ctx: HandlerContext,
     event: TezosUnknownEvent,
-) -> None:
-    ...
+) -> None: ...

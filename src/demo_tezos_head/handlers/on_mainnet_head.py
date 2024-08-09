@@ -6,5 +6,4 @@ from dipdup.models.tezos import TezosHeadBlockData
 async def on_mainnet_head(
     ctx: HandlerContext,
     head: TezosHeadBlockData,
-) -> None:
-    ...
+) -> None: ...

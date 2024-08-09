@@ -57,7 +57,7 @@ class ERC20Token:
         self.contract = self.web3.eth.contract(
             address=self.address,
             abi=get_abi('erc20.ERC20'),
-            )
+        )
 
     @classmethod
     def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':
@@ -75,7 +75,7 @@ class ERC20Token:
                 address=self.address,
                 abi=get_abi('erc20.ERC20SymbolBytes'),
             )
-            symbol = await contract.functions.symbol().call() 
+            symbol = await contract.functions.symbol().call()
             return bytes(symbol).decode('utf-8').replace('\x00', '')
 
         token = StaticTokenDefinition.from_address(self.address)

@@ -10,4 +10,4 @@ class Holder(CachedModel):
     last_seen = fields.BigIntField(null=True)
 
     class Meta:
-        maxsize = 2 ** 18
+        maxsize = 2**18
