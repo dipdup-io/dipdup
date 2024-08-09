@@ -7,5 +7,4 @@ from dipdup.models.evm import EvmEvent
 async def flash(
     ctx: HandlerContext,
     event: EvmEvent[FlashPayload],
-) -> None:
-    ...
+) -> None: ...

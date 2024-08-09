@@ -7,5 +7,4 @@ from dipdup.models.tezos import TezosEvent
 async def on_roll_event(
     ctx: HandlerContext,
     event: TezosEvent[RollPayload],
-) -> None:
-    ...
+) -> None: ...

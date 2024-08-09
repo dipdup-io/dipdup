@@ -34,5 +34,5 @@ async def on_factory_origination(
         values={
             'dex': dex_contract,
             'token': token_contract,
-        }
+        },
     )

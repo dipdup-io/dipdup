@@ -12,5 +12,4 @@ async def on_withdraw(
     sr_execute_0: TezosSmartRollupExecute,
     withdraw: TezosTransaction[WithdrawParameter, TicketerStorage],
     transaction_2: TezosOperationData,
-) -> None:
-    ...
+) -> None: ...
