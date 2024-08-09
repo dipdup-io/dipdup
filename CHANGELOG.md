@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
-## [Unreleased]
+## [8.0.0b5] - 2024-08-09
 
 ### Added
 
@@ -21,8 +21,8 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 ### Changed
 
 - config: When filtering EVM transactions by signature, use `signature` field instead of `method`.
-- ctx: Signatures of `fire_handler` and `fire_hook` methods have changed.
-- ctx: `ctx.logger` is a regular `logging.Logger` instead of pre-configured `FormattedLogger`.
+- context: Signatures of `fire_handler` and `fire_hook` methods have changed.
+- context: `ctx.logger` is a regular `logging.Logger` instead of pre-configured `FormattedLogger`.
 
 ### Other
 
