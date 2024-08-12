@@ -51,12 +51,6 @@ classifiers = [
 ]
 
 dependencies = [
-    # NOTE: Core dependencies; keep pinned between major versions.
-    "datamodel-code-generator~=0.25.7",
-    "pydantic~=2.7",
-    "tortoise-orm==0.21.5",
-    "web3~=6.19",
-    #
     # FIXME: KeyError in _make_or_get_ssl_context
     "aiohttp==3.10.2",
     "aiolimiter~=1.0",
@@ -65,10 +59,12 @@ dependencies = [
     "async-lru~=2.0",
     "asyncpg~=0.29",
     "click~=8.0",
+    "datamodel-code-generator~=0.25.7",
     "eth-abi>=5.0.1,<6",
     "orjson~=3.9",
     "prometheus-client~=0.17",
     "pycryptodome~=3.17",
+    "pydantic~=2.7",
     "pyhumps~=3.0",
     "pysignalr~=1.0",
     "python-dotenv~=1.0",
@@ -76,11 +72,14 @@ dependencies = [
     "ruamel.yaml~=0.17",
     "sentry-sdk~=2.5",
     "sqlparse~=0.4",
-    "starknet-py~=0.22",
+    "starknet-py~=0.23",
     "strict-rfc3339~=0.7",
     "survey~=5.3",
     "tabulate~=0.9",
+    # NOTE: Heavily patched; don't update without testing.
+    "tortoise-orm==0.21.5",
     "uvloop>=0.19.0",
+    "web3~=6.19",
 ]
 
 [tool.pdm.resolution.overrides]
@@ -107,7 +106,7 @@ lint = [
 ]
 test = [
     "docker",
-    "pytest~=7.4",
+    "pytest",
     "pytest-aiohttp",
     "pytest-asyncio",
     "pytest-cov",
@@ -123,8 +122,8 @@ perf = [
     "scalene",
 ]
 
-[tool.pdm.build.targets.wheel]
-packages = ["src/dipdup"]
+[tool.pdm.build]
+includes = ["src/dipdup"]
 
 [tool.black]
 line-length = 120
