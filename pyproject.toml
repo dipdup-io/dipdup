@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.0.0b5"
+version = "8.0.0"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -57,7 +57,8 @@ dependencies = [
     "tortoise-orm==0.21.5",
     "web3~=6.19",
     #
-    "aiohttp~=3.9",
+    # FIXME: KeyError in _make_or_get_ssl_context
+    "aiohttp==3.10.2",
     "aiolimiter~=1.0",
     "anyio~=4.1",
     "APScheduler~=3.8",
