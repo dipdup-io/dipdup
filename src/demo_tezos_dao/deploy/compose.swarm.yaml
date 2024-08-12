@@ -1,4 +1,3 @@
-version: "3.8"
 name: demo_tezos_dao
 
 services:
@@ -38,7 +37,7 @@ services:
       - POSTGRES_DB=dipdup
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -252,7 +252,7 @@ class _BaseCodeGenerator(ABC):
 
     def _cleanup_schemas(self) -> None:
         rmtree(self._package.schemas)
-        self._package.schemas.mkdir()
+        self._package.schemas.mkdir(parents=True, exist_ok=True)
 
 
 class CommonCodeGenerator(_BaseCodeGenerator):

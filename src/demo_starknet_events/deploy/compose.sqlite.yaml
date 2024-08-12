@@ -1,4 +1,3 @@
-version: "3.8"
 name: demo_starknet_events
 
 services:

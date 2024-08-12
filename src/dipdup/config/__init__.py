@@ -928,7 +928,7 @@ class DipDupConfig:
 
         if missing_value := re.search(r'<*>', raw_template):
             raise ConfigurationError(
-                f'`{template_config.name}` index config is missing required template value `{missing_value}`'
+                f'`{template_config.name}` index config is missing required template value `{missing_value.group()}`'
             )
 
         json_template = orjson.loads(raw_template)

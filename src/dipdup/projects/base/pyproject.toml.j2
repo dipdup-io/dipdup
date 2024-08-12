@@ -34,18 +34,6 @@ dev = [
     "ruff",
     "mypy",
 ]
-
-[tool.pdm.scripts]
-help = {cmd = "make help", help = "Show this help (default)"}
-all = {cmd = "make all", help = "Run an entire CI pipeline"}
-format = {cmd = "make format", help = "Format with all tools"}
-lint = {cmd = "make lint", help = "Lint with all tools"}
-black = {cmd = "make black", help = "Format with black"}
-ruff = {cmd = "make ruff", help = "Lint with ruff"}
-mypy = {cmd = "make mypy", help = "Lint with mypy"}
-image = {cmd = "make image", help = "Build Docker image"}
-up = {cmd = "make up", help = "Start Compose stack"}
-down = {cmd = "make down", help = "Stop Compose stack"}
 {% elif project.package_manager == 'poetry' %}
 [tool.poetry]
 name = "{{ project.package }}"
@@ -84,6 +72,10 @@ isort = { force-single-line = true}
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = false
+exclude = "{{ project.package }}"
+
+[tool.mypy-ruamel.yaml]
+ignore-missing-imports = true
 
 {% if project.package_manager == 'pdm' -%}
 [build-system]
