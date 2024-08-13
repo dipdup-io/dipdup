@@ -58,6 +58,7 @@ mypy = "*"
 line-length = {{ project.line_length }}
 target-version = ['py312']
 skip-string-normalization = true
+extend-exclude = "{{ project.package }}"
 
 [tool.ruff]
 line-length = {{ project.line_length }}
@@ -75,7 +76,7 @@ strict = false
 exclude = "{{ project.package }}"
 
 [tool.mypy-ruamel.yaml]
-ignore-missing-imports = true
+ignore_missing_imports = true
 
 {% if project.package_manager == 'pdm' -%}
 [build-system]

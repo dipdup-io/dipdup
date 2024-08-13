@@ -24,6 +24,7 @@ dev = [
 line-length = 120
 target-version = ['py312']
 skip-string-normalization = true
+extend-exclude = "demo_tezos_factories"
 
 [tool.ruff]
 line-length = 120
@@ -41,7 +42,7 @@ strict = false
 exclude = "demo_tezos_factories"
 
 [tool.mypy-ruamel.yaml]
-ignore-missing-imports = true
+ignore_missing_imports = true
 
 [build-system]
 requires = ["pdm-backend"]
