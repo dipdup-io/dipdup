@@ -88,6 +88,10 @@ demos:          ## Recreate demo projects from templates
 	python scripts/demos.py init ${DEMO}
 	make format lint
 
+demos_refresh:
+	for demo in `ls src | grep demo | grep -v etherlink`; do cd src/$$demo && dipdup init -b -f && cd ../..; done
+	make format lint
+
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format
 	make lint
