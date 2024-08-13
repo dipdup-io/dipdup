@@ -335,10 +335,12 @@ class DipDupContext:
             raise NotImplementedError
 
         for handler_config in index_config.handlers:
+            handler_config.parent = index_config
             self.register_handler(handler_config)
-            batch_handler = BatchHandlerConfig()
-            batch_handler.parent = index_config
-            self.register_handler(batch_handler)
+
+        batch_handler = BatchHandlerConfig()
+        batch_handler.parent = index_config
+        self.register_handler(batch_handler)
 
         await index.initialize_state(state)
 
