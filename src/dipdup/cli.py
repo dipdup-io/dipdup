@@ -161,12 +161,13 @@ def _skip_cli_group() -> bool:
     is_empty_group = args in (
         ['config'],
         ['hasura'],
+        ['package'],
         ['schema'],
     )
     # NOTE: Simple helpers that don't use any of our cli boilerplate
     is_script = args[0] in (
-        'self',
         'report',
+        'self',
     )
     if not (is_help or is_empty_group or is_script):
         _logger.debug('Skipping cli group')
