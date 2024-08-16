@@ -21,23 +21,11 @@ DEFAULT_ENV = {
 
 
 def _get_demos() -> dict[str, Path]:
-    return {
-        p.name: p
-        for p in SRC_PATH.iterdir()
-        if p.is_dir() and p.name.startswith(DEMO_PREFIX)
-        # FIXME: nairobinet is dead
-        if p.name != 'demo_tezos_etherlink'
-    }
+    return {p.name: p for p in SRC_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
 
 
 def _get_projects() -> dict[str, Path]:
-    return {
-        p.name: p
-        for p in PROJECTS_PATH.iterdir()
-        if p.is_dir() and p.name.startswith(DEMO_PREFIX)
-        # FIXME: nairobinet is dead
-        if p.name != 'demo_tezos_etherlink'
-    }
+    return {p.name: p for p in PROJECTS_PATH.iterdir() if p.is_dir() and p.name.startswith(DEMO_PREFIX)}
 
 
 def _render_demo(path: Path) -> None:
