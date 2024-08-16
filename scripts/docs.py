@@ -190,6 +190,14 @@ MARKDOWNLINT_IGNORE = (
     'single-title',
     'single-h1',
 )
+MARKDOWNLINT_CMD = (
+    'markdownlint',
+    '-f',
+    '--disable',
+    *MARKDOWNLINT_IGNORE,
+    '--',
+    'docs',
+)
 
 
 # NOTE: As in Keep a Changelog spec
@@ -604,7 +612,7 @@ def markdownlint() -> None:
     green_echo('=> Running markdownlint')
     try:
         subprocess.run(
-            ('markdownlint', '-f', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
+            MARKDOWNLINT_CMD,
             check=True,
         )
     except subprocess.CalledProcessError:
