@@ -1,10 +1,10 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
 
-import demo_tezos_domains.models as domains_models
-import demo_tezos_nft_marketplace.models as hen_models
 from tortoise.expressions import F
 
+import demo_tezos_domains.models as domains_models
+import demo_tezos_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.models import Index

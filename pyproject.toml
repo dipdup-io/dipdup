@@ -70,7 +70,8 @@ dependencies = [
     "python-dotenv~=1.0",
     "python-json-logger>=2.0.7",
     "ruamel.yaml~=0.17",
-    "sentry-sdk~=2.5",
+    # FIXME: Argument 1 to "serialize" has incompatible type "Event";
+    "sentry-sdk==2.12.0",
     "sqlparse~=0.4",
     "starknet-py~=0.23",
     "strict-rfc3339~=0.7",

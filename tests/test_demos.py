@@ -93,8 +93,9 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    import demo_tezos_dex.models
     from tortoise.transactions import in_transaction
+
+    import demo_tezos_dex.models
 
     trades = await demo_tezos_dex.models.Trade.filter().count()
     positions = await demo_tezos_dex.models.Position.filter().count()
@@ -121,7 +122,6 @@ async def assert_run_events() -> None:
 
 async def assert_run_factories() -> None:
     import demo_tezos_factories.models
-
     from dipdup import models
 
     indexes = await models.Index.filter().count()

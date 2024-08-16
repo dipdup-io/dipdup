@@ -93,12 +93,7 @@ demos_refresh:
 	make format lint
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml
-	make format
-	make lint
-	make update
-	make demos
-	make test
-	make docs
+	make format lint update demos test docs
 
 jsonschemas:    ## Dump config JSON schemas
 	python scripts/docs.py dump-jsonschema
