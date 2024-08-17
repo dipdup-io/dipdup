@@ -49,7 +49,7 @@ See the Makefile for details.
 | 7.5.9, asyncio   | 1044,56s user 258,07s system 102% cpu 21:06,02 total | 79        |             |         |
 | 7.5.10, uvloop   | 924,94s user 182,33s system 102% cpu 18:04,67 total  | 92        | 1.15        |         |
 | 8.0.0b4, asyncio | 832,32s user 163,20s system 101% cpu 16:19,93 total  | 102       |             | 1.29    |
-| 8.0.0b5, uvloop  | 721,13s user 84,17s system 98% cpu 13:33,88 total    | 123 (116) | 1.18        | 1.31    |
+| 8.0.0, uvloop    | 721,13s user 84,17s system 98% cpu 13:33,88 total    | 123 (116) | 1.18        | 1.31    |
 
 #### Without CPU boost
 
@@ -57,18 +57,18 @@ The same tests run without frequency boost, which increases frequency from 2.9 G
 
 Run `echo 0 | sudo tee /sys/devices/system/cpu/cpufreq/boost`.
 
-| run                       | time                                                 | bps | vs. boost |
-| ------------------------- | ---------------------------------------------------- | --- | --------- |
-| 7.5.10, uvloop, no boost  | 1329,36s user 231,93s system 101% cpu 25:31,69 total | 65  | 0.82      |
-| 8.0.0b5, uvloop, no boost | 1048,85s user 115,34s system 99% cpu 19:35,61 total  | 85  | 0.70      |
+| run                      | time                                                 | bps | vs. boost |
+| ------------------------ | ---------------------------------------------------- | --- | --------- |
+| 7.5.10, uvloop, no boost | 1329,36s user 231,93s system 101% cpu 25:31,69 total | 65  | 0.82      |
+| 8.0.0, uvloop, no boost  | 1048,85s user 115,34s system 99% cpu 19:35,61 total  | 85  | 0.70      |
 
 In the subsequent runs, we will skip the 7.5 branch; speedup vs 8.0 is pretty stable.
 
 #### With PostgreSQL
 
-| run             | time                                                | bps     | vs. in-memory |
-| --------------- | --------------------------------------------------- | ------- | ------------- |
-| 8.0.0b5, uvloop | 1083,66s user 214,23s system 57% cpu 37:33,04 total | 46 (42) | 0.36          |
+| run           | time                                                | bps     | vs. in-memory |
+| ------------- | --------------------------------------------------- | ------- | ------------- |
+| 8.0.0, uvloop | 1083,66s user 214,23s system 57% cpu 37:33,04 total | 46 (42) | 0.36          |
 
 ### starknet.events
 
@@ -79,13 +79,13 @@ In the subsequent runs, we will skip the 7.5 branch; speedup vs 8.0 is pretty st
 | run              | time                                              | bps | speedup |
 | ---------------- | ------------------------------------------------- | --- | ------- |
 | 8.0.0b4, asyncio | 246,94s user 61,67s system 100% cpu 5:07,54 total | 326 | 1       |
-| 8.0.0b5, uvloop  | 213,01s user 33,22s system 96% cpu 4:14,32 total  | 394 | 1.20    |
+| 8.0.0, uvloop    | 213,01s user 33,22s system 96% cpu 4:14,32 total  | 394 | 1.20    |
 
 #### With PostgreSQL
 
-| run             | time                                        | bps | vs. in-memory |
-| --------------- | ------------------------------------------- | --- | ------------- |
-| 8.0.0b5, uvloop | real 12m6,394s user 5m24,683s sys 1m14,761s | 138 | 0.35          |
+| run           | time                                        | bps | vs. in-memory |
+| ------------- | ------------------------------------------- | --- | ------------- |
+| 8.0.0, uvloop | real 12m6,394s user 5m24,683s sys 1m14,761s | 138 | 0.35          |
 
 ### tezos.big_maps
 
@@ -98,4 +98,4 @@ Only our code. And only 7% of blocks are non-empty.
 | run              | time                                             | bps        | speedup |
 | ---------------- | ------------------------------------------------ | ---------- | ------- |
 | 8.0.0b4, asyncio | 136,63s user 17,91s system 98% cpu 2:37,40 total | 3185 (221) | 1       |
-| 8.0.0b5, uvloop  | 124,44s user 9,75s system 98% cpu 2:16,80 total  | 3650 (254) | 1.15    |
+| 8.0.0, uvloop    | 124,44s user 9,75s system 98% cpu 2:16,80 total  | 3650 (254) | 1.15    |
