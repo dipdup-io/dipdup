@@ -1,3 +1,4 @@
+import time
 from collections import deque
 from datetime import datetime
 from typing import Any
@@ -14,6 +15,7 @@ from dipdup.models.tezos import TezosBigMapAction
 from dipdup.models.tezos import TezosBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
+from dipdup.prometheus import Metrics
 
 QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 
@@ -56,13 +58,13 @@ class TezosBigMapsIndex(
             raise FrameworkException('`skip_history` requires `early_realtime` feature flag to be enabled')
 
         big_map_pairs = get_big_map_pairs(self._config.handlers)
-        big_map_ids: set[tuple[int, str, str]] = set()
+        big_map_ids: list[tuple[int, str, str]] = []
 
         for address, path in big_map_pairs:
             async for contract_big_maps in self.random_datasource.iter_contract_big_maps(address):
                 for contract_big_map in contract_big_maps:
                     if contract_big_map['path'] == path:
-                        big_map_ids.add((int(contract_big_map['ptr']), address, path))
+                        big_map_ids.append((int(contract_big_map['ptr']), address, path))
 
         # NOTE: Do not use `_process_level_data` here; we want to maintain transaction manually.
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
@@ -87,15 +89,27 @@ class TezosBigMapsIndex(
                         )
                         for big_map_key in big_map_keys
                     )
-                    metrics.objects_indexed += len(big_map_data)
+
+                    started_at = time.time()
 
                     matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
+
+                    total_matched = len(matched_handlers)
+                    Metrics.set_index_handlers_matched(total_matched)
+                    metrics.handlers_matched[self.name] += total_matched
+                    metrics.time_in_matcher[self.name] += time.time() - started_at
+
+                    started_at = time.time()
+
                     for handler_config, big_map_diff in matched_handlers:
                         await self._ctx.fire_handler(
                             name=handler_config.callback,
                             index=handler_config.parent.name,
                             args=(big_map_diff,),
                         )
+
+                    metrics.objects_indexed += len(big_map_data)
+                    metrics.time_in_callbacks[self.name] += time.time() - started_at
 
             await self._update_state(level=head_level)
 
