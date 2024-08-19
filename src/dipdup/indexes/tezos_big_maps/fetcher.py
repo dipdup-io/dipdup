@@ -33,11 +33,11 @@ def get_big_map_paths(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[str]
     return paths
 
 
-def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[tuple[str, str]]:
+def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> list[tuple[str, str]]:
     """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
-    pairs = set()
+    pairs = []
     for handler_config in handlers:
-        pairs.add(
+        pairs.append(
             (
                 handler_config.contract.get_address(),
                 handler_config.path,
