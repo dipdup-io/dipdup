@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [8.0.0] - ????-??-??
 
+### Fixed
+
+- tezos.big_maps: Fixed logging status message.
+
 ### Removed
 
 - config: Removed `advanced.skip_version_check` flag; use `DIPDUP_NO_VERSION_CHECK` environment variable.

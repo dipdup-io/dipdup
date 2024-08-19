@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
-from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_big_maps.fetcher import BigMapFetcher
 from dipdup.indexes.tezos_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_big_maps.matcher import match_big_maps
@@ -52,9 +52,8 @@ class TezosBigMapsIndex(
             await self._process_level_data(big_maps, sync_level)
 
     async def _synchronize_level(self, head_level: int) -> None:
-        # NOTE: Checking late because feature flags could be modified after loading config
         if not self._ctx.config.advanced.early_realtime:
-            raise ConfigurationError('`skip_history` requires `early_realtime` feature flag to be enabled')
+            raise FrameworkException('`skip_history` requires `early_realtime` feature flag to be enabled')
 
         big_map_pairs = get_big_map_pairs(self._config.handlers)
         big_map_ids: set[tuple[int, str, str]] = set()
@@ -68,6 +67,9 @@ class TezosBigMapsIndex(
         # NOTE: Do not use `_process_level_data` here; we want to maintain transaction manually.
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             for big_map_id, address, path in big_map_ids:
+                total_keys = (await self.random_datasource.request('get', f'v1/bigmaps/{big_map_id}'))['activeKeys']
+                self._logger.info('Processing %s keys of big map %s; this may take a while', total_keys, big_map_id)
+
                 async for big_map_keys in self.random_datasource.iter_big_map(big_map_id, head_level):
                     big_map_data = tuple(
                         TezosBigMapData(

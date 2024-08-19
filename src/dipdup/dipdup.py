@@ -299,10 +299,13 @@ class IndexDispatcher:
             return
 
         progress, left = metrics.progress * 100, int(total - indexed)
+        scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
         if not progress:
             if self._indexes:
-                scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
-                msg = f'indexing: {scanned_levels:6} levels, estimating...'
+                if scanned_levels:
+                    msg = f'indexing: {scanned_levels:6} levels, estimating...'
+                else:
+                    msg = f'indexing: {metrics.objects_indexed} objects, estimating...'
             else:
                 msg = 'no indexes, idling'
             _logger.info(msg)
