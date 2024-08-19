@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [8.0.0] - ????-??-??
 
-This release contains no changes except for the version number.
+### Removed
+
+- config: Removed `advanced.skip_version_check` flag; use `DIPDUP_NO_VERSION_CHECK` environment variable.
 
 ## [8.0.0b5] - 2024-08-09
 

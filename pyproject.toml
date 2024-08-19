@@ -78,7 +78,7 @@ dependencies = [
     "survey~=5.3",
     "tabulate~=0.9",
     # NOTE: Heavily patched; don't update without testing.
-    "tortoise-orm==0.21.5",
+    "tortoise-orm==0.21.6",
     "uvloop>=0.19.0",
     "web3~=6.19",
 ]

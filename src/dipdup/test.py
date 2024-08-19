@@ -180,6 +180,7 @@ async def tmp_project(
             'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
             'DIPDUP_DEBUG': '1',
+            'DIPDUP_NO_VERSION_CHECK': '1',
         }
 
         yield Path(tmp_package_path), env

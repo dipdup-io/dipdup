@@ -133,11 +133,13 @@ def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None
 async def _check_version() -> None:
     if '+editable' in __version__:
         return
+
+    _skip_msg = 'Set `DIPDUP_NO_VERSION_CHECK` variable to hide this message.'
     if not all(c.isdigit() or c == '.' for c in __version__):
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
-        _logger.info('Set `advanced.skip_version_check` flag in config to hide this message.')
+        _logger.info(_skip_msg)
         return
 
     import aiohttp
@@ -150,8 +152,12 @@ async def _check_version() -> None:
         latest_version = response_json['tag_name']
 
         if __version__ != latest_version:
-            _logger.warning('You are running an outdated version of DipDup. Please run `dipdup update`.')
-            _logger.info('Set `skip_version_check` flag in config to hide this message.')
+            _logger.warning(
+                'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
+                __version__,
+                latest_version,
+            )
+            _logger.info(_skip_msg)
 
 
 def _skip_cli_group() -> bool:
@@ -259,7 +265,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
+    if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
         fire_and_forget(_check_version())
 
     try:

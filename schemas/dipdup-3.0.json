@@ -86,12 +86,6 @@
           "type": "boolean",
           "description": "Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM)."
         },
-        "skip_version_check": {
-          "default": false,
-          "title": "skip_version_check",
-          "type": "boolean",
-          "description": "Disable warning about running unstable or out-of-date DipDup version."
-        },
         "rollback_depth": {
           "anyOf": [
             {
