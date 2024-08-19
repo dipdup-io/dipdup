@@ -41,7 +41,8 @@ plugins = ["pydantic.mypy"]
 strict = false
 exclude = "demo_tezos_big_maps"
 
-[tool.mypy-ruamel.yaml]
+[[tool.mypy.overrides]]
+module = "ruamel"
 ignore_missing_imports = true
 
 [build-system]

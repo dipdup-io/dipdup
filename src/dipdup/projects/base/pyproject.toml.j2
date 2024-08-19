@@ -75,7 +75,8 @@ plugins = ["pydantic.mypy"]
 strict = false
 exclude = "{{ project.package }}"
 
-[tool.mypy-ruamel.yaml]
+[[tool.mypy.overrides]]
+module = "ruamel"
 ignore_missing_imports = true
 
 {% if project.package_manager == 'pdm' -%}

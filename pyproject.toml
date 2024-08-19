@@ -151,7 +151,8 @@ python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
 
-[tool.mypy-ruamel.yaml]
+[[tool.mypy.overrides]]
+module = "ruamel"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
