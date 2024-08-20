@@ -54,6 +54,8 @@ def get_package_path(package: str) -> Path:
         return Path.cwd()
 
     # NOTE: Detect existing package in current environment
+    if Path.cwd().name == package:
+        (Path.cwd() / '__init__.py').touch(exist_ok=True)
     with suppress(ImportError):
         module = importlib.import_module(package)
         if module.__file__ is None:
