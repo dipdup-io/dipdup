@@ -51,7 +51,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "aiohttp~=3.10.5",
+    # FIXME: KeyError in _make_or_get_ssl_context
+    "aiohttp==3.10.2",
     "aiolimiter~=1.0",
     "anyio~=4.1",
     "APScheduler~=3.8",
@@ -69,7 +70,8 @@ dependencies = [
     "python-dotenv~=1.0",
     "python-json-logger>=2.0.7",
     "ruamel.yaml~=0.17",
-    "sentry-sdk~=2.13.0",
+    # FIXME: Argument 1 to "serialize" has incompatible type "Event";
+    "sentry-sdk==2.12.0",
     "sqlparse~=0.4",
     "starknet-py~=0.23",
     "strict-rfc3339~=0.7",

@@ -42,7 +42,7 @@ def extract_event(error: Exception) -> 'Event':
     """Extracts Sentry event from an exception"""
     exc_info = sentry_sdk.utils.exc_info_from_error(error)
     event, _ = sentry_sdk.utils.event_from_exception(exc_info)
-    return sentry_sdk.serializer.serialize(event)  # type: ignore[arg-type,return-value]
+    return sentry_sdk.serializer.serialize(event)
 
 
 def before_send(
