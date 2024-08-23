@@ -54,8 +54,9 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
 
 
 class DipDupPackage:
-    def __init__(self, root: Path) -> None:
-        _logger.info('Loading package `%s` from `%s`', root.name, root)
+    def __init__(self, root: Path, quiet: bool = False) -> None:
+        _log = _logger.debug if quiet else _logger.info
+        _log('Loading package `%s` from `%s`', root.name, root)
 
         self.root = root
         self.name = root.name

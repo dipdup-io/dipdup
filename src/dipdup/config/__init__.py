@@ -15,7 +15,6 @@ inheritance.
 
 from __future__ import annotations
 
-import hashlib
 import importlib
 import inspect
 import logging.config
@@ -343,6 +342,8 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
+        import hashlib
+
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)

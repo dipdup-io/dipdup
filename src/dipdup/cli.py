@@ -271,7 +271,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
         # NOTE: `ConfigurationError` will be raised later with more details.
-        DipDupPackage(_config.package_path).initialize()
+        DipDupPackage(_config.package_path, quiet=True).initialize()
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
