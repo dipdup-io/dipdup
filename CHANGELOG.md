@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ### Fixed
 
+- package: Create package in-place if cwd equals package name.
 - tezos.big_maps: Fixed logging status message in `skip_history` mode.
 - tezos.big_maps: Respect order of handlers in `skip_history` mode.
 
