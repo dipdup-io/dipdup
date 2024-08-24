@@ -81,10 +81,10 @@ def _valid_url(v: str, ws: bool) -> str:
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
-Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
-ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
-Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]
-WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
+type Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]  # type: ignore
+type ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]  # type: ignore
+type Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]  # type: ignore
+type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]  # type: ignore
 
 
 _logger = logging.getLogger(__name__)
