@@ -179,6 +179,8 @@ def install(
     ref: str | None,
     path: str | None,
     pre: bool = False,
+    editable: bool = False,
+    update: bool = False,
     with_pdm: bool = False,
     with_poetry: bool = False,
 ) -> None:
@@ -190,12 +192,6 @@ def install(
     env.prepare()
     if not quiet:
         env.print()
-
-    pipx_args = []
-    if force:
-        pipx_args.append('--force')
-    if pre:
-        pipx_args.append('--pip-args="--pre"')
 
     pipx_packages = env._pipx_packages
 
@@ -211,9 +207,21 @@ def install(
             .split('\n')[0]
         )
 
-    if 'dipdup' in pipx_packages and not force:
-        echo('Updating DipDup')
-        env.run_cmd('pipx', 'upgrade', 'dipdup', *pipx_args)
+    pipx_args = []
+    if force:
+        pipx_args.append('--force')
+    if pre:
+        pipx_args.append('--pip-args="--pre"')
+    if editable:
+        pipx_args.append('--editable')
+
+    if 'dipdup' in pipx_packages and force:
+        env.run_cmd('pipx', 'uninstall', 'dipdup')
+        pipx_packages.remove('dipdup')
+
+    if 'dipdup' in pipx_packages:
+        if update:
+            env.run_cmd('pipx', 'upgrade', '--python', python_inter_pipx, 'dipdup', *pipx_args)
     elif path:
         echo(f'Installing DipDup from `{path}`')
         env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, *pipx_args)
@@ -231,11 +239,11 @@ def install(
         ('poetry', with_poetry),
     ):
         if pm in pipx_packages:
-            echo(f'Updating `{pm}`')
-            env.run_cmd('pipx', 'upgrade', pm, *pipx_args)
+            if update:
+                env.run_cmd('pipx', 'upgrade', '--python', python_inter_pipx, pm, *pipx_args)
         elif with_pm or force or quiet or ask(f'Install `{pm}`?', False):
             echo(f'Installing `{pm}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pm, *pipx_args)
+            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, *pipx_args, pm)
             env._commands[pm] = which(pm)
 
     done(
@@ -282,6 +290,7 @@ def cli() -> None:
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
     parser.add_argument('--pre', action='store_true', help='Include pre-release versions')
+    parser.add_argument('-e', '--editable', action='store_true', help='Install DipDup in editable mode')
     parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
     parser.add_argument('--with-poetry', action='store_true', help='Install Poetry')
     args = parser.parse_args()
@@ -299,6 +308,8 @@ def cli() -> None:
             ref=args.ref.strip() if args.ref else None,
             path=args.path.strip() if args.path else None,
             pre=args.pre,
+            editable=args.editable,
+            update=args.update,
             with_pdm=args.with_pdm,
             with_poetry=args.with_poetry,
         )

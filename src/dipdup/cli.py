@@ -367,6 +367,7 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
         ctx=ctx,
         base=True,
         force=True,
+        include=[],
     )
 
 
@@ -773,6 +774,7 @@ async def self(ctx: click.Context) -> None:
 @click.option('--ref', '-r', default=None, help='Install DipDup from specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from local path.')
 @click.option('--pre', is_flag=True, help='Include pre-release versions.')
+@click.option('--editable', '-e', is_flag=True, help='Install DipDup in editable mode.')
 @_cli_wrapper
 async def self_install(
     ctx: click.Context,
@@ -782,6 +784,7 @@ async def self_install(
     ref: str | None,
     path: str | None,
     pre: bool,
+    editable: bool,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
@@ -795,6 +798,7 @@ async def self_install(
         ref=ref,
         path=path,
         pre=pre,
+        editable=editable,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )
@@ -838,6 +842,7 @@ async def self_update(
         ref=None,
         path=None,
         pre=pre,
+        update=True,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )
