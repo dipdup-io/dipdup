@@ -18,7 +18,6 @@ from typing import TypeVar
 
 from tortoise.exceptions import OperationalError
 
-from dipdup import env
 from dipdup.codegen import BatchHandlerConfig
 from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
@@ -55,6 +54,8 @@ from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
+from dipdup.env import ENV_MODEL
+from dipdup.env import get_package_path
 from dipdup.exceptions import CallbackError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
@@ -95,7 +96,8 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable
     from collections.abc import Iterable
     from collections.abc import Iterator
-    from types import ModuleType
+
+    from pydantic_settings import BaseSettings
 
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
@@ -168,8 +170,9 @@ class DipDupContext:
 
     # TODO: The next four properties are process-global. Document later.
     @property
-    def env(self) -> ModuleType:
-        return env
+    def env(self) -> BaseSettings:
+        # NOTE: Allows to access internal environment variables
+        return ENV_MODEL
 
     @property
     def caches(self) -> _CacheManager:
@@ -662,7 +665,7 @@ class DipDupContext:
         :param kwargs: Keyword arguments to pass to the script
         """
         # NOTE: Modified `package_path` breaks SQL discovery.
-        if env.TEST:
+        if ENV_MODEL.TEST:
             return
 
         sql_path = self._get_sql_path(name)
@@ -708,7 +711,7 @@ class DipDupContext:
 
     def _get_sql_path(self, name: str) -> Path:
         subpackages = name.split('.')
-        sql_path = Path(env.get_package_path(self.config.package), 'sql', *subpackages)
+        sql_path = Path(get_package_path(self.config.package), 'sql', *subpackages)
         if not sql_path.exists():
             raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
 

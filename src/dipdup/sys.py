@@ -10,7 +10,7 @@ from typing import Any
 import orjson
 from pydantic_core import to_jsonable_python
 
-from dipdup import env
+from dipdup.env import ENV_MODEL
 
 _futures: deque[asyncio.Future[None]] = deque()
 
@@ -20,7 +20,7 @@ def set_up_logging() -> None:
     handler = logging.StreamHandler(stream=sys.stdout)
     formatter: logging.Formatter
 
-    if env.JSON_LOG:
+    if ENV_MODEL.JSON_LOG:
         from pythonjsonlogger import jsonlogger
 
         formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
@@ -37,7 +37,7 @@ def set_up_logging() -> None:
     # NOTE: Nothing useful there
     logging.getLogger('tortoise').setLevel(logging.WARNING)
 
-    if env.DEBUG:
+    if ENV_MODEL.DEBUG:
         logging.getLogger('dipdup').setLevel(logging.DEBUG)
 
 
@@ -51,7 +51,7 @@ def fire_and_forget(aw: Awaitable[Any]) -> None:
 def set_up_process() -> None:
     """Set up interpreter process-wide state"""
     # NOTE: Skip for integration tests
-    if env.TEST:
+    if ENV_MODEL.TEST:
         return
 
     # NOTE: Better discoverability of DipDup packages and configs

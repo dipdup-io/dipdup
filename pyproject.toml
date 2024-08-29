@@ -80,6 +80,7 @@ dependencies = [
     "survey~=5.3",
     "tabulate~=0.9",
     "uvloop>=0.19.0",
+    "pydantic-settings>=2.4.0",
 ]
 
 [tool.pdm.resolution.overrides]

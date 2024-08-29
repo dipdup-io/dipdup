@@ -4,18 +4,15 @@ import platform
 import sys
 import tomllib
 from contextlib import suppress
-from os import getenv
 from pathlib import Path
 
+from pydantic import AliasChoices
+from pydantic import AliasGenerator
+from pydantic import Field
+from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
+
 from dipdup.exceptions import FrameworkException
-
-
-def dump() -> dict[str, str]:
-    result: dict[str, str] = {}
-    for key in globals().keys():
-        if key.isupper():
-            result[key] = getenv(f'DIPDUP_{key}') or ''
-    return result
 
 
 def get_pyproject_name() -> str | None:
@@ -34,19 +31,19 @@ def get_pyproject_name() -> str | None:
 def get_package_path(package: str) -> Path:
     """Absolute path to the indexer package, existing or default"""
 
-    if PACKAGE_PATH:
-        spec = importlib.util.spec_from_file_location(package, PACKAGE_PATH / '__init__.py')
+    if ENV_MODEL.PACKAGE_PATH:
+        spec = importlib.util.spec_from_file_location(package, ENV_MODEL.PACKAGE_PATH / '__init__.py')
         if spec is None:
-            raise ImportError(f'Failed to import `{package}` package from `{PACKAGE_PATH}`')
+            raise ImportError(f'Failed to import `{package}` package from `{ENV_MODEL.PACKAGE_PATH}`')
         module = importlib.util.module_from_spec(spec)
         sys.modules[package] = module
         if spec.loader is None:
-            raise ImportError(f'Failed to import `{package}` package from `{PACKAGE_PATH}`')
+            raise ImportError(f'Failed to import `{package}` package from `{ENV_MODEL.PACKAGE_PATH}`')
         spec.loader.exec_module(module)
-        return PACKAGE_PATH
+        return ENV_MODEL.PACKAGE_PATH
 
     # NOTE: Integration tests run in isolated environment
-    if TEST:
+    if ENV_MODEL.TEST:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
@@ -64,40 +61,31 @@ def get_package_path(package: str) -> Path:
     return Path.cwd() / package
 
 
-def get_bool(key: str) -> bool:
-    return (getenv(key) or '').lower() in ('1', 'y', 'yes', 't', 'true', 'on')
-
-
-def get_int(key: str, default: int) -> int:
-    return int(getenv(key) or default)
-
-
-def get_path(key: str) -> Path | None:
-    value = getenv(key)
-    if value is None:
-        return None
-    return Path(value)
-
-
 def set_test() -> None:
-    global TEST, REPLAY_PATH
-    TEST = True
-    REPLAY_PATH = Path(__file__).parent.parent.parent / 'tests' / 'replays'
+    ENV_MODEL.TEST = True
+    ENV_MODEL.REPLAY_PATH = Path(__file__).parent.parent.parent / 'tests' / 'replays'
 
 
-CI: bool = get_bool('DIPDUP_CI')
-DEBUG: bool = get_bool('DIPDUP_DEBUG')
-DOCKER: bool = get_bool('DIPDUP_DOCKER')
-JSON_LOG: bool = get_bool('DIPDUP_JSON_LOG')
-LOW_MEMORY: bool = get_bool('DIPDUP_LOW_MEMORY')
-NEXT: bool = get_bool('DIPDUP_NEXT')
-NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
-NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
-PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
-REPLAY_PATH: Path | None = get_path('DIPDUP_REPLAY_PATH')
-TEST: bool = get_bool('DIPDUP_TEST')
+class DipDupSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix='DIPDUP_',
+        extra='allow',
+        case_sensitive=True,
+        env_ignore_empty=True,
+        alias_generator=AliasGenerator(serialization_alias=lambda s: f'DIPDUP_{s}'),
+    )
 
-if getenv('CI') == 'true':
-    CI = True
-if platform.system() == 'Linux' and Path('/.dockerenv').exists():
-    DOCKER = True
+    CI: bool = Field(default=False, validation_alias=AliasChoices('DIPDUP_CI', 'CI'))
+    DEBUG: bool = False
+    DOCKER: bool = Field(default_factory=lambda: platform.system() == 'Linux' and Path('/.dockerenv').exists())
+    JSON_LOG: bool = False
+    LOW_MEMORY: bool = False
+    NEXT: bool = False
+    NO_SYMLINK: bool = False
+    NO_VERSION_CHECK: bool = False
+    PACKAGE_PATH: Path | None = None
+    REPLAY_PATH: Path | None = None
+    TEST: bool = False
+
+
+ENV_MODEL = DipDupSettings()

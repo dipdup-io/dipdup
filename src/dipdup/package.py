@@ -9,9 +9,9 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from dipdup import env
 from dipdup.abi.cairo import CairoAbiManager
 from dipdup.abi.evm import EvmAbiManager
+from dipdup.env import ENV_MODEL
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -153,7 +153,7 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
-        if self.root != Path.cwd() or env.NO_SYMLINK:
+        if self.root != Path.cwd() or ENV_MODEL.NO_SYMLINK:
             return
 
         symlink_path = self.root.joinpath(self.name)

@@ -14,7 +14,7 @@ from sentry_sdk.integrations.atexit import AtexitIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
 from dipdup import __version__
-from dipdup import env
+from dipdup.env import ENV_MODEL
 from dipdup.sys import fire_and_forget
 
 HEARTBEAT_INTERVAL = 60 * 60 * 24
@@ -67,7 +67,7 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
     if dsn:
         _logger.info('Sentry is enabled: %s', dsn)
 
-    if config.debug or env.DEBUG:
+    if config.debug or ENV_MODEL.DEBUG:
         level, event_level, attach_stacktrace = logging.DEBUG, logging.WARNING, True
     else:
         level, event_level, attach_stacktrace = logging.INFO, logging.ERROR, False
@@ -86,11 +86,11 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
     server_name = config.server_name
 
     if not environment:
-        if env.DOCKER:
+        if ENV_MODEL.DOCKER:
             environment = 'docker'
-        elif env.TEST:
+        elif ENV_MODEL.TEST:
             environment = 'tests'
-        elif env.CI:
+        elif ENV_MODEL.CI:
             environment = 'gha'
         else:
             environment = 'local'

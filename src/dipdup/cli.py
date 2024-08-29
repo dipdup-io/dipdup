@@ -19,7 +19,7 @@ import click
 import uvloop
 
 from dipdup import __version__
-from dipdup import env
+from dipdup.env import ENV_MODEL
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
 from dipdup.report import REPORTS_PATH
@@ -119,7 +119,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             raise e
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
-        if fn.__name__ == 'run' and not env.TEST:
+        if fn.__name__ == 'run' and not ENV_MODEL.TEST:
             package = ctx.obj.config.package
             save_report(package, None)
 
@@ -231,6 +231,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
             raise ConfigurationError(f'env file `{env_path}` does not exist')
         _logger.info('Applying env_file `%s`', env_path)
         load_dotenv(env_path, override=True)
+    # NOTE: Apply internals
+    ENV_MODEL.__init__(_env_file=env_file_paths)  # type: ignore
 
     # NOTE: These commands need no other preparations
     if ctx.invoked_subcommand in NO_CONFIG_CMDS:
@@ -258,7 +260,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
+    if not any((_config.advanced.skip_version_check, ENV_MODEL.TEST, ENV_MODEL.CI, ENV_MODEL.NO_VERSION_CHECK)):
         fire_and_forget(_check_version())
 
     try:
@@ -442,7 +444,7 @@ async def config_env(
         unsafe=unsafe,
     )
     if internal:
-        environment.update(env.dump())
+        environment.update(ENV_MODEL.model_dump(mode='json', by_alias=True))
     if compose:
         content = 'services:\n  dipdup:\n    environment:\n'
         _tab = ' ' * 6

@@ -20,7 +20,6 @@ from typing import Any
 
 from tortoise.exceptions import OperationalError
 
-from dipdup import env
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
 from dipdup.codegen import generate_environments
@@ -44,6 +43,7 @@ from dipdup.datasources import create_datasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tezos_tzkt import late_tzkt_initialization
+from dipdup.env import ENV_MODEL
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import FrameworkException
 from dipdup.hasura import HasuraGateway
@@ -84,8 +84,8 @@ from dipdup.transactions import TransactionManager
 if TYPE_CHECKING:
     from dipdup.index import Index
 
-METRICS_INTERVAL = 1.0 if env.DEBUG else 5.0
-STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
+METRICS_INTERVAL = 1.0 if ENV_MODEL.DEBUG else 5.0
+STATUS_INTERVAL = 1.0 if ENV_MODEL.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
 
@@ -790,7 +790,7 @@ class DipDup:
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
-        if not api_config or env.TEST or env.CI:
+        if not api_config or ENV_MODEL.TEST or ENV_MODEL.CI:
             return
 
         from aiohttp import web

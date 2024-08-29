@@ -46,10 +46,11 @@ from pydantic.dataclasses import is_pydantic_dataclass
 from pydantic_core import to_jsonable_python
 
 from dipdup import __spec_version__
-from dipdup import env
 from dipdup.config._mixin import CallbackMixin
 from dipdup.config._mixin import NameMixin
 from dipdup.config._mixin import ParentMixin
+from dipdup.env import ENV_MODEL
+from dipdup.env import get_package_path
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import IndexAlreadyExistsError
@@ -609,7 +610,7 @@ class DipDupConfig:
 
     @property
     def package_path(self) -> Path:
-        return env.get_package_path(self.package)
+        return get_package_path(self.package)
 
     @property
     def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
@@ -802,7 +803,7 @@ class DipDupConfig:
             loglevels[self.package] = self.logging
 
         # NOTE: Environment variables have higher priority
-        if env.DEBUG:
+        if ENV_MODEL.DEBUG:
             loglevels['dipdup'] = 'DEBUG'
             loglevels[self.package] = 'DEBUG'
 

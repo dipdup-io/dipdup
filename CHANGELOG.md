@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
+## Unreleased
+
+### Changed
+
+- env: Rebuilt on pydantic_settings, behavior expected to be the same
+
 ## [8.0.0b5] - 2024-08-09
 
 ### Added
