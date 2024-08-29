@@ -45,7 +45,7 @@ def get_sighash(
     if (not to) and signature:
         from web3 import Web3
 
-        return Web3.keccak(text=signature).hex()[:10]
+        return '0x' + Web3.keccak(text=signature).hex()[:8]
 
     raise ConfigurationError('Either `to` or `signature` filters are expected')
 

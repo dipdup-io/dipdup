@@ -53,41 +53,42 @@ classifiers = [
 dependencies = [
     # FIXME: KeyError in _make_or_get_ssl_context
     "aiohttp==3.10.2",
-    "aiolimiter~=1.0",
-    "anyio~=4.1",
-    "APScheduler~=3.8",
+    "aiolimiter~=1.1",
+    "anyio~=4.4",
+    "APScheduler~=3.10",
     "async-lru~=2.0",
     "asyncpg~=0.29",
-    "click~=8.0",
-    "datamodel-code-generator~=0.25.7",
-    "eth-abi>=5.0.1,<6",
-    "orjson~=3.9",
-    "prometheus-client~=0.17",
-    "pycryptodome~=3.17",
-    "pydantic~=2.7",
-    "pyhumps~=3.0",
+    "click~=8.1",
+    "datamodel-code-generator~=0.25.9",
+    "eth-abi~=5.0",
+    "lru-dict~=1.3",
+    "orjson~=3.10",
+    "prometheus-client~=0.20",
+    "pycryptodome~=3.20",
+    "pydantic~=2.8",
+    "pyhumps~=3.8",
     "pysignalr~=1.0",
     "python-dotenv~=1.0",
-    "python-json-logger>=2.0.7",
-    "ruamel.yaml~=0.17",
+    "python-json-logger~=2.0",
+    "ruamel.yaml~=0.18.6",
     # FIXME: Argument 1 to "serialize" has incompatible type "Event";
     "sentry-sdk==2.12.0",
-    "sqlparse~=0.4",
-    "starknet-py~=0.23",
+    "sqlparse~=0.5",
+    "starknet-py~=0.24",
     "strict-rfc3339~=0.7",
-    "survey~=5.3",
+    "survey~=5.4",
     "tabulate~=0.9",
     # NOTE: Heavily patched; don't update without testing.
     "tortoise-orm==0.21.6",
-    "uvloop>=0.19.0",
-    "web3~=6.19",
+    "uvloop~=0.20",
+    "web3~=7.1",
 ]
 
-[tool.pdm.resolution.overrides]
-# NOTE: Update blocked by web3; safe to override (see https://github.com/ethereum/web3.py/pull/3144)
-lru-dict = "1.3.0"
+[tool.pdm.resolution]
+# NOTE: Introduced by starknetpy 0.24; depends on half of the PyPI
+excludes = ["bip-utils", "ledgerwallet"]
 # NOTE: tortoise-orm
-aiosqlite = "0.20.0"
+overrides = { aiosqlite = "0.20.0" }
 
 [project.urls]
 Homepage = "https://dipdup.io/"
