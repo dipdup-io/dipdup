@@ -451,7 +451,7 @@ async def config_env(
         for k, v in sorted(environment.items()):
             line = f'{_tab}- {k}=' + '${' + k
             if v is not None:
-                line += ':-' + v + '}'
+                line += ':-' + repr(v) + '}'
             else:
                 line += '}'
 
