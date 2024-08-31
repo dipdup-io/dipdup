@@ -241,19 +241,19 @@ class DocsBuilder(FileSystemEventHandler):
             check=True,
         )
 
-    def on_modified(self, event: FileSystemEvent, with_rst: bool = True) -> None:
+    def on_modified(
+        self,
+        event: FileSystemEvent,
+        skip_rst: bool = False,
+    ) -> None:
         src_file = Path(event.src_path).relative_to(self._source)  # type: ignore[arg-type]
-        if src_file.is_dir():
+        if src_file.is_dir() or 'html' in src_file.parts:
             return
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            if with_rst:
+            if not skip_rst:
                 self.on_rst_modified()
-            return
-
-        # FIXME: Frontend dies otherwise
-        if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
             return
 
         if event.event_type == EVENT_TYPE_DELETED:
@@ -264,8 +264,12 @@ class DocsBuilder(FileSystemEventHandler):
         if event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
             return
 
+        # NOTE: Vite doesn't like images in content directory; add '../public'
+        destination = self._destination.parent.parent / 'public' if 'public' in src_file.parts else self._destination
+
         src_file = self._source / src_file
-        dst_file = (self._destination / src_file.relative_to(self._source)).resolve()
+        dst_file = (destination / src_file.relative_to(self._source)).resolve()
+
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -386,7 +390,10 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     )
     event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(str(path)), with_rst=False)
+        event_handler.on_modified(
+            FileModifiedEvent(str(path)),
+            skip_rst=True,
+        )
 
     if not (watch or serve):
         return
@@ -431,6 +438,10 @@ def check_links(source: Path, http: bool) -> None:
                 continue
 
             link, anchor = link.split('#') if '#' in link else (link, None)
+
+            # NOTE: Vite doesn't like images in content directory; revert path hack
+            if 'public' in link:
+                link = link.replace('../../public', '../public')
 
             full_path = path.parent.joinpath(link)
             if not full_path.exists():
