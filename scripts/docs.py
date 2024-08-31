@@ -212,9 +212,6 @@ CHANGELOG_GROUP_ORDER = (
     'Other',
 )
 
-# NOTE: Don't process older versions
-CHANGELOG_FIRST_VERSION = 7
-
 
 class ScriptObserver(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent) -> None:
@@ -660,9 +657,6 @@ def merge_changelog() -> None:
     for version in sorted(changelog_tree.keys()):
         major = int(version.split('.')[0])
         minor = int(version.split('.')[1])
-
-        if major < CHANGELOG_FIRST_VERSION:
-            continue
 
         version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')
         lines: list[str] = ['<!-- markdownlint-disable first-line-h1 -->']
