@@ -244,11 +244,11 @@ class DocsBuilder(FileSystemEventHandler):
         skip_rst: bool = False,
     ) -> None:
         src_file = Path(event.src_path).relative_to(self._source)  # type: ignore[arg-type]
-        if src_file.is_dir() or 'html' in src_file.parts:
+        if src_file.is_dir() or '_build' in src_file.parts:
             return
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
-        if src_file.name.endswith('.rst'):
+        if src_file.name.endswith(('.rst', 'conf.py')):
             if not skip_rst:
                 self.on_rst_modified()
             return
@@ -261,16 +261,13 @@ class DocsBuilder(FileSystemEventHandler):
         if event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
             return
 
-        # NOTE: Vite doesn't like images in content directory; add '../public'
-        destination = self._destination.parent.parent / 'public' if 'public' in src_file.parts else self._destination
-
         src_file = self._source / src_file
-        dst_file = (destination / src_file.relative_to(self._source)).resolve()
+        dst_file = (self._destination / src_file.relative_to(self._source)).resolve()
 
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
-        _logger.info('`%s` has been %s; copying', src_file, event.event_type)
+        _logger.info('`%s` has been %s', src_file.relative_to(self._source.parent), event.event_type)
 
         try:
             if src_file.suffix in TEXT_EXTENSIONS:
@@ -435,10 +432,6 @@ def check_links(source: Path, http: bool) -> None:
                 continue
 
             link, anchor = link.split('#') if '#' in link else (link, None)
-
-            # NOTE: Vite doesn't like images in content directory; revert path hack
-            if 'public' in link:
-                link = link.replace('../../public', '../public')
 
             full_path = path.parent.joinpath(link)
             if not full_path.exists():
@@ -641,9 +634,6 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
-            # FIXME: Remove after the first 8.0 release
-            line = line.replace('## [Unreleased]', '## [8.0.0]')
-
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:
