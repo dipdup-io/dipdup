@@ -247,8 +247,8 @@ def install(
             env._commands[pm] = which(pm)
 
     done(
-        'Done! DipDup is ready to use.\nRun `dipdup new` to create a new project or `dipdup` to see all available'
-        ' commands.'
+        'Done! DipDup is ready to use.\n'
+        'Run `dipdup new` to create a new project or `dipdup` to see all available commands.'
     )
 
 
@@ -289,6 +289,7 @@ def cli() -> None:
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
+    parser.add_argument('-U', '--update', action='store_true', help='Update DipDup')
     parser.add_argument('--pre', action='store_true', help='Include pre-release versions')
     parser.add_argument('-e', '--editable', action='store_true', help='Install DipDup in editable mode')
     parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
