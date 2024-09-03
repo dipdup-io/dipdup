@@ -94,11 +94,17 @@ async def tortoise_wrapper(
                 except asyncpg.exceptions.InvalidPasswordError as e:
                     raise ConfigurationError(f'{e.__class__.__name__}: {e}') from e
 
-                if unsafe_sqlite:
+                if not isinstance(conn, SqliteClient):
+                    pass
+                elif unsafe_sqlite:
                     _logger.warning('Unsafe SQLite mode enabled; database integrity is not guaranteed!')
                     await conn.execute_script('PRAGMA foreign_keys = OFF')
                     await conn.execute_script('PRAGMA synchronous = OFF')
                     await conn.execute_script('PRAGMA journal_mode = OFF')
+                else:
+                    await conn.execute_script('PRAGMA foreign_keys = ON')
+                    await conn.execute_script('PRAGMA synchronous = NORMAL')
+                    await conn.execute_script('PRAGMA journal_mode = WAL')
 
             # FIXME: Poor logging
             except (OSError, asyncpg.exceptions.CannotConnectNowError):
