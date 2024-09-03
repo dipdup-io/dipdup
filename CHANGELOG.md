@@ -20,6 +20,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - config: Removed `advanced.skip_version_check` flag; use `DIPDUP_NO_VERSION_CHECK` environment variable.
 
+### Performance
+
+- database: Set `synchronous=NORMAL` and `journal_mode=WAL` pragmas for on-disk SQLite databases.
+
 ## [8.0.0b5] - 2024-08-09
 
 ### Added
@@ -362,12 +366,6 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - cli: Fixed `schema wipe` command for SQLite databases.
 - tezos.tzkt: Fixed regression in `get_transactions` method pagination.
-
-## [6.5.13] - 2023-10-10
-
-### Fixed
-
-- tzkt: Fixed regression in `get_transactions` method pagination.
 
 ## [7.0.1] - 2023-09-30
 

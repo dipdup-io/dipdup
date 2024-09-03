@@ -43,7 +43,6 @@ from tortoise.fields.relational import OneToOneNullableRelation as OneToOneNulla
 from tortoise.fields.relational import OneToOneRelation as OneToOneRelation
 from tortoise.fields.relational import ReverseRelation as ReverseRelation
 
-from dipdup import fields
 from dipdup.exceptions import FrameworkException
 
 if TYPE_CHECKING:
@@ -56,7 +55,7 @@ ManyToManyField = ManyToManyFieldInstance
 _EnumFieldT = TypeVar('_EnumFieldT', bound=Enum)
 
 
-class EnumField(fields.Field[_EnumFieldT]):
+class EnumField(Field[_EnumFieldT]):
     """Like CharEnumField but without max_size and additional validation"""
 
     indexable = True
