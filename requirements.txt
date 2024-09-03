@@ -16,7 +16,7 @@ asyncpg==0.29.0
 attrs==24.2.0
 bitarray==2.9.2
 black==24.8.0
-certifi==2024.7.4
+certifi==2024.8.30
 charset-normalizer==3.3.2
 ckzg==2.0.0
 click==8.1.7
@@ -98,6 +98,6 @@ tzdata==2024.1; platform_system == "Windows"
 tzlocal==5.2
 urllib3==2.2.2
 uvloop==0.20.0
-web3==7.1.0
+web3==7.2.0
 websockets==12.0
-yarl==1.9.4
+yarl==1.9.5

@@ -23,18 +23,15 @@ keywords = [
     "crypto",
     "cryptocurrencies",
     "dapp",
-    "declarative",
     "ethereum",
     "evm",
     "framework",
     "indexer",
     "indexers",
-    "michelson",
-    "scheduler",
+    "starknet",
     "sdk",
     "smart-contracts",
     "tezos",
-    "tzkt",
     "web3",
 ]
 classifiers = [
@@ -42,7 +39,8 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -81,7 +79,7 @@ dependencies = [
     # NOTE: Heavily patched; don't update without testing.
     "tortoise-orm==0.21.6",
     "uvloop~=0.20",
-    "web3~=7.1",
+    "web3~=7.2",
 ]
 
 [tool.pdm.resolution]
