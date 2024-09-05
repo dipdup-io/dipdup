@@ -215,9 +215,9 @@ class _MetricManager:
                 continue
             if isinstance(v, defaultdict):
                 for kk, vv in v.items():
-                    result[f'{k}:{kk}'] = vv
+                    result[f'{k}:{kk}'] = f'{vv:.2f}' if isinstance(vv, float) else vv
             else:
-                result[k] = v
+                result[k] = f'{v:.2f}' if isinstance(v, float) else v
         return result
 
 
