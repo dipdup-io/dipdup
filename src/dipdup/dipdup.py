@@ -304,8 +304,10 @@ class IndexDispatcher:
             if self._indexes:
                 if scanned_levels:
                     msg = f'indexing: {scanned_levels:6} levels, estimating...'
+                elif metrics.objects_indexed:
+                    msg = f'indexing: {metrics.objects_indexed:6} objects, estimating...'
                 else:
-                    msg = f'indexing: {metrics.objects_indexed} objects, estimating...'
+                    msg = 'indexing: warming up...'
             else:
                 msg = 'no indexes, idling'
             _logger.info(msg)
