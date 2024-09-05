@@ -6,14 +6,10 @@ from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import FetcherChannel
-from dipdup.fetcher import readahead_by_level
 from dipdup.indexes.starknet_node import StarknetNodeFetcher
 from dipdup.indexes.starknet_subsquid import StarknetSubsquidFetcher
 from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet_subsquid import EventRequest
-
-STARKNET_NODE_READAHEAD_LIMIT = 100
-STARKNET_SUBSQUID_READAHEAD_LIMIT = 10000
 
 
 class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
@@ -40,7 +36,7 @@ class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
             last_level=self._last_level,
             filters=filters,
         )
-        async for level, batch in readahead_by_level(event_iter, limit=STARKNET_SUBSQUID_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(event_iter):
             yield level, batch
 
 
@@ -106,7 +102,7 @@ class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
         events_iter = self._merged_iter(
             channels, lambda i: tuple(sorted(i, key=lambda x: f'{x.block_number}_{x.transaction_index}'))
         )
-        async for level, batch in readahead_by_level(events_iter, limit=STARKNET_NODE_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(events_iter):
             yield level, batch
 
     def get_random_node(self) -> StarknetNodeDatasource:

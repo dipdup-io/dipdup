@@ -23,6 +23,18 @@ _logger = logging.getLogger(__name__)
 
 
 class EvmNodeFetcher(Generic[BufferT], DataFetcher[BufferT, EvmNodeDatasource], ABC):
+    def __init__(
+        self,
+        datasources: tuple[EvmNodeDatasource, ...],
+        first_level: int,
+        last_level: int,
+    ) -> None:
+        super().__init__(
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+            readahead_limit=EVM_NODE_READAHEAD_LIMIT,
+        )
 
     def get_next_batch_size(self, batch_size: int, ratelimited: bool) -> int:
         old_batch_size = batch_size

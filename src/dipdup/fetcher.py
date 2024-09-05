@@ -65,17 +65,18 @@ async def yield_by_level(
         yield items[0].level, items
 
 
-async def readahead_by_level(
+async def _readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
     limit: int,
+    hint: str,
 ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
     if env.LOW_MEMORY:
         limit = min(limit, 1000)
-    queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
+    name = f'index_fetcher:{hint}:{hex(id(fetcher_iter))[-8:]}'
     queue: deque[tuple[int, tuple[BufferT, ...]]] = deque()
     queues.add_queue(
         queue,
-        name=queue_name,
+        name=name,
         limit=limit,
     )
     has_more = asyncio.Event()
@@ -92,7 +93,7 @@ async def readahead_by_level(
 
     task = asyncio.create_task(
         _readahead(),
-        name=f'fetcher:{id(fetcher_iter)}',
+        name=name,
     )
 
     while True:
@@ -107,7 +108,7 @@ async def readahead_by_level(
         with suppress(asyncio.TimeoutError):
             await asyncio.wait_for(has_more.wait(), timeout=10)
 
-    queues.remove_queue(queue_name)
+    queues.remove_queue(name)
 
 
 class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
@@ -158,10 +159,12 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         datasources: tuple[DatasourceT, ...],
         first_level: int,
         last_level: int,
+        readahead_limit: int,
     ) -> None:
         self._datasources = datasources
         self._first_level = first_level
         self._last_level = last_level
+        self._readahead_limit = readahead_limit
         self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
@@ -179,6 +182,18 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.
         """
         ...
+
+    async def readahead_by_level(
+        self,
+        fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
+        limit: int | None = None,
+    ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
+        async for level, batch in _readahead_by_level(
+            fetcher_iter=fetcher_iter,
+            limit=limit or self._readahead_limit,
+            hint=self.__class__.__name__,
+        ):
+            yield level, batch
 
     async def _merged_iter(
         self,

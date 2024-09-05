@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
 from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosTokenTransferData
 
@@ -42,5 +40,5 @@ class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(token_transfer_iter, limit=TZKT_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(token_transfer_iter):
             yield level, batch

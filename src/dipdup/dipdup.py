@@ -76,6 +76,7 @@ from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos import TezosTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
+from dipdup.performance import get_stats
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
@@ -292,7 +293,7 @@ class IndexDispatcher:
             fire_and_forget(
                 Meta.update_or_create(
                     key='dipdup_metrics',
-                    defaults={'value': metrics.stats()},
+                    defaults={'value': get_stats()},
                 )
             )
 

@@ -25,4 +25,15 @@ class TezosTzktFetcher(
     DataFetcher[BufferT, TezosTzktDatasource],
     ABC,
 ):
-    pass
+    def __init__(
+        self,
+        datasources: tuple[TezosTzktDatasource, ...],
+        first_level: int,
+        last_level: int,
+    ) -> None:
+        super().__init__(
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+            readahead_limit=TZKT_READAHEAD_LIMIT,
+        )

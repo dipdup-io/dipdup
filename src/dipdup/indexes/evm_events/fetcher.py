@@ -3,9 +3,6 @@ from collections.abc import AsyncIterator
 
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.evm import EVM_SUBSQUID_READAHEAD_LIMIT
-from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import EvmSubsquidFetcher
@@ -29,7 +26,7 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(event_iter, limit=EVM_SUBSQUID_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(event_iter):
             yield level, batch
 
 
@@ -48,7 +45,7 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmEventData, ...]]]:
         event_iter = self._fetch_by_level()
-        async for level, batch in readahead_by_level(event_iter, limit=EVM_NODE_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(event_iter):
             yield level, batch
 
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmEventData, ...]]:
