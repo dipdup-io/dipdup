@@ -175,7 +175,7 @@ class MessageBuffer:
     """
 
     def __init__(self, size: int) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger(__name__)
         self._size = size
         self._messages: dict[int, list[BufferedMessage]] = {}
 

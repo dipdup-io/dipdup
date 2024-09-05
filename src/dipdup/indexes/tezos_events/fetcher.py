@@ -14,13 +14,14 @@ if TYPE_CHECKING:
 class EventFetcher(TezosTzktFetcher[TezosEventData]):
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
         event_addresses: set[str],
         event_tags: set[str],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(name, datasources, first_level, last_level)
         self._event_addresses = event_addresses
         self._event_tags = event_tags
 

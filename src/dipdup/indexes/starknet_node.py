@@ -11,11 +11,13 @@ STARKNET_NODE_READAHEAD_LIMIT = 100
 class StarknetNodeFetcher(Generic[BufferT], DataFetcher[BufferT, StarknetNodeDatasource], ABC):
     def __init__(
         self,
+        name: str,
         datasources: tuple[StarknetNodeDatasource, ...],
         first_level: int,
         last_level: int,
     ) -> None:
         super().__init__(
+            name=name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,

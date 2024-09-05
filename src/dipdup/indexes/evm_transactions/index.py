@@ -68,6 +68,7 @@ class EvmTransactionsIndex(
             filters.append(query)
 
         return EvmSubsquidTransactionFetcher(
+            name=self.name,
             datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
@@ -76,6 +77,7 @@ class EvmTransactionsIndex(
 
     def _create_node_fetcher(self, first_level: int, last_level: int) -> EvmNodeTransactionFetcher:
         return EvmNodeTransactionFetcher(
+            name=self.name,
             datasources=self.node_datasources,
             first_level=first_level,
             last_level=last_level,

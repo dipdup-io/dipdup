@@ -15,12 +15,18 @@ class EvmSubsquidTransactionFetcher(EvmSubsquidFetcher[EvmTransactionData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[EvmSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._filters = filters
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
@@ -49,14 +48,19 @@ class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],
         big_map_paths: set[str],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.fetcher')
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 
@@ -72,6 +76,7 @@ class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
         big_map_paths = get_big_map_paths(config.handlers)
 
         return BigMapFetcher(
+            name=config.name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,

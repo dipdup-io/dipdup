@@ -11,11 +11,13 @@ STARKNET_SUBSQUID_READAHEAD_LIMIT = 10000
 class StarknetSubsquidFetcher(Generic[BufferT], DataFetcher[BufferT, StarknetSubsquidDatasource], ABC):
     def __init__(
         self,
+        name: str,
         datasources: tuple[StarknetSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
     ) -> None:
         super().__init__(
+            name=name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,

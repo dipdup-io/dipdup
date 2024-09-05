@@ -12,12 +12,18 @@ from dipdup.models.evm import EvmEventData
 class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
     def __init__(
         self,
+        name: str,
         datasources: tuple[EvmSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
         topics: tuple[tuple[str | None, str], ...],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._topics = topics
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmEventData, ...]]]:
@@ -35,12 +41,18 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[EvmNodeDatasource, ...],
         first_level: int,
         last_level: int,
         addresses: set[str],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._addresses = addresses
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmEventData, ...]]]:

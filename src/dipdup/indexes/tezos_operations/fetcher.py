@@ -460,6 +460,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
@@ -470,7 +471,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
         sr_execute_addresses: set[str],
         migration_originations: bool = False,
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(name, datasources, first_level, last_level)
         self._transaction_addresses = transaction_addresses
         self._transaction_hashes = transaction_hashes
         self._origination_addresses = origination_addresses
@@ -491,6 +492,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
         sr_execute_addresses = await get_sr_execute_filters(config)
 
         return OperationsFetcher(
+            name=config.name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,
@@ -565,6 +567,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
 class OperationsUnfilteredFetcher(TezosTzktFetcher[TezosOperationData]):
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
@@ -572,7 +575,7 @@ class OperationsUnfilteredFetcher(TezosTzktFetcher[TezosOperationData]):
         originations: bool,
         migration_originations: bool,
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(name, datasources, first_level, last_level)
         self._transactions = transactions
         self._originations = originations
         self._migration_originations = migration_originations
@@ -586,6 +589,7 @@ class OperationsUnfilteredFetcher(TezosTzktFetcher[TezosOperationData]):
         last_level: int,
     ) -> OperationsUnfilteredFetcher:
         return OperationsUnfilteredFetcher(
+            name=config.name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,

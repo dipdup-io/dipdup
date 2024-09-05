@@ -1609,11 +1609,7 @@
           "description": "Mapping of big map diff handlers"
         },
         "skip_history": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/SkipHistory"
-            }
-          ],
+          "$ref": "#/$defs/SkipHistory",
           "default": "never",
           "title": "skip_history",
           "description": "Fetch only current big map keys ignoring historical changes"
@@ -2578,11 +2574,7 @@
           "description": "always 'tezos.tzkt'"
         },
         "url": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/Url"
-            }
-          ],
+          "$ref": "#/$defs/Url",
           "default": "https://api.tzkt.io",
           "title": "url",
           "description": "Base API URL, e.g. https://api.tzkt.io/"

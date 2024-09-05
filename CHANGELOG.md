@@ -6,13 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.0.0] - ????-??-??
+## [8.0.0] - 2024-09-09
+
+### Added
+
+- cli: Added `-C` option, a shorthand for `-c . -c configs/dipdup.<name>.yaml`.
 
 ### Fixed
 
 - cli: Don't update existing installation in `self install` command unless asked to.
 - install: Fixed reinstalling package when `--force` flag is used.
 - package: Create package in-place if cwd equals package name.
+- performance: Add index name to fetcher and realtime queues.
 - tezos.big_maps: Fixed logging status message in `skip_history` mode.
 - tezos.big_maps: Respect order of handlers in `skip_history` mode.
 

@@ -193,7 +193,7 @@ def _skip_cli_group() -> bool:
     type=str,
     multiple=True,
     help='A path to DipDup project config.',
-    default=[ROOT_CONFIG],
+    default=[],
     metavar='PATH',
     envvar='DIPDUP_CONFIG',
 )
@@ -207,9 +207,17 @@ def _skip_cli_group() -> bool:
     metavar='PATH',
     envvar='DIPDUP_ENV_FILE',
 )
+@click.option(
+    '-C',
+    type=str,
+    multiple=True,
+    help='A shorthand for `-c . -c configs/dipdup.<name>.yaml',
+    default=[],
+    metavar='NAME',
+)
 @click.pass_context
 @_cli_wrapper
-async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
+async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: list[str]) -> None:
     set_up_process()
 
     if _skip_cli_group():
@@ -222,18 +230,25 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     except AttributeError:
         _logger.warning("You're running an outdated Python 3.12 release; consider upgrading")
 
-    from dotenv import load_dotenv
-
     from dipdup.exceptions import ConfigurationError
     from dipdup.sys import set_up_logging
 
     set_up_logging()
 
-    env_file_paths = [Path(file) for file in env_file]
+    if c:
+        if config:
+            raise ConfigurationError('Cannot use both `-c` and `-C` options at the same time')
+        config = ['.', *(f'configs/dipdup.{name}.yaml' for name in c)]
+    if not config:
+        config = [ROOT_CONFIG]
+
     config_paths = [Path(file) for file in config]
+    env_file_paths = [Path(file) for file in env_file]
 
     # NOTE: Apply env files before loading the config
     for env_path in env_file_paths:
+        from dotenv import load_dotenv
+
         if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
         _logger.info('Applying env_file `%s`', env_path)

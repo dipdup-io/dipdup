@@ -25,11 +25,13 @@ _logger = logging.getLogger(__name__)
 class EvmNodeFetcher(Generic[BufferT], DataFetcher[BufferT, EvmNodeDatasource], ABC):
     def __init__(
         self,
+        name: str,
         datasources: tuple[EvmNodeDatasource, ...],
         first_level: int,
         last_level: int,
     ) -> None:
         super().__init__(
+            name=name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,

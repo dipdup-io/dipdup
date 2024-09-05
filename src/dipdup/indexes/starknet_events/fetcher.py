@@ -15,12 +15,18 @@ from dipdup.models.starknet_subsquid import EventRequest
 class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
     def __init__(
         self,
+        name: str,
         datasources: tuple[StarknetSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
         event_ids: dict[str, set[str]],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._event_ids = event_ids
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[StarknetEventData, ...]]]:
@@ -76,12 +82,13 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
 class StarknetNodeEventFetcher(StarknetNodeFetcher[StarknetEventData]):
     def __init__(
         self,
+        name: str,
         datasources: tuple[StarknetNodeDatasource, ...],
         first_level: int,
         last_level: int,
         event_ids: dict[str, set[str]],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(name, datasources, first_level, last_level)
         self._event_ids = event_ids
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[StarknetEventData, ...]]]:

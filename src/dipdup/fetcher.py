@@ -16,6 +16,7 @@ from typing import TypeVar
 from dipdup import env
 from dipdup.exceptions import FrameworkException
 from dipdup.performance import queues
+from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -156,20 +157,23 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[DatasourceT, ...],
         first_level: int,
         last_level: int,
         readahead_limit: int,
     ) -> None:
+        self._name = name
         self._datasources = datasources
         self._first_level = first_level
         self._last_level = last_level
         self._readahead_limit = readahead_limit
+        self._logger = FormattedLogger(__name__, fmt=f'{self._name}: ' + '{}')
         self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)}>'
+        return f'<{self.__class__.__name__} name={self._name} head={self._head} buffer={len(self._buffer)}>'
 
     @property
     def random_datasource(self) -> DatasourceT:
@@ -191,7 +195,7 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         async for level, batch in _readahead_by_level(
             fetcher_iter=fetcher_iter,
             limit=limit or self._readahead_limit,
-            hint=self.__class__.__name__ + hex(id(self))[-8:],
+            hint=self._name,
         ):
             yield level, batch
 
