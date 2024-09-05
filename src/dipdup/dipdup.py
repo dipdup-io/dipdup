@@ -55,7 +55,7 @@ from dipdup.indexes.tezos_head.index import TezosHeadIndex
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.indexes.tezos_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
-from dipdup.models import Contract
+from dipdup.models import Contract, Meta
 from dipdup.models import ContractKind
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
@@ -286,6 +286,14 @@ class IndexDispatcher:
 
         self._last_levels_nonempty = metrics.levels_nonempty
         self._last_objects_indexed = metrics.objects_indexed
+
+        if env.NEXT:
+            fire_and_forget(
+                Meta.update_or_create(
+                    key='dipdup_metrics',
+                    defaults={'value': metrics.stats()},
+                )
+            )
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
