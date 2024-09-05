@@ -62,9 +62,9 @@ platformdirs==4.2.2
 poseidon-py==0.1.5
 prometheus-client==0.20.0
 pycryptodome==3.20.0
-pydantic==2.8.2
-pydantic-core==2.20.1
-pydantic[email]==2.8.2; python_version ~= "3.11"
+pydantic==2.9.0
+pydantic-core==2.23.2
+pydantic[email]==2.9.0; python_version ~= "3.11"
 pyhumps==3.8.0
 pypika-tortoise==0.1.6
 pysignalr==1.0.0
@@ -94,7 +94,7 @@ typeguard==4.0.1
 types-requests==2.32.0.20240712
 typing-extensions==4.12.2
 typing-inspect==0.9.0
-tzdata==2024.1; platform_system == "Windows"
+tzdata==2024.1; python_version >= "3.9" or platform_system == "Windows"
 tzlocal==5.2
 urllib3==2.2.2
 uvloop==0.20.0

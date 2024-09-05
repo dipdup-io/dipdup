@@ -55,12 +55,13 @@ from dipdup.indexes.tezos_head.index import TezosHeadIndex
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.indexes.tezos_operations.index import extract_operation_subgroups
 from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
-from dipdup.models import Contract, Meta
+from dipdup.models import Contract
 from dipdup.models import ContractKind
 from dipdup.models import Head
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
+from dipdup.models import Meta
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
