@@ -134,9 +134,12 @@ class _QueueManager:
         self._queues: dict[str, deque[Any]] = {}
         self._limits: dict[str, int] = {}
 
-    def add_queue(self, queue: deque[Any], name: str | None = None, limit: int = 0) -> None:
-        if name is None:
-            name = f'{queue.__module__}:{id(queue)}'
+    def add_queue(
+        self,
+        queue: deque[Any],
+        name: str,
+        limit: int = 0,
+    ) -> None:
         if name in self._queues:
             raise FrameworkException(f'Queue `{name}` already exists')
         self._queues[name] = queue

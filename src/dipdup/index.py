@@ -71,7 +71,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
     def queue(self) -> deque[IndexQueueItemT]:
         if self._queue is None:
             self._queue = deque()
-            queues.add_queue(self._queue, f'index_realtime:{self._config.name}')
+            queues.add_queue(self._queue, f'{self._config.name}:realtime')
         return self._queue
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:

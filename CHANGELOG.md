@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Added
 
 - cli: Added `-C` option, a shorthand for `-c . -c configs/dipdup.<name>.yaml`.
+- database: Added `dipdup_status` view to the schema.
 
 ### Fixed
 
@@ -24,6 +25,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Removed
 
 - config: Removed `advanced.skip_version_check` flag; use `DIPDUP_NO_VERSION_CHECK` environment variable.
+- database: Removed `dipdup_head_status` view; use `dipdup_status` view instead.
+
 
 ### Performance
 

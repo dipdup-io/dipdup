@@ -441,7 +441,7 @@ class HasuraGateway(HTTPGateway):
             queries.append({'name': query_name, 'query': query})
 
         # NOTE: This is the only view we add by ourselves and thus know all params. Won't work for any view.
-        queries.append(self._format_rest_head_status_query())
+        queries.append(self._format_rest_status_query())
 
         return queries
 
@@ -566,14 +566,16 @@ class HasuraGateway(HTTPGateway):
             ),
         }
 
-    def _format_rest_head_status_query(self) -> dict[str, Any]:
-        name = 'dipdup_head_status'
+    def _format_rest_status_query(self) -> dict[str, Any]:
+        name = 'dipdup_status'
+        fields = '{type name level size updated_at}'
         if self._hasura_config.camel_case:
             name = humps.camelize(name)
+            fields = fields.replace('updated_at', 'updatedAt')
 
         return {
             'name': name,
-            'query': 'query ' + name + ' ($name: String!) {' + name + '(where: {name: {_eq: $name}}) {status}}',
+            'query': 'query ' + name + ' ($name: String!) {' + name + '(where: {name: {_eq: $name}}) ' + fields + '}',
         }
 
     def _format_rest_endpoint(self, query_name: str) -> dict[str, Any]:

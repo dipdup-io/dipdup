@@ -69,11 +69,11 @@ async def yield_by_level(
 async def _readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
     limit: int,
-    hint: str,
+    name: str,
 ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
     if env.LOW_MEMORY:
         limit = min(limit, 1000)
-    name = f'index_fetcher:{hint}'
+    name = f'{name}:readahead'
     queue: deque[tuple[int, tuple[BufferT, ...]]] = deque()
     queues.add_queue(
         queue,
@@ -195,7 +195,7 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         async for level, batch in _readahead_by_level(
             fetcher_iter=fetcher_iter,
             limit=limit or self._readahead_limit,
-            hint=self._name,
+            name=self._name,
         ):
             yield level, batch
 

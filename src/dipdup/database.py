@@ -215,6 +215,7 @@ async def _pg_create_functions(conn: AsyncpgClient) -> None:
     for fn in (
         'dipdup_approve.sql',
         'dipdup_wipe.sql',
+        'dipdup_status.sql',
     ):
         sql_path = Path(__file__).parent / 'sql' / fn
         await execute_sql(conn, sql_path)
@@ -235,9 +236,8 @@ async def get_tables() -> set[str]:
 
 
 async def _pg_create_views(conn: AsyncpgClient) -> None:
-    sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
-    # TODO: Configurable interval
-    await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
+    sql_path = Path(__file__).parent / 'sql' / 'dipdup_status.sql'
+    await execute_sql(conn, sql_path)
 
 
 # FIXME: Private but used in dipdup.hasura
