@@ -289,13 +289,12 @@ class IndexDispatcher:
         self._last_levels_nonempty = metrics.levels_nonempty
         self._last_objects_indexed = metrics.objects_indexed
 
-        if env.NEXT:
-            fire_and_forget(
-                Meta.update_or_create(
-                    key='dipdup_metrics',
-                    defaults={'value': get_stats()},
-                )
+        fire_and_forget(
+            Meta.update_or_create(
+                key='dipdup_metrics',
+                defaults={'value': get_stats()},
             )
+        )
 
     async def _status_loop(self, update_interval: float) -> None:
         while True:
