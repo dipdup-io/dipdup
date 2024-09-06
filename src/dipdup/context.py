@@ -505,7 +505,7 @@ class DipDupContext:
         """
         return self._get_datasource(name, CoinbaseDatasource)
 
-    def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
+    def get_tzip_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name
 
         :param name: Name of the datasource
