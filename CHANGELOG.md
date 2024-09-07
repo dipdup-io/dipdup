@@ -16,6 +16,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Don't update existing installation in `self install` command unless asked to.
+- cli: Fixed env files not being loaded in some commands.
 - install: Fixed reinstalling package when `--force` flag is used.
 - package: Create package in-place if cwd equals package name.
 - performance: Add index name to fetcher and realtime queues.
@@ -26,7 +27,6 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - config: Removed `advanced.skip_version_check` flag; use `DIPDUP_NO_VERSION_CHECK` environment variable.
 - database: Removed `dipdup_head_status` view; use `dipdup_status` view instead.
-
 
 ### Performance
 

@@ -178,8 +178,9 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 if attempt == last_attempt:
                     raise e
 
-                self._logger.info('Waiting %s seconds before retry', ratelimit_sleep or retry_sleep)
-                await asyncio.sleep(ratelimit_sleep or retry_sleep)
+                to_sleep = float(f'{ratelimit_sleep or retry_sleep:.1f}')
+                self._logger.info('Waiting %s seconds before retry', to_sleep)
+                await asyncio.sleep(to_sleep)
 
                 attempt += 1
                 if not ratelimit_sleep:
