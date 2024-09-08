@@ -93,8 +93,9 @@ async def assert_init(package: str) -> None:
 
 
 async def assert_run_dex() -> None:
-    import demo_tezos_dex.models
     from tortoise.transactions import in_transaction
+
+    import demo_tezos_dex.models
 
     trades = await demo_tezos_dex.models.Trade.filter().count()
     positions = await demo_tezos_dex.models.Position.filter().count()
@@ -121,7 +122,6 @@ async def assert_run_events() -> None:
 
 async def assert_run_factories() -> None:
     import demo_tezos_factories.models
-
     from dipdup import models
 
     indexes = await models.Index.filter().count()
@@ -223,9 +223,8 @@ test_params = (
     ('demo_evm_events.yml:test_evm.yml', 'demo_evm_events', 'init', None),
     ('demo_evm_transactions.yml:test_evm.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions.yml:test_evm.yml', 'demo_evm_transactions', 'init', None),
-    # FIXME: nairobinet is dead
-    # ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'run', None),
-    # ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'init', None),
+    ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'run', None),
+    ('demo_tezos_etherlink.yml', 'demo_tezos_etherlink', 'init', None),
     # NOTE: Indexes with `evm.node` as index datasource
     ('demo_evm_events_node.yml:test_evm.yml', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node.yml:test_evm.yml', 'demo_evm_transactions', 'run', assert_run_evm_transactions),

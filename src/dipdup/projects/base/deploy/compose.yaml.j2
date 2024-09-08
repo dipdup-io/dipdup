@@ -1,4 +1,3 @@
-version: "3.8"
 name: {{ project.package }}
 
 services:
@@ -19,7 +18,7 @@ services:
   db:
     image: {{ project.postgres_image }}
     ports:
-      - 5432
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - db:{{ project.postgres_data_path }}
     restart: always
@@ -37,7 +36,7 @@ services:
   hasura:
     image: {{ project.hasura_image }}
     ports:
-      - 8080
+      - "${HASURA_HOST_PORT:-8080}:8080"
     depends_on:
       - db
     restart: always

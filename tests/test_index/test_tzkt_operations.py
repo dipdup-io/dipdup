@@ -176,7 +176,7 @@ async def test_realtime() -> None:
                 operations=operations,
             )
 
-        assert len(index._queue) == 4
+        assert len(index.queue) == 4
         assert await models.Holder.filter().count() == 0
 
         # NOTE: We don't want index with `last_level` to be disabled

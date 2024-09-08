@@ -121,7 +121,7 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
             'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
         },
         detach=True,
-        remove=True,
+        # remove=True,
     )
     atexit.register(hasura_container.stop)
     hasura_container.reload()
@@ -180,6 +180,7 @@ async def tmp_project(
             'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
             'DIPDUP_DEBUG': '1',
+            'DIPDUP_NO_VERSION_CHECK': '1',
         }
 
         yield Path(tmp_package_path), env

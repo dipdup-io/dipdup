@@ -62,6 +62,7 @@ class EvmEventsIndex(
             raise FrameworkException('Creating EvmSubsquidEventFetcher, but no `evm.subsquid` datasources available')
 
         return EvmSubsquidEventFetcher(
+            name=self.name,
             datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
@@ -81,6 +82,7 @@ class EvmEventsIndex(
                 break
 
         return EvmNodeEventFetcher(
+            name=self.name,
             datasources=self.node_datasources,
             first_level=first_level,
             last_level=last_level,

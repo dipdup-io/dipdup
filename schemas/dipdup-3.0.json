@@ -86,12 +86,6 @@
           "type": "boolean",
           "description": "Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM)."
         },
-        "skip_version_check": {
-          "default": false,
-          "title": "skip_version_check",
-          "type": "boolean",
-          "description": "Disable warning about running unstable or out-of-date DipDup version."
-        },
         "rollback_depth": {
           "anyOf": [
             {
@@ -222,6 +216,9 @@
       ],
       "title": "CoinbaseDatasourceConfig",
       "type": "object"
+    },
+    "EvmAddress": {
+      "$ref": "#/$defs/Hex"
     },
     "EvmContractConfig": {
       "additionalProperties": false,
@@ -391,14 +388,14 @@
           "description": "Always 'evm.node'"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "title": "url",
-          "type": "string",
           "description": "EVM node URL"
         },
         "ws_url": {
           "anyOf": [
             {
-              "type": "string"
+              "$ref": "#/$defs/WsUrl"
             },
             {
               "type": "null"
@@ -446,8 +443,8 @@
           "description": "always 'evm.subsquid'"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "title": "url",
-          "type": "string",
           "description": "URL of Subsquid Network API"
         },
         "http": {
@@ -610,8 +607,8 @@
       "description": "Config for the Hasura integration.",
       "properties": {
         "url": {
+          "$ref": "#/$defs/Url",
           "title": "url",
-          "type": "string",
           "description": "URL of the Hasura instance."
         },
         "admin_secret": {
@@ -688,6 +685,9 @@
       ],
       "title": "HasuraConfig",
       "type": "object"
+    },
+    "Hex": {
+      "type": "string"
     },
     "HookConfig": {
       "additionalProperties": false,
@@ -1289,6 +1289,9 @@
       "title": "SqliteDatabaseConfig",
       "type": "object"
     },
+    "StarknetAddress": {
+      "$ref": "#/$defs/Hex"
+    },
     "StarknetContractConfig": {
       "additionalProperties": false,
       "description": "Starknet contract config",
@@ -1454,14 +1457,14 @@
           "description": "Always 'starknet.node'"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "title": "url",
-          "type": "string",
           "description": "Starknet node URL"
         },
         "ws_url": {
           "anyOf": [
             {
-              "type": "string"
+              "$ref": "#/$defs/WsUrl"
             },
             {
               "type": "null"
@@ -1509,8 +1512,8 @@
           "description": "always 'starknet.subsquid'"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "title": "url",
-          "type": "string",
           "description": "URL of Subsquid Network API"
         },
         "http": {
@@ -1533,6 +1536,9 @@
       ],
       "title": "StarknetSubsquidDatasourceConfig",
       "type": "object"
+    },
+    "TezosAddress": {
+      "type": "string"
     },
     "TezosBigMapsHandlerConfig": {
       "additionalProperties": false,
@@ -1603,11 +1609,7 @@
           "description": "Mapping of big map diff handlers"
         },
         "skip_history": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/SkipHistory"
-            }
-          ],
+          "$ref": "#/$defs/SkipHistory",
           "default": "never",
           "title": "skip_history",
           "description": "Fetch only current big map keys ignoring historical changes"
@@ -1646,7 +1648,7 @@
         "address": {
           "anyOf": [
             {
-              "type": "string"
+              "$ref": "#/$defs/TezosAddress"
             },
             {
               "type": "null"
@@ -1662,7 +1664,7 @@
               "type": "integer"
             },
             {
-              "type": "string"
+              "$ref": "#/$defs/TezosAddress"
             },
             {
               "type": "null"
@@ -2572,9 +2574,9 @@
           "description": "always 'tezos.tzkt'"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "default": "https://api.tzkt.io",
           "title": "url",
-          "type": "string",
           "description": "Base API URL, e.g. https://api.tzkt.io/"
         },
         "http": {
@@ -2614,6 +2616,16 @@
       ],
       "title": "TezosTzktDatasourceConfig",
       "type": "object"
+    },
+    "ToStr": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ]
     },
     "TzipMetadataDatasourceConfig": {
       "additionalProperties": false,
@@ -2667,6 +2679,12 @@
         "parisnet"
       ],
       "title": "TzipMetadataNetwork",
+      "type": "string"
+    },
+    "Url": {
+      "type": "string"
+    },
+    "WsUrl": {
       "type": "string"
     }
   },
@@ -2850,14 +2868,7 @@
       "description": "User-defined configuration to use in callbacks"
     },
     "spec_version": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "number"
-        }
-      ],
+      "$ref": "#/$defs/ToStr",
       "title": "spec_version",
       "description": "Version of config specification, currently always `3.0`"
     },

@@ -15,6 +15,7 @@ from dipdup.abi.evm import EvmAbiManager
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
+from dipdup.project import get_default_answers
 from dipdup.utils import import_from
 from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
@@ -53,8 +54,9 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
 
 
 class DipDupPackage:
-    def __init__(self, root: Path) -> None:
-        _logger.info('Loading package `%s` from `%s`', root.name, root)
+    def __init__(self, root: Path, quiet: bool = False) -> None:
+        _log = _logger.debug if quiet else _logger.info
+        _log('Loading package `%s` from `%s`', root.name, root)
 
         self.root = root
         self.name = root.name
@@ -91,10 +93,14 @@ class DipDupPackage:
         return self.abi.glob(f'**/{EVM_ABI_JSON}')
 
     @property
-    def replay(self) -> Answers | None:
-        if not self._replay and (self.root / 'configs' / 'replay.yaml').exists():
-            self._replay = answers_from_replay(self.root / 'configs' / 'replay.yaml')
-        return self._replay
+    def replay_path(self) -> Path:
+        return self.root / 'configs' / 'replay.yaml'
+
+    @property
+    def replay(self) -> Answers:
+        if self.replay_path.exists():
+            return answers_from_replay(self.replay_path)
+        return get_default_answers()
 
     @property
     def skel(self) -> dict[Path, str | None]:

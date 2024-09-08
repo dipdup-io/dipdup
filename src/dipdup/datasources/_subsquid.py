@@ -12,7 +12,9 @@ from dipdup.datasources import IndexDatasourceConfigT
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import safe_exceptions
+from dipdup.models import Head
 from dipdup.models._subsquid import AbstractSubsquidQuery
+from dipdup.sys import fire_and_forget
 
 QueryT = TypeVar('QueryT', bound=AbstractSubsquidQuery)
 
@@ -41,6 +43,7 @@ class AbstractSubsquidDatasource(
 
     def __init__(self, config: Any) -> None:
         self._started = asyncio.Event()
+        self._last_level: int = 0
         super().__init__(config, False)
 
     async def run(self) -> None:
@@ -81,12 +84,25 @@ class AbstractSubsquidDatasource(
                 retry_sleep *= self._http_config.retry_multiplier
 
     async def initialize(self) -> None:
-        level = await self.get_head_level()
+        curr_level = self._last_level
+        level = self._last_level = await self.get_head_level()
 
         if not level:
             raise DatasourceError('Subsquid is not ready yet', self.name)
+        if level == curr_level:
+            return
 
         self.set_sync_level(None, level)
+        fire_and_forget(
+            Head.update_or_create(
+                name=self.name,
+                defaults={
+                    'level': level,
+                    'hash': '',
+                    'timestamp': '',
+                },
+            ),
+        )
 
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height')

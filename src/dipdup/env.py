@@ -50,7 +50,7 @@ def get_package_path(package: str) -> Path:
         return Path.cwd() / package
 
     # NOTE: If cwd is a package, use it
-    if get_pyproject_name() == package:
+    if package in {get_pyproject_name(), Path.cwd().name}:
         return Path.cwd()
 
     # NOTE: Detect existing package in current environment

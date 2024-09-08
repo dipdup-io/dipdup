@@ -175,7 +175,7 @@ class MessageBuffer:
     """
 
     def __init__(self, size: int) -> None:
-        self._logger = logging.getLogger('dipdup.tzkt')
+        self._logger = logging.getLogger(__name__)
         self._size = size
         self._messages: dict[int, list[BufferedMessage]] = {}
 
@@ -1215,6 +1215,7 @@ class TezosTzktDatasource(
         self._signalr_client = SignalRClient(
             url=f'{self._http._url}/v1/ws',
             max_size=None,
+            connection_timeout=30,
         )
 
         self._signalr_client.on_open(self._on_connected)

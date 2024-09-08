@@ -13,6 +13,28 @@ help:           ## Show this help (default)
 all:            ## Run an entire CI pipeline
 	make format lint
 
+##
+
+install:        ## Install dependencies
+{%- if project.package_manager == 'none' %}
+	true
+{%- elif project.package_manager == 'pdm' %}
+	pdm install
+{%- elif project.package_manager == 'poetry' %}
+	poetry install
+{% endif %}
+
+update:         ## Update dependencies
+{%- if project.package_manager == 'none' %}
+	true
+{%- elif project.package_manager == 'pdm' %}
+	pdm update
+	dipdup self update -q
+{%- elif project.package_manager == 'poetry' %}
+	poetry update
+	dipdup self update -q
+{% endif %}
+
 format:         ## Format with all tools
 	make black
 
@@ -28,7 +50,7 @@ ruff:           ## Lint with ruff
 	ruff check --fix .
 
 mypy:           ## Lint with mypy
-	mypy --no-incremental --exclude ${PACKAGE} .
+	mypy .
 
 ##
 

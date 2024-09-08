@@ -3,9 +3,6 @@ import time
 from collections.abc import AsyncIterator
 
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.evm import EVM_SUBSQUID_READAHEAD_LIMIT
-from dipdup.indexes.evm_node import EVM_NODE_READAHEAD_LIMIT
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import EvmSubsquidFetcher
@@ -18,12 +15,18 @@ class EvmSubsquidTransactionFetcher(EvmSubsquidFetcher[EvmTransactionData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[EvmSubsquidDatasource, ...],
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._filters = filters
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:
@@ -32,7 +35,7 @@ class EvmSubsquidTransactionFetcher(EvmSubsquidFetcher[EvmTransactionData]):
             self._last_level,
             self._filters,
         )
-        async for level, batch in readahead_by_level(transaction_iter, limit=EVM_SUBSQUID_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(transaction_iter):
             yield level, batch
 
 
@@ -40,7 +43,7 @@ class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmTransactionData]):
 
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:
         transaction_iter = self._fetch_by_level()
-        async for level, batch in readahead_by_level(transaction_iter, limit=EVM_NODE_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(transaction_iter):
             yield level, batch
 
     async def _fetch_by_level(self) -> AsyncIterator[tuple[EvmTransactionData, ...]]:

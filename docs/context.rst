@@ -15,7 +15,7 @@
 .. automethod:: dipdup.context.DipDupContext.get_evm_subsquid_datasource
 .. automethod:: dipdup.context.DipDupContext.get_http_datasource
 .. automethod:: dipdup.context.DipDupContext.get_ipfs_datasource
-.. automethod:: dipdup.context.DipDupContext.get_metadata_datasource
+.. automethod:: dipdup.context.DipDupContext.get_tzip_metadata_datasource
 .. automethod:: dipdup.context.DipDupContext.get_tezos_tzkt_datasource
 .. automethod:: dipdup.context.DipDupContext.reindex
 .. automethod:: dipdup.context.DipDupContext.restart

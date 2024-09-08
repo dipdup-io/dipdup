@@ -335,10 +335,12 @@ class DipDupContext:
             raise NotImplementedError
 
         for handler_config in index_config.handlers:
+            handler_config.parent = index_config
             self.register_handler(handler_config)
-            batch_handler = BatchHandlerConfig()
-            batch_handler.parent = index_config
-            self.register_handler(batch_handler)
+
+        batch_handler = BatchHandlerConfig()
+        batch_handler.parent = index_config
+        self.register_handler(batch_handler)
 
         await index.initialize_state(state)
 
@@ -503,7 +505,7 @@ class DipDupContext:
         """
         return self._get_datasource(name, CoinbaseDatasource)
 
-    def get_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
+    def get_tzip_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name
 
         :param name: Name of the datasource

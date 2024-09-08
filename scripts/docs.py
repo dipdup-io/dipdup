@@ -190,6 +190,14 @@ MARKDOWNLINT_IGNORE = (
     'single-title',
     'single-h1',
 )
+MARKDOWNLINT_CMD = (
+    'markdownlint',
+    '-f',
+    '--disable',
+    *MARKDOWNLINT_IGNORE,
+    '--',
+    'docs',
+)
 
 
 # NOTE: As in Keep a Changelog spec
@@ -203,9 +211,6 @@ CHANGELOG_GROUP_ORDER = (
     'Security',
     'Other',
 )
-
-# NOTE: Don't process older versions
-CHANGELOG_FIRST_VERSION = 7
 
 
 class ScriptObserver(FileSystemEventHandler):
@@ -233,19 +238,19 @@ class DocsBuilder(FileSystemEventHandler):
             check=True,
         )
 
-    def on_modified(self, event: FileSystemEvent, with_rst: bool = True) -> None:
-        src_file = Path(event.src_path).relative_to(self._source)
-        if src_file.is_dir():
+    def on_modified(
+        self,
+        event: FileSystemEvent,
+        skip_rst: bool = False,
+    ) -> None:
+        src_file = Path(event.src_path).relative_to(self._source)  # type: ignore[arg-type]
+        if src_file.is_dir() or 'html' in src_file.parts:
             return
 
         # NOTE: Sphinx autodoc reference; rebuild HTML
         if src_file.name.endswith('.rst'):
-            if with_rst:
+            if not skip_rst:
                 self.on_rst_modified()
-            return
-
-        # FIXME: Frontend dies otherwise
-        if not (src_file.name[0] == '_' or src_file.name[0].isdigit()):
             return
 
         if event.event_type == EVENT_TYPE_DELETED:
@@ -256,8 +261,12 @@ class DocsBuilder(FileSystemEventHandler):
         if event.event_type not in (EVENT_TYPE_CREATED, EVENT_TYPE_MODIFIED, EVENT_TYPE_MOVED):
             return
 
+        # NOTE: Vite doesn't like images in content directory; add '../public'
+        destination = self._destination.parent.parent / 'public' if 'public' in src_file.parts else self._destination
+
         src_file = self._source / src_file
-        dst_file = (self._destination / src_file.relative_to(self._source)).resolve()
+        dst_file = (destination / src_file.relative_to(self._source)).resolve()
+
         # NOTE: Make sure the destination directory exists
         dst_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -314,12 +323,12 @@ def create_project_callback() -> Callable[[str], str]:
 @contextmanager
 def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
     observer = Observer()
-    observer.schedule(handler, path=path, recursive=True)  # type: ignore[no-untyped-call]
-    observer.start()  # type: ignore[no-untyped-call]
+    observer.schedule(handler, path=str(path), recursive=True)
+    observer.start()
 
     yield observer
 
-    observer.stop()  # type: ignore[no-untyped-call]
+    observer.stop()
     observer.join()
 
 
@@ -378,7 +387,10 @@ def build(source: Path, destination: Path, watch: bool, serve: bool) -> None:
     )
     event_handler.on_rst_modified()
     for path in source.glob('**/*'):
-        event_handler.on_modified(FileModifiedEvent(str(path)), with_rst=False)
+        event_handler.on_modified(
+            FileModifiedEvent(str(path)),
+            skip_rst=True,
+        )
 
     if not (watch or serve):
         return
@@ -423,6 +435,10 @@ def check_links(source: Path, http: bool) -> None:
                 continue
 
             link, anchor = link.split('#') if '#' in link else (link, None)
+
+            # NOTE: Vite doesn't like images in content directory; revert path hack
+            if 'public' in link:
+                link = link.replace('../../public', '../public')
 
             full_path = path.parent.joinpath(link)
             if not full_path.exists():
@@ -604,7 +620,7 @@ def markdownlint() -> None:
     green_echo('=> Running markdownlint')
     try:
         subprocess.run(
-            ('markdownlint', '-f', '--disable', *MARKDOWNLINT_IGNORE, '--', 'docs'),
+            MARKDOWNLINT_CMD,
             check=True,
         )
     except subprocess.CalledProcessError:
@@ -641,9 +657,6 @@ def merge_changelog() -> None:
     for version in sorted(changelog_tree.keys()):
         major = int(version.split('.')[0])
         minor = int(version.split('.')[1])
-
-        if major < CHANGELOG_FIRST_VERSION:
-            continue
 
         version_path = Path(f'docs/9.release-notes/_{version}_changelog.md')
         lines: list[str] = ['<!-- markdownlint-disable first-line-h1 -->']

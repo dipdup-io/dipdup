@@ -18,7 +18,6 @@ from dipdup.config import HandlerConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config._mixin import CallbackMixin
 from dipdup.datasources import Datasource
-from dipdup.exceptions import FrameworkException
 from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PACKAGE_MARKER
@@ -84,12 +83,13 @@ class _BaseCodeGenerator(ABC):
         self._package.initialize()
 
         # NOTE: Common files
-        replay = self._package.replay
         if base or self._include:
-            if not replay:
-                raise FrameworkException('`--base` option passed but `configs/replay.yaml` file is missing')
             _logger.info('Recreating base template with replay.yaml')
-            render_base(replay, force, self._include)
+            render_base(
+                answers=self._package.replay,
+                force=force,
+                include=self._include,
+            )
 
         if self._include:
             force = any(str(path).startswith('types') for path in self._include)
@@ -252,7 +252,7 @@ class _BaseCodeGenerator(ABC):
 
     def _cleanup_schemas(self) -> None:
         rmtree(self._package.schemas)
-        self._package.schemas.mkdir()
+        self._package.schemas.mkdir(parents=True, exist_ok=True)
 
 
 class CommonCodeGenerator(_BaseCodeGenerator):

@@ -61,6 +61,7 @@ from dipdup.models import Head
 from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
+from dipdup.models import Meta
 from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
@@ -75,6 +76,7 @@ from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos import TezosTokenTransferData
 from dipdup.package import DipDupPackage
 from dipdup.performance import caches
+from dipdup.performance import get_stats
 from dipdup.performance import metrics
 from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
@@ -287,6 +289,13 @@ class IndexDispatcher:
         self._last_levels_nonempty = metrics.levels_nonempty
         self._last_objects_indexed = metrics.objects_indexed
 
+        fire_and_forget(
+            Meta.update_or_create(
+                key='dipdup_metrics',
+                defaults={'value': get_stats()},
+            )
+        )
+
     async def _status_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
@@ -299,9 +308,17 @@ class IndexDispatcher:
             return
 
         progress, left = metrics.progress * 100, int(total - indexed)
+        scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
         if not progress:
-            scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
-            msg = f'indexing: {scanned_levels:6} levels, estimating...'
+            if self._indexes:
+                if scanned_levels:
+                    msg = f'indexing: {scanned_levels:6} levels, estimating...'
+                elif metrics.objects_indexed:
+                    msg = f'indexing: {metrics.objects_indexed:6} objects, estimating...'
+                else:
+                    msg = 'indexing: warming up...'
+            else:
+                msg = 'no indexes, idling'
             _logger.info(msg)
             return
 

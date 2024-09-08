@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
 from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosTokenTransferData
 
@@ -18,6 +15,7 @@ class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         token_addresses: set[str],
         token_ids: set[int],
@@ -26,8 +24,12 @@ class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
         first_level: int,
         last_level: int,
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.fetcher')
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._token_addresses = token_addresses
         self._token_ids = token_ids
         self._from_addresses = from_addresses
@@ -42,5 +44,5 @@ class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(token_transfer_iter, limit=TZKT_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(token_transfer_iter):
             yield level, batch
