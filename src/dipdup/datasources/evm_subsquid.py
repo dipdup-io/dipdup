@@ -1,150 +1,148 @@
-import asyncio
-import zipfile
 from collections import defaultdict
-from io import BytesIO
+from collections import deque
+from collections.abc import AsyncIterator
 from typing import Any
-from typing import AsyncIterator
-from typing import TypedDict
-from typing import cast
 
-import pyarrow.ipc  # type: ignore[import]
-from typing_extensions import NotRequired
+from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
+from dipdup.datasources import EvmHistoryProvider
+from dipdup.datasources._subsquid import AbstractSubsquidDatasource
+from dipdup.datasources._subsquid import AbstractSubsquidWorker
+from dipdup.models.evm import EvmEventData
+from dipdup.models.evm import EvmTransactionData
+from dipdup.models.evm_subsquid import FieldSelection
+from dipdup.models.evm_subsquid import LogRequest
+from dipdup.models.evm_subsquid import Query
+from dipdup.models.evm_subsquid import TransactionRequest
 
-from dipdup.config import HttpConfig
-from dipdup.config.evm_subsquid import SubsquidDatasourceConfig
-from dipdup.datasources import IndexDatasource
-from dipdup.exceptions import DatasourceError
-from dipdup.models.evm_subsquid import SubsquidEventData
-
-FieldMap = dict[str, bool]
-
-
-class FieldSelection(TypedDict):
-    block: NotRequired[FieldMap]
-    transaction: NotRequired[FieldMap]
-    log: NotRequired[FieldMap]
-
-
-class LogFilter(TypedDict):
-    address: NotRequired[list[str]]
-    topics: NotRequired[list[list[str]]]
-    fieldSelection: NotRequired[FieldSelection]
-
-
-class TxFilter(TypedDict):
-    to: NotRequired[list[str]]
-    sighash: NotRequired[list[str]]
-
-
-class Query(TypedDict):
-    logs: NotRequired[list[LogFilter]]
-    transactions: NotRequired[list[TxFilter]]
-    fromBlock: NotRequired[int]
-    toBlock: NotRequired[int]
-
-
-_log_fields: FieldSelection = {
+_LOG_FIELDS: FieldSelection = {
+    'block': {
+        'timestamp': True,
+    },
     'log': {
+        'logIndex': True,
+        'transactionIndex': True,
+        'transactionHash': True,
         'address': True,
-        'blockNumber': True,
         'data': True,
         'topics': True,
-        'blockHash': True,
-        'index': True,
-        'transactionHash': True,
+    },
+}
+_TRANSACTION_FIELDS: FieldSelection = {
+    'block': {
+        'timestamp': True,
+    },
+    'transaction': {
+        # 'accessList': True,
+        'chainId': True,
+        'contractAddress': True,
+        'cumulativeGasUsed': True,
+        'effectiveGasPrice': True,
+        'from': True,
+        'gasPrice': True,
+        'gas': True,
+        'gasUsed': True,
+        'hash': True,
+        'input': True,
+        'maxFeePerGas': True,
+        'maxPriorityFeePerGas': True,
+        'nonce': True,
+        'r': True,
+        'sighash': True,
+        'status': True,
+        's': True,
+        'to': True,
         'transactionIndex': True,
+        'type': True,
+        'value': True,
+        'v': True,
+        'yParity': True,
     },
 }
 
 
-def unpack_data(content: bytes) -> dict[str, list[dict[str, Any]]]:
-    """Extract bytes from Subsquid zip+pyarrow archives"""
-    data = {}
-    with zipfile.ZipFile(BytesIO(content), 'r') as arch:
-        for item in arch.filelist:  # The set of files depends on requested data
-            with arch.open(item) as f, pyarrow.ipc.open_stream(f) as reader:
-                table: pyarrow.Table = reader.read_all()
-                data[item.filename] = table.to_pylist()
-    return data
+class _EvmSubsquidWorker(AbstractSubsquidWorker[Query]):
+    pass
 
 
-class SubsquidDatasource(IndexDatasource[SubsquidDatasourceConfig]):
-    _default_http_config = HttpConfig()
+class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig, Query], EvmHistoryProvider):
 
-    def __init__(self, config: SubsquidDatasourceConfig) -> None:
-        super().__init__(config, False)
+    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
+        super().__init__(config)
 
-    async def run(self) -> None:
-        if self._config.node:
-            return
-        # NOTE: If node datasource is missing, just poll archive in reasonable intervals
-        # NOTE: Subsquid archives are expected to get real-time support in the future
-        while True:
-            await asyncio.sleep(1)
-            await self.initialize()
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
+        return _EvmSubsquidWorker(await self._fetch_worker(level))
 
-    async def subscribe(self) -> None:
-        pass
+    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
+        return await super().query_worker(query, current_level)
 
-    async def iter_event_logs(
+    async def iter_events(
         self,
-        topics: list[tuple[str | None, str]],
+        topics: tuple[tuple[str | None, str], ...],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[SubsquidEventData, ...]]:
+    ) -> AsyncIterator[tuple[EvmEventData, ...]]:
         current_level = first_level
 
-        # TODO: smarter query optimizator
+        # TODO: Smarter query optimizator
         topics_by_address = defaultdict(list)
         for address, topic in topics:
             topics_by_address[address].append(topic)
 
-        def make_log_filter(address: str | None, topics: list[str]) -> LogFilter:
-            if address is None:
-                return {
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
+        log_request: list[LogRequest] = []
+        for address, topic_list in topics_by_address.items():
+            if address:
+                log_request.append(LogRequest(address=[address], topic0=topic_list))
             else:
-                return {
-                    'address': [address],
-                    'topics': [topics],
-                    'fieldSelection': _log_fields,
-                }
+                log_request.append(LogRequest(topic0=topic_list))
 
         while current_level <= last_level:
             query: Query = {
-                'logs': [make_log_filter(address, topics) for address, topics in topics_by_address.items()],
+                'logs': log_request,
+                'fields': _LOG_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
             }
+            response = await self.query_worker(query, current_level)
 
-            response: dict[str, Any] = await self.request(
-                'post',
-                url='query',
-                json=query,
-            )
+            for level_item in response:
+                current_level = level_item['header']['number'] + 1
+                logs: deque[EvmEventData] = deque()
+                for raw_log in level_item['logs']:
+                    logs.append(
+                        EvmEventData.from_subsquid_json(
+                            event_json=raw_log,
+                            header=level_item['header'],
+                        ),
+                    )
+                yield tuple(logs)
 
-            # NOTE: There's also 'archiveHeight' field, but sync level updated in the main loop
-            current_level = response['nextBlock']
+    async def iter_transactions(
+        self,
+        first_level: int,
+        last_level: int,
+        filters: tuple[TransactionRequest, ...],
+    ) -> AsyncIterator[tuple[EvmTransactionData, ...]]:
+        current_level = first_level
 
-            logs: list[SubsquidEventData] = []
-            for level in response['data']:
-                for transaction in level:
-                    for raw_log in transaction['logs']:
-                        logs.append(
-                            SubsquidEventData.from_json(raw_log),
-                        )
-            yield tuple(logs)
+        while current_level <= last_level:
+            query: Query = {
+                'fields': _TRANSACTION_FIELDS,
+                'fromBlock': current_level,
+                'toBlock': last_level,
+                'transactions': list(filters),
+            }
+            response = await self.query_worker(query, current_level)
 
-    async def initialize(self) -> None:
-        level = await self.get_head_level()
-
-        if not level:
-            raise DatasourceError('Archive is not ready yet', self.name)
-
-        self.set_sync_level(None, level)
-
-    async def get_head_level(self) -> int:
-        response = await self.request('get', 'height')
-        return cast(int, response.get('height', 0))
+            for level_item in response:
+                current_level = level_item['header']['number'] + 1
+                transactions: deque[EvmTransactionData] = deque()
+                for raw_transaction in level_item['transactions']:
+                    transaction = EvmTransactionData.from_subsquid_json(
+                        transaction_json=raw_transaction,
+                        header=level_item['header'],
+                    )
+                    # NOTE: `None` falue is for chains and block ranges not compliant with the post-Byzantinum
+                    # hard fork EVM specification (e.g. before 4.370,000 on Ethereum).
+                    if transaction.status != 0:
+                        transactions.append(transaction)
+                yield tuple(transactions)

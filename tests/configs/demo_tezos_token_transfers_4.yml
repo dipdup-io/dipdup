@@ -1,0 +1,36 @@
+spec_version: 3.0
+package: demo_tezos_token_transfers
+
+contracts:
+  tzbtc_mainnet:
+    kind: tezos
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+  tzbtc_holder_mainnet:
+    kind: tezos
+    address: tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: tezos.token_transfers
+    datasources:
+      - tzkt
+    handlers:
+      - callback: on_token_transfer
+        contract: tzbtc_mainnet
+      - callback: on_token_transfer
+        from: tzbtc_mainnet
+      - callback: on_token_transfer
+        to: tzbtc_holder_mainnet
+    # see: https://api.tzkt.io/v1/tokens/transfers?id=125069119
+    first_level: 1366840
+    last_level: 1366840
+
+logging: WARN

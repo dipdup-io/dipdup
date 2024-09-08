@@ -1,65 +1,75 @@
+# NOTE: To run this pipeline in act replace secrets.GITHUB_TOKEN with $GITHUB_TOKEN and uncomment the first step
+
 name: Docs
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
   push:
     tags:
-      - '*.*.*'
+      - '8.*.*'
+      - 'docs-next'
     branches:
       - '**'
     paths:
       - 'docs/**'
       - 'scripts/**'
       - '.github/workflows/docs.yml'
+      - '.github/workflows/installer.yml'
+
+env:
+  FRONTEND_BRANCH: dev
+  GITHUB_TOKEN: ${{ secrets.DOCS_GITHUB_TOKEN }}
 
 jobs:
   docs:
     name: Docs
     runs-on: ubuntu-22.04
     steps:
-    - name: Check out the repo
-      uses: actions/checkout@v3
+      # NOTE: Uncomment for local testing with act
+      # - name: Install GitHub CLI (act only)
+      #   run: |
+      #     type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+      #     curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+      #     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+      #     && sudo apt update \
+      #     && sudo apt install gh -y
 
-    - name: Install poetry
-      run: pipx install poetry
+      - name: Check out the repo
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        cache: 'poetry'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
 
-    - name: Set up mdbook
-      uses: jontze/action-mdbook@v2
-      with:
-        token: ${{secrets.GITHUB_TOKEN}}
-        use-toc: true
-        use-admonish: true
+      - name: Install PDM
+        run: pip install pdm
 
-    - name: Install project
-      run: make install
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
 
-    - name: Build docs (docs)
-      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, 'rc')
-      run: MDBOOK_ROOT=https://docs.dipdup.io make docs
+      - name: Install project
+        run: pdm sync
 
-    - name: Deploy to GH Pages (docs)
-      if: startsWith(github.ref, 'refs/tags') && !contains(github.ref, 'rc')
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/dist/docs
-        destination_dir: docs
+      - name: Clone frontend
+        run: |
+          gh auth setup-git
+          gh repo clone dipdup-io/interface ../interface -- --single-branch --branch "$FRONTEND_BRANCH"
 
-    - name: Build docs (docs-next)
-      if: startsWith(github.ref, 'refs/heads')
-      run: MDBOOK_ROOT=https://docs-next.dipdup.io make docs
+      - name: Build docs
+        run: pdm run make docs
 
-    - name: Deploy to GH Pages (docs-next)
-      if: startsWith(github.ref, 'refs/heads/master')
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/dist/docs
-        destination_dir: docs-next
+      # NOTE: Installer is tested in `installer` workflow
+      - name: Commit and push frontend
+        if: github.ref_type == 'tag'
+        run: |
+          cp src/dipdup/install.py ../interface/public/install.py
+          cd ../interface
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff-index --quiet HEAD || git commit -m "${{ github.event.head_commit.message }}"
+          git push origin $FRONTEND_BRANCH

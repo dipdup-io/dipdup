@@ -3,34 +3,28 @@
 
 from __future__ import annotations
 
-from typing import Dict
-from typing import List
-from typing import Optional
-
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class ResourceMap(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     id: str
     rate: str
 
 
 class ResourceCollectorStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     administrator: str
-    current_user: Optional[str]
+    current_user: str | None
     default_start_time: str
     generation_rate: str
-    managers: List[str]
-    metadata: Dict[str, str]
+    managers: list[str]
+    metadata: dict[str, str]
     nft_registry: str
     paused: bool
-    resource_map: Dict[str, ResourceMap]
+    resource_map: dict[str, ResourceMap]
     resource_registry: str
-    tezotop_collection: Dict[str, str]
+    tezotop_collection: dict[str, str]

@@ -1,0 +1,46 @@
+import demo_tezos_big_maps.models as models
+from demo_tezos_big_maps.types.name_registry.tezos_big_maps.store_records_key import StoreRecordsKey
+from demo_tezos_big_maps.types.name_registry.tezos_big_maps.store_records_value import StoreRecordsValue
+from dipdup.context import HandlerContext
+from dipdup.models.tezos import TezosBigMapDiff
+
+
+async def on_update_records(
+    ctx: HandlerContext,
+    store_records: TezosBigMapDiff[StoreRecordsKey, StoreRecordsValue],
+) -> None:
+    if not store_records.action.has_value:
+        return
+    assert store_records.key
+    assert store_records.value
+
+    record_name = bytes.fromhex(store_records.key.root).decode()
+    record_path = record_name.split('.')
+    ctx.logger.info('Processing `%s`', record_name)
+
+    level = store_records.value.level
+    if len(record_path) != int(level):
+        ctx.logger.warning('`%s`: expected %s chunks, got %s', record_name, level, len(record_path))
+        return
+
+    if level == '1':
+        await models.TLD.update_or_create(id=record_name, defaults={'owner': store_records.value.owner})
+    else:
+        if level == '2':
+            token_id = int(store_records.value.tzip12_token_id) if store_records.value.tzip12_token_id else None
+            await models.Domain.update_or_create(
+                id=record_name,
+                defaults={
+                    'tld_id': record_path[-1],
+                    'owner': store_records.value.owner,
+                    'token_id': token_id,
+                },
+            )
+
+        await models.Record.update_or_create(
+            id=record_name,
+            defaults={
+                'domain_id': '.'.join(record_path[-2:]),
+                'address': store_records.value.address,
+            },
+        )

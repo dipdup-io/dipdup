@@ -1,0 +1,11 @@
+{
+    "yaml.schemas": {
+        "schemas/dipdup-3.0.json": [
+            "**/dipdup*.y[a]ml",
+            "tests/configs/*.yml"
+        ],
+    },
+    "files.associations": {
+        "*.env.default": "shellscript"
+    }
+}

@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic.dataclasses import dataclass
 
+from dipdup.fetcher import HasLevel
 from dipdup.subscriptions import Subscription
 
 
@@ -15,8 +16,9 @@ class EvmNodeSubscription(ABC, Subscription):
 
 
 @dataclass(frozen=True)
-class EvmNodeNewHeadsSubscription(EvmNodeSubscription):
+class EvmNodeHeadSubscription(EvmNodeSubscription):
     name: Literal['newHeads'] = 'newHeads'
+    transactions: bool = False
 
 
 @dataclass(frozen=True)
@@ -26,11 +28,9 @@ class EvmNodeLogsSubscription(EvmNodeSubscription):
     topics: tuple[tuple[str, ...], ...] | None = None
 
     def get_params(self) -> list[Any]:
-        return super().get_params() + [
-            {
-                'address': self.address,
-                'topics': self.topics,
-            }
+        return [
+            *super().get_params(),
+            {'address': self.address, 'topics': self.topics},
         ]
 
 
@@ -39,95 +39,67 @@ class EvmNodeSyncingSubscription(EvmNodeSubscription):
     name: Literal['syncing'] = 'syncing'
 
 
-# FIXME: Frozen?
-@dataclass
-class EvmNodeHeadData:
-    number: str
-    hash: str
-    parent_hash: str
-    sha3_uncles: str
-    logs_bloom: str
-    transactions_root: str
-    state_root: str
-    receipts_root: str
-    miner: str
-    difficulty: str
+@dataclass(frozen=True)
+class EvmNodeHeadData(HasLevel):
+    base_fee_per_gas: int
+    difficulty: int
     extra_data: str
-    gas_limit: str
-    gas_used: str
-    timestamp: str
-    base_fee_per_gas: str
-    withdrawals_root: str
-    nonce: str
+    gas_limit: int
+    gas_used: int
+    hash: str
+    level: int
+    logs_bloom: str
+    miner: str
     mix_hash: str
+    nonce: str
+    number: int
+    parent_hash: str
+    receipts_root: str
+    sha3_uncles: str
+    state_root: str
+    timestamp: int
+    transactions_root: str
+    withdrawals_root: str | None
 
     @classmethod
     def from_json(cls, block_json: dict[str, Any]) -> 'EvmNodeHeadData':
+        # NOTE: Skale Nebula
+        if 'baseFeePerGas' not in block_json:
+            block_json['baseFeePerGas'] = '0x0'
+
         return cls(
-            number=block_json['number'],
-            hash=block_json['hash'],
-            parent_hash=block_json['parentHash'],
-            sha3_uncles=block_json['sha3Uncles'],
-            logs_bloom=block_json['logsBloom'],
-            transactions_root=block_json['transactionsRoot'],
-            state_root=block_json['stateRoot'],
-            receipts_root=block_json['receiptsRoot'],
-            miner=block_json['miner'],
-            difficulty=block_json['difficulty'],
+            base_fee_per_gas=int(block_json['baseFeePerGas'], 16),
+            difficulty=int(block_json['difficulty'], 16),
             extra_data=block_json['extraData'],
-            gas_limit=block_json['gasLimit'],
-            gas_used=block_json['gasUsed'],
-            timestamp=block_json['timestamp'],
-            base_fee_per_gas=block_json['baseFeePerGas'],
-            withdrawals_root=block_json['withdrawalsRoot'],
-            nonce=block_json['nonce'],
+            gas_limit=int(block_json['gasLimit'], 16),
+            gas_used=int(block_json['gasUsed'], 16),
+            hash=block_json['hash'],
+            level=int(block_json['number'], 16),
+            logs_bloom=block_json['logsBloom'],
+            miner=block_json['miner'],
             mix_hash=block_json['mixHash'],
+            nonce=block_json['nonce'],
+            number=int(block_json['number'], 16),
+            parent_hash=block_json['parentHash'],
+            receipts_root=block_json['receiptsRoot'],
+            sha3_uncles=block_json['sha3Uncles'],
+            state_root=block_json['stateRoot'],
+            timestamp=int(block_json['timestamp'], 16),
+            transactions_root=block_json['transactionsRoot'],
+            withdrawals_root=block_json.get('withdrawalsRoot', None),
         )
 
 
-@dataclass
-class EvmNodeLogData:
-    address: str
-    topics: list[str]
-    data: str
-    block_number: str
-    transaction_hash: str
-    transaction_index: str
-    log_index: str
-    removed: bool
-
-    @classmethod
-    def from_json(cls, log_json: dict[str, Any]) -> 'EvmNodeLogData':
-        return cls(
-            address=log_json['address'],
-            topics=log_json['topics'],
-            data=log_json['data'],
-            block_number=log_json['blockNumber'],
-            transaction_hash=log_json['transactionHash'],
-            transaction_index=log_json['transactionIndex'],
-            log_index=log_json['logIndex'],
-            removed=log_json['removed'],
-        )
-
-    @property
-    def level(self) -> int:
-        return int(self.block_number, 16)
-
-    @property
-    def index(self) -> str:
-        return self.log_index
-
-
-@dataclass
+@dataclass(frozen=True)
 class EvmNodeSyncingData:
-    starting_block: str
-    current_block: str
-    highest_block: str
+    current_block: int
+    highest_block: int
+    starting_block: int
 
     @classmethod
     def from_json(cls, syncing_json: dict[str, Any]) -> 'EvmNodeSyncingData':
         return cls(
-            starting_block=syncing_json['startingBlock'],
-            current_block=syncing_json['currentBlock'],
-            highest_block=syncing_json['highestBlock'],
+            current_block=int(syncing_json['currentBlock'], 16),
+            highest_block=int(syncing_json['highestBlock'], 16),
+            starting_block=int(syncing_json['startingBlock'], 16),
         )

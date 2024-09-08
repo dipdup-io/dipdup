@@ -1,0 +1,31 @@
+spec_version: 3.0
+package: demo_tezos_raw
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  mainnet_operations:
+    kind: tezos.operations_unfiltered
+    datasources:
+      - tzkt
+    types:
+      - transaction
+      - migration
+    callback: on_operation
+    first_level: 1589246
+    last_level: 1589247
+
+  mainnet_originations:
+    kind: tezos.operations_unfiltered
+    datasources:
+      - tzkt
+    types:
+      - origination
+    callback: on_operation
+    first_level: 1589255
+    last_level: 1589255

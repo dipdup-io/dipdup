@@ -1,0 +1,36 @@
+spec_version: 3.0
+package: demo_tezos_dao
+
+contracts:
+  registry:
+    kind: tezos
+    code_hash: KT1J2e6sDkgdTuB9hmE1AntzrghJem1wzT7a
+    typename: registry
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  registry_dao:
+    kind: tezos.operations
+    datasources:
+      - tzkt
+    types:
+      - transaction
+      - origination
+    handlers:
+      - callback: on_origination
+        pattern:
+          - type: origination
+            originated_contract: registry
+      - callback: on_propose
+        pattern:
+          - type: transaction
+            destination: registry
+            entrypoint: propose
+    first_level: 1685991 
+    last_level: 1686024

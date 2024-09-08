@@ -1,1 +1,39 @@
-{"id":1314030,"type":"contract","address":"KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD","kind":"smart_contract","alias":"QuipuSwap FA1.2 Factory Old 2","balance":0,"creator":{"address":"tz1Y3xE8s2xmKGNT6VexA3rcXvMcdWQWhT5V"},"numContracts":14,"activeTokensCount":0,"tokensCount":0,"tokenBalancesCount":0,"tokenTransfersCount":0,"numDelegations":0,"numOriginations":15,"numTransactions":42,"numReveals":0,"numMigrations":0,"transferTicketCount":0,"increasePaidStorageCount":0,"eventsCount":0,"firstActivity":1434856,"firstActivityTime":"2021-04-18T21:39:43Z","lastActivity":1488484,"lastActivityTime":"2021-05-26T17:15:42Z","typeHash":1479913559,"codeHash":-517093702,"metadata":{"site":"https://quipuswap.com/","alias":"QuipuSwap FA1.2 Factory Old 2","reddit":"r/MadFishCommunity","twitter":"madfishofficial","telegram":"MadFishCommunity","description":"QuipuSwap is an open-source protocol that provides an interface for the seamless decentralized exchange of Tezos-based Tokens and XTZ."}}
+{
+  "id": 1314030,
+  "type": "contract",
+  "address": "KT1Lw8hCoaBrHeTeMXbqHPG4sS4K1xn7yKcD",
+  "kind": "smart_contract",
+  "alias": "QuipuSwap FA1.2 Factory Old 2",
+  "balance": 0,
+  "creator": {
+    "address": "tz1Y3xE8s2xmKGNT6VexA3rcXvMcdWQWhT5V"
+  },
+  "numContracts": 14,
+  "activeTokensCount": 0,
+  "tokensCount": 0,
+  "tokenBalancesCount": 0,
+  "tokenTransfersCount": 0,
+  "numDelegations": 0,
+  "numOriginations": 15,
+  "numTransactions": 42,
+  "numReveals": 0,
+  "numMigrations": 0,
+  "transferTicketCount": 0,
+  "increasePaidStorageCount": 0,
+  "eventsCount": 0,
+  "firstActivity": 1434856,
+  "firstActivityTime": "2021-04-18T21:39:43Z",
+  "lastActivity": 1488484,
+  "lastActivityTime": "2021-05-26T17:15:42Z",
+  "typeHash": 1479913559,
+  "codeHash": -517093702,
+  "metadata": {
+    "kind": "dex",
+    "site": "https://quipuswap.com/",
+    "alias": "QuipuSwap FA1.2 Factory Old 2",
+    "reddit": "r/MadFishCommunity",
+    "twitter": "madfishofficial",
+    "telegram": "MadFishCommunity",
+    "description": "QuipuSwap is an open-source protocol that provides an interface for the seamless decentralized exchange of Tezos-based Tokens and XTZ."
+  }
+}

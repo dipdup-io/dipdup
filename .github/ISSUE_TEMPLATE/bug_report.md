@@ -17,7 +17,7 @@ about: Something doesn't work as expected
 * **Database engine version:**
 * **Hasura version:**
 * **Are you in docker?**
-* **Can you reproduce this issue on `master`?**
+* **Can you reproduce this issue on `next`?**
 
 <!---
 ### Attachment checklist

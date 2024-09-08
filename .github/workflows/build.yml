@@ -1,5 +1,5 @@
 name: Build
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
@@ -12,7 +12,8 @@ on:
       - 'src/**'
       - 'Dockerfile'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      # NOTE: Dumped with `pdm run update`
+      - 'requirements.txt'
       - '.github/workflows/build.yml'
 
 jobs:
@@ -25,18 +26,18 @@ jobs:
 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
       - name: Log in to the registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
@@ -44,7 +45,7 @@ jobs:
 
       - name: Set up metadata
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
           flavor: |
@@ -54,7 +55,7 @@ jobs:
             type=ref,event=tag
 
       - name: Publish nightly image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile

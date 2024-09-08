@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 from typing import Literal
 
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 
 
-@dataclass
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class HttpDatasourceConfig(DatasourceConfig):
     """Generic HTTP datasource config
 

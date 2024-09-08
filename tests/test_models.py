@@ -3,14 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import Tuple
 
 import orjson as json
 
-from demo_domains.types.name_registry.tezos_storage import NameRegistryStorage
-from dipdup.indexes.tezos_tzkt_operations.parser import deserialize_storage
-from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.indexes.tezos_operations.parser import deserialize_storage
+from dipdup.models.tezos import TezosOperationData
 from tests.types.asdf.storage import AsdfStorage
 from tests.types.bazaar.storage import BazaarMarketPlaceStorage
 from tests.types.ftzfun.storage import FtzFunStorage
@@ -26,8 +23,8 @@ from tests.types.yupana.storage import YupanaStorage
 from tests.types.zxcv.storage import ZxcvStorage
 
 
-def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> TzktOperationData:
-    return TzktOperationData(
+def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> TezosOperationData:
+    return TezosOperationData(
         storage=storage,
         diffs=diffs,
         type='transaction',
@@ -43,83 +40,6 @@ def get_operation_data(storage: Any, diffs: Tuple[Dict[str, Any], ...]) -> TzktO
         status='',
         has_internals=False,
     )
-
-
-def test_deserialize_storage_dict() -> None:
-    # Arrange
-    storage = {
-        'store': {
-            'data': 15023,
-            'owner': 'tz1VBLpuDKMoJuHRLZ4HrCgRuiLpEr7zZx2E',
-            'records': 15026,
-            'metadata': 15025,
-            'expiry_map': 15024,
-            'tzip12_tokens': 15028,
-            'reverse_records': 15027,
-            'next_tzip12_token_id': '18',
-        },
-        'actions': 15022,
-        'trusted_senders': [
-            'KT19fHFeGecCBRePPMoRjMthJ9YZCJkB5MsN',
-            'KT1A84aNsVCG7EsZyKHSyqZacVVSN1zcQzS7',
-            'KT1AQmVzLnNWtCmksbCGg7np9dmAU5CKYH72',
-            'KT1EeRLdEPJPFx96tDM1VgRka2V6ZyKV4vRg',
-            'KT1FpHyP8vUd7p2aq7DLRccUVPixoGVB4fJE',
-            'KT1HKtJxcr8dMTJMUiiFhttA6rk4v6xqTkmH',
-            'KT1KP2Yy6MNkYKkHqroGBZ7KFN5NdNfnUHHv',
-            'KT1LE3iTYfJNWkmPoa3KzN45y1QFKF6GA42Q',
-            'KT1Mq1zd986PxK4C2y9S7UaJkhTBbY15AU32',
-        ],
-    }
-    diffs = (
-        {
-            'bigmap': 15028,
-            'path': 'store.tzip12_tokens',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruh5diuJb6Vu4B127cxWhiJ3927mvmG9oZ1pYKSNERPpefM4KBg',
-                'key': '17',
-                'value': '6672657175656e742d616e616c7973742e65646f',
-            },
-        },
-        {
-            'bigmap': 15026,
-            'path': 'store.records',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruDKynBfQW5KFzPfKyRxNTfFzTJGrHUU4FpzBZcoRYXjyhdPPrM',
-                'key': '6672657175656e742d616e616c7973742e65646f',
-                'value': {
-                    'data': {},
-                    'level': '2',
-                    'owner': 'tz1SUrXU6cxioeyURSxTgaxmpSWgQq4PMSov',
-                    'address': 'tz1SUrXU6cxioeyURSxTgaxmpSWgQq4PMSov',
-                    'expiry_key': '6672657175656e742d616e616c7973742e65646f',
-                    'internal_data': {},
-                    'tzip12_token_id': '17',
-                },
-            },
-        },
-        {
-            'bigmap': 15024,
-            'path': 'store.expiry_map',
-            'action': 'add_key',
-            'content': {
-                'hash': 'expruDKynBfQW5KFzPfKyRxNTfFzTJGrHUU4FpzBZcoRYXjyhdPPrM',
-                'key': '6672657175656e742d616e616c7973742e65646f',
-                'value': '2024-02-29T15:45:49Z',
-            },
-        },
-    )
-    operation_data = get_operation_data(storage, diffs)
-
-    # Act
-    storage_obj = deserialize_storage(operation_data, NameRegistryStorage)
-
-    # Assert
-    assert isinstance(storage_obj, NameRegistryStorage)
-    assert isinstance(storage_obj.store.records, dict)
-    assert '6672657175656e742d616e616c7973742e65646f' in storage_obj.store.records
 
 
 def test_deserialize_storage_nested_dicts() -> None:
@@ -145,7 +65,7 @@ def test_deserialize_storage_nested_dicts() -> None:
     operation_data = get_operation_data(storage, ())
 
     # Arc
-    storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
+    _, storage_obj = deserialize_storage(operation_data, ResourceCollectorStorage)
 
     # Assert
     assert isinstance(storage_obj, ResourceCollectorStorage)
@@ -177,12 +97,12 @@ def test_deserialize_storage_plain_list() -> None:
     operation_data = get_operation_data(storage, diffs)
 
     # Act
-    storage_obj = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
+    _, storage_obj = deserialize_storage(operation_data, BazaarMarketPlaceStorage)
 
     # Assert
     assert isinstance(storage_obj, BazaarMarketPlaceStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[0].key.sale_seller == 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb'
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[0].key.sale_seller == 'tz1QX6eLPYbRcakYbiUy7i8krXEgc5XL3Lhb'
 
 
 def test_deserialize_storage_list_of_maps() -> None:
@@ -226,12 +146,12 @@ def test_deserialize_storage_list_of_maps() -> None:
     operation_data = get_operation_data(storage, diffs)
 
     # Act
-    storage_obj = deserialize_storage(operation_data, ListOfMapsStorage)
+    _, storage_obj = deserialize_storage(operation_data, ListOfMapsStorage)
 
     # Assert
     assert isinstance(storage_obj, ListOfMapsStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[1]['test'] == '123'
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[1]['test'] == '123'
 
 
 def test_convert_operation_with_default_entrypoint() -> None:
@@ -240,7 +160,7 @@ def test_convert_operation_with_default_entrypoint() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
 
     # Assert
     assert operations[0].entrypoint == 'default'
@@ -255,8 +175,8 @@ def test_deserialize_storage_dict_key() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], FtzFunStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], FtzFunStorage)
 
     # Assert
     assert isinstance(storage_obj, FtzFunStorage)
@@ -270,14 +190,14 @@ def test_qwer() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], QwerStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], QwerStorage)
 
     # Assert
     assert isinstance(storage_obj, QwerStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert storage_obj.__root__[0][1].R['1'] == '1'  # type: ignore[union-attr]
-    assert storage_obj.__root__[0][1].R['2'] == '2'  # type: ignore[union-attr]
+    assert isinstance(storage_obj.root, list)
+    assert storage_obj.root[0][1].R['1'] == '1'  # type: ignore[union-attr]
+    assert storage_obj.root[0][1].R['2'] == '2'  # type: ignore[union-attr]
 
 
 def test_asdf() -> None:
@@ -285,13 +205,13 @@ def test_asdf() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], AsdfStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], AsdfStorage)
 
     # Assert
     assert isinstance(storage_obj, AsdfStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert isinstance(storage_obj.__root__[0]['pupa'], list)
+    assert isinstance(storage_obj.root, list)
+    assert isinstance(storage_obj.root[0]['pupa'], list)
 
 
 def test_hjkl() -> None:
@@ -299,14 +219,14 @@ def test_hjkl() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], HjklStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], HjklStorage)
 
     # Assert
     assert isinstance(storage_obj, HjklStorage)
-    assert isinstance(storage_obj.__root__, list)
-    assert isinstance(storage_obj.__root__[0].value.mr, dict)
-    assert storage_obj.__root__[0].value.mr['111'] is True
+    assert isinstance(storage_obj.root, list)
+    assert isinstance(storage_obj.root[0].value.mr, dict)
+    assert storage_obj.root[0].value.mr['111'] is True
 
 
 def test_zxcv() -> None:
@@ -314,8 +234,8 @@ def test_zxcv() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], ZxcvStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], ZxcvStorage)
 
     # Assert
     assert isinstance(storage_obj, ZxcvStorage)
@@ -332,8 +252,8 @@ def test_rewq() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], RewqStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], RewqStorage)
 
     # Assert
     assert isinstance(storage_obj, RewqStorage)
@@ -349,8 +269,8 @@ def test_hen_subjkt() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], HenSubjktStorage)
 
     # Assert
     assert isinstance(storage_obj, HenSubjktStorage)
@@ -363,14 +283,14 @@ def test_kolibri_ovens() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
-    parameter_obj = SetDelegateParameter.parse_obj(operations[0].parameter_json)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], KolibriOvensStorage)
+    parameter_obj = SetDelegateParameter.model_validate(operations[0].parameter_json)
 
     # Assert
     assert isinstance(storage_obj, KolibriOvensStorage)
     assert isinstance(parameter_obj, SetDelegateParameter)
-    assert parameter_obj.__root__ is None
+    assert parameter_obj.root is None
 
 
 def test_yupana() -> None:
@@ -378,8 +298,8 @@ def test_yupana() -> None:
     operations_json = json.loads(json_path.read_bytes())
 
     # Act
-    operations = [TzktOperationData.from_json(op) for op in operations_json]
-    storage_obj = deserialize_storage(operations[0], YupanaStorage)
+    operations = [TezosOperationData.from_json(op) for op in operations_json]
+    _, storage_obj = deserialize_storage(operations[0], YupanaStorage)
 
     # Assert
     assert isinstance(storage_obj, YupanaStorage)
@@ -394,6 +314,6 @@ def _load_response(name: str) -> Any:
 
 def test_origination_amount() -> None:
     operations_json = _load_response('origination_amount.json')
-    operation = TzktOperationData.from_json(operations_json[0])
+    operation = TezosOperationData.from_json(operations_json[0])
 
     assert operation.amount == 31000000

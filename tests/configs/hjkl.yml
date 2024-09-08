@@ -1,4 +1,4 @@
-spec_version: 2.0
+spec_version: 3.0
 package: hjkl
 
 contracts:
@@ -16,8 +16,9 @@ datasources:
 
 indexes:
   hjkl:
-    kind: tezos.tzkt.operations
-    datasource: tzkt
+    kind: tezos.operations
+    datasources:
+      - tzkt
     contracts:
       - hjkl
     handlers:

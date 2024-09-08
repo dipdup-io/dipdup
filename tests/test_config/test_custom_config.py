@@ -1,4 +1,5 @@
 import os
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,13 @@ from _pytest.tmpdir import TempPathFactory
 
 from dipdup.config import DipDupConfig
 from dipdup.exceptions import ConfigurationError
+
+load_config = partial(
+    DipDupConfig.load,
+    environment=True,
+    raw=False,
+    unsafe=True,
+)
 
 
 class TestCustomConfig:
@@ -17,12 +25,8 @@ class TestCustomConfig:
     @staticmethod
     def appended_config_path(dummy_config_path: str, tmp_path_factory: TempPathFactory, append_raw: str) -> str:
         config_file = tmp_path_factory.mktemp('config') / 'dipdup.yml'
-        with open(dummy_config_path, 'r') as f:
-            config_raw = f.read()
-
-        with open(config_file, 'a') as f:
-            f.write(config_raw)
-            f.write(append_raw)
+        config_raw = Path(dummy_config_path).read_text()
+        config_file.write_text(config_raw + append_raw)
 
         return str(config_file)
 
@@ -48,14 +52,14 @@ custom:
 
     @staticmethod
     def test_empty_custom_section(dummy_config_path: str) -> None:
-        config = DipDupConfig.load([Path(dummy_config_path)], False)
+        config = load_config([Path(dummy_config_path)])
         config.initialize()
         assert hasattr(config, 'custom')
         assert config.custom == {}
 
     @staticmethod
     def test_custom_section_items(config_with_custom_section_path: str) -> None:
-        config = DipDupConfig.load([Path(config_with_custom_section_path)], False)
+        config = load_config([Path(config_with_custom_section_path)])
         config.initialize()
 
         assert hasattr(config, 'custom')
@@ -86,7 +90,7 @@ custom:
     var_from_env: {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        config = DipDupConfig.load([Path(config_path)], True)
+        config = load_config([Path(config_path)])
         config.initialize()
 
         assert hasattr(config, 'custom')
@@ -106,9 +110,9 @@ custom:
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
 
         try:
-            DipDupConfig.load([Path(config_path)], True)
+            load_config([Path(config_path)])
         except ConfigurationError as exc:
-            assert str(exc) == f'DipDup YAML config is invalid -> {exc.args[0]}'
+            assert str(exc) == 'DipDup YAML config is invalid -> ' + exc.args[0].split('\n')[0]
             assert exc.args[0] == 'Environment variable `DEFINITELY_NOT_DEFINED` is not set'
         else:
             raise AssertionError('ConfigurationError not raised')
@@ -127,4 +131,4 @@ custom:
   #  some commented line corresponding to ENV_VARIABLE_REGEX with {value}
 """
         config_path = self.appended_config_path(dummy_config_path, tmp_path_factory, append_raw)
-        DipDupConfig.load([Path(config_path)], True)
+        load_config([Path(config_path)])

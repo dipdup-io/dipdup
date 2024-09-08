@@ -1,0 +1,2451 @@
+[
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44172786532354,
+    1366840,
+    "2021-03-02T06:32:35Z",
+    "767376",
+    44172786532352,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1iMfjNhpcUfDNCFTY5j2S3J6cY9NU8fKuv"
+    },
+    44173217497089,
+    1366851,
+    "2021-03-02T06:43:35Z",
+    "152245",
+    44173217497088,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1brpTwsNqxpJW69iQxaZSLAZgsLbSwRuN1"
+    },
+    44173251051521,
+    1366852,
+    "2021-03-02T06:44:35Z",
+    "1007162",
+    44173251051520,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1NpaSh5FzvsqVCEcLDtfexYyYELz9ys1m7"
+    },
+    44173378977794,
+    1366855,
+    "2021-03-02T06:47:35Z",
+    "1218978",
+    44173378977792,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1NpaSh5FzvsqVCEcLDtfexYyYELz9ys1m7"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44173450280961,
+    1366857,
+    "2021-03-02T06:49:35Z",
+    "938223",
+    44173450280960,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44173529972737,
+    1366859,
+    "2021-03-02T06:51:35Z",
+    "767376",
+    44173529972736,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44173543604225,
+    1366859,
+    "2021-03-02T06:51:35Z",
+    "1000000",
+    44173543604224,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44173576110081,
+    1366860,
+    "2021-03-02T06:52:35Z",
+    "444485",
+    44173576110080,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44173631684609,
+    1366861,
+    "2021-03-02T06:53:35Z",
+    "367774",
+    44173631684608,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1brpTwsNqxpJW69iQxaZSLAZgsLbSwRuN1"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44173634830337,
+    1366861,
+    "2021-03-02T06:53:35Z",
+    "913481",
+    44173634830336,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44173637976065,
+    1366861,
+    "2021-03-02T06:53:35Z",
+    "992759",
+    44173637976064,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44173918994433,
+    1366863,
+    "2021-03-02T06:55:35Z",
+    "365427",
+    44173918994432,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44174160166913,
+    1366864,
+    "2021-03-02T06:56:35Z",
+    "723963",
+    44174160166912,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44174448525313,
+    1366866,
+    "2021-03-02T06:58:35Z",
+    "1901649",
+    44174448525312,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44175537995777,
+    1366874,
+    "2021-03-02T07:06:35Z",
+    "714988",
+    44175537995776,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44175568404481,
+    1366875,
+    "2021-03-02T07:07:35Z",
+    "1029045",
+    44175568404480,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1iMfjNhpcUfDNCFTY5j2S3J6cY9NU8fKuv"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176184967169,
+    1366880,
+    "2021-03-02T07:12:35Z",
+    "180000",
+    44176184967168,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44176218521601,
+    1366881,
+    "2021-03-02T07:13:35Z",
+    "718812",
+    44176218521600,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1NpaSh5FzvsqVCEcLDtfexYyYELz9ys1m7"
+    },
+    44176288776193,
+    1366883,
+    "2021-03-02T07:15:35Z",
+    "547483",
+    44176288776192,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176328622081,
+    1366884,
+    "2021-03-02T07:16:35Z",
+    "1101944",
+    44176328622080,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176405168129,
+    1366886,
+    "2021-03-02T07:18:35Z",
+    "1400000",
+    44176405168128,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176409362433,
+    1366886,
+    "2021-03-02T07:18:35Z",
+    "600000",
+    44176409362432,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176453402625,
+    1366887,
+    "2021-03-02T07:19:35Z",
+    "605543",
+    44176453402624,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176484859905,
+    1366888,
+    "2021-03-02T07:20:35Z",
+    "300000",
+    44176484859904,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176580280321,
+    1366891,
+    "2021-03-02T07:23:35Z",
+    "293750",
+    44176580280320,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1SEEQNGjxP3SC8biDWMMHwgpYk1aeiQDyJ"
+    },
+    44176610689025,
+    1366892,
+    "2021-03-02T07:24:35Z",
+    "7321",
+    44176610689024,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44176661020673,
+    1366893,
+    "2021-03-02T07:25:35Z",
+    "364927",
+    44176661020672,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1NpaSh5FzvsqVCEcLDtfexYyYELz9ys1m7"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44176737566721,
+    1366895,
+    "2021-03-02T07:27:35Z",
+    "561960",
+    44176737566720,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44176740712449,
+    1366895,
+    "2021-03-02T07:27:35Z",
+    "723249",
+    44176740712448,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177066819585,
+    1366898,
+    "2021-03-02T07:30:35Z",
+    "358364",
+    44177066819584,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177153851393,
+    1366900,
+    "2021-03-02T07:32:35Z",
+    "710310",
+    44177153851392,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177183211521,
+    1366901,
+    "2021-03-02T07:33:35Z",
+    "1307757",
+    44177183211520,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177253466113,
+    1366903,
+    "2021-03-02T07:35:35Z",
+    "2190650",
+    44177253466112,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177429626881,
+    1366907,
+    "2021-03-02T07:39:35Z",
+    "500000",
+    44177429626880,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1WaDeDu4iQLdtb63rFaiwz9ghJJvWfwfsc"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177470521345,
+    1366908,
+    "2021-03-02T07:40:35Z",
+    "503587",
+    44177470521344,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177645633537,
+    1366912,
+    "2021-03-02T07:44:35Z",
+    "435041",
+    44177645633536,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1g5CT55ctsEUnjHwCsJr4d8jvDqYdygCmA"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177648779265,
+    1366912,
+    "2021-03-02T07:44:35Z",
+    "5946694",
+    44177648779264,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    44177684430849,
+    1366913,
+    "2021-03-02T07:45:35Z",
+    "4452507",
+    44177684430848,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177729519617,
+    1366914,
+    "2021-03-02T07:46:35Z",
+    "735660",
+    44177729519616,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177794531329,
+    1366915,
+    "2021-03-02T07:47:35Z",
+    "726968",
+    44177794531328,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177827037185,
+    1366916,
+    "2021-03-02T07:48:35Z",
+    "718428",
+    44177827037184,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44177861640193,
+    1366917,
+    "2021-03-02T07:49:35Z",
+    "589916",
+    44177861640192,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44177891000321,
+    1366918,
+    "2021-03-02T07:50:35Z",
+    "1374964",
+    44177891000320,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1SEEQNGjxP3SC8biDWMMHwgpYk1aeiQDyJ"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178064015361,
+    1366922,
+    "2021-03-02T07:54:35Z",
+    "10000",
+    44178064015360,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1UWADavU7ja9BJ84AsdmdxmymHtwVB6QRf"
+    },
+    44178083938305,
+    1366922,
+    "2021-03-02T07:54:35Z",
+    "2132802",
+    44178083938304,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178117492737,
+    1366923,
+    "2021-03-02T07:56:15Z",
+    "1902276",
+    44178117492736,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178465619969,
+    1366926,
+    "2021-03-02T07:59:15Z",
+    "1170701",
+    44178465619968,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1UWADavU7ja9BJ84AsdmdxmymHtwVB6QRf"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178513854465,
+    1366927,
+    "2021-03-02T08:00:15Z",
+    "2260000",
+    44178513854464,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178710986753,
+    1366932,
+    "2021-03-02T08:05:15Z",
+    "2035312",
+    44178710986752,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44178778095617,
+    1366934,
+    "2021-03-02T08:07:15Z",
+    "716691",
+    44178778095616,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178815844353,
+    1366935,
+    "2021-03-02T08:08:15Z",
+    "1437084",
+    44178815844352,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44178899730433,
+    1366937,
+    "2021-03-02T08:10:15Z",
+    "724733",
+    44178899730432,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44178933284865,
+    1366938,
+    "2021-03-02T08:11:15Z",
+    "716594",
+    44178933284864,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44178963693569,
+    1366939,
+    "2021-03-02T08:12:15Z",
+    "1389874",
+    44178963693568,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44179105251329,
+    1366943,
+    "2021-03-02T08:16:15Z",
+    "724107",
+    44179105251328,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44179130417153,
+    1366944,
+    "2021-03-02T08:17:15Z",
+    "1123206",
+    44179130417152,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44179190185985,
+    1366945,
+    "2021-03-02T08:18:15Z",
+    "2158018",
+    44179190185984,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44179479592961,
+    1366953,
+    "2021-03-02T08:26:15Z",
+    "728637",
+    44179479592960,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44179514195969,
+    1366954,
+    "2021-03-02T08:27:15Z",
+    "720566",
+    44179514195968,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44179544604673,
+    1366955,
+    "2021-03-02T08:28:15Z",
+    "1275480",
+    44179544604672,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44179551944705,
+    1366955,
+    "2021-03-02T08:28:15Z",
+    "726666",
+    44179551944704,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44179601227777,
+    1366956,
+    "2021-03-02T08:29:15Z",
+    "718629",
+    44179601227776,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44179631636481,
+    1366957,
+    "2021-03-02T08:30:15Z",
+    "1326603",
+    44179631636480,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Z1ZX2B98nEAvEnLXJBCnsJ6K1GqaSp9jK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44180269170689,
+    1366962,
+    "2021-03-02T08:35:15Z",
+    "72157",
+    44180269170688,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44180272316417,
+    1366962,
+    "2021-03-02T08:35:15Z",
+    "3214231",
+    44180272316416,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181257977857,
+    1366971,
+    "2021-03-02T08:44:15Z",
+    "725405",
+    44181257977856,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181351301121,
+    1366974,
+    "2021-03-02T08:47:15Z",
+    "717584",
+    44181351301120,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44181377515521,
+    1366975,
+    "2021-03-02T08:48:15Z",
+    "1412320",
+    44181377515520,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181543190529,
+    1366977,
+    "2021-03-02T08:50:15Z",
+    "363497",
+    44181543190528,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181579890689,
+    1366978,
+    "2021-03-02T08:51:15Z",
+    "721104",
+    44181579890688,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44181609250817,
+    1366979,
+    "2021-03-02T08:52:15Z",
+    "1163340",
+    44181609250816,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181613445121,
+    1366979,
+    "2021-03-02T08:52:15Z",
+    "725841",
+    44181613445120,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181645950977,
+    1366980,
+    "2021-03-02T08:53:15Z",
+    "718013",
+    44181645950976,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44181675311105,
+    1366981,
+    "2021-03-02T08:54:15Z",
+    "1334016",
+    44181675311104,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181825257473,
+    1366985,
+    "2021-03-02T08:58:15Z",
+    "724611",
+    44181825257472,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    44181858811905,
+    1366986,
+    "2021-03-02T08:59:15Z",
+    "716803",
+    44181858811904,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1QjFsFrSYStAf5yhH5obYt1eAPjbT5MZPK"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44181891317761,
+    1366987,
+    "2021-03-02T09:00:15Z",
+    "1564726",
+    44181891317760,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1ZeRsv3qTfoKAzfaJLSGtqXpnJeUTM8BHg"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44182194356225,
+    1366994,
+    "2021-03-02T09:07:15Z",
+    "2369223",
+    44182194356224,
+    null,
+    null
+  ],
+  [
+    {
+      "id": 24975299837953,
+      "contract": {
+        "alias": "tzBTC",
+        "address": "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn"
+      },
+      "tokenId": "0",
+      "standard": "fa1.2",
+      "totalSupply": "107615636205",
+      "metadata": {
+        "name": "tzBTC",
+        "symbol": "tzBTC",
+        "decimals": "8"
+      }
+    },
+    {
+      "address": "tz1Ub7v6eoec6KdB5VTCqtAEVrQsjj1ZTFTk"
+    },
+    {
+      "alias": "Dexter tzBTC/XTZ",
+      "address": "KT1BGQR7t4izzKZ7eRodKWTodAsM23P38v7N"
+    },
+    44182391488513,
+    1366999,
+    "2021-03-02T09:12:15Z",
+    "5100429",
+    44182391488512,
+    null,
+    null
+  ]
+]

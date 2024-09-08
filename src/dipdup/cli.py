@@ -3,77 +3,141 @@ import asyncio
 import atexit
 import logging
 import sys
+from collections.abc import Callable
+from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import suppress
+from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Awaitable
-from typing import Callable
 from typing import TypeVar
 from typing import cast
 
-import asyncclick as click
+import click
+import uvloop
 
 from dipdup import __version__
 from dipdup import env
-from dipdup.sys import IGNORE_CONFIG_CMDS
-from dipdup.sys import set_up_logging
+from dipdup.install import EPILOG
+from dipdup.install import WELCOME_ASCII
+from dipdup.report import REPORTS_PATH
+from dipdup.report import cleanup_reports
+from dipdup.report import get_reports
+from dipdup.report import save_report
+from dipdup.sys import fire_and_forget
 from dipdup.sys import set_up_process
 
-DEFAULT_CONFIG_NAME = 'dipdup.yml'
+if TYPE_CHECKING:
+    from dipdup.config import DipDupConfig
 
 
-_logger = logging.getLogger('dipdup.cli')
+_click_wrap_text = click.formatting.wrap_text
 
 
-def echo(message: str) -> None:
+def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
+    # NOTE: WELCOME_ASCII and EPILOG
+    if text.startswith('    '):
+        return text
+    if text.startswith('\0\n'):
+        return text[2:]
+    return _click_wrap_text(text, *a, **kw)
+
+
+click.formatting.wrap_text = _wrap_text
+
+ROOT_CONFIG = 'dipdup.yaml'
+CONFIG_RE = r'dipdup.*\.ya?ml'
+
+# NOTE: Do not try to load config for these commands as they don't need it
+NO_CONFIG_CMDS = {
+    'new',
+    'install',
+    'uninstall',
+    'update',
+    'migrate',
+    'config',
+}
+
+
+_logger = logging.getLogger(__name__)
+
+
+def echo(message: str, err: bool = False, **styles: Any) -> None:
     with suppress(BrokenPipeError):
-        click.echo(message)
+        click.secho(message, err=err, **styles)
 
 
-def _print_help(error: Exception) -> None:
+def big_yellow_echo(message: str) -> None:
+    echo(f'\n{message}\n', fg='yellow')
+
+
+def green_echo(message: str) -> None:
+    echo(message, fg='green')
+
+
+def red_echo(message: str) -> None:
+    echo(message, err=True, fg='red')
+
+
+def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
     from dipdup.exceptions import Error
 
     def _print() -> None:
         if isinstance(error, Error):
-            click.echo(error.help(), err=True)
+            echo(error.help(), err=True)
         else:
-            click.echo(Error.default_help())
+            echo(Error.default_help(), err=True)
+
+        echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
 
     atexit.register(_print)
 
 
-WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Awaitable[None]])
+WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Coroutine[Any, Any, None]])
+
+
+@dataclass
+class CLIContext:
+    config_paths: list[str]
+    config: 'DipDupConfig'
 
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
-    async def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
-        set_up_process(ctx.invoked_subcommand)
-
+    def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
         try:
-            await fn(ctx, *args, **kwargs)
+            uvloop.run(fn(ctx, *args, **kwargs))
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
-            from dipdup.sentry import save_crashdump
-
-            crashdump_path = save_crashdump(e)
-            _logger.info(f'Unhandled exception caught, crashdump saved to `{crashdump_path}`')
-            _print_help(e)
+            package = ctx.obj.config.package if ctx.obj else 'unknown'
+            report_id = save_report(package, e)
+            _print_help_atexit(e, report_id)
             raise e
+
+        # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
+        if fn.__name__ == 'run' and not env.TEST:
+            package = ctx.obj.config.package
+            save_report(package, None)
 
     return cast(WrappedCommandT, wrapper)
 
 
+def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
+    return cmd.callback.__wrapped__.__wrapped__  # type: ignore[no-any-return,union-attr]
+
+
 async def _check_version() -> None:
-    if 'rc' in __version__:
+    if '+editable' in __version__:
+        return
+    if not all(c.isdigit() or c == '.' for c in __version__):
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
-        _logger.info('Set `skip_version_check` flag in config to hide this message.')
+        _logger.info('Set `advanced.skip_version_check` flag in config to hide this message.')
         return
 
     import aiohttp
@@ -90,16 +154,41 @@ async def _check_version() -> None:
             _logger.info('Set `skip_version_check` flag in config to hide this message.')
 
 
-@click.group(context_settings={'max_content_width': 120})
+def _skip_cli_group() -> bool:
+    # NOTE: Workaround for help pages. First argument check is for the test runner.
+    args = sys.argv[1:] if sys.argv else ['--help']
+    is_help = '--help' in args
+    is_empty_group = args in (
+        ['config'],
+        ['hasura'],
+        ['schema'],
+    )
+    # NOTE: Simple helpers that don't use any of our cli boilerplate
+    is_script = args[0] in (
+        'self',
+        'report',
+    )
+    if not (is_help or is_empty_group or is_script):
+        _logger.debug('Skipping cli group')
+        return False
+    return True
+
+
+@click.group(
+    context_settings={'max_content_width': 120},
+    help=WELCOME_ASCII,
+    epilog=EPILOG,
+)
 @click.version_option(__version__)
 @click.option(
     '--config',
     '-c',
     type=str,
     multiple=True,
-    help=f'A path to DipDup project config (default: {DEFAULT_CONFIG_NAME}).',
-    default=[DEFAULT_CONFIG_NAME],
+    help='A path to DipDup project config.',
+    default=[ROOT_CONFIG],
     metavar='PATH',
+    envvar='DIPDUP_CONFIG',
 )
 @click.option(
     '--env-file',
@@ -109,31 +198,34 @@ async def _check_version() -> None:
     help='A path to .env file containing `KEY=value` strings.',
     default=[],
     metavar='PATH',
+    envvar='DIPDUP_ENV_FILE',
 )
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
-    """Manage and run DipDup indexers.
+    set_up_process()
 
-    Documentation: https://docs.dipdup.io
-
-    Issues: https://github.com/dipdup-io/dipdup/issues
-    """
-    # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    if '--help' in args or args in (['config'], ['hasura'], ['schema']) or args[0] == 'self':
+    if _skip_cli_group():
         return
+
+    # NOTE: https://github.com/python/cpython/issues/95778
+    # NOTE: Method is not available in early Python 3.12
+    try:
+        sys.set_int_max_str_digits(0)
+    except AttributeError:
+        _logger.warning("You're running an outdated Python 3.12 release; consider upgrading")
 
     from dotenv import load_dotenv
 
     from dipdup.exceptions import ConfigurationError
+    from dipdup.sys import set_up_logging
 
     set_up_logging()
 
     env_file_paths = [Path(file) for file in env_file]
     config_paths = [Path(file) for file in config]
 
-    # NOTE: Apply env files before loading config
+    # NOTE: Apply env files before loading the config
     for env_path in env_file_paths:
         if not env_path.is_file():
             raise ConfigurationError(f'env file `{env_path}` does not exist')
@@ -141,42 +233,41 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
         load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
-    if ctx.invoked_subcommand in IGNORE_CONFIG_CMDS:
+    if ctx.invoked_subcommand in NO_CONFIG_CMDS:
         logging.getLogger('dipdup').setLevel(logging.INFO)
         return
 
-    from dataclasses import dataclass
-
     from dipdup.config import DipDupConfig
-    from dipdup.exceptions import ConfigurationError
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
-    from dipdup.sentry import init_sentry
 
-    _config = DipDupConfig.load(config_paths)
+    _config = DipDupConfig.load(
+        paths=config_paths,
+        environment=True,
+        raw=False,
+        unsafe=True,
+    )
     _config.set_up_logging()
 
-    init_sentry(_config)
+    if _config.sentry:
+        from dipdup.sentry import init_sentry
+
+        init_sentry(_config.sentry, _config.package)
 
     # NOTE: Imports will be loaded later if needed
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI)):
-        asyncio.ensure_future(_check_version())
+    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
+        fire_and_forget(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
-        # NOTE: `ConfigurationError` will be raised with more details.
-        DipDupPackage(_config.package_path).create()
+        # NOTE: `ConfigurationError` will be raised later with more details.
+        DipDupPackage(_config.package_path).initialize()
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
-
-    @dataclass
-    class CLIContext:
-        config_paths: list[str]
-        config: DipDupConfig
 
     ctx.obj = CLIContext(
         config_paths=config,
@@ -188,11 +279,10 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
 @click.pass_context
 @_cli_wrapper
 async def run(ctx: click.Context) -> None:
-    """Run indexer.
+    """Run the indexer.
 
     Execution can be gracefully interrupted with `Ctrl+C` or `SIGINT` signal.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -203,58 +293,74 @@ async def run(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.option('--force', '-f', is_flag=True, help='Regenerate existing types and ABIs.')
-@click.option('--keep-schemas', is_flag=True, help='Do not remove JSONSchemas after generating types.')
+@click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
+@click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.argument(
+    'include',
+    type=str,
+    nargs=-1,
+    metavar='PATH',
+)
 @click.pass_context
 @_cli_wrapper
-async def init(ctx: click.Context, force: bool, keep_schemas: bool) -> None:
-    """Generate project tree, callbacks and types.
+async def init(
+    ctx: click.Context,
+    force: bool,
+    base: bool,
+    include: list[str],
+) -> None:
+    """Generate project tree, typeclasses and callback stubs.
 
     This command is idempotent, meaning it won't overwrite previously generated files unless asked explicitly.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    await dipdup.init(force, keep_schemas)
+
+    await dipdup.init(
+        force=force,
+        base=base or bool(include),
+        include=set(include),
+    )
 
 
 @cli.command()
+@click.option('--dry-run', '-n', is_flag=True, help='Print changes without applying them.')
 @click.pass_context
 @_cli_wrapper
-async def migrate(ctx: click.Context) -> None:
+async def migrate(ctx: click.Context, dry_run: bool) -> None:
     """
     Migrate project to the new spec version.
 
     If you're getting `MigrationRequiredError` after updating DipDup, this command will fix imports and type annotations to match the current `spec_version`. Review and commit changes after running it.
     """
-    _logger.info('Project is already at the latest version, no further actions required')
-
-
-@cli.command()
-@click.pass_context
-@_cli_wrapper
-async def status(ctx: click.Context) -> None:
-    """Show the current status of indexes in the database."""
     from dipdup.config import DipDupConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.models import Index
+    from dipdup.migrations.three_zero import ThreeZeroProjectMigration
 
-    config: DipDupConfig = ctx.obj.config
-    url = config.database.connection_string
-    models = f'{config.package}.models'
+    # NOTE: Extract paths from arguments since we can't load config with old spec version
+    assert ctx.parent
+    config_paths: list[Path] = [Path(file) for file in ctx.parent.params['config']]
 
-    table: list[tuple[str, str, str | int]] = [('name', 'status', 'level')]
-    async with tortoise_wrapper(url, models):
-        async for index in Index.filter().order_by('name'):
-            row = (index.name, index.status.value, index.level)
-            table.append(row)
+    migration = ThreeZeroProjectMigration(tuple(config_paths), dry_run)
+    migration.migrate()
 
-    # NOTE: Lazy import to speed up startup
-    from tabulate import tabulate
-
-    echo(tabulate(table, tablefmt='plain'))
+    config = DipDupConfig.load(
+        paths=config_paths,
+        environment=True,
+        raw=False,
+        unsafe=True,
+    )
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=ctx.parent.params['config'],
+        config=config,
+    )
+    await _cli_unwrapper(init)(
+        ctx=ctx,
+        base=True,
+        force=True,
+    )
 
 
 @cli.group()
@@ -262,50 +368,96 @@ async def status(ctx: click.Context) -> None:
 @_cli_wrapper
 async def config(ctx: click.Context) -> None:
     """Commands to manage DipDup configuration."""
-    ...
+    pass
 
 
 @config.command(name='export')
-@click.option('--unsafe', is_flag=True, help='Resolve environment variables or use default values from config.')
-@click.option('--full', is_flag=True, help='Resolve index templates.')
+@click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
+@click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
+@click.option('--raw', '-r', is_flag=True, help='Do not initialize config; preserve file structure.')
 @click.pass_context
 @_cli_wrapper
-async def config_export(ctx: click.Context, unsafe: bool, full: bool) -> None:
+async def config_export(
+    ctx: click.Context,
+    unsafe: bool,
+    full: bool,
+    raw: bool,
+) -> None:
     """
     Print config after resolving all links and, optionally, templates.
 
     WARNING: Avoid sharing output with 3rd-parties when `--unsafe` flag set - it may contain secrets!
     """
     from dipdup.config import DipDupConfig
+    from dipdup.yaml import DipDupYAMLConfig
 
-    config = DipDupConfig.load(
-        paths=ctx.obj.config.paths,
-        environment=unsafe,
-    )
-    if full:
-        config.initialize()
-    echo(config.dump())
+    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+    if raw:
+        raw_config, _ = DipDupYAMLConfig.load(
+            paths=config_paths,
+            environment=False,
+            raw=True,
+            unsafe=unsafe,
+        )
+        echo(raw_config.dump())
+
+    else:
+        config = DipDupConfig.load(
+            paths=config_paths,
+            environment=True,
+            raw=False,
+            unsafe=unsafe,
+        )
+        if full:
+            config.initialize()
+        echo(config.dump())
 
 
 @config.command(name='env')
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
+@click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
+@click.option('--compose', '-c', is_flag=True, help='Output in docker-compose format.')
+@click.option('--internal', '-i', is_flag=True, help='Include internal variables.')
 @click.pass_context
 @_cli_wrapper
-async def config_env(ctx: click.Context, file: str | None) -> None:
+async def config_env(
+    ctx: click.Context,
+    output: str | None,
+    unsafe: bool,
+    compose: bool,
+    internal: bool,
+) -> None:
     """Dump environment variables used in DipDup config.
 
     If variable is not set, default value will be used.
     """
-    from dipdup.config import DipDupConfig
+    from dipdup.yaml import DipDupYAMLConfig
 
-    config = DipDupConfig.load(
-        paths=ctx.obj.config.paths,
+    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+
+    _, environment = DipDupYAMLConfig.load(
+        paths=config_paths,
         environment=True,
+        raw=False,
+        unsafe=unsafe,
     )
-    content = '\n'.join(f'{k}={v}' for k, v in config.environment.items())
-    if file:
-        with open(file, 'w') as f:
-            f.write(content)
+    if internal:
+        environment.update(env.dump())
+    if compose:
+        content = 'services:\n  dipdup:\n    environment:\n'
+        _tab = ' ' * 6
+        for k, v in sorted(environment.items()):
+            line = f'{_tab}- {k}=' + '${' + k
+            if v is not None:
+                line += ':-' + v + '}'
+            else:
+                line += '}'
+
+            content += line + '\n'
+    else:
+        content = '\n'.join(f'{k}={v}' for k, v in sorted(environment.items()))
+    if output:
+        Path(output).write_text(content)
     else:
         echo(content)
 
@@ -314,11 +466,11 @@ async def config_env(ctx: click.Context, file: str | None) -> None:
 @click.pass_context
 @_cli_wrapper
 async def hasura(ctx: click.Context) -> None:
-    ...
+    pass
 
 
 @hasura.command(name='configure')
-@click.option('--force', is_flag=True, help='Proceed even if Hasura is already configured.')
+@click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @_cli_wrapper
 async def hasura_configure(ctx: click.Context, force: bool) -> None:
@@ -356,7 +508,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    ...
+    pass
 
 
 @schema.command(name='approve')
@@ -364,7 +516,7 @@ async def schema(ctx: click.Context) -> None:
 @_cli_wrapper
 async def schema_approve(ctx: click.Context) -> None:
     """Continue to use existing schema after reindexing was triggered."""
-    from dipdup.config import DipDupConfig
+
     from dipdup.database import tortoise_wrapper
     from dipdup.models import Index
     from dipdup.models import Schema
@@ -375,7 +527,12 @@ async def schema_approve(ctx: click.Context) -> None:
 
     _logger.info('Approving schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
             hash=None,
@@ -388,8 +545,8 @@ async def schema_approve(ctx: click.Context) -> None:
 
 
 @schema.command(name='wipe')
-@click.option('--immune', is_flag=True, help='Drop immune tables too.')
-@click.option('--force', is_flag=True, help='Skip confirmation prompt.')
+@click.option('--immune', '-i', is_flag=True, help='Drop immune tables too.')
+@click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
 @_cli_wrapper
 async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
@@ -398,44 +555,62 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 
     WARNING: This action is irreversible! All indexed data will be lost!
     """
-    from tortoise import Tortoise
-
-    from dipdup.config import DipDupConfig
-    from dipdup.config import PostgresDatabaseConfig
-    from dipdup.database import get_connection
-    from dipdup.database import tortoise_wrapper
-    from dipdup.database import wipe_schema
+    from dipdup.config import SqliteDatabaseConfig
+    from dipdup.exceptions import ConfigurationError
 
     config: DipDupConfig = ctx.obj.config
     url = config.database.connection_string
     models = f'{config.package}.models'
 
+    # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
+    immune_tables = set() if immune else config.database.immune_tables
+
+    if isinstance(config.database, SqliteDatabaseConfig):
+        message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
+        if config.advanced.unsafe_sqlite:
+            immune_tables.add('dipdup_meta')
+            _logger.warning(message)
+        elif immune_tables:
+            raise ConfigurationError(message)
+    else:
+        immune_tables.add('dipdup_meta')
+
     if not force:
         try:
-            assert sys.__stdin__.isatty()
+            assert sys.__stdin__.isatty()  # type: ignore[union-attr]
             click.confirm(
                 f"You're about to wipe schema `{url}`. All indexed data will be irreversibly lost, are you sure?",
                 abort=True,
             )
         except AssertionError:
-            click.echo('Not in a TTY, skipping confirmation')
+            echo('Not in a TTY, skipping confirmation')
         except click.Abort:
-            click.echo('\nAborted')
+            echo('\nAborted')
             quit(0)
 
     _logger.info('Wiping schema `%s`', url)
 
-    async with tortoise_wrapper(url, models):
+    from dipdup.database import get_connection
+    from dipdup.database import tortoise_wrapper
+    from dipdup.database import wipe_schema
+
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+        unsafe_sqlite=config.advanced.unsafe_sqlite,
+    ):
         conn = get_connection()
-        if isinstance(config.database, PostgresDatabaseConfig):
-            await wipe_schema(
-                conn=conn,
-                schema_name=config.database.schema_name,
-                # NOTE: Don't be confused by the name of `--immune` flag, we want to drop all tables if it's set.
-                immune_tables=set() if immune else config.database.immune_tables | {'dipdup_meta'},
-            )
-        else:
-            await Tortoise._drop_databases()
+        await wipe_schema(
+            conn=conn,
+            schema_name=(
+                config.database.path
+                if isinstance(config.database, SqliteDatabaseConfig)
+                else config.database.schema_name
+            ),
+            immune_tables=immune_tables,
+        )
 
     _logger.info('Schema wiped')
 
@@ -445,11 +620,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
 @_cli_wrapper
 async def schema_init(ctx: click.Context) -> None:
     """
-    Prepare a database for running DipDip.
+    Prepare database schema for running DipDup.
 
     This command creates tables based on your models, then executes `sql/on_reindex` to finish preparation - the same things DipDup does when run on a clean database.
     """
-    from dipdup.config import DipDupConfig
     from dipdup.database import generate_schema
     from dipdup.database import get_connection
     from dipdup.dipdup import DipDup
@@ -462,7 +636,7 @@ async def schema_init(ctx: click.Context) -> None:
 
     async with AsyncExitStack() as stack:
         await dipdup._set_up_database(stack)
-        await dipdup._set_up_hooks(set())
+        await dipdup._set_up_hooks()
         await dipdup._create_datasources()
         await dipdup._initialize_schema()
 
@@ -484,9 +658,10 @@ async def schema_export(ctx: click.Context) -> None:
 
     This command may help you debug inconsistency between project models and expected SQL schema.
     """
+
     from tortoise.utils import get_schema_sql
 
-    from dipdup.config import DipDupConfig
+    from dipdup import env
     from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
     from dipdup.utils import iter_files
@@ -496,7 +671,12 @@ async def schema_export(ctx: click.Context) -> None:
     models = f'{config.package}.models'
     package_path = env.get_package_path(config.package)
 
-    async with tortoise_wrapper(url, models):
+    async with tortoise_wrapper(
+        url=url,
+        models=models,
+        timeout=config.database.connection_timeout,
+        decimal_precision=config.advanced.decimal_precision,
+    ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
         dipdup_sql_path = Path(__file__).parent / 'sql' / 'on_reindex'
@@ -513,20 +693,61 @@ async def schema_export(ctx: click.Context) -> None:
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
-@click.option('--replay', '-r', type=click.Path(exists=True), default=None, help='Replay a previously saved state.')
+@click.option(
+    '--replay',
+    '-r',
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help='Use values from a replay file.',
+)
+@click.option('--template', '-t', type=str, default=None, help='Use a specific template.')
 @_cli_wrapper
 async def new(
     ctx: click.Context,
     quiet: bool,
     force: bool,
-    replay: str | None,
+    replay: Path | None,
+    template: str | None,
 ) -> None:
     """Create a new project interactively."""
-    from dipdup.project import BaseProject
 
-    project = BaseProject()
-    project.run(quiet, replay)
-    project.render(force)
+    from survey._widgets import Escape  # type: ignore[import-untyped]
+
+    from dipdup.config import DipDupConfig
+    from dipdup.project import answers_from_replay
+    from dipdup.project import answers_from_terminal
+    from dipdup.project import get_default_answers
+    from dipdup.project import render_project
+
+    if quiet:
+        answers = get_default_answers()
+    elif replay:
+        answers = answers_from_replay(replay)
+    else:
+        try:
+            answers = answers_from_terminal(template)
+        except Escape:
+            return
+
+    _logger.info('Rendering project')
+    render_project(answers, force)
+
+    _logger.info('Initializing project')
+    config = DipDupConfig.load([Path(answers['package'])])
+    config.initialize()
+    ctx.obj = CLIContext(
+        config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
+        config=config,
+    )
+    await _cli_unwrapper(init)(
+        ctx=ctx,
+        base=False,
+        force=force,
+        include=[],
+    )
+
+    green_echo('Project created successfully!')
+    green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
 
 
 @cli.group()
@@ -534,27 +755,42 @@ async def new(
 @_cli_wrapper
 async def self(ctx: click.Context) -> None:
     """Commands to manage local DipDup installation."""
-    ...
+    pass
 
 
 @self.command(name='install')
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
-@click.option('--ref', '-r', default=None, help='Install DipDup from a specific git ref.')
-@click.option('--path', '-p', default=None, help='Install DipDup from a local path.')
+@click.option('--version', '-v', default=None, help='Install DipDup from specific version.')
+@click.option('--ref', '-r', default=None, help='Install DipDup from specific git ref.')
+@click.option('--path', '-p', default=None, help='Install DipDup from local path.')
+@click.option('--pre', is_flag=True, help='Include pre-release versions.')
 @_cli_wrapper
 async def self_install(
     ctx: click.Context,
     quiet: bool,
     force: bool,
+    version: str | None,
     ref: str | None,
     path: str | None,
+    pre: bool,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, ref, path)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=version,
+        ref=ref,
+        path=path,
+        pre=pre,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
 
 
 @self.command(name='uninstall')
@@ -575,13 +811,153 @@ async def self_uninstall(
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
+@click.option('--pre', is_flag=True, help='Include pre-release versions.')
 @_cli_wrapper
 async def self_update(
     ctx: click.Context,
     quiet: bool,
     force: bool,
+    pre: bool,
 ) -> None:
     """Update DipDup for the current user."""
     import dipdup.install
+    import dipdup.project
 
-    dipdup.install.install(quiet, force, None, None)
+    replay = dipdup.project.get_package_answers()
+    dipdup.install.install(
+        quiet=quiet,
+        force=force,
+        version=None,
+        ref=None,
+        path=None,
+        pre=pre,
+        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
+        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
+    )
+
+
+@self.command(name='env', hidden=True)
+@click.pass_context
+@_cli_wrapper
+async def self_env(ctx: click.Context) -> None:
+    import dipdup.install
+
+    env = dipdup.install.DipDupEnvironment()
+    env.refresh()
+    env.print()
+
+
+@cli.group()
+@click.pass_context
+@_cli_wrapper
+async def report(ctx: click.Context) -> None:
+    """Manage crash and performance reports."""
+    cleanup_reports()
+
+
+@report.command(name='ls')
+@click.pass_context
+@_cli_wrapper
+async def report_ls(ctx: click.Context) -> None:
+    """List reports."""
+    from tabulate import tabulate
+
+    from dipdup.yaml import yaml_loader
+
+    header = ['id', 'date', 'package', 'reason']
+    rows = []
+    for path in get_reports():
+        event = yaml_loader.load(path)
+        row = [
+            event['id'],
+            event['date'][:-7],
+            event['package'],
+            event['reason'][:80],
+        ]
+        rows.append(row)
+
+    rows.sort(key=lambda row: str(row[1]))
+    echo(tabulate(rows, headers=header))
+
+
+@report.command(name='show')
+@click.pass_context
+@click.argument('id', type=str)
+@_cli_wrapper
+async def report_show(ctx: click.Context, id: str) -> None:
+    """Show report."""
+    if id == 'latest':
+        reports = get_reports()
+        if not reports:
+            echo('No reports')
+            return
+        id = reports[-1].stem
+
+    path = REPORTS_PATH / f'{id}.yaml'
+    if not path.exists():
+        echo('No such report')
+        return
+    echo(path.read_text())
+
+
+@report.command(name='rm')
+@click.pass_context
+@click.argument('id', type=str, required=False)
+@click.option('--all', '-a', is_flag=True, help='Remove all reports.')
+@_cli_wrapper
+async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
+    """Remove report(s)."""
+    if all and id:
+        echo('Please specify either name or --all')
+        return
+    if all:
+        path = REPORTS_PATH
+        for file in path.iterdir():
+            file.unlink()
+        return
+
+    path = REPORTS_PATH / f'{id}.yaml'
+    if not path.exists():
+        echo('No such report')
+        return
+    path.unlink()
+
+
+@cli.group()
+@click.pass_context
+@_cli_wrapper
+async def package(ctx: click.Context) -> None:
+    """Inspect and manage project package."""
+    pass
+
+
+@package.command(name='tree')
+@click.pass_context
+@_cli_wrapper
+async def package_tree(ctx: click.Context) -> None:
+    """Draw package tree."""
+    from dipdup.package import DipDupPackage
+    from dipdup.package import draw_package_tree
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.initialize()
+
+    tree = package.tree()
+    echo(f'{package.name} [{package.root}]')
+    for line in draw_package_tree(package.root, tree):
+        echo(line)
+
+
+@package.command(name='verify')
+@click.pass_context
+@_cli_wrapper
+async def package_verify(ctx: click.Context) -> None:
+    """Verify project package."""
+    from dipdup.package import DipDupPackage
+
+    config: DipDupConfig = ctx.obj.config
+    package = DipDupPackage(config.package_path)
+    package.initialize()
+
+    package.verify()

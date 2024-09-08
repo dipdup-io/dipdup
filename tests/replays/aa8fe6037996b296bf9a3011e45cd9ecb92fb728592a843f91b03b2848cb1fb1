@@ -1,1 +1,24 @@
-{"chain":"mainnet","chainId":"NetXdQprcVkpaWU","cycle":581,"level":3171258,"hash":"BLLZZ7ttA3sQkMBxyVySnvsMiYHS35ixnsGirNqaUXCebpByKAc","protocol":"PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW","nextProtocol":"PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW","timestamp":"2023-02-23T16:01:59Z","votingEpoch":44,"votingPeriod":91,"knownLevel":3171258,"lastSync":"2023-02-23T16:02:02Z","synced":true,"quoteLevel":3171258,"quoteBtc":0.00005771097764267156,"quoteEur":1.305505888561056,"quoteUsd":1.3828178518395506,"quoteCny":9.543102559115102,"quoteJpy":186.53797975959998,"quoteKrw":1794.2512661316885,"quoteEth":0.0008348510157873505,"quoteGbp":1.1505155152733229}
+{
+  "chain": "mainnet",
+  "chainId": "NetXdQprcVkpaWU",
+  "cycle": 649,
+  "level": 4190957,
+  "hash": "BMCtuve7Eg88FyHj6A98aVXZCCN5mTbZcaJ1c5hiJ5ZU6TpGRkS",
+  "protocol": "PtNairobiyssHuh87hEhfVBGCVrK3WnS8Z2FT4ymB5tAa4r1nQf",
+  "nextProtocol": "PtNairobiyssHuh87hEhfVBGCVrK3WnS8Z2FT4ymB5tAa4r1nQf",
+  "timestamp": "2023-09-07T21:34:59Z",
+  "votingEpoch": 50,
+  "votingPeriod": 105,
+  "knownLevel": 4190957,
+  "lastSync": "2023-09-07T21:35:00Z",
+  "synced": true,
+  "quoteLevel": 4190957,
+  "quoteBtc": 0.000026453865653873164,
+  "quoteEur": 0.6494875097908308,
+  "quoteUsd": 0.6947876655871096,
+  "quoteCny": 5.091820886021689,
+  "quoteJpy": 102.32965615518428,
+  "quoteKrw": 927.5067941755124,
+  "quoteEth": 0.00042155985558707835,
+  "quoteGbp": 0.5569883435082209
+}

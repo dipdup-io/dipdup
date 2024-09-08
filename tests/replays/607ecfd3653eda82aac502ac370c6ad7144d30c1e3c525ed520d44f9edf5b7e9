@@ -1,0 +1,1280 @@
+[
+  [
+    null,
+    48783931998208,
+    1434943,
+    "2021-04-18T23:06:43Z",
+    "ooHvjSRNRZGsXAzDx1VC8ftBAU82wBuxTkhQAGft1fmKLNf6inS",
+    3148721,
+    {
+      "address": "tz1QKmewVc3nMi2MHBqeeowPHtffr3YyLxms"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "49924584",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "330500000000000000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "50000000",
+        "user_rewards": 1486,
+        "period_finish": "2021-04-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T22:50:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": null
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tokenToTezPayment",
+      "value": {
+        "amount": "500000000000000000",
+        "min_out": "75038",
+        "receiver": "tz1QKmewVc3nMi2MHBqeeowPHtffr3YyLxms"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48784208822272,
+    1434947,
+    "2021-04-18T23:10:43Z",
+    "onxiMkr5A9HESnBpVqjh9Zr7BHRC2Yw5nFpZNZY2QaYnBcmJkV1",
+    9582174,
+    {
+      "address": "tz1PwgbbSsSmWUoeWgdUHRpf9RJ7mrjGz3dG"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "49924434",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "330501000000000000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "50000000",
+        "user_rewards": 1486,
+        "period_finish": "2021-04-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T22:50:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": null
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tokenToTezPayment",
+      "value": {
+        "amount": "1000000000000000",
+        "min_out": "149",
+        "receiver": "tz1PwgbbSsSmWUoeWgdUHRpf9RJ7mrjGz3dG"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48784343040000,
+    1434949,
+    "2021-04-18T23:12:43Z",
+    "onr4sdZsPtTXz9TamoxUhcaWN3Jfeb5UT7GGewAAsFJAW1UFaXN",
+    6121277,
+    {
+      "address": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "49924434",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "330501000000000000000",
+        "reward_paid": "0",
+        "total_votes": "50000000",
+        "total_reward": "0",
+        "total_supply": "50000000",
+        "user_rewards": 1486,
+        "period_finish": "2021-04-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T22:50:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1489,
+        "path": "storage.votes",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtnow9bXhFhoaEx4r6HwkqjVJ7CX1jmfQ8tarTxqoMmNBwaSD93",
+          "key": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+          "value": "50000000"
+        }
+      },
+      {
+        "bigmap": 1488,
+        "path": "storage.voters",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvTB4k7zaeDybCunTXbQfW3zFP1MdosG9L1G3MSrYCdqMPN34oc",
+          "key": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+          "value": {
+            "veto": "0",
+            "vote": "50000000",
+            "candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+            "last_veto": "2021-04-18T23:12:43Z"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "update_key",
+        "content": {
+          "hash": "exprvTB4k7zaeDybCunTXbQfW3zFP1MdosG9L1G3MSrYCdqMPN34oc",
+          "key": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+          "value": {
+            "balance": "0",
+            "allowances": {},
+            "frozen_balance": "50000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "vote",
+      "value": {
+        "value": "50000000",
+        "voter": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+        "candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48784510812160,
+    1434952,
+    "2021-04-18T23:15:43Z",
+    "opRnoH7poXzvZ75zPcD4gJa6sEsQmSdyvitBFVoVCifCPt7nJRf",
+    6121279,
+    {
+      "address": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "49924434",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "330501000000000000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "50000000",
+        "user_rewards": 1486,
+        "period_finish": "2021-04-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T22:50:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    false,
+    [
+      {
+        "bigmap": 1489,
+        "path": "storage.votes",
+        "action": "update_key",
+        "content": {
+          "hash": "exprtnow9bXhFhoaEx4r6HwkqjVJ7CX1jmfQ8tarTxqoMmNBwaSD93",
+          "key": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+          "value": "0"
+        }
+      },
+      {
+        "bigmap": 1488,
+        "path": "storage.voters",
+        "action": "update_key",
+        "content": {
+          "hash": "exprvTB4k7zaeDybCunTXbQfW3zFP1MdosG9L1G3MSrYCdqMPN34oc",
+          "key": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+          "value": {
+            "veto": "0",
+            "vote": "0",
+            "candidate": null,
+            "last_veto": "2021-04-18T23:12:43Z"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "update_key",
+        "content": {
+          "hash": "exprvTB4k7zaeDybCunTXbQfW3zFP1MdosG9L1G3MSrYCdqMPN34oc",
+          "key": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+          "value": {
+            "balance": "50000000",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "vote",
+      "value": {
+        "value": "0",
+        "voter": "tz1WW1xr4mdTif7jorgVr7aqY3YnnJPSDXj7",
+        "candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      }
+    },
+    false
+  ],
+  [
+    null,
+    48786065850368,
+    1434976,
+    "2021-04-18T23:39:43Z",
+    "ooYmxgqZUczDc8QUg7UKXGj5QTn5beFDNeE3BcETG3NB9kgiRLq",
+    9584202,
+    {
+      "address": "tz1gucx7tZJn55vxBNQWzRW6rVfeRLSe12X9"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    452829,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "50377263",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "333498736610280000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "50453514",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T23:39:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "expruCaxdTHodLXiJ9NpvZJWnBiUdxtNLoSyxpnnoSFueXCmU86eue",
+          "key": "tz1gucx7tZJn55vxBNQWzRW6rVfeRLSe12X9",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "expruCaxdTHodLXiJ9NpvZJWnBiUdxtNLoSyxpnnoSFueXCmU86eue",
+          "key": "tz1gucx7tZJn55vxBNQWzRW6rVfeRLSe12X9",
+          "value": {
+            "balance": "453514",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "2997736610280000001"
+    },
+    true
+  ],
+  [
+    null,
+    48786402443264,
+    1434981,
+    "2021-04-18T23:44:43Z",
+    "onxEUkKGimboQ874tJzX1THUkANoNLyXZrXpMd5YDLvgabz5Mvw",
+    12504532,
+    {
+      "address": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    38407620,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "88784883",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "587758133255340000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "88919267",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-18T23:44:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "expruu4ASte9zYK8fumcgkfAjjXguBrxm7r1cPenG15xwj8StuX6gw",
+          "key": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "expruu4ASte9zYK8fumcgkfAjjXguBrxm7r1cPenG15xwj8StuX6gw",
+          "key": "tz1aD4DmnnGyqxL7neCZ5JMQ6UnpcrKCpajE",
+          "value": {
+            "balance": "38465753",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "254259396645060000001"
+    },
+    true
+  ],
+  [
+    null,
+    48788068630528,
+    1435013,
+    "2021-04-19T00:16:43Z",
+    "ooQB8pHqY3YKyDWw7ceFUrwL9weEQehHqxKJgCgYpQ7X39NVQqE",
+    3958921,
+    {
+      "address": "tz1X6ADVxP37XjYppBHMLVRJQwmxA2YxztbQ"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    2613336192,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2702121075",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "17888108708629620000000",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2706210981",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:16:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtipe26dTbrX7ACTuST9xoPWAAGzcyUngMuKTkdB8R8W3nUeorD",
+          "key": "tz1X6ADVxP37XjYppBHMLVRJQwmxA2YxztbQ",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtipe26dTbrX7ACTuST9xoPWAAGzcyUngMuKTkdB8R8W3nUeorD",
+          "key": "tz1X6ADVxP37XjYppBHMLVRJQwmxA2YxztbQ",
+          "value": {
+            "balance": "2617291714",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "17300350575374280000001"
+    },
+    true
+  ],
+  [
+    null,
+    48788278345728,
+    1435015,
+    "2021-04-19T00:18:43Z",
+    "opLR4CnpSS5tTv1XrMz7qoKcrfzJ7E8goKFiVqqcKE5M8GwcJE7",
+    11211663,
+    {
+      "address": "tz1ZdpmKkqKNAWYvc7MudCgNeDqSp5E4CfXk"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2671910669",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18090972201567884197872",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2706210981",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:16:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tokenToTezPayment",
+      "value": {
+        "amount": "202863492938264197872",
+        "min_out": "30210406",
+        "receiver": "tz1ZdpmKkqKNAWYvc7MudCgNeDqSp5E4CfXk"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48788489109504,
+    1435018,
+    "2021-04-19T00:21:43Z",
+    "opBy8PauUuPbabCV9JwWg6ZjisA1LSX6b26TxoMGe4wP6ZvbRXL",
+    10675476,
+    {
+      "address": "tz1WT27PugwGBtre1hsj6BHmbAK2qQsVbRDo"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    1329237,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2673239906",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18099972193085903554580",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2707557281",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:21:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "expruppA4kaYEDGdBBtGbnk68kbgZZjfUBs3TZuDa3pSobQ3EWtLv8",
+          "key": "tz1WT27PugwGBtre1hsj6BHmbAK2qQsVbRDo",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "expruppA4kaYEDGdBBtGbnk68kbgZZjfUBs3TZuDa3pSobQ3EWtLv8",
+          "key": "tz1WT27PugwGBtre1hsj6BHmbAK2qQsVbRDo",
+          "value": {
+            "balance": "1346300",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "8999991518019356709"
+    },
+    true
+  ],
+  [
+    null,
+    48788572995584,
+    1435019,
+    "2021-04-19T00:22:43Z",
+    "ooeN8ZHiP4jMKBwdzLfndS45NwcyTGhpdCEjGxk8ybeM7NWeEn5",
+    10744772,
+    {
+      "address": "tz1hAZNx3LrRKFgfRytoLNVGhCrzU1uVDUHS"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    13305515,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2686545421",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18190061165598788983711",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2721033603",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:22:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "exprv8XS6NqHozrPK49fKwNUr2be8Wj4jKbCNkMBGEW9Sx9ys6rKN3",
+          "key": "tz1hAZNx3LrRKFgfRytoLNVGhCrzU1uVDUHS",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "exprv8XS6NqHozrPK49fKwNUr2be8Wj4jKbCNkMBGEW9Sx9ys6rKN3",
+          "key": "tz1hAZNx3LrRKFgfRytoLNVGhCrzU1uVDUHS",
+          "value": {
+            "balance": "13476322",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "90088972512885429132"
+    },
+    true
+  ],
+  [
+    null,
+    48788734476288,
+    1435021,
+    "2021-04-19T00:24:43Z",
+    "oofujeYGsrkryL4Wkr9skpm9qCSPrL9mRzMx4MZTkybgBfMQiAp",
+    13217477,
+    {
+      "address": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    98645349,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2785190770",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18857969073606609298346",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2820945299",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:24:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvR6wKJ3hoGanywvehQPhG9vaBTTomNgsoz3qsaxWDj9jScSAVk",
+          "key": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvR6wKJ3hoGanywvehQPhG9vaBTTomNgsoz3qsaxWDj9jScSAVk",
+          "key": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK",
+          "value": {
+            "balance": "99911696",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "667907908007820314636"
+    },
+    true
+  ],
+  [
+    null,
+    48788857159680,
+    1435022,
+    "2021-04-19T00:25:43Z",
+    "onnxJZDxF5LoZpZb8vgLHF8CqGMsFtkRE5D5bxsEVeHubrAH1EU",
+    6673190,
+    {
+      "address": "tz1dBU7YAkrviDyUvZN5aeTZJ9YrmtaDADMG"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    50000000,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2835190770",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18526379571167358848512",
+        "reward_paid": "0",
+        "total_votes": "0",
+        "total_reward": "0",
+        "total_supply": "2820945299",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:24:43Z",
+        "reward_per_share": "0",
+        "current_candidate": null,
+        "current_delegated": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tezToTokenPayment",
+      "value": {
+        "min_out": "329931554927054197584",
+        "receiver": "tz1dBU7YAkrviDyUvZN5aeTZJ9YrmtaDADMG"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48789098332160,
+    1435025,
+    "2021-04-19T00:28:43Z",
+    "op3nqwxLnxVZdgDdGXpVMKThRg6qJFExysdGzkeMrCrtLFtFDGY",
+    13217478,
+    {
+      "address": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2835190770",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18526379571167358848512",
+        "reward_paid": "0",
+        "total_votes": "90000000",
+        "total_reward": "0",
+        "total_supply": "2820945299",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:24:43Z",
+        "reward_per_share": "0",
+        "current_candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+        "current_delegated": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1489,
+        "path": "storage.votes",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvF8Sc89bvLkQsd4vbdqYkUtUvQPq6e5XCnPF1ismLa9pMGW594",
+          "key": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99",
+          "value": "90000000"
+        }
+      },
+      {
+        "bigmap": 1488,
+        "path": "storage.voters",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvR6wKJ3hoGanywvehQPhG9vaBTTomNgsoz3qsaxWDj9jScSAVk",
+          "key": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK",
+          "value": {
+            "veto": "0",
+            "vote": "90000000",
+            "candidate": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99",
+            "last_veto": "2021-04-19T00:28:43Z"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "update_key",
+        "content": {
+          "hash": "exprvR6wKJ3hoGanywvehQPhG9vaBTTomNgsoz3qsaxWDj9jScSAVk",
+          "key": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK",
+          "value": {
+            "balance": "9911696",
+            "allowances": {},
+            "frozen_balance": "90000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "vote",
+      "value": {
+        "value": "90000000",
+        "voter": "tz1Z2mQP5Vr9cTK96ijTArTxcvyvNwYdzRBK",
+        "candidate": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48789115109376,
+    1435025,
+    "2021-04-19T00:28:43Z",
+    "op3jLQ12DBhKJdsoaBnDT5XLiQXP1joo9KJ1Tw9PLavoyHvih9q",
+    12490858,
+    {
+      "address": "tz1RSQ8MiXbeJhH86YSieazCP2oZzWtuMsRx"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    5608510,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2840799280",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18563028028414169424272",
+        "reward_paid": "0",
+        "total_votes": "90000000",
+        "total_reward": "0",
+        "total_supply": "2826525628",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:28:43Z",
+        "reward_per_share": "0",
+        "current_candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+        "current_delegated": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 1486,
+        "path": "storage.user_rewards",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvGs3DHTSFpZ8DRZsPaSC1nb4geTZ3vpnSc6wrhSsHnPB7ArVoA",
+          "key": "tz1RSQ8MiXbeJhH86YSieazCP2oZzWtuMsRx",
+          "value": {
+            "reward": "0",
+            "reward_paid": "0"
+          }
+        }
+      },
+      {
+        "bigmap": 1485,
+        "path": "storage.ledger",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvGs3DHTSFpZ8DRZsPaSC1nb4geTZ3vpnSc6wrhSsHnPB7ArVoA",
+          "key": "tz1RSQ8MiXbeJhH86YSieazCP2oZzWtuMsRx",
+          "value": {
+            "balance": "5580329",
+            "allowances": {},
+            "frozen_balance": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "investLiquidity",
+      "value": "36648457246810575761"
+    },
+    true
+  ],
+  [
+    null,
+    48789117206528,
+    1435025,
+    "2021-04-19T00:28:43Z",
+    "op1ugjmNpBVxN8bP7UHPQUcbTsgiPCGAbeRyfCa4xVxUi1xxxXN",
+    3958929,
+    {
+      "address": "tz1X6ADVxP37XjYppBHMLVRJQwmxA2YxztbQ"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    20300000,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2861099280",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18431712425241492930364",
+        "reward_paid": "0",
+        "total_votes": "90000000",
+        "total_reward": "0",
+        "total_supply": "2826525628",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:28:43Z",
+        "reward_per_share": "0",
+        "current_candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+        "current_delegated": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tezToTokenPayment",
+      "value": {
+        "min_out": "130657196821618744923",
+        "receiver": "tz1X6ADVxP37XjYppBHMLVRJQwmxA2YxztbQ"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    48789217869824,
+    1435026,
+    "2021-04-19T00:29:43Z",
+    "oo7reea9YbR3ZUyHfgDSwEQfBvbLsaCFhxVMFDegmfSoDPGPn4e",
+    3807292,
+    {
+      "address": "tz1SBxNvpDFC4bjW23CtQfVLqN5cBATVf68B"
+    },
+    null,
+    {
+      "alias": "QuipuSwap kUSD",
+      "address": "KT1K4EwTpbvYN9agJdjpyJm4ZZdhpUNKB3F6"
+    },
+    null,
+    0,
+    {
+      "storage": {
+        "veto": "0",
+        "vetos": 1487,
+        "votes": 1489,
+        "ledger": 1485,
+        "reward": "0",
+        "voters": 1488,
+        "tez_pool": "2845706412",
+        "last_veto": "2021-04-18T22:50:43Z",
+        "token_pool": "18531712425241492930364",
+        "reward_paid": "0",
+        "total_votes": "90000000",
+        "total_reward": "0",
+        "total_supply": "2826525628",
+        "user_rewards": 1486,
+        "period_finish": "2021-05-18T22:50:43Z",
+        "token_address": "KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV",
+        "reward_per_sec": "0",
+        "baker_validator": "KT1LcPGQzWWaqBdJKH32fn6RQXVeZPgutDqw",
+        "last_update_time": "2021-04-19T00:28:43Z",
+        "reward_per_share": "0",
+        "current_candidate": "tz1aRoaRhSpRYvFdyvgWLL6TGyRoGF51wDjM",
+        "current_delegated": "tz1bjTaXURxeCucaPiCvRB7F9LouyUqdvn99"
+      },
+      "metadata": 1484,
+      "dex_lambdas": 1483,
+      "token_lambdas": 1490
+    },
+    "applied",
+    true,
+    null,
+    null,
+    null,
+    572234294,
+    {
+      "entrypoint": "tokenToTezPayment",
+      "value": {
+        "amount": "100000000000000000000",
+        "min_out": "15100073",
+        "receiver": "tz1SBxNvpDFC4bjW23CtQfVLqN5cBATVf68B"
+      }
+    },
+    true
+  ]
+]

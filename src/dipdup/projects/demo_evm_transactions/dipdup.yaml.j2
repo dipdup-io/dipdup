@@ -1,0 +1,34 @@
+spec_version: 3.0
+package: {{ project.package }}
+
+datasources:
+  subsquid:
+    kind: evm.subsquid
+    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+  etherscan:
+    kind: abi.etherscan
+    url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
+    api_key: ${ETHERSCAN_API_KEY:-''}
+  evm_node:
+    kind: evm.node
+    url: ${NODE_URL:-https://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+    ws_url: ${NODE_WS_URL:-wss://eth-mainnet.g.alchemy.com/v2}/${NODE_API_KEY:-''}
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_transactions:
+    kind: evm.transactions
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_transfer
+        to: eth_usdt
+        method: transfer
+    first_level: 4634748

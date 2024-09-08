@@ -1,20 +1,22 @@
 # Ignore all
 *
 
-# Add build files
-!Makefile
+# Add metadata and build files
+!{{ project.package }}
 !pyproject.toml
-!poetry.lock
-!requirements**
+!*.lock
 !README.md
 
-# Add code
-!src
-
-# Add configs
-!*.yml
-
-# Ignore caches
-**/.mypy_cache
-**/.pytest_cache
+# Add Python code
+!**/*.py
+**/.*_cache
 **/__pycache__
+
+# Add configs and scripts (but not env!)
+!**/*.graphql
+!**/*.json
+!**/*.sql
+!**/*.yaml
+!**/*.yml
+!**/*.j2
+!**/.keep

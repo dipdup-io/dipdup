@@ -1,13 +1,56 @@
-# {{cookiecutter.project_name}}
+# {{project.package}}
 
-{{cookiecutter.description}}
+{{project.description}}
 
-## First steps
+## Installation
 
-* Install Poetry and GNU Make
-* Enter the project's directory with `cd {{cookiecutter.project_name}}`
-* Install required dependencies with `make install`
-* Generate types and handlers with `dipdup init`
-* Ensure generated project is valid with `make lint`
-* Commit your code with `git init && git add -A && git commit -m 'Initial commit'` 
-* Spawn a Docker Compose stack with `docker-compose up`
+This project is based on [DipDup](https://dipdup.io), a framework for building featureful dapps.
+
+You need a Linux/macOS system with Python 3.12 installed. To install DipDup with pipx or use our installer:
+
+```shell
+curl -Lsf https://dipdup.io/install.py | python3.12
+```
+
+See the [Installation](https://dipdup.io/docs/installation) page for all options.
+
+## Usage
+
+Run the indexer in memory:
+
+```shell
+dipdup run
+```
+
+Store data in SQLite database:
+
+```shell
+dipdup -c . -c configs/dipdup.sqlite.yaml run
+```
+
+Or spawn a Compose stack with PostgreSQL and Hasura:
+
+```shell
+cd deploy
+cp .env.default .env
+# Edit .env file before running
+docker-compose up
+```
+
+## Development setup
+
+To set up the development environment:
+
+{% if project.package_manager == 'pdm' -%}
+```shell
+pdm install
+$(pdm venv activate)
+```
+{%- elif project.package_manager == 'poetry' -%}
+```shell
+poetry install
+poetry shell
+```
+{%- endif %}
+
+Run `make all` to run full CI check or `make help` to see other available commands.

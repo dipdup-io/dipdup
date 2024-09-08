@@ -1,0 +1,7 @@
+# To refresh existing project run `dipdup init --base --force` after modifying this file.
+# To generate a new project from this replay run `dipdup new --replay <path_to_file>`.
+#
+spec_version: 3.0
+replay:
+{% for k, v in project.items() %}{{ '  ' + k + ': ' + v }}
+{% endfor %}

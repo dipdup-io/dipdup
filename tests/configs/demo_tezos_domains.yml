@@ -1,0 +1,45 @@
+spec_version: 3.0
+package: demo_tezos_domains
+
+contracts:
+  mainnet_name_registry:
+    kind: tezos
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  mainnet:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  tezos_domains_big_map:
+    kind: tezos.big_maps
+    datasources:
+      - <datasource>
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  tezos_domains_big_map_mainnet:
+    template: tezos_domains_big_map
+    values:
+      datasource: mainnet
+      name_registry: mainnet_name_registry
+    first_level: 1417329
+    last_level: 1417729
+
+hooks:
+  check_expiration:
+    callback: check_expiration
+    atomic: False
+
+jobs:
+  check_expiration_hourly:
+    hook: check_expiration
+    crontab: "0 * * * *"

@@ -1,0 +1,39 @@
+spec_version: 3.0
+package: demo_tezos_big_maps
+
+contracts:
+  name_registry:
+    kind: tezos
+    address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
+    typename: name_registry
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+templates:
+  big_maps:
+    kind: tezos.big_maps
+    datasources:
+      - <datasource>
+    handlers:
+      - callback: on_update_records
+        contract: <name_registry>
+        path: store.records
+      - callback: on_update_expiry_map
+        contract: <name_registry>
+        path: store.expiry_map
+
+indexes:
+  big_maps:
+    template: big_maps
+    first_level: 1417329
+    last_level: 1417729
+    values:
+      datasource: tzkt
+      name_registry: name_registry
+
+logging: WARN

@@ -1,0 +1,20 @@
+spec_version: 3.0
+package: demo_evm_events
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_events:
+    kind: evm.events
+    datasources:
+      - evm_node
+    handlers:
+      - callback: on_transfer
+        contract: eth_usdt
+        name: Transfer
+    first_level: 18077421
+    last_level: 18077421

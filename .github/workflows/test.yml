@@ -1,5 +1,5 @@
 name: Test
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'pdm.lock'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -28,21 +28,25 @@ jobs:
             arch: arm64
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install poetry
-        run: pipx install poetry
+      - name: Install PDM
+        run: pipx install pdm
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'poetry'
+          python-version: '3.12'
+          cache: 'pip'
 
-      - name: Install project
-        run: make install
+      - name: Run install
+        run: pdm sync
+
       - name: Run lint
-        run: make lint
+        run: pdm run make lint
         if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
+
       - name: Run tests
-        run: make test
+        run: pdm run make test
+        env:
+          NODE_API_KEY: ${{ secrets.ALCHEMY_KEY }}

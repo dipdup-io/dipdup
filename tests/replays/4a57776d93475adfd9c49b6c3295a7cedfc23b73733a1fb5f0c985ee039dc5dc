@@ -1,0 +1,4639 @@
+[
+  [
+    null,
+    44105621045248,
+    1365153,
+    "2021-03-01T02:09:41Z",
+    "oo2nRQCSmFUs8TChvjSEHjzJie77nVEBegDVKo7WGvzByHsR4rX",
+    4957694,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "0",
+      "metadata": 521,
+      "objkt_id": "152",
+      "royalties": 522
+    },
+    "applied",
+    false,
+    null,
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "genesis",
+      "value": {}
+    },
+    false
+  ],
+  [
+    null,
+    44108710150144,
+    1365242,
+    "2021-03-01T03:39:21Z",
+    "onyoeuGPkxxXdKXYLwdzZ91nyaRFW4qVLKqkfwJv6j8Mt5cWb8C",
+    4957695,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "0",
+      "metadata": 521,
+      "objkt_id": "153",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprusBDEMffQGtgXrHHfUWWWvDGJvSRdt4WBNR5PRsZ5eWqC2nfJ7",
+          "key": "152",
+          "value": {
+            "issuer": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+        "metadata": "697066733a2f2f516d6131316b366168505258475656375267484e754c7577423950715142324d564a55744e4e584a376451654172",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44117001240576,
+    1365467,
+    "2021-03-01T07:27:27Z",
+    "opLcz2WHyyiAWQRwBRpggB2kwF9ZyxWJyAEEqV5uRaNtjqP47Sj",
+    4957696,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "0",
+      "metadata": 521,
+      "objkt_id": "154",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvL7MZvPENJyNFDSochCwN4nTLtww9JgVGgxb9CL32LcETnt1Du",
+          "key": "153",
+          "value": {
+            "issuer": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+            "royalties": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "2",
+        "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+        "metadata": "697066733a2f2f516d656171524255697734634a694e4b456357326e6f633765674c6435476742714c63484871556861754a41484e",
+        "royalties": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44117196275712,
+    1365472,
+    "2021-03-01T07:32:27Z",
+    "op3qay9x8BrJ9CwnSmn2FkEaZonB9dEhnYoSXG6uKcKNWXZB3Ck",
+    4957697,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "0",
+      "metadata": 521,
+      "objkt_id": "155",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvTST1fVY5Fyc527fAtuY2sHYWisgB7ENfzE36PQLq2MY5e6ywR",
+          "key": "154",
+          "value": {
+            "issuer": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+            "royalties": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "2",
+        "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+        "metadata": "697066733a2f2f516d557876566d3876785a387a7a7844387a55345a43734b555048633838387a74726b614663476173454b7a6270",
+        "royalties": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44123237122048,
+    1365612,
+    "2021-03-01T09:55:07Z",
+    "opYXNWa6Cs8LoFvsguVpKocmQ6JpksSuTRWcACSfCkuY4UTNkhC",
+    4957698,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "155",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtZBwZUeYYYfUs9B9Rg2ywHezVHnCCnmF9WsDQVrs582dSK63dC",
+          "key": "0",
+          "value": {
+            "issuer": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+            "objkt_id": "154",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "154",
+        "objkt_amount": "1",
+        "xtz_per_objkt": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44123334639616,
+    1365615,
+    "2021-03-01T09:58:07Z",
+    "ooKbTDkkT9fHoXxrkN5cAEFfbrXnd47YZuGHR991YzEtqneeGrQ",
+    10064748,
+    {
+      "address": "tz1Zz4MmtM6mpzh5XWiAEXGeP9iWsT7PSmzg"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "155",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "remove_key",
+        "content": {
+          "hash": "exprtZBwZUeYYYfUs9B9Rg2ywHezVHnCCnmF9WsDQVrs582dSK63dC",
+          "key": "0",
+          "value": {
+            "issuer": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+            "objkt_id": "154",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "0",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44125051158528,
+    1365654,
+    "2021-03-01T10:37:07Z",
+    "onh1tSBP53B4pJ9roNLsJJ8KSX7DAmm612KYAFeRRCeQrwbDXfH",
+    11110529,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "156",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvPGbGdo6Pn6sBPePRvXCkSiKCuNtpHQirkpod7wj2Urp2WaxW8",
+          "key": "155",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "royalties": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+        "metadata": "697066733a2f2f516d50645a7555586e544a5356675a4e59595767666b6367597264336b556a6d4a563642613546794d75794d3264",
+        "royalties": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44126085054464,
+    1365680,
+    "2021-03-01T11:03:07Z",
+    "opGdyiHASv2taJW4eTke2D7vditymDZhR2MbmHmNieHDzVT2dgy",
+    11110530,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "157",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprurc1H5iKvBFRUhHmmMs9qfVxmk6CZrCd9YR5jEnw9qFabYcdkN",
+          "key": "156",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+        "metadata": "697066733a2f2f516d654466684a5a6e37775468316835554e554a4b4d35436344384c4754705235526154334433354e5a76333551",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44126751948800,
+    1365694,
+    "2021-03-01T11:17:07Z",
+    "opFwgrumVg2gGfpu7g1pFaBmGUcFordrJ4YXJ5KuUpx4CYNxyza",
+    10511768,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "158",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruE9yEs3nFtPEjxcRQy12v9vS5WqyxvCmKp9gHRTjA4FGRjNn5x",
+          "key": "157",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "100",
+        "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+        "metadata": "697066733a2f2f516d554b4366426e704e34437572436844533936774d635131616b554a58694b746b5a744867486d69655a55794c",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44127147261952,
+    1365697,
+    "2021-03-01T11:20:07Z",
+    "oobQvBLRc6UYqtfsabBpp3dJXStP8aRLEuVFzMftxsyPvLrZFuP",
+    6944861,
+    {
+      "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "1",
+      "metadata": 521,
+      "objkt_id": "159",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expru1wmUmaBVrNQVJgPo72n8BdEsWqv6CCsngZjtXzEFBz7JzgBCw",
+          "key": "158",
+          "value": {
+            "issuer": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "50",
+        "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z",
+        "metadata": "697066733a2f2f516d5874574237574a45314e4851447357376f644a4d36466d704a5431626177516436674336664a617639344d50",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44127299305472,
+    1365701,
+    "2021-03-01T11:24:07Z",
+    "ooC74aSgA9287QcTimtayVX6WWPGndaBR9C99tGHFEMQSok7sqb",
+    6944862,
+    {
+      "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "2",
+      "metadata": 521,
+      "objkt_id": "159",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expru2dKqDfZG8hu4wNGkiyunvq2hdSKuVYtcKta7BWP6Q18oNxKjS",
+          "key": "1",
+          "value": {
+            "issuer": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z",
+            "objkt_id": "158",
+            "objkt_amount": "10",
+            "xtz_per_objkt": "1000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "158",
+        "objkt_amount": "10",
+        "xtz_per_objkt": "1000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44127302451200,
+    1365701,
+    "2021-03-01T11:24:07Z",
+    "ooUKgv8xsZbkLRYqFRczxHtTBvY9HMsF4QGVSHHo5bYJBmwvcXt",
+    10511769,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "2",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprubhtkjagGW5C4waB2LFoKdhVm83ToGjtVaxkyJ7jNQV5cmnhwv",
+          "key": "159",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "100",
+        "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+        "metadata": "697066733a2f2f516d627337346252653978327837744c38377a316f78375172414e445557346b4a7058564258784e703859517a67",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44127673647104,
+    1365710,
+    "2021-03-01T11:33:07Z",
+    "op7ft9rqdYvbctZ5NFw2wPDmioBx29nPREgeZgxmdypxL5nxyAk",
+    4957699,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    1000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "2",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expru2dKqDfZG8hu4wNGkiyunvq2hdSKuVYtcKta7BWP6Q18oNxKjS",
+          "key": "1",
+          "value": {
+            "issuer": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z",
+            "objkt_id": "158",
+            "objkt_amount": "9",
+            "xtz_per_objkt": "1000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "1",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44128505167872,
+    1365730,
+    "2021-03-01T11:53:07Z",
+    "opBaCrpKg64FTBDnZUzydw4rjsDKSU6mMRj1RYpB5iMBvXcuENi",
+    10511771,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "3",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "100",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "159",
+        "objkt_amount": "100",
+        "xtz_per_objkt": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44128565985280,
+    1365732,
+    "2021-03-01T11:55:07Z",
+    "oo66CBqK7jYRhU138kbQ2ySQdfTocQiGRHZ35dTfzB6z8F6Qsgn",
+    11110531,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "4",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprujyHLX2vacVy6AcFmAt5K3Y93aMtccrbNtcsCRik6fjxR8wL6x",
+          "key": "3",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "objkt_id": "156",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "156",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44128606879744,
+    1365733,
+    "2021-03-01T11:56:07Z",
+    "onfuNgrGYBqNgrFHjpjJsbmfTRBLYbmFSfvRqyKXgSVnR8xngGo",
+    4957700,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "4",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "99",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44128772554752,
+    1365735,
+    "2021-03-01T11:58:07Z",
+    "ooAkNRFJcph375NukU5uUMbfUYvLbhHL99w4QBexZAEBzt4Kd5P",
+    11110532,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "5",
+      "metadata": 521,
+      "objkt_id": "160",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtkcv5vD1Ct4y91FvZFgXVHCxebKhorSVs8hFmXYgmGsEMo4qdp",
+          "key": "4",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "objkt_id": "155",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "50000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "155",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "50000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129075593216,
+    1365743,
+    "2021-03-01T12:06:07Z",
+    "onxTWuMAuQRBJvFQniEcCLJWeNdxbqQi6m2jPnDTwhMfuuAQVcJ",
+    10511772,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "5",
+      "metadata": 521,
+      "objkt_id": "161",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtn5S2VpVAmKm4NTs4mEaGKfjtbyUA81p7XXAqCKtr3aA8EGGKD",
+          "key": "160",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "20",
+        "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+        "metadata": "697066733a2f2f516d556b7a70364c4631596e72667857783459484c687367624d6f724b5870685a377479774b38414e5657674563",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129308377088,
+    1365747,
+    "2021-03-01T12:10:07Z",
+    "onfijzr2vzGUZXUzqiNcuC5ctUUMS3suMcGSnqSuTVJPasokYPY",
+    10511773,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "6",
+      "metadata": 521,
+      "objkt_id": "161",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtqoNj2hRg8PsPMaXLcy3dXjMM3B7nHKrRNqpfjbYpMbULbRj8k",
+          "key": "5",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "160",
+            "objkt_amount": "20",
+            "xtz_per_objkt": "10000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "160",
+        "objkt_amount": "20",
+        "xtz_per_objkt": "10000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129428963328,
+    1365751,
+    "2021-03-01T12:14:07Z",
+    "ooKDHd7HhuWfZrrT8yS7aYBEErnp6yzfDEHA6P96vhe8NXRf4yJ",
+    6944863,
+    {
+      "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    10000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "6",
+      "metadata": 521,
+      "objkt_id": "161",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprtqoNj2hRg8PsPMaXLcy3dXjMM3B7nHKrRNqpfjbYpMbULbRj8k",
+          "key": "5",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "160",
+            "objkt_amount": "19",
+            "xtz_per_objkt": "10000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "5",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129473003520,
+    1365752,
+    "2021-03-01T12:15:07Z",
+    "oohPu8bn9KBT6ABESowzxkvJXU976UES3y9HBAPMdYd39GjaoZX",
+    10973174,
+    {
+      "alias": "Mario Klingemann",
+      "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    10000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "6",
+      "metadata": 521,
+      "objkt_id": "161",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprtqoNj2hRg8PsPMaXLcy3dXjMM3B7nHKrRNqpfjbYpMbULbRj8k",
+          "key": "5",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "160",
+            "objkt_amount": "18",
+            "xtz_per_objkt": "10000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "5",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129583104000,
+    1365755,
+    "2021-03-01T12:18:07Z",
+    "oo1U3Tc2gsbxCuq1L7HVyrCqZwkhJFBcyeXd1w2XJXXmDnDte3z",
+    10511774,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "6",
+      "metadata": 521,
+      "objkt_id": "162",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruNCLzY4FBLEMbgQQaVJy61W3Yh7QvpTNGNdqGi4rFPVWNz8ogr",
+          "key": "161",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "7",
+        "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+        "metadata": "697066733a2f2f516d62716d5334646e5a425852685067465852734d4a594c323278787537704a7777635a57373439426e56667363",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129733050368,
+    1365756,
+    "2021-03-01T12:19:07Z",
+    "op65mFdGecUia3ybKUajpo8QxTB2Bg6JnkuE939Ub5nJHHtYFhV",
+    11054390,
+    {
+      "address": "tz1hkNPg5jQ66pJpZH2boiF5AnbAcd1dt5KS"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "6",
+      "metadata": 521,
+      "objkt_id": "163",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprte2vboUNg2N4JxKQzzt7eDuokqeoNNe8cEejv46CGpUV6qKv5B",
+          "key": "162",
+          "value": {
+            "issuer": "tz1hkNPg5jQ66pJpZH2boiF5AnbAcd1dt5KS",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1hkNPg5jQ66pJpZH2boiF5AnbAcd1dt5KS",
+        "metadata": "697066733a2f2f516d63677a434135565878444554316367344151706544456e4674353267653658774c45524a5245723237453761",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129767653376,
+    1365757,
+    "2021-03-01T12:20:07Z",
+    "opXmo9xebaeDaVpSNjipL3F4qELN3e5ZFq4Vs7poSDwpDAQK3Wf",
+    10511775,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "7",
+      "metadata": 521,
+      "objkt_id": "163",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruhrcC4osJigCeAywh27e6iYerzr5LnhYDwnWJc7VrLg7SxJbtm",
+          "key": "6",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "161",
+            "objkt_amount": "7",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "161",
+        "objkt_amount": "7",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129769750528,
+    1365757,
+    "2021-03-01T12:20:07Z",
+    "onhvi117QuqJjnq9mHYGn6nikp8bxrJzZScDjjcqsTXzwUM26QA",
+    10973175,
+    {
+      "alias": "Mario Klingemann",
+      "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "7",
+      "metadata": 521,
+      "objkt_id": "164",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruwr1rbadhiuaJPAPNgu8q22HpJAPCogYXw2mbyjkUxSDaEDjDP",
+          "key": "163",
+          "value": {
+            "issuer": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp",
+            "royalties": "150"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp",
+        "metadata": "697066733a2f2f516d5161756a68614b6b4a515769323250576d53614c36554351715a6e62414d5959563870614c5642506a757247",
+        "royalties": "150"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129876705280,
+    1365760,
+    "2021-03-01T12:23:07Z",
+    "oouKYTe1isiqgWuGSr9SkwsbhNkg1fYToHz6KKkd17xedQ6tab2",
+    10511776,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "7",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruuF68Mae4xJTnupLaSYf5nsF6E4TDEkC316WuVExteUDzwGHJj",
+          "key": "164",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "2",
+        "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+        "metadata": "697066733a2f2f516d58354e687466537866707065635438435570616246344c52677064547a4a4e5470624c64456a476a48507579",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44129980514304,
+    1365763,
+    "2021-03-01T12:26:07Z",
+    "opA7NqBibA6dKnjBKnSDFDXFqKVgzVEBFSxc4nUUUZzbF1ttBbn",
+    10511777,
+    {
+      "alias": "KOSHA",
+      "address": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "8",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprufunBN3FAVpZ21WXquoqiNyWB2PvYy1njkP4wHGtMexdKtcJEM",
+          "key": "7",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "164",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "200000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "164",
+        "objkt_amount": "1",
+        "xtz_per_objkt": "200000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44130835103744,
+    1365781,
+    "2021-03-01T12:44:07Z",
+    "opNXJY1jQw6S7cspgHWHZZnnCKbr6WHm6Moa2A7J7TsR12jcqbU",
+    10973176,
+    {
+      "alias": "Mario Klingemann",
+      "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtweQBK1emmeg9Q84E7YwE9c8AQrvn88c8SrG2JgjBCYkC1AWx5",
+          "key": "8",
+          "value": {
+            "issuer": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp",
+            "objkt_id": "163",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "100000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "163",
+        "objkt_amount": "1",
+        "xtz_per_objkt": "100000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44131463200768,
+    1365798,
+    "2021-03-01T13:01:07Z",
+    "ooZy5xTru8h4RBck4Yrtn6pNLDjk1mEpw9w9BJHGRMxAZjoGeQ5",
+    7072071,
+    {
+      "address": "tz1N33TtiYBQ67sw32rhCsMSVpZkrSHWe9aq"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    100000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "remove_key",
+        "content": {
+          "hash": "exprtweQBK1emmeg9Q84E7YwE9c8AQrvn88c8SrG2JgjBCYkC1AWx5",
+          "key": "8",
+          "value": {
+            "issuer": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp",
+            "objkt_id": "163",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "100000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "8",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44131579592704,
+    1365801,
+    "2021-03-01T13:04:07Z",
+    "oo2tDGPF8iEcGzhhktuRXxeafnZ6mhg45CBmFpAAWvZNdBPEKNT",
+    6944864,
+    {
+      "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "98",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44132173086720,
+    1365817,
+    "2021-03-01T13:20:07Z",
+    "opBHGCXLacfaaBqL2mv334UdxQPHQ5ghWfx82LXZmh3boKpwfpf",
+    8261997,
+    {
+      "address": "tz1QRm2TJKnarZ9tbL5CNjN4Ltq9pJtytuk7"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "97",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44132206641152,
+    1365818,
+    "2021-03-01T13:21:07Z",
+    "ooq84PDyoB7xJoRPCC6WLbiJLH7vfLVSEyPNNhsAtKfyQ6WRWCL",
+    10973177,
+    {
+      "alias": "Mario Klingemann",
+      "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    30000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "165",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprujyHLX2vacVy6AcFmAt5K3Y93aMtccrbNtcsCRik6fjxR8wL6x",
+          "key": "3",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "objkt_id": "156",
+            "objkt_amount": "4",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "3",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44132394336256,
+    1365824,
+    "2021-03-01T13:27:07Z",
+    "op3cK4qwMv5cyVwMnQaZwTgGj2ZEVNRWKmPemniJ6casZK4U5wW",
+    11065712,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "9",
+      "metadata": 521,
+      "objkt_id": "166",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvP6KwYZaaoT577PBXL9rZ91pbEPpCqmF37najYvWdtSeF1tuXD",
+          "key": "165",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "3",
+        "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+        "metadata": "697066733a2f2f516d545164554a466e317979524463665a5a5668557a62563875634d45656b69686a343254375067756138534c65",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44132690034688,
+    1365832,
+    "2021-03-01T13:35:07Z",
+    "opTWpkeoC7hCHUyWhDFVVfhvUCsMGdxmGDbMx1X2aHG8Vw6x3Pg",
+    11065713,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "10",
+      "metadata": 521,
+      "objkt_id": "166",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtvAzqNE9zfpBLL9nKEaY1Dd2rznyG9iTFtECJvDkuub1bj3XvW",
+          "key": "9",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "objkt_id": "165",
+            "objkt_amount": "2",
+            "xtz_per_objkt": "15000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "165",
+        "objkt_amount": "2",
+        "xtz_per_objkt": "15000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44132747706368,
+    1365834,
+    "2021-03-01T13:37:07Z",
+    "op3tNDqLfkJszToWYkyKt4DYV961f1qeT6U8TA7J8pQLZeTksM5",
+    11065714,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "10",
+      "metadata": 521,
+      "objkt_id": "166",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "96",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133149310976,
+    1365845,
+    "2021-03-01T13:48:07Z",
+    "onfSkJpMgsUc6RwDCYcapEVfWyosRhKXqq8uUYVLsjanLrAYGB1",
+    11065715,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "10",
+      "metadata": 521,
+      "objkt_id": "167",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expru7udtWTLQUZnDc47YHp5YWbNuLcoDNat99RU6o8oTRmnWDZMME",
+          "key": "166",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "3",
+        "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+        "metadata": "697066733a2f2f516d63736175577945526d726d33627650433964586668434c57586a535471475068385755644d526a45434a4764",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133216419840,
+    1365847,
+    "2021-03-01T13:50:07Z",
+    "oopJ89JTYwqSuMps9piSdfSgFqDx5ygtwrifZyaNWpa7rjx933m",
+    11065716,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "11",
+      "metadata": 521,
+      "objkt_id": "167",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruXiL5LQuHx7RcPZztJUFDi93bbuMnKL3AryPqLeM6HkWRAVCeL",
+          "key": "10",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "objkt_id": "166",
+            "objkt_amount": "2",
+            "xtz_per_objkt": "15000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "166",
+        "objkt_amount": "2",
+        "xtz_per_objkt": "15000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133300305920,
+    1365850,
+    "2021-03-01T13:53:07Z",
+    "opDCZHLC1ZLJcRQgQnhuTYM6bcec5V4hv7xPAgdC4EDdYR7Jrif",
+    11065717,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "11",
+      "metadata": 521,
+      "objkt_id": "168",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprutCM4rsauoyj5yJxNCcbGcHR6k61UzhV4vyPoM4dr2knCxRU7V",
+          "key": "167",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "3",
+        "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+        "metadata": "697066733a2f2f516d57677767584d3661475162706674315067476f7139683165646d794b787a785734354c4c37613777764e546e",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133329666048,
+    1365851,
+    "2021-03-01T13:54:07Z",
+    "op9sbtDpUJNMmLj2vRJnToQHoR7imYhdRZW3ozn2ojLZtczzW65",
+    301432,
+    {
+      "alias": "Qartsi",
+      "address": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "11",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvNRPp1ifo78hegJQuTL96PbxuZeWt9tbhQfrNCS8ihGkaFu8tE",
+          "key": "168",
+          "value": {
+            "issuer": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "3",
+        "address": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+        "metadata": "697066733a2f2f516d5868516d7a524b6a4d5a6162456e6b6a5a676b7661785043523232336a347970376d6e314876766d43415053",
+        "royalties": "100"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133367414784,
+    1365852,
+    "2021-03-01T13:55:07Z",
+    "ooa4fGbGHYPcnBiGZccaiWtdvqh4D2mtRzriz7n2TJwAf3Dsu6K",
+    11065718,
+    {
+      "alias": "Tais Koshino",
+      "address": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "12",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprugoUUkTmJphCejTLPwF9gbKm2WonYuUBXYqtkc16JVBWe3bdqv",
+          "key": "11",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "objkt_id": "167",
+            "objkt_amount": "2",
+            "xtz_per_objkt": "15000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "167",
+        "objkt_amount": "2",
+        "xtz_per_objkt": "15000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133523652608,
+    1365856,
+    "2021-03-01T13:59:47Z",
+    "onwAvuwp54sp9QQNVVRHi25aJrS5fADtFC6P5d1dXjmY9A1TaBh",
+    301433,
+    {
+      "alias": "Qartsi",
+      "address": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruSKSLw7MS3ou3pPd7MUXy5QDPtVvkUNF4yWS2g6n8mXGzDJCG7",
+          "key": "12",
+          "value": {
+            "issuer": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+            "objkt_id": "168",
+            "objkt_amount": "3",
+            "xtz_per_objkt": "1500000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "168",
+        "objkt_amount": "3",
+        "xtz_per_objkt": "1500000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133700861952,
+    1365861,
+    "2021-03-01T14:04:47Z",
+    "ooLUL27MMef2uRRmviGXxNke2rgLSwLqhPkzSw4pbLXpaiAwGHb",
+    6944865,
+    {
+      "address": "tz1Rux3pGrp2KpZUBKvg3VQ4edRYVJsapr4z"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    30000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprujyHLX2vacVy6AcFmAt5K3Y93aMtccrbNtcsCRik6fjxR8wL6x",
+          "key": "3",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "objkt_id": "156",
+            "objkt_amount": "3",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "3",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44133847662592,
+    1365864,
+    "2021-03-01T14:07:47Z",
+    "ooamStBxD3dhd4sb6To99LGPKSMj6bbQxGUrRy8q16CM1zEiLNR",
+    4957701,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    1500000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruSKSLw7MS3ou3pPd7MUXy5QDPtVvkUNF4yWS2g6n8mXGzDJCG7",
+          "key": "12",
+          "value": {
+            "issuer": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+            "objkt_id": "168",
+            "objkt_amount": "2",
+            "xtz_per_objkt": "1500000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "12",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134078349312,
+    1365871,
+    "2021-03-01T14:14:47Z",
+    "oo3yXGSkygzbw97G7ECDSQu6TJxeUvwMghCxPauyoRuJfoZTvLF",
+    9514502,
+    {
+      "address": "tz1XaLRi6i8qNDa4KyNjQcxFvFDDs8xi7nr1"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    1500000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "169",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruSKSLw7MS3ou3pPd7MUXy5QDPtVvkUNF4yWS2g6n8mXGzDJCG7",
+          "key": "12",
+          "value": {
+            "issuer": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+            "objkt_id": "168",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "1500000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "12",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134185304064,
+    1365874,
+    "2021-03-01T14:18:27Z",
+    "oo8kt4cEescfcH81wELgsPCYmcn1bV3FHtFcV2Eb1sY2bbvo2eH",
+    3753463,
+    {
+      "address": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expru9Kk5REchC6Z5Z7LvMrrr6oFG5Gy94da8RM5DG7Dv14r4zMTx7",
+          "key": "169",
+          "value": {
+            "issuer": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF",
+            "royalties": "50"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "21",
+        "address": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF",
+        "metadata": "697066733a2f2f516d6565317a54756667394b3447424a713346546242693547336650727164685457334d733533576d794b4c784b",
+        "royalties": "50"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134188449792,
+    1365874,
+    "2021-03-01T14:18:27Z",
+    "onvqTmAwgGzwHM4FCNu54F1ReRBUDYsdbL8biXadxbHUYHXsAEV",
+    9514503,
+    {
+      "address": "tz1XaLRi6i8qNDa4KyNjQcxFvFDDs8xi7nr1"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    1500000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "13",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "remove_key",
+        "content": {
+          "hash": "expruSKSLw7MS3ou3pPd7MUXy5QDPtVvkUNF4yWS2g6n8mXGzDJCG7",
+          "key": "12",
+          "value": {
+            "issuer": "tz1PYqfNnkpZydtSY2Tn3Rv8mjkgUpHJpFXC",
+            "objkt_id": "168",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "1500000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "12",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134580617216,
+    1365886,
+    "2021-03-01T14:30:27Z",
+    "op3FhTu9daKvuPmxsHBp3g9TwcRiQTudiDiYCqq67U3pRQwhDdf",
+    3753464,
+    {
+      "address": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "14",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtdzbjWsSSvctJBA2SFXHnNS3oiwvq3dKbfc2FtshKaPdiBsDvc",
+          "key": "13",
+          "value": {
+            "issuer": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF",
+            "objkt_id": "169",
+            "objkt_amount": "20",
+            "xtz_per_objkt": "5000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "169",
+        "objkt_amount": "20",
+        "xtz_per_objkt": "5000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134614171648,
+    1365887,
+    "2021-03-01T14:31:27Z",
+    "ooyCY3r24HMmmnDAPFYaBk8ZWjtGRWU93SkRscVYRYZACKGbzMs",
+    3753465,
+    {
+      "address": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruS8yaBiiCWPiKFsgmsCJJhsdBSWznsE7btotoVAVhfJjCPzBna",
+          "key": "14",
+          "value": {
+            "issuer": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF",
+            "objkt_id": "169",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "5000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "169",
+        "objkt_amount": "1",
+        "xtz_per_objkt": "5000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134689669120,
+    1365889,
+    "2021-03-01T14:33:27Z",
+    "ooKU49WsyYnt8Yc3WSYVK2Q52NzHkHza8i4MKuG8YW36mDmm9bh",
+    10680113,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "95",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44134723223552,
+    1365890,
+    "2021-03-01T14:34:27Z",
+    "ooJLEpnXeNhjvDSUvyKKFcGkRkXYuHbry3DjaD7rgNougkZPrV9",
+    4957702,
+    {
+      "alias": "hicetnunc2000lab",
+      "address": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    15000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprugoUUkTmJphCejTLPwF9gbKm2WonYuUBXYqtkc16JVBWe3bdqv",
+          "key": "11",
+          "value": {
+            "issuer": "tz1U2wsJgebEvS6CZYXn1mjErRU5mSZ2ZS1Z",
+            "objkt_id": "167",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "15000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "11",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44135468761088,
+    1365912,
+    "2021-03-01T14:56:27Z",
+    "oouA4JB1zg8j265AgH29FaqJCVuFSzfnFaYcqEDJEcTfkm8tcti",
+    8815292,
+    {
+      "address": "tz1XYh8aN8MdCGKKhKgKwuT1duedWn22hqBt"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    5000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "remove_key",
+        "content": {
+          "hash": "expruS8yaBiiCWPiKFsgmsCJJhsdBSWznsE7btotoVAVhfJjCPzBna",
+          "key": "14",
+          "value": {
+            "issuer": "tz1bhMc5uPJynkrHpw7pAiBt6YMhQktn7owF",
+            "objkt_id": "169",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "5000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "14",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44135837859840,
+    1365922,
+    "2021-03-01T15:07:07Z",
+    "opTPQx9utmrrpfj8j1aUh5wTde59kbhvohPyF1sgPESxscKPoPm",
+    10680114,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    10000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprtqoNj2hRg8PsPMaXLcy3dXjMM3B7nHKrRNqpfjbYpMbULbRj8k",
+          "key": "5",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "160",
+            "objkt_amount": "17",
+            "xtz_per_objkt": "10000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "5",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44135868268544,
+    1365923,
+    "2021-03-01T15:08:07Z",
+    "ontC1a5YNrXtWFdUjvVqMq9YseVjts2dNCXZPeaJwhE7gTP8STv",
+    10680115,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    30000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruhrcC4osJigCeAywh27e6iYerzr5LnhYDwnWJc7VrLg7SxJbtm",
+          "key": "6",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "161",
+            "objkt_amount": "6",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "6",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136017166336,
+    1365928,
+    "2021-03-01T15:13:07Z",
+    "ooEk6gJ7uL2wv17ujL5gy7fCGFSiYNjzwbnoZWqFYo9FaegLtFX",
+    10680116,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    200000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "170",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "remove_key",
+        "content": {
+          "hash": "exprufunBN3FAVpZ21WXquoqiNyWB2PvYy1njkP4wHGtMexdKtcJEM",
+          "key": "7",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "164",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "200000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "7",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136239464448,
+    1365935,
+    "2021-03-01T15:20:07Z",
+    "ooWnLkTebhW8QoCncVc8vukrYBH2ksaypy9HuUGTuhQtY3iKae6",
+    11110534,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "171",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvDEVLUZYadgpicuNA7pR1Z2LPsrCJqS6iQADik8xfFX4nnDNVW",
+          "key": "170",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+        "metadata": "697066733a2f2f516d63486176755263614c4677314c76316a595a4e62787959645747374633586b4e394e6252375234624164574c",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136278261760,
+    1365936,
+    "2021-03-01T15:21:07Z",
+    "op4RBDAYu2UhwwYLiHPm91SQDwBPXBsHY1ZtUWNptH6xdYcrYfj",
+    10680117,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "171",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "94",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136485879808,
+    1365939,
+    "2021-03-01T15:24:07Z",
+    "ooQE3asVLN4DXvLGU6KQ2YCJe1ci2rh3HTfz42FdCfFwKNwZmb5",
+    10680118,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "171",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "93",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136522579968,
+    1365940,
+    "2021-03-01T15:25:07Z",
+    "opSL8BQsmLdyR9x5CqmZv9TdprgSXjKQWxMyMkvBMoDMiPboG7N",
+    11159433,
+    {
+      "alias": "apol_stamaria",
+      "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "15",
+      "metadata": 521,
+      "objkt_id": "172",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruMzzKHY2A9ovvuaaGeAbsndNRNxfGptQn54LuzKyvyMG5MFmjT",
+          "key": "171",
+          "value": {
+            "issuer": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+        "metadata": "697066733a2f2f516d6165753874686947414c7a6f723644674a745345363747524751614d54596547764b594a3252577574336e43",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136585494528,
+    1365942,
+    "2021-03-01T15:27:07Z",
+    "ooYgQGKqshpFiQ1DLcHkrnSjAwfTB5V7R3A4EfT6se1JxCLno7f",
+    11110535,
+    {
+      "alias": "sintang_ligalig",
+      "address": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "16",
+      "metadata": 521,
+      "objkt_id": "172",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruzd4LbpPJmTa1kyjkFmMfKpW7BKwiANc91jthRiNi5RSCEN4RX",
+          "key": "15",
+          "value": {
+            "issuer": "tz2G5SBeAJVbiE1icji3P59Lx8EvcwMLEHp3",
+            "objkt_id": "170",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "170",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136839249920,
+    1365949,
+    "2021-03-01T15:34:07Z",
+    "ooJKvo46MPmxtmm6VEHNsYaixqyW9z4AKoYZDmbG67XyNMPZHmG",
+    11159435,
+    {
+      "alias": "apol_stamaria",
+      "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "17",
+      "metadata": 521,
+      "objkt_id": "172",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprv1d5xmBww8CQpuSxyAE3g9m7x1Z15UTJ3zBTEFMVE9kqApyNDK",
+          "key": "16",
+          "value": {
+            "issuer": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+            "objkt_id": "171",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "171",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136868610048,
+    1365950,
+    "2021-03-01T15:35:07Z",
+    "op15etHikFx6jGfxAxwu5sxVrxLmAj3ZAeEcUDuGpDZzdNCTr5W",
+    10404505,
+    {
+      "alias": "Yoeshi",
+      "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "17",
+      "metadata": 521,
+      "objkt_id": "173",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruSMA5HfhXc8B5QRVcspmaBfuGhkCcETLVj2aGnHkY76hXAYRSP",
+          "key": "172",
+          "value": {
+            "issuer": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+            "royalties": "150"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+        "metadata": "697066733a2f2f516d52427853744856764437756a55597041416a4837514459526d713442317170353247326f764e694a57485273",
+        "royalties": "150"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44136912650240,
+    1365951,
+    "2021-03-01T15:36:07Z",
+    "ooz862X4TRFAHmMjrPx8L5XSyman1bfDLwCZdDwcagpnnQxza4o",
+    11159436,
+    {
+      "alias": "apol_stamaria",
+      "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "17",
+      "metadata": 521,
+      "objkt_id": "174",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvCwWrBsXxTLEEudC8c7UHTB4osKJBYWnfkVgvQ2Lkh9QhBGf5h",
+          "key": "173",
+          "value": {
+            "issuer": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+        "metadata": "697066733a2f2f516d524d4c384152535a364242776e73715750505446656e56556d74757658346f45617146547362555138503447",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137023799296,
+    1365954,
+    "2021-03-01T15:39:07Z",
+    "ont4fgnJx2qqjZFYYcA5eotqMyu2DRbRfiMXPZ8tfuY3TqD8b2N",
+    11159437,
+    {
+      "alias": "apol_stamaria",
+      "address": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "18",
+      "metadata": 521,
+      "objkt_id": "174",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruh5diuJb6Vu4B127cxWhiJ3927mvmG9oZ1pYKSNERPpefM4KBg",
+          "key": "17",
+          "value": {
+            "issuer": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+            "objkt_id": "173",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "173",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137084616704,
+    1365956,
+    "2021-03-01T15:41:07Z",
+    "oo4uRTCSbgjvovbjFQAbyGxRRY55a2fPSz5tB5Gr17CF1A6EBor",
+    10680119,
+    {
+      "address": "tz1Qw7r9P5NDVm7KwAKQGFXGPpqH5RgDPYQx"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "18",
+      "metadata": 521,
+      "objkt_id": "174",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "expruDuAZnFKqmLoisJqUGqrNzXTvw7PJM2rYk97JErM5FHCerQqgn",
+          "key": "2",
+          "value": {
+            "issuer": "tz1ZdMfzmWLb8mu22jE7rZ8Y3t9iKezM68cq",
+            "objkt_id": "159",
+            "objkt_amount": "92",
+            "xtz_per_objkt": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "2",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137271263232,
+    1365961,
+    "2021-03-01T15:46:07Z",
+    "onrL4BEyGaDm4L97d1CucmgGmZg3FtBg6oHMdYWtAu7ZsjVQCzC",
+    10404506,
+    {
+      "alias": "Yoeshi",
+      "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "18",
+      "metadata": 521,
+      "objkt_id": "175",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvTBB3SwBVLmHXtq5hEUVWbwg6FEevtAdJivXdEybPSzZDwBzrG",
+          "key": "174",
+          "value": {
+            "issuer": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+        "metadata": "697066733a2f2f516d5965507644464b5238356b6f50367070686e69554333616b62486a476a7a716d3845714e4c59636372565a6f",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137274408960,
+    1365961,
+    "2021-03-01T15:46:07Z",
+    "ooDXTBPCy7TpU6oy23UwvCbGo9kkNW2q92cySf5RFaEEqbckDSt",
+    10973179,
+    {
+      "alias": "Mario Klingemann",
+      "address": "tz1hb9PiWxQEf6J9xevPsUM6dkuCLnhDMvsp"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    30000000,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "18",
+      "metadata": 521,
+      "objkt_id": "175",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "update_key",
+        "content": {
+          "hash": "exprv1d5xmBww8CQpuSxyAE3g9m7x1Z15UTJ3zBTEFMVE9kqApyNDK",
+          "key": "16",
+          "value": {
+            "issuer": "tz2BY6RzeE9AWpjKydQnpE7wp3dtCMogU11D",
+            "objkt_id": "171",
+            "objkt_amount": "4",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "collect",
+      "value": {
+        "swap_id": "16",
+        "objkt_amount": "1"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137605758976,
+    1365970,
+    "2021-03-01T15:55:07Z",
+    "oou8ZJ7BZdSRwd6uPcTWQWR9zXj8nWPTUDn9h9SHxoZVpKT7EHR",
+    10404507,
+    {
+      "alias": "Yoeshi",
+      "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "175",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "expruWifKZdDCFGUaA8nKmtuNQCGAYx7jacBdMfmKC4QdqJc31rKuQ",
+          "key": "18",
+          "value": {
+            "issuer": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+            "objkt_id": "172",
+            "objkt_amount": "1",
+            "xtz_per_objkt": "30"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "172",
+        "objkt_amount": "1",
+        "xtz_per_objkt": "30"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44137920331776,
+    1365978,
+    "2021-03-01T16:03:07Z",
+    "opLsCGSMNHMbJW3HPe3sAKxFvz754ES4hyUTKvJgUZcxMC3VWLc",
+    11159912,
+    {
+      "address": "tz1cUxXMjVeGYThU7JhwN1Z4pxneftxgAkTV"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "176",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruqifsZ9gF3EvhjGZbGXpASCj9h6DZcKnVK5GZ4HwhdPsbZjF2k",
+          "key": "175",
+          "value": {
+            "issuer": "tz1cUxXMjVeGYThU7JhwN1Z4pxneftxgAkTV",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "3",
+        "address": "tz1cUxXMjVeGYThU7JhwN1Z4pxneftxgAkTV",
+        "metadata": "697066733a2f2f516d557052717441626d7436743568333247774b76475667723843375135765036477a786d78434a63586b4c5050",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138063986688,
+    1365981,
+    "2021-03-01T16:06:07Z",
+    "opUKgcyQDXX59eL3nesyY7gbsrJuWvpaTahjfr6Wu77mEGCBwgJ",
+    7246430,
+    {
+      "address": "tz1dPPVGVRxY45ZvnRMU3vebaBVMuhPq5bxh"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "177",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expru6um82omQLrJFpXB3YsucUzwwrA7ga3vqrygNhi2tvYLhmukFN",
+          "key": "176",
+          "value": {
+            "issuer": "tz1dPPVGVRxY45ZvnRMU3vebaBVMuhPq5bxh",
+            "royalties": "250"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1dPPVGVRxY45ZvnRMU3vebaBVMuhPq5bxh",
+        "metadata": "697066733a2f2f516d644452464737785067747657373768385951545a7a755248434b437847443731704c7377504d796f564d5451",
+        "royalties": "250"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138176184320,
+    1365984,
+    "2021-03-01T16:09:07Z",
+    "ooemcXFJqquee4AQeX2Q1shvD8kz37Qr5P9JLCdZXaWDHTzQp5s",
+    7052434,
+    {
+      "address": "tz1LN3wPFYuS5fCnodwxT94xVFLPtcFHvcHk"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "178",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtxHom2orGjKXCMs4R89dTe59akqCKty42Y9bafeTPX16Vrqfjs",
+          "key": "177",
+          "value": {
+            "issuer": "tz1LN3wPFYuS5fCnodwxT94xVFLPtcFHvcHk",
+            "royalties": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1LN3wPFYuS5fCnodwxT94xVFLPtcFHvcHk",
+        "metadata": "697066733a2f2f516d637a644d51585070337463435152536f4159634e694a5446485a566a386676544753464e74776d766e386a42",
+        "royalties": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138178281472,
+    1365984,
+    "2021-03-01T16:09:07Z",
+    "opCNJrZmHYN8k9boCcsc9Qx7qJN4VL6F6Kyg53xAzmju5sKdwuR",
+    10404508,
+    {
+      "alias": "Yoeshi",
+      "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "179",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruSLsGkErdNce2VD3UKsv9VLkWCRWAH5vwonUDZYdQC5Jqg2CWx",
+          "key": "178",
+          "value": {
+            "issuer": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+            "royalties": "200"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "5",
+        "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+        "metadata": "697066733a2f2f516d514b716e333857614463504b6875656543796d794c6d5962585364316432486b6d4a57646f794d63746f697a",
+        "royalties": "200"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138212884480,
+    1365985,
+    "2021-03-01T16:10:07Z",
+    "opTW6pmvp5zTRuQZZ2QAQZmETr2igC8AjFV4FH975isTERU8fKk",
+    9415570,
+    {
+      "address": "tz1S2YCqqbddiWtFeiRXLUKcdAw5AXc66w8p"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "19",
+      "metadata": 521,
+      "objkt_id": "180",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvGyj6frPEoXURPHTb5xffFVr5pbucLjqabhyuNkas68KHoQH7R",
+          "key": "179",
+          "value": {
+            "issuer": "tz1S2YCqqbddiWtFeiRXLUKcdAw5AXc66w8p",
+            "royalties": "0"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1S2YCqqbddiWtFeiRXLUKcdAw5AXc66w8p",
+        "metadata": "697066733a2f2f516d5748447358473834395a5248323146653663787569713179784b77744e364b7550557270643476557a796e4b",
+        "royalties": "0"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138275799040,
+    1365987,
+    "2021-03-01T16:12:07Z",
+    "oo9NLryAfvsE5QSaR4k37j2FukDQnkijx2XXYxQLQoGRy7ba3wE",
+    10404509,
+    {
+      "alias": "Yoeshi",
+      "address": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "20",
+      "metadata": 521,
+      "objkt_id": "180",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 523,
+        "path": "swaps",
+        "action": "add_key",
+        "content": {
+          "hash": "exprtuTKafuqW7qHC8HYtRRZvLRZBA5EgxPpJED3ARXg5x47Ze9Wtz",
+          "key": "19",
+          "value": {
+            "issuer": "tz1ae2d1BJt7YUqaaec6Xenh3mBqS7VjSZtK",
+            "objkt_id": "178",
+            "objkt_amount": "5",
+            "xtz_per_objkt": "30000000"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "swap",
+      "value": {
+        "objkt_id": "178",
+        "objkt_amount": "5",
+        "xtz_per_objkt": "30000000"
+      }
+    },
+    true
+  ],
+  [
+    null,
+    44138725638144,
+    1366000,
+    "2021-03-01T16:25:07Z",
+    "op8zqjAfTB35rvWPD2wUcRMwHTh6jRTFuetBPPenwvQtta7CsG3",
+    7028797,
+    {
+      "alias": "ohweoh",
+      "address": "tz1a92ZVmHDSqZ2dYbcrTZG9baK7bXSMRazZ"
+    },
+    null,
+    {
+      "alias": "hic et nunc Minter",
+      "address": "KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9"
+    },
+    null,
+    0,
+    {
+      "hdao": "KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW",
+      "size": "0",
+      "objkt": "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton",
+      "swaps": 523,
+      "curate": "KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6",
+      "locked": true,
+      "genesis": "2021-04-15T02:09:41Z",
+      "manager": "tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw",
+      "swap_id": "20",
+      "metadata": 521,
+      "objkt_id": "181",
+      "royalties": 522
+    },
+    "applied",
+    true,
+    [
+      {
+        "bigmap": 522,
+        "path": "royalties",
+        "action": "add_key",
+        "content": {
+          "hash": "expruEXTyBYqtuegpQ8EHqXQZyDLJoyc8QhkDrtVbZM1dB2PdkcHCy",
+          "key": "180",
+          "value": {
+            "issuer": "tz1a92ZVmHDSqZ2dYbcrTZG9baK7bXSMRazZ",
+            "royalties": "100"
+          }
+        }
+      }
+    ],
+    null,
+    null,
+    -680664524,
+    {
+      "entrypoint": "mint_OBJKT",
+      "value": {
+        "amount": "1",
+        "address": "tz1a92ZVmHDSqZ2dYbcrTZG9baK7bXSMRazZ",
+        "metadata": "697066733a2f2f516d557479686678544c4539436359657673616d5147376142424a5341537a797459733643686148316552586f41",
+        "royalties": "100"
+      }
+    },
+    true
+  ]
+]

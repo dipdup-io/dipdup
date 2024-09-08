@@ -1,6 +1,5 @@
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator
-from typing import Tuple
 from typing import TypeVar
 from unittest.mock import AsyncMock
 
@@ -11,16 +10,16 @@ import pytest
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
+from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktOperationData
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from tests import tzkt_replay
 
 T = TypeVar('T')
 
 
-async def take_two(iterable: AsyncIterator[Tuple[T, ...]]) -> Tuple[T, ...]:
-    result: Tuple[T, ...] = ()
+async def take_two(iterable: AsyncIterator[tuple[T, ...]]) -> tuple[T, ...]:
+    result: tuple[T, ...] = ()
     left = 2
     async for batch in iterable:
         result = result + batch
@@ -203,16 +202,17 @@ async def test_on_operation_message_data() -> None:
         tzkt._subscriptions.add(HeadSubscription())
         tzkt.set_sync_level(HeadSubscription(), 1)
 
-        level = tzkt.get_channel_level(TzktMessageType.operation)
+        level = tzkt.get_channel_level(TezosTzktMessageType.operation)
         assert level == 1
 
-        await tzkt._on_message(TzktMessageType.operation, [message])
+        await tzkt._on_message(TezosTzktMessageType.operation, [message])
 
-        level = tzkt.get_channel_level(TzktMessageType.operation)
+        level = tzkt.get_channel_level(TezosTzktMessageType.operation)
         assert level == 2
-        assert isinstance(emit_mock.await_args_list[0][0][1][0], TzktOperationData)
+        assert isinstance(emit_mock.await_args_list[0][0][1][0], TezosOperationData)
 
 
+# FIXME: Hangs without internet
 async def test_no_content() -> None:
     async with tzkt_replay('https://api.ghostnet.tzkt.io', batch_size=1) as tzkt:
         with pytest.raises(InvalidRequestError):

@@ -1,0 +1,6 @@
+database:
+  kind: postgres
+  host: ${POSTGRES_HOST}
+  user: test
+  password: test
+  database: test

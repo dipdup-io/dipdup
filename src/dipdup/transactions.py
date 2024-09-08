@@ -1,8 +1,6 @@
 from collections import deque
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
-from typing import Optional
-from typing import Set
 
 from tortoise.transactions import in_transaction
 
@@ -16,12 +14,12 @@ class TransactionManager:
 
     def __init__(
         self,
-        depth: int = 2,
-        immune_tables: Optional[Set[str]] = None,
+        depth: int | None = None,
+        immune_tables: set[str] | None = None,
     ) -> None:
         self._depth = depth
         self._immune_tables = immune_tables or set()
-        self._transaction: Optional[dipdup.models.VersionedTransaction] = None
+        self._transaction: dipdup.models.VersionedTransaction | None = None
         self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
 
     @asynccontextmanager
@@ -39,9 +37,9 @@ class TransactionManager:
     @asynccontextmanager
     async def in_transaction(
         self,
-        level: Optional[int] = None,
-        sync_level: Optional[int] = None,
-        index: Optional[str] = None,
+        level: int | None = None,
+        sync_level: int | None = None,
+        index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
         try:
@@ -75,6 +73,8 @@ class TransactionManager:
 
     async def cleanup(self) -> None:
         """Cleanup outdated model updates"""
+        if not self._depth:
+            return
         most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
         if not most_recent_index:
             return

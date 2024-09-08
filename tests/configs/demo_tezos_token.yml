@@ -1,0 +1,36 @@
+spec_version: 3.0
+package: demo_tezos_token
+
+contracts:
+  tzbtc_mainnet:
+    kind: tezos
+    address: KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn
+    typename: tzbtc
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  tzbtc_holders_mainnet:
+    kind: tezos.operations
+    datasources:
+      - tzkt
+    contracts:
+      - tzbtc_mainnet
+    handlers:
+      - callback: on_transfer
+        pattern:
+          - destination: tzbtc_mainnet
+            entrypoint: transfer
+      - callback: on_mint
+        pattern:
+          - destination: tzbtc_mainnet
+            entrypoint: mint
+    first_level: 1365000
+    last_level: 1366000
+
+logging: WARN

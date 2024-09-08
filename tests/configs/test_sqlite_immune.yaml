@@ -1,0 +1,11 @@
+database:
+  kind: sqlite
+  path: db.sqlite3
+
+  immune_tables:
+    - tld
+    - domain
+    - test
+
+advanced:
+  unsafe_sqlite: true

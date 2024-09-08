@@ -1,0 +1,10 @@
+from dipdup import fields
+
+from dipdup.models.tezos import TezosOperationType
+from dipdup.models import Model
+
+
+class Operation(Model):
+    hash = fields.TextField()
+    level = fields.IntField()
+    type = fields.EnumField(TezosOperationType)

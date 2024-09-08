@@ -4,16 +4,13 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Dict
-from typing import List
 
 from pydantic import BaseModel
-from pydantic import Extra
+from pydantic import ConfigDict
 
 
 class Key(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     address_0: str
     address_1: str
@@ -21,34 +18,30 @@ class Key(BaseModel):
 
 
 class Operator(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     key: Key
-    value: Dict[str, Any]
+    value: dict[str, Any]
 
 
 class TokenMetadata(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     token_id: str
-    token_info: Dict[str, str]
+    token_info: dict[str, str]
 
 
 class Assets(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
-    ledger: Dict[str, str]
+    ledger: dict[str, str]
     next_token_id: str
-    operators: List[Operator]
-    token_metadata: Dict[str, TokenMetadata]
+    operators: list[Operator]
+    token_metadata: dict[str, TokenMetadata]
 
 
 class FtzFunStorage(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    model_config = ConfigDict(extra='forbid')
 
     assets: Assets
-    metadata: Dict[str, str]
+    metadata: dict[str, str]

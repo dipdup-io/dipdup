@@ -1,0 +1,40 @@
+[
+  [
+    66864949493760,
+    1589247,
+    "2021-08-06T09:29:54Z",
+    {
+      "admin": "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5",
+      "tokens": 9563,
+      "allowances": 9564,
+      "total_supply": "100"
+    },
+    [
+      {
+        "bigmap": 9563,
+        "path": "tokens",
+        "action": "allocate"
+      },
+      {
+        "bigmap": 9563,
+        "path": "tokens",
+        "action": "add_key",
+        "content": {
+          "hash": "exprvBfbrdZVCjkmcsJRpioTnZdos3RLMZUDTK2AyFURY423xuWX4N",
+          "key": "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU",
+          "value": "100"
+        }
+      },
+      {
+        "bigmap": 9564,
+        "path": "allowances",
+        "action": "allocate"
+      }
+    ],
+    {
+      "alias": "SIRS",
+      "address": "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo"
+    },
+    0
+  ]
+]

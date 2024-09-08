@@ -1,0 +1,19 @@
+from dipdup.context import HandlerContext
+from dipdup.models.tezos import TezosTransaction
+
+import {{ project.package }}.models as models
+from {{ project.package }}.types.token.tezos_parameters.transfer import TransferParameter
+from {{ project.package }}.types.token.tezos_storage import TokenStorage
+
+
+async def on_transfer(
+    ctx: HandlerContext,
+    transfer: TezosTransaction[TransferParameter, TokenStorage],
+) -> None:
+    for transfer_item in transfer.parameter.root:
+        for tx in transfer_item.txs:
+            await models.Transfer.create(
+                from_=transfer_item.from_,
+                to=tx.to_,
+                amount=tx.amount,
+            )

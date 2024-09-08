@@ -1,0 +1,18 @@
+# To refresh existing project run `dipdup init --base --force` after modifying this file.
+# To generate a new project from this replay run `dipdup new --replay <path_to_file>`.
+#
+spec_version: 3.0
+replay:
+  dipdup_version: 8
+  template: demo_evm_uniswap
+  package: demo_evm_uniswap
+  version: 0.0.1
+  description: Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB)
+  license: MIT
+  name: John Doe
+  email: john_doe@example.com
+  postgres_image: timescale/timescaledb-ha:pg15
+  postgres_data_path: /home/postgres/pgdata/data
+  hasura_image: hasura/graphql-engine:latest
+  line_length: 120
+  package_manager: pdm

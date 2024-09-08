@@ -1,0 +1,56 @@
+spec_version: 3.0
+package: {{ project.package }}
+
+contracts:
+  factory:
+    kind: tezos
+    address: KT1PvEyN1xCFCgorN92QCfYjw3axS6jawCiJ
+    typename: factory
+  token:
+    kind: tezos
+    address: KT1UsSfaXyqcjSVPeiD7U1bWgKy3taYN7NWY
+    typename: token
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+templates:
+  dex:
+    kind: tezos.operations
+    datasources:
+      - tzkt
+    types:
+      - transaction
+    contracts:
+      - <dex>
+      - <token>
+    handlers:
+      - callback: on_transfer
+        pattern:
+          - type: transaction
+            destination: <token>
+            entrypoint: transfer
+    first_level: 2393103
+    last_level: 2393103
+
+indexes:
+  factory:
+    kind: tezos.operations
+    datasources:
+      - tzkt
+    contracts:
+      - factory
+    types:
+      - origination
+      - transaction
+    handlers:
+      - callback: on_factory_origination
+        pattern:
+          - type: transaction
+            entrypoint: launchExchange
+          - type: origination
+            source: factory
+    first_level: 2428590
+    last_level: 2428590

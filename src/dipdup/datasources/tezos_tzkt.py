@@ -3,42 +3,52 @@ import logging
 from asyncio import Event
 from collections import defaultdict
 from collections import deque
-from dataclasses import fields
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
+from collections.abc import Generator
+from collections.abc import Sequence
+from contextlib import suppress
 from enum import Enum
 from functools import partial
 from typing import Any
-from typing import AsyncIterator
-from typing import Awaitable
-from typing import Callable
-from typing import Generator
 from typing import NamedTuple
 from typing import NoReturn
-from typing import Sequence
 from typing import cast
 
 import pysignalr.exceptions
 from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
+from dipdup.config import DipDupConfig
 from dipdup.config import HttpConfig
+from dipdup.config.tezos import SMART_CONTRACT_PREFIX
+from dipdup.config.tezos import SMART_ROLLUP_PREFIX
+from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_tzkt import TZKT_API_URLS
-from dipdup.config.tezos_tzkt import TzktDatasourceConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
+from dipdup.datasources import TezosAbiProvider
+from dipdup.datasources import TezosHistoryProvider
+from dipdup.datasources import TezosRealtimeProvider
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import Head
 from dipdup.models import MessageType
+from dipdup.models import ReindexingReason
+from dipdup.models import RollbackMessage
+from dipdup.models.tezos import TezosBigMapData
+from dipdup.models.tezos import TezosBlockData
+from dipdup.models.tezos import TezosEventData
+from dipdup.models.tezos import TezosHeadBlockData
+from dipdup.models.tezos import TezosOperationData
+from dipdup.models.tezos import TezosQuoteData
+from dipdup.models.tezos import TezosTokenBalanceData
+from dipdup.models.tezos import TezosTokenTransferData
 from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TzktBigMapData
-from dipdup.models.tezos_tzkt import TzktBlockData
-from dipdup.models.tezos_tzkt import TzktEventData
-from dipdup.models.tezos_tzkt import TzktHeadBlockData
-from dipdup.models.tezos_tzkt import TzktMessageType
-from dipdup.models.tezos_tzkt import TzktOperationData
-from dipdup.models.tezos_tzkt import TzktQuoteData
-from dipdup.models.tezos_tzkt import TzktSubscription
-from dipdup.models.tezos_tzkt import TzktTokenTransferData
-from dipdup.utils import FormattedLogger
+from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.models.tezos_tzkt import TezosTzktSubscription
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100
@@ -80,6 +90,12 @@ TRANSACTION_OPERATION_FIELDS = (
     'parameter',
     'hasInternals',
 )
+SR_OPERATION_FIELDS = (
+    *OPERATION_FIELDS,
+    'rollup',
+    'commitment',
+    'ticketTransfersCount',
+)
 BIGMAP_FIELDS = (
     'ptr',
     'contract',
@@ -94,7 +110,7 @@ BIGMAP_FIELDS = (
     'keyType',
     'valueType',
 )
-TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
+TOKEN_TRANSFER_FIELDS = (
     'token',
     'from',
     'to',
@@ -106,29 +122,49 @@ TZKT_TOKEN_TRANSFER_DATA_FIELDS = (
     'originationId',
     'migrationId',
 )
+TOKEN_BALANCE_FIELDS = (
+    'id',
+    'transfersCount',
+    'firstLevel',
+    'firstTime',
+    'lastLevel',
+    'lastTime',
+    'account',
+    'token',
+    'balance',
+    'balanceValue',
+)
+EVENT_FIELDS = (
+    'id',
+    'level',
+    'timestamp',
+    'tag',
+    'payload',
+    'contract',
+    'codeHash',
+    'transactionId',
+)
 
 
-EmptyCallback = Callable[[], Awaitable[None]]
-HeadCallback = Callable[['TzktDatasource', TzktHeadBlockData], Awaitable[None]]
-OperationsCallback = Callable[['TzktDatasource', tuple[TzktOperationData, ...]], Awaitable[None]]
-TokenTransfersCallback = Callable[['TzktDatasource', tuple[TzktTokenTransferData, ...]], Awaitable[None]]
-BigMapsCallback = Callable[['TzktDatasource', tuple[TzktBigMapData, ...]], Awaitable[None]]
-EventsCallback = Callable[['TzktDatasource', tuple[TzktEventData, ...]], Awaitable[None]]
-# TODO: move somewhere
-RollbackCallback = Callable[['IndexDatasource', MessageType, int, int], Awaitable[None]]
+HeadCallback = Callable[['TezosTzktDatasource', TezosHeadBlockData], Awaitable[None]]
+OperationsCallback = Callable[['TezosTzktDatasource', tuple[TezosOperationData, ...]], Awaitable[None]]
+TokenTransfersCallback = Callable[['TezosTzktDatasource', tuple[TezosTokenTransferData, ...]], Awaitable[None]]
+TokenBalancesCallback = Callable[['TezosTzktDatasource', tuple[TezosTokenBalanceData, ...]], Awaitable[None]]
+BigMapsCallback = Callable[['TezosTzktDatasource', tuple[TezosBigMapData, ...]], Awaitable[None]]
+EventsCallback = Callable[['TezosTzktDatasource', tuple[TezosEventData, ...]], Awaitable[None]]
 
 
-class TzktMessageAction(Enum):
+class TezosTzktMessageAction(Enum):
     STATE = 0
     DATA = 1
     REORG = 2
 
 
-MessageData = dict[str, Any] | list[dict[str, Any]]
+MessageData = dict[str, Any] | list[dict[str, Any]] | RollbackMessage
 
 
 class BufferedMessage(NamedTuple):
-    type: TzktMessageType
+    type: TezosTzktMessageType
     data: MessageData
 
 
@@ -146,13 +182,13 @@ class MessageBuffer:
     def __len__(self) -> int:
         return len(self._messages)
 
-    def add(self, type_: TzktMessageType, level: int, data: MessageData) -> None:
+    def add(self, type_: TezosTzktMessageType, level: int, data: MessageData) -> None:
         """Add a message to the buffer."""
         if level not in self._messages:
             self._messages[level] = []
         self._messages[level].append(BufferedMessage(type_, data))
 
-    def rollback(self, type_: TzktMessageType, channel_level: int, message_level: int) -> bool:
+    def rollback(self, type_: TezosTzktMessageType, channel_level: int, message_level: int) -> bool:
         """Drop buffered messages in reversed order while possible, return if successful."""
         self._logger.info('`%s` rollback requested: %s -> %s', type_.value, channel_level, message_level)
         levels = range(channel_level, message_level, -1)
@@ -198,7 +234,9 @@ class ContractHashes:
         return self._hashes_to_address[(code_hash, type_hash)]
 
 
-class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
+class TezosTzktDatasource(
+    IndexDatasource[TezosTzktDatasourceConfig], TezosHistoryProvider, TezosRealtimeProvider, TezosAbiProvider
+):
     _default_http_config = HttpConfig(
         retry_sleep=1,
         retry_multiplier=1.1,
@@ -206,30 +244,26 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ratelimit_rate=100,
         ratelimit_period=1,
         connection_limit=25,
-        batch_size=1000,
+        batch_size=10000,
     )
 
     def __init__(
         self,
-        config: TzktDatasourceConfig,
+        config: TezosTzktDatasourceConfig,
     ) -> None:
         super().__init__(config)
-        self._logger = logging.getLogger('dipdup.tzkt')
         self._buffer = MessageBuffer(config.buffer_size)
         self._contract_hashes = ContractHashes()
 
-        self._on_connected_callbacks: set[EmptyCallback] = set()
-        self._on_disconnected_callbacks: set[EmptyCallback] = set()
         self._on_head_callbacks: set[HeadCallback] = set()
         self._on_operations_callbacks: set[OperationsCallback] = set()
         self._on_token_transfers_callbacks: set[TokenTransfersCallback] = set()
+        self._on_token_balances_callbacks: set[TokenBalancesCallback] = set()
         self._on_big_maps_callbacks: set[BigMapsCallback] = set()
         self._on_events_callbacks: set[EventsCallback] = set()
-        self._on_rollback_callbacks: set[RollbackCallback] = set()
-        self._network: str | None = None
 
         self._signalr_client: SignalRClient | None = None
-        self._channel_levels: defaultdict[TzktMessageType, int | None] = defaultdict(lambda: None)
+        self._channel_levels: defaultdict[TezosTzktMessageType, int | None] = defaultdict(lambda: None)
 
     async def __aenter__(self) -> None:
         try:
@@ -247,12 +281,6 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             )
         except Exception as e:
             raise DatasourceError(f'Failed to connect to TzKT: {e}', self.name) from e
-
-    @property
-    def network(self) -> str:
-        if not self._network:
-            raise FrameworkException('Network is not set')
-        return self._network
 
     @property
     def request_limit(self) -> int:
@@ -277,27 +305,10 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
     async def initialize(self) -> None:
         head_block = await self.get_head_block()
-        self.set_network(head_block.chain)
         self.set_sync_level(
             subscription=None,
             level=head_block.level,
         )
-
-        db_head = await Head.filter(name=self.name).first()
-        if not db_head:
-            return
-
-        # FIXME: No ctx to throw reorg; VERY IMPORTANT CHECK
-        # NOTE: Ensure that no reorgs happened while we were offline
-        # actual_head = await self.get_block(db_head.level)
-        # if db_head.hash != actual_head.hash:
-        #     await self._ctx.reindex(
-        #         ReindexingReason.rollback,
-        #         datasource=self.name,
-        #         level=db_head.level,
-        #         stored_block_hash=db_head.hash,
-        #         actual_block_hash=actual_head.hash,
-        #     )
 
     def call_on_head(self, fn: HeadCallback) -> None:
         self._on_head_callbacks.add(fn)
@@ -314,32 +325,27 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     def call_on_events(self, fn: EventsCallback) -> None:
         self._on_events_callbacks.add(fn)
 
-    def call_on_rollback(self, fn: RollbackCallback) -> None:
-        self._on_rollback_callbacks.add(fn)
-
-    def call_on_connected(self, fn: EmptyCallback) -> None:
-        self._on_connected_callbacks.add(fn)
-
-    def call_on_disconnected(self, fn: EmptyCallback) -> None:
-        self._on_disconnected_callbacks.add(fn)
-
-    async def emit_head(self, head: TzktHeadBlockData) -> None:
+    async def emit_head(self, head: TezosHeadBlockData) -> None:
         for fn in self._on_head_callbacks:
             await fn(self, head)
 
-    async def emit_operations(self, operations: tuple[TzktOperationData, ...]) -> None:
+    async def emit_operations(self, operations: tuple[TezosOperationData, ...]) -> None:
         for fn in self._on_operations_callbacks:
             await fn(self, operations)
 
-    async def emit_token_transfers(self, token_transfers: tuple[TzktTokenTransferData, ...]) -> None:
+    async def emit_token_transfers(self, token_transfers: tuple[TezosTokenTransferData, ...]) -> None:
         for fn in self._on_token_transfers_callbacks:
             await fn(self, token_transfers)
 
-    async def emit_big_maps(self, big_maps: tuple[TzktBigMapData, ...]) -> None:
+    async def emit_token_balances(self, token_balances: tuple[TezosTokenBalanceData, ...]) -> None:
+        for fn in self._on_token_balances_callbacks:
+            await fn(self, token_balances)
+
+    async def emit_big_maps(self, big_maps: tuple[TezosBigMapData, ...]) -> None:
         for fn in self._on_big_maps_callbacks:
             await fn(self, big_maps)
 
-    async def emit_events(self, events: tuple[TzktEventData, ...]) -> None:
+    async def emit_events(self, events: tuple[TezosEventData, ...]) -> None:
         for fn in self._on_events_callbacks:
             await fn(self, events)
 
@@ -355,16 +361,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         for fn in self._on_disconnected_callbacks:
             await fn()
 
-    def set_network(self, network: str) -> None:
-        if self._network:
-            raise FrameworkException('Network is already set')
-        self._network = network
-
-    def set_logger(self, name: str) -> None:
-        super().set_logger(name)
-        self._buffer._logger = FormattedLogger(self._buffer._logger.name, name + ': {}')
-
-    def get_channel_level(self, message_type: TzktMessageType) -> int:
+    def get_channel_level(self, message_type: TezosTzktMessageType) -> int:
         """Get current level of the channel, or sync level if no messages were received yet."""
         channel_level = self._channel_levels[message_type]
         if channel_level is None:
@@ -506,11 +503,17 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
     async def get_jsonschemas(self, address: str) -> dict[str, Any]:
         """Get JSONSchemas for contract's storage/parameter/bigmap types"""
         self._logger.info('Fetching jsonschemas for address `%s`', address)
+        if address.startswith(SMART_CONTRACT_PREFIX):
+            endpoint = 'contracts'
+        elif address.startswith(SMART_ROLLUP_PREFIX):
+            endpoint = 'smart_rollups'
+        else:
+            raise NotImplementedError
         return cast(
             dict[str, Any],
             await self.request(
                 'get',
-                url=f'v1/contracts/{address}/interface',
+                url=f'v1/{endpoint}/{address}/interface',
             ),
         )
 
@@ -583,23 +586,23 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ):
             yield batch
 
-    async def get_head_block(self) -> TzktHeadBlockData:
+    async def get_head_block(self) -> TezosHeadBlockData:
         """Get latest block (head)"""
         self._logger.info('Fetching latest block')
         head_block_json = await self.request(
             'get',
             url='v1/head',
         )
-        return TzktHeadBlockData.from_json(head_block_json)
+        return TezosHeadBlockData.from_json(head_block_json)
 
-    async def get_block(self, level: int) -> TzktBlockData:
+    async def get_block(self, level: int) -> TezosBlockData:
         """Get block by level"""
         self._logger.info('Fetching block %s', level)
         block_json = await self.request(
             'get',
             url=f'v1/blocks/{level}',
         )
-        return TzktBlockData.from_json(block_json)
+        return TezosBlockData.from_json(block_json)
 
     async def get_migration_originations(
         self,
@@ -607,7 +610,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktOperationData, ...]:
+    ) -> tuple[TezosOperationData, ...]:
         """Get contracts originated from migrations"""
         self._logger.info('Fetching contracts originated with migrations')
         params = self._get_request_params(
@@ -625,13 +628,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             url='v1/operations/migrations',
             params=params,
         )
-        return tuple(TzktOperationData.from_migration_json(m) for m in raw_migrations)
+        return tuple(TezosOperationData.from_migration_json(m) for m in raw_migrations)
 
     async def iter_migration_originations(
         self,
         first_level: int | None = None,
         last_level: int | None = None,
-    ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
+    ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_migration_originations,
             first_level,
@@ -647,7 +650,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktOperationData, ...]:
+    ) -> tuple[TezosOperationData, ...]:
         offset, limit = offset or 0, limit or self.request_limit
         raw_originations: list[dict[str, Any]] = []
         params = self._get_request_params(
@@ -701,7 +704,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             raise FrameworkException('Either `addresses` or `code_hashes` should be specified')
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        return tuple(TzktOperationData.from_json(op, type_='origination') for op in raw_originations)
+        return tuple(TezosOperationData.from_json(op, type_='origination') for op in raw_originations)
 
     async def get_transactions(
         self,
@@ -712,21 +715,28 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int | None = None,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktOperationData, ...]:
+    ) -> tuple[TezosOperationData, ...]:
         params = self._get_request_params(
-            first_level,
-            last_level,
-            offset,
-            limit,
-            TRANSACTION_OPERATION_FIELDS,
-            cursor=True,
+            first_level=first_level,
+            last_level=last_level,
+            # NOTE: This is intentional
+            offset=None,
+            limit=limit,
+            select=TRANSACTION_OPERATION_FIELDS,
             values=True,
+            sort='level',
             status='applied',
         )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
         if addresses and not code_hashes:
             params[f'{field}.in'] = ','.join(addresses)
         elif code_hashes and not addresses:
             params[f'{field}CodeHash.in'] = ','.join(str(h) for h in code_hashes)
+        else:
+            pass
 
         raw_transactions = await self._request_values_dict(
             'get',
@@ -735,7 +745,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         )
 
         # NOTE: `type` field needs to be set manually when requesting operations by specific type
-        return tuple(TzktOperationData.from_json(op, type_='transaction') for op in raw_transactions)
+        return tuple(TezosOperationData.from_json(op, type_='transaction') for op in raw_transactions)
 
     async def iter_transactions(
         self,
@@ -743,9 +753,111 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         addresses: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TzktOperationData, ...]]:
+    ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
         async for batch in self._iter_batches(
             self.get_transactions,
+            field,
+            addresses,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
+    async def get_sr_execute(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TezosOperationData, ...]:
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=None,
+            limit=limit,
+            select=SR_OPERATION_FIELDS,
+            values=True,
+            sort='level',
+            status='applied',
+        )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
+        if addresses:
+            params[f'{field}.in'] = ','.join(addresses)
+
+        raw_transactions = await self._request_values_dict(
+            'get',
+            url='v1/operations/sr_execute',
+            params=params,
+        )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(TezosOperationData.from_json(op, type_='sr_execute') for op in raw_transactions)
+
+    async def iter_sr_execute(
+        self,
+        field: str,
+        addresses: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_sr_execute,
+            field,
+            addresses,
+            first_level,
+            last_level,
+        ):
+            yield batch
+
+    async def get_sr_cement(
+        self,
+        field: str,
+        addresses: set[str] | None,
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TezosOperationData, ...]:
+        params = self._get_request_params(
+            first_level=first_level,
+            last_level=last_level,
+            offset=None,
+            limit=limit,
+            select=SR_OPERATION_FIELDS,
+            values=True,
+            sort='level',
+            status='applied',
+        )
+        # TODO: TzKT doesn't support sort+cr currently
+        if offset is not None:
+            params['id.gt'] = offset
+
+        if addresses:
+            params[f'{field}.in'] = ','.join(addresses)
+
+        raw_transactions = await self._request_values_dict(
+            'get',
+            url='v1/operations/sr_cement',
+            params=params,
+        )
+
+        # NOTE: `type` field needs to be set manually when requesting operations by specific type
+        return tuple(TezosOperationData.from_json(op, type_='sr_cement') for op in raw_transactions)
+
+    async def iter_sr_cement(
+        self,
+        field: str,
+        addresses: set[str],
+        first_level: int,
+        last_level: int,
+    ) -> AsyncIterator[tuple[TezosOperationData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_sr_cement,
             field,
             addresses,
             first_level,
@@ -761,7 +873,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktBigMapData, ...]:
+    ) -> tuple[TezosBigMapData, ...]:
         params = self._get_request_params(
             first_level=first_level,
             last_level=last_level,
@@ -777,7 +889,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 'path.in': ','.join(paths),
             },
         )
-        return tuple(TzktBigMapData.from_json(bm) for bm in raw_big_maps)
+        return tuple(TezosBigMapData.from_json(bm) for bm in raw_big_maps)
 
     async def iter_big_maps(
         self,
@@ -785,7 +897,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         paths: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TzktBigMapData, ...]]:
+    ) -> AsyncIterator[tuple[TezosBigMapData, ...]]:
         async for batch in self._iter_batches(
             self.get_big_maps,
             addresses,
@@ -796,7 +908,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         ):
             yield batch
 
-    async def get_quote(self, level: int) -> TzktQuoteData:
+    async def get_quote(self, level: int) -> TezosQuoteData:
         """Get quote for block"""
         self._logger.info('Fetching quotes for level %s', level)
         quote_json = await self.request(
@@ -804,7 +916,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             url='v1/quotes',
             params={'level': level},
         )
-        return TzktQuoteData.from_json(quote_json[0])
+        return TezosQuoteData.from_json(quote_json[0])
 
     async def get_quotes(
         self,
@@ -812,7 +924,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktQuoteData, ...]:
+    ) -> tuple[TezosQuoteData, ...]:
         """Get quotes for blocks"""
         offset, limit = offset or 0, limit or self.request_limit
         self._logger.info('Fetching quotes for levels %s-%s', first_level, last_level)
@@ -826,13 +938,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 'limit': limit,
             },
         )
-        return tuple(TzktQuoteData.from_json(quote) for quote in quotes_json)
+        return tuple(TezosQuoteData.from_json(quote) for quote in quotes_json)
 
     async def iter_quotes(
         self,
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TzktQuoteData, ...]]:
+    ) -> AsyncIterator[tuple[TezosQuoteData, ...]]:
         """Iterate quotes for blocks"""
         async for batch in self._iter_batches(
             self.get_quotes,
@@ -851,14 +963,14 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktTokenTransferData, ...]:
+    ) -> tuple[TezosTokenTransferData, ...]:
         """Get token transfers for contract"""
         params = self._get_request_params(
             first_level,
             last_level,
             offset=offset or 0,
             limit=limit,
-            select=TZKT_TOKEN_TRANSFER_DATA_FIELDS,
+            select=TOKEN_TRANSFER_FIELDS,
             values=True,
             cursor=True,
             **{
@@ -869,7 +981,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             },
         )
         raw_token_transfers = await self._request_values_dict('get', url='v1/tokens/transfers', params=params)
-        return tuple(TzktTokenTransferData.from_json(item) for item in raw_token_transfers)
+        return tuple(TezosTokenTransferData.from_json(item) for item in raw_token_transfers)
 
     async def iter_token_transfers(
         self,
@@ -879,7 +991,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         to_addresses: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TzktTokenTransferData, ...]]:
+    ) -> AsyncIterator[tuple[TezosTokenTransferData, ...]]:
         """Iterate token transfers for contract"""
         async for batch in self._iter_batches(
             self.get_token_transfers,
@@ -887,6 +999,48 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             token_ids,
             from_addresses,
             to_addresses,
+            first_level,
+            last_level,
+            cursor=True,
+        ):
+            yield batch
+
+    async def get_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int | None = None,
+        last_level: int | None = None,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> tuple[TezosTokenBalanceData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=TOKEN_BALANCE_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'token.contract.in': ','.join(token_addresses),
+                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
+            },
+        )
+        raw_token_balances = await self._request_values_dict('get', url='v1/tokens/balances', params=params)
+        return tuple(TezosTokenBalanceData.from_json(item) for item in raw_token_balances)
+
+    async def iter_token_balances(
+        self,
+        token_addresses: set[str],
+        token_ids: set[int],
+        first_level: int | None = None,
+        last_level: int | None = None,
+    ) -> AsyncIterator[tuple[TezosTokenBalanceData, ...]]:
+        async for batch in self._iter_batches(
+            self.get_token_balances,
+            token_addresses,
+            token_ids,
             first_level,
             last_level,
             cursor=True,
@@ -901,23 +1055,27 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         last_level: int,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> tuple[TzktEventData, ...]:
-        # FIXME: no tests for function
+    ) -> tuple[TezosEventData, ...]:
+        params = self._get_request_params(
+            first_level,
+            last_level,
+            offset=offset or 0,
+            limit=limit,
+            select=EVENT_FIELDS,
+            values=True,
+            cursor=True,
+            **{
+                'contract.in': ','.join(addresses),
+                'tag.in': ','.join(tags),
+            },
+        )
         offset, limit = offset or 0, limit or self.request_limit
         raw_events = await self._request_values_dict(
             'get',
             url='v1/contracts/events',
-            params={
-                'contract.in': ','.join(addresses),
-                'tag.in': ','.join(tags),
-                'level.ge': first_level,
-                'level.le': last_level,
-                'select.values': ','.join(f.name for f in fields(TzktEventData)),
-                'offset.cr': offset,
-                'limit': limit,
-            },
+            params=params,
         )
-        return tuple(TzktEventData.from_json(e) for e in raw_events)
+        return tuple(TezosEventData.from_json(e) for e in raw_events)
 
     async def iter_events(
         self,
@@ -925,7 +1083,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         tags: set[str],
         first_level: int,
         last_level: int,
-    ) -> AsyncIterator[tuple[TzktEventData, ...]]:
+    ) -> AsyncIterator[tuple[TezosEventData, ...]]:
         async for batch in self._iter_batches(
             self.get_events,
             addresses,
@@ -943,12 +1101,12 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
         for subscription in missing_subscriptions:
-            if not isinstance(subscription, TzktSubscription):
-                raise FrameworkException(f'Expected TzktSubscription, got {subscription}')
+            if not isinstance(subscription, TezosTzktSubscription):
+                raise FrameworkException(f'Expected TezosTzktSubscription, got {subscription}')
             await self._subscribe(subscription)
         self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
-    async def _subscribe(self, subscription: TzktSubscription) -> None:
+    async def _subscribe(self, subscription: TezosTzktSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         method = subscription.method
         request: list[dict[str, Any]] = subscription.get_request()
@@ -966,7 +1124,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         await event.wait()
 
     async def _request_values_dict(self, *args: Any, **kwargs: Any) -> tuple[dict[str, Any], ...]:
-        # NOTE: basicaly this function create dict from list of tuples request
+        # NOTE: basically this function create dict from list of tuples request
         # NOTE: this is necessary because for TZKT API cursor iteration is more efficient and asking only values is more efficient too """
         try:
             fields = kwargs.get('params', {})['select.values'].split(',')
@@ -979,7 +1137,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         # NOTE: select.values supported for methods with multiple objects in response only
         response: list[list[str]] = await self.request(*args, **kwargs)
-        return tuple([dict(zip(fields, values)) for values in response])
+        return tuple([dict(zip(fields, values, strict=True)) for values in response])
 
     def _get_request_params(
         self,
@@ -988,8 +1146,9 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
         select: tuple[str, ...] | None = None,
-        values: bool = False,  # return only list of chosen values instead of dict
+        values: bool = False,
         cursor: bool = False,
+        sort: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
@@ -1004,9 +1163,16 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
                 params['offset.cr'] = offset
             else:
                 params['offset'] = offset
+        # NOTE: If `values` is set request will return list of lists instead of list of dicts.
         if select:
-            #  filter fields
             params['select.values' if values else 'select'] = ','.join(select)
+        if sort:
+            if sort.startswith('-'):
+                sort_param_name = 'sort.desc'
+                sort = sort[1:]
+            else:
+                sort_param_name = 'sort'
+            params[sort_param_name] = sort
         return {
             **params,
             **kwargs,
@@ -1047,7 +1213,7 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         self._logger.info('Creating SignalR client')
         self._signalr_client = SignalRClient(
-            url=f'{self._http._url}/v1/events',
+            url=f'{self._http._url}/v1/ws',
             max_size=None,
         )
 
@@ -1055,11 +1221,12 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         self._signalr_client.on_close(self._on_disconnected)
         self._signalr_client.on_error(self._on_error)
 
-        self._signalr_client.on('operations', partial(self._on_message, TzktMessageType.operation))
-        self._signalr_client.on('transfers', partial(self._on_message, TzktMessageType.token_transfer))
-        self._signalr_client.on('bigmaps', partial(self._on_message, TzktMessageType.big_map))
-        self._signalr_client.on('head', partial(self._on_message, TzktMessageType.head))
-        self._signalr_client.on('events', partial(self._on_message, TzktMessageType.event))
+        self._signalr_client.on('operations', partial(self._on_message, TezosTzktMessageType.operation))
+        self._signalr_client.on('transfers', partial(self._on_message, TezosTzktMessageType.token_transfer))
+        self._signalr_client.on('balances', partial(self._on_message, TezosTzktMessageType.token_balance))
+        self._signalr_client.on('bigmaps', partial(self._on_message, TezosTzktMessageType.big_map))
+        self._signalr_client.on('head', partial(self._on_message, TezosTzktMessageType.head))
+        self._signalr_client.on('events', partial(self._on_message, TezosTzktMessageType.event))
 
         return self._signalr_client
 
@@ -1088,13 +1255,13 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
         """Raise exception from WS server's error message"""
         raise DatasourceError(datasource=self.name, msg=cast(str, message.error))
 
-    async def _on_message(self, type_: TzktMessageType, message: list[dict[str, Any]]) -> None:
+    async def _on_message(self, type_: TezosTzktMessageType, message: list[dict[str, Any]]) -> None:
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
-            action = TzktMessageAction(item['type'])
+            action = TezosTzktMessageAction(item['type'])
             # NOTE: Legacy, sync level returned by TzKT during negotiation
-            if action == TzktMessageAction.STATE:
+            if action == TezosTzktMessageAction.STATE:
                 continue
 
             message_level = item['state']
@@ -1110,11 +1277,11 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
             )
 
             # NOTE: Put data messages to buffer by level
-            if action == TzktMessageAction.DATA:
+            if action == TezosTzktMessageAction.DATA:
                 self._buffer.add(type_, message_level, item['data'])
 
             # NOTE: Try to process rollback automatically, emit if failed
-            elif action == TzktMessageAction.REORG:
+            elif action == TezosTzktMessageAction.REORG:
                 if self._buffer.rollback(type_, channel_level, message_level):
                     self._logger.info('Rolled back blocks were dropped from realtime message buffer')
                 else:
@@ -1126,30 +1293,32 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
         # NOTE: Process extensive data from buffer
         for buffered_message in self._buffer.yield_from():
-            if buffered_message.type == TzktMessageType.operation:
+            if buffered_message.type == TezosTzktMessageType.operation:
                 await self._process_operations_data(cast(list[dict[str, Any]], buffered_message.data))
-            elif buffered_message.type == TzktMessageType.token_transfer:
+            elif buffered_message.type == TezosTzktMessageType.token_transfer:
                 await self._process_token_transfers_data(cast(list[dict[str, Any]], buffered_message.data))
-            elif buffered_message.type == TzktMessageType.big_map:
+            elif buffered_message.type == TezosTzktMessageType.token_balance:
+                await self._process_token_balances_data(cast(list[dict[str, Any]], buffered_message.data))
+            elif buffered_message.type == TezosTzktMessageType.big_map:
                 await self._process_big_maps_data(cast(list[dict[str, Any]], buffered_message.data))
-            elif buffered_message.type == TzktMessageType.head:
+            elif buffered_message.type == TezosTzktMessageType.head:
                 await self._process_head_data(cast(dict[str, Any], buffered_message.data))
-            elif buffered_message.type == TzktMessageType.event:
+            elif buffered_message.type == TezosTzktMessageType.event:
                 await self._process_events_data(cast(list[dict[str, Any]], buffered_message.data))
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 
     async def _process_operations_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw operations from WS"""
-        level_operations: defaultdict[int, deque[TzktOperationData]] = defaultdict(deque)
+        level_operations: defaultdict[int, deque[TezosOperationData]] = defaultdict(deque)
 
         for operation_json in data:
             if operation_json['status'] != 'applied':
                 continue
             if 'hash' in operation_json:
-                operation = TzktOperationData.from_json(operation_json)
+                operation = TezosOperationData.from_json(operation_json)
             else:
-                operation = TzktOperationData.from_migration_json(operation_json)
+                operation = TezosOperationData.from_migration_json(operation_json)
             level_operations[operation.level].append(operation)
 
         for _level, operations in level_operations.items():
@@ -1157,22 +1326,33 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
     async def _process_token_transfers_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw token transfers from WS"""
-        level_token_transfers: defaultdict[int, deque[TzktTokenTransferData]] = defaultdict(deque)
+        level_token_transfers: defaultdict[int, deque[TezosTokenTransferData]] = defaultdict(deque)
 
         for token_transfer_json in data:
-            token_transfer = TzktTokenTransferData.from_json(token_transfer_json)
+            token_transfer = TezosTokenTransferData.from_json(token_transfer_json)
             level_token_transfers[token_transfer.level].append(token_transfer)
 
         for _level, token_transfers in level_token_transfers.items():
             await self.emit_token_transfers(tuple(token_transfers))
 
+    async def _process_token_balances_data(self, data: list[dict[str, Any]]) -> None:
+        """Parse and emit raw token balances from WS"""
+        level_token_balances: defaultdict[int, deque[TezosTokenBalanceData]] = defaultdict(deque)
+
+        for token_balance_json in data:
+            token_balance = TezosTokenBalanceData.from_json(token_balance_json)
+            level_token_balances[token_balance.level].append(token_balance)
+
+        for _level, token_balances in level_token_balances.items():
+            await self.emit_token_balances(tuple(token_balances))
+
     async def _process_big_maps_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        level_big_maps: defaultdict[int, deque[TzktBigMapData]] = defaultdict(deque)
+        level_big_maps: defaultdict[int, deque[TezosBigMapData]] = defaultdict(deque)
 
-        big_maps: deque[TzktBigMapData] = deque()
+        big_maps: deque[TezosBigMapData] = deque()
         for big_map_json in data:
-            big_map = TzktBigMapData.from_json(big_map_json)
+            big_map = TezosBigMapData.from_json(big_map_json)
             level_big_maps[big_map.level].append(big_map)
 
         for _level, big_maps in level_big_maps.items():
@@ -1180,17 +1360,61 @@ class TzktDatasource(IndexDatasource[TzktDatasourceConfig]):
 
     async def _process_head_data(self, data: dict[str, Any]) -> None:
         """Parse and emit raw head block from WS"""
-        block = TzktHeadBlockData.from_json(data)
+        block = TezosHeadBlockData.from_json(data)
         await self.emit_head(block)
 
     async def _process_events_data(self, data: list[dict[str, Any]]) -> None:
         """Parse and emit raw big map diffs from WS"""
-        level_events: defaultdict[int, deque[TzktEventData]] = defaultdict(deque)
+        level_events: defaultdict[int, deque[TezosEventData]] = defaultdict(deque)
 
-        events: deque[TzktEventData] = deque()
+        events: deque[TezosEventData] = deque()
         for event_json in data:
-            event = TzktEventData.from_json(event_json)
+            event = TezosEventData.from_json(event_json)
             level_events[event.level].append(event)
 
         for _level, events in level_events.items():
             await self.emit_events(tuple(events))
+
+
+async def late_tzkt_initialization(
+    config: DipDupConfig,
+    datasources: dict[str, Datasource[Any]],
+    reindex_fn: Callable[..., Awaitable[None]] | None,
+) -> None:
+    """Tasks to perform after all datasources are initialized."""
+    tzkt_datasources = tuple(d for d in datasources.values() if isinstance(d, TezosTzktDatasource))
+    tezos_contracts = tuple(c for c in config.contracts.values() if isinstance(c, TezosContractConfig))
+
+    # NOTE: Late config initialization: resolve contract code hashes.
+    for contract in tezos_contracts:
+        code_hash = contract.code_hash
+        if not isinstance(code_hash, str):
+            continue
+
+        for datasource in tzkt_datasources:
+            with suppress(DatasourceError):
+                contract.code_hash, _ = await datasource.get_contract_hashes(code_hash)
+                break
+        else:
+            raise FrameworkException(f'Failed to resolve code hash for contract `{contract.code_hash}`')
+
+    if not reindex_fn:
+        return
+
+    # NOTE: Ensure that no reorgs happened while we were offline
+    for datasource in tzkt_datasources:
+        db_head = await Head.filter(name=datasource.name).first()
+        if not db_head or not db_head.hash:
+            continue
+
+        actual_head = await datasource.get_block(db_head.level)
+        if db_head.hash != actual_head.hash:
+            # FIXME: Datasources can't trigger reindexing without context, thus `reindex_fn`
+            await reindex_fn(
+                ReindexingReason.rollback,
+                message='Block hash mismatch after restart',
+                datasource=datasource.name,
+                level=db_head.level,
+                stored_block_hash=db_head.hash,
+                actual_block_hash=actual_head.hash,
+            )

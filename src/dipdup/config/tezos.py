@@ -1,49 +1,98 @@
+from __future__ import annotations
+
+import random
+from typing import Annotated
 from typing import Literal
 
-from pydantic import validator
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
+from pydantic.functional_validators import AfterValidator
 
+from dipdup.config import Alias
 from dipdup.config import ContractConfig
+from dipdup.config import IndexConfig
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import FrameworkException
+from dipdup.models.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions import Subscription
 
-TEZOS_ADDRESS_PREFIXES = (
-    'KT1',
-    # NOTE: Wallet addresses are allowed during config validation for debugging purposes.
-    # NOTE: It's a undocumented hack to filter by `source` field. Wallet indexing is not supported.
-    # NOTE: See https://github.com/dipdup-io/dipdup/issues/291
-    'tz1',
-    'tz2',
-    'tz3',
-)
-TEZOS_ADDRESS_LENGTH = 36
+ADDRESS_LENGTH = 36
+SMART_CONTRACT_PREFIX = 'KT1'
+SMART_ROLLUP_PREFIX = 'sr1'
+WALLET_PREFIXES = ('tz1', 'tz2', 'tz3')
 
 
-@dataclass
+def is_contract_address(address: str) -> bool:
+    return len(address) == ADDRESS_LENGTH and address.startswith(SMART_CONTRACT_PREFIX)
+
+
+def is_rollup_address(address: str) -> bool:
+    return len(address) == ADDRESS_LENGTH and address.startswith(SMART_ROLLUP_PREFIX)
+
+
+def is_wallet_address(address: str) -> bool:
+    return len(address) == ADDRESS_LENGTH and address.startswith(WALLET_PREFIXES)
+
+
+def _validate_tezos_address(v: str) -> str:
+    # NOTE: It's a `config export` call with environment variable substitution disabled
+    if '${' in v:
+        return v
+
+    if not (is_contract_address(v) or is_rollup_address(v) or is_wallet_address(v)):
+        raise ValueError(f'`{v}` is not a valid Tezos address')
+
+    return v
+
+
+TezosAddress = Annotated[str, AfterValidator(_validate_tezos_address)]
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
 class TezosContractConfig(ContractConfig):
-    """Contract config
+    """Tezos contract config.
 
+    :param kind: Always `tezos`
     :param address: Contract address
     :param code_hash: Contract code hash or address to fetch it from
-    :param typename: User-defined alias for the contract script
+    :param typename: Alias for the contract script
     """
 
     kind: Literal['tezos']
+    address: TezosAddress | None = None
+    code_hash: int | TezosAddress | None = None
     typename: str | None = None
-    address: str | None = None
-    code_hash: int | str | None = None
-
-    @validator('address', allow_reuse=True)
-    def _valid_address(cls, v: str | None) -> str | None:
-        # NOTE: Environment substitution was disabled during export, skip validation
-        if not v or '$' in v:
-            return v
-
-        if not v.startswith(TEZOS_ADDRESS_PREFIXES) or len(v) != TEZOS_ADDRESS_LENGTH:
-            raise ValueError(f'`{v}` is not a valid Tezos address')
-
-        return v
 
     def get_address(self) -> str:
         if self.address is None:
             raise ConfigurationError(f'`contracts.{self.name}`: `address` field is required`')
         return self.address
+
+    @property
+    def resolved_code_hash(self) -> int | None:
+        if isinstance(self.code_hash, str):
+            raise FrameworkException('`code_hash` was not resolved during startup')
+        return self.code_hash
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+class TezosIndexConfig(IndexConfig):
+    """TzKT index config
+
+    :param kind: starts with 'tezos'
+    :param datasources: `tezos` datasources to use
+    """
+
+    datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
+
+    @property
+    def merge_subscriptions(self) -> bool:
+        return any(d.merge_subscriptions for d in self.datasources)
+
+    @property
+    def random_datasource(self) -> TezosTzktDatasourceConfig:
+        return random.choice(self.datasources)
+
+    def get_subscriptions(self) -> set[Subscription]:
+        return {HeadSubscription()}

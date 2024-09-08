@@ -1,0 +1,16 @@
+from {{ project.package }} import models
+from {{ project.package }}.models.pool import PoolUpdateSign
+from {{ project.package }}.models.pool import pool_update
+from {{ project.package }}.types.pool.evm_events.burn import BurnPayload
+from dipdup.context import HandlerContext
+from dipdup.models.evm import EvmEvent
+
+
+async def burn(
+    ctx: HandlerContext,
+    event: EvmEvent[BurnPayload],
+) -> None:
+    pool = await models.Pool.cached_get_or_none(event.data.address)
+    if not pool:
+        return
+    await pool_update(ctx, pool, event, PoolUpdateSign.BURN)

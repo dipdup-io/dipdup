@@ -1,9 +1,5 @@
-spec_version: 2.0
-package: demo_nft_marketplace
-
-database:
-  kind: sqlite
-  path: db.sqlite3
+spec_version: 3.0
+package: demo_tezos_nft_marketplace
 
 contracts:
   HEN_objkts:
@@ -24,8 +20,9 @@ datasources:
 
 indexes:
   hen_mainnet:
-    kind: tezos.tzkt.operations
-    datasource: tzkt_mainnet
+    kind: tezos.operations
+    datasources:
+      - tzkt_mainnet
     contracts:
       - HEN_minter
     handlers:

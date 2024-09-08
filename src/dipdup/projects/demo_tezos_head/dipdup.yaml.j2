@@ -1,0 +1,14 @@
+spec_version: 3.0
+package: {{ project.package }}
+
+datasources:
+  tzkt_mainnet:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+
+indexes:
+  mainnet_head:
+    kind: tezos.head
+    datasources:
+      - tzkt_mainnet
+    callback: on_mainnet_head

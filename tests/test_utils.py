@@ -1,18 +1,24 @@
 from contextlib import suppress
 
+from pytest import raises
 from tortoise import Tortoise
 
 from dipdup.database import iter_models
 from dipdup.database import tortoise_wrapper
+from dipdup.exceptions import FrameworkException
 from dipdup.models import Index
 from dipdup.models import IndexType
 from dipdup.transactions import TransactionManager
+from dipdup.utils import import_submodules
+from dipdup.utils import parse_object
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
+from tests.types.kolibri_ovens.set_delegate import SetDelegateParameter
+from tests.types.qwer.storage import QwerStorage
+from tests.types.qwer.storage import QwerStorageItem1
 
 
-class SomeException(Exception):
-    ...
+class SomeException(Exception): ...
 
 
 async def test_in_global_transaction() -> None:
@@ -21,19 +27,19 @@ async def test_in_global_transaction() -> None:
         await Tortoise.generate_schemas()
 
         # 1. Success query without transaction
-        await Index(name='1', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+        await Index(name='1', type=IndexType.tezos_operations, config_hash='').save()
         count = await Index.filter().count()
         assert count == 1
 
         # 2. Success query within transaction
         async with transactions.in_transaction():
-            await Index(name='2', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+            await Index(name='2', type=IndexType.tezos_operations, config_hash='').save()
         count = await Index.filter().count()
         assert count == 2
 
         # 3. Not rolled back query without transaction
         with suppress(SomeException):
-            await Index(name='3', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+            await Index(name='3', type=IndexType.tezos_operations, config_hash='').save()
             raise SomeException
         count = await Index.filter().count()
         assert count == 3
@@ -41,7 +47,7 @@ async def test_in_global_transaction() -> None:
         # 4. Rolled back query within transaction
         with suppress(SomeException):
             async with transactions.in_transaction():
-                await Index(name='4', type=IndexType.tezos_tzkt_operations, config_hash='').save()
+                await Index(name='4', type=IndexType.tezos_operations, config_hash='').save()
                 raise SomeException
         count = await Index.filter().count()
         assert count == 3
@@ -66,7 +72,28 @@ async def test_humps_helpers() -> None:
 
 
 async def test_iter_models() -> None:
-    models = list(iter_models('demo_token'))
+    models = list(iter_models('demo_tezos_token'))
     assert len(models) == 9
     assert models[0][0] == 'int_models'
     assert models[-1][0] == 'models'
+
+
+async def test_import_submodules() -> None:
+    with raises(FrameworkException):
+        import_submodules('demo_tezos_token')
+
+    submodules = import_submodules('demo_tezos_token.handlers')
+    assert len(submodules) == 4
+
+
+async def test_parse_object() -> None:
+    # empty
+    empty = parse_object(SetDelegateParameter, None)
+    assert empty.root is None
+    # string only
+    str_ = parse_object(SetDelegateParameter, 'some')
+    assert str_.root == 'some'
+    # map
+    map_ = parse_object(QwerStorage, [[{'R': {'a': 'b'}}, {'R': {}}], [{'L': 'test'}]])
+    assert isinstance(map_.root[0][0], QwerStorageItem1)
+    assert map_.root[0][0].R['a'] == 'b'

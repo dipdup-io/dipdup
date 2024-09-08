@@ -1,0 +1,56 @@
+spec_version: 3.0
+package: demo_tezos_auction
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+contracts:
+  tzcolors_minter:
+    kind: tezos
+    address: KT1FyaDqiMQWg7Exo7VUiXAgZbd2kCzo3d4s
+    typename: tzcolors_minter
+  tzcolors_auction:
+    kind: tezos
+    address: KT1CpeSQKdkhWi4pinYcseCFKmDhs5M74BkU
+    typename: tzcolors_auction
+
+
+templates:
+  tzcolors_auction:
+    kind: tezos.operations
+    datasources:
+      - <datasource>
+    contracts:
+      - <auction>
+    handlers:
+      - callback: on_create_auction
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: create_auction
+      - callback: on_bid
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: bid
+      - callback: on_withdraw
+        pattern:
+          - type: transaction
+            destination: <auction>
+            entrypoint: withdraw
+    first_level: 1335654
+    last_level: 1340654
+
+indexes:
+  tzcolors_auction:
+    template: tzcolors_auction
+    values:
+      datasource: tzkt
+      minter: tzcolors_minter
+      auction: tzcolors_auction
+
+logging: WARN

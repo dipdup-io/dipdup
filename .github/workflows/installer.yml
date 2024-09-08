@@ -1,14 +1,14 @@
 name: Installer
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 on:
   push:
     paths:
       - 'src/**'
-      - 'scripts/install.py'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'pdm.lock'
+      - '.github/workflows/docs.yml'
       - '.github/workflows/installer.yml'
 
 jobs:
@@ -28,12 +28,13 @@ jobs:
             arch: arm64
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+          cache: 'pip'
 
       - name: macOS runner workaround
         run: pip install --upgrade pip pipx
@@ -43,23 +44,14 @@ jobs:
 
       - name: dipdup new
         run: dipdup new --quiet
-
+        
       - name: dipdup init
-        run: cd dipdup-indexer; dipdup init
+        run: cd dipdup_indexer; dipdup init
 
-      - name: make install
-        run: cd dipdup-indexer; make install
+      - name: Install dev dependencies
+        run: cd dipdup_indexer; pdm venv create; pdm remove dipdup; pdm add ..; pdm install
 
-      - name: reinstall dipdup from HEAD
-        run: cd dipdup-indexer; poetry run pip install --upgrade --force-reinstall --no-deps --no-cache-dir ..
+      - name: make all
+        run: cd dipdup_indexer; $(pdm venv activate); make all
 
-      - name: make lint
-        run: cd dipdup-indexer; make lint
-
-      - name: Deploy scripts to GH Pages
-        if: contains(github.ref, 'master')
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./scripts
-          keep_files: true
+      # NOTE: Installer is published in `docs` workflow

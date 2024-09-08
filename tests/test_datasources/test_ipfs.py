@@ -14,6 +14,7 @@ async def test_ipfs_datasource() -> None:
             replay_path=str(Path(__file__).parent.parent / 'replays'),
         ),
     )
+    config._name = 'ipfs'
     ipfs = IpfsDatasource(config)
     async with ipfs:
         file = await ipfs.get('bafybeifx7yeb55armcsxwwitkymga5xf53dxiarykms3ygqic223w5sk3m')

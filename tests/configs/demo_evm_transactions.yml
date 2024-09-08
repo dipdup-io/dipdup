@@ -1,0 +1,22 @@
+spec_version: 3.0
+package: demo_evm_transactions
+
+contracts:
+  eth_usdt:
+    kind: evm
+    address: 0xdac17f958d2ee523a2206206994597c13d831ec7
+    typename: eth_usdt
+
+indexes:
+  eth_usdt_transactions:
+    kind: evm.transactions
+    datasources:
+      - subsquid
+      - etherscan
+      - evm_node
+    handlers:
+      - callback: on_transfer
+        to: eth_usdt
+        method: transfer
+    first_level: 18077421
+    last_level: 18077421

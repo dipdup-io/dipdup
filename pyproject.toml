@@ -1,16 +1,42 @@
-[tool.poetry]
+[project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "6.5.5"
-license = "MIT"
+version = "8.0.0b5"
+license = { text = "MIT" }
 authors = [
-    "Lev Gorodetskiy <dipdup@drsr.io>",
-    "Michael Zaikin <mz@baking-bad.org>"
+    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+    { name = "Michael Zaikin", email = "mz@baking-bad.org" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
+]
+maintainers = [
+    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+    { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 readme = "README.md"
-repository = "https://github.com/dipdup-io/dipdup"
-homepage = "https://dipdup.io/"
-keywords = ["tezos", "blockchain", "sdk", "michelson", "indexers", "tzkt", "cryptocurrencies", "smart-contracts"]
+requires-python = ">=3.12,<3.13"
+keywords = [
+    "api",
+    "backend",
+    "blockchain",
+    "crypto",
+    "cryptocurrencies",
+    "dapp",
+    "declarative",
+    "ethereum",
+    "evm",
+    "framework",
+    "indexer",
+    "indexers",
+    "michelson",
+    "scheduler",
+    "sdk",
+    "smart-contracts",
+    "tezos",
+    "tzkt",
+    "web3",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -18,98 +44,135 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Typing :: Typed",
 ]
-packages = [
-    { include = "dipdup", from = "src" },
+
+dependencies = [
+    # NOTE: Core dependencies; keep pinned between major versions.
+    "datamodel-code-generator~=0.25.7",
+    "pydantic~=2.7",
+    "tortoise-orm==0.21.5",
+    "web3~=6.19",
+    #
+    "aiohttp~=3.9",
+    "aiolimiter~=1.0",
+    "anyio~=4.1",
+    "APScheduler~=3.8",
+    "async-lru~=2.0",
+    "asyncpg~=0.29",
+    "click~=8.0",
+    "eth-abi>=5.0.1,<6",
+    "orjson~=3.9",
+    "prometheus-client~=0.17",
+    "pycryptodome~=3.17",
+    "pyhumps~=3.0",
+    "pysignalr~=1.0",
+    "python-dotenv~=1.0",
+    "python-json-logger>=2.0.7",
+    "ruamel.yaml~=0.17",
+    "sentry-sdk~=2.5",
+    "sqlparse~=0.4",
+    "starknet-py~=0.22",
+    "strict-rfc3339~=0.7",
+    "survey~=5.3",
+    "tabulate~=0.9",
+    "uvloop>=0.19.0",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+[tool.pdm.resolution.overrides]
+# NOTE: Update blocked by web3; safe to override (see https://github.com/ethereum/web3.py/pull/3144)
+lru-dict = "1.3.0"
+# NOTE: tortoise-orm
+aiosqlite = "0.20.0"
 
-# NOTE: Core dependencies are pinned to exact versions to avoid breaking changes
-asyncpg = "0.27.0"
-datamodel-code-generator = "0.18.0"
-pydantic = "1.10.7"
-tortoise-orm = "0.19.3"
+[project.urls]
+Homepage = "https://dipdup.io/"
+Documentation = "https://dipdup.io/docs"
+Repository = "https://github.com/dipdup-io/dipdup"
 
-aiohttp = "^3.8.1"
-aiolimiter = "^1.0.0"
-anyio = "^3.3.2"
-APScheduler = "^3.8.0"
-asyncclick = "^8.0.1"
-eth-abi = "^4.0.0"
-orjson = "^3.6.6"
-prometheus-client = "^0.14.1"
-pyarrow = "^11.0.0"
-pycryptodome = "^3.17"
-pyhumps = "^3.0.2"
-pysignalr = "^0.2.0"
-python-dotenv = "^0.19.0"
-"ruamel.yaml" = "^0.17.2"
-sentry-sdk = "^1.4.3"
-sqlparse = "^0.4.2"
-tabulate = "^0.9.0"
-web3 = "^6.2.0"
-
-[tool.poetry.group.dev.dependencies]
-black = "*"
-diff-cover = "*"
-docker = "*"
-ruff = "*"
-isort = "*"
-mypy = "*"
-pytest = "*"
-pytest-aiohttp = "*"
-pytest-asyncio = "*"
-pytest-cov = "*"
-pytest-xdist = "*"
-Sphinx = "*"
-sphinx-click = "*"
-sphinx-markdown-builder = "*"
-types-pytz = "*"
-types-tabulate = "*"
-
-[tool.poetry.scripts]
+[project.scripts]
 dipdup = "dipdup.cli:cli"
 
-[tool.isort]
-line_length = 120
-force_single_line = true
+[tool.pdm.dev-dependencies]
+lint = [
+    "black",
+    "mypy",
+    "ruff",
+    "types-pytz",
+    "types-tabulate",
+]
+test = [
+    "docker",
+    "pytest~=7.4",
+    "pytest-aiohttp",
+    "pytest-asyncio",
+    "pytest-cov",
+    "pytest-xdist",
+]
+docs = [
+    "Sphinx",
+    "sphinx-click",
+    "sphinx-markdown-builder",
+    "watchdog",
+]
+perf = [
+    "scalene",
+]
+
+[tool.pdm.build.targets.wheel]
+packages = ["src/dipdup"]
 
 [tool.black]
 line-length = 120
-target-version = ["py310"]
+target-version = ["py312"]
 skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
-ignore = ["E402", "E501", "B905"]
-target-version = "py310"
-extend-select = ["B", "C4", "Q"]  # todo: G, PTH, RET, RUF, S, TCH
-flake8-quotes = {inline-quotes = "single", multiline-quotes = "double"}
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = [
+    "E402",   # module level import not at top of file
+    "E501",   # line too long
+    "TCH001", # breaks our runtime Pydantic magic
+    "UP040",  # PEP 695 type aliases are not yet supported by mypy
+]
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
+flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+isort = { force-single-line = true, known-first-party = ["dipdup"] }
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
+strict = true
 
 [tool.pytest.ini_options]
+addopts="--cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v"
 asyncio_mode = "auto"
+log_cli_level = "WARNING"
+filterwarnings = [
+    'ignore:RemovedInMarshmallow4Warning',
+    'ignore:has no models',
+]
 
 [tool.coverage.report]
+precision = 2
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
-    "raise FrameworkError",
     "raise NotImplementedError",
+    "raise FrameworkException",
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
+    "if TYPE_CHECKING:",
+    "if env.DEBUG:",
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

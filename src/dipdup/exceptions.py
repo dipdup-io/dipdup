@@ -3,12 +3,13 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Type
 
-from tortoise.models import Model
+if TYPE_CHECKING:
+    from tortoise.models import Model
+
+    from dipdup.models import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
 
@@ -45,7 +46,7 @@ class Error(ABC, FrameworkException):
     def __str__(self) -> str:
         if not self.__doc__:
             raise NotImplementedError(f'{self.__class__.__name__} has no docstring')
-        return self.__doc__ + ' -> ' + ' '.join(self.args)
+        return self.__doc__ + ' -> ' + ' '.join(self.args).split('\n')[0]
 
     def help(self) -> str:
         """Return a string containing a help message for this error."""
@@ -62,8 +63,7 @@ class Error(ABC, FrameworkException):
         )
 
     @abstractmethod
-    def _help(self) -> str:
-        ...
+    def _help(self) -> str: ...
 
 
 @dataclass(repr=False)
@@ -75,11 +75,28 @@ class DatasourceError(Error):
 
     def _help(self) -> str:
         return f"""
-            `{self.datasource}` datasource returned an error.
+            `{self.datasource}` datasource returned an error:
             
-            {self.msg}
+            "{self.msg}"
 
-            See https://docs.dipdup.io/advanced/datasources
+            See https://dipdup.io/docs/getting-started/datasources
+        """
+
+
+@dataclass(repr=False, kw_only=True)
+class AbiNotAvailableError(Error):
+    """ABI for the contract is not available"""
+
+    address: str
+    typename: str
+
+    def _help(self) -> str:
+        return f"""
+            ABI for the contract `{self.address}` is not available.
+
+            Check the contract address and datasource configuration. If contract is not verified, place ABI manually to `abi/{self.typename}/abi.json` and run `dipdup init`.
+
+            See https://dipdup.io/docs/datasources/abi_etherscan
         """
 
 
@@ -110,17 +127,17 @@ class ConfigurationError(Error):
         return f"""
             {self.msg}
 
-            See https://docs.dipdup.io/config
+            See https://dipdup.io/docs/getting-started/config
         """
 
 
 @dataclass(repr=False)
 class InvalidModelsError(Error):
-    """Can't initialize database, `models.py` module is invalid"""
+    """Can't initialize the database, `models` package is invalid"""
 
     msg: str
-    model: Type[Model]
-    field: Optional[str] = None
+    model: type['Model']
+    field: str | None = None
 
     def _help(self) -> str:
         return f"""
@@ -130,60 +147,35 @@ class InvalidModelsError(Error):
               table: `{self.model._meta.db_table}`
               field: `{self.field or ''}`
 
-            See https://docs.dipdup.io/getting-started/defining-models
-            See https://docs.dipdup.io/config/database
-            See https://docs.dipdup.io/advanced/internal-tables
+            See https://dipdup.io/docs/getting-started/models
         """
 
 
-@dataclass(repr=False)
-class DatabaseEngineError(Error):
-    """Some of the features are not supported with the current database engine"""
-
-    msg: str
-    kind: str
-    required: str
-
-    def _help(self) -> str:
-        return f"""
-            {self.msg}
-
-              database: `{self.kind}`
-              required: `{self.required}`
-
-            See https://docs.dipdup.io/deployment/database-engines
-            See https://docs.dipdup.io/advanced/sql
-            See https://docs.dipdup.io/config/database
-        """
-
-
+# NOTE: Do not raise this exception directly; call `ctx.reindex` instead!
 @dataclass(repr=False)
 class ReindexingRequiredError(Error):
     """Unable to continue indexing with existing database"""
 
     reason: 'ReindexingReason'
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
 
     def _help(self) -> str:
         # FIXME: Indentation hell
         prefix = '\n' + ' ' * 14
         context = prefix.join(f'{k}: {v}' for k, v in self.context.items())
         if context:
-            context = '{prefix}{context}\n'.format(prefix=prefix, context=context)
+            context = f'{prefix}{context}\n'
 
-        return """
-            Reindexing required! Reason: {reason}.
+        return f"""
+            Reindexing required! Reason: {self.reason.value}.
               {context}
             You may want to backup database before proceeding. After that perform one of the following actions:
 
-              * Eliminate the cause of reindexing and run `dipdup schema approve`.
-              * Drop database and start indexing from scratch with `dipdup schema wipe` command.
+              - Eliminate the cause of reindexing and run `dipdup schema approve`.
+              - Drop database and start indexing from scratch with `dipdup schema wipe` command.
 
-            See https://docs.dipdup.io/advanced/reindexing for more information.
-        """.format(
-            reason=self.reason.value,
-            context=context,
-        )
+            See https://dipdup.io/docs/advanced/reindexing for more information.
+        """
 
 
 @dataclass(repr=False)
@@ -198,8 +190,8 @@ class InitializationRequiredError(Error):
 
             Perform the following actions:
 
-              * Run `dipdup init`.
-              * Review and commit changes.
+              - Run `dipdup init`.
+              - Review and commit changes.
         """
 
 
@@ -208,7 +200,7 @@ class ProjectImportError(Error):
     """Can't import type or callback from the project package"""
 
     module: str
-    obj: Optional[str] = None
+    obj: str | None = None
 
     def _help(self) -> str:
         what = f'`{self.obj}` from ' if self.obj else ''
@@ -221,6 +213,24 @@ class ProjectImportError(Error):
               2. Type or callback has been renamed or removed manually
               3. `package` name is occupied by existing non-DipDup package
               4. Package exists, but not discoverable - check `$PYTHONPATH`
+        """
+
+
+@dataclass(repr=False)
+class ProjectPackageError(Error):
+    """Project package is invalid"""
+
+    msg: str
+
+    def _help(self) -> str:
+        return f"""
+            Project package is invalid:
+
+              {self.msg}
+
+            Make sure that package structure is correct and all required files are present.
+
+            See https://dipdup.io/docs/getting-started/package
         """
 
 
@@ -253,7 +263,7 @@ class InvalidDataError(Error):
     """Failed to validate datasource message against generated type class"""
 
     msg: str
-    type_: Type[Any]
+    type_: type[Any]
     data: Any
 
     def _help(self) -> str:
@@ -269,7 +279,7 @@ class InvalidDataError(Error):
 
 @dataclass(repr=False)
 class CallbackError(Error):
-    """An error occured during callback execution"""
+    """An error occurred during callback execution"""
 
     module: str
     exc: Exception
@@ -286,14 +296,14 @@ class CallbackError(Error):
 
 @dataclass(repr=False)
 class CallbackTypeError(Error):
-    """Agrument of invalid type was passed to a callback"""
+    """Argument of invalid type was passed to a callback"""
 
     kind: str
     name: str
 
     arg: str
-    type_: Type[Any]
-    expected_type: Type[Any]
+    type_: type[Any]
+    expected_type: type[Any]
 
     def _help(self) -> str:
         return f"""
@@ -305,8 +315,8 @@ class CallbackTypeError(Error):
 
             Make sure to set correct typenames in config and run `dipdup init --force` to regenerate typeclasses.
 
-            See https://docs.dipdup.io/getting-started/project-package
-            See https://docs.dipdup.io/cli-reference#init
+            See https://dipdup.io/docs/getting-started/package
+            See https://dipdup.io/docs/references/cli#init
         """
 
 
@@ -324,27 +334,7 @@ class HasuraError(Error):
 
             If it's `400 Bad Request`, check out Hasura logs for more information.
 
-            See https://docs.dipdup.io/graphql/
-            See https://docs.dipdup.io/config/hasura
-            See https://docs.dipdup.io/cli-reference#dipdup-hasura-configure
-        """
-
-
-@dataclass(repr=False)
-class FeatureAvailabilityError(Error):
-    """Requested feature is not supported in the current environment"""
-
-    feature: str
-    reason: str
-
-    def _help(self) -> str:
-        return f"""
-            Feature `{self.feature}` is not available in the current environment.
-
-            {self.reason}
-
-            See https://docs.dipdup.io/installation
-            See https://docs.dipdup.io/advanced/docker
+            See https://dipdup.io/docs/graphql/hasura
         """
 
 
@@ -364,4 +354,6 @@ class UnsupportedAPIError(Error):
         """
 
 
-from dipdup.models import ReindexingReason  # noqa: E402
+# TODO: Human-readable Error
+class MigrationError(FrameworkException):
+    pass

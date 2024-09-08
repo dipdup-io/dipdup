@@ -1,0 +1,96 @@
+{{ header }}
+{%- if project.package_manager == 'none' %}
+[project]
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = { text = "{{ project.license }}" }
+authors = [
+    { name = "{{ project.name }}", email = "{{ project.email }}" },
+]
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dipdup>={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}",
+]
+{%- elif project.package_manager == 'pdm' %}
+[project]
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = { text = "{{ project.license }}" }
+authors = [
+    { name = "{{ project.name }}", email = "{{ project.email }}" },
+]
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dipdup>={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}",
+]
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "black",
+    "ruff",
+    "mypy",
+]
+
+[tool.pdm.scripts]
+help = {cmd = "make help", help = "Show this help (default)"}
+all = {cmd = "make all", help = "Run an entire CI pipeline"}
+format = {cmd = "make format", help = "Format with all tools"}
+lint = {cmd = "make lint", help = "Lint with all tools"}
+black = {cmd = "make black", help = "Format with black"}
+ruff = {cmd = "make ruff", help = "Lint with ruff"}
+mypy = {cmd = "make mypy", help = "Lint with mypy"}
+image = {cmd = "make image", help = "Build Docker image"}
+up = {cmd = "make up", help = "Start Compose stack"}
+down = {cmd = "make down", help = "Stop Compose stack"}
+{% elif project.package_manager == 'poetry' %}
+[tool.poetry]
+name = "{{ project.package }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+license = "{{ project.license }}"
+authors = [
+    "{{ project.name }} <{{ project.email }}>",
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+dipdup = ">={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+ruff = "*"
+mypy = "*"
+{% endif %}
+[tool.black]
+line-length = {{ project.line_length }}
+target-version = ['py312']
+skip-string-normalization = true
+
+[tool.ruff]
+line-length = {{ project.line_length }}
+target-version = 'py312'
+
+[tool.ruff.lint]
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
+flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+isort = { force-single-line = true}
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = false
+
+{% if project.package_manager == 'pdm' -%}
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+{%- elif project.package_manager == 'poetry' %}
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+{%- endif %}
