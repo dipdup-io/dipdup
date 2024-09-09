@@ -212,16 +212,14 @@ class _MetricManager:
     progress: float = 0.0
 
     def stats(self) -> dict[str, Any]:
-        result = {}
-        for k, v in self.__dict__.items():
-            if k.startswith('_'):
-                continue
-            if isinstance(v, defaultdict):
-                for kk, vv in v.items():
-                    result[f'{k}:{kk}'] = f'{vv:.2f}' if isinstance(vv, float) else vv
-            else:
-                result[k] = f'{v:.2f}' if isinstance(v, float) else v
-        return result
+        def _round(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {k: _round(v) for k, v in value.items()}
+            if isinstance(value, float):
+                return round(value, 2)
+            return value
+
+        return {k: _round(v) for k, v in self.__dict__.items() if not k.startswith('_')}
 
 
 caches = _CacheManager()

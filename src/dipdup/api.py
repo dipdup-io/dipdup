@@ -51,6 +51,7 @@ async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Respon
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()
+    routes.get('/')(_method_wrapper(ctx, _performance))
     routes.get('/performance')(_method_wrapper(ctx, _performance))
     routes.post('/add_index')(_method_wrapper(ctx, _add_index))
     routes.post('/add_contract')(_method_wrapper(ctx, _add_contract))
