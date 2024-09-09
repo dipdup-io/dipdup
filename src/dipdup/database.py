@@ -206,9 +206,9 @@ async def generate_schema(
         await _pg_create_schema(conn, name)
         await Tortoise.generate_schemas()
         await _pg_create_functions(conn)
-        await _pg_create_views(conn)
     else:
         raise NotImplementedError
+    await _create_views(conn)
 
 
 async def _pg_create_functions(conn: AsyncpgClient) -> None:
@@ -235,7 +235,7 @@ async def get_tables() -> set[str]:
     raise NotImplementedError
 
 
-async def _pg_create_views(conn: AsyncpgClient) -> None:
+async def _create_views(conn: SupportedClient) -> None:
     sql_path = Path(__file__).parent / 'sql' / 'dipdup_status.sql'
     await execute_sql(conn, sql_path)
 

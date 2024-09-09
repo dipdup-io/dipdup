@@ -99,7 +99,7 @@ class AbstractSubsquidDatasource(
                 defaults={
                     'level': level,
                     'hash': '',
-                    'timestamp': '',
+                    'timestamp': 0,
                 },
             ),
         )

@@ -20,6 +20,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - install: Fixed reinstalling package when `--force` flag is used.
 - package: Create package in-place if cwd equals package name.
 - performance: Add index name to fetcher and realtime queues.
+- subsquid: Fixed missing entry in `dipdup_head` internal table.
 - tezos.big_maps: Fixed logging status message in `skip_history` mode.
 - tezos.big_maps: Respect order of handlers in `skip_history` mode.
 
