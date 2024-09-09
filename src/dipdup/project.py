@@ -10,7 +10,6 @@ from pathlib import Path
 from pydantic import ConfigDict
 from pydantic import TypeAdapter
 from pydantic.dataclasses import dataclass
-from tabulate import tabulate
 from typing_extensions import TypedDict
 
 from dipdup import __version__
@@ -125,6 +124,7 @@ def prompt_anyof(
 ) -> tuple[int, str]:
     """Ask user to choose one of options; returns index and value"""
     import survey  # type: ignore[import-untyped]
+    from tabulate import tabulate
 
     table = tabulate(
         zip(options, comments, strict=True),

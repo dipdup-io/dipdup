@@ -16,7 +16,7 @@ async def on_update_records(
 
     record_name = bytes.fromhex(store_records.key.root).decode()
     record_path = record_name.split('.')
-    ctx.logger.info('Processing `%s`', record_name)
+    ctx.logger.debug('Processing `%s`', record_name)
 
     level = store_records.value.level
     if len(record_path) != int(level):

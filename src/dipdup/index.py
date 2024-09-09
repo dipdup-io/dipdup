@@ -62,17 +62,23 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._ctx = ctx
         self._config = config
         self._datasources = datasources
-        self._queue: deque[IndexQueueItemT] = deque()
-        queues.add_queue(self._queue, f'index_realtime:{config.name}:{id(self)})')
+        self._queue: deque[IndexQueueItemT] | None = None
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
 
+    @property
+    def queue(self) -> deque[IndexQueueItemT]:
+        if self._queue is None:
+            self._queue = deque()
+            queues.add_queue(self._queue, f'{self._config.name}:realtime')
+        return self._queue
+
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
-        self._queue.append(message)
+        self.queue.append(message)
 
-        Metrics.set_levels_to_realtime(self._config.name, len(self._queue))
+        Metrics.set_levels_to_realtime(self._config.name, len(self.queue))
 
     @abstractmethod
     async def _synchronize(self, sync_level: int) -> None:
@@ -88,10 +94,10 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
-        if self._queue:
+        if self.queue:
             self._logger.debug('Processing websocket queue')
-        while self._queue:
-            message = self._queue.popleft()
+        while self.queue:
+            message = self.queue.popleft()
             if not message:
                 raise FrameworkException('Empty message in the queue')
 
@@ -186,7 +192,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     @property
     def realtime(self) -> bool:
-        return self.state.status == IndexStatus.realtime and not self._queue
+        return self.state.status == IndexStatus.realtime and not self.queue
 
     def get_sync_level(self) -> int:
         """Get level index needs to be synchronized to depending on its subscription status"""
@@ -252,13 +258,13 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         if index_level < sync_level:
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
-            self._queue.clear()
+            self.queue.clear()
 
             with Metrics.measure_total_sync_duration():
                 await self._synchronize(sync_level)
                 return True
 
-        if self._queue:
+        if self.queue:
             with Metrics.measure_total_realtime_duration():
                 await self._process_queue()
                 return True

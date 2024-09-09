@@ -83,6 +83,7 @@ class StarknetEventsIndex(
             event_ids[handler_config.contract.address].add(event_abi['event_identifier'])
 
         return StarknetSubsquidEventFetcher(
+            name=self.name,
             datasources=self.subsquid_datasources,
             first_level=first_level,
             last_level=last_level,
@@ -108,6 +109,7 @@ class StarknetEventsIndex(
             event_ids[handler_config.contract.address].add(event_abi['event_identifier'])
 
         return StarknetNodeEventFetcher(
+            name=self.name,
             datasources=self.node_datasources,
             first_level=first_level,
             last_level=last_level,

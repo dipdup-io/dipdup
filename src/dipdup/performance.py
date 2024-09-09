@@ -134,9 +134,12 @@ class _QueueManager:
         self._queues: dict[str, deque[Any]] = {}
         self._limits: dict[str, int] = {}
 
-    def add_queue(self, queue: deque[Any], name: str | None = None, limit: int = 0) -> None:
-        if name is None:
-            name = f'{queue.__module__}:{id(queue)}'
+    def add_queue(
+        self,
+        queue: deque[Any],
+        name: str,
+        limit: int = 0,
+    ) -> None:
         if name in self._queues:
             raise FrameworkException(f'Queue `{name}` already exists')
         self._queues[name] = queue
@@ -209,16 +212,14 @@ class _MetricManager:
     progress: float = 0.0
 
     def stats(self) -> dict[str, Any]:
-        result = {}
-        for k, v in self.__dict__.items():
-            if k.startswith('_'):
-                continue
-            if isinstance(v, defaultdict):
-                for kk, vv in v.items():
-                    result[f'{k}:{kk}'] = vv
-            else:
-                result[k] = v
-        return result
+        def _round(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {k: _round(v) for k, v in value.items()}
+            if isinstance(value, float):
+                return round(value, 2)
+            return value
+
+        return {k: _round(v) for k, v in self.__dict__.items() if not k.startswith('_')}
 
 
 caches = _CacheManager()

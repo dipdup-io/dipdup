@@ -169,7 +169,7 @@ def sighash_from_abi(abi_item: dict[str, Any]) -> str:
         raise FrameworkException(f"`{abi_item['name']}` is not a function; can't get sighash")
 
     signature = f'{abi_item["name"]}({",".join([i["type"] for i in abi_item["inputs"]])})'
-    return Web3.keccak(text=signature).hex()[:10]
+    return '0x' + Web3.keccak(text=signature).hex()[:8]
 
 
 def topic0_from_abi(event: dict[str, Any]) -> str:

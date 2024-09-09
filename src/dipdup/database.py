@@ -94,11 +94,17 @@ async def tortoise_wrapper(
                 except asyncpg.exceptions.InvalidPasswordError as e:
                     raise ConfigurationError(f'{e.__class__.__name__}: {e}') from e
 
-                if unsafe_sqlite:
+                if not isinstance(conn, SqliteClient):
+                    pass
+                elif unsafe_sqlite:
                     _logger.warning('Unsafe SQLite mode enabled; database integrity is not guaranteed!')
                     await conn.execute_script('PRAGMA foreign_keys = OFF')
                     await conn.execute_script('PRAGMA synchronous = OFF')
                     await conn.execute_script('PRAGMA journal_mode = OFF')
+                else:
+                    await conn.execute_script('PRAGMA foreign_keys = ON')
+                    await conn.execute_script('PRAGMA synchronous = NORMAL')
+                    await conn.execute_script('PRAGMA journal_mode = WAL')
 
             # FIXME: Poor logging
             except (OSError, asyncpg.exceptions.CannotConnectNowError):
@@ -194,21 +200,20 @@ async def generate_schema(
     conn: SupportedClient,
     name: str,
 ) -> None:
-    if isinstance(conn, SqliteClient):
-        await Tortoise.generate_schemas()
-    elif isinstance(conn, AsyncpgClient):
+    if isinstance(conn, AsyncpgClient):
         await _pg_create_schema(conn, name)
-        await Tortoise.generate_schemas()
-        await _pg_create_functions(conn)
-        await _pg_create_views(conn)
-    else:
-        raise NotImplementedError
+
+    await Tortoise.generate_schemas()
+
+    if isinstance(conn, AsyncpgClient):
+        await _pg_run_scripts(conn)
 
 
-async def _pg_create_functions(conn: AsyncpgClient) -> None:
+async def _pg_run_scripts(conn: AsyncpgClient) -> None:
     for fn in (
         'dipdup_approve.sql',
         'dipdup_wipe.sql',
+        'dipdup_status.sql',
     ):
         sql_path = Path(__file__).parent / 'sql' / fn
         await execute_sql(conn, sql_path)
@@ -226,12 +231,6 @@ async def get_tables() -> set[str]:
         return {row[0] for row in postgres_res}
 
     raise NotImplementedError
-
-
-async def _pg_create_views(conn: AsyncpgClient) -> None:
-    sql_path = Path(__file__).parent / 'sql' / 'dipdup_head_status.sql'
-    # TODO: Configurable interval
-    await execute_sql(conn, sql_path, HEAD_STATUS_TIMEOUT)
 
 
 # FIXME: Private but used in dipdup.hasura

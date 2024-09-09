@@ -32,7 +32,18 @@ from dipdup.sys import set_up_process
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
+ROOT_CONFIG = 'dipdup.yaml'
+CONFIG_RE = r'dipdup.*\.ya?ml'
 
+# NOTE: Do not try to load config for these commands as they don't need it
+NO_CONFIG_CMDS = {
+    'new',
+    'migrate',
+    'config',
+}
+
+
+_logger = logging.getLogger(__name__)
 _click_wrap_text = click.formatting.wrap_text
 
 
@@ -47,21 +58,51 @@ def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
 
 click.formatting.wrap_text = _wrap_text
 
-ROOT_CONFIG = 'dipdup.yaml'
-CONFIG_RE = r'dipdup.*\.ya?ml'
 
-# NOTE: Do not try to load config for these commands as they don't need it
-NO_CONFIG_CMDS = {
-    'new',
-    'install',
-    'uninstall',
-    'update',
-    'migrate',
-    'config',
-}
+def _get_paths(
+    params: dict[str, Any],
+) -> tuple[list[Path], list[Path]]:
+    from dipdup.exceptions import ConfigurationError
+
+    config_args: list[str] = params.pop('config', [])
+    env_file_args: list[str] = params.pop('env_file', [])
+    config_alias_args: list[str] = params.pop('c', [])
+
+    config_paths: list[Path] = []
+    env_file_paths: list[Path] = []
+
+    if config_alias_args:
+        if config_args:
+            raise ConfigurationError('Cannot use both `-c` and `-C` options at the same time')
+        config_args = [
+            ROOT_CONFIG,
+            *[f'configs/dipdup.{name}.yaml' for name in config_alias_args],
+        ]
+    config_args = config_args or [ROOT_CONFIG]
+
+    for arg in config_args:
+        path = Path(arg)
+        if path.is_dir():
+            path = path / ROOT_CONFIG
+        if not path.is_file():
+            raise ConfigurationError(f'Config file not found: {path}')
+        config_paths.append(path)
+
+    for arg in env_file_args:
+        path = Path(arg)
+        if not path.is_file():
+            raise ConfigurationError(f'Env file not found: {path}')
+        env_file_paths.append(path)
+
+    return config_paths, env_file_paths
 
 
-_logger = logging.getLogger(__name__)
+def _load_env_files(env_file_paths: list[Path]) -> None:
+    for path in env_file_paths:
+        from dotenv import load_dotenv
+
+        _logger.info('Applying env_file `%s`', path)
+        load_dotenv(path, override=True)
 
 
 def echo(message: str, err: bool = False, **styles: Any) -> None:
@@ -133,11 +174,13 @@ def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None
 async def _check_version() -> None:
     if '+editable' in __version__:
         return
+
+    _skip_msg = 'Set `DIPDUP_NO_VERSION_CHECK` variable to hide this message.'
     if not all(c.isdigit() or c == '.' for c in __version__):
         _logger.warning(
             'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
         )
-        _logger.info('Set `advanced.skip_version_check` flag in config to hide this message.')
+        _logger.info(_skip_msg)
         return
 
     import aiohttp
@@ -150,8 +193,12 @@ async def _check_version() -> None:
         latest_version = response_json['tag_name']
 
         if __version__ != latest_version:
-            _logger.warning('You are running an outdated version of DipDup. Please run `dipdup update`.')
-            _logger.info('Set `skip_version_check` flag in config to hide this message.')
+            _logger.warning(
+                'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
+                __version__,
+                latest_version,
+            )
+            _logger.info(_skip_msg)
 
 
 def _skip_cli_group() -> bool:
@@ -161,15 +208,15 @@ def _skip_cli_group() -> bool:
     is_empty_group = args in (
         ['config'],
         ['hasura'],
+        ['package'],
         ['schema'],
     )
     # NOTE: Simple helpers that don't use any of our cli boilerplate
-    is_script = args[0] in (
-        'self',
+    is_script_group = args[0] in (
         'report',
+        'self',
     )
-    if not (is_help or is_empty_group or is_script):
-        _logger.debug('Skipping cli group')
+    if not (is_help or is_empty_group or is_script_group):
         return False
     return True
 
@@ -186,7 +233,7 @@ def _skip_cli_group() -> bool:
     type=str,
     multiple=True,
     help='A path to DipDup project config.',
-    default=[ROOT_CONFIG],
+    default=[],
     metavar='PATH',
     envvar='DIPDUP_CONFIG',
 )
@@ -200,9 +247,17 @@ def _skip_cli_group() -> bool:
     metavar='PATH',
     envvar='DIPDUP_ENV_FILE',
 )
+@click.option(
+    '-C',
+    type=str,
+    multiple=True,
+    help='A shorthand for `-c . -c configs/dipdup.<name>.yaml`',
+    default=[],
+    metavar='NAME',
+)
 @click.pass_context
 @_cli_wrapper
-async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> None:
+async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: list[str]) -> None:
     set_up_process()
 
     if _skip_cli_group():
@@ -215,22 +270,9 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     except AttributeError:
         _logger.warning("You're running an outdated Python 3.12 release; consider upgrading")
 
-    from dotenv import load_dotenv
-
-    from dipdup.exceptions import ConfigurationError
     from dipdup.sys import set_up_logging
 
     set_up_logging()
-
-    env_file_paths = [Path(file) for file in env_file]
-    config_paths = [Path(file) for file in config]
-
-    # NOTE: Apply env files before loading the config
-    for env_path in env_file_paths:
-        if not env_path.is_file():
-            raise ConfigurationError(f'env file `{env_path}` does not exist')
-        _logger.info('Applying env_file `%s`', env_path)
-        load_dotenv(env_path, override=True)
 
     # NOTE: These commands need no other preparations
     if ctx.invoked_subcommand in NO_CONFIG_CMDS:
@@ -240,6 +282,11 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     from dipdup.config import DipDupConfig
     from dipdup.exceptions import InitializationRequiredError
     from dipdup.package import DipDupPackage
+
+    # NOTE: Early config loading; some commands do it later
+    config_paths, env_file_paths = _get_paths(ctx.params)
+    # NOTE: Apply env files before loading the config
+    _load_env_files(env_file_paths)
 
     _config = DipDupConfig.load(
         paths=config_paths,
@@ -258,13 +305,13 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str]) -> Non
     _config.initialize()
 
     # NOTE: Fire and forget, do not block instant commands
-    if not any((_config.advanced.skip_version_check, env.TEST, env.CI, env.NO_VERSION_CHECK)):
+    if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
         fire_and_forget(_check_version())
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
         # NOTE: `ConfigurationError` will be raised later with more details.
-        DipDupPackage(_config.package_path).initialize()
+        DipDupPackage(_config.package_path, quiet=True).initialize()
     except Exception as e:
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
@@ -338,9 +385,10 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
     from dipdup.config import DipDupConfig
     from dipdup.migrations.three_zero import ThreeZeroProjectMigration
 
-    # NOTE: Extract paths from arguments since we can't load config with old spec version
+    # NOTE: Late loading: can't load config with old spec version
     assert ctx.parent
-    config_paths: list[Path] = [Path(file) for file in ctx.parent.params['config']]
+    config_paths, env_file_paths = _get_paths(ctx.parent.params)
+    _load_env_files(env_file_paths)
 
     migration = ThreeZeroProjectMigration(tuple(config_paths), dry_run)
     migration.migrate()
@@ -360,6 +408,7 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
         ctx=ctx,
         base=True,
         force=True,
+        include=[],
     )
 
 
@@ -391,7 +440,10 @@ async def config_export(
     from dipdup.config import DipDupConfig
     from dipdup.yaml import DipDupYAMLConfig
 
-    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+    # NOTE: Late loading; cli() was skipped.
+    config_paths, env_file_paths = _get_paths(ctx.parent.parent.params)  # type: ignore[union-attr]
+    _load_env_files(env_file_paths)
+
     if raw:
         raw_config, _ = DipDupYAMLConfig.load(
             paths=config_paths,
@@ -433,7 +485,9 @@ async def config_env(
     """
     from dipdup.yaml import DipDupYAMLConfig
 
-    config_paths = [Path(c) for c in ctx.parent.parent.params['config']]  # type: ignore[union-attr]
+    # NOTE: Late loading; cli() was skipped.
+    config_paths, env_file_paths = _get_paths(ctx.parent.parent.params)  # type: ignore[union-attr]
+    _load_env_files(env_file_paths)
 
     _, environment = DipDupYAMLConfig.load(
         paths=config_paths,
@@ -766,6 +820,7 @@ async def self(ctx: click.Context) -> None:
 @click.option('--ref', '-r', default=None, help='Install DipDup from specific git ref.')
 @click.option('--path', '-p', default=None, help='Install DipDup from local path.')
 @click.option('--pre', is_flag=True, help='Include pre-release versions.')
+@click.option('--editable', '-e', is_flag=True, help='Install DipDup in editable mode.')
 @_cli_wrapper
 async def self_install(
     ctx: click.Context,
@@ -775,6 +830,7 @@ async def self_install(
     ref: str | None,
     path: str | None,
     pre: bool,
+    editable: bool,
 ) -> None:
     """Install DipDup for the current user."""
     import dipdup.install
@@ -788,6 +844,7 @@ async def self_install(
         ref=ref,
         path=path,
         pre=pre,
+        editable=editable,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )
@@ -831,6 +888,7 @@ async def self_update(
         ref=None,
         path=None,
         pre=pre,
+        update=True,
         with_pdm=replay is not None and replay['package_manager'] == 'pdm',
         with_poetry=replay is not None and replay['package_manager'] == 'poetry',
     )

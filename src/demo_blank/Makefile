@@ -13,6 +13,15 @@ help:           ## Show this help (default)
 all:            ## Run an entire CI pipeline
 	make format lint
 
+##
+
+install:        ## Install dependencies
+	pdm install
+
+update:         ## Update dependencies
+	pdm update
+	dipdup self update -q
+
 format:         ## Format with all tools
 	make black
 
@@ -28,7 +37,7 @@ ruff:           ## Lint with ruff
 	ruff check --fix .
 
 mypy:           ## Lint with mypy
-	mypy --no-incremental --exclude ${PACKAGE} .
+	mypy .
 
 ##
 

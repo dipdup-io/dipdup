@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from dipdup.config.tezos_big_maps import TezosBigMapsHandlerConfig
-from dipdup.fetcher import readahead_by_level
-from dipdup.indexes.tezos_tzkt import TZKT_READAHEAD_LIMIT
 from dipdup.indexes.tezos_tzkt import TezosTzktFetcher
 from dipdup.models.tezos import TezosBigMapData
 
@@ -33,11 +30,11 @@ def get_big_map_paths(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[str]
     return paths
 
 
-def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> set[tuple[str, str]]:
+def get_big_map_pairs(handlers: Iterable[TezosBigMapsHandlerConfig]) -> list[tuple[str, str]]:
     """Get address-path pairs for fetch big map diffs during sync with `skip_history`"""
-    pairs = set()
+    pairs = []
     for handler_config in handlers:
-        pairs.add(
+        pairs.append(
             (
                 handler_config.contract.get_address(),
                 handler_config.path,
@@ -51,14 +48,19 @@ class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[TezosTzktDatasource, ...],
         first_level: int,
         last_level: int,
         big_map_addresses: set[str],
         big_map_paths: set[str],
     ) -> None:
-        super().__init__(datasources, first_level, last_level)
-        self._logger = logging.getLogger('dipdup.fetcher')
+        super().__init__(
+            name=name,
+            datasources=datasources,
+            first_level=first_level,
+            last_level=last_level,
+        )
         self._big_map_addresses = big_map_addresses
         self._big_map_paths = big_map_paths
 
@@ -74,6 +76,7 @@ class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
         big_map_paths = get_big_map_paths(config.handlers)
 
         return BigMapFetcher(
+            name=config.name,
             datasources=datasources,
             first_level=first_level,
             last_level=last_level,
@@ -88,5 +91,5 @@ class BigMapFetcher(TezosTzktFetcher[TezosBigMapData]):
             self._first_level,
             self._last_level,
         )
-        async for level, batch in readahead_by_level(big_map_iter, limit=TZKT_READAHEAD_LIMIT):
+        async for level, batch in self.readahead_by_level(big_map_iter):
             yield level, batch

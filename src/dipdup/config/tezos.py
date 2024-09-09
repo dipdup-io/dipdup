@@ -46,7 +46,7 @@ def _validate_tezos_address(v: str) -> str:
     return v
 
 
-TezosAddress = Annotated[str, AfterValidator(_validate_tezos_address)]
+type TezosAddress = Annotated[str, AfterValidator(_validate_tezos_address)]  # type: ignore
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

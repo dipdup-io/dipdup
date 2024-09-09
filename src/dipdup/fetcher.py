@@ -16,6 +16,7 @@ from typing import TypeVar
 from dipdup import env
 from dipdup.exceptions import FrameworkException
 from dipdup.performance import queues
+from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -65,17 +66,18 @@ async def yield_by_level(
         yield items[0].level, items
 
 
-async def readahead_by_level(
+async def _readahead_by_level(
     fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
     limit: int,
+    name: str,
 ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
     if env.LOW_MEMORY:
         limit = min(limit, 1000)
-    queue_name = f'fetcher_readahead:{id(fetcher_iter)}'
+    name = f'{name}:readahead'
     queue: deque[tuple[int, tuple[BufferT, ...]]] = deque()
     queues.add_queue(
         queue,
-        name=queue_name,
+        name=name,
         limit=limit,
     )
     has_more = asyncio.Event()
@@ -92,7 +94,7 @@ async def readahead_by_level(
 
     task = asyncio.create_task(
         _readahead(),
-        name=f'fetcher:{id(fetcher_iter)}',
+        name=name,
     )
 
     while True:
@@ -107,7 +109,7 @@ async def readahead_by_level(
         with suppress(asyncio.TimeoutError):
             await asyncio.wait_for(has_more.wait(), timeout=10)
 
-    queues.remove_queue(queue_name)
+    queues.remove_queue(name)
 
 
 class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
@@ -155,18 +157,23 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
 
     def __init__(
         self,
+        name: str,
         datasources: tuple[DatasourceT, ...],
         first_level: int,
         last_level: int,
+        readahead_limit: int,
     ) -> None:
+        self._name = name
         self._datasources = datasources
         self._first_level = first_level
         self._last_level = last_level
+        self._readahead_limit = readahead_limit
+        self._logger = FormattedLogger(__name__, fmt=f'{self._name}: ' + '{}')
         self._buffer: defaultdict[Level, deque[BufferT]] = defaultdict(deque)
         self._head = 0
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)}>'
+        return f'<{self.__class__.__name__} name={self._name} head={self._head} buffer={len(self._buffer)}>'
 
     @property
     def random_datasource(self) -> DatasourceT:
@@ -179,6 +186,18 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.
         """
         ...
+
+    async def readahead_by_level(
+        self,
+        fetcher_iter: AsyncIterator[tuple[BufferT, ...]],
+        limit: int | None = None,
+    ) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
+        async for level, batch in _readahead_by_level(
+            fetcher_iter=fetcher_iter,
+            limit=limit or self._readahead_limit,
+            name=self._name,
+        ):
+            yield level, batch
 
     async def _merged_iter(
         self,

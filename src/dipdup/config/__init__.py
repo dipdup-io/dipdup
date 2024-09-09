@@ -15,7 +15,6 @@ inheritance.
 
 from __future__ import annotations
 
-import hashlib
 import importlib
 import inspect
 import logging.config
@@ -82,10 +81,10 @@ def _valid_url(v: str, ws: bool) -> str:
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
-Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
-ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
-Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]
-WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
+type Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]  # type: ignore
+type ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]  # type: ignore
+type Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]  # type: ignore
+type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]  # type: ignore
 
 
 _logger = logging.getLogger(__name__)
@@ -343,6 +342,8 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
 
     def hash(self) -> str:
         """Calculate hash to ensure config has not changed since last run."""
+        import hashlib
+
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)
@@ -536,7 +537,6 @@ class AdvancedConfig:
     :param scheduler: `apscheduler` scheduler config.
     :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
     :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
-    :param skip_version_check: Disable warning about running unstable or out-of-date DipDup version.
     :param rollback_depth: A number of levels to keep for rollback.
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
@@ -547,7 +547,6 @@ class AdvancedConfig:
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
-    skip_version_check: bool = False
     rollback_depth: int | None = None
     decimal_precision: int | None = None
     unsafe_sqlite: bool = False
@@ -928,7 +927,7 @@ class DipDupConfig:
 
         if missing_value := re.search(r'<*>', raw_template):
             raise ConfigurationError(
-                f'`{template_config.name}` index config is missing required template value `{missing_value}`'
+                f'`{template_config.name}` index config is missing required template value `{missing_value.group()}`'
             )
 
         json_template = orjson.loads(raw_template)
