@@ -200,18 +200,16 @@ async def generate_schema(
     conn: SupportedClient,
     name: str,
 ) -> None:
-    if isinstance(conn, SqliteClient):
-        await Tortoise.generate_schemas()
-    elif isinstance(conn, AsyncpgClient):
+    if isinstance(conn, AsyncpgClient):
         await _pg_create_schema(conn, name)
-        await Tortoise.generate_schemas()
-        await _pg_create_functions(conn)
-    else:
-        raise NotImplementedError
-    await _create_views(conn)
+
+    await Tortoise.generate_schemas()
+
+    if isinstance(conn, AsyncpgClient):
+        await _pg_run_scripts(conn)
 
 
-async def _pg_create_functions(conn: AsyncpgClient) -> None:
+async def _pg_run_scripts(conn: AsyncpgClient) -> None:
     for fn in (
         'dipdup_approve.sql',
         'dipdup_wipe.sql',
@@ -233,11 +231,6 @@ async def get_tables() -> set[str]:
         return {row[0] for row in postgres_res}
 
     raise NotImplementedError
-
-
-async def _create_views(conn: SupportedClient) -> None:
-    sql_path = Path(__file__).parent / 'sql' / 'dipdup_status.sql'
-    await execute_sql(conn, sql_path)
 
 
 # FIXME: Private but used in dipdup.hasura
