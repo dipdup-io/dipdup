@@ -74,12 +74,17 @@ def _get_paths(
     if config_alias_args:
         if config_args:
             raise ConfigurationError('Cannot use both `-c` and `-C` options at the same time')
-        config_args = ['.', *(f'configs/dipdup.{name}.yaml' for name in config_args)]
-
-    config_args = config_args or ['.']
+        config_args = [
+            ROOT_CONFIG,
+            *[f'configs/dipdup.{name}.yaml' for name in config_alias_args],
+        ]
+    if not config_args:
+        config_args.append(ROOT_CONFIG)
 
     for arg in config_args:
-        path = Path(arg if arg != '.' else ROOT_CONFIG)
+        path = Path(arg)
+        if path.is_dir():
+            path = path / ROOT_CONFIG
         if not path.is_file():
             raise ConfigurationError(f'Config file not found: {path}')
         config_paths.append(path)
