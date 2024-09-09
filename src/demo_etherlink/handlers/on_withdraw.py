@@ -11,5 +11,4 @@ async def on_withdraw(
     sr_execute_0: TzktSmartRollupExecute,
     withdraw: TzktTransaction[WithdrawParameter, TicketerStorage],
     transaction_2: TzktOperationData,
-) -> None:
-    ...
+) -> None: ...

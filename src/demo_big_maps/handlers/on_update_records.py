@@ -39,5 +39,8 @@ async def on_update_records(
 
         await models.Record.update_or_create(
             id=record_name,
-            defaults={'domain_id': '.'.join(record_path[-2:]), 'address': store_records.value.address,},
+            defaults={
+                'domain_id': '.'.join(record_path[-2:]),
+                'address': store_records.value.address,
+            },
         )
