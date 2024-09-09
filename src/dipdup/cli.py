@@ -78,8 +78,7 @@ def _get_paths(
             ROOT_CONFIG,
             *[f'configs/dipdup.{name}.yaml' for name in config_alias_args],
         ]
-    if not config_args:
-        config_args.append(ROOT_CONFIG)
+    config_args = config_args or [ROOT_CONFIG]
 
     for arg in config_args:
         path = Path(arg)
