@@ -13,5 +13,4 @@ async def on_deposit(
     deposit: TzktTransaction[DepositParameter, TicketerStorage],
     default: TzktTransaction[DefaultParameter, TicketHelperStorage],
     rollup_default: TzktTransaction[RollupDefaultParameter, RollupStorage],
-) -> None:
-    ...
+) -> None: ...

@@ -7,5 +7,4 @@ from dipdup.models.tezos_tzkt import TzktEvent
 async def on_move_event(
     ctx: HandlerContext,
     event: TzktEvent[MovePayload],
-) -> None:
-    ...
+) -> None: ...

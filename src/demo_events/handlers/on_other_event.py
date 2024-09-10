@@ -6,5 +6,4 @@ from dipdup.models.tezos_tzkt import TzktUnknownEvent
 async def on_other_event(
     ctx: HandlerContext,
     event: TzktUnknownEvent,
-) -> None:
-    ...
+) -> None: ...

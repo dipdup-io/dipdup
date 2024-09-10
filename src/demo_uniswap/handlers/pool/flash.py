@@ -7,5 +7,4 @@ from dipdup.models.evm_subsquid import SubsquidEvent
 async def flash(
     ctx: HandlerContext,
     event: SubsquidEvent[Flash],
-) -> None:
-    ...
+) -> None: ...
