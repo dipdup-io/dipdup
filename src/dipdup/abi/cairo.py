@@ -13,10 +13,10 @@ from dipdup.utils import json_dumps
 from dipdup.utils import touch
 
 if TYPE_CHECKING:
-    from starknet_py.abi.v2 import Abi  # type: ignore[import-untyped]
-    from starknet_py.cairo.data_types import CairoType  # type: ignore[import-untyped]
+    from starknet_py.abi.v2.model import Abi
+    from starknet_py.cairo.data_types import CairoType
     from starknet_py.cairo.data_types import EventType
-    from starknet_py.serialization import PayloadSerializer  # type: ignore[import-untyped]
+    from starknet_py.serialization.data_serializers.payload_serializer import PayloadSerializer
 
     from dipdup.package import DipDupPackage
 
@@ -63,8 +63,8 @@ def sn_keccak(x: str) -> str:
 @cache
 def _loaded_abis(package: DipDupPackage) -> dict[str, Abi]:
 
-    from starknet_py.abi.v2 import AbiParser
-    from starknet_py.abi.v2 import AbiParsingError
+    from starknet_py.abi.v2.parser import AbiParser
+    from starknet_py.abi.v2.parser import AbiParsingError
 
     result = {}
     for abi_path in package.cairo_abi_paths:
@@ -81,7 +81,7 @@ def _loaded_abis(package: DipDupPackage) -> dict[str, Abi]:
 
 
 def convert_abi(package: DipDupPackage) -> dict[str, CairoAbi]:
-    from starknet_py.serialization import serializer_for_event
+    from starknet_py.serialization.factory import serializer_for_event
 
     abi_by_typename: dict[str, CairoAbi] = {}
 
