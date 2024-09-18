@@ -24,6 +24,7 @@ templates:
       - callback: on_update_expiry_map
         contract: <name_registry>
         path: store.expiry_map
+    skip_history: never
 
 indexes:
   tezos_domains_big_map_mainnet:
@@ -34,12 +35,3 @@ indexes:
     first_level: 1417329
     last_level: 1417729
 
-hooks:
-  check_expiration:
-    callback: check_expiration
-    atomic: False
-
-jobs:
-  check_expiration_hourly:
-    hook: check_expiration
-    crontab: "0 * * * *"

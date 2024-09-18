@@ -194,38 +194,6 @@
       }
     },
     {
-      "name": "demo_tezos_big_maps: run",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "run"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_big_maps",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
-      "name": "demo_tezos_big_maps: init",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "dipdup",
-      "args": [
-        "-e",
-        ".env",
-        "init"
-      ],
-      "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}/src/demo_tezos_big_maps",
-      "env": {
-        "DIPDUP_DEBUG": "1"
-      }
-    },
-    {
       "name": "demo_tezos_dao: run",
       "type": "debugpy",
       "request": "launch",
