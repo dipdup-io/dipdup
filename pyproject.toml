@@ -72,7 +72,7 @@ dependencies = [
     # FIXME: Argument 1 to "serialize" has incompatible type "Event";
     "sentry-sdk==2.12.0",
     "sqlparse~=0.5",
-    "starknet-py~=0.24",
+    "starknet-py==0.24.0",
     "strict-rfc3339~=0.7",
     "survey~=5.4",
     "tabulate~=0.9",

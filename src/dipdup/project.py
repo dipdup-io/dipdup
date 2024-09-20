@@ -36,7 +36,6 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
     ),
     'tezos': (
         'demo_tezos_auction',
-        'demo_tezos_big_maps',
         'demo_tezos_dao',
         'demo_tezos_dex',
         'demo_tezos_domains',

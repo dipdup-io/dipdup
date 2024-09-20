@@ -2,19 +2,20 @@ spec_version: 3.0
 package: demo_tezos_domains
 
 contracts:
-  mainnet_name_registry:
+  name_registry_mainnet:
     kind: tezos
     address: KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS
     typename: name_registry
 
 datasources:
-  mainnet:
+  tzkt_mainnet:
     kind: tezos.tzkt
     url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
-  tezos_domains_big_map:
+  tezos_domains:
     kind: tezos.big_maps
+    skip_history: once
     datasources:
       - <datasource>
     handlers:
@@ -26,11 +27,11 @@ templates:
         path: store.expiry_map
 
 indexes:
-  tezos_domains_big_map_mainnet:
-    template: tezos_domains_big_map
+  tezos_domains_mainnet:
+    template: tezos_domains
     values:
-      datasource: mainnet
-      name_registry: mainnet_name_registry
+      datasource: tzkt_mainnet
+      name_registry: name_registry_mainnet
 
 hooks:
   check_expiration:
