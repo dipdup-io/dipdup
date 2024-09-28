@@ -390,7 +390,7 @@ class HasuraConfig:
     rest: bool = True
     http: HttpConfig | None = None
     ignore_internal: bool = False
-    ignore: List[str] = Field(default_factory=list)
+    ignore: list[str] = Field(default_factory=list)
 
     @property
     def headers(self) -> dict[str, str]:

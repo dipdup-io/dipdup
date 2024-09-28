@@ -403,11 +403,12 @@ class HasuraGateway(HTTPGateway):
                     related_table_name = model_tables[field.model_name]
                     if not related_table_name:
                         continue
-                    
+
                     junction_table_name = field.through
 
-                     if (self._hasura_config.ignore_internal and junction_table_name.startswith('dipdup_')) or \
-                        (junction_table_name in self._hasura_config.ignore):
+                    if (self._hasura_config.ignore_internal and junction_table_name.startswith('dipdup_')) or (
+                        junction_table_name in self._hasura_config.ignore
+                    ):
                         continue
                     metadata_tables[junction_table_name] = self._format_table(junction_table_name)
                     metadata_tables[junction_table_name]['object_relationships'].append(
