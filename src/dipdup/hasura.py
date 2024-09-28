@@ -373,13 +373,13 @@ class HasuraGateway(HTTPGateway):
             metadata_tables[view] = self._format_table(view)
 
         for app, model in iter_models(self._package):
-            table_name = model_tables[f'{app}.{model.__name__}']
+            table_name = model_tables.get(f'{app}.{model.__name__}')
             if not table_name:
                 continue
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    related_table_name = model_tables[field.model_name]
+                    related_table_name = model_tables.get(field.model_name)
                     if not related_table_name:
                         continue
 
@@ -400,7 +400,7 @@ class HasuraGateway(HTTPGateway):
                         )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    related_table_name = model_tables[field.model_name]
+                    related_table_name = model_tables.get(field.model_name)
                     if not related_table_name:
                         continue
 
