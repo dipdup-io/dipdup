@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], and this project adheres to [Semantic Versioning].
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
+## [8.0.0] - 2024-09-28
+
+### Added feature
+
+- Indexer config should have an option to skip `dipdup_*` tables
+- :param ignore_internal: Whether to ignore internal tables (prefixed with 'dipdup_') when generating the GraphQL API.
+- :param ignore: List of additional table names to ignore when generating the GraphQL API.
 
 ## [8.0.0] - 2024-09-10
 
