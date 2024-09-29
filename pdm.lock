@@ -5,10 +5,28 @@
 groups = ["default", "docs", "lint", "perf", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:efeccde6cf7fa27b2c7859f00537bdd0607b65957aecad1cfb05e1199ca2c80f"
+content_hash = "sha256:7708f19bdb28aa796e77cc08197e3bdc7486b962940fd7dba63041b94492708b"
 
 [[metadata.targets]]
 requires_python = ">=3.12,<3.13"
+
+[[package]]
+name = "aerich"
+version = "0.7.2"
+requires_python = ">=3.7,<4.0"
+summary = "A database migrations tool for Tortoise ORM."
+groups = ["default"]
+dependencies = [
+    "click",
+    "dictdiffer",
+    "pydantic",
+    "tomlkit",
+    "tortoise-orm",
+]
+files = [
+    {file = "aerich-0.7.2-py3-none-any.whl", hash = "sha256:84c78c07d45436b89ca4db5411eca4e9292a591fb7d6fd4282fa4a7d0c6d2af1"},
+    {file = "aerich-0.7.2.tar.gz", hash = "sha256:31d67de7b96184636b89de99062e059e5e6204b6251d24c33eb21fc9cf982e09"},
+]
 
 [[package]]
 name = "aiohappyeyeballs"
@@ -510,6 +528,16 @@ dependencies = [
 files = [
     {file = "datamodel_code_generator-0.25.9-py3-none-any.whl", hash = "sha256:9e0324233123d6e39a35bc0004771956935889a974aacfd7a0651de11d2219a9"},
     {file = "datamodel_code_generator-0.25.9.tar.gz", hash = "sha256:65ca9807d8edbd88a7f7931c10f4bc1c08bd9bbc5bb0508418a2b6a16590eb65"},
+]
+
+[[package]]
+name = "dictdiffer"
+version = "0.9.0"
+summary = "Dictdiffer is a library that helps you to diff and patch dictionaries."
+groups = ["default"]
+files = [
+    {file = "dictdiffer-0.9.0-py2.py3-none-any.whl", hash = "sha256:442bfc693cfcadaf46674575d2eba1c53b42f5e404218ca2c2ff549f2df56595"},
+    {file = "dictdiffer-0.9.0.tar.gz", hash = "sha256:17bacf5fbfe613ccf1b6d512bd766e6b21fb798822a133aa86098b8ac9997578"},
 ]
 
 [[package]]
@@ -1868,9 +1896,9 @@ dependencies = [
     "asgiref<4.0.0,>=3.4.1",
     "bip-utils<3.0.0,>=2.9.3",
     "crypto-cpp-py==1.4.4",
-    "eth-keyfile<1.0.0,>=0.8.1",
+    "eth-keyfile<0.9.0,>=0.8.1",
     "lark<2.0.0,>=1.1.5",
-    "ledgerwallet<1.0.0,>=0.5.0",
+    "ledgerwallet<0.6.0,>=0.5.0",
     "marshmallow-dataclass<8.8.0",
     "marshmallow-oneofschema==3.1.1",
     "marshmallow<4.0.0,>=3.15.0",
@@ -1925,6 +1953,17 @@ groups = ["default", "docs"]
 files = [
     {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
     {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+]
+
+[[package]]
+name = "tomlkit"
+version = "0.13.2"
+requires_python = ">=3.8"
+summary = "Style preserving TOML library"
+groups = ["default"]
+files = [
+    {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
+    {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
 
 [[package]]

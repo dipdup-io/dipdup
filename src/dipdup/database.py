@@ -73,7 +73,7 @@ async def tortoise_wrapper(
     if models:
         if not models.endswith('.models'):
             models += '.models'
-        model_modules['models'] = [models]
+        model_modules['models'] = [models, "aerich.models"]
 
     # NOTE: Must be called before entering Tortoise context
     decimal_precision = decimal_precision or guess_decimal_precision(models)

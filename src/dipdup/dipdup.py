@@ -726,6 +726,7 @@ class DipDup:
             self._schema = await Schema.get_or_none(name=schema_name)
 
         # NOTE: Call with existing Schema too to create new tables if missing
+        # TODO: Check if it doesn't conflict with aerich migrations
         try:
             await generate_schema(
                 conn,
@@ -740,6 +741,7 @@ class DipDup:
 
         schema_hash = get_schema_hash(conn)
 
+        # TODO: Advise to run `dipdup schema migrate` before `dipdup schema approve`
         if self._schema is None:
             await self._ctx.fire_hook('on_reindex')
 
