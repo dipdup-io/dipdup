@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Added
+
+- hasura: Added `ignore` and `ignore_internal` config options to hide specific tables/views.
+
 ## [8.0.0] - 2024-09-10
 
 ### Added

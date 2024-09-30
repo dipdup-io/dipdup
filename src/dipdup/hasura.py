@@ -356,18 +356,33 @@ class HasuraGateway(HTTPGateway):
 
         for app, model in iter_models(self._package):
             table_name = model._meta.db_table or pascal_to_snake(model.__name__)
+            if self._hasura_config.ignore_internal and table_name.startswith('dipdup_'):
+                continue
+            if table_name in self._hasura_config.ignore:
+                continue
+
             model_tables[f'{app}.{model.__name__}'] = table_name
             metadata_tables[table_name] = self._format_table(table_name)
 
         for view in views:
+            if self._hasura_config.ignore_internal and view.startswith('dipdup_'):
+                continue
+            if view in self._hasura_config.ignore:
+                continue
+
             metadata_tables[view] = self._format_table(view)
 
         for app, model in iter_models(self._package):
-            table_name = model_tables[f'{app}.{model.__name__}']
+            table_name = model_tables.get(f'{app}.{model.__name__}')
+            if not table_name:
+                continue
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    related_table_name = model_tables[field.model_name]
+                    related_table_name = model_tables.get(field.model_name)
+                    if not related_table_name:
+                        continue
+
                     field_name = field.model_field_name
                     metadata_tables[table_name]['object_relationships'].append(
                         self._format_object_relationship(
@@ -385,9 +400,16 @@ class HasuraGateway(HTTPGateway):
                         )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    related_table_name = model_tables[field.model_name]
+                    related_table_name = model_tables.get(field.model_name)
+                    if not related_table_name:
+                        continue
+
                     junction_table_name = field.through
 
+                    if (self._hasura_config.ignore_internal and junction_table_name.startswith('dipdup_')) or (
+                        junction_table_name in self._hasura_config.ignore
+                    ):
+                        continue
                     metadata_tables[junction_table_name] = self._format_table(junction_table_name)
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
