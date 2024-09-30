@@ -29,6 +29,7 @@ from tortoise.utils import get_schema_sql
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
+from dipdup.exceptions import SQLScriptFailureError
 from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
 
@@ -182,8 +183,11 @@ async def execute_sql(
         for statement in sqlparse.split(sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
-                await conn.execute_script(statement)
-
+                try:
+                    await conn.execute_script(statement)
+                except Exception as exc:
+                    # Raise specific exception for SQL script failures
+                    raise SQLScriptFailureError(module=file.name, exc=exc) from exc 
 
 async def execute_sql_query(
     conn: SupportedClient,
@@ -193,8 +197,11 @@ async def execute_sql_query(
     """Execute SQL query with arguments"""
     _logger.info('Executing query `%s`', path.name)
     sql = path.read_text()
-    return await conn.execute_query(sql, list(values))
-
+    try:
+        return await conn.execute_query(sql, list(values))
+    except Exception as exc:
+        # Raise specific exception for SQL script failures
+        raise SQLScriptFailureError(module=path.name, exc=exc) from exc
 
 async def generate_schema(
     conn: SupportedClient,
