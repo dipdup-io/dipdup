@@ -183,6 +183,16 @@ async def _check_version() -> None:
         _logger.info(_skip_msg)
         return
 
+    from appdirs import user_cache_dir
+
+    cache_dir = Path(user_cache_dir('dipdup'))
+    cache_file = cache_dir / 'latest_version.json'
+
+    latest_version = await get_cached_version(cache_file)
+    if latest_version:
+        _warn_if_outdated(_skip_msg, latest_version)
+        return
+    
     import aiohttp
 
     async with AsyncExitStack() as stack:
@@ -191,14 +201,53 @@ async def _check_version() -> None:
         response = await session.get('https://api.github.com/repos/dipdup-io/dipdup/releases/latest')
         response_json = await response.json()
         latest_version = response_json['tag_name']
+        
+        if latest_version:
+            _warn_if_outdated(_skip_msg, latest_version)
+            await write_cached_version(cache_dir, cache_file, latest_version)
 
-        if __version__ != latest_version:
-            _logger.warning(
-                'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
-                __version__,
-                latest_version,
-            )
-            _logger.info(_skip_msg)
+
+async def get_cached_version(cache_file: Path, ttl: int = 86400) -> str | None:
+    # NOTE: Time-to-live (ttl) for the cache in seconds (default: 86400 seconds = 24 hours)
+    import time
+    try:
+        if (time.time() - cache_file.stat().st_mtime) >= ttl:
+            return None
+        return await read_cached_version(cache_file)
+    except FileNotFoundError:
+        return None
+
+
+async def read_cached_version(cache_file: Path) -> str | None:
+    try:
+        import json
+        with open(cache_file, 'r') as f:
+            data = json.load(f)
+            return data.get('latest_version')
+    except Exception as e:
+        _logger.warning('Failed to read cache file %s: %s', cache_file, e)
+        return None
+
+
+async def write_cached_version(cache_dir: Path, cache_file: Path, latest_version: str) -> None:
+    try:
+        import json
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        with open(cache_file, 'w') as f:
+            json.dump({'latest_version': latest_version}, f)
+    except Exception as e:
+        _logger.warning('Failed to write cache file %s: %s', cache_file, e)
+
+
+def _warn_if_outdated(_skip_msg: str, latest_version: str) -> None:
+    if __version__ == latest_version:
+        return
+    _logger.warning(
+        'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
+        __version__,
+        latest_version,
+    )
+    _logger.info(_skip_msg)
 
 
 def _skip_cli_group() -> bool:
