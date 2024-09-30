@@ -68,6 +68,7 @@ DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
+DEFAULT_MIGRATIONS_DIR = './migrations'
 
 
 def _valid_url(v: str, ws: bool) -> str:
@@ -98,11 +99,13 @@ class SqliteDatabaseConfig:
     :param kind: always 'sqlite'
     :param path: Path to .sqlite file, leave default for in-memory database (`:memory:`)
     :param immune_tables: List of tables to preserve during reindexing
+    :param migrations_dir: Where to store migrations files (relative to project root)
     """
 
     kind: Literal['sqlite']
     path: str = DEFAULT_SQLITE_PATH
     immune_tables: set[str] = Field(default_factory=set)
+    migrations_dir: str = DEFAULT_MIGRATIONS_DIR
 
     @property
     def schema_name(self) -> str:
@@ -137,6 +140,7 @@ class PostgresDatabaseConfig:
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
     :param connection_timeout: Connection timeout
+    :param migrations_dir: Where to store migrations files (relative to project root)
     """
 
     kind: Literal['postgres']
@@ -148,6 +152,7 @@ class PostgresDatabaseConfig:
     password: str = Field(default='', repr=False)
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
+    migrations_dir: str = DEFAULT_MIGRATIONS_DIR
 
     def __post_init__(self) -> None:
         for table in self.immune_tables:

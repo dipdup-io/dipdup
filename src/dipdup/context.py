@@ -230,6 +230,7 @@ class DipDupContext:
                 conn=conn,
                 schema_name=self.config.database.schema_name,
                 immune_tables=immune_tables,
+                migrations_dir=self.config.database.migrations_dir,
             )
             await self.restart()
 

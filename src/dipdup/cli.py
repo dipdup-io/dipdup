@@ -8,17 +8,16 @@ from collections.abc import Coroutine
 from contextlib import AsyncExitStack
 from contextlib import suppress
 from dataclasses import dataclass
-from dataclasses import fields
 from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 from typing import cast
-from typing import Iterable
 
 import click
 import uvloop
+from aerich.cli import cli as aerich_cli
 
 from dipdup import __version__
 from dipdup import env
@@ -30,11 +29,8 @@ from dipdup.report import get_reports
 from dipdup.report import save_report
 from dipdup.sys import fire_and_forget
 from dipdup.sys import set_up_process
-from aerich.cli import cli as aerich_cli
-from aerich.cli import Command as AerichCommand
 
 if TYPE_CHECKING:
-    from types import ModuleType
     from dipdup.config import DipDupConfig
 
 ROOT_CONFIG = 'dipdup.yaml'
@@ -47,6 +43,7 @@ NO_CONFIG_CMDS = {
     'config',
 }
 
+# NOTE: commands we reuse from aerich for database migration
 AERICH_CMDS = {
     'history',
     'heads',
@@ -156,13 +153,14 @@ WrappedCommandT = TypeVar('WrappedCommandT', bound=Callable[..., Coroutine[Any, 
 class CLIContext:
     config_paths: list[str]
     config: 'DipDupConfig'
-    command: AerichCommand
 
-    # NOTE: aerich CLI access the context via `ctx.obj["command"]`
-    def __getitem__(self, item):
-        if item in {f.name for f in fields(self)}:
-            return getattr(self, item)
-        raise KeyError(f"{item} is not a valid field name.")
+    # NOTE: we have to implement __getitem__ and __setitem__ because aerich CLI
+    #  commands (`AERICH_CMDS`) access the context object via `ctx.obj["command"]`
+    def __getitem__(self, item: str) -> Any:
+        return getattr(self, item)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        setattr(self, key, value)
 
 
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
@@ -238,18 +236,6 @@ def _skip_cli_group() -> bool:
     if not (is_help or is_empty_group or is_script_group):
         return False
     return True
-
-
-# TODO: add DipDupConfig type hint and import it
-async def _create_aerich_command(config) -> AerichCommand:
-    from tortoise.backends.base.config_generator import generate_config
-
-    db_url = config.database.connection_string
-    # TODO: Refactor building the app_modules dict and use here and in the tortoise_wrapper function ?
-    modules: dict[str, Iterable[str | ModuleType]] = {"models": [f'{config.package}.models', "aerich.models"]}
-    tortoise_config = generate_config(db_url=db_url, app_modules=modules)
-    # TODO: add location in config file (and CLI option?)
-    return AerichCommand(tortoise_config=tortoise_config, app="models")
 
 
 @click.group(
@@ -347,12 +333,9 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
         if ctx.invoked_subcommand != 'init':
             raise InitializationRequiredError(f'Failed to create a project package: {e}') from e
 
-    aerich_command = await _create_aerich_command(_config)
-
     ctx.obj = CLIContext(
         config_paths=config,
         config=_config,
-        command=aerich_command,
     )
 
 
@@ -368,15 +351,6 @@ async def run(ctx: click.Context) -> None:
 
     config: DipDupConfig = ctx.obj.config
     config.initialize()
-
-    aerich_command: AerichCommand = ctx.obj.command
-    # TODO: add safe option to the CLI and/or config
-    # TODO: make the logs DEBUG
-    try:
-        _logger.info("Trying to initializing database migrations")
-        await aerich_command.init_db(safe=True)
-    except FileExistsError:
-        _logger.info("Database migrations already initialized")
 
     dipdup = DipDup(config)
     await dipdup.run()
@@ -444,12 +418,9 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
     )
     config.initialize()
 
-    aerich_command = await _create_aerich_command(config)
-
     ctx.obj = CLIContext(
         config_paths=ctx.parent.params['config'],
         config=config,
-        command=aerich_command,
     )
     await _cli_unwrapper(init)(
         ctx=ctx,
@@ -609,16 +580,52 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
+    from pathlib import Path
+
+    from dipdup.aerich import create_aerich_command
+
+    if '--help' in sys.argv:
+        return
+
+    config: DipDupConfig = ctx.obj.config
+
     if ctx.invoked_subcommand in AERICH_CMDS:
-        aerich_command: AerichCommand = ctx.obj.command
+        if not Path(config.database.migrations_dir).exists():
+            echo(
+                f"""Database migrations is not initialize at {config.database.migrations_dir}.
+                 Run `dipdup schema init` or just run `dipdup run` and it'll be initialized automatically."""
+            )
+            raise click.Abort()
+
+        aerich_command = await create_aerich_command(config)
         await aerich_command.init()
 
+        ctx.obj['command'] = aerich_command
 
-schema.add_command(aerich_cli.commands["history"])
-schema.add_command(aerich_cli.commands["heads"])
-schema.add_command(aerich_cli.commands["migrate"])
-schema.add_command(aerich_cli.commands["upgrade"])
-schema.add_command(aerich_cli.commands["downgrade"])
+
+# Wrapper function to approve schema after upgrade and downgrade
+# Since upgrade and downgrade are meant to be intentionally run by the user, it'll be confusing for the user to run approve just after them
+def _approve_schema_after(command: click.Command) -> click.Command:
+    @click.pass_context
+    def wrapper(ctx: click.Context, /, *args: Any, **kwargs: Any) -> None:
+        ctx.invoke(command, *args, **kwargs)
+        # TODO: don't call approve if no upgrades/downgrades happened
+        ctx.invoke(schema_approve)
+
+    return click.Command(
+        name=command.name,
+        callback=wrapper,
+        params=command.params,
+        help=command.help,
+        short_help=command.short_help,
+    )
+
+
+schema.add_command(aerich_cli.commands['history'])
+schema.add_command(aerich_cli.commands['heads'])
+schema.add_command(aerich_cli.commands['migrate'])
+schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
+schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
 
 
 @schema.command(name='approve')
@@ -720,6 +727,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
                 else config.database.schema_name
             ),
             immune_tables=immune_tables,
+            migrations_dir=config.database.migrations_dir,
         )
 
     _logger.info('Schema wiped')
@@ -749,6 +757,7 @@ async def schema_init(ctx: click.Context) -> None:
         await dipdup._set_up_hooks()
         await dipdup._create_datasources()
         await dipdup._initialize_schema()
+        await dipdup._initialize_migrations()
 
         # NOTE: It's not necessary a reindex, but it's safe to execute built-in scripts to (re)create views.
         conn = get_connection()
@@ -756,10 +765,6 @@ async def schema_init(ctx: click.Context) -> None:
             conn,
             config.database.schema_name,
         )
-
-    aerich_command: AerichCommand = ctx.obj.command
-    # TODO: add safe option to the CLI
-    await aerich_command.init_db(safe=True)
 
     _logger.info('Schema initialized')
 
@@ -850,11 +855,9 @@ async def new(
     config = DipDupConfig.load([Path(answers['package'])])
     config.initialize()
 
-    aerich_command = await _create_aerich_command(config)
     ctx.obj = CLIContext(
         config_paths=[Path(answers['package']).joinpath(ROOT_CONFIG).as_posix()],
         config=config,
-        command=aerich_command,
     )
     await _cli_unwrapper(init)(
         ctx=ctx,

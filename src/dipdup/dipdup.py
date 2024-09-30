@@ -21,6 +21,7 @@ from typing import Any
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.aerich import create_aerich_command
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
 from dipdup.codegen import generate_environments
@@ -680,6 +681,7 @@ class DipDup:
             await self._set_up_api(stack)
 
             await self._initialize_schema()
+            await self._initialize_migrations()
             await self._initialize_datasources()
 
             hasura_gateway = await self._set_up_hasura(stack)
@@ -921,6 +923,16 @@ class DipDup:
             )
         )
         return event
+
+    async def _initialize_migrations(self) -> None:
+        """Initialize database migrations with aerich."""
+        migrations_dir = self._config.database.migrations_dir
+        try:
+            _logger.info("Initializing database migrations at '%s'", migrations_dir)
+            aerich_command = await create_aerich_command(self._config)
+            await aerich_command.init_db(safe=True)
+        except FileExistsError:
+            _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()
