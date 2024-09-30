@@ -295,6 +295,22 @@ class CallbackError(Error):
 
 
 @dataclass(repr=False)
+class SQLScriptFailureError(Error):
+    """An error occurred during SQL script execution"""
+
+    module: str
+    exc: Exception
+
+    def _help(self) -> str:
+        return f"""
+            `{self.module}` SQL script execution failed:
+
+            {self.exc.__class__.__name__}: {self.exc}
+
+            Check the SQL script for errors, correct the issues, and retry the operation.
+        """
+    
+@dataclass(repr=False)
 class CallbackTypeError(Error):
     """Argument of invalid type was passed to a callback"""
 
