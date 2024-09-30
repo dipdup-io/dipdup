@@ -1,6 +1,7 @@
 from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pprint import pformat
 
 from tortoise.transactions import in_transaction
 
@@ -21,6 +22,9 @@ class TransactionManager:
         self._immune_tables = immune_tables or set()
         self._transaction: dipdup.models.VersionedTransaction | None = None
         self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
+    
+    def __repr__(self) -> str:
+        return f'<Class {self.__class__.__name__} {pformat(self.__dict__)}>'
 
     @asynccontextmanager
     async def register(self) -> AsyncIterator[None]:

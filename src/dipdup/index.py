@@ -66,6 +66,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
+    
+    def __repr__(self) -> str:
+        return f'<Class {self.__class__.__name__}(ctx={self._ctx})>'
 
     @property
     def queue(self) -> deque[IndexQueueItemT]:

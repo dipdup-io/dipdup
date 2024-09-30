@@ -83,6 +83,9 @@ class DipDupPackage:
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis = EvmAbiManager(self)
         self._cairo_abis = CairoAbiManager(self)
+    
+    def __repr__(self) -> str:
+        return f'<Class {self.__class__.__name__} (root={self.root}, evm_abis={self._evm_abis}, cairo_abis={self._cairo_abis})>'
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:
