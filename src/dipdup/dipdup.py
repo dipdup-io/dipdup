@@ -926,11 +926,15 @@ class DipDup:
 
     async def _initialize_migrations(self) -> None:
         """Initialize database migrations with aerich."""
-        migrations_dir = self._config.database.migrations_dir
+        migrations_dir = self._ctx.package.migrations
         try:
             _logger.info("Initializing database migrations at '%s'", migrations_dir)
-            aerich_command = await create_aerich_command(self._config)
+            aerich_command = await create_aerich_command(
+                self._config.database.connection_string, self._config.package, migrations_dir
+            )
             await aerich_command.init_db(safe=True)
+        except ModuleNotFoundError:
+            _logger.debug('aerich is not installed, skipping database migration initialization')
         except FileExistsError:
             _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 

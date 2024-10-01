@@ -17,7 +17,6 @@ from typing import cast
 
 import click
 import uvloop
-from aerich.cli import cli as aerich_cli
 
 from dipdup import __version__
 from dipdup import env
@@ -580,24 +579,26 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    from pathlib import Path
-
-    from dipdup.aerich import create_aerich_command
-
     if '--help' in sys.argv:
         return
 
     config: DipDupConfig = ctx.obj.config
 
     if ctx.invoked_subcommand in AERICH_CMDS:
-        if not Path(config.database.migrations_dir).exists():
+        from dipdup.package import DipDupPackage
+
+        migrations_dir = DipDupPackage(config.package_path).migrations
+
+        if not migrations_dir.exists():
             echo(
-                f"""Database migrations is not initialize at {config.database.migrations_dir}.
+                f"""Database migrations is not initialize at {migrations_dir}.
                  Run `dipdup schema init` or just run `dipdup run` and it'll be initialized automatically."""
             )
             raise click.Abort()
 
-        aerich_command = await create_aerich_command(config)
+        from dipdup.aerich import create_aerich_command
+
+        aerich_command = await create_aerich_command(config.database.connection_string, config.package, migrations_dir)
         await aerich_command.init()
 
         ctx.obj['command'] = aerich_command
@@ -621,11 +622,16 @@ def _approve_schema_after(command: click.Command) -> click.Command:
     )
 
 
-schema.add_command(aerich_cli.commands['history'])
-schema.add_command(aerich_cli.commands['heads'])
-schema.add_command(aerich_cli.commands['migrate'])
-schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
-schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+try:
+    from aerich.cli import cli as aerich_cli
+
+    schema.add_command(aerich_cli.commands['history'])
+    schema.add_command(aerich_cli.commands['heads'])
+    schema.add_command(aerich_cli.commands['migrate'])
+    schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
+    schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+except ImportError:
+    _logger.debug('aerich is not installed, skipping database migration commands')
 
 
 @schema.command(name='approve')
@@ -710,6 +716,9 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     from dipdup.database import get_connection
     from dipdup.database import tortoise_wrapper
     from dipdup.database import wipe_schema
+    from dipdup.package import DipDupPackage
+
+    migrations_dir = DipDupPackage(config.package_path).migrations
 
     async with tortoise_wrapper(
         url=url,
@@ -727,7 +736,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
                 else config.database.schema_name
             ),
             immune_tables=immune_tables,
-            migrations_dir=config.database.migrations_dir,
+            migrations_dir=migrations_dir,
         )
 
     _logger.info('Schema wiped')

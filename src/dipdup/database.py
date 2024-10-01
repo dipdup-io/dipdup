@@ -310,11 +310,10 @@ async def wipe_schema(
     conn: SupportedClient,
     schema_name: str,
     immune_tables: set[str],
-    migrations_dir: str,
+    migrations_dir: 'Path',
 ) -> None:
     """Truncate schema and remove migrations directory preserving immune tables. Executes in a transaction"""
     import shutil
-    from pathlib import Path
 
     async with conn._in_transaction() as conn:
         if isinstance(conn, SqliteClient):
@@ -324,7 +323,7 @@ async def wipe_schema(
         else:
             raise NotImplementedError
 
-        if Path(migrations_dir).exists():
+        if migrations_dir.exists():
             shutil.rmtree(migrations_dir)
 
 
