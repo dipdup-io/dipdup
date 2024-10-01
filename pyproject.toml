@@ -80,9 +80,12 @@ dependencies = [
     "tortoise-orm==0.21.6",
     "uvloop~=0.20",
     "web3~=7.2",
-    "aerich~=0.7.2",
 ]
 
+[project.optional-dependencies]
+migrations = [
+    "aerich~=0.7.2",
+]
 [tool.pdm.resolution]
 # NOTE: Introduced by starknetpy 0.24; depends on half of the PyPI
 excludes = ["bip-utils", "ledgerwallet"]

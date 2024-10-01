@@ -928,15 +928,20 @@ class DipDup:
         """Initialize database migrations with aerich."""
         migrations_dir = self._ctx.package.migrations
         try:
-            _logger.info("Initializing database migrations at '%s'", migrations_dir)
             aerich_command = await create_aerich_command(
                 self._config.database.connection_string, self._config.package, migrations_dir
             )
+            _logger.info("Initializing database migrations at '%s'", migrations_dir)
             await aerich_command.init_db(safe=True)
-        except ModuleNotFoundError:
-            _logger.debug('aerich is not installed, skipping database migration initialization')
-        except FileExistsError:
-            _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
+        except ModuleNotFoundError as e:
+            if e.name == 'aerich':
+                _logger.debug('aerich is not installed, skipping database migration initialization')
+            else:
+                raise
+        except FileExistsError as e:
+            from pathlib import Path
+            if Path(e.filename).is_relative_to(migrations_dir):
+                _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()
