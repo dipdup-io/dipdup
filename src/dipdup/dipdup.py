@@ -940,6 +940,7 @@ class DipDup:
                 raise
         except FileExistsError as e:
             from pathlib import Path
+
             if Path(e.filename).is_relative_to(migrations_dir):
                 _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 

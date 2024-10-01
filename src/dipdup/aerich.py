@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from aerich import Command as AerichCommand
     from collections.abc import Iterable
     from pathlib import Path
     from types import ModuleType
+
+    from aerich import Command as AerichCommand
 
 
 async def create_aerich_command(db_url: str, package: str, migrations_dir: 'Path') -> 'AerichCommand':

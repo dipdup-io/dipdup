@@ -590,11 +590,12 @@ async def schema(ctx: click.Context) -> None:
         migrations_dir = DipDupPackage(config.package_path).migrations
 
         if not migrations_dir.exists():
-            echo(
-                f"""Database migrations is not initialize at {migrations_dir}.
-                 Run `dipdup schema init` or just run `dipdup run` and it'll be initialized automatically."""
+            from dipdup.exceptions import ProjectPackageError
+
+            raise ProjectPackageError(
+                f"""Database migrations are not initialized at {migrations_dir}.
+              Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
             )
-            raise click.Abort()
 
         from dipdup.aerich import create_aerich_command
 

@@ -76,7 +76,7 @@ class DatasourceError(Error):
     def _help(self) -> str:
         return f"""
             `{self.datasource}` datasource returned an error:
-            
+
             "{self.msg}"
 
             See https://dipdup.io/docs/getting-started/datasources

@@ -69,14 +69,12 @@ async def tortoise_wrapper(
 
     model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
-        'models': ['dipdup.models'],
     }
 
     if models:
         if not models.endswith('.models'):
             models += '.models'
-        # NOTE: The only way we can append to the list without getting yelled at by mypy
-        model_modules['models'] = [models, *model_modules['models']]
+        model_modules['models'] = [models, 'dipdup.models']
 
     # NOTE: Must be called before entering Tortoise context
     decimal_precision = decimal_precision or guess_decimal_precision(models)
