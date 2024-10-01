@@ -186,8 +186,8 @@ async def execute_sql(
                 try:
                     await conn.execute_script(statement)
                 except Exception as exc:
-                    #Raise specific exception for sql script failure
-                    raise SQLScriptFailureError(module=file.name, exc=exc) from exc
+                    # Raise specific exception for SQL script failures
+                    raise SQLScriptFailureError(module=file.name, exc=exc) from exc 
 
 async def execute_sql_query(
     conn: SupportedClient,
@@ -200,7 +200,7 @@ async def execute_sql_query(
     try:
         return await conn.execute_query(sql, list(values))
     except Exception as exc:
-        #Raise specific exception for sql script failure
+        # Raise specific exception for SQL script failures
         raise SQLScriptFailureError(module=path.name, exc=exc) from exc
 
 async def generate_schema(
