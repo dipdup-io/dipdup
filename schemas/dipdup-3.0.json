@@ -606,6 +606,14 @@
       "additionalProperties": false,
       "description": "Config for the Hasura integration.",
       "properties": {
+        "ignore": {
+          "items": {
+            "type": "string"
+          },
+          "title": "ignore",
+          "type": "array",
+          "description": "List of additional table names to ignore when generating the GraphQL API."
+        },
         "url": {
           "$ref": "#/$defs/Url",
           "title": "url",
@@ -678,6 +686,12 @@
           "default": null,
           "title": "http",
           "description": "HTTP connection tunables"
+        },
+        "ignore_internal": {
+          "default": false,
+          "title": "ignore_internal",
+          "type": "boolean",
+          "description": "Whether to ignore internal tables (prefixed with \"dipdup\") when generating the GraphQL API."
         }
       },
       "required": [

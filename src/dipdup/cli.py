@@ -12,9 +12,9 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypedDict
 from typing import TypeVar
 from typing import cast
-from typing import TypedDict
 
 import click
 import uvloop
@@ -188,7 +188,7 @@ async def _check_version() -> None:
         _logger.info(_skip_msg)
         return
 
-    from appdirs import user_cache_dir
+    from appdirs import user_cache_dir  # type: ignore[import-untyped]
 
     cache_file = Path(user_cache_dir('dipdup')) / 'version_info.json'
 
@@ -196,7 +196,7 @@ async def _check_version() -> None:
     if latest_version:
         _warn_if_outdated(_skip_msg, latest_version)
         return
-    
+
     import aiohttp
 
     async with AsyncExitStack() as stack:
@@ -204,8 +204,8 @@ async def _check_version() -> None:
         session = await stack.enter_async_context(aiohttp.ClientSession())
         response = await session.get('https://api.github.com/repos/dipdup-io/dipdup/releases/latest')
         response_json = await response.json()
-        latest_version = response_json['tag_name']
-        
+        latest_version = cast(str, response_json['tag_name'])
+
         _warn_if_outdated(_skip_msg, latest_version)
         _write_cached_version(cache_file, latest_version)
 
@@ -213,6 +213,7 @@ async def _check_version() -> None:
 def _get_cached_version(cache_file: Path, ttl: int = 86400) -> str | None:
     # NOTE: Time-to-live (ttl) for the cache in seconds (default: 86400 seconds = 24 hours)
     import time
+
     try:
         if (time.time() - cache_file.stat().st_mtime) >= ttl:
             return None
@@ -239,11 +240,12 @@ def _read_cached_version(cache_file: Path) -> CachedVersion | None:
 
 def _write_cached_version(cache_file: Path, latest_version: str) -> None:
     try:
-        from dipdup.utils import json_dumps, write
+        from dipdup.utils import json_dumps
+        from dipdup.utils import write
 
         version_info: CachedVersion = {
             'latest_version': latest_version,
-            'installed_version': __version__
+            'installed_version': __version__,
         }
         write(cache_file, json_dumps(version_info), overwrite=True)
     except Exception as e:
@@ -370,7 +372,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
         # Replace with fire_and_forget(_check_version()) once the issue is resolved.
         # Remember to import fire_and_forget: from dipdup.sys import fire_and_forget
         await _check_version()
-
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.

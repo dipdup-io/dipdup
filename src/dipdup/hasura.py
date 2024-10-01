@@ -373,7 +373,7 @@ class HasuraGateway(HTTPGateway):
             metadata_tables[view] = self._format_table(view)
 
         for app, model in iter_models(self._package):
-            table_name = model_tables.get(f'{app}.{model.__name__}')
+            table_name = model_tables.get(f'{app}.{model.__name__}')  # type: ignore[assignment]
             if not table_name:
                 continue
 
