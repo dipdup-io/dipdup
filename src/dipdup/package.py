@@ -85,7 +85,7 @@ class DipDupPackage:
         self._cairo_abis = CairoAbiManager(self)
     
     def __repr__(self) -> str:
-        return f'<Class {self.__class__.__name__} (root={self.root}, evm_abis={self._evm_abis}, cairo_abis={self._cairo_abis})>'
+        return f'<{self.__class__.__name__} (root={self.root})>'
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:

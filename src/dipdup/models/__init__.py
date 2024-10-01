@@ -397,7 +397,8 @@ class Model(TortoiseModel):
     
     def __repr__(self) -> str:
         pk = getattr(self, 'pk', None)
-        return f'<Class {self.__class__.__name__}(pk={pk}, versioned_data={self.versioned_data})>'
+        versioned_data_str = ', '.join(f'{key}={value}' for key, value in self.versioned_data.items())
+        return f'<{self.__class__.__name__}(pk={pk}, versioned_data=({versioned_data_str}))>'
 
     @classmethod
     def _init_from_db(cls, **kwargs: Any) -> Model:
@@ -541,8 +542,6 @@ class CachedModel(Model):
         cls._cache = LRU(cls._maxsize)
         super().__init_subclass__()
     
-    def __repr__(self) -> str:
-        return f'<Class {self.__class__.__name__}(hits={self._hits}, misses={self._misses}, maxsize={self._maxsize})>'
 
     @classmethod
     def clear(cls) -> None:
@@ -704,8 +703,6 @@ class ContractMetadata(Model):
         table = 'dipdup_contract_metadata'
         unique_together = ('network', 'contract')
     
-    def __repr__(self) -> str:
-        return f'<Class {self.__class__.__name__}(network={self.network}, contract={self.contract}, metadata={self.metadata})>'
 
 
 class TokenMetadata(Model):
@@ -721,6 +718,3 @@ class TokenMetadata(Model):
     class Meta:
         table = 'dipdup_token_metadata'
         unique_together = ('network', 'contract', 'token_id')
-
-    def __repr__(self) -> str:
-        return f'<Class {self.__class__.__name__}(network={self.network}, contract={self.contract}, token_id={self.token_id}, metadata={self.metadata})>'
