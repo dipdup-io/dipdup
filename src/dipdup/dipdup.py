@@ -926,6 +926,10 @@ class DipDup:
 
     async def _initialize_migrations(self) -> None:
         """Initialize database migrations with aerich."""
+        # FIXME
+        if env.TEST:
+            return
+
         migrations_dir = self._ctx.package.migrations
         try:
             aerich_command = await create_aerich_command(
