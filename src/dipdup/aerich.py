@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from pathlib import Path
     from types import ModuleType
 
-    from aerich import Command as AerichCommand
+    from aerich import Command as AerichCommand  # type: ignore[import-untyped]
 
 
 async def create_aerich_command(db_url: str, package: str, migrations_dir: 'Path') -> 'AerichCommand':
