@@ -61,7 +61,6 @@ from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InitializationRequiredError
 from dipdup.exceptions import ReindexingRequiredError
-from dipdup.exceptions import SQLScriptFailureError
 from dipdup.index import Index as IndexCls
 from dipdup.index import MatchedHandler
 from dipdup.indexes.evm import EvmIndex

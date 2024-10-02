@@ -3,6 +3,7 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses import field
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -293,21 +294,35 @@ class CallbackError(Error):
             Eliminate the reason of failure and restart DipDup.
         """
 
+
 @dataclass(repr=False)
-class SQLScriptFailureError(Error):
+class SQLScriptExecutionError(Exception):
     """SQL script execution failed"""
 
-    module: str
+    path: Path
     exc: Exception
 
-    def _help(self) -> str:
+    def __str__(self) -> str:
+        # Recortar el path para que solo incluya la parte a partir de 'dipdup'
+        project_root = 'dipdup'
+        try:
+            # Convertir a string relativo al directorio 'dipdup'
+            relative_path = str(self.path)
+            if project_root in relative_path:
+                relative_path = relative_path.split(project_root, 1)[1]  # Retener desde 'dipdup'
+            else:
+                relative_path = self.path  # Si no está 'dipdup', dejar el path completo
+        except ValueError:
+            relative_path = self.path
+
         return f"""
-            SQL script execution in `{self.module}` failed with the following error:
+            SQL script execution in `{relative_path}` failed with the following error:
 
             {self.exc.__class__.__name__}: {self.exc}
 
             Please check the script for any syntax or logical issues and retry.
         """
+
 
 @dataclass(repr=False)
 class CallbackTypeError(Error):
