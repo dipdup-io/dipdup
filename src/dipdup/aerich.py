@@ -13,7 +13,7 @@ async def create_aerich_command(db_url: str, package: str, migrations_dir: 'Path
 
     The AerichCommand is the entry point to manage database migrations using aerich.
     """
-    from aerich import Command as AerichCommand
+    from aerich import Command as AerichCommand 
     from tortoise.backends.base.config_generator import generate_config
 
     # TODO: Refactor building the app_modules dict and use here and in the tortoise_wrapper function ?

@@ -5,7 +5,7 @@
 groups = ["default", "docs", "lint", "migrations", "perf", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:bf4dcd81d5e13eba28aa0995cd81cb2478181a02a720a2dcd4308272af7d847a"
+content_hash = "sha256:7f4333f669cfe9240e257bef6afabd34b58ce39354dc611b6c74a4838ac66f85"
 
 [[metadata.targets]]
 requires_python = ">=3.12,<3.13"
@@ -131,7 +131,7 @@ name = "annotated-types"
 version = "0.7.0"
 requires_python = ">=3.8"
 summary = "Reusable constraint types to use with typing.Annotated"
-groups = ["default", "migrations"]
+groups = ["default", "migrations", "perf"]
 dependencies = [
     "typing-extensions>=4.0.0; python_version < \"3.9\"",
 ]
@@ -1275,22 +1275,22 @@ files = [
 
 [[package]]
 name = "pycryptodome"
-version = "3.20.0"
-requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "3.21.0"
+requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 summary = "Cryptographic library for Python"
 groups = ["default"]
 files = [
-    {file = "pycryptodome-3.20.0-cp35-abi3-macosx_10_9_universal2.whl", hash = "sha256:ac1c7c0624a862f2e53438a15c9259d1655325fc2ec4392e66dc46cdae24d044"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-macosx_10_9_x86_64.whl", hash = "sha256:76658f0d942051d12a9bd08ca1b6b34fd762a8ee4240984f7c06ddfb55eaf15a"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f35d6cee81fa145333137009d9c8ba90951d7d77b67c79cbe5f03c7eb74d8fe2"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:76cb39afede7055127e35a444c1c041d2e8d2f1f9c121ecef573757ba4cd2c3c"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:49a4c4dc60b78ec41d2afa392491d788c2e06edf48580fbfb0dd0f828af49d25"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:fb3b87461fa35afa19c971b0a2b7456a7b1db7b4eba9a8424666104925b78128"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-musllinux_1_1_i686.whl", hash = "sha256:acc2614e2e5346a4a4eab6e199203034924313626f9620b7b4b38e9ad74b7e0c"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:210ba1b647837bfc42dd5a813cdecb5b86193ae11a3f5d972b9a0ae2c7e9e4b4"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-win32.whl", hash = "sha256:8d6b98d0d83d21fb757a182d52940d028564efe8147baa9ce0f38d057104ae72"},
-    {file = "pycryptodome-3.20.0-cp35-abi3-win_amd64.whl", hash = "sha256:9b3ae153c89a480a0ec402e23db8d8d84a3833b65fa4b15b81b83be9d637aab9"},
-    {file = "pycryptodome-3.20.0.tar.gz", hash = "sha256:09609209ed7de61c2b560cc5c8c4fbf892f8b15b1faf7e4cbffac97db1fffda7"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-macosx_10_9_universal2.whl", hash = "sha256:2480ec2c72438430da9f601ebc12c518c093c13111a5c1644c82cdfc2e50b1e4"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:de18954104667f565e2fbb4783b56667f30fb49c4d79b346f52a29cb198d5b6b"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2de4b7263a33947ff440412339cb72b28a5a4c769b5c1ca19e33dd6cd1dcec6e"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0714206d467fc911042d01ea3a1847c847bc10884cf674c82e12915cfe1649f8"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7d85c1b613121ed3dbaa5a97369b3b757909531a959d229406a75b912dd51dd1"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:8898a66425a57bcf15e25fc19c12490b87bd939800f39a03ea2de2aea5e3611a"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-musllinux_1_2_i686.whl", hash = "sha256:932c905b71a56474bff8a9c014030bc3c882cee696b448af920399f730a650c2"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:18caa8cfbc676eaaf28613637a89980ad2fd96e00c564135bf90bc3f0b34dd93"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-win32.whl", hash = "sha256:280b67d20e33bb63171d55b1067f61fbd932e0b1ad976b3a184303a3dad22764"},
+    {file = "pycryptodome-3.21.0-cp36-abi3-win_amd64.whl", hash = "sha256:b7aa25fc0baa5b1d95b7633af4f5f1838467f1815442b22487426f94e0d66c53"},
+    {file = "pycryptodome-3.21.0.tar.gz", hash = "sha256:f7787e0d469bdae763b876174cf2e6c0f7be79808af26b1da96f1a64bcf47297"},
 ]
 
 [[package]]
@@ -1298,7 +1298,7 @@ name = "pydantic"
 version = "2.9.2"
 requires_python = ">=3.8"
 summary = "Data validation using Python type hints"
-groups = ["default", "migrations"]
+groups = ["default", "migrations", "perf"]
 dependencies = [
     "annotated-types>=0.6.0",
     "pydantic-core==2.23.4",
@@ -1315,7 +1315,7 @@ name = "pydantic-core"
 version = "2.23.4"
 requires_python = ">=3.8"
 summary = "Core functionality for Pydantic validation and serialization"
-groups = ["default", "migrations"]
+groups = ["default", "migrations", "perf"]
 dependencies = [
     "typing-extensions!=4.7.0,>=4.6.0",
 ]
@@ -1687,7 +1687,7 @@ files = [
 
 [[package]]
 name = "scalene"
-version = "1.5.44.1"
+version = "1.5.45"
 requires_python = "!=3.11.0,>=3.8"
 summary = "Scalene: A high-resolution, low-overhead CPU, GPU, and memory profiler for Python with AI-powered optimization suggestions"
 groups = ["perf"]
@@ -1695,18 +1695,19 @@ dependencies = [
     "Jinja2>=3.0.3",
     "astunparse>=1.6.3; python_version < \"3.9\"",
     "cloudpickle>=2.2.1",
-    "numpy<1.27,>=1.24.0",
+    "numpy!=1.27,>=1.24.0",
     "nvidia-ml-py>=12.555.43; platform_system != \"Darwin\"",
     "psutil>=5.9.2",
+    "pydantic>=2.6",
     "rich>=10.7.0",
     "wheel>=0.36.1",
 ]
 files = [
-    {file = "scalene-1.5.44.1-cp312-cp312-macosx_13_0_universal2.whl", hash = "sha256:fdcd10f4e34b00fd50714f07cc2fe5294da64a6a478c212e42da717a931f19df"},
-    {file = "scalene-1.5.44.1-cp312-cp312-macosx_14_0_universal2.whl", hash = "sha256:5b00e5a774ec25613282e0da48a7af9d294df8277595b9e3104a1c2794af8189"},
-    {file = "scalene-1.5.44.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:803dfb2085fe7f9fba31008472599b8b42aba8029f6f44dd8bc003078bc9e325"},
-    {file = "scalene-1.5.44.1-cp312-cp312-win_amd64.whl", hash = "sha256:f89261a40ca690b0e1d865ed2eeea2448357db5db0d6ff5bfc3158208e1578d8"},
-    {file = "scalene-1.5.44.1.tar.gz", hash = "sha256:ce9a79b23a94fdc28b37522bdc3f22b964467583606cf4d49169bd3fe68e286b"},
+    {file = "scalene-1.5.45-cp312-cp312-macosx_13_0_universal2.whl", hash = "sha256:047f60f3b3c78e2f105d7da40a22d724ce7a15755b390211c4c69c803bb19ce3"},
+    {file = "scalene-1.5.45-cp312-cp312-macosx_14_0_universal2.whl", hash = "sha256:2f3f36487cf852477abe9844eb189bcdab5ef532b4bdf3e0969ce171ce8c3cd6"},
+    {file = "scalene-1.5.45-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:3cd9b97410633cf6c58cfb951003cfbca7e05dd13cc8b8030f94580272db7cc8"},
+    {file = "scalene-1.5.45-cp312-cp312-win_amd64.whl", hash = "sha256:5f63d0b62b74d3d37b5e92d41465f46821bee3d684f7c2a8dab864aac37ebacb"},
+    {file = "scalene-1.5.45.tar.gz", hash = "sha256:47796aa5662bb9ea9e9d4dc4cfe4677ace6f6051701fc6ddaa457769876cf2ed"},
 ]
 
 [[package]]
@@ -2062,7 +2063,7 @@ name = "typing-extensions"
 version = "4.12.2"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
-groups = ["default", "lint", "migrations"]
+groups = ["default", "lint", "migrations", "perf"]
 files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
