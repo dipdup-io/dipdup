@@ -21,6 +21,7 @@ from typing import Any
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
+from dipdup.aerich import create_aerich_command
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
 from dipdup.codegen import generate_environments
@@ -680,6 +681,7 @@ class DipDup:
             await self._set_up_api(stack)
 
             await self._initialize_schema()
+            await self._initialize_migrations()
             await self._initialize_datasources()
 
             hasura_gateway = await self._set_up_hasura(stack)
@@ -726,6 +728,7 @@ class DipDup:
             self._schema = await Schema.get_or_none(name=schema_name)
 
         # NOTE: Call with existing Schema too to create new tables if missing
+        # TODO: Check if it doesn't conflict with aerich migrations
         try:
             await generate_schema(
                 conn,
@@ -740,6 +743,7 @@ class DipDup:
 
         schema_hash = get_schema_hash(conn)
 
+        # TODO: Advise to run `dipdup schema migrate` before `dipdup schema approve`
         if self._schema is None:
             await self._ctx.fire_hook('on_reindex')
 
@@ -919,6 +923,26 @@ class DipDup:
             )
         )
         return event
+
+    async def _initialize_migrations(self) -> None:
+        """Initialize database migrations with aerich."""
+        migrations_dir = self._ctx.package.migrations
+        try:
+            aerich_command = await create_aerich_command(
+                self._config.database.connection_string, self._config.package, migrations_dir
+            )
+            _logger.info("Initializing database migrations at '%s'", migrations_dir)
+            await aerich_command.init_db(safe=True)
+        except ModuleNotFoundError as e:
+            if e.name == 'aerich':
+                _logger.debug('aerich is not installed, skipping database migration initialization')
+            else:
+                raise
+        except FileExistsError as e:
+            from pathlib import Path
+
+            if Path(e.filename).is_relative_to(migrations_dir):
+                _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()

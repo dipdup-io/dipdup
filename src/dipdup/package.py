@@ -73,6 +73,9 @@ class DipDupPackage:
         self.sql = root / 'sql'
         self.types = root / 'types'
 
+        # NOTE: optional sections
+        self.migrations = root / 'migrations'
+
         # NOTE: Shared directories; not a part of package
         self._xdg_shared_dir = Path.home() / '.local' / 'share' / 'dipdup'
         self.schemas = self._xdg_shared_dir / 'schemas' / self.name

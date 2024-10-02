@@ -70,10 +70,11 @@ async def tortoise_wrapper(
     model_modules: dict[str, Iterable[str | ModuleType]] = {
         'int_models': ['dipdup.models'],
     }
+
     if models:
         if not models.endswith('.models'):
             models += '.models'
-        model_modules['models'] = [models]
+        model_modules['models'] = [models, 'dipdup.models']
 
     # NOTE: Must be called before entering Tortoise context
     decimal_precision = decimal_precision or guess_decimal_precision(models)
@@ -307,8 +308,11 @@ async def wipe_schema(
     conn: SupportedClient,
     schema_name: str,
     immune_tables: set[str],
+    migrations_dir: 'Path',
 ) -> None:
-    """Truncate schema preserving immune tables. Executes in a transaction"""
+    """Truncate schema and remove migrations directory preserving immune tables. Executes in a transaction"""
+    import shutil
+
     async with conn._in_transaction() as conn:
         if isinstance(conn, SqliteClient):
             await _sqlite_wipe_schema(conn, schema_name, immune_tables)
@@ -316,6 +320,9 @@ async def wipe_schema(
             await _pg_wipe_schema(conn, schema_name, immune_tables)
         else:
             raise NotImplementedError
+
+        if migrations_dir.exists():
+            shutil.rmtree(migrations_dir)
 
 
 async def _pg_create_schema(conn: AsyncpgClient, name: str) -> None:
