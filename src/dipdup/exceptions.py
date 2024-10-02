@@ -303,13 +303,13 @@ class SQLScriptExecutionError(Exception):
     exc: Exception
 
     def __str__(self) -> str:
-        # Recortar el path para que solo incluya la parte a partir de 'dipdup'
+        # cut the path to the project root
         project_root = 'dipdup'
         try:
-            # Convertir a string relativo al directorio 'dipdup'
+            # convert Path to string
             relative_path = str(self.path)
             if project_root in relative_path:
-                relative_path = relative_path.split(project_root, 1)[1]  # Retener desde 'dipdup'
+                relative_path = relative_path.split(project_root, 1)[1]  # cut the path to 'dipdup'
             else:
                 relative_path = self.path  # Si no está 'dipdup', dejar el path completo
         except ValueError:
