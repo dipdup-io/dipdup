@@ -694,8 +694,6 @@ class DipDupContext:
         # NOTE: Do not wrap known errors like ProjectImportError
         except FrameworkException:
             raise
-        except SQLScriptFailureError as e:
-            raise e
         except Exception as e:
             raise CallbackError(module, e) from e
 
