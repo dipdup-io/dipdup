@@ -693,7 +693,7 @@ def _approve_schema_after(command: click.Command) -> click.Command:
 
 
 try:
-    from aerich.cli import cli as aerich_cli
+    from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
 
     schema.add_command(aerich_cli.commands['history'])
     schema.add_command(aerich_cli.commands['heads'])
