@@ -225,7 +225,8 @@ class DipDupContext:
 
         elif action == ReindexingAction.wipe:
             conn = get_connection()
-            immune_tables = self.config.database.immune_tables | {'dipdup_meta'}
+            # FIXME: Define a global var or config option for "always immune tables"
+            immune_tables = self.config.database.immune_tables | {'dipdup_meta', 'aerich'}
             await wipe_schema(
                 conn=conn,
                 schema_name=self.config.database.schema_name,
