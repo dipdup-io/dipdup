@@ -243,7 +243,7 @@ class DocsBuilder(FileSystemEventHandler):
         event: FileSystemEvent,
         skip_rst: bool = False,
     ) -> None:
-        src_file = Path(event.src_path).relative_to(self._source)  # type: ignore[arg-type]
+        src_file = Path(event.src_path).relative_to(self._source)
         if src_file.is_dir() or 'html' in src_file.parts:
             return
 
@@ -323,12 +323,12 @@ def create_project_callback() -> Callable[[str], str]:
 @contextmanager
 def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
     observer = Observer()
-    observer.schedule(handler, path=str(path), recursive=True)
-    observer.start()
+    observer.schedule(handler, path=str(path), recursive=True)  # type: ignore
+    observer.start()  # type: ignore
 
     yield observer
 
-    observer.stop()
+    observer.stop()  # type: ignore
     observer.join()
 
 
