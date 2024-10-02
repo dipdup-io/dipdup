@@ -738,6 +738,7 @@ def dump_demos() -> None:
                     'env': {
                         'DIPDUP_DEBUG': '1',
                     },
+                    'comment': 'Environment variables can be reloaded at runtime using dipdup.env.reload_env()',
                 }
             )
     launch_json_path.write_bytes(

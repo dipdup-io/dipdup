@@ -18,6 +18,7 @@ from dipdup.cli import echo
 from dipdup.config import ToStr
 from dipdup.env import get_package_path
 from dipdup.env import get_pyproject_name
+from dipdup.env import reload_env
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -373,3 +374,6 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
         header=CODEGEN_HEADER,
     )
     write(output_path, content, overwrite=force)
+
+
+reload_env()
