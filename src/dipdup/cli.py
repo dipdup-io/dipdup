@@ -650,6 +650,13 @@ async def schema(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
 
     if ctx.invoked_subcommand in AERICH_CMDS:
+        from dipdup.config import SqliteDatabaseConfig
+
+        if isinstance(config.database, SqliteDatabaseConfig):
+            from dipdup.exceptions import UnsupportedFeatureError
+
+            raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
+
         from dipdup.package import DipDupPackage
 
         migrations_dir = DipDupPackage(config.package_path).migrations
@@ -689,7 +696,7 @@ def _approve_schema_after(command: click.Command) -> click.Command:
 
 
 try:
-    from aerich.cli import cli as aerich_cli
+    from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
 
     schema.add_command(aerich_cli.commands['history'])
     schema.add_command(aerich_cli.commands['heads'])
