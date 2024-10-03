@@ -109,6 +109,9 @@ class IndexDispatcher:
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
         self._last_levels_nonempty: int = 0
         self._last_objects_indexed: int = 0
+    
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}(indexes={self._indexes}, entrypoint_filter={self._entrypoint_filter}, address_filter={self._address_filter}, code_hash_filter={self._code_hash_filter})>'
 
     async def run(
         self,
@@ -614,6 +617,9 @@ class DipDup:
         )
         self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
+    
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}(package_name={self._ctx.package.name}>'
 
     @property
     def schema(self) -> Schema:

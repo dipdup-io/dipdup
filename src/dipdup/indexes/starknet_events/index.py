@@ -35,6 +35,7 @@ class StarknetEventsIndex(
     ) -> None:
         super().__init__(ctx, config, datasources)
         self._event_identifiers: dict[str, dict[str, str]] | None = None
+    
 
     @property
     def event_identifiers(self) -> dict[str, dict[str, str]]:
