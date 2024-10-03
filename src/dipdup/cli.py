@@ -112,8 +112,10 @@ def _get_paths(
 
 def _load_env_files(env_file_paths: list[Path]) -> None:
     for path in env_file_paths:
-         from dotenv import load_dotenv
-         from dipdup.env import reload_env
+        from dotenv import load_dotenv
+
+        from dipdup.env import reload_env
+
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
         reload_env()

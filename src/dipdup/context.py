@@ -10,7 +10,6 @@ from contextlib import suppress
 from logging import Logger
 from logging import getLogger
 from pathlib import Path
-from pprint import pformat
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -747,9 +746,9 @@ class HookContext(DipDupContext):
         )
         self.logger = logger
         self.hook_config = hook_config
-    
+
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(hook_name={self.hook_config.name})>'
+        return f'<{self.__class__.__name__}(hook_name={self.hook_config.callback})>'
 
     @classmethod
     def _wrap(
@@ -814,9 +813,9 @@ class HandlerContext(DipDupContext):
             handler_config.parent.name if handler_config.parent else 'unknown',
             handler_config.parent._template_values if handler_config.parent else {},
         )
-    
+
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}>(<{self.template_values._index}.{self.handler_config.name}>)'
+        return f'<{self.__class__.__name__}>(<{self.template_values._index}.{self.handler_config.callback}>)'
 
     @classmethod
     def _wrap(

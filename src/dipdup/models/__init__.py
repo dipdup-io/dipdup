@@ -394,7 +394,7 @@ class Model(TortoiseModel):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._original_versioned_data = self.versioned_data
-    
+
     def __repr__(self) -> str:
         pk = getattr(self, 'pk', None)
         versioned_data_str = ', '.join(f'{key}={value}' for key, value in self.versioned_data.items())
@@ -541,7 +541,6 @@ class CachedModel(Model):
         cls._misses = 0
         cls._cache = LRU(cls._maxsize)
         super().__init_subclass__()
-    
 
     @classmethod
     def clear(cls) -> None:
@@ -702,7 +701,6 @@ class ContractMetadata(Model):
     class Meta:
         table = 'dipdup_contract_metadata'
         unique_together = ('network', 'contract')
-    
 
 
 class TokenMetadata(Model):

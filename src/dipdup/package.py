@@ -86,7 +86,7 @@ class DipDupPackage:
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis = EvmAbiManager(self)
         self._cairo_abis = CairoAbiManager(self)
-    
+
     def __repr__(self) -> str:
         return f'<{self.__class__.__name__} (root={self.root})>'
 
