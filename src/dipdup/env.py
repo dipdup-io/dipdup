@@ -94,11 +94,6 @@ def reload_env() -> None:
     REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
     TEST = get_bool('DIPDUP_TEST')
 
-    if getenv('CI') == 'true':
-        CI = True
-    if platform.system() == 'Linux' and Path('/.dockerenv').exists():
-        DOCKER = True
-
 
 def set_test() -> None:
     global TEST, REPLAY_PATH
