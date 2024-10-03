@@ -650,6 +650,13 @@ async def schema(ctx: click.Context) -> None:
     config: DipDupConfig = ctx.obj.config
 
     if ctx.invoked_subcommand in AERICH_CMDS:
+        from dipdup.config import SqliteDatabaseConfig
+
+        if isinstance(config.database, SqliteDatabaseConfig):
+            from dipdup.exceptions import UnsupportedFeatureError
+
+            raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
+
         from dipdup.package import DipDupPackage
 
         migrations_dir = DipDupPackage(config.package_path).migrations
@@ -757,12 +764,14 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     if isinstance(config.database, SqliteDatabaseConfig):
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
-            immune_tables.add('dipdup_meta')
+            # FIXME: Define a global constant or config option for "always immune tables"
+            immune_tables = immune_tables | {'dipdup_meta', 'aerich'}
             _logger.warning(message)
         elif immune_tables:
             raise ConfigurationError(message)
     else:
-        immune_tables.add('dipdup_meta')
+        # FIXME: Define a global constant or config option for "always immune tables"
+        immune_tables = immune_tables | {'dipdup_meta', 'aerich'}
 
     if not force:
         try:

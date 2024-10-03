@@ -29,6 +29,7 @@ from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import SqliteDatabaseConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -728,7 +729,6 @@ class DipDup:
             self._schema = await Schema.get_or_none(name=schema_name)
 
         # NOTE: Call with existing Schema too to create new tables if missing
-        # TODO: Check if it doesn't conflict with aerich migrations
         try:
             await generate_schema(
                 conn,
@@ -743,7 +743,6 @@ class DipDup:
 
         schema_hash = get_schema_hash(conn)
 
-        # TODO: Advise to run `dipdup schema migrate` before `dipdup schema approve`
         if self._schema is None:
             await self._ctx.fire_hook('on_reindex')
 
@@ -926,8 +925,8 @@ class DipDup:
 
     async def _initialize_migrations(self) -> None:
         """Initialize database migrations with aerich."""
-        # FIXME
-        if env.TEST:
+        if isinstance(self._config.database, SqliteDatabaseConfig):
+            _logger.debug('SQLite database detected, skipping migrations initialization')
             return
 
         migrations_dir = self._ctx.package.migrations

@@ -18,6 +18,7 @@ _dipdup_tables = {
     'dipdup_head',
     'dipdup_index',
     'dipdup_meta',
+    'aerich',
 }
 
 
@@ -151,7 +152,7 @@ async def test_schema_postgres() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == {'dipdup_meta'}
+            assert await get_tables() == {'dipdup_meta', 'aerich'}
 
 
 async def test_schema_postgres_immune() -> None:
@@ -192,4 +193,4 @@ async def test_schema_postgres_immune() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == {'dipdup_meta', 'test', 'domain', 'tld'}
+            assert await get_tables() == {'dipdup_meta', 'aerich', 'test', 'domain', 'tld'}
