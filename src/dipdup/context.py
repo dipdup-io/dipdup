@@ -163,8 +163,8 @@ class DipDupContext:
         self._handlers: dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: dict[str, HookConfig] = {}
 
-    def __str__(self) -> str:
-        return pformat(self.__dict__)
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}(package={self.package}, transactions={self.transactions})>'
 
     # TODO: The next four properties are process-global. Document later.
     @property
@@ -747,6 +747,9 @@ class HookContext(DipDupContext):
         )
         self.logger = logger
         self.hook_config = hook_config
+    
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}(hook_name={self.hook_config.name})>'
 
     @classmethod
     def _wrap(
@@ -811,6 +814,9 @@ class HandlerContext(DipDupContext):
             handler_config.parent.name if handler_config.parent else 'unknown',
             handler_config.parent._template_values if handler_config.parent else {},
         )
+    
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__}>(<{self.template_values._index}.{self.handler_config.name}>)'
 
     @classmethod
     def _wrap(
