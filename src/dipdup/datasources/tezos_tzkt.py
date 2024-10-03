@@ -885,8 +885,7 @@ class TezosTzktDatasource(
             url='v1/bigmaps/updates',
             params={
                 **params,
-                'contract.in': ','.join(addresses),
-                'path.in': ','.join(paths),
+                'bigmap.in': '1264,1262'
             },
         )
         return tuple(TezosBigMapData.from_json(bm) for bm in raw_big_maps)
