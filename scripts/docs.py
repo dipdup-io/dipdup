@@ -323,12 +323,12 @@ def create_project_callback() -> Callable[[str], str]:
 @contextmanager
 def observer(path: Path, handler: Any) -> Iterator[BaseObserver]:
     observer = Observer()
-    observer.schedule(handler, path=str(path), recursive=True)  # type: ignore
-    observer.start()  # type: ignore
+    observer.schedule(handler, path=str(path), recursive=True)  
+    observer.start()  
 
     yield observer
 
-    observer.stop()  # type: ignore
+    observer.stop() 
     observer.join()
 
 
