@@ -16,6 +16,7 @@ from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
+from dipdup.datasources.graphql import GraphQLDatasource
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)

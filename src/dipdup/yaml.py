@@ -154,13 +154,24 @@ class DipDupYAMLConfig(dict[str, Any]):
                 path_yaml, path_environment = substitute_env_variables(path_yaml, unsafe)
                 config_environment.update(path_environment)
 
-            config.update(yaml_loader.load(path_yaml))
+            # Update to handle graphql configuration
+            loaded_yaml = yaml_loader.load(path_yaml)
+            config.update(loaded_yaml)
+
+            # Check for graphql datasource
+            for datasource in loaded_yaml.get('datasources', []):
+                if datasource.get('kind') == 'graphql':
+                    config['graphql'] = {
+                        'url': datasource.get('url'),
+                        'headers': datasource.get('headers', {}),
+                        'queries': datasource.get('queries', [])
+                    }
 
         if not raw:
-            # FIXME: Can't use `from_` field alias in dataclasses
             fix_dataclass_field_aliases(config)
 
         return config, config_environment
 
     def dump(self) -> str:
         return dump(self)
+
