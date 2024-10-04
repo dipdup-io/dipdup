@@ -21,7 +21,6 @@ class TransactionManager:
         self._immune_tables = immune_tables or set()
         self._transaction: dipdup.models.VersionedTransaction | None = None
         self._pending_updates: deque[dipdup.models.ModelUpdate] = deque()
-    
 
     @asynccontextmanager
     async def register(self) -> AsyncIterator[None]:
