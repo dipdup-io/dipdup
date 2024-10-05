@@ -53,6 +53,7 @@ dependencies = [
     "aiohttp==3.10.2",
     "aiolimiter~=1.1",
     "anyio~=4.4",
+    "appdirs~=1.4.4",
     "APScheduler~=3.10",
     "async-lru~=2.0",
     "asyncpg~=0.29",
@@ -72,7 +73,7 @@ dependencies = [
     # FIXME: Argument 1 to "serialize" has incompatible type "Event";
     "sentry-sdk==2.12.0",
     "sqlparse~=0.5",
-    "starknet-py~=0.24",
+    "starknet-py==0.24.0",
     "strict-rfc3339~=0.7",
     "survey~=5.4",
     "tabulate~=0.9",
@@ -82,6 +83,10 @@ dependencies = [
     "web3~=7.2",
 ]
 
+[project.optional-dependencies]
+migrations = [
+    "aerich~=0.7.2",
+]
 [tool.pdm.resolution]
 # NOTE: Introduced by starknetpy 0.24; depends on half of the PyPI
 excludes = ["bip-utils", "ledgerwallet"]

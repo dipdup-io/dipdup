@@ -7,7 +7,6 @@
 | demo_evm_uniswap | EVM | Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_evm_uniswap) |
 | demo_starknet_events | Starknet | ERC-20 token transfers (from events) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_starknet_events) |
 | demo_tezos_auction | Tezos | NFT marketplace (TzColors) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_tezos_auction) |
-| demo_tezos_big_maps | Tezos | Indexing specific big maps | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_tezos_big_maps) |
 | demo_tezos_dao | Tezos | DAO registry (Homebase DAO) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_tezos_dao) |
 | demo_tezos_dex | Tezos | DEX balances and liquidity (Quipuswap) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_tezos_dex) |
 | demo_tezos_domains | Tezos | Domain name service (Tezos Domains) | [link](https://github.com/dipdup-io/dipdup/tree/8.0.0/src/demo_tezos_domains) |

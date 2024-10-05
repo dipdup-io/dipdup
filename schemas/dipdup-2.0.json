@@ -2796,6 +2796,21 @@
           "default": null,
           "title": "http",
           "description": "HTTP connection tunables"
+        },
+        "ignore_internal": {
+          "type": "boolean",
+          "default": false,
+          "title": "ignore_internal",
+          "description": "Whether to ignore internal tables (prefixed with 'dipdup_') when generating the GraphQL API."
+        },
+        "ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "title": "ignore",
+          "description": "List of additional table names to ignore when generating the GraphQL API."
         }
       },
       "required": [

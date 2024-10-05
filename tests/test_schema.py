@@ -143,15 +143,15 @@ async def test_schema_postgres() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry'}
+            assert await get_tables() == _dipdup_tables | {'aerich', 'tld', 'record', 'domain', 'expiry'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
-            assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry', 'test'}
+            assert await get_tables() == _dipdup_tables | {'aerich', 'tld', 'record', 'domain', 'expiry', 'test'}
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == {'dipdup_meta'}
+            assert await get_tables() == {'dipdup_meta', 'aerich'}
 
 
 async def test_schema_postgres_immune() -> None:
@@ -184,12 +184,12 @@ async def test_schema_postgres_immune() -> None:
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry'}
+            assert await get_tables() == _dipdup_tables | {'aerich', 'tld', 'record', 'domain', 'expiry'}
             await conn.execute_script('CREATE TABLE test (id INTEGER PRIMARY KEY);')
-            assert await get_tables() == _dipdup_tables | {'tld', 'record', 'domain', 'expiry', 'test'}
+            assert await get_tables() == _dipdup_tables | {'aerich', 'tld', 'record', 'domain', 'expiry', 'test'}
 
         await run_in_tmp(tmp_package_path, env, 'schema', 'wipe', '--force')
 
         async with tortoise():
             conn = get_connection()
-            assert await get_tables() == {'dipdup_meta', 'test', 'domain', 'tld'}
+            assert await get_tables() == {'dipdup_meta', 'aerich', 'test', 'domain', 'tld'}

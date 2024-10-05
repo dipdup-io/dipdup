@@ -78,16 +78,6 @@ async def assert_run_balances() -> None:
     assert random_balance == 0
 
 
-async def assert_run_big_maps() -> None:
-    import demo_tezos_big_maps.models
-
-    tlds = await demo_tezos_big_maps.models.TLD.filter().count()
-    domains = await demo_tezos_big_maps.models.Domain.filter().count()
-
-    assert tlds == 1
-    assert domains == 1
-
-
 async def assert_init(package: str) -> None:
     pass
 
@@ -205,8 +195,6 @@ test_params = (
     # ),
     ('demo_tezos_token_balances.yml', 'demo_tezos_token_balances', 'run', assert_run_balances),
     ('demo_tezos_token_balances.yml', 'demo_tezos_token_balances', 'init', None),
-    ('demo_tezos_big_maps.yml', 'demo_tezos_big_maps', 'run', assert_run_big_maps),
-    ('demo_tezos_big_maps.yml', 'demo_tezos_big_maps', 'init', None),
     ('demo_tezos_domains.yml', 'demo_tezos_domains', 'run', assert_run_domains),
     ('demo_tezos_domains.yml', 'demo_tezos_domains', 'init', None),
     ('demo_tezos_dex.yml', 'demo_tezos_dex', 'run', assert_run_dex),

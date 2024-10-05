@@ -73,6 +73,9 @@ class DipDupPackage:
         self.sql = root / 'sql'
         self.types = root / 'types'
 
+        # NOTE: optional sections
+        self.migrations = root / 'migrations'
+
         # NOTE: Shared directories; not a part of package
         self._xdg_shared_dir = Path.home() / '.local' / 'share' / 'dipdup'
         self.schemas = self._xdg_shared_dir / 'schemas' / self.name
@@ -83,6 +86,9 @@ class DipDupPackage:
         self._types: dict[str, type[BaseModel]] = {}
         self._evm_abis = EvmAbiManager(self)
         self._cairo_abis = CairoAbiManager(self)
+
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} (root={self.root})>'
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:

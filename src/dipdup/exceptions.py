@@ -76,7 +76,7 @@ class DatasourceError(Error):
     def _help(self) -> str:
         return f"""
             `{self.datasource}` datasource returned an error:
-            
+
             "{self.msg}"
 
             See https://dipdup.io/docs/getting-started/datasources
@@ -166,6 +166,7 @@ class ReindexingRequiredError(Error):
         if context:
             context = f'{prefix}{context}\n'
 
+        # TODO: If migrations are enabled, suggest `migrate` and `upgrade` instead of `approve`/`wipe`
         return f"""
             Reindexing required! Reason: {self.reason.value}.
               {context}
@@ -357,3 +358,13 @@ class UnsupportedAPIError(Error):
 # TODO: Human-readable Error
 class MigrationError(FrameworkException):
     pass
+
+
+@dataclass(repr=False)
+class UnsupportedFeatureError(Error):
+    """User trying to use an unsupported feature"""
+
+    msg: str
+
+    def _help(self) -> str:
+        return self.msg
