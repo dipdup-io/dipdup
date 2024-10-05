@@ -21,7 +21,6 @@ from typing import Any
 from tortoise.exceptions import OperationalError
 
 from dipdup import env
-from dipdup.aerich import create_aerich_command
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
 from dipdup.codegen import generate_environments
@@ -937,9 +936,16 @@ class DipDup:
 
         migrations_dir = self._ctx.package.migrations
         try:
-            aerich_command = await create_aerich_command(
-                self._config.database.connection_string, self._config.package, migrations_dir
+            from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+
+            from dipdup.database import get_tortoise_config
+
+            tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
+            aerich_command = AerichCommand(
+                tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
             )
+            await aerich_command.init()
+
             _logger.info("Initializing database migrations at '%s'", migrations_dir)
             await aerich_command.init_db(safe=True)
         except ModuleNotFoundError as e:
