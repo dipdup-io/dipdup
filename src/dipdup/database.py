@@ -3,6 +3,7 @@ import atexit
 import decimal
 import hashlib
 import importlib
+import importlib.util
 import logging
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
@@ -35,6 +36,7 @@ from dipdup.utils import pascal_to_snake
 if TYPE_CHECKING:
     from types import ModuleType
 
+
 _logger = logging.getLogger(__name__)
 
 DEFAULT_CONNECTION_NAME = 'default'
@@ -53,6 +55,32 @@ def set_connection(conn: SupportedClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
+def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[str, Any]:
+    """Get Tortoise config for the given URL and internal, aerich and project models"""
+    from tortoise.backends.base.config_generator import generate_config
+
+    app_modules: dict[str, Iterable[str | ModuleType]] = {
+        'int_models': ['dipdup.models'],
+    }
+
+    models = []
+
+    if project_models:
+        if not project_models.endswith('.models'):
+            project_models += '.models'
+        models.append(project_models)
+
+    if 'sqlite' not in db_url:
+        import importlib
+
+        if importlib.util.find_spec('aerich') is not None:
+            models.append('aerich.models')
+
+    app_modules['models'] = models
+
+    return generate_config(db_url=db_url, app_modules=app_modules)
+
+
 @asynccontextmanager
 async def tortoise_wrapper(
     url: str,
@@ -67,15 +95,6 @@ async def tortoise_wrapper(
     if '/tmp/' in url:
         _logger.warning('Using tmpfs database; data will be lost on reboot')
 
-    model_modules: dict[str, Iterable[str | ModuleType]] = {
-        'int_models': ['dipdup.models'],
-    }
-
-    if models:
-        if not models.endswith('.models'):
-            models += '.models'
-        model_modules['models'] = [models, 'dipdup.models']
-
     # NOTE: Must be called before entering Tortoise context
     decimal_precision = decimal_precision or guess_decimal_precision(models)
     set_decimal_precision(decimal_precision)
@@ -84,10 +103,7 @@ async def tortoise_wrapper(
     try:
         for attempt in range(timeout):
             try:
-                await Tortoise.init(
-                    db_url=url,
-                    modules=model_modules,
-                )
+                await Tortoise.init(config=get_tortoise_config(url, models))
 
                 conn = get_connection()
                 try:

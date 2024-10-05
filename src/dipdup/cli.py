@@ -673,9 +673,14 @@ async def schema(ctx: click.Context) -> None:
               Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
             )
 
-        from dipdup.aerich import create_aerich_command
+        from aerich import Command as AerichCommand  # type: ignore[import-untyped]
 
-        aerich_command = await create_aerich_command(config.database.connection_string, config.package, migrations_dir)
+        from dipdup.database import get_tortoise_config
+
+        tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
+        aerich_command = AerichCommand(
+            tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
+        )
         await aerich_command.init()
 
         ctx.obj['command'] = aerich_command
