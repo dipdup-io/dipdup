@@ -79,6 +79,22 @@ def get_path(key: str) -> Path | None:
     return Path(value)
 
 
+def reload_env() -> None:
+    global CI, DEBUG, DOCKER, JSON_LOG, LOW_MEMORY, NEXT, NO_SYMLINK, NO_VERSION_CHECK, PACKAGE_PATH, REPLAY_PATH, TEST
+
+    CI = get_bool('DIPDUP_CI')
+    DEBUG = get_bool('DIPDUP_DEBUG')
+    DOCKER = get_bool('DIPDUP_DOCKER')
+    JSON_LOG = get_bool('DIPDUP_JSON_LOG')
+    LOW_MEMORY = get_bool('DIPDUP_LOW_MEMORY')
+    NEXT = get_bool('DIPDUP_NEXT')
+    NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
+    NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
+    PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
+    REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
+    TEST = get_bool('DIPDUP_TEST')
+
+
 def set_test() -> None:
     global TEST, REPLAY_PATH
     TEST = True
