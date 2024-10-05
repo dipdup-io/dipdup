@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
+- abi.etherscan: Try to extract ABI from webpage when API call fails.
 - database: support database migrations using [`aerich`](https://github.com/tortoise/aerich)
 - cli: Added `schema` subcommands to manage database migrations: `migrate`, `upgrade`, `downgrade`, `heads` and `history`
 - hasura: Added `ignore` and `ignore_internal` config options to hide specific tables/views.
