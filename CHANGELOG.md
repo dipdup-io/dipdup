@@ -6,13 +6,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.1.0] - 2024-10-??
 
 ### Added
 
 - database: support database migrations using [`aerich`](https://github.com/tortoise/aerich)
 - cli: Added `schema` subcommands to manage database migrations: `migrate`, `upgrade`, `downgrade`, `heads` and `history`
 - hasura: Added `ignore` and `ignore_internal` config options to hide specific tables/views.
+
+### Fixed
+
+- cli: Reload constants in `dipdup.env` after applying env-files.
 
 ## [8.0.0] - 2024-09-10
 
@@ -526,7 +530,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.0.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.1.0...HEAD
+[8.1.0]: https://github.com/dipdup-io/dipdup/compare/8.0.0...8.1.0
 [8.0.0]: https://github.com/dipdup-io/dipdup/compare/8.0.0b5...8.0.0
 [8.0.0b5]: https://github.com/dipdup-io/dipdup/compare/8.0.0b4...8.0.0b5
 [8.0.0b4]: https://github.com/dipdup-io/dipdup/compare/8.0.0b3...8.0.0b4
