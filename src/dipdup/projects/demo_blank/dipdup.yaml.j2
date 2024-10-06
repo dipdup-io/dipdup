@@ -62,8 +62,8 @@ indexes:
         {%- endif %}
         {%- if handler.pattern %}
         pattern:
-          - destination: {{ pattern.destination }}
-            entrypoint: {{ pattern.entrypoint }}
+          - destination: {{ handler.pattern.destination }}
+            entrypoint: {{ handler.pattern.entrypoint }}
         {%- endif %}
       {%- endfor %}
     {%- endif %}

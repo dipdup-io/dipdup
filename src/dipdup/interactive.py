@@ -25,7 +25,6 @@ def prompt_anyof(
 
 
 # Combined predefined settings for each blockchain type, including detailed indexer configurations
-# Combined predefined settings for each blockchain type, including detailed indexer configurations
 DIPDUP_CONFIG = {
     'evm': {
         'datasources': [
@@ -75,7 +74,7 @@ DIPDUP_CONFIG = {
                 'handler_fields': ['callback', 'contract'],
                 'optional_fields': {}
             },
-            'tezos.token_balances': {
+            'tezos.token_transfers': {
                 'handler_fields': ['callback', 'contract'],
                 'optional_fields': {}
             }
@@ -102,7 +101,6 @@ DIPDUP_CONFIG = {
 class Pattern(TypedDict):
     destination: str
     entrypoint: str
-
 
 class Handler(TypedDict):
     name: Optional[str]
@@ -182,10 +180,10 @@ def get_indexer_comments(indexers: dict) -> tuple:
 # Helper functions with typings
 def query_handlers(contract_names: List[str], additional_fields: List[str] = None) -> Optional[List[Handler]]:
     import survey
-    handlers: List[Handler] = None
+    handlers: List[Handler] = []
     
     if len(additional_fields) == 0:
-        return handlers
+        return None
 
     big_yellow_echo('Configure Indexer Handlers')
 
@@ -245,7 +243,7 @@ def query_optional_fields(optional_fields: Dict[str, str]) -> Dict[str, Optional
                 types = []
                 while True:
                     _, type = prompt_anyof(
-                        f'Select {field}',
+                        f'Select operation {field}',
                         ('origination', 'transaction', 'migration'),
                         ('origination operations', 'transaction operations', 'migration operations'),
                         0
