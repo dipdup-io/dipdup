@@ -183,6 +183,7 @@ def install(
     update: bool = False,
     with_pdm: bool = False,
     with_poetry: bool = False,
+    addons: list[str] = None,
 ) -> None:
     """Install DipDup and its dependencies with pipx"""
     if ref and path:
@@ -245,6 +246,9 @@ def install(
             echo(f'Installing `{pm}`')
             env.run_cmd('pipx', 'install', '--python', python_inter_pipx, *pipx_args, pm)
             env._commands[pm] = which(pm)
+    
+    if addons:
+        update_replay_yaml(addons)
 
     done(
         'Done! DipDup is ready to use.\n'
@@ -262,6 +266,25 @@ def ask(question: str, default: bool) -> bool:
             return False
         if answer in ('y', 'yes'):
             return True
+
+def ask_for_addons() -> list[str]:
+    addons = []
+    available_addons = ['swarm_deploy', 'squid_cloud_deploy']  # Define your addons here
+    print("Select optional addons (leave blank to skip):")
+    for addon in available_addons:
+        response = input(f"Include {addon.replace('_', ' ').title()}? (y/n): ").lower()
+        if response.startswith('y'):
+            addons.append(addon)
+    return addons
+
+def update_replay_yaml(addons: list[str]) -> None:
+    replay_path = Path('../demo_tezos_factories/configs/replay.yaml')
+    if replay_path.exists():
+        with replay_path.open('a') as replay_file:
+            replay_file.write("\naddons:\n")
+            for addon in addons:
+                replay_file.write(f"  - {addon}\n")
+
 
 
 def uninstall(quiet: bool) -> NoReturn:
@@ -295,9 +318,11 @@ def cli() -> None:
     parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
     parser.add_argument('--with-poetry', action='store_true', help='Install Poetry')
     args = parser.parse_args()
+    addons = []
 
     if not args.quiet:
         sys.stdin = open('/dev/tty')  # noqa: PTH123
+        addons = ask_for_addons()
 
     if args.uninstall:
         uninstall(args.quiet)
@@ -313,6 +338,7 @@ def cli() -> None:
             update=args.update,
             with_pdm=args.with_pdm,
             with_poetry=args.with_poetry,
+            addons=addons,
         )
 
 
