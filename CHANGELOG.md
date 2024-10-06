@@ -9,6 +9,9 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ## [Unreleased]
 
 ### Added
+- GraphQL datasource for querying GraphQL APIs, including other DipDup instances.
+
+### Added
 
 - hasura: Added `ignore` and `ignore_internal` config options to hide specific tables/views.
 

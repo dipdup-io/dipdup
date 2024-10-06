@@ -18,6 +18,7 @@ from typing import Any
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.datasources.graphql import GraphQLDatasource
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index

@@ -1,0 +1,10 @@
+datasources:
+  starknet_mainnet:
+    kind: graphql
+    url: https://mainnet.starknet.dipdup.net/v1/graphql
+    headers:
+      Authorization: "Bearer YOUR_TOKEN"
+    query_path: graphql/
+    http:
+      retry_count: 3
+      retry_sleep: 1

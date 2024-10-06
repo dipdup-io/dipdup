@@ -11,12 +11,19 @@ from logging import Logger
 from logging import getLogger
 from pathlib import Path
 from pprint import pformat
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from typing import Any
 from typing import Literal
 from typing import TypeVar
 
+from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.datasources.graphql import GraphQLDatasource
 from tortoise.exceptions import OperationalError
+
+from dipdup.datasources import TzktDatasource
+from dipdup.datasources import BcdDatasource
+from dipdup.datasources.http import HttpDatasource
+from dipdup.datasources.graphql import GraphQLDatasource
 
 from dipdup import env
 from dipdup.codegen import BatchHandlerConfig
@@ -90,6 +97,8 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
+from typing import Dict, Union
+from dipdup.datasources.graphql import GraphQLDatasource
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
@@ -792,10 +801,11 @@ class HandlerContext(DipDupContext):
         self,
         config: DipDupConfig,
         package: DipDupPackage,
-        datasources: dict[str, Datasource[Any]],
+       # datasources: dict[str, Datasource[Any]],
         transactions: TransactionManager,
         logger: Logger,
         handler_config: HandlerConfig,
+        datasources: Dict[str, Union[TzktDatasource, BcdDatasource, HttpDatasource, GraphQLDatasource]],
     ) -> None:
         super().__init__(
             config=config,
@@ -809,6 +819,8 @@ class HandlerContext(DipDupContext):
             handler_config.parent.name if handler_config.parent else 'unknown',
             handler_config.parent._template_values if handler_config.parent else {},
         )
+
+
 
     @classmethod
     def _wrap(

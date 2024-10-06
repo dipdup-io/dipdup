@@ -49,3 +49,4 @@ indexes:
           - type: transaction
             destination: HEN_minter
             entrypoint: collect
+            
