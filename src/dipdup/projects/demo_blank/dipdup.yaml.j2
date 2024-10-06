@@ -38,6 +38,7 @@ indexes:
       {%- for datasource in index.datasources %}
       - {{ datasource }}
       {%- endfor %}
+    {%- if index.handlers %}
     handlers:
       {%- for handler in index.handlers %}
       - callback: {{ handler.callback }}
@@ -61,12 +62,11 @@ indexes:
         {%- endif %}
         {%- if handler.pattern %}
         pattern:
-          {%- for pattern_entry in handler.pattern %}
-          - destination: {{ pattern_entry.destination }}
-            entrypoint: {{ pattern_entry.entrypoint }}
-          {%- endfor %}
+          - destination: {{ pattern.destination }}
+            entrypoint: {{ pattern.entrypoint }}
         {%- endif %}
       {%- endfor %}
+    {%- endif %}
     {%- if index.skip_history is not none %}
     skip_history: {{ index.skip_history }}
     {%- endif %}

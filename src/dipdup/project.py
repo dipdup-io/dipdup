@@ -399,7 +399,6 @@ def _render_templates(
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
-        print(answers)
         output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
 

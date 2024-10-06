@@ -36,35 +36,47 @@ DIPDUP_CONFIG = {
         'contract_kind': 'evm',
         'indexers': {
             'evm.events': {
-                'handler_fields': ['contract', 'name'],
+                'handler_fields': ['callback', 'contract', 'name'],
                 'optional_fields': {}
             },
             'evm.transactions': {
-                'handler_fields': ['to', 'method'],
+                'handler_fields': ['callback', 'to', 'method'],
                 'optional_fields': {'first_level': 'integer'}
             }
         }
     },
     'tezos': {
         'datasources': [
-            {'kind': 'tezos.tzkt', 'requires_api_key': False, 'default_url': 'https://api.parisnet.tzkt.io', 'name': 'tzkt'}
+            {'kind': 'tezos.tzkt', 'requires_api_key': False, 'default_url': 'https://api.ghostnet.tzkt.io', 'name': 'tzkt'}
         ],
         'contract_kind': 'tezos',
         'indexers': {
             'tezos.big_maps': {
-                'handler_fields': ['path', 'pattern'],
+                'handler_fields': ['callback', 'contract', 'path'],
                 'optional_fields': {'skip_history': 'select'}
             },
             'tezos.events': {
-                'handler_fields': ['pattern', 'path'],
+                'handler_fields': ['callback', 'contract', 'tag'],
                 'optional_fields': {}
             },
             'tezos.head': {
-                'handler_fields': ['pattern', 'path'],
+                'handler_fields': [],
                 'optional_fields': {'callback': 'string'}
             },
             'tezos.operations': {
-                'handler_fields': ['pattern', 'path'],
+                'handler_fields': ['callback', 'pattern'],
+                'optional_fields': {}
+            },
+            'tezos.operations_unfiltered': {
+                'handler_fields': [],
+                'optional_fields': {'types': 'select', 'callback': 'string', 'first_level': 'integer', 'last_level': 'integer'}
+            },
+            'tezos.token_balances': {
+                'handler_fields': ['callback', 'contract'],
+                'optional_fields': {}
+            },
+            'tezos.token_balances': {
+                'handler_fields': ['callback', 'contract'],
                 'optional_fields': {}
             }
         }
@@ -77,7 +89,7 @@ DIPDUP_CONFIG = {
         'contract_kind': 'starknet',
         'indexers': {
             'starknet.events': {
-                'handler_fields': ['contract', 'name'],
+                'handler_fields': ['callback', 'contract', 'name'],
                 'optional_fields': {}
             }
         }
@@ -87,16 +99,20 @@ DIPDUP_CONFIG = {
 
 
 # TypedDicts for return types
+class Pattern(TypedDict):
+    destination: str
+    entrypoint: str
+
+
 class Handler(TypedDict):
     name: Optional[str]
     callback: str
     contract: Optional[str]
     path: Optional[str]
     tag: Optional[str]
-    pattern: Optional[List[Dict[str, str]]]  # For tezos.operations
+    pattern: Optional[Pattern]  # For tezos.operations
     to: Optional[str]
     method: Optional[str]
-
 
 class Datasource(TypedDict):
     name: str
@@ -116,18 +132,18 @@ class Index(TypedDict):
     name: str
     kind: str
     datasources: List[str]
-    handlers: List[Handler]
+    handlers: Optional[List[Handler]]
     skip_history: Optional[str]  # For tezos.big_maps
     first_level: Optional[int]
     last_level: Optional[int]    # For tezos.operations_unfiltered
     callback: Optional[str]      # For tezos.head
     types: Optional[List[str]]   # For tezos.operations_unfiltered
     contracts: Optional[List[str]]  # For tezos.operations
-
+    
 
 class DipDupYamlConfig(TypedDict):
     datasources: List[Datasource]
-    contracts: List[Contract]
+    contracts: Optional[List[Contract]]
     indexes: List[Index]
 
 
@@ -164,22 +180,25 @@ def get_indexer_comments(indexers: dict) -> tuple:
 
 
 # Helper functions with typings
-def query_handlers(contract_names: List[str], blockchain: str, additional_fields: List[str] = None) -> List[Handler]:
+def query_handlers(contract_names: List[str], additional_fields: List[str] = None) -> Optional[List[Handler]]:
     import survey
-    handlers: List[Handler] = []
+    handlers: List[Handler] = None
+    
+    if len(additional_fields) == 0:
+        return handlers
 
     big_yellow_echo('Configure Indexer Handlers')
 
     while True:
         handler: Handler = {
-            'callback': survey.routines.input('Enter the callback trigger for the handler: '),
+            'callback': None,
             'path': None,
             'tag': None,
             'pattern': None,
             'name': None,
             'contract': None,
             'to': None,
-            'method': None
+            'method': None,
         }
 
         # Prompt for additional fields if they exist
@@ -191,6 +210,20 @@ def query_handlers(contract_names: List[str], blockchain: str, additional_fields
                 ('Contract to listen to',) * len(contract_names),
                 0
                 )[1]
+            elif field == 'pattern':
+                destination = prompt_anyof(
+                'Choose contract for the handler',
+                tuple(contract_names),
+                ('Contract to listen to',) * len(contract_names),
+                0
+                )[1]
+                
+                entrypoint = validate_non_empty_input(survey.routines.input(f"Enter pattern entrypoint: ", value=''), 'entrypoint')
+                
+                handler['pattern'] = {
+                    'destination': destination,
+                    'entrypoint': entrypoint
+                }
             else:
                 handler[field] =  validate_non_empty_input(survey.routines.input(f"Enter handler {field}: ", value=''), field)
 
@@ -208,12 +241,26 @@ def query_optional_fields(optional_fields: Dict[str, str]) -> Dict[str, Optional
 
     for field, field_type in optional_fields.items():
         if field_type == 'select':
-            _, field_values[field] = prompt_anyof(
-                f'Select {field}',
-                ('never', 'always', 'auto'),
-                ('Never process history', 'Always process history', 'Auto-detect based on the state'),
-                0
-            )
+            if field == 'types':
+                types = []
+                while True:
+                    _, type = prompt_anyof(
+                        f'Select {field}',
+                        ('origination', 'transaction', 'migration'),
+                        ('origination operations', 'transaction operations', 'migration operations'),
+                        0
+                    )
+                    types.append(type)
+                    
+                    if survey.routines.input("Add another type? (y/n): ", value='').lower() != 'y':
+                        break
+            else:           
+                _, field_values[field] = prompt_anyof(
+                    f'Select {field}',
+                    ('never', 'always', 'auto'),
+                    ('Never process history', 'Always process history', 'Auto-detect based on the state'),
+                    0
+                )
         else:
             field_values[field] = survey.routines.input(f'Enter {field}: ')
 
@@ -316,6 +363,10 @@ def query_dipdup_config(blockchain: str) -> DipDupYamlConfig:
             indexer_comments,
             0
         )[1]
+        
+        if indexer == 'tezos.head' or indexer == 'tezos.operations_unfiltered':
+            contracts = None
+            
         index_config = blockchain_config['indexers'].get(indexer, {})
         
         index_name = validate_non_empty_input(survey.routines.input('Enter the indexer name: '), 'Indexer name')
@@ -324,7 +375,7 @@ def query_dipdup_config(blockchain: str) -> DipDupYamlConfig:
             'name': index_name,
             'kind': indexer,
             'datasources': datasource_names,
-            'handlers': [],
+            'handlers': None,
             'skip_history': None,
             'first_level': None,
             'last_level': None,
@@ -333,7 +384,7 @@ def query_dipdup_config(blockchain: str) -> DipDupYamlConfig:
             'contracts': None
         }
 
-        handlers = query_handlers(contract_names, blockchain, index_config.get('handler_fields'))
+        handlers = query_handlers(contract_names, index_config.get('handler_fields'))
         index['handlers'] = handlers
 
         if 'optional_fields' in index_config:
