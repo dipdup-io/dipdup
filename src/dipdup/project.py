@@ -22,7 +22,7 @@ from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
-from dipdup.interactive import DipDupConfig, query_dipdup_config
+from dipdup.interactive import DipDupYamlConfig, query_dipdup_config
 
 _logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
     'other': ('demo_blank',),
 }
 
-BLOCKCHAINS = ['evm', 'tezos', 'starknet']
+BLOCKCHAINS = ['evm', 'starknet', 'tezos']
 
 # TODO: demo_jobs
 # TODO: demo_backup
@@ -80,7 +80,7 @@ class Answers(TypedDict):
     hasura_image: str
     line_length: ToStr
     package_manager: str
-    dipdup_config: Optional[DipDupConfig]
+    dipdup_config: Optional[DipDupYamlConfig]
 
 
 def get_default_answers() -> Answers:
@@ -98,6 +98,7 @@ def get_default_answers() -> Answers:
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
         package_manager='pdm',
+        dipdup_config=None
     )
 
 
@@ -142,7 +143,11 @@ def prompt_anyof(
     return index, options[index]
 
 
-def template_from_terminal() -> tuple[str, Optional[DipDupConfig]]:
+def get_replay_path(name: str) -> str:
+    return Path(__file__).parent / 'projects' / name / 'replay.yaml'
+
+
+def template_from_terminal() -> tuple[str, Optional[DipDupYamlConfig]]:
     group_index, _ = prompt_anyof(
         question='What blockchain are you going to index?',
         options=(
@@ -162,17 +167,19 @@ def template_from_terminal() -> tuple[str, Optional[DipDupConfig]]:
         question="Select one of the following: ",
         options=(
             'Use Template',
-            'Create project from scratch'
+            'Create from scratch'
         ),
-        comments=(),
+        comments=(
+            'Use existing DipDup Templates',
+            'Adventure mode'
+        ),
         default=0
     )
 
     template_group = (
         TEMPLATES['evm'],
         TEMPLATES['starknet'],
-        TEMPLATES['tezos'],
-        # TEMPLATES['other'],
+        TEMPLATES['tezos']
     )[group_index]
 
     template = ''
@@ -182,11 +189,11 @@ def template_from_terminal() -> tuple[str, Optional[DipDupConfig]]:
 
     if option_index == 0:
         for name in template_group:
-            replay_path = Path(__file__).parent / \
-                'projects' / name / 'replay.yaml'
+            replay_path = get_replay_path(name)
             _answers = answers_from_replay(replay_path)
             options.append(_answers['template'])
             comments.append(_answers['description'])
+
         _, template = prompt_anyof(
             'Choose a project template:',
             options=tuple(options),
@@ -194,10 +201,8 @@ def template_from_terminal() -> tuple[str, Optional[DipDupConfig]]:
             default=0,
         )
     else:
-        name = 'demo_blank',
+        replay_path = get_replay_path('demo_blank')
         dipdup_config = query_dipdup_config(BLOCKCHAINS[group_index])
-        replay_path = Path(__file__).parent / \
-            'projects' / name / 'replay.yaml'
         _answers = answers_from_replay(replay_path)
         options.append(_answers['template'])
         comments.append(_answers['description'])
@@ -218,10 +223,14 @@ def answers_from_terminal(template: str | None) -> Answers:
     if template:
         echo(f'Using template `{template}`\n')
     else:
-        template, _ = template_from_terminal()
+        template, dipdup_config = template_from_terminal()
 
     answers = get_default_answers()
     answers['template'] = template
+
+    answers['dipdup_config'] = dipdup_config
+
+    big_yellow_echo('Set Project Config')
 
     while True:
         package = survey.routines.input(
@@ -315,6 +324,7 @@ def answers_from_replay(path: Path) -> Answers:
         **get_default_answers(),
         **yaml_config['replay'],
     }
+    yaml_config['replay']['dipdup_config'] = None
     return TypeAdapter(ReplayConfig).validate_python(yaml_config).replay
 
 
@@ -389,6 +399,7 @@ def _render_templates(
             *path.relative_to(project_path).parts,
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
+        print(answers)
         output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
 
@@ -399,8 +410,15 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
 
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
-    content = template.render(
-        project={k: str(v) for k, v in answers.items()},
-        header=CODEGEN_HEADER,
-    )
+    content = ''
+    if "dipdup.yaml.j2" in str(template_path):
+        content = template.render(
+            project=answers,
+            header=CODEGEN_HEADER,
+        )
+    else:
+        content = template.render(
+            project={k: str(v) for k, v in answers.items()},
+            header=CODEGEN_HEADER,
+        )
     write(output_path, content, overwrite=force)
