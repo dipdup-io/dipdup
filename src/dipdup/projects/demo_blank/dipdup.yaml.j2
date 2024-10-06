@@ -41,12 +41,18 @@ indexes:
     handlers:
       {%- for handler in index.handlers %}
       - callback: {{ handler.callback }}
+        {%- if handler.contract %}
         contract: {{ handler.contract }}
-        
+        {%- endif %}
         {%- if handler.name %}
         name: {{ handler.name }}
         {%- endif %}
-
+        {%- if handler.to %}
+        to: {{ handler.to }}
+        {%- endif %}
+        {%- if handler.method %}
+        method: {{ handler.method }}
+        {%- endif %}
         {%- if handler.path %}
         path: {{ handler.path }}
         {%- endif %}

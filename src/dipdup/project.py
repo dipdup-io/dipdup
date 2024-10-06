@@ -22,7 +22,7 @@ from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
-from dipdup.interactive import DipDupYamlConfig, query_dipdup_config
+from dipdup.interactive import DipDupYamlConfig, query_dipdup_config, Contract
 
 _logger = logging.getLogger(__name__)
 
@@ -403,7 +403,6 @@ def _render_templates(
         output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
 
-
 def _render(answers: Answers, template_path: Path, output_path: Path, force: bool) -> None:
     if output_path.exists() and not force:
         _logger.info('File `%s` already exists, skipping', output_path)
@@ -411,14 +410,35 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
     _logger.info('Generating `%s`', output_path)
     template = load_template(str(template_path))
     content = ''
+
     if "dipdup.yaml.j2" in str(template_path):
         content = template.render(
             project=answers,
             header=CODEGEN_HEADER,
         )
+        
+        # Check if dipdup_config exists and has contracts before calling _render_abi_file
+        if answers.get('dipdup_config') and answers['dipdup_config'].get('contracts'):
+            _render_abi_file(output_path, answers['dipdup_config']['contracts'], False)
     else:
         content = template.render(
             project={k: str(v) for k, v in answers.items()},
             header=CODEGEN_HEADER,
         )
+    
     write(output_path, content, overwrite=force)
+
+def _render_abi_file(path: Path, contracts: List[Contract], overwrite: bool = False) -> None:
+    """Create the /<contract-name>/abi.json file and write [] inside it."""
+    parent = path.parent
+
+    for contract in contracts:
+        # Append /abi/<contract>/abi.json
+        new_path = parent / 'abi' / contract['name'] / 'abi.json'
+        
+        # Logging the new path
+        _logger.info('Creating ABI file at `%s`', new_path)
+        
+        abi_content = '[]'
+        
+        write(new_path, abi_content, overwrite)

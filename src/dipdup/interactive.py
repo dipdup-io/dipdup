@@ -36,11 +36,11 @@ DIPDUP_CONFIG = {
         'contract_kind': 'evm',
         'indexers': {
             'evm.events': {
-                'handler_fields': [],
+                'handler_fields': ['contract', 'name'],
                 'optional_fields': {}
             },
             'evm.transactions': {
-                'handler_fields': [],
+                'handler_fields': ['to', 'method'],
                 'optional_fields': {'first_level': 'integer'}
             }
         }
@@ -77,7 +77,7 @@ DIPDUP_CONFIG = {
         'contract_kind': 'starknet',
         'indexers': {
             'starknet.events': {
-                'handler_fields': [],
+                'handler_fields': ['contract', 'name'],
                 'optional_fields': {}
             }
         }
@@ -88,12 +88,14 @@ DIPDUP_CONFIG = {
 
 # TypedDicts for return types
 class Handler(TypedDict):
-    name: str
+    name: Optional[str]
     callback: str
-    contract: str
+    contract: Optional[str]
     path: Optional[str]
     tag: Optional[str]
     pattern: Optional[List[Dict[str, str]]]  # For tezos.operations
+    to: Optional[str]
+    method: Optional[str]
 
 
 class Datasource(TypedDict):
@@ -173,22 +175,24 @@ def query_handlers(contract_names: List[str], blockchain: str, additional_fields
             'callback': survey.routines.input('Enter the callback trigger for the handler: '),
             'path': None,
             'tag': None,
-            'pattern': None
+            'pattern': None,
+            'name': None,
+            'contract': None,
+            'to': None,
+            'method': None
         }
 
-        # Only prompt for contract and name if blockchain is not Tezos
-        if blockchain != 'tezos':
-            handler['contract'] = prompt_anyof(
+        # Prompt for additional fields if they exist
+        for field in additional_fields:
+            if field == 'contract' or field == 'to':
+                handler[field] = prompt_anyof(
                 'Choose contract for the handler',
                 tuple(contract_names),
                 ('Contract to listen to',) * len(contract_names),
                 0
-            )[1]
-            handler['name'] = survey.routines.input('Enter the handler identifier: ')
-
-        # Prompt for additional fields if they exist
-        for field in additional_fields:
-            handler[field] = survey.routines.input(f"Enter {field}: ", value='')
+                )[1]
+            else:
+                handler[field] =  validate_non_empty_input(survey.routines.input(f"Enter handler {field}: ", value=''), field)
 
         handlers.append(handler)
 
@@ -314,7 +318,7 @@ def query_dipdup_config(blockchain: str) -> DipDupYamlConfig:
         )[1]
         index_config = blockchain_config['indexers'].get(indexer, {})
         
-        index_name = validate_non_empty_input(survey.routines.input('Enter the indexer identifier: '), 'Indexer identifier')
+        index_name = validate_non_empty_input(survey.routines.input('Enter the indexer name: '), 'Indexer name')
 
         index: Index = {
             'name': index_name,
