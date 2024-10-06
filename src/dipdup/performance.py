@@ -11,10 +11,12 @@ These three need to be importable from anywhere, so no internal imports in this 
 
 import gc
 import logging
-from collections import defaultdict
+import time
 from collections import deque
 from collections.abc import Callable
 from collections.abc import Coroutine
+from collections.abc import Generator
+from contextlib import contextmanager
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
@@ -23,10 +25,12 @@ from typing import Any
 from typing import cast
 
 from async_lru import alru_cache
-from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import FrameworkException
+from dipdup.prometheus import Counter
+from dipdup.prometheus import Gauge
+from dipdup.prometheus import Histogram
 
 if TYPE_CHECKING:
 
@@ -179,20 +183,87 @@ class _QueueManager:
 
 @dataclass
 class _MetricManager:
+    # Copied from prometheus.py, probably should be removed
+    enabled: bool = False
+
     # NOTE: General metrics
-    levels_indexed: int = 0
-    levels_nonempty: int = 0
-    levels_total: int = 0
-    objects_indexed: int = 0
+    # NOTE: Transformed to prometheus metrics easily
+    levels_indexed = Counter('dipdup_levels_indexed_total', 'Total number of levels indexed')
+    levels_nonempty = Counter('dipdup_levels_nonempty_total', 'Total number of nonempty levels indexed')
+    levels_total = Counter('dipdup_levels_total', 'Total number of levels')
+    objects_indexed = Counter('dipdup_objects_indexed_total', 'Total number of objects indexed')
+
+    # NOTE: Orignally in prometheus.py
+    indexes_total = Counter(
+        'dipdup_indexes_total',
+        'Number of indexes in operation by status',
+        ('status',),
+    )
+    levels_to_sync = Histogram(
+        'dipdup_index_levels_to_sync_total',
+        'Number of levels to reach synced state',
+        ['index'],
+    )
+    levels_to_realtime = Histogram(
+        'dipdup_index_levels_to_realtime_total',
+        'Number of levels to reach realtime state',
+        ['index'],
+    )
+    # FIXME: move inside _MetricManager
+    _index_total_sync_duration = Histogram(
+        'dipdup_index_total_sync_duration_seconds',
+        'Duration of the last index syncronization',
+    )
+    _index_total_realtime_duration = Histogram(
+        'dipdup_index_total_realtime_duration_seconds',
+        'Duration of the last index realtime syncronization',
+    )
+
+    _datasource_head_updated = Histogram(
+        'dipdup_datasource_head_updated_timestamp',
+        'Timestamp of the last head update',
+        ['datasource'],
+    )
+    _datasource_rollbacks = Counter(
+        'dipdup_datasource_rollbacks_total',
+        'Number of rollbacks',
+        ['datasource'],
+    )
+
+    _http_errors = Counter(
+        'dipdup_http_errors_total',
+        'Number of http errors',
+        ['url', 'status'],
+    )
+    _http_errors_in_row = Histogram(
+        'dipdup_http_errors_in_row',
+        'Number of consecutive failed requests',
+    )
+
+    _sqd_processor_last_block = Gauge(
+        'sqd_processor_last_block',
+        'Level of the last processed block from Subsquid Network',
+    )
+    _sqd_processor_chain_height = Gauge(
+        'sqd_processor_chain_height',
+        'Current chain height as reported by Subsquid Network',
+    )
+    _sqd_processor_archive_http_errors_in_row = Histogram(
+        'sqd_processor_archive_http_errors_in_row',
+        'Number of consecutive failed requests to Subsquid Network',
+    )
 
     # NOTE: Index metrics
-    handlers_matched: defaultdict[str, int] = Field(default_factory=lambda: defaultdict(int))
-    time_in_matcher: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
-    time_in_callbacks: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
+    # NOTE: Merged with the one in prometheus.py
+    handlers_matched = Gauge('dipdup_index_handlers_matched_total', 'Index total hits', ['handler'])
+    time_in_matcher = Histogram('dipdup_index_time_in_matcher_seconds', 'Time spent in matcher', ['index'])
+    time_in_callbacks = Histogram('dipdup_index_time_in_callbacks_seconds', 'Time spent in callbacks', ['index'])
 
     # NOTE: Datasource metrics
-    time_in_requests: defaultdict[str, float] = Field(default_factory=lambda: defaultdict(float))
-    requests_total: defaultdict[str, int] = Field(default_factory=lambda: defaultdict(int))
+    time_in_requests = Histogram(
+        'dipdup_datasource_time_in_requests_seconds', 'Time spent in datasource requests', ['datasource']
+    )
+    requests_total = Counter('dipdup_datasource_requests_total', 'Total number of datasource requests', ['datasource'])
 
     # NOTE: Various timestamps
     started_at: float = 0.0
@@ -211,8 +282,46 @@ class _MetricManager:
     time_left: float = 0.0
     progress: float = 0.0
 
+    @contextmanager
+    def measure_total_sync_duration(self) -> Generator[None, None, None]:
+        print('call', 'measure_total_sync_duration')
+        with self._index_total_sync_duration.time():
+            print('contextmanager', 'measure_total_sync_duration', 'enter')
+            yield
+            print('contextmanager', 'measure_total_sync_duration', 'exit')
+
+    @contextmanager
+    def measure_total_realtime_duration(self) -> Generator[None, None, None]:
+        print('call', 'measure_total_realtime_duration')
+        with self._index_total_realtime_duration.time():
+            print('contextmanager', 'measure_total_realtime_duration', 'enter')
+            yield
+            print('contextmanager', 'measure_total_realtime_duration', 'exit')
+
+    def set_datasource_head_updated(self, name: str) -> None:
+        self._datasource_head_updated.labels(datasource=name).observe(time.time())
+
+    def set_datasource_rollback(self, name: str) -> None:
+        self._datasource_rollbacks.labels(datasource=name).inc()
+
+    def set_http_error(self, url: str, status: int) -> None:
+        self._http_errors.labels(url=url, status=status).inc()
+
+    def set_sqd_processor_last_block(self, last_block: int) -> None:
+        self._sqd_processor_last_block.set(last_block)
+
+    def set_sqd_processor_chain_height(self, chain_height: int) -> None:
+        self._sqd_processor_chain_height.set(chain_height)
+
+    def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
+        self._http_errors_in_row.observe(errors_count)
+        if 'subsquid' in url:
+            self._sqd_processor_archive_http_errors_in_row.observe(errors_count)
+
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:
+            if isinstance(value, Counter | Gauge | Histogram):
+                return _round(value.value)
             if isinstance(value, dict):
                 return {k: _round(v) for k, v in value.items()}
             if isinstance(value, float):

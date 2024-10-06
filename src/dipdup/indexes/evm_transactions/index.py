@@ -13,7 +13,7 @@ from dipdup.models import RollbackMessage
 from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import TransactionRequest
-from dipdup.prometheus import Metrics
+from dipdup.performance import metrics
 
 QueueItem = tuple[EvmTransactionData, ...] | RollbackMessage
 EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
@@ -36,7 +36,7 @@ class EvmTransactionsIndex(
 
         async for _level, transactions in fetcher.fetch_by_level():
             await self._process_level_data(transactions, sync_level)
-            Metrics.set_sqd_processor_last_block(_level)
+            metrics.set_sqd_processor_last_block(_level)
 
     async def _synchronize_node(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -44,7 +44,7 @@ class EvmTransactionsIndex(
 
         async for _level, transactions in fetcher.fetch_by_level():
             await self._process_level_data(transactions, sync_level)
-            Metrics.set_sqd_processor_last_block(_level)
+            metrics.set_sqd_processor_last_block(_level)
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidTransactionFetcher:
 

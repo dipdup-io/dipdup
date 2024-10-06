@@ -32,7 +32,6 @@ from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
-from dipdup.prometheus import Metrics
 
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
@@ -220,7 +219,8 @@ class TezosOperationsIndex(
         fetcher = await self._create_fetcher(first_level, sync_level)
 
         async for level, operations in fetcher.fetch_by_level():
-            Metrics.set_levels_to_sync(self._config.name, sync_level - level)
+            # FIXME: Try to use -= or += instead
+            metrics.levels_to_sync[self._config.name] = sync_level - level
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(

@@ -22,7 +22,6 @@ from dipdup.models import MessageType
 from dipdup.models import RollbackMessage
 from dipdup.performance import metrics
 from dipdup.performance import queues
-from dipdup.prometheus import Metrics
 from dipdup.utils import FormattedLogger
 
 if TYPE_CHECKING:
@@ -81,7 +80,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         """Push message to the queue"""
         self.queue.append(message)
 
-        Metrics.set_levels_to_realtime(self._config.name, len(self.queue))
+        # NOTE: Try to use += or -= instead
+        metrics.levels_to_realtime[self._config.name] = len(self.queue)
 
     @abstractmethod
     async def _synchronize(self, sync_level: int) -> None:
@@ -136,7 +136,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         matched_handlers = self._match_level_data(self._config.handlers, level_data)
 
         total_matched = len(matched_handlers)
-        Metrics.set_index_handlers_matched(total_matched)
+        # metrics.set_index_handlers_matched(total_matched)
         metrics.handlers_matched[self.name] += total_matched
         metrics.time_in_matcher[self.name] += time.time() - started_at
 
@@ -251,7 +251,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         last_level = self._config.last_level
         if last_level:
-            with Metrics.measure_total_sync_duration():
+            with metrics.measure_total_sync_duration():
                 await self._synchronize(last_level)
                 await self._enter_disabled_state(last_level)
                 return True
@@ -263,12 +263,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
             self.queue.clear()
 
-            with Metrics.measure_total_sync_duration():
+            with metrics.measure_total_sync_duration():
                 await self._synchronize(sync_level)
                 return True
 
         if self.queue:
-            with Metrics.measure_total_realtime_duration():
+            with metrics.measure_total_realtime_duration():
                 await self._process_queue()
                 return True
 
@@ -288,12 +288,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     async def _exit_sync_state(self, head_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', head_level)
-        Metrics.set_levels_to_sync(self._config.name, 0)
+        metrics.levels_to_sync[self._config.name] = 0
         await self._update_state(status=IndexStatus.realtime, level=head_level)
 
     async def _enter_disabled_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        Metrics.set_levels_to_sync(self._config.name, 0)
+        metrics.levels_to_sync[self._config.name] = 0
         await self._update_state(status=IndexStatus.disabled, level=last_level)
 
     async def _update_state(
