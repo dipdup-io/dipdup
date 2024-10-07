@@ -3,7 +3,6 @@
 Ask user some question with Click; render Jinja2 templates with answers.
 """
 
-from typing import TypedDict, List, Dict, Optional
 import logging
 import re
 from pathlib import Path
@@ -19,10 +18,13 @@ from dipdup.cli import echo
 from dipdup.config import ToStr
 from dipdup.env import get_package_path
 from dipdup.env import get_pyproject_name
+from dipdup.interactive import Contract
+from dipdup.interactive import DipDupInteractiveYamlConfig
+from dipdup.interactive import prompt_anyof
+from dipdup.interactive import query_dipdup_config
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
-from dipdup.interactive import DipDupYamlConfig, query_dipdup_config, Contract, prompt_anyof
 
 _logger = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ class Answers(TypedDict):
     hasura_image: str
     line_length: ToStr
     package_manager: str
-    dipdup_config: Optional[DipDupYamlConfig]
+    dipdup_config: DipDupInteractiveYamlConfig | None
 
 
 def get_default_answers() -> Answers:
@@ -121,11 +123,11 @@ class ReplayConfig:
     replay: Answers
 
 
-def get_replay_path(name: str) -> str:
+def get_replay_path(name: str) -> Path:
     return Path(__file__).parent / 'projects' / name / 'replay.yaml'
 
 
-def template_from_terminal() -> tuple[str, Optional[DipDupYamlConfig]]:
+def template_from_terminal() -> tuple[str, DipDupInteractiveYamlConfig | None]:
     start_index, _ = prompt_anyof(
         question='How would you like to set up your new DipDup project?',
         options=(
@@ -192,7 +194,7 @@ def template_from_terminal() -> tuple[str, Optional[DipDupYamlConfig]]:
 
 def answers_from_terminal(template: str | None) -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
-    import survey
+    import survey  # type: ignore
 
     big_yellow_echo(
         'Welcome to DipDup! This command will help you to create a new project.\n'
@@ -388,15 +390,18 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
     template = load_template(str(template_path))
     content = ''
 
-    if "dipdup.yaml.j2" in str(template_path):
+    if 'dipdup.yaml.j2' in str(template_path):
         content = template.render(
             project=answers,
             header=CODEGEN_HEADER,
         )
 
         # Check if dipdup_config exists and has contracts before calling _render_abi_file
-        if answers.get('dipdup_config') and answers['dipdup_config'].get('contracts'):
-            _render_abi_file(output_path, answers['dipdup_config']['contracts'], False)
+        dipdup_config = answers.get('dipdup_config')
+        if dipdup_config and dipdup_config.get('contracts'):
+            if dipdup_config['contracts']:
+                _render_abi_file(output_path, dipdup_config['contracts'], False)
+
     else:
         content = template.render(
             project={k: str(v) for k, v in answers.items()},
@@ -406,7 +411,7 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
     write(output_path, content, overwrite=force)
 
 
-def _render_abi_file(path: Path, contracts: List[Contract], overwrite: bool = False) -> None:
+def _render_abi_file(path: Path, contracts: list[Contract], overwrite: bool = False) -> None:
     """Create the /<contract-name>/abi.json file and write [] inside it."""
     parent = path.parent
 
