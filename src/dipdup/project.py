@@ -3,7 +3,7 @@
 Ask user some question with Click; render Jinja2 templates with answers.
 """
 
-from typing import TypedDict, List, Dict, Optional, Union
+from typing import TypedDict, List, Dict, Optional
 import logging
 import re
 from pathlib import Path
@@ -22,7 +22,7 @@ from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
-from dipdup.interactive import DipDupYamlConfig, query_dipdup_config, Contract
+from dipdup.interactive import DipDupYamlConfig, query_dipdup_config, Contract, prompt_anyof
 
 _logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def get_default_answers() -> Answers:
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
         package_manager='pdm',
-        dipdup_config=None
+        dipdup_config=None,
     )
 
 
@@ -121,73 +121,59 @@ class ReplayConfig:
     replay: Answers
 
 
-def prompt_anyof(
-    question: str,
-    options: tuple[str, ...],
-    comments: tuple[str, ...],
-    default: int,
-) -> tuple[int, str]:
-    """Ask user to choose one of options; returns index and value"""
-    import survey  # type: ignore[import-untyped]
-    from tabulate import tabulate
-
-    table = tabulate(
-        zip(options, comments, strict=True),
-        tablefmt='plain',
-    )
-    index = survey.routines.select(
-        question + '\n',
-        options=table.split('\n'),
-        index=default,
-    )
-    return index, options[index]
-
-
 def get_replay_path(name: str) -> str:
     return Path(__file__).parent / 'projects' / name / 'replay.yaml'
 
 
 def template_from_terminal() -> tuple[str, Optional[DipDupYamlConfig]]:
-    group_index, _ = prompt_anyof(
-        question='What blockchain are you going to index?',
+    start_index, _ = prompt_anyof(
+        question='How would you like to set up your new DipDup project?',
         options=(
-            'EVM',
-            'Starknet',
-            'Tezos',
+            'Template',
+            'Interactively',
+            'Blank',
         ),
         comments=(
-            'EVM-compatible blockchains',
-            'Starknet',
-            'Tezos',
+            'Use existing DipDup Templates',
+            'Guided setup with prompts',
+            'Begin with an empty project',
         ),
         default=0,
     )
 
-    option_index, _ = prompt_anyof(
-        question="Select one of the following: ",
-        options=(
-            'Use Template',
-            'Create from scratch'
-        ),
-        comments=(
-            'Use existing DipDup Templates',
-            'Adventure mode'
-        ),
-        default=0
-    )
+    if start_index != 2:
+        group_index, _ = prompt_anyof(
+            question='What blockchain are you going to index?',
+            options=(
+                'EVM',
+                'Starknet',
+                'Tezos',
+            ),
+            comments=(
+                'EVM-compatible blockchains',
+                'Starknet',
+                'Tezos',
+            ),
+            default=0,
+        )
+    else:
+        group_index = 3
 
-    template_group = (
-        TEMPLATES['evm'],
-        TEMPLATES['starknet'],
-        TEMPLATES['tezos']
-    )[group_index]
+    template_group = (TEMPLATES['evm'], TEMPLATES['starknet'], TEMPLATES['tezos'], TEMPLATES['other'])[group_index]
 
     template = ''
     options, comments = [], []
 
     dipdup_config = None
 
-    if option_index == 0:
+    if start_index == 1:
+        replay_path = get_replay_path('demo_blank')
+        dipdup_config = query_dipdup_config(BLOCKCHAINS[group_index])
+        _answers = answers_from_replay(replay_path)
+        options.append(_answers['template'])
+        comments.append(_answers['description'])
+        template = options[0]
+    else:
         for name in template_group:
             replay_path = get_replay_path(name)
             _answers = answers_from_replay(replay_path)
@@ -200,13 +186,6 @@ def template_from_terminal() -> tuple[str, Optional[DipDupYamlConfig]]:
             comments=tuple(comments),
             default=0,
         )
-    else:
-        replay_path = get_replay_path('demo_blank')
-        dipdup_config = query_dipdup_config(BLOCKCHAINS[group_index])
-        _answers = answers_from_replay(replay_path)
-        options.append(_answers['template'])
-        comments.append(_answers['description'])
-        template = options[0]
 
     return (template, dipdup_config)
 
@@ -340,8 +319,7 @@ def render_project(
     _render_templates(answers, Path(answers['template']), force)
 
     # NOTE: Replay to use with `init --base` and `new --replay`
-    Path(answers['package']).joinpath(
-        'configs').mkdir(parents=True, exist_ok=True)
+    Path(answers['package']).joinpath('configs').mkdir(parents=True, exist_ok=True)
     _render(
         answers,
         template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
@@ -392,8 +370,7 @@ def _render_templates(
         if include and not any(relative_path.startswith(i) for i in include):
             continue
 
-        output_base = get_package_path(
-            answers['package']) if exists else Path(answers['package'])
+        output_base = get_package_path(answers['package']) if exists else Path(answers['package'])
         output_path = Path(
             output_base,
             *path.relative_to(project_path).parts,
@@ -401,6 +378,7 @@ def _render_templates(
         ).with_suffix(path.suffix[:-3])
         output_path = Path(Template(str(output_path)).render(project=answers))
         _render(answers, template_path, output_path, force)
+
 
 def _render(answers: Answers, template_path: Path, output_path: Path, force: bool) -> None:
     if output_path.exists() and not force:
@@ -415,7 +393,7 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
             project=answers,
             header=CODEGEN_HEADER,
         )
-        
+
         # Check if dipdup_config exists and has contracts before calling _render_abi_file
         if answers.get('dipdup_config') and answers['dipdup_config'].get('contracts'):
             _render_abi_file(output_path, answers['dipdup_config']['contracts'], False)
@@ -424,8 +402,9 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
             project={k: str(v) for k, v in answers.items()},
             header=CODEGEN_HEADER,
         )
-    
+
     write(output_path, content, overwrite=force)
+
 
 def _render_abi_file(path: Path, contracts: List[Contract], overwrite: bool = False) -> None:
     """Create the /<contract-name>/abi.json file and write [] inside it."""
@@ -434,10 +413,10 @@ def _render_abi_file(path: Path, contracts: List[Contract], overwrite: bool = Fa
     for contract in contracts:
         # Append /abi/<contract>/abi.json
         new_path = parent / 'abi' / contract['name'] / 'abi.json'
-        
+
         # Logging the new path
         _logger.info('Creating ABI file at `%s`', new_path)
-        
+
         abi_content = '[]'
-        
+
         write(new_path, abi_content, overwrite)

@@ -34,10 +34,12 @@ indexes:
   {%- for index in project.dipdup_config.indexes %}
   {{ index.name }}:
     kind: {{ index.kind }}
+    {%- if index.datasources %}
     datasources:
       {%- for datasource in index.datasources %}
       - {{ datasource }}
       {%- endfor %}
+    {%- endif %}
     {%- if index.handlers %}
     handlers:
       {%- for handler in index.handlers %}
