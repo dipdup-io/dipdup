@@ -1,2 +1,94 @@
+# DipDup YAML
+
 spec_version: 3.0
 package: {{ project.package }}
+
+{%- if project.dipdup_config %}
+  {%- if project.dipdup_config.datasources %}
+
+datasources:
+  {%- for datasource in project.dipdup_config.datasources %}
+  {{ datasource.name }}:
+    kind: {{ datasource.kind }}
+    url: {{ datasource.url }}
+    {%- if datasource.ws_url %}
+    ws_url: {{ datasource.ws_url }}
+    {%- endif %}
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if project.dipdup_config.contracts %}
+
+contracts:
+  {%- for contract in project.dipdup_config.contracts %}
+  {{ contract.name }}:
+    kind: {{ contract.kind }}
+    address: {{ contract.address }}
+    typename: {{ contract.typename }}
+  {%- endfor %}
+  {%- endif %}
+
+  {%- if project.dipdup_config.indexes %}
+
+indexes:
+  {%- for index in project.dipdup_config.indexes %}
+  {{ index.name }}:
+    kind: {{ index.kind }}
+    {%- if index.datasources %}
+    datasources:
+      {%- for datasource in index.datasources %}
+      - {{ datasource }}
+      {%- endfor %}
+    {%- endif %}
+    {%- if index.handlers %}
+    handlers:
+      {%- for handler in index.handlers %}
+      - callback: {{ handler.callback }}
+        {%- if handler.contract %}
+        contract: {{ handler.contract }}
+        {%- endif %}
+        {%- if handler.name %}
+        name: {{ handler.name }}
+        {%- endif %}
+        {%- if handler.to %}
+        to: {{ handler.to }}
+        {%- endif %}
+        {%- if handler.method %}
+        method: {{ handler.method }}
+        {%- endif %}
+        {%- if handler.path %}
+        path: {{ handler.path }}
+        {%- endif %}
+        {%- if handler.tag %}
+        tag: {{ handler.tag }}
+        {%- endif %}
+        {%- if handler.pattern %}
+        pattern:
+          - destination: {{ handler.pattern.destination }}
+            entrypoint: {{ handler.pattern.entrypoint }}
+        {%- endif %}
+      {%- endfor %}
+    {%- endif %}
+    {%- if index.skip_history is not none %}
+    skip_history: {{ index.skip_history }}
+    {%- endif %}
+    {%- if index.first_level is not none %}
+    first_level: {{ index.first_level }}
+    {%- endif %}
+    {%- if index.last_level is not none %}
+    last_level: {{ index.last_level }}
+    {%- endif %}
+    {%- if index.callback %}
+    callback: {{ index.callback }}
+    {%- endif %}
+    {%- if index.types %}
+    types:
+      {%- for type in index.types %}
+      - {{ type }}
+      {%- endfor %}
+    {%- endif %}
+  {%- endfor %}
+  {%- endif %}
+{% else %}
+# project.dipdup_config is not set, so the template doesn't render any dipdup-specific data.
+{% endif %}
