@@ -16,6 +16,7 @@ from dipdup.models import MessageType
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
+from dipdup.datasources.graphql import GraphQLDatasource
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)
@@ -61,12 +62,12 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
         )
         self._logger = FormattedLogger(__name__, config.name + ': {}')
 
+    @abstractmethod
+    async def run(self) -> None: ...
+
     @property
     def name(self) -> str:
         return self._config.name
-
-    async def run(self) -> None:
-        pass
 
 
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
@@ -85,9 +86,6 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
         self._on_connected_callbacks: set[EmptyCallback] = set()
         self._on_disconnected_callbacks: set[EmptyCallback] = set()
         self._on_rollback_callbacks: set[RollbackCallback] = set()
-
-    @abstractmethod
-    async def run(self) -> None: ...
 
     @abstractmethod
     async def subscribe(self) -> None: ...

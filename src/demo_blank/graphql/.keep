@@ -1,0 +1,15 @@
+from dipdup.context import HandlerContext
+
+
+async def handle_starknet_data(ctx: HandlerContext):
+    starknet_ds = ctx.datasources['starknet_mainnet']
+    
+    # Using a custom query
+    result = await starknet_ds.execute_query("getBlocks", variables={"limit": 10})
+    
+    # Using a helper method
+    blocks = await starknet_ds.get_blocks(limit=10)
+    
+    for block in blocks:
+        transactions = await starknet_ds.get_transactions(block['hash'])
+        

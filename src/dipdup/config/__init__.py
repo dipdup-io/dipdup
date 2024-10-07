@@ -26,7 +26,7 @@ from contextlib import suppress
 from itertools import chain
 from pathlib import Path
 from types import NoneType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 from typing import Annotated
 from typing import Any
 from typing import Literal
@@ -57,6 +57,7 @@ from dipdup.models import ReindexingReason
 from dipdup.models import SkipHistory
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
+from dipdup.datasources.graphql import GraphQLDatasource
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -272,10 +273,11 @@ class DatasourceConfig(ABC, NameMixin):
     :param http: HTTP connection tunables
     """
 
-    kind: str
+    kind: Literal['tezos', 'ethereum', 'http', 'graphql']
     url: str
-    http: HttpConfig | None = None
-
+    http: Optional[HttpConfig] = Field(default=None)
+    headers: Optional[Dict[str, str]] = Field(default=None)
+    query_path: Optional[str] = Field(default="graphql/")
 
 class AbiDatasourceConfig(DatasourceConfig):
     """Provider of EVM contract ABIs. Datasource kind starts with 'abi.'"""
@@ -598,6 +600,10 @@ class DipDupConfig:
     custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
 
+
+
+    
+
     def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):
             raise ConfigurationError('Python package name must be in snake_case.')
@@ -605,6 +611,8 @@ class DipDupConfig:
         self._paths: list[Path] = []
         self._environment: dict[str, str] = {}
         self._json = DipDupYAMLConfig()
+
+
 
     @property
     def schema_name(self) -> str:
@@ -1074,6 +1082,29 @@ class DipDupConfig:
                     handler_config.contract = self.get_starknet_contract(handler_config.contract)
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
+
+    def configure_datasource(self, name: str, config: DatasourceConfig) -> None:
+        if config.kind == 'graphql':
+            datasource = GraphQLDatasource(
+                url=config.url,
+                headers=config.headers,
+                query_path=config.query_path or "graphql/",
+            )
+        elif config.kind == 'tezos':
+            # Existing code for Tezos datasource
+            pass
+        elif config.kind == 'ethereum':
+            # Existing code for Ethereum datasource
+            pass
+        elif config.kind == 'http':
+            # Existing code for HTTP datasource
+            pass
+        else:
+            raise ValueError(f"Unknown datasource kind: {config.kind}")
+        
+        self.datasources[name] = datasource
+
+
 
     def _set_names(self) -> None:
         # TODO: Forbid reusing names between sections?

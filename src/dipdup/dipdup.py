@@ -28,7 +28,6 @@ from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
-from dipdup.config import SqliteDatabaseConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.tezos import TezosContractConfig
@@ -108,9 +107,6 @@ class IndexDispatcher:
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
         self._last_levels_nonempty: int = 0
         self._last_objects_indexed: int = 0
-
-    def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(indexes={self._indexes}, entrypoint_filter={self._entrypoint_filter}, address_filter={self._address_filter}, code_hash_filter={self._code_hash_filter})>'
 
     async def run(
         self,
@@ -617,9 +613,6 @@ class DipDup:
         self._index_dispatcher: IndexDispatcher = IndexDispatcher(self._ctx)
         self._schema: Schema | None = None
 
-    def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(package_name={self._ctx.package.name}>'
-
     @property
     def schema(self) -> Schema:
         if self._schema is None:
@@ -687,7 +680,6 @@ class DipDup:
             await self._set_up_api(stack)
 
             await self._initialize_schema()
-            await self._initialize_migrations()
             await self._initialize_datasources()
 
             hasura_gateway = await self._set_up_hasura(stack)
@@ -927,37 +919,6 @@ class DipDup:
             )
         )
         return event
-
-    async def _initialize_migrations(self) -> None:
-        """Initialize database migrations with aerich."""
-        if isinstance(self._config.database, SqliteDatabaseConfig):
-            _logger.debug('SQLite database detected, skipping migrations initialization')
-            return
-
-        migrations_dir = self._ctx.package.migrations
-        try:
-            from aerich import Command as AerichCommand  # type: ignore[import-untyped]
-
-            from dipdup.database import get_tortoise_config
-
-            tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
-            aerich_command = AerichCommand(
-                tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
-            )
-            await aerich_command.init()
-
-            _logger.info("Initializing database migrations at '%s'", migrations_dir)
-            await aerich_command.init_db(safe=True)
-        except ModuleNotFoundError as e:
-            if e.name == 'aerich':
-                _logger.debug('aerich is not installed, skipping database migration initialization')
-            else:
-                raise
-        except FileExistsError as e:
-            from pathlib import Path
-
-            if Path(e.filename).is_relative_to(migrations_dir):
-                _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
     async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()
