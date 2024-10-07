@@ -17,7 +17,6 @@
 !**/*.py
 **/.*_cache
 **/__pycache__
-venv
 
 # Add configs and scripts (but not env!)
 !**/*.graphql
