@@ -18,8 +18,7 @@ from dipdup.cli import echo
 from dipdup.config import ToStr
 from dipdup.env import get_package_path
 from dipdup.env import get_pyproject_name
-from dipdup.interactive import Contract
-from dipdup.interactive import DipDupInteractiveYamlConfig
+from dipdup.interactive import DipDupSurveyConfig
 from dipdup.interactive import prompt_anyof
 from dipdup.interactive import query_dipdup_config
 from dipdup.utils import load_template
@@ -82,7 +81,7 @@ class Answers(TypedDict):
     hasura_image: str
     line_length: ToStr
     package_manager: str
-    dipdup_config: DipDupInteractiveYamlConfig | None
+    _survey_config: DipDupSurveyConfig | None
 
 
 def get_default_answers() -> Answers:
@@ -100,7 +99,7 @@ def get_default_answers() -> Answers:
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
         package_manager='pdm',
-        dipdup_config=None,
+        _survey_config=None,
     )
 
 
@@ -127,7 +126,7 @@ def get_replay_path(name: str) -> Path:
     return Path(__file__).parent / 'projects' / name / 'replay.yaml'
 
 
-def template_from_terminal() -> tuple[str, DipDupInteractiveYamlConfig | None]:
+def template_from_terminal() -> tuple[str, DipDupSurveyConfig | None]:
     start_index, _ = prompt_anyof(
         question='How would you like to set up your new DipDup project?',
         options=(
@@ -161,7 +160,12 @@ def template_from_terminal() -> tuple[str, DipDupInteractiveYamlConfig | None]:
     else:
         group_index = 3
 
-    template_group = (TEMPLATES['evm'], TEMPLATES['starknet'], TEMPLATES['tezos'], TEMPLATES['other'])[group_index]
+    template_group = (
+        TEMPLATES['evm'],
+        TEMPLATES['starknet'],
+        TEMPLATES['tezos'],
+        TEMPLATES['other'],
+    )[group_index]
 
     template = ''
     options, comments = [], []
@@ -209,7 +213,7 @@ def answers_from_terminal(template: str | None) -> Answers:
     answers = get_default_answers()
     answers['template'] = template
 
-    answers['dipdup_config'] = dipdup_config
+    answers['_survey_config'] = dipdup_config
 
     big_yellow_echo('Set Project Config')
 
@@ -305,7 +309,6 @@ def answers_from_replay(path: Path) -> Answers:
         **get_default_answers(),
         **yaml_config['replay'],
     }
-    yaml_config['replay']['dipdup_config'] = None
     return TypeAdapter(ReplayConfig).validate_python(yaml_config).replay
 
 
@@ -395,13 +398,6 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
             project=answers,
             header=CODEGEN_HEADER,
         )
-
-        # Check if dipdup_config exists and has contracts before calling _render_abi_file
-        dipdup_config = answers.get('dipdup_config')
-        if dipdup_config and dipdup_config.get('contracts'):
-            if dipdup_config['contracts']:
-                _render_abi_file(output_path, dipdup_config['contracts'], False)
-
     else:
         content = template.render(
             project={k: str(v) for k, v in answers.items()},
@@ -409,19 +405,3 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
         )
 
     write(output_path, content, overwrite=force)
-
-
-def _render_abi_file(path: Path, contracts: list[Contract], overwrite: bool = False) -> None:
-    """Create the /<contract-name>/abi.json file and write [] inside it."""
-    parent = path.parent
-
-    for contract in contracts:
-        # Append /abi/<contract>/abi.json
-        new_path = parent / 'abi' / contract['name'] / 'abi.json'
-
-        # Logging the new path
-        _logger.info('Creating ABI file at `%s`', new_path)
-
-        abi_content = '[]'
-
-        write(new_path, abi_content, overwrite)

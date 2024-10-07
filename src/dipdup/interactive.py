@@ -1,7 +1,7 @@
 from typing import Any
 from typing import TypedDict
 
-import survey  # type: ignore
+import survey  # type: ignore[import-untyped]
 
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
@@ -52,7 +52,7 @@ class Index(TypedDict):
     contracts: list[str] | None
 
 
-class DipDupInteractiveYamlConfig(TypedDict):
+class DipDupSurveyConfig(TypedDict):
     datasources: list[Datasource]
     contracts: list[Contract] | None
     indexes: list[Index]
@@ -78,7 +78,7 @@ class BlockchainConfig(TypedDict):
 
 
 # Example instantiation
-DipDupConfigDict: dict[str, BlockchainConfig] = {
+CONFIG_STRUCTURE: dict[str, BlockchainConfig] = {
     'evm': {
         'datasources': [
             {
@@ -102,10 +102,16 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
         ],
         'contract_kind': 'evm',
         'indexers': {
-            'events': {'handler_fields': ['callback', 'contract', 'name'], 'optional_fields': {}, 'kind': 'evm.events'},
+            'events': {
+                'handler_fields': ['callback', 'contract', 'name'],
+                'optional_fields': {},
+                'kind': 'evm.events',
+            },
             'transactions': {
                 'handler_fields': ['callback', 'to', 'method'],
-                'optional_fields': {'first_level': 'integer'},
+                'optional_fields': {
+                    'first_level': 'integer',
+                },
                 'kind': 'evm.transactions',
             },
         },
@@ -123,7 +129,9 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
         'indexers': {
             'big_maps': {
                 'handler_fields': ['callback', 'contract', 'path'],
-                'optional_fields': {'skip_history': 'select'},
+                'optional_fields': {
+                    'skip_history': 'select',
+                },
                 'kind': 'tezos.big_maps',
             },
             'events': {
@@ -133,7 +141,9 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
             },
             'head': {
                 'handler_fields': [],
-                'optional_fields': {'callback': 'string'},
+                'optional_fields': {
+                    'callback': 'string',
+                },
                 'kind': 'tezos.head',
             },
             'operations': {
@@ -199,8 +209,15 @@ def prompt_anyof(
     """Ask user to choose one of the options; returns index and value"""
     from tabulate import tabulate
 
-    table = tabulate(zip(options, comments, strict=False), tablefmt='plain')
-    index = survey.routines.select(question + '\n', options=table.split('\n'), index=default)
+    table = tabulate(
+        zip(options, comments, strict=False),
+        tablefmt='plain',
+    )
+    index = survey.routines.select(
+        question + '\n',
+        options=table.split('\n'),
+        index=default,
+    )
     return index, options[index]
 
 
@@ -239,7 +256,10 @@ def get_indexer_comments(indexers: dict[str, IndexerConfig]) -> tuple[str, ...]:
     return tuple(comments)
 
 
-def query_handlers(contract_names: list[str], additional_fields: list[str] | None) -> list[Handler] | None:
+def query_handlers(
+    contract_names: list[str],
+    additional_fields: list[str] | None,
+) -> list[Handler] | None:
 
     handlers: list[Handler] = []
 
@@ -283,7 +303,8 @@ def query_handlers(contract_names: list[str], additional_fields: list[str] | Non
                 }
             else:
                 handler[field] = validate_non_empty_input(  # type: ignore
-                    survey.routines.input(f'Enter handler {field}: ', value=''), field
+                    survey.routines.input(f'Enter handler {field}: ', value=''),
+                    field,
                 )
 
         handlers.append(handler)
@@ -313,7 +334,10 @@ def query_optional_fields(optional_fields: dict[str, str | int]) -> dict[str, An
                 field_values[field] = types
             else:
                 _, field_values[field] = prompt_anyof(
-                    f'Select {field}', ('never', 'always', 'auto'), ('Never', 'Always', 'Auto'), 0
+                    f'Select {field}',
+                    ('never', 'always', 'auto'),
+                    ('Never', 'Always', 'Auto'),
+                    0,
                 )
         else:
             field_values[field] = survey.routines.input(f'Enter {field}: ')
@@ -329,9 +353,12 @@ def validate_non_empty_input(input_value: str, field_name: str) -> str:
 
 
 def filter_indexer_options(
-    indexers: tuple[str, ...], indexer_comments: tuple[str, ...], contracts: list[Contract], blockchain: str
+    indexers: tuple[str, ...],
+    indexer_comments: tuple[str, ...],
+    contracts: list[Contract],
+    blockchain: str,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    blockchain_config = DipDupConfigDict[blockchain]
+    blockchain_config = CONFIG_STRUCTURE[blockchain]
     indexer_dict = blockchain_config['indexers']
     required_contract_fields = {'contract', 'to', 'pattern'}
     if not contracts:
@@ -348,9 +375,9 @@ def filter_indexer_options(
     return indexers, indexer_comments
 
 
-def query_dipdup_config(blockchain: str) -> DipDupInteractiveYamlConfig:
+def query_dipdup_config(blockchain: str) -> DipDupSurveyConfig:
 
-    blockchain_config = DipDupConfigDict[blockchain]
+    blockchain_config = CONFIG_STRUCTURE[blockchain]
 
     datasources: list[Datasource] = []
     contracts: list[Contract] = []
@@ -380,7 +407,10 @@ def query_dipdup_config(blockchain: str) -> DipDupInteractiveYamlConfig:
             ws_url = None
 
             if selected_datasource['requires_api_key']:
-                api_key = validate_non_empty_input(survey.routines.input('Enter API key: ', value=''), 'API key')
+                api_key = validate_non_empty_input(
+                    survey.routines.input('Enter API key: ', value=''),
+                    'API key',
+                )
                 if 'node' in datasource_kind:
                     final_url = '${NODE_URL:-' + final_url + '}/${NODE_API_KEY:-' + api_key + '}'
                     if datasource_kind == 'evm.node':
@@ -413,9 +443,13 @@ def query_dipdup_config(blockchain: str) -> DipDupInteractiveYamlConfig:
 
     if ask('Add contract?', True):
         while True:
-            contract_name = validate_non_empty_input(survey.routines.input('Enter contract name: '), 'Contract name')
+            contract_name = validate_non_empty_input(
+                survey.routines.input('Enter contract name: '),
+                'Contract name',
+            )
             contract_address = validate_non_empty_input(
-                survey.routines.input('Enter contract address: '), 'Contract address'
+                survey.routines.input('Enter contract address: '),
+                'Contract address',
             )
 
             contract: Contract = {
@@ -471,4 +505,8 @@ def query_dipdup_config(blockchain: str) -> DipDupInteractiveYamlConfig:
                 if not ask('Add another indexer?', False):
                     break
 
-    return DipDupInteractiveYamlConfig(datasources=datasources, contracts=contracts, indexes=indexes)
+    return DipDupSurveyConfig(
+        datasources=datasources,
+        contracts=contracts,
+        indexes=indexes,
+    )
