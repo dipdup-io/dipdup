@@ -25,7 +25,6 @@ from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.performance import metrics
-from dipdup.prometheus import Metrics
 from dipdup.utils import json_dumps
 
 safe_exceptions = (
@@ -149,7 +148,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         retry_count = self._config.retry_count
         last_attempt = retry_count + 1
 
-        Metrics.set_http_errors_in_row(self._url, 0)
+        metrics.set_http_errors_in_row(self._url, 0)
 
         while True:
             try:
@@ -162,7 +161,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             except safe_exceptions as e:
                 ratelimit_sleep: float | None = None
                 if isinstance(e, aiohttp.ClientResponseError):
-                    Metrics.set_http_error(self._url, e.status)
+                    metrics.set_http_error(self._url, e.status)
 
                     if e.status == HTTPStatus.TOO_MANY_REQUESTS:
                         ratelimit_sleep = self._config.ratelimit_sleep
@@ -171,10 +170,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                             e.headers = cast(Mapping[str, Any], e.headers)
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))
                 else:
-                    Metrics.set_http_error(self._url, 0)
+                    metrics.set_http_error(self._url, 0)
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, last_attempt, e)
-                Metrics.set_http_errors_in_row(self._url, attempt)
+                metrics.set_http_errors_in_row(self._url, attempt)
                 if attempt == last_attempt:
                     raise e
 

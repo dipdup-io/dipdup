@@ -15,7 +15,7 @@ from dipdup.exceptions import ConfigurationError
 from dipdup.index import Index
 from dipdup.index import IndexQueueItemT
 from dipdup.package import DipDupPackage
-from dipdup.prometheus import Metrics
+from dipdup.performance import metrics
 
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext
@@ -105,7 +105,7 @@ class EvmIndex(
 
         if self.subsquid_datasources:
             subsquid_sync_level = await self.subsquid_datasources[0].get_head_level()
-            Metrics.set_sqd_processor_chain_height(subsquid_sync_level)
+            metrics.set_sqd_processor_chain_height(subsquid_sync_level)
         else:
             subsquid_sync_level = 0
 

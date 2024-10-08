@@ -85,4 +85,3 @@ class IndexStateTest:
 
             # Act
             await dispatcher._update_metrics()
-            await dispatcher._update_prometheus()
