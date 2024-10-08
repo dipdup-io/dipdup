@@ -13,9 +13,9 @@ from pydantic.dataclasses import dataclass
 from typing_extensions import TypedDict
 
 from dipdup import __version__
-from dipdup._interactive import DipDupSurveyConfig
-from dipdup._interactive import prompt_anyof
-from dipdup._interactive import query_dipdup_config
+from dipdup._survey import DipDupSurveyConfig
+from dipdup._survey import prompt_anyof
+from dipdup._survey import query_survey_config
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.config import ToStr
@@ -37,6 +37,7 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_evm_transactions',
         'demo_evm_uniswap',
     ),
+    'starknet': ('demo_starknet_events',),
     'tezos': (
         'demo_tezos_auction',
         'demo_tezos_dao',
@@ -52,11 +53,8 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_tezos_token_balances',
         'demo_tezos_token_transfers',
     ),
-    'starknet': ('demo_starknet_events',),
     'other': ('demo_blank',),
 }
-
-BLOCKCHAINS = ['evm', 'starknet', 'tezos']
 
 # TODO: demo_jobs
 # TODO: demo_backup
@@ -126,61 +124,49 @@ def get_replay_path(name: str) -> Path:
     return Path(__file__).parent / 'projects' / name / 'replay.yaml'
 
 
-def template_from_terminal() -> tuple[str, DipDupSurveyConfig | None]:
-    start_index, _ = prompt_anyof(
+def template_from_terminal() -> tuple[str | None, DipDupSurveyConfig | None]:
+    _, mode = prompt_anyof(
         question='How would you like to set up your new DipDup project?',
         options=(
-            'Template',
+            'From template',
             'Interactively',
             'Blank',
         ),
         comments=(
-            'Use existing DipDup Templates',
+            'Use one of demo projects',
             'Guided setup with prompts',
             'Begin with an empty project',
         ),
         default=0,
     )
 
-    if start_index != 2:
-        group_index, _ = prompt_anyof(
-            question='What blockchain are you going to index?',
-            options=(
-                'EVM',
-                'Starknet',
-                'Tezos',
-            ),
-            comments=(
-                'EVM-compatible blockchains',
-                'Starknet',
-                'Tezos',
-            ),
-            default=0,
-        )
-    else:
-        group_index = 3
+    if mode == 'Blank':
+        return ('demo_blank', None)
 
-    template_group = (
-        TEMPLATES['evm'],
-        TEMPLATES['starknet'],
-        TEMPLATES['tezos'],
-        TEMPLATES['other'],
-    )[group_index]
+    res = prompt_anyof(
+        question='What blockchain are you going to index?',
+        options=(
+            'EVM',
+            'Starknet',
+            'Tezos',
+        ),
+        comments=(
+            'EVM-compatible blockchains',
+            'Starknet',
+            'Tezos',
+        ),
+        default=0,
+    )
+    blockchain = res[1].lower()
 
-    template = ''
-    options, comments = [], []
-
-    dipdup_config = None
-
-    if start_index == 1:
+    if mode == 'Interactively':
         replay_path = get_replay_path('demo_blank')
-        dipdup_config = query_dipdup_config(BLOCKCHAINS[group_index])
-        _answers = answers_from_replay(replay_path)
-        options.append(_answers['template'])
-        comments.append(_answers['description'])
-        template = options[0]
-    else:
-        for name in template_group:
+        survey_config = query_survey_config(blockchain)
+        return ('demo_blank', survey_config)
+
+    if mode == 'From template':
+        options, comments = [], []
+        for name in TEMPLATES[blockchain]:
             replay_path = get_replay_path(name)
             _answers = answers_from_replay(replay_path)
             options.append(_answers['template'])
@@ -192,8 +178,9 @@ def template_from_terminal() -> tuple[str, DipDupSurveyConfig | None]:
             comments=tuple(comments),
             default=0,
         )
+        return (template, None)
 
-    return (template, dipdup_config)
+    raise NotImplementedError
 
 
 def answers_from_terminal(template: str | None) -> Answers:
@@ -205,17 +192,17 @@ def answers_from_terminal(template: str | None) -> Answers:
         'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
     )
 
+    answers = get_default_answers()
+
     if template:
         echo(f'Using template `{template}`\n')
     else:
-        template, dipdup_config = template_from_terminal()
+        template, survey_config = template_from_terminal()
+        answers['_survey_config'] = survey_config
 
-    answers = get_default_answers()
-    answers['template'] = template
+    answers['template'] = template or 'demo_blank'
 
-    answers['_survey_config'] = dipdup_config
-
-    big_yellow_echo('Set Project Config')
+    big_yellow_echo('Set up project')
 
     while True:
         package = survey.routines.input(
