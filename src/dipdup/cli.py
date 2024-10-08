@@ -42,7 +42,7 @@ NO_CONFIG_CMDS = {
     'config',
 }
 
-# NOTE: commands we reuse from aerich for database migration
+# NOTE: Click commands from `aerich` we use as is  for database migration
 AERICH_CMDS = {
     'history',
     'heads',
@@ -109,13 +109,11 @@ def _load_env_files(env_file_paths: list[Path]) -> None:
     for path in env_file_paths:
         from dotenv import load_dotenv
 
-        from dipdup.env import reload_env
-
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
 
     if env_file_paths:
-        reload_env()
+        env.reload_env()
 
 
 def echo(message: str, err: bool = False, **styles: Any) -> None:
@@ -559,46 +557,47 @@ async def schema(ctx: click.Context) -> None:
 
     config: DipDupConfig = ctx.obj.config
 
-    if ctx.invoked_subcommand in AERICH_CMDS:
-        from dipdup.config import SqliteDatabaseConfig
+    if ctx.invoked_subcommand not in AERICH_CMDS:
+        return
 
-        if isinstance(config.database, SqliteDatabaseConfig):
-            from dipdup.exceptions import UnsupportedFeatureError
+    from dipdup.config import SqliteDatabaseConfig
 
-            raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
+    if isinstance(config.database, SqliteDatabaseConfig):
+        from dipdup.exceptions import UnsupportedFeatureError
 
-        from dipdup.package import DipDupPackage
+        raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
 
-        migrations_dir = DipDupPackage(config.package_path).migrations
+    from dipdup.package import DipDupPackage
 
-        if not migrations_dir.exists():
-            from dipdup.exceptions import ProjectPackageError
+    migrations_dir = DipDupPackage(config.package_path).migrations
 
-            raise ProjectPackageError(
-                f"""Database migrations are not initialized at {migrations_dir}.
-              Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
-            )
+    if not migrations_dir.exists():
+        from dipdup.exceptions import ProjectPackageError
 
-        from aerich import Command as AerichCommand  # type: ignore[import-untyped]
-
-        from dipdup.database import get_tortoise_config
-
-        tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
-        aerich_command = AerichCommand(
-            tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
+        raise ProjectPackageError(
+            f"""Database migrations are not initialized at {migrations_dir}.
+            Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
         )
-        await aerich_command.init()
 
-        ctx.obj['command'] = aerich_command
+    from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+
+    from dipdup.database import get_tortoise_config
+
+    tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
+    aerich_command = AerichCommand(
+        tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
+    )
+    await aerich_command.init()
+
+    ctx.obj['command'] = aerich_command
 
 
-# Wrapper function to approve schema after upgrade and downgrade
-# Since upgrade and downgrade are meant to be intentionally run by the user, it'll be confusing for the user to run approve just after them
+# NOTE: A wrapper to approve schema after `upgrade` and `downgrade` commands. It would be confusing for the user to run approve just after them.
 def _approve_schema_after(command: click.Command) -> click.Command:
     @click.pass_context
     def wrapper(ctx: click.Context, /, *args: Any, **kwargs: Any) -> None:
         ctx.invoke(command, *args, **kwargs)
-        # TODO: don't call approve if no upgrades/downgrades happened
+        # TODO: Don't call approve if no upgrades/downgrades happened
         ctx.invoke(schema_approve)
 
     return click.Command(
