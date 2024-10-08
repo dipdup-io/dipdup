@@ -12,7 +12,6 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypedDict
 from typing import TypeVar
 from typing import cast
 
@@ -21,6 +20,7 @@ import uvloop
 
 from dipdup import __version__
 from dipdup import env
+from dipdup._version import check_version
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
 from dipdup.report import REPORTS_PATH
@@ -53,11 +53,6 @@ AERICH_CMDS = {
 
 _logger = logging.getLogger(__name__)
 _click_wrap_text = click.formatting.wrap_text
-
-
-class CachedVersion(TypedDict):
-    latest_version: str
-    installed_version: str
 
 
 def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
@@ -118,8 +113,9 @@ def _load_env_files(env_file_paths: list[Path]) -> None:
 
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
+
+    if env_file_paths:
         reload_env()
-        _logger.debug('Environment reloaded after applying `%s`', path)
 
 
 def echo(message: str, err: bool = False, **styles: Any) -> None:
@@ -162,8 +158,7 @@ class CLIContext:
     config_paths: list[str]
     config: 'DipDupConfig'
 
-    # NOTE: we have to implement __getitem__ and __setitem__ because aerich CLI
-    #  commands (`AERICH_CMDS`) access the context object via `ctx.obj["command"]`
+    # NOTE: We need this because aerich Click commands expect `ctx.obj` object to be a dict.
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 
@@ -194,93 +189,6 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
 def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
     return cmd.callback.__wrapped__.__wrapped__  # type: ignore[no-any-return,union-attr]
-
-
-async def _check_version() -> None:
-    if '+editable' in __version__:
-        return
-
-    _skip_msg = 'Set `DIPDUP_NO_VERSION_CHECK` variable to hide this message.'
-    if not all(c.isdigit() or c == '.' for c in __version__):
-        _logger.warning(
-            'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
-        )
-        _logger.info(_skip_msg)
-        return
-
-    from appdirs import user_cache_dir  # type: ignore[import-untyped]
-
-    cache_file = Path(user_cache_dir('dipdup')) / 'version_info.json'
-
-    latest_version = _get_cached_version(cache_file)
-    if latest_version:
-        _warn_if_outdated(_skip_msg, latest_version)
-        return
-
-    import aiohttp
-
-    async with AsyncExitStack() as stack:
-        stack.enter_context(suppress(Exception))
-        session = await stack.enter_async_context(aiohttp.ClientSession())
-        response = await session.get('https://api.github.com/repos/dipdup-io/dipdup/releases/latest')
-        response_json = await response.json()
-        latest_version = cast(str, response_json['tag_name'])
-
-        _warn_if_outdated(_skip_msg, latest_version)
-        _write_cached_version(cache_file, latest_version)
-
-
-def _get_cached_version(cache_file: Path, ttl: int = 86400) -> str | None:
-    # NOTE: Time-to-live (ttl) for the cache in seconds (default: 86400 seconds = 24 hours)
-    import time
-
-    try:
-        if (time.time() - cache_file.stat().st_mtime) >= ttl:
-            return None
-        version_info = _read_cached_version(cache_file)
-        if version_info is None:
-            return None
-        if version_info.get('installed_version') != __version__:
-            return None
-        return version_info.get('latest_version')
-    except FileNotFoundError:
-        return None
-
-
-def _read_cached_version(cache_file: Path) -> CachedVersion | None:
-    try:
-        import orjson as json
-
-        content = json.loads(cache_file.read_bytes())
-        return cast(CachedVersion, content)
-    except Exception as e:
-        _logger.warning('Failed to read cache file %s: %s', cache_file, e)
-        return None
-
-
-def _write_cached_version(cache_file: Path, latest_version: str) -> None:
-    try:
-        from dipdup.utils import json_dumps
-        from dipdup.utils import write
-
-        version_info: CachedVersion = {
-            'latest_version': latest_version,
-            'installed_version': __version__,
-        }
-        write(cache_file, json_dumps(version_info), overwrite=True)
-    except Exception as e:
-        _logger.warning('Failed to write cache file %s: %s', cache_file, e)
-
-
-def _warn_if_outdated(skip_msg: str, latest_version: str) -> None:
-    if __version__ == latest_version:
-        return
-    _logger.warning(
-        'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
-        __version__,
-        latest_version,
-    )
-    _logger.info(skip_msg)
 
 
 def _skip_cli_group() -> bool:
@@ -388,10 +296,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
 
     # NOTE: Fire and forget, do not block instant commands
     if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
-        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114
-        # Replace with fire_and_forget(_check_version()) once the issue is resolved.
-        # Remember to import fire_and_forget: from dipdup.sys import fire_and_forget
-        await _check_version()
+        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114; replace with `fire_and_forget` call once resolved.
+        await check_version()
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
