@@ -15,7 +15,6 @@ from dipdup.models.tezos import TezosBigMapAction
 from dipdup.models.tezos import TezosBigMapData
 from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
-from dipdup.prometheus import Metrics
 
 QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 
@@ -95,7 +94,6 @@ class TezosBigMapsIndex(
                     matched_handlers = match_big_maps(self._ctx.package, self._config.handlers, big_map_data)
 
                     total_matched = len(matched_handlers)
-                    Metrics.set_index_handlers_matched(total_matched)
                     metrics.handlers_matched[self.name] += total_matched
                     metrics.time_in_matcher[self.name] += time.time() - started_at
 

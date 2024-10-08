@@ -79,7 +79,6 @@ from dipdup.package import DipDupPackage
 from dipdup.performance import caches
 from dipdup.performance import get_stats
 from dipdup.performance import metrics
-from dipdup.prometheus import Metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
@@ -206,24 +205,6 @@ class IndexDispatcher:
 
         return True
 
-    # TODO: Use ctx.metrics
-    async def _prometheus_loop(self, update_interval: float) -> None:
-        while True:
-            await asyncio.sleep(update_interval)
-            await self._update_prometheus()
-
-    async def _update_prometheus(self) -> None:
-        active, synced, realtime = 0, 0, 0
-        for index in copy(self._indexes).values():
-            # FIXME: We don't remove disabled indexes from dispatcher anymore
-            active += 1
-            if index.synchronized:
-                synced += 1
-            if index.realtime:
-                realtime += 1
-
-        Metrics.set_indexes_count(active, synced, realtime)
-
     async def _metrics_loop(self, update_interval: float) -> None:
         while True:
             await asyncio.sleep(update_interval)
@@ -240,8 +221,16 @@ class IndexDispatcher:
         if not all(i.state.level for i in self._indexes.values()):
             return
 
+        active, synced, realtime = 0, 0, 0
         levels_indexed, levels_total, levels_interval = 0, 0, 0
         for index in self._indexes.values():
+            # FIXME: We don't remove disabled indexes from dispatcher anymore
+            active += 1
+            if index.synchronized:
+                synced += 1
+            if index.realtime:
+                realtime += 1
+
             try:
                 sync_level = index.get_sync_level()
             except FrameworkException:
@@ -261,6 +250,10 @@ class IndexDispatcher:
 
             self._previous_levels[index.name] = index.state.level
 
+        metrics.indexes_total['active'] += active
+        metrics.indexes_total['synced'] += synced
+        metrics.indexes_total['realtime'] += realtime
+
         update_interval = time.time() - metrics.metrics_updated_at
         metrics.metrics_updated_at = time.time()
 
@@ -277,8 +270,10 @@ class IndexDispatcher:
         if levels_total:
             progress = levels_indexed / levels_total
 
-        metrics.levels_indexed = levels_indexed
-        metrics.levels_total = levels_total
+        # FIXME: This was an assignment in the original code
+        metrics.levels_indexed += levels_indexed
+        # FIXME: This was an assignment in the original code
+        metrics.levels_total += levels_total
 
         metrics.levels_speed = levels_speed
         metrics.levels_speed_average = levels_speed_average
@@ -290,8 +285,8 @@ class IndexDispatcher:
         metrics.time_left = time_left
         metrics.progress = progress
 
-        self._last_levels_nonempty = metrics.levels_nonempty
-        self._last_objects_indexed = metrics.objects_indexed
+        self._last_levels_nonempty = int(metrics.levels_nonempty)
+        self._last_objects_indexed = int(metrics.objects_indexed)
 
         fire_and_forget(
             Meta.update_or_create(
@@ -464,7 +459,7 @@ class IndexDispatcher:
                 },
             ),
         )
-        Metrics.set_datasource_head_updated(datasource.name)
+        metrics.set_datasource_head_updated(datasource.name)
         for index in self._indexes.values():
             if isinstance(index, TezosHeadIndex) and datasource in index.datasources:
                 index.push_realtime_message(head)
@@ -481,7 +476,8 @@ class IndexDispatcher:
                 },
             ),
         )
-        Metrics.set_datasource_head_updated(datasource.name)
+        metrics._datasource_head_updated[datasource.name] = time.time()
+        metrics.set_datasource_head_updated(datasource.name)
 
     async def _on_evm_node_events(
         self,
@@ -559,7 +555,7 @@ class IndexDispatcher:
 
         channel = f'{datasource.name}:{type_.value}'
         _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
-        Metrics.set_datasource_rollback(datasource.name)
+        metrics.set_datasource_rollback(datasource.name)
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
@@ -809,8 +805,8 @@ class DipDup:
 
         from prometheus_client import start_http_server
 
-        _logger.info('Setting up Prometheus')
-        Metrics.enabled = True
+        _logger.info('Setting up Prometheus at %s:%s', self._config.prometheus.host, self._config.prometheus.port)
+        metrics.enabled = True
         start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
@@ -890,9 +886,6 @@ class DipDup:
         # NOTE: Monitoring tasks
         _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
         _add_task(index_dispatcher._status_loop(STATUS_INTERVAL))
-        if prometheus_config := self._ctx.config.prometheus:
-            _add_task(index_dispatcher._prometheus_loop(prometheus_config.update_interval))
-
         # NOTE: Outdated model updates cleanup
         _add_task(index_dispatcher._cleanup_loop(CLEANUP_INTERVAL))
 
