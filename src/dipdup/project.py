@@ -13,14 +13,14 @@ from pydantic.dataclasses import dataclass
 from typing_extensions import TypedDict
 
 from dipdup import __version__
+from dipdup._interactive import DipDupSurveyConfig
+from dipdup._interactive import prompt_anyof
+from dipdup._interactive import query_dipdup_config
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.config import ToStr
 from dipdup.env import get_package_path
 from dipdup.env import get_pyproject_name
-from dipdup.interactive import DipDupSurveyConfig
-from dipdup.interactive import prompt_anyof
-from dipdup.interactive import query_dipdup_config
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -198,7 +198,7 @@ def template_from_terminal() -> tuple[str, DipDupSurveyConfig | None]:
 
 def answers_from_terminal(template: str | None) -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
-    import survey  # type: ignore
+    import survey  # type: ignore[import-untyped]
 
     big_yellow_echo(
         'Welcome to DipDup! This command will help you to create a new project.\n'

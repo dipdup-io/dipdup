@@ -70,7 +70,7 @@ def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[
             project_models += '.models'
         models.append(project_models)
 
-    if 'sqlite' not in db_url:
+    if not db_url.startswith('sqlite'):
         import importlib
 
         if importlib.util.find_spec('aerich') is not None:

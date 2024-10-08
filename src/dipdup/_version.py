@@ -6,7 +6,8 @@ from typing import cast
 
 from appdirs import user_cache_dir  # type: ignore[import-untyped]
 
-from dipdup import __version__, __editable__
+from dipdup import __editable__
+from dipdup import __version__
 
 PREVIEW_MSG = 'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
 OUTDATED_MSG = 'You are running DipDup %s, while %s is available. Please run `dipdup self update` to upgrade.'

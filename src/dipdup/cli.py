@@ -552,17 +552,12 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    if '--help' in sys.argv:
+    if '--help' in sys.argv or ctx.invoked_subcommand not in AERICH_CMDS:
         return
 
     config: DipDupConfig = ctx.obj.config
 
-    if ctx.invoked_subcommand not in AERICH_CMDS:
-        return
-
-    from dipdup.config import SqliteDatabaseConfig
-
-    if isinstance(config.database, SqliteDatabaseConfig):
+    if config.database.kind == 'sqlite':
         from dipdup.exceptions import UnsupportedFeatureError
 
         raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
@@ -584,9 +579,7 @@ async def schema(ctx: click.Context) -> None:
     from dipdup.database import get_tortoise_config
 
     tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
-    aerich_command = AerichCommand(
-        tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
-    )
+    aerich_command = AerichCommand(tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix())
     await aerich_command.init()
 
     ctx.obj['command'] = aerich_command
