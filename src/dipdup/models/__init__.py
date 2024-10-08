@@ -396,9 +396,8 @@ class Model(TortoiseModel):
         self._original_versioned_data = self.versioned_data
 
     def __repr__(self) -> str:
-        pk = getattr(self, 'pk', None)
         versioned_data_str = ', '.join(f'{key}={value}' for key, value in self.versioned_data.items())
-        return f'<{self.__class__.__name__}(pk={pk}, versioned_data=({versioned_data_str}))>'
+        return f'{self.__class__.__name__}(pk={self.pk}, {versioned_data_str})'
 
     @classmethod
     def _init_from_db(cls, **kwargs: Any) -> Model:

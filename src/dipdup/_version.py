@@ -6,7 +6,7 @@ from typing import cast
 
 from appdirs import user_cache_dir  # type: ignore[import-untyped]
 
-from dipdup import __version__
+from dipdup import __version__, __editable__
 
 PREVIEW_MSG = 'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
 OUTDATED_MSG = 'You are running DipDup %s, while %s is available. Please run `dipdup self update` to upgrade.'
@@ -25,7 +25,7 @@ class CachedVersion(TypedDict):
 
 
 async def check_version() -> None:
-    if '+editable' in __version__:
+    if __editable__:
         return
 
     if not all(c.isdigit() or c == '.' for c in __version__):
