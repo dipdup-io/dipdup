@@ -13,7 +13,7 @@ def raise_unsupported_operation(operation: str, a: MetricWrapperBase, b: float |
 
     b_type = type(b)
     if isinstance(b, Counter):
-        b_type = 'Counter' if not b._labelnames else 'Counter with labels'
+        b_type = 'Counter' if not b._labelnames else 'Counter with labels'  # type: ignore
 
     raise TypeError(f"Unsupported operation '{operation}' between a {a_type} and a {b_type}")
 
@@ -45,6 +45,9 @@ class Counter(PrometheusCounter):
         """Increment the counter by a given value."""
         self.inc(other)
         return self
+
+    def __format__(self, format_spec: str = '') -> str:
+        return f'{self.value:{format_spec}}'
 
     # def to_dict(self) -> dict[str, Any]:
     #     """Return a JSON-serializable representation of the Counter."""

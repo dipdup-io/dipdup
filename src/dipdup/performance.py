@@ -284,19 +284,13 @@ class _MetricManager:
 
     @contextmanager
     def measure_total_sync_duration(self) -> Generator[None, None, None]:
-        print('call', 'measure_total_sync_duration')
         with self._index_total_sync_duration.time():
-            print('contextmanager', 'measure_total_sync_duration', 'enter')
             yield
-            print('contextmanager', 'measure_total_sync_duration', 'exit')
 
     @contextmanager
     def measure_total_realtime_duration(self) -> Generator[None, None, None]:
-        print('call', 'measure_total_realtime_duration')
         with self._index_total_realtime_duration.time():
-            print('contextmanager', 'measure_total_realtime_duration', 'enter')
             yield
-            print('contextmanager', 'measure_total_realtime_duration', 'exit')
 
     def set_datasource_head_updated(self, name: str) -> None:
         self._datasource_head_updated.labels(datasource=name).observe(time.time())

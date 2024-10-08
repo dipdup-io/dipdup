@@ -272,6 +272,10 @@ class IndexDispatcher:
         if levels_total:
             progress = levels_indexed / levels_total
 
+        # FIXME: Only with Etherlink demo. Why?
+        if levels_total <= 0:
+            return
+
         # FIXME: This was an assignment in the original code
         metrics.levels_indexed += levels_indexed
         # FIXME: This was an assignment in the original code
