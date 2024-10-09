@@ -456,7 +456,7 @@ class PrometheusConfig:
     :param update_interval: Interval to update some metrics in seconds
     """
 
-    host: str
+    host: str = '127.0.0.1'
     port: int = 8000
     update_interval: float = 1.0
 
