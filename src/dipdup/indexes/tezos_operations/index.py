@@ -220,7 +220,7 @@ class TezosOperationsIndex(
 
         async for level, operations in fetcher.fetch_by_level():
             # FIXME: Try to use -= or += instead
-            metrics.levels_to_sync[self._config.name] = sync_level - level
+            metrics._levels_to_sync[self._config.name] = sync_level - level
 
             operation_subgroups = tuple(
                 extract_operation_subgroups(

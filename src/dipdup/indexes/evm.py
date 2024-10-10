@@ -105,7 +105,7 @@ class EvmIndex(
 
         if self.subsquid_datasources:
             subsquid_sync_level = await self.subsquid_datasources[0].get_head_level()
-            metrics.set_sqd_processor_chain_height(subsquid_sync_level)
+            metrics._sqd_processor_chain_height = subsquid_sync_level
         else:
             subsquid_sync_level = 0
 
