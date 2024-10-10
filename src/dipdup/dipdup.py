@@ -310,8 +310,8 @@ class IndexDispatcher:
             if self._indexes:
                 if scanned_levels:
                     msg = f'indexing: {scanned_levels:6} levels, estimating...'
-                elif int(metrics.objects_indexed):
-                    msg = f'indexing: {metrics.objects_indexed:6} objects, estimating...'
+                elif objects_indexed := int(metrics.objects_indexed):
+                    msg = f'indexing: {objects_indexed:6} objects, estimating...'
                 else:
                     msg = 'indexing: warming up...'
             else:

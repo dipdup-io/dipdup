@@ -80,7 +80,6 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         """Push message to the queue"""
         self.queue.append(message)
 
-        # NOTE: Try to use += or -= instead
         metrics._levels_to_realtime[self._config.name] = len(self.queue)
 
     @abstractmethod

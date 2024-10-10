@@ -11,12 +11,9 @@ These three need to be importable from anywhere, so no internal imports in this 
 
 import gc
 import logging
-import time
 from collections import deque
 from collections.abc import Callable
 from collections.abc import Coroutine
-from collections.abc import Generator
-from contextlib import contextmanager
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
@@ -287,14 +284,6 @@ class _MetricManager:
         'Number of consecutive failed requests to Subsquid Network',
     )
 
-    def set_http_error(self, url: str, status: int) -> None:
-        self._http_errors.labels(url=url, status=status).inc()
-
-    def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
-        self._http_errors_in_row.observe(errors_count)
-        if 'subsquid' in url:
-            self._sqd_processor_archive_http_errors_in_row.observe(errors_count)
-
     def __setattr__(self, name: str, value: int | float | Counter | Gauge | Histogram) -> None:
         """Custom attribute setter for the class, it only affects Counter, Gauge and Histogram attributes,
         falling back to the default behavior for the rest.
@@ -334,6 +323,14 @@ class _MetricManager:
                 raise TypeError(f'Cannot assign {type(value)} to Histogram, only int and float are allowed')
 
         super().__setattr__(name, value)
+
+    def set_http_error(self, url: str, status: int) -> None:
+        self._http_errors.labels(url=url, status=status).inc()
+
+    def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
+        self._http_errors_in_row.observe(errors_count)
+        if 'subsquid' in url:
+            self._sqd_processor_archive_http_errors_in_row.observe(errors_count)
 
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:

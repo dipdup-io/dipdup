@@ -82,7 +82,7 @@ def test_gauge_setitem() -> None:
     try:
         non_parent_gauge['label1'] = 5.0
     except TypeError as e:
-        assert str(e) == "This Gauge is not a parent"
+        assert str(e) == 'This Gauge is not a parent'
 
 
 def test_histogram_math() -> None:
@@ -140,4 +140,4 @@ def test_histogram_setitem() -> None:
     try:
         non_parent_histogram['label1'] = 5.0
     except TypeError as e:
-        assert str(e) == "This Histogram is not a parent"
+        assert str(e) == 'This Histogram is not a parent'

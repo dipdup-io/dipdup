@@ -1,9 +1,9 @@
 """This module provides a set of classes extending Prometheus metrics with additional functionality
 
 The goal is to make the use of Prometheus metrics easier in DipDup, directly integrating them with the
-existing `_MetricManager` class in the `dipdup.performance`
+existing `_MetricManager` class in the `dipdup.performance` module
 
-The first goal was to be able to transform `_MetricManager's attributes into Prometheus metrics with as little changes as possible,
+The first goal was to be able to transform `_MetricManager`'s attributes into Prometheus metrics with as little changes as possible,
 that's why we make it possible to perform arithmetic operations between metrics and/or numeric values and retrieve their values
 easily with the `value` property for reporting
 
@@ -182,7 +182,7 @@ class Gauge(Metric, PrometheusGauge):
             raise TypeError('Cannot reassign a Gauge with another Gauge')
 
         if not self._is_parent():
-            raise TypeError("This Gauge is not a parent")
+            raise TypeError('This Gauge is not a parent')
 
         self[label_values].set(value)
 
@@ -240,6 +240,6 @@ class Histogram(Metric, PrometheusHistogram):
             raise TypeError('Cannot reassign a Histogram with another Histogram')
 
         if not self._is_parent():
-            raise TypeError("This Histogram is not a parent")
+            raise TypeError('This Histogram is not a parent')
 
         self[label_values].observe(value)
