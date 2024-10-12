@@ -183,6 +183,8 @@ class _QueueManager:
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class _MetricManager:
     # NOTE: Some metrics types are unions with int and float to make mypy happy
+    # NOTE: If you want your metric to be part of the stats, it should not be private (start with _)
+    # and should have explicit type annotation
 
     # NOTE: General metrics
     levels_indexed: Gauge | int = Gauge('dipdup_levels_indexed_total', 'Total number of levels indexed')
@@ -191,7 +193,7 @@ class _MetricManager:
     objects_indexed: Counter = Counter('dipdup_objects_indexed_total', 'Total number of objects indexed')
 
     # NOTE: Index metrics
-    handlers_matched: Gauge = Gauge('dipdup_index_handlers_matched_total', 'Index total hits', ['handler'])
+    handlers_matched: Counter = Counter('dipdup_index_handlers_matched_total', 'Index total hits', ['handler'])
     time_in_matcher: Histogram = Histogram('dipdup_index_time_in_matcher_seconds', 'Time spent in matcher', ['index'])
     time_in_callbacks: Histogram = Histogram(
         'dipdup_index_time_in_callbacks_seconds', 'Time spent in callbacks', ['index']
@@ -225,7 +227,8 @@ class _MetricManager:
     progress: Gauge | float = Gauge('dipdup_progress', 'Progress in percents')
 
     # NOTE: Orignally in prometheus.py
-    _indexes_total: Counter = Counter(
+    _indexes_total = Gauge(
+        # _indexes_total: Counter = Counter(
         'dipdup_indexes_total',
         'Number of indexes in operation by status',
         ('status',),
@@ -250,23 +253,23 @@ class _MetricManager:
         'Duration of the last index realtime syncronization',
     )
 
-    _datasource_head_updated: Histogram = Histogram(
+    _datasource_head_updated = Gauge(
         'dipdup_datasource_head_updated_timestamp',
         'Timestamp of the last head update',
         ['datasource'],
     )
-    _datasource_rollbacks: Counter = Counter(
+    _datasource_rollbacks = Counter(
         'dipdup_datasource_rollbacks_total',
         'Number of rollbacks',
         ['datasource'],
     )
 
-    _http_errors: Counter = Counter(
+    _http_errors = Counter(
         'dipdup_http_errors_total',
         'Number of http errors',
         ['url', 'status'],
     )
-    _http_errors_in_row: Histogram = Histogram(
+    _http_errors_in_row = Gauge(
         'dipdup_http_errors_in_row',
         'Number of consecutive failed requests',
     )
@@ -275,11 +278,11 @@ class _MetricManager:
         'sqd_processor_last_block',
         'Level of the last processed block from Subsquid Network',
     )
-    _sqd_processor_chain_height: Gauge = Gauge(
+    _sqd_processor_chain_height = Gauge(
         'sqd_processor_chain_height',
         'Current chain height as reported by Subsquid Network',
     )
-    _sqd_processor_archive_http_errors_in_row: Histogram = Histogram(
+    _sqd_processor_archive_http_errors_in_row = Gauge(
         'sqd_processor_archive_http_errors_in_row',
         'Number of consecutive failed requests to Subsquid Network',
     )
@@ -328,9 +331,9 @@ class _MetricManager:
         self._http_errors.labels(url=url, status=status).inc()
 
     def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
-        self._http_errors_in_row.observe(errors_count)
+        self._http_errors_in_row.inc(errors_count)
         if 'subsquid' in url:
-            self._sqd_processor_archive_http_errors_in_row.observe(errors_count)
+            self._sqd_processor_archive_http_errors_in_row.inc(errors_count)
 
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:

@@ -250,9 +250,9 @@ class IndexDispatcher:
 
             self._previous_levels[index.name] = index.state.level
 
-        metrics._indexes_total['active'] += active
-        metrics._indexes_total['synced'] += synced
-        metrics._indexes_total['realtime'] += realtime
+        metrics._indexes_total['active'] = active
+        metrics._indexes_total['synced'] = synced
+        metrics._indexes_total['realtime'] = realtime
 
         update_interval = time.time() - float(metrics.metrics_updated_at)
         metrics.metrics_updated_at = time.time()
@@ -553,7 +553,7 @@ class IndexDispatcher:
 
         channel = f'{datasource.name}:{type_.value}'
         _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
-        metrics._datasource_rollbacks[datasource.name] = time.time()
+        metrics._datasource_rollbacks[datasource.name] += 1
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
