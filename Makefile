@@ -13,6 +13,9 @@ FRONTEND_PATH=../interface
 help:           ## Show this help (default)
 	@grep -Fh "##" $(MAKEFILE_LIST) | grep -Fv grep -F | sed -e 's/\\$$//' | sed -e 's/##//'
 
+install:
+	pdm sync --clean
+
 ##
 ##-- CI
 ##
@@ -52,6 +55,7 @@ docs:           ## Build docs
 	python scripts/docs.py check-links --source docs
 	python scripts/docs.py dump-references
 	python scripts/docs.py dump-demos
+	python scripts/docs.py dump-metrics
 	python scripts/docs.py dump-jsonschema
 	python scripts/docs.py merge-changelog
 	python scripts/docs.py markdownlint
@@ -65,7 +69,7 @@ docs_watch:     ## Build docs and watch for changes
 
 docs_publish:   ## Tag and push `docs-next` ref
 	git tag -d docs-next && git tag docs-next && git push --force origin docs-next
-	
+
 ##
 
 fixme: todo

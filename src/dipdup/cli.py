@@ -602,16 +602,18 @@ def _approve_schema_after(command: click.Command) -> click.Command:
     )
 
 
-try:
-    from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
+# NOTE: Saving 0.45s on imports and hiding from reference
+if 'schema' in sys.argv:
+    try:
+        from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
 
-    schema.add_command(aerich_cli.commands['history'])
-    schema.add_command(aerich_cli.commands['heads'])
-    schema.add_command(aerich_cli.commands['migrate'])
-    schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
-    schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
-except ImportError:
-    _logger.debug('aerich is not installed, skipping database migration commands')
+        schema.add_command(aerich_cli.commands['history'])
+        schema.add_command(aerich_cli.commands['heads'])
+        schema.add_command(aerich_cli.commands['migrate'])
+        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
+        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+    except ImportError:
+        _logger.debug('aerich is not installed, skipping database migration commands')
 
 
 @schema.command(name='approve')
