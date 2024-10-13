@@ -57,7 +57,7 @@ class StarknetEventsIndex(
 
         async for _level, events in fetcher.fetch_by_level():
             await self._process_level_data(events, sync_level)
-            metrics.set_sqd_processor_last_block(_level)
+            metrics._sqd_processor_last_block = _level
 
     async def _synchronize_node(self, sync_level: int) -> None:
         first_level = self.state.level + 1
@@ -65,7 +65,7 @@ class StarknetEventsIndex(
 
         async for _level, events in fetcher.fetch_by_level():
             await self._process_level_data(events, sync_level)
-            metrics.set_sqd_processor_last_block(_level)
+            metrics._sqd_processor_last_block = _level
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> StarknetSubsquidEventFetcher:
         event_ids: dict[str, set[str]] = {}

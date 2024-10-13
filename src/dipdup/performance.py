@@ -4,19 +4,16 @@ There are three module-level singletons, one for each type of resource:
 
 - `_QueueManager` for simple deque queues
 - `_CacheManager` for LRU caches
-- `_MetricManager` for performance metrics and pprofile integration
+- `_MetricManager` for performance/prometheus metrics and pprofile integration
 
-These three need to be importable from anywhere, so no internal imports in this module. Prometheus is not there yet.
+These three need to be importable from anywhere, so no internal imports in this module.
 """
 
 import gc
 import logging
-import time
 from collections import deque
 from collections.abc import Callable
 from collections.abc import Coroutine
-from collections.abc import Generator
-from contextlib import contextmanager
 from functools import _CacheInfo
 from functools import lru_cache
 from itertools import chain
@@ -25,12 +22,14 @@ from typing import Any
 from typing import cast
 
 from async_lru import alru_cache
+from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 
 from dipdup.exceptions import FrameworkException
 from dipdup.prometheus import Counter
 from dipdup.prometheus import Gauge
 from dipdup.prometheus import Histogram
+from dipdup.prometheus import Metric
 
 if TYPE_CHECKING:
 
@@ -181,45 +180,80 @@ class _QueueManager:
         return stats
 
 
-@dataclass
+@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class _MetricManager:
-    # Copied from prometheus.py, probably should be removed
-    enabled: bool = False
+    # NOTE: Some metrics types are unions with int and float to make mypy happy
+    # NOTE: If you want your metric to be part of the stats, it should not be private (start with _)
+    # and should have explicit type annotation
 
     # NOTE: General metrics
-    # NOTE: Transformed to prometheus metrics easily
-    levels_indexed = Counter('dipdup_levels_indexed_total', 'Total number of levels indexed')
-    levels_nonempty = Counter('dipdup_levels_nonempty_total', 'Total number of nonempty levels indexed')
-    levels_total = Counter('dipdup_levels_total', 'Total number of levels')
-    objects_indexed = Counter('dipdup_objects_indexed_total', 'Total number of objects indexed')
+    levels_indexed: Gauge | int = Gauge('dipdup_levels_indexed_total', 'Total number of levels indexed')
+    levels_nonempty: Counter = Counter('dipdup_levels_nonempty_total', 'Total number of nonempty levels indexed')
+    levels_total: Gauge | int = Gauge('dipdup_levels_total', 'Total number of levels')
+    objects_indexed: Counter = Counter('dipdup_objects_indexed_total', 'Total number of objects indexed')
+
+    # NOTE: Index metrics
+    handlers_matched: Counter = Counter('dipdup_index_handlers_matched_total', 'Index total hits', ['handler'])
+    time_in_matcher: Histogram = Histogram('dipdup_index_time_in_matcher_seconds', 'Time spent in matcher', ['index'])
+    time_in_callbacks: Histogram = Histogram(
+        'dipdup_index_time_in_callbacks_seconds', 'Time spent in callbacks', ['index']
+    )
+
+    # NOTE: Datasource metrics
+    time_in_requests: Histogram = Histogram(
+        'dipdup_datasource_time_in_requests_seconds', 'Time spent in datasource requests', ['datasource']
+    )
+    requests_total: Counter = Counter(
+        'dipdup_datasource_requests_total', 'Total number of datasource requests', ['datasource']
+    )
+
+    # NOTE: Various timestamps
+    started_at: Gauge | float = Gauge('dipdup_started_at_timestamp', 'Timestamp of the DipDup start')
+    synchronized_at: Gauge | float = Gauge('dipdup_synchronized_at_timestamp', 'Timestamp of the last synchronization')
+    realtime_at: Gauge | float = Gauge('dipdup_realtime_at_timestamp', 'Timestamp of the last realtime update')
+    metrics_updated_at: Gauge | float = Gauge(
+        'dipdup_metrics_updated_at_timestamp', 'Timestamp of the last metrics update'
+    )
+
+    # NOTE: Speed estimates
+    levels_speed: Gauge | float = Gauge('dipdup_levels_speed', 'Levels per second')
+    levels_speed_average: Gauge | float = Gauge('dipdup_levels_speed_average', 'Average levels per second')
+    levels_nonempty_speed: Gauge | float = Gauge('dipdup_levels_nonempty_speed', 'Nonempty levels per second')
+    objects_speed: Gauge | float = Gauge('dipdup_objects_speed', 'Objects per second')
+
+    # NOTE: Time estimates
+    time_passed: Gauge | float = Gauge('dipdup_time_passed_seconds', 'Time passed since the start')
+    time_left: Gauge | float = Gauge('dipdup_time_left_seconds', 'Time left estimated until the end')
+    progress: Gauge | float = Gauge('dipdup_progress', 'Progress in percents')
 
     # NOTE: Orignally in prometheus.py
-    indexes_total = Counter(
+    _indexes_total = Gauge(
+        # _indexes_total: Counter = Counter(
         'dipdup_indexes_total',
         'Number of indexes in operation by status',
         ('status',),
     )
-    levels_to_sync = Histogram(
+    _levels_to_sync: Histogram = Histogram(
         'dipdup_index_levels_to_sync_total',
         'Number of levels to reach synced state',
         ['index'],
     )
-    levels_to_realtime = Histogram(
+    _levels_to_realtime: Histogram = Histogram(
         'dipdup_index_levels_to_realtime_total',
         'Number of levels to reach realtime state',
         ['index'],
     )
-    # FIXME: move inside _MetricManager
-    _index_total_sync_duration = Histogram(
+
+    _index_total_sync_duration: Histogram = Histogram(
         'dipdup_index_total_sync_duration_seconds',
         'Duration of the last index syncronization',
     )
-    _index_total_realtime_duration = Histogram(
+    _index_total_realtime_duration: Histogram = Histogram(
         'dipdup_index_total_realtime_duration_seconds',
         'Duration of the last index realtime syncronization',
     )
 
-    _datasource_head_updated = Histogram(
+    _datasource_head_updated = Gauge(
         'dipdup_datasource_head_updated_timestamp',
         'Timestamp of the last head update',
         ['datasource'],
@@ -235,12 +269,12 @@ class _MetricManager:
         'Number of http errors',
         ['url', 'status'],
     )
-    _http_errors_in_row = Histogram(
+    _http_errors_in_row = Gauge(
         'dipdup_http_errors_in_row',
         'Number of consecutive failed requests',
     )
 
-    _sqd_processor_last_block = Gauge(
+    _sqd_processor_last_block: Gauge | int = Gauge(
         'sqd_processor_last_block',
         'Level of the last processed block from Subsquid Network',
     )
@@ -248,79 +282,62 @@ class _MetricManager:
         'sqd_processor_chain_height',
         'Current chain height as reported by Subsquid Network',
     )
-    _sqd_processor_archive_http_errors_in_row = Histogram(
+    _sqd_processor_archive_http_errors_in_row = Gauge(
         'sqd_processor_archive_http_errors_in_row',
         'Number of consecutive failed requests to Subsquid Network',
     )
 
-    # NOTE: Index metrics
-    # NOTE: Merged with the one in prometheus.py
-    handlers_matched = Gauge('dipdup_index_handlers_matched_total', 'Index total hits', ['handler'])
-    time_in_matcher = Histogram('dipdup_index_time_in_matcher_seconds', 'Time spent in matcher', ['index'])
-    time_in_callbacks = Histogram('dipdup_index_time_in_callbacks_seconds', 'Time spent in callbacks', ['index'])
+    def __setattr__(self, name: str, value: int | float | Counter | Gauge | Histogram) -> None:
+        """Custom attribute setter for the class, it only affects Counter, Gauge and Histogram attributes,
+        falling back to the default behavior for the rest.
 
-    # NOTE: Datasource metrics
-    time_in_requests = Histogram(
-        'dipdup_datasource_time_in_requests_seconds', 'Time spent in datasource requests', ['datasource']
-    )
-    requests_total = Counter('dipdup_datasource_requests_total', 'Total number of datasource requests', ['datasource'])
+        This method makes it possible to assign int and float values to Gauge and Histogram attributes,
+        calling `set` and `observe` methods respectively and raises an error when trying to assign:
+            - any value to a Counter attribute
+            - any value to a parent Gauge or Histogram attribute
+            - other than int or float or Gauge to a Gauge attribute, same for Histogram
+        """
+        attr = getattr(self, name)
 
-    # NOTE: Various timestamps
-    started_at: float = 0.0
-    synchronized_at: float = 0.0
-    realtime_at: float = 0.0
-    metrics_updated_at: float = 0.0
+        # If both are Counters, it's probably coming from a += operation, se we accept it
+        if isinstance(attr, Counter) and not isinstance(value, Counter):
+            raise TypeError('Counters can only be incremented, use the += operator or the `inc` method instead')
 
-    # NOTE: Speed estimates
-    levels_speed: float = 0.0
-    levels_speed_average: float = 0.0
-    levels_nonempty_speed: float = 0.0
-    objects_speed: float = 0.0
+        if isinstance(attr, Gauge):
+            if attr._is_parent():
+                raise TypeError('Cannot assign to parent Gauge, use metric["label"] = value instead')
 
-    # NOTE: Time estimates
-    time_passed: float = 0.0
-    time_left: float = 0.0
-    progress: float = 0.0
+            if isinstance(value, int | float):
+                attr.set(value)
+                return
 
-    @contextmanager
-    def measure_total_sync_duration(self) -> Generator[None, None, None]:
-        print('call', 'measure_total_sync_duration')
-        with self._index_total_sync_duration.time():
-            print('contextmanager', 'measure_total_sync_duration', 'enter')
-            yield
-            print('contextmanager', 'measure_total_sync_duration', 'exit')
+            if not isinstance(value, Gauge):
+                raise TypeError(f'Cannot assign {type(value)} to Gauge, only int and float are allowed')
 
-    @contextmanager
-    def measure_total_realtime_duration(self) -> Generator[None, None, None]:
-        print('call', 'measure_total_realtime_duration')
-        with self._index_total_realtime_duration.time():
-            print('contextmanager', 'measure_total_realtime_duration', 'enter')
-            yield
-            print('contextmanager', 'measure_total_realtime_duration', 'exit')
+        if isinstance(attr, Histogram):
+            if attr._is_parent():
+                raise TypeError('Cannot assign to parent Histogram, use metric["label"] = value instead')
 
-    def set_datasource_head_updated(self, name: str) -> None:
-        self._datasource_head_updated.labels(datasource=name).observe(time.time())
+            if isinstance(value, int | float):
+                attr.observe(value)
+                return
 
-    def set_datasource_rollback(self, name: str) -> None:
-        self._datasource_rollbacks.labels(datasource=name).inc()
+            if not isinstance(value, Histogram):
+                raise TypeError(f'Cannot assign {type(value)} to Histogram, only int and float are allowed')
+
+        super().__setattr__(name, value)
 
     def set_http_error(self, url: str, status: int) -> None:
         self._http_errors.labels(url=url, status=status).inc()
 
-    def set_sqd_processor_last_block(self, last_block: int) -> None:
-        self._sqd_processor_last_block.set(last_block)
-
-    def set_sqd_processor_chain_height(self, chain_height: int) -> None:
-        self._sqd_processor_chain_height.set(chain_height)
-
     def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
-        self._http_errors_in_row.observe(errors_count)
+        self._http_errors_in_row.inc(errors_count)
         if 'subsquid' in url:
-            self._sqd_processor_archive_http_errors_in_row.observe(errors_count)
+            self._sqd_processor_archive_http_errors_in_row.inc(errors_count)
 
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:
-            if isinstance(value, Counter | Gauge | Histogram):
+            if isinstance(value, Metric):
                 return _round(value.value)
             if isinstance(value, dict):
                 return {k: _round(v) for k, v in value.items()}
