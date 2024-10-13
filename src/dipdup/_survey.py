@@ -76,7 +76,6 @@ class BlockchainConfig(TypedDict):
     indexes: dict[str, IndexerConfig]
 
 
-# Example instantiation
 CONFIG_STRUCTURE: dict[str, BlockchainConfig] = {
     'evm': {
         'datasources': [
