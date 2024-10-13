@@ -80,8 +80,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         """Push message to the queue"""
         self.queue.append(message)
 
-        # NOTE: Try to use += or -= instead
-        metrics.levels_to_realtime[self._config.name] = len(self.queue)
+        metrics._levels_to_realtime[self._config.name] = len(self.queue)
 
     @abstractmethod
     async def _synchronize(self, sync_level: int) -> None:
@@ -251,7 +250,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         last_level = self._config.last_level
         if last_level:
-            with metrics.measure_total_sync_duration():
+            with metrics._index_total_sync_duration.time():
                 await self._synchronize(last_level)
                 await self._enter_disabled_state(last_level)
                 return True
@@ -263,12 +262,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
             self.queue.clear()
 
-            with metrics.measure_total_sync_duration():
+            with metrics._index_total_sync_duration.time():
                 await self._synchronize(sync_level)
                 return True
 
         if self.queue:
-            with metrics.measure_total_realtime_duration():
+            with metrics._index_total_realtime_duration.time():
                 await self._process_queue()
                 return True
 
@@ -288,12 +287,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     async def _exit_sync_state(self, head_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', head_level)
-        metrics.levels_to_sync[self._config.name] = 0
+        metrics._levels_to_sync[self._config.name] = 0
         await self._update_state(status=IndexStatus.realtime, level=head_level)
 
     async def _enter_disabled_state(self, last_level: int) -> None:
         self._logger.info('Index is synchronized to level %s', last_level)
-        metrics.levels_to_sync[self._config.name] = 0
+        metrics._levels_to_sync[self._config.name] = 0
         await self._update_state(status=IndexStatus.disabled, level=last_level)
 
     async def _update_state(

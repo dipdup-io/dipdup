@@ -252,11 +252,11 @@ class IndexDispatcher:
 
             self._previous_levels[index.name] = index.state.level
 
-        metrics.indexes_total['active'] += active
-        metrics.indexes_total['synced'] += synced
-        metrics.indexes_total['realtime'] += realtime
+        metrics._indexes_total['active'] = active
+        metrics._indexes_total['synced'] = synced
+        metrics._indexes_total['realtime'] = realtime
 
-        update_interval = time.time() - metrics.metrics_updated_at
+        update_interval = time.time() - float(metrics.metrics_updated_at)
         metrics.metrics_updated_at = time.time()
 
         last_levels_nonempty, last_objects_indexed = self._last_levels_nonempty, self._last_objects_indexed
@@ -276,10 +276,8 @@ class IndexDispatcher:
         if levels_total <= 0:
             return
 
-        # FIXME: This was an assignment in the original code
-        metrics.levels_indexed += levels_indexed
-        # FIXME: This was an assignment in the original code
-        metrics.levels_total += levels_total
+        metrics.levels_indexed = levels_indexed
+        metrics.levels_total = levels_total
 
         metrics.levels_speed = levels_speed
         metrics.levels_speed_average = levels_speed_average
@@ -307,19 +305,19 @@ class IndexDispatcher:
             self._log_status()
 
     def _log_status(self) -> None:
-        total, indexed = metrics.levels_total, metrics.levels_indexed
+        total, indexed = int(metrics.levels_total), int(metrics.levels_indexed)
         if metrics.realtime_at:
             _logger.info('realtime: %s levels indexed and counting', indexed)
             return
 
-        progress, left = metrics.progress * 100, int(total - indexed)
+        progress, left = float(metrics.progress) * 100, total - indexed
         scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
         if not progress:
             if self._indexes:
                 if scanned_levels:
                     msg = f'indexing: {scanned_levels:6} levels, estimating...'
-                elif metrics.objects_indexed:
-                    msg = f'indexing: {metrics.objects_indexed:6} objects, estimating...'
+                elif objects_indexed := int(metrics.objects_indexed):
+                    msg = f'indexing: {objects_indexed:6} objects, estimating...'
                 else:
                     msg = 'indexing: warming up...'
             else:
@@ -465,7 +463,8 @@ class IndexDispatcher:
                 },
             ),
         )
-        metrics.set_datasource_head_updated(datasource.name)
+        metrics._datasource_head_updated[datasource.name] = time.time()
+
         for index in self._indexes.values():
             if isinstance(index, TezosHeadIndex) and datasource in index.datasources:
                 index.push_realtime_message(head)
@@ -483,7 +482,6 @@ class IndexDispatcher:
             ),
         )
         metrics._datasource_head_updated[datasource.name] = time.time()
-        metrics.set_datasource_head_updated(datasource.name)
 
     async def _on_evm_node_events(
         self,
@@ -561,7 +559,7 @@ class IndexDispatcher:
 
         channel = f'{datasource.name}:{type_.value}'
         _logger.info('Channel `%s` has rolled back: %s -> %s', channel, from_level, to_level)
-        metrics.set_datasource_rollback(datasource.name)
+        metrics._datasource_rollbacks[datasource.name] += 1
 
         # NOTE: Choose action for each index
         for index_name, index in self._indexes.items():
@@ -812,7 +810,6 @@ class DipDup:
         from prometheus_client import start_http_server
 
         _logger.info('Setting up Prometheus at %s:%s', self._config.prometheus.host, self._config.prometheus.port)
-        metrics.enabled = True
         start_http_server(self._config.prometheus.port, self._config.prometheus.host)
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
