@@ -42,7 +42,7 @@ def _validate_evm_address(v: str) -> str:
     return to_normalized_address(v)
 
 
-type EvmAddress = Annotated[Hex, AfterValidator(_validate_evm_address)]  # type: ignore
+type EvmAddress = Annotated[Hex, AfterValidator(_validate_evm_address)]
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

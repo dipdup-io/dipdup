@@ -42,7 +42,7 @@ def _validate_starknet_address(v: str) -> str:
     return v
 
 
-type StarknetAddress = Annotated[Hex, AfterValidator(_validate_starknet_address)]  # type: ignore
+type StarknetAddress = Annotated[Hex, AfterValidator(_validate_starknet_address)]
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
