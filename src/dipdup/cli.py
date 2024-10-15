@@ -23,10 +23,6 @@ from dipdup import env
 from dipdup._version import check_version
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.report import REPORTS_PATH
-from dipdup.report import cleanup_reports
-from dipdup.report import get_reports
-from dipdup.report import save_report
 from dipdup.sys import set_up_process
 
 if TYPE_CHECKING:
@@ -172,6 +168,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            from dipdup.report import save_report
+
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
             _print_help_atexit(e, report_id)
@@ -179,6 +177,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
+            from dipdup.report import save_report
+
             package = ctx.obj.config.package
             save_report(package, None)
 
@@ -969,6 +969,8 @@ async def self_env(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
     """Manage crash and performance reports."""
+    from dipdup.report import cleanup_reports
+
     cleanup_reports()
 
 
@@ -979,6 +981,7 @@ async def report_ls(ctx: click.Context) -> None:
     """List reports."""
     from tabulate import tabulate
 
+    from dipdup.report import get_reports
     from dipdup.yaml import yaml_loader
 
     header = ['id', 'date', 'package', 'reason']
@@ -1003,6 +1006,9 @@ async def report_ls(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report_show(ctx: click.Context, id: str) -> None:
     """Show report."""
+    from dipdup.report import REPORTS_PATH
+    from dipdup.report import get_reports
+
     if id == 'latest':
         reports = get_reports()
         if not reports:
@@ -1024,6 +1030,8 @@ async def report_show(ctx: click.Context, id: str) -> None:
 @_cli_wrapper
 async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
     """Remove report(s)."""
+    from dipdup.report import REPORTS_PATH
+
     if all and id:
         echo('Please specify either name or --all')
         return

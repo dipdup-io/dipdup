@@ -7,9 +7,6 @@ from collections.abc import Awaitable
 from pathlib import Path
 from typing import Any
 
-import orjson
-from pydantic_core import to_jsonable_python
-
 from dipdup import env
 
 _futures: deque[asyncio.Future[None]] = deque()
@@ -21,6 +18,8 @@ def set_up_logging() -> None:
     formatter: logging.Formatter
 
     if env.JSON_LOG:
+        import orjson
+        from pydantic_core import to_jsonable_python
         from pythonjsonlogger import jsonlogger
 
         formatter = jsonlogger.JsonFormatter(  # type: ignore[no-untyped-call]
