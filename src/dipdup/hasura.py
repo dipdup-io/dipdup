@@ -349,6 +349,13 @@ class HasuraGateway(HTTPGateway):
             return True
         return False
 
+    def _is_hidden(self, name: str) -> bool:
+        if self._hasura_config.hide_internal and name.startswith('dipdup_'):
+            return True
+        if name in self._hasura_config.hide:
+            return True
+        return False
+
     async def _generate_source_tables_metadata(self) -> list[dict[str, Any]]:
         """Generate source tables metadata based on project models and views.
 
@@ -649,13 +656,12 @@ class HasuraGateway(HTTPGateway):
         return {humps.decamelize(f.name): {'custom_name': humps.decamelize(f.name)} for f in fields}
 
     def _format_table(self, name: str) -> dict[str, Any]:
+        permissions = [] if self._is_hidden(name) else [self._format_select_permissions()]
         return {
             'table': self._format_table_table(name),
             'object_relationships': [],
             'array_relationships': [],
-            'select_permissions': [
-                self._format_select_permissions(),
-            ],
+            'select_permissions': permissions,
         }
 
     def _format_table_table(self, name: str) -> dict[str, Any]:

@@ -37,7 +37,8 @@ async def check_version() -> None:
     latest_version = _read_cached_version()
     if not latest_version:
         latest_version = await _get_latest_version()
-        _write_cached_version(latest_version)
+        if latest_version:
+            _write_cached_version(latest_version)
     if not latest_version:
         return
 
