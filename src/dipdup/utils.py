@@ -54,16 +54,17 @@ def touch(path: Path) -> None:
         path.touch()
 
 
-def write(path: Path, content: str | bytes, overwrite: bool = False) -> bool:
+def write(path: Path, content: str | bytes, overwrite: bool = False, silent: bool = False) -> bool:
     """Write content to file, create directory tree if necessary"""
+    _log = _logger.debug if silent else _logger.info
     if not path.parent.exists():
-        _logger.info('Creating directory `%s`', path.parent)
+        _log('Creating directory `%s`', path.parent)
         path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.exists() and not overwrite:
         return False
 
-    _logger.info('Writing into file `%s`', path)
+    _log('Writing into file `%s`', path)
     if isinstance(content, str):
         content = content.encode()
     path.write_bytes(content)

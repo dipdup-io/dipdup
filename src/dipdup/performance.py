@@ -21,10 +21,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-from async_lru import alru_cache
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
-
 from dipdup.exceptions import FrameworkException
 from dipdup.prometheus import Counter
 from dipdup.prometheus import Gauge
@@ -72,6 +68,8 @@ class _CacheManager:
         maxsize: int,
         name: str | None = None,
     ) -> Callable[..., Coroutine[Any, Any, None]]:
+        from async_lru import alru_cache
+
         if name is None:
             name = f'{fn.__module__}.{fn.__name__}:{id(fn)}'
         if name in self._lru or name in self._alru:
@@ -180,7 +178,6 @@ class _QueueManager:
         return stats
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
 class _MetricManager:
     # NOTE: Some metrics types are unions with int and float to make mypy happy
     # NOTE: If you want your metric to be part of the stats, it should not be private (start with _)

@@ -67,7 +67,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._state: models.Index | None = None
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(index_name={self.state.name})>'
+        return f'{self.__class__.__name__}(name={self.state.name}, level={self.state.level}, status={self.state.status}, queue={len(self.queue)})>'
 
     @property
     def queue(self) -> deque[IndexQueueItemT]:

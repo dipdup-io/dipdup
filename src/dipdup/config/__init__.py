@@ -81,10 +81,10 @@ def _valid_url(v: str, ws: bool) -> str:
 _T = TypeVar('_T')
 Alias = Annotated[_T, NoneType]
 
-type Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]  # type: ignore
-type ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]  # type: ignore
-type Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]  # type: ignore
-type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]  # type: ignore
+type Hex = Annotated[str, BeforeValidator(lambda v: hex(v) if isinstance(v, int) else v)]
+type ToStr = Annotated[str | float, BeforeValidator(lambda v: str(v))]
+type Url = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=False))]
+type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
 
 
 _logger = logging.getLogger(__name__)
@@ -456,7 +456,7 @@ class PrometheusConfig:
     :param update_interval: Interval to update some metrics in seconds
     """
 
-    host: str
+    host: str = '127.0.0.1'
     port: int = 8000
     update_interval: float = 1.0
 

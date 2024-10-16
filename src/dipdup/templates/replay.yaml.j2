@@ -3,5 +3,5 @@
 #
 spec_version: 3.0
 replay:
-{% for k, v in project.items() %}{{ '  ' + k + ': ' + v }}
+{% for k, v in project.items() if not k.startswith('_') %}{{ '  ' + k + ': ' + v }}
 {% endfor %}

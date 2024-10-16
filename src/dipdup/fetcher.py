@@ -132,7 +132,7 @@ class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
         self._offset: int | str | None = None
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} head={self._head} buffer={len(self._buffer)} offset={self._offset}>'
+        return f'{self.__class__.__name__}(head={self._head}, offset={self._offset})'
 
     @property
     def head(self) -> int:
@@ -173,7 +173,7 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
         self._head = 0
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} name={self._name} head={self._head} buffer={len(self._buffer)}>'
+        return f'{self.__class__.__name__}(name={self._name}, head={self._head}, buffer={len(self._buffer)})'
 
     @property
     def random_datasource(self) -> DatasourceT:

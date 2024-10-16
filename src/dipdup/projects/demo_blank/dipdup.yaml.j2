@@ -1,13 +1,10 @@
-# DipDup YAML
-
 spec_version: 3.0
 package: {{ project.package }}
-
-{%- if project.dipdup_config %}
-  {%- if project.dipdup_config.datasources %}
+{%- if project._survey_config %}
+  {%- if project._survey_config.datasources %}
 
 datasources:
-  {%- for datasource in project.dipdup_config.datasources %}
+  {%- for datasource in project._survey_config.datasources %}
   {{ datasource.name }}:
     kind: {{ datasource.kind }}
     url: {{ datasource.url }}
@@ -17,10 +14,10 @@ datasources:
   {%- endfor %}
   {%- endif %}
 
-  {%- if project.dipdup_config.contracts %}
+  {%- if project._survey_config.contracts %}
 
 contracts:
-  {%- for contract in project.dipdup_config.contracts %}
+  {%- for contract in project._survey_config.contracts %}
   {{ contract.name }}:
     kind: {{ contract.kind }}
     address: {{ contract.address }}
@@ -28,10 +25,10 @@ contracts:
   {%- endfor %}
   {%- endif %}
 
-  {%- if project.dipdup_config.indexes %}
+  {%- if project._survey_config.indexes %}
 
 indexes:
-  {%- for index in project.dipdup_config.indexes %}
+  {%- for index in project._survey_config.indexes %}
   {{ index.name }}:
     kind: {{ index.kind }}
     {%- if index.datasources %}
@@ -89,6 +86,4 @@ indexes:
     {%- endif %}
   {%- endfor %}
   {%- endif %}
-{% else %}
-# project.dipdup_config is not set, so the template doesn't render any dipdup-specific data.
 {% endif %}

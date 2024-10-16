@@ -15,6 +15,7 @@ from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from copy import copy
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -37,6 +38,7 @@ from dipdup.context import MetadataCursor
 from dipdup.database import generate_schema
 from dipdup.database import get_connection
 from dipdup.database import get_schema_hash
+from dipdup.database import get_tortoise_config
 from dipdup.database import preload_cached_models
 from dipdup.database import tortoise_wrapper
 from dipdup.datasources import Datasource
@@ -109,7 +111,7 @@ class IndexDispatcher:
         self._last_objects_indexed: int = 0
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(indexes={self._indexes}, entrypoint_filter={self._entrypoint_filter}, address_filter={self._address_filter}, code_hash_filter={self._code_hash_filter})>'
+        return f'{self.__class__.__name__}({len(self._indexes)})'
 
     async def run(
         self,
@@ -269,6 +271,10 @@ class IndexDispatcher:
             time_left = (levels_total - levels_indexed) / levels_speed_average
         if levels_total:
             progress = levels_indexed / levels_total
+
+        # FIXME: Only with Etherlink demo. Why?
+        if levels_total <= 0:
+            return
 
         metrics.levels_indexed = levels_indexed
         metrics.levels_total = levels_total
@@ -612,7 +618,7 @@ class DipDup:
         self._schema: Schema | None = None
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__}(package_name={self._ctx.package.name}>'
+        return f'{self.__class__.__name__}({self._ctx.package.name})'
 
     @property
     def schema(self) -> Schema:
@@ -928,8 +934,6 @@ class DipDup:
         try:
             from aerich import Command as AerichCommand  # type: ignore[import-untyped]
 
-            from dipdup.database import get_tortoise_config
-
             tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
             aerich_command = AerichCommand(
                 tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
@@ -939,13 +943,10 @@ class DipDup:
             _logger.info("Initializing database migrations at '%s'", migrations_dir)
             await aerich_command.init_db(safe=True)
         except ModuleNotFoundError as e:
-            if e.name == 'aerich':
-                _logger.debug('aerich is not installed, skipping database migration initialization')
-            else:
+            if e.name != 'aerich':
                 raise
+            _logger.debug('aerich is not installed, skipping database migration initialization')
         except FileExistsError as e:
-            from pathlib import Path
-
             if Path(e.filename).is_relative_to(migrations_dir):
                 _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 

@@ -1,9 +1,8 @@
 from typing import Any
 from typing import TypedDict
 
-import survey  # type: ignore
+import survey  # type: ignore[import-untyped]
 
-from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.install import ask
 
@@ -52,7 +51,7 @@ class Index(TypedDict):
     contracts: list[str] | None
 
 
-class DipDupInteractiveYamlConfig(TypedDict):
+class DipDupSurveyConfig(TypedDict):
     datasources: list[Datasource]
     contracts: list[Contract] | None
     indexes: list[Index]
@@ -74,11 +73,10 @@ class IndexerConfig(TypedDict):
 class BlockchainConfig(TypedDict):
     datasources: list[DatasourceConfig]
     contract_kind: str
-    indexers: dict[str, IndexerConfig]
+    indexes: dict[str, IndexerConfig]
 
 
-# Example instantiation
-DipDupConfigDict: dict[str, BlockchainConfig] = {
+CONFIG_STRUCTURE: dict[str, BlockchainConfig] = {
     'evm': {
         'datasources': [
             {
@@ -101,11 +99,17 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
             },
         ],
         'contract_kind': 'evm',
-        'indexers': {
-            'events': {'handler_fields': ['callback', 'contract', 'name'], 'optional_fields': {}, 'kind': 'evm.events'},
+        'indexes': {
+            'events': {
+                'handler_fields': ['callback', 'contract', 'name'],
+                'optional_fields': {},
+                'kind': 'evm.events',
+            },
             'transactions': {
                 'handler_fields': ['callback', 'to', 'method'],
-                'optional_fields': {'first_level': 'integer'},
+                'optional_fields': {
+                    'first_level': 'integer',
+                },
                 'kind': 'evm.transactions',
             },
         },
@@ -120,10 +124,12 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
             }
         ],
         'contract_kind': 'tezos',
-        'indexers': {
+        'indexes': {
             'big_maps': {
                 'handler_fields': ['callback', 'contract', 'path'],
-                'optional_fields': {'skip_history': 'select'},
+                'optional_fields': {
+                    'skip_history': 'select',
+                },
                 'kind': 'tezos.big_maps',
             },
             'events': {
@@ -133,7 +139,9 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
             },
             'head': {
                 'handler_fields': [],
-                'optional_fields': {'callback': 'string'},
+                'optional_fields': {
+                    'callback': 'string',
+                },
                 'kind': 'tezos.head',
             },
             'operations': {
@@ -179,7 +187,7 @@ DipDupConfigDict: dict[str, BlockchainConfig] = {
             },
         ],
         'contract_kind': 'starknet',
-        'indexers': {
+        'indexes': {
             'events': {
                 'handler_fields': ['callback', 'contract', 'name'],
                 'optional_fields': {},
@@ -199,8 +207,15 @@ def prompt_anyof(
     """Ask user to choose one of the options; returns index and value"""
     from tabulate import tabulate
 
-    table = tabulate(zip(options, comments, strict=False), tablefmt='plain')
-    index = survey.routines.select(question + '\n', options=table.split('\n'), index=default)
+    table = tabulate(
+        zip(options, comments, strict=False),
+        tablefmt='plain',
+    )
+    index = survey.routines.select(
+        question + '\n',
+        options=table.split('\n'),
+        index=default,
+    )
     return index, options[index]
 
 
@@ -210,15 +225,15 @@ def get_datasource_comments(datasources: list[str]) -> tuple[str, ...]:
         'evm.subsquid': 'Use Subsquid as your datasource for EVM.',
         'evm.node': 'Connect to an EVM node.',
         'abi.etherscan': 'Fetch ABI from Etherscan.',
-        'tezos.tzkt': 'Use TzKT indexer for Tezos.',
+        'tezos.tzkt': 'Use TzKT API for Tezos.',
         'starknet.subsquid': 'Use Subsquid for Starknet.',
         'starknet.node': 'Connect to a Starknet node.',
     }
     return tuple(default_comments.get(option, 'No description available') for option in datasources)
 
 
-# Helper function to generate comments for indexers options
-def get_indexer_comments(indexers: dict[str, IndexerConfig]) -> tuple[str, ...]:
+# Helper function to generate comments for indexes options
+def get_index_comments(indexes: dict[str, IndexerConfig]) -> tuple[str, ...]:
     default_comments: dict[str, str] = {
         'evm.events': 'Listen to EVM blockchain events.',
         'evm.transactions': 'Track EVM blockchain transactions.',
@@ -232,23 +247,27 @@ def get_indexer_comments(indexers: dict[str, IndexerConfig]) -> tuple[str, ...]:
         'starknet.events': 'Listen to Starknet blockchain events.',
     }
     comments = []
-    for _, config in indexers.items():
+    for _, config in indexes.items():
         kind = config.get('kind')
-        comment = default_comments.get(kind, 'No description available')  # type: ignore
+        comment = default_comments.get(kind, 'No description available')  # type: ignore[arg-type]
         comments.append(comment)
     return tuple(comments)
 
 
-def query_handlers(contract_names: list[str], additional_fields: list[str] | None) -> list[Handler] | None:
+def query_handlers(
+    contract_names: list[str],
+    additional_fields: list[str] | None,
+) -> list[Handler] | None:
 
     handlers: list[Handler] = []
 
     if not additional_fields:
         return None
 
-    big_yellow_echo('Configure Indexer Handlers')
+    first = True
+    while first or ask('Add another handler?', False):
+        first = False
 
-    while True:
         handler: Handler = {
             'callback': '',
             'path': None,
@@ -263,7 +282,7 @@ def query_handlers(contract_names: list[str], additional_fields: list[str] | Non
         # Prompt for additional fields
         for field in additional_fields:
             if field in ['contract', 'to']:
-                handler[field] = prompt_anyof(  # type: ignore
+                handler[field] = prompt_anyof(  # type: ignore[literal-required]
                     'Choose contract for the handler',
                     tuple(contract_names),
                     ('Contract to listen to',) * len(contract_names),
@@ -282,14 +301,12 @@ def query_handlers(contract_names: list[str], additional_fields: list[str] | Non
                     ),
                 }
             else:
-                handler[field] = validate_non_empty_input(  # type: ignore
-                    survey.routines.input(f'Enter handler {field}: ', value=''), field
+                handler[field] = validate_non_empty_input(  # type: ignore[literal-required]
+                    survey.routines.input(f'Enter handler {field}: ', value=''),
+                    field,
                 )
 
         handlers.append(handler)
-
-        if not ask('Add another handler?', False):
-            break
 
     return handlers
 
@@ -313,7 +330,10 @@ def query_optional_fields(optional_fields: dict[str, str | int]) -> dict[str, An
                 field_values[field] = types
             else:
                 _, field_values[field] = prompt_anyof(
-                    f'Select {field}', ('never', 'always', 'auto'), ('Never', 'Always', 'Auto'), 0
+                    f'Select {field}',
+                    ('never', 'always', 'auto'),
+                    ('Never', 'Always', 'Auto'),
+                    0,
                 )
         else:
             field_values[field] = survey.routines.input(f'Enter {field}: ')
@@ -328,147 +348,156 @@ def validate_non_empty_input(input_value: str, field_name: str) -> str:
     return input_value
 
 
-def filter_indexer_options(
-    indexers: tuple[str, ...], indexer_comments: tuple[str, ...], contracts: list[Contract], blockchain: str
+def filter_index_options(
+    indexes: tuple[str, ...],
+    index_comments: tuple[str, ...],
+    contracts: list[Contract],
+    blockchain: str,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    blockchain_config = DipDupConfigDict[blockchain]
-    indexer_dict = blockchain_config['indexers']
+    blockchain_config = CONFIG_STRUCTURE[blockchain]
+    index_dict = blockchain_config['indexes']
     required_contract_fields = {'contract', 'to', 'pattern'}
     if not contracts:
         valid_indexes = [
             idx
-            for idx, indexer in enumerate(indexers)
-            if not required_contract_fields.intersection(set(indexer_dict[indexer].get('handler_fields', [])))
-            or contracts
+            for idx, index in enumerate(indexes)
+            if not required_contract_fields.intersection(set(index_dict[index].get('handler_fields', []))) or contracts
         ]
 
-        indexers = tuple(indexers[idx] for idx in valid_indexes)
-        indexer_comments = tuple(indexer_comments[idx] for idx in valid_indexes)
+        indexes = tuple(indexes[idx] for idx in valid_indexes)
+        index_comments = tuple(index_comments[idx] for idx in valid_indexes)
 
-    return indexers, indexer_comments
+    return indexes, index_comments
 
 
-def query_dipdup_config(blockchain: str) -> DipDupInteractiveYamlConfig:
-
-    blockchain_config = DipDupConfigDict[blockchain]
-
+def query_survey_config(blockchain: str) -> DipDupSurveyConfig:
+    blockchain_config = CONFIG_STRUCTURE[blockchain]
     datasources: list[Datasource] = []
     contracts: list[Contract] = []
     indexes: list[Index] = []
+    survey_config = DipDupSurveyConfig(
+        datasources=datasources,
+        contracts=contracts,
+        indexes=indexes,
+    )
 
-    big_yellow_echo('Configure DipDup Project Setup')
+    first = True
+    while ask(f'Add {'' if first else 'another '}datasource?', first):
+        first = False
 
-    if ask('Add datasource?', True):
-        while True:
-            datasource_options = blockchain_config['datasources']
-            datasource_comments = get_datasource_comments([ds['kind'] for ds in datasource_options])
+        datasource_options = blockchain_config['datasources']
+        datasource_comments = get_datasource_comments([ds['kind'] for ds in datasource_options])
 
-            selected_index, _ = prompt_anyof(
-                f'Select the datasource kind for {blockchain}:',
-                tuple(ds['name'] for ds in datasource_options),
-                datasource_comments,
-                0,
+        selected_index, _ = prompt_anyof(
+            f'Select the datasource kind for {blockchain}:',
+            tuple(ds['name'] for ds in datasource_options),
+            datasource_comments,
+            0,
+        )
+        selected_datasource = datasource_options[selected_index]
+        datasource_kind = selected_datasource['kind']
+
+        final_url = validate_non_empty_input(
+            survey.routines.input('Enter Datasource URL: ', value=selected_datasource.get('default_url', '')),
+            'Datasource URL',
+        )
+        api_key = None
+        ws_url = None
+
+        if selected_datasource['requires_api_key']:
+            api_key = validate_non_empty_input(
+                survey.routines.input('Enter API key: ', value=''),
+                'API key',
             )
-            selected_datasource = datasource_options[selected_index]
-            datasource_kind = selected_datasource['kind']
-
-            final_url = validate_non_empty_input(
-                survey.routines.input('Enter Datasource URL: ', value=selected_datasource.get('default_url', '')),
-                'Datasource URL',
-            )
-            api_key = None
-            ws_url = None
-
-            if selected_datasource['requires_api_key']:
-                api_key = validate_non_empty_input(survey.routines.input('Enter API key: ', value=''), 'API key')
-                if 'node' in datasource_kind:
-                    final_url = '${NODE_URL:-' + final_url + '}/${NODE_API_KEY:-' + api_key + '}'
-                    if datasource_kind == 'evm.node':
-                        ws_url = survey.routines.input(
-                            'Enter WebSocket (wss) URL: ', value='wss://eth-mainnet.g.alchemy.com/v2'
-                        )
-                        ws_url = '${NODE_WS_URL:-' + ws_url + '}/${NODE_API_KEY:-' + api_key + '}'
-                    api_key = None
-                else:
-                    api_key = '${ETHERSCAN_API_KEY:-' + api_key + '}'
-
-            if datasource_kind != 'abi.etherscan':
+            if 'node' in datasource_kind:
+                final_url = '${NODE_URL:-' + final_url + '}/${NODE_API_KEY:-' + api_key + '}'
+                if datasource_kind == 'evm.node':
+                    ws_url = survey.routines.input(
+                        'Enter WebSocket (wss) URL: ', value='wss://eth-mainnet.g.alchemy.com/v2'
+                    )
+                    ws_url = '${NODE_WS_URL:-' + ws_url + '}/${NODE_API_KEY:-' + api_key + '}'
                 api_key = None
+            else:
+                api_key = '${ETHERSCAN_API_KEY:-' + api_key + '}'
 
-            if 'subsquid' in datasource_kind:
-                final_url = '${SUBSQUID_URL:-' + final_url + '}'
+        if datasource_kind != 'abi.etherscan':
+            api_key = None
 
-            datasource: Datasource = {
-                'kind': datasource_kind,
-                'url': final_url,
-                'ws_url': ws_url,
-                'api_key': api_key,
-                'name': selected_datasource.get('name', 'dipDUp'),
-            }
+        if 'subsquid' in datasource_kind:
+            final_url = '${SUBSQUID_URL:-' + final_url + '}'
 
-            datasources.append(datasource)
+        datasource: Datasource = {
+            'kind': datasource_kind,
+            'url': final_url,
+            'ws_url': ws_url,
+            'api_key': api_key,
+            'name': selected_datasource['name'],
+        }
 
-            if not ask('Add another datasource?', False):
-                break
+        datasources.append(datasource)
 
-    if ask('Add contract?', True):
-        while True:
-            contract_name = validate_non_empty_input(survey.routines.input('Enter contract name: '), 'Contract name')
-            contract_address = validate_non_empty_input(
-                survey.routines.input('Enter contract address: '), 'Contract address'
-            )
+    first = True
+    while ask(f'Add {'' if first else 'another '}contract?', first):
+        first = False
 
-            contract: Contract = {
-                'name': contract_name,
-                'kind': blockchain_config['contract_kind'],
-                'address': contract_address,
-                'typename': contract_name,
-            }
-
-            contracts.append(contract)
-
-            if not ask('Add another contract?', False):
-                break
-
-    if datasources:
-        indexer_options = tuple(blockchain_config['indexers'].keys())
-        indexer_comments = get_indexer_comments(blockchain_config['indexers'])
-
-        indexer_options, indexer_comments = filter_indexer_options(
-            indexer_options, indexer_comments, contracts, blockchain
+        contract_name = validate_non_empty_input(
+            survey.routines.input('Enter contract name: '),
+            'Contract name',
+        )
+        contract_address = validate_non_empty_input(
+            survey.routines.input('Enter contract address: '),
+            'Contract address',
         )
 
-        if indexer_options and ask('Add indexer?', True):
-            while True:
-                indexer = prompt_anyof(
-                    f'Select the type of indexer for {blockchain}:', indexer_options, indexer_comments, 0
-                )[1]
+        contract: Contract = {
+            'name': contract_name,
+            'kind': blockchain_config['contract_kind'],
+            'address': contract_address,
+            'typename': contract_name,
+        }
+        contracts.append(contract)
 
-                index_config = blockchain_config['indexers'][indexer]
-                index_name = validate_non_empty_input(survey.routines.input('Enter the indexer name: '), 'Indexer name')
+    if not datasources:
+        return survey_config
 
-                index: Index = {
-                    'name': index_name,
-                    'kind': index_config['kind'],
-                    'datasources': [ds['name'] for ds in datasources],
-                    'handlers': None,
-                    'skip_history': None,
-                    'first_level': None,
-                    'last_level': None,
-                    'callback': None,
-                    'types': None,
-                    'contracts': None,
-                }
+    index_options = tuple(blockchain_config['indexes'].keys())
+    index_comments = get_index_comments(blockchain_config['indexes'])
+    index_options, index_comments = filter_index_options(index_options, index_comments, contracts, blockchain)
 
-                handlers = query_handlers([c['name'] for c in contracts], index_config.get('handler_fields'))
-                index['handlers'] = handlers
+    if not index_options:
+        return survey_config
 
-                if 'optional_fields' in index_config:
-                    index.update(query_optional_fields(index_config['optional_fields']))  # type: ignore
+    first = True
+    while ask(f'Add {'' if first else 'another '}index?', first):
+        first = False
 
-                indexes.append(index)
+        _, kind = prompt_anyof(f'Select the type of index for {blockchain}:', index_options, index_comments, 0)
 
-                if not ask('Add another indexer?', False):
-                    break
+        index_config = blockchain_config['indexes'][kind]
+        index_name = validate_non_empty_input(
+            survey.routines.input('Enter the index name: '),
+            'Indexer name',
+        )
 
-    return DipDupInteractiveYamlConfig(datasources=datasources, contracts=contracts, indexes=indexes)
+        index: Index = {
+            'name': index_name,
+            'kind': index_config['kind'],
+            'datasources': [ds['name'] for ds in datasources],
+            'handlers': None,
+            'skip_history': None,
+            'first_level': None,
+            'last_level': None,
+            'callback': None,
+            'types': None,
+            'contracts': None,
+        }
+
+        handlers = query_handlers([c['name'] for c in contracts], index_config.get('handler_fields'))
+        index['handlers'] = handlers
+
+        if 'optional_fields' in index_config:
+            index.update(query_optional_fields(index_config['optional_fields']))  # type: ignore[typeddict-item]
+
+        indexes.append(index)
+
+    return survey_config

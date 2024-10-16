@@ -43,9 +43,6 @@ from dipdup import __version__
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
-from dipdup.project import TEMPLATES
-from dipdup.project import answers_from_replay
-from dipdup.project import get_default_answers
 from dipdup.sys import set_up_logging
 
 _version = __version__.split('+')[0]
@@ -308,6 +305,8 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
 
 
 def create_project_callback() -> Callable[[str], str]:
+    from dipdup.project import get_default_answers
+
     answers = get_default_answers()
 
     def callback(data: str) -> str:
@@ -678,10 +677,40 @@ def merge_changelog() -> None:
         version_path.write_text('\n'.join(lines))
 
 
+@main.command('dump-metrics', help='Dump Markdown table of Prometheus metrics')
+def dump_metrics() -> None:
+    green_echo('=> Dumping metrics table')
+    metrics: list[tuple[str, str, str]] = []
+
+    from dipdup.performance import _MetricManager as cls
+    from dipdup.prometheus import Metric
+
+    for attr in dir(cls):
+        val = object.__getattribute__(cls, attr)
+        if not isinstance(val, Metric):
+            continue
+
+        metrics.append((val._get_metric().name, val._get_metric().documentation, val.__class__.__name__))  # type: ignore[no-untyped-call]
+
+    metrics = sorted(metrics, key=lambda x: x[0])
+
+    lines = [
+        '<!-- markdownlint-disable first-line-h1 -->',
+        '| name | description | type |',
+        '|-|-|-|',
+        *(f'| {name} | {description} | {type_} |' for name, description, type_ in metrics),
+        '',
+    ]
+
+    Path('docs/5.advanced/_metrics_table.md').write_text('\n'.join(lines))
+
+
 @main.command('dump-demos', help='Dump Markdown table of available demo projects')
 def dump_demos() -> None:
+    from dipdup.project import TEMPLATES
+    from dipdup.project import answers_from_replay
+
     green_echo('=> Dumping demos table')
-    lines: list[str] = []
     demos: list[tuple[str, str, str]] = []
 
     replays = Path('src/dipdup/projects').glob('**/replay.yaml')

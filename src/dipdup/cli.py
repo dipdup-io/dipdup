@@ -12,7 +12,6 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import TypedDict
 from typing import TypeVar
 from typing import cast
 
@@ -21,12 +20,9 @@ import uvloop
 
 from dipdup import __version__
 from dipdup import env
+from dipdup._version import check_version
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.report import REPORTS_PATH
-from dipdup.report import cleanup_reports
-from dipdup.report import get_reports
-from dipdup.report import save_report
 from dipdup.sys import set_up_process
 
 if TYPE_CHECKING:
@@ -42,7 +38,7 @@ NO_CONFIG_CMDS = {
     'config',
 }
 
-# NOTE: commands we reuse from aerich for database migration
+# NOTE: Click commands from `aerich` we use as is  for database migration
 AERICH_CMDS = {
     'history',
     'heads',
@@ -53,11 +49,6 @@ AERICH_CMDS = {
 
 _logger = logging.getLogger(__name__)
 _click_wrap_text = click.formatting.wrap_text
-
-
-class CachedVersion(TypedDict):
-    latest_version: str
-    installed_version: str
 
 
 def _wrap_text(text: str, *a: Any, **kw: Any) -> str:
@@ -114,12 +105,11 @@ def _load_env_files(env_file_paths: list[Path]) -> None:
     for path in env_file_paths:
         from dotenv import load_dotenv
 
-        from dipdup.env import reload_env
-
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
-        reload_env()
-        _logger.debug('Environment reloaded after applying `%s`', path)
+
+    if env_file_paths:
+        env.reload_env()
 
 
 def echo(message: str, err: bool = False, **styles: Any) -> None:
@@ -162,8 +152,7 @@ class CLIContext:
     config_paths: list[str]
     config: 'DipDupConfig'
 
-    # NOTE: we have to implement __getitem__ and __setitem__ because aerich CLI
-    #  commands (`AERICH_CMDS`) access the context object via `ctx.obj["command"]`
+    # NOTE: We need this because aerich Click commands expect `ctx.obj` object to be a dict.
     def __getitem__(self, item: str) -> Any:
         return getattr(self, item)
 
@@ -179,6 +168,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            from dipdup.report import save_report
+
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
             _print_help_atexit(e, report_id)
@@ -186,6 +177,8 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
+            from dipdup.report import save_report
+
             package = ctx.obj.config.package
             save_report(package, None)
 
@@ -194,93 +187,6 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
 
 def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
     return cmd.callback.__wrapped__.__wrapped__  # type: ignore[no-any-return,union-attr]
-
-
-async def _check_version() -> None:
-    if '+editable' in __version__:
-        return
-
-    _skip_msg = 'Set `DIPDUP_NO_VERSION_CHECK` variable to hide this message.'
-    if not all(c.isdigit() or c == '.' for c in __version__):
-        _logger.warning(
-            'You are running a pre-release version of DipDup. Please, report any issues to the GitHub repository.'
-        )
-        _logger.info(_skip_msg)
-        return
-
-    from appdirs import user_cache_dir  # type: ignore[import-untyped]
-
-    cache_file = Path(user_cache_dir('dipdup')) / 'version_info.json'
-
-    latest_version = _get_cached_version(cache_file)
-    if latest_version:
-        _warn_if_outdated(_skip_msg, latest_version)
-        return
-
-    import aiohttp
-
-    async with AsyncExitStack() as stack:
-        stack.enter_context(suppress(Exception))
-        session = await stack.enter_async_context(aiohttp.ClientSession())
-        response = await session.get('https://api.github.com/repos/dipdup-io/dipdup/releases/latest')
-        response_json = await response.json()
-        latest_version = cast(str, response_json['tag_name'])
-
-        _warn_if_outdated(_skip_msg, latest_version)
-        _write_cached_version(cache_file, latest_version)
-
-
-def _get_cached_version(cache_file: Path, ttl: int = 86400) -> str | None:
-    # NOTE: Time-to-live (ttl) for the cache in seconds (default: 86400 seconds = 24 hours)
-    import time
-
-    try:
-        if (time.time() - cache_file.stat().st_mtime) >= ttl:
-            return None
-        version_info = _read_cached_version(cache_file)
-        if version_info is None:
-            return None
-        if version_info.get('installed_version') != __version__:
-            return None
-        return version_info.get('latest_version')
-    except FileNotFoundError:
-        return None
-
-
-def _read_cached_version(cache_file: Path) -> CachedVersion | None:
-    try:
-        import orjson as json
-
-        content = json.loads(cache_file.read_bytes())
-        return cast(CachedVersion, content)
-    except Exception as e:
-        _logger.warning('Failed to read cache file %s: %s', cache_file, e)
-        return None
-
-
-def _write_cached_version(cache_file: Path, latest_version: str) -> None:
-    try:
-        from dipdup.utils import json_dumps
-        from dipdup.utils import write
-
-        version_info: CachedVersion = {
-            'latest_version': latest_version,
-            'installed_version': __version__,
-        }
-        write(cache_file, json_dumps(version_info), overwrite=True)
-    except Exception as e:
-        _logger.warning('Failed to write cache file %s: %s', cache_file, e)
-
-
-def _warn_if_outdated(skip_msg: str, latest_version: str) -> None:
-    if __version__ == latest_version:
-        return
-    _logger.warning(
-        'You are running DipDup %s, while %s is available. Please run `dipdup update` to upgrade.',
-        __version__,
-        latest_version,
-    )
-    _logger.info(skip_msg)
 
 
 def _skip_cli_group() -> bool:
@@ -388,10 +294,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
 
     # NOTE: Fire and forget, do not block instant commands
     if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
-        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114
-        # Replace with fire_and_forget(_check_version()) once the issue is resolved.
-        # Remember to import fire_and_forget: from dipdup.sys import fire_and_forget
-        await _check_version()
+        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114; replace with `fire_and_forget` call once resolved.
+        await check_version()
 
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
@@ -648,51 +552,45 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
     """Commands to manage database schema."""
-    if '--help' in sys.argv:
+    if '--help' in sys.argv or ctx.invoked_subcommand not in AERICH_CMDS:
         return
 
     config: DipDupConfig = ctx.obj.config
 
-    if ctx.invoked_subcommand in AERICH_CMDS:
-        from dipdup.config import SqliteDatabaseConfig
+    if config.database.kind == 'sqlite':
+        from dipdup.exceptions import UnsupportedFeatureError
 
-        if isinstance(config.database, SqliteDatabaseConfig):
-            from dipdup.exceptions import UnsupportedFeatureError
+        raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
 
-            raise UnsupportedFeatureError('Database migrations are not supported for SQLite')
+    from dipdup.package import DipDupPackage
 
-        from dipdup.package import DipDupPackage
+    migrations_dir = DipDupPackage(config.package_path).migrations
 
-        migrations_dir = DipDupPackage(config.package_path).migrations
+    if not migrations_dir.exists():
+        from dipdup.exceptions import ProjectPackageError
 
-        if not migrations_dir.exists():
-            from dipdup.exceptions import ProjectPackageError
-
-            raise ProjectPackageError(
-                f"""Database migrations are not initialized at {migrations_dir}.
-              Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
-            )
-
-        from aerich import Command as AerichCommand  # type: ignore[import-untyped]
-
-        from dipdup.database import get_tortoise_config
-
-        tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
-        aerich_command = AerichCommand(
-            tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
+        raise ProjectPackageError(
+            f"""Database migrations are not initialized at {migrations_dir}.
+            Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
         )
-        await aerich_command.init()
 
-        ctx.obj['command'] = aerich_command
+    from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+
+    from dipdup.database import get_tortoise_config
+
+    tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
+    aerich_command = AerichCommand(tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix())
+    await aerich_command.init()
+
+    ctx.obj['command'] = aerich_command
 
 
-# Wrapper function to approve schema after upgrade and downgrade
-# Since upgrade and downgrade are meant to be intentionally run by the user, it'll be confusing for the user to run approve just after them
+# NOTE: A wrapper to approve schema after `upgrade` and `downgrade` commands. It would be confusing for the user to run approve just after them.
 def _approve_schema_after(command: click.Command) -> click.Command:
     @click.pass_context
     def wrapper(ctx: click.Context, /, *args: Any, **kwargs: Any) -> None:
         ctx.invoke(command, *args, **kwargs)
-        # TODO: don't call approve if no upgrades/downgrades happened
+        # TODO: Don't call approve if no upgrades/downgrades happened
         ctx.invoke(schema_approve)
 
     return click.Command(
@@ -704,16 +602,18 @@ def _approve_schema_after(command: click.Command) -> click.Command:
     )
 
 
-try:
-    from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
+# NOTE: Saving 0.45s on imports and hiding from reference
+if 'schema' in sys.argv:
+    try:
+        from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
 
-    schema.add_command(aerich_cli.commands['history'])
-    schema.add_command(aerich_cli.commands['heads'])
-    schema.add_command(aerich_cli.commands['migrate'])
-    schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
-    schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
-except ImportError:
-    _logger.debug('aerich is not installed, skipping database migration commands')
+        schema.add_command(aerich_cli.commands['history'])
+        schema.add_command(aerich_cli.commands['heads'])
+        schema.add_command(aerich_cli.commands['migrate'])
+        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
+        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+    except ImportError:
+        _logger.debug('aerich is not installed, skipping database migration commands')
 
 
 @schema.command(name='approve')
@@ -1069,6 +969,8 @@ async def self_env(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
     """Manage crash and performance reports."""
+    from dipdup.report import cleanup_reports
+
     cleanup_reports()
 
 
@@ -1079,6 +981,7 @@ async def report_ls(ctx: click.Context) -> None:
     """List reports."""
     from tabulate import tabulate
 
+    from dipdup.report import get_reports
     from dipdup.yaml import yaml_loader
 
     header = ['id', 'date', 'package', 'reason']
@@ -1103,6 +1006,9 @@ async def report_ls(ctx: click.Context) -> None:
 @_cli_wrapper
 async def report_show(ctx: click.Context, id: str) -> None:
     """Show report."""
+    from dipdup.report import REPORTS_PATH
+    from dipdup.report import get_reports
+
     if id == 'latest':
         reports = get_reports()
         if not reports:
@@ -1124,6 +1030,8 @@ async def report_show(ctx: click.Context, id: str) -> None:
 @_cli_wrapper
 async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
     """Remove report(s)."""
+    from dipdup.report import REPORTS_PATH
+
     if all and id:
         echo('Please specify either name or --all')
         return

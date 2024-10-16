@@ -1149,6 +1149,7 @@
       "description": "Config for Prometheus integration.",
       "properties": {
         "host": {
+          "default": "127.0.0.1",
           "title": "host",
           "type": "string",
           "description": "Host to bind to"
@@ -1166,9 +1167,6 @@
           "description": "Interval to update some metrics in seconds"
         }
       },
-      "required": [
-        "host"
-      ],
       "title": "PrometheusConfig",
       "type": "object"
     },
