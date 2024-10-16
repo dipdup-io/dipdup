@@ -14,7 +14,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: Added `schema` subcommands to manage database migrations: `migrate`, `upgrade`, `downgrade`, `heads` and `history`.
 - cli: Added interactive mode for `new` command.
 - database: Support database migrations using [`aerich`](https://github.com/tortoise/aerich).
-- hasura: Added several config options to ignore some tables/views or make them private.
+- hasura: Added `hide` and `hide_internal` config options to make specified tables/views private.
 
 ### Fixed
 

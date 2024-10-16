@@ -342,13 +342,6 @@ class HasuraGateway(HTTPGateway):
         for file in iter_files(graphql_path, '.graphql'):
             yield file.name.split('/')[-1][:-8], file.read()
 
-    def _is_ignored(self, name: str) -> bool:
-        if self._hasura_config.ignore_internal and name.startswith('dipdup_'):
-            return True
-        if name in self._hasura_config.ignore:
-            return True
-        return False
-
     def _is_hidden(self, name: str) -> bool:
         if self._hasura_config.hide_internal and name.startswith('dipdup_'):
             return True
@@ -370,16 +363,10 @@ class HasuraGateway(HTTPGateway):
 
         for app, model in iter_models(self._package):
             table_name = model._meta.db_table or pascal_to_snake(model.__name__)
-            if self._is_ignored(table_name):
-                continue
-
             model_tables[f'{app}.{model.__name__}'] = table_name
             metadata_tables[table_name] = self._format_table(table_name)
 
         for view in views:
-            if self._is_ignored(view):
-                continue
-
             metadata_tables[view] = self._format_table(view)
 
         for app, model in iter_models(self._package):
@@ -416,8 +403,6 @@ class HasuraGateway(HTTPGateway):
 
                     junction_table_name = field.through
 
-                    if self._is_ignored(junction_table_name):
-                        continue
                     metadata_tables[junction_table_name] = self._format_table(junction_table_name)
                     metadata_tables[junction_table_name]['object_relationships'].append(
                         self._format_object_relationship(
