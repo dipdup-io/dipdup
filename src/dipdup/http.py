@@ -3,7 +3,6 @@ import hashlib
 import logging
 import platform
 import time
-from collections.abc import Mapping
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
 from http import HTTPStatus
@@ -11,7 +10,6 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 from typing import Literal
-from typing import cast
 from typing import overload
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
@@ -167,8 +165,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                         ratelimit_sleep = self._config.ratelimit_sleep
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
-                            e.headers = cast(Mapping[str, Any], e.headers)
-                            ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))
+                            ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))  # type: ignore[index]
                 else:
                     metrics.set_http_error(self._url, 0)
 
@@ -251,6 +248,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             # NOTE: Use raw=True if fail on 204 is not a desired behavior
             if response.status == HTTPStatus.NO_CONTENT:
                 raise InvalidRequestError('204 No Content', request_string)
+            if not response._body:
+                raise InvalidRequestError('Empty response', request_string)
             with suppress(JSONDecodeError):
                 return orjson.loads(response._body)
             return response._body

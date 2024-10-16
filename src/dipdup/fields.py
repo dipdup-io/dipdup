@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
 
-import orjson
+from tortoise.contrib.postgres.fields import ArrayField as ArrayField
 from tortoise.exceptions import ConfigurationError as TortoiseConfigurationError
 from tortoise.fields import relational as relational
 from tortoise.fields.base import CASCADE as CASCADE
@@ -93,24 +93,6 @@ class EnumField(Field[_EnumFieldT]):
         if value is None:
             return None
         raise FrameworkException(f'Invalid enum value: {value}')
-
-
-# TODO: Use PostgreSQL native ARRAY type
-class ArrayField(Field[list[str]]):
-    SQL_TYPE = 'TEXT'
-
-    def to_db_value(
-        self,
-        value: list[str],
-        instance: type[_TortoiseModel] | _TortoiseModel,
-    ) -> str | None:
-        return orjson.dumps(value).decode()
-
-    def to_python_value(self, value: str | list[str]) -> list[str] | None:
-        if isinstance(value, str):
-            array = orjson.loads(value)
-            return [str(x) for x in array]
-        return value
 
 
 class DecimalField(Field[Decimal], Decimal):
