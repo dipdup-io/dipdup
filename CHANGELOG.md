@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.1.0] - 2024-10-??
+## [8.1.0] - 2024-10-16
 
 ### Added
 
@@ -14,7 +14,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: Added `schema` subcommands to manage database migrations: `migrate`, `upgrade`, `downgrade`, `heads` and `history`.
 - cli: Added interactive mode for `new` command.
 - database: Support database migrations using [`aerich`](https://github.com/tortoise/aerich).
-- hasura: Added `ignore` and `ignore_internal` config options to hide specific tables/views.
+- hasura: Added `hide` and `hide_internal` config options to make specified tables/views private.
 
 ### Fixed
 
