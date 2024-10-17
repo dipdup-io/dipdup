@@ -225,7 +225,6 @@ class _MetricManager:
 
     # NOTE: Orignally in prometheus.py
     _indexes_total = Gauge(
-        # _indexes_total: Counter = Counter(
         'dipdup_indexes_total',
         'Number of indexes in operation by status',
         ('status',),

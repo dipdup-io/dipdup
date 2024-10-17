@@ -150,6 +150,9 @@ class Gauge(Metric, PrometheusGauge):
         """Get the value of the Gauge."""
         return float(self._value.get())
 
+    def __bool__(self) -> bool:
+        return bool(self.value)
+
     def __iadd__(self, other: int | float) -> 'Gauge':  # type: ignore[override, misc]
         """Increment the Gauge using `inc`."""
         self.inc(other)

@@ -2190,7 +2190,7 @@ files = [
 
 [[package]]
 name = "web3"
-version = "7.3.1"
+version = "7.4.0"
 requires_python = "<4,>=3.8"
 summary = "web3: A Python library for interacting with Ethereum"
 groups = ["default"]
@@ -2211,8 +2211,8 @@ dependencies = [
     "websockets>=10.0.0",
 ]
 files = [
-    {file = "web3-7.3.1-py3-none-any.whl", hash = "sha256:fceb5816d64da000e0eaf26a8ba3a260ae87d32eb6cb88502348fa900fcba7df"},
-    {file = "web3-7.3.1.tar.gz", hash = "sha256:7da3dbdd6741360913f88a245b8a74889f370648b2d0fa6decb16c143ce77651"},
+    {file = "web3-7.4.0-py3-none-any.whl", hash = "sha256:09864c549e0ab97a9915f0c02a98f9e87bc1bfb23fedc3e4e6a95e5ab11787b6"},
+    {file = "web3-7.4.0.tar.gz", hash = "sha256:473e85ee9ff61f20acb114756bbf222f2f75b42daedc1c3e9183ce6431c6039e"},
 ]
 
 [[package]]

@@ -98,6 +98,6 @@ tzdata==2024.1; platform_system == "Windows"
 tzlocal==5.2
 urllib3==2.2.2
 uvloop==0.21.0
-web3==7.3.1
+web3==7.4.0
 websockets==12.0
 yarl==1.15.3
