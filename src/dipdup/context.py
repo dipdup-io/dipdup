@@ -29,6 +29,8 @@ from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.starknet import StarknetIndexConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
+from dipdup.config.substrate import SubstrateIndexConfig
+from dipdup.config.substrate_events import SubstrateEventsIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
@@ -52,6 +54,9 @@ from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
 from dipdup.datasources.starknet_node import StarknetNodeDatasource
 from dipdup.datasources.starknet_subsquid import StarknetSubsquidDatasource
+from dipdup.datasources.substrate_node import SubstrateNodeDatasource
+from dipdup.datasources.substrate_subscan import SubstrateSubscanDatasource
+from dipdup.datasources.substrate_subsquid import SubstrateSubsquidDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
 from dipdup.exceptions import CallbackError
@@ -67,6 +72,8 @@ from dipdup.indexes.evm_events.index import EvmEventsIndex
 from dipdup.indexes.evm_transactions.index import EvmTransactionsIndex
 from dipdup.indexes.starknet import StarknetIndex
 from dipdup.indexes.starknet_events.index import StarknetEventsIndex
+from dipdup.indexes.substrate import SubstrateIndex
+from dipdup.indexes.substrate_events.index import SubstrateEventsIndex
 from dipdup.indexes.tezos_big_maps.index import TezosBigMapsIndex
 from dipdup.indexes.tezos_events.index import TezosEventsIndex
 from dipdup.indexes.tezos_head.index import TezosHeadIndex
@@ -332,6 +339,8 @@ class DipDupContext:
             index = self._create_tezos_index(index_config)
         elif isinstance(index_config, StarknetIndexConfig):
             index = self._create_starknet_index(index_config)
+        elif isinstance(index_config, SubstrateIndexConfig):
+            index = self._create_substrate_index(index_config)
         else:
             raise NotImplementedError
 
@@ -379,6 +388,22 @@ class DipDupContext:
         index: StarknetIndex[Any, Any, Any]
         if isinstance(index_config, StarknetEventsIndexConfig):
             index = StarknetEventsIndex(self, index_config, index_datasources)
+        else:
+            raise NotImplementedError
+
+        return index
+
+    def _create_substrate_index(self, index_config: SubstrateIndexConfig) -> SubstrateIndex[Any, Any, Any]:
+        datasource_configs = index_config.datasources
+        datasources = tuple(self.get_substrate_datasource(c.name) for c in datasource_configs)
+        index_datasources = tuple(d for d in datasources if isinstance(d, IndexDatasource))
+
+        for datasource in index_datasources:
+            datasource.attach_index(index_config)
+
+        index: SubstrateIndex[Any, Any, Any]
+        if isinstance(index_config, SubstrateEventsIndexConfig):
+            index = SubstrateEventsIndex(self, index_config, index_datasources)
         else:
             raise NotImplementedError
 
@@ -498,6 +523,12 @@ class DipDupContext:
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
         return self._get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
+
+    def get_substrate_datasource(
+        self, name: str
+    ) -> SubstrateSubsquidDatasource | SubstrateSubscanDatasource | SubstrateNodeDatasource:
+        """Get `substrate` datasource by name"""
+        return self._get_datasource(name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource)  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name

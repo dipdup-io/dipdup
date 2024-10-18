@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from typing import Literal
 from typing import overload
+from urllib.parse import parse_qsl
 from urllib.parse import urlsplit
 from urllib.parse import urlunsplit
 
@@ -80,6 +81,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         self._url = urlunsplit((parsed_url.scheme, parsed_url.netloc, '', '', ''))
         self._alias = config.alias or parsed_url.netloc
         self._path = parsed_url.path
+        self._query = parsed_url.query
         self._config = config
         self._user_agent_args: tuple[str, ...] = ()
         self._user_agent: str | None = None
@@ -223,7 +225,10 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
 
-        params = kwargs.get('params', {})
+        params = kwargs.pop('params', {})
+        for item in parse_qsl(self._query):
+            params[item[0]] = item[1]
+
         params_string = '&'.join(f'{k}={v}' for k, v in params.items())
         request_string = f'{self._url}{url}?{params_string}'.rstrip('?')
         self._logger.debug('Calling `%s`', request_string)
@@ -238,6 +243,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             url=url,
             headers=headers,
             raise_for_status=True,
+            params=params,
             **kwargs,
         ) as response:
             await response.read()

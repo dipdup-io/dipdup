@@ -26,6 +26,7 @@ from dipdup.project import CODEGEN_HEADER
 from dipdup.project import render_base
 from dipdup.utils import load_template
 from dipdup.utils import pascal_to_snake
+from dipdup.utils import sorted_glob
 from dipdup.utils import touch
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -136,7 +137,7 @@ class _BaseCodeGenerator(ABC):
 
     async def _generate_types(self, force: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-        for path in self._package.schemas.glob('**/*.json'):
+        for path in sorted_glob(self._package.schemas, '**/*.json'):
             await self._generate_type(path, force)
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
@@ -172,6 +173,7 @@ class _BaseCodeGenerator(ABC):
             custom_file_header=CODEGEN_HEADER,
             use_union_operator=True,
             output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
+            use_schema_description=True,
         )
 
     async def _generate_callback(

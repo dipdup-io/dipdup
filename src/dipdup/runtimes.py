@@ -1,0 +1,131 @@
+import logging
+import re
+from functools import cached_property
+from typing import TYPE_CHECKING
+from typing import Any
+
+import orjson
+
+from dipdup.exceptions import FrameworkException
+from dipdup.package import DipDupPackage
+
+if TYPE_CHECKING:
+    from scalecodec.base import RuntimeConfigurationObject  # type: ignore[import-untyped]
+
+_logger = logging.getLogger(__name__)
+
+ALIASES = {
+    'assethub': 'statemint',
+}
+
+
+def extract_args_name(description: str) -> list[str]:
+    pattern = r'\((.*?)\)|\[(.*?)\]'
+    match = re.search(pattern, description)
+
+    if not match:
+        raise ValueError('No valid bracket pairs found in the description')
+
+    args_str = match.group(1) or match.group(2)
+    return [arg.strip('\\') for arg in args_str.split(', ')]
+
+
+class SubstrateSpecVersion:
+    def __init__(self, name: str, metadata: list[dict[str, Any]]) -> None:
+        self._name = name
+        self._metadata = metadata
+        self._events: dict[str, dict[str, Any]] = {}
+
+    def get_event_abi(self, qualname: str) -> dict[str, Any]:
+        if qualname not in self._events:
+            pallet, name = qualname.split('.')
+            found = False
+            for item in self._metadata:
+                # FIXME: double break
+                if found:
+                    break
+                if item['name'] != pallet:
+                    continue
+                for event in item.get('events', ()):
+                    if event['name'] != name:
+                        continue
+                    self._events[qualname] = event
+                    found = True
+            else:
+                raise FrameworkException(f'Event `{qualname}` not found in `{self._name}` spec')
+
+        return self._events[qualname]
+
+
+class SubstrateRuntime:
+    def __init__(
+        self,
+        name: str,
+        package: DipDupPackage,
+    ) -> None:
+        self._name = name
+        self._package = package
+        # TODO: unload by LRU?
+        self._spec_versions: dict[str, SubstrateSpecVersion] = {}
+
+    @cached_property
+    def runtime_config(self) -> 'RuntimeConfigurationObject':
+        from scalecodec.base import RuntimeConfigurationObject
+        from scalecodec.type_registry import load_type_registry_preset  # type: ignore[import-untyped]
+
+        # FIXME: ss58_format
+        runtime_config = RuntimeConfigurationObject(ss58_format=99)
+        for name in ('core', ALIASES.get(self._name, self._name)):
+            preset = load_type_registry_preset(name)
+            assert preset
+            runtime_config.update_type_registry(preset)
+
+        return runtime_config
+
+    def get_spec_version(self, name: str) -> SubstrateSpecVersion:
+        if name not in self._spec_versions:
+            _logger.info('loading spec version `%s`', name)
+            metadata = orjson.loads(self._package.abi.joinpath(self._name, f'v{name}.json').read_bytes())
+            self._spec_versions[name] = SubstrateSpecVersion(
+                name=f'v{name}',
+                metadata=metadata,
+            )
+
+        return self._spec_versions[name]
+
+    def decode_event_args(
+        self,
+        name: str,
+        args: list[Any] | dict[str, Any],
+        spec_version: str,
+    ) -> dict[str, Any]:
+        from scalecodec.base import ScaleBytes
+
+        spec_obj = self.get_spec_version(spec_version)
+        event_abi = spec_obj.get_event_abi(
+            qualname=name,
+        )
+
+        if isinstance(args, list):
+            assert 'args_name' not in event_abi
+            arg_names = extract_args_name(event_abi['docs'][0])
+            args = dict(zip(arg_names, args, strict=True))
+        else:
+            arg_names = event_abi['args_name']
+
+        arg_types = event_abi['args']
+
+        payload = {}
+        for (key, value), type_ in zip(args.items(), arg_types, strict=True):
+            if not isinstance(value, str) or not value.startswith('0x'):
+                payload[key] = value
+                continue
+
+            scale_obj = self.runtime_config.create_scale_object(
+                type_string=type_,
+                data=ScaleBytes(value),
+            )
+            scale_obj.decode()
+            payload[key] = scale_obj.value_serialized
+
+        return payload

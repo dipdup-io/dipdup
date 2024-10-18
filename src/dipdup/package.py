@@ -79,6 +79,9 @@ class DipDupPackage:
         # NOTE: Shared directories; not a part of package
         self._xdg_shared_dir = Path.home() / '.local' / 'share' / 'dipdup'
         self.schemas = self._xdg_shared_dir / 'schemas' / self.name
+        # FIXME
+        # self.abi_local = self._xdg_shared_dir / 'abi' / self.name
+        self.abi_local = self.abi
 
         # NOTE: Finally, internal in-memory stuff
         self._replay: Answers | None = None

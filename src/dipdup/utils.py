@@ -2,6 +2,7 @@ import asyncio
 import importlib
 import logging
 import pkgutil
+import re
 import types
 from collections import defaultdict
 from collections.abc import Callable
@@ -255,3 +256,15 @@ class Watchdog:
             except TimeoutError as e:
                 msg = f'Watchdog timeout; no messages received in {self._timeout} seconds'
                 raise FrameworkException(msg) from e
+
+
+def sorted_glob(path: Path, pattern: str) -> list[Path]:
+    def natural_sort_key(item: Path) -> tuple[list[int | str], list[int | str]]:
+        def split_parts(text: str) -> list[int | str]:
+            parts = re.split(r'(\d+)', text)
+            return [int(part) if part.isdigit() else part.lower() for part in parts]
+
+        # Sort by parent directories first, then by filename
+        return ([split_parts(part) for part in item.parent.parts], split_parts(item.name))
+
+    return sorted(path.glob(pattern), key=natural_sort_key)

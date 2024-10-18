@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import ConfigDict
+from pydantic.dataclasses import dataclass
+
+from dipdup.config import AbiDatasourceConfig
+from dipdup.config import HttpConfig
+
+
+@dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
+class SubstrateSubscanDatasourceConfig(AbiDatasourceConfig):
+    """Subscan datasource config
+
+    :param kind: always 'substrate.subscan'
+    :param url: API URL
+    :param api_key: API key
+    :param http: HTTP client configuration
+    """
+
+    kind: Literal['substrate.subscan']
+    url: str
+    api_key: str | None = None
+
+    http: HttpConfig | None = None

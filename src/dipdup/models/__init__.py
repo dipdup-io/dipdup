@@ -59,6 +59,7 @@ class IndexType(Enum):
     tezos_token_transfers = 'tezos.token_transfers'
     tezos_token_balances = 'tezos.token_balances'
     starknet_events = 'starknet.events'
+    substrate_events = 'substrate.events'
 
 
 class MessageType:

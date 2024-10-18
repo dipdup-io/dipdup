@@ -79,6 +79,7 @@ dependencies = [
     "tortoise-orm==0.21.7",
     "uvloop~=0.20",
     "web3~=7.2",
+    "scalecodec",
 ]
 
 [project.optional-dependencies]

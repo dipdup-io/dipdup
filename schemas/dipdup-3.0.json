@@ -11,7 +11,6 @@
           "description": "always 'abi.etherscan'"
         },
         "url": {
-          "default": "https://api.etherscan.io/api",
           "title": "url",
           "type": "string",
           "description": "API URL"
@@ -44,7 +43,8 @@
         }
       },
       "required": [
-        "kind"
+        "kind",
+        "url"
       ],
       "title": "AbiEtherscanDatasourceConfig",
       "type": "object"
@@ -1549,6 +1549,247 @@
       "title": "StarknetSubsquidDatasourceConfig",
       "type": "object"
     },
+    "SubstrateEventsHandlerConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid event handler",
+      "properties": {
+        "callback": {
+          "title": "callback",
+          "type": "string",
+          "description": "Callback name"
+        },
+        "name": {
+          "title": "name",
+          "type": "string",
+          "description": "Event name (pallet.event)"
+        }
+      },
+      "required": [
+        "callback",
+        "name"
+      ],
+      "title": "SubstrateEventsHandlerConfig",
+      "type": "object"
+    },
+    "SubstrateEventsIndexConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid datasource config",
+      "properties": {
+        "kind": {
+          "const": "substrate.events",
+          "title": "kind",
+          "type": "string",
+          "description": "Always 'substrate.events'"
+        },
+        "datasources": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
+              },
+              {
+                "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
+              }
+            ]
+          },
+          "title": "datasources",
+          "type": "array",
+          "description": "`substrate` datasources to use"
+        },
+        "runtime": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/SubstrateRuntimeConfig"
+            }
+          ],
+          "title": "runtime",
+          "description": "Substrate runtime"
+        },
+        "handlers": {
+          "items": {
+            "$ref": "#/$defs/SubstrateEventsHandlerConfig"
+          },
+          "title": "handlers",
+          "type": "array",
+          "description": "Event handlers"
+        },
+        "first_level": {
+          "default": 0,
+          "title": "first_level",
+          "type": "integer",
+          "description": "Level to start indexing from"
+        },
+        "last_level": {
+          "default": 0,
+          "title": "last_level",
+          "type": "integer",
+          "description": "Level to stop indexing and disable this index"
+        }
+      },
+      "required": [
+        "kind",
+        "datasources",
+        "runtime",
+        "handlers"
+      ],
+      "title": "SubstrateEventsIndexConfig",
+      "type": "object"
+    },
+    "SubstrateNodeDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Substrate node datasource config",
+      "properties": {
+        "kind": {
+          "const": "substrate.node",
+          "title": "kind",
+          "type": "string",
+          "description": "Always 'substrate.node'"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "title": "url",
+          "description": "Substrate node URL"
+        },
+        "ws_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WsUrl"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "ws_url",
+          "description": "Substrate node WebSocket URL"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "title": "SubstrateNodeDatasourceConfig",
+      "type": "object"
+    },
+    "SubstrateRuntimeConfig": {
+      "additionalProperties": false,
+      "description": "Substrate runtime config",
+      "properties": {
+        "kind": {
+          "const": "substrate",
+          "default": "substrate",
+          "title": "kind",
+          "type": "string",
+          "description": "Always 'substrate'"
+        }
+      },
+      "title": "SubstrateRuntimeConfig",
+      "type": "object"
+    },
+    "SubstrateSubscanDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Subscan datasource config",
+      "properties": {
+        "kind": {
+          "const": "substrate.subscan",
+          "title": "kind",
+          "type": "string",
+          "description": "always 'substrate.subscan'"
+        },
+        "url": {
+          "title": "url",
+          "type": "string",
+          "description": "API URL"
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "api_key",
+          "description": "API key"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "title": "SubstrateSubscanDatasourceConfig",
+      "type": "object"
+    },
+    "SubstrateSubsquidDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Subsquid datasource config",
+      "properties": {
+        "kind": {
+          "const": "substrate.subsquid",
+          "title": "kind",
+          "type": "string",
+          "description": "always 'substrate.subsquid'"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "title": "url",
+          "description": "URL of Subsquid Network API"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "http",
+          "description": "HTTP client configuration"
+        }
+      },
+      "required": [
+        "kind",
+        "url"
+      ],
+      "title": "SubstrateSubsquidDatasourceConfig",
+      "type": "object"
+    },
     "TezosAddress": {
       "type": "string"
     },
@@ -2735,6 +2976,15 @@
           },
           {
             "$ref": "#/$defs/StarknetNodeDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/SubstrateNodeDatasourceConfig"
           }
         ]
       },
@@ -2753,6 +3003,14 @@
       ],
       "title": "database",
       "description": "Database config"
+    },
+    "runtimes": {
+      "additionalProperties": {
+        "$ref": "#/$defs/SubstrateRuntimeConfig"
+      },
+      "title": "runtimes",
+      "type": "object",
+      "description": "Mapping of runtime aliases and runtime configs"
     },
     "contracts": {
       "additionalProperties": {
@@ -2806,6 +3064,9 @@
             "$ref": "#/$defs/StarknetEventsIndexConfig"
           },
           {
+            "$ref": "#/$defs/SubstrateEventsIndexConfig"
+          },
+          {
             "$ref": "#/$defs/IndexTemplateConfig"
           }
         ]
@@ -2846,6 +3107,9 @@
           },
           {
             "$ref": "#/$defs/StarknetEventsIndexConfig"
+          },
+          {
+            "$ref": "#/$defs/SubstrateEventsIndexConfig"
           }
         ]
       },

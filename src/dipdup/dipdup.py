@@ -315,9 +315,9 @@ class IndexDispatcher:
         if not progress:
             if self._indexes:
                 if scanned_levels:
-                    msg = f'indexing: {scanned_levels:6} levels, estimating...'
-                elif objects_indexed := int(metrics.objects_indexed):
-                    msg = f'indexing: {objects_indexed:6} objects, estimating...'
+                    msg = f'indexing: {scanned_levels} levels, estimating...'
+                elif metrics.objects_indexed:
+                    msg = f'indexing: {metrics.objects_indexed} objects, estimating...'
                 else:
                     msg = 'indexing: warming up...'
             else:
@@ -635,6 +635,7 @@ class DipDup:
         """Create new or update existing dipdup project"""
         from dipdup.codegen.evm import EvmCodeGenerator
         from dipdup.codegen.starknet import StarknetCodeGenerator
+        from dipdup.codegen.substrate import SubstrateCodeGenerator
         from dipdup.codegen.tezos import TezosCodeGenerator
 
         await self._create_datasources()
@@ -648,9 +649,10 @@ class DipDup:
 
             codegen_classes: tuple[type[CodeGenerator], ...] = (  # type: ignore[assignment]
                 CommonCodeGenerator,
-                TezosCodeGenerator,
                 EvmCodeGenerator,
                 StarknetCodeGenerator,
+                SubstrateCodeGenerator,
+                TezosCodeGenerator,
             )
             for codegen_cls in codegen_classes:
                 codegen = codegen_cls(

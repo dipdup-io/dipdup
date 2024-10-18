@@ -249,7 +249,7 @@ class ContractConfig(ABC, NameMixin):
     """Contract config
 
     :param kind: Defined by child class
-    :param typename: Alias for the contract script
+    :param typename: Alias for the typeclass directory
     """
 
     kind: str
@@ -262,6 +262,17 @@ class ContractConfig(ABC, NameMixin):
     @property
     def module_path(self) -> Path:
         return Path(*self.module_name.split('.'))
+
+
+# FIXME: we use Substrate runtimes as contracts for codegen
+class RuntimeConfig(ContractConfig):
+    """Runtime config
+
+    :param kind: Defined by child class
+    :param typename: Alias for the typeclass directory
+    """
+
+    pass
 
 
 class DatasourceConfig(ABC, NameMixin):
@@ -565,6 +576,7 @@ class DipDupConfig:
     :param package: Name of indexer's Python package, existing or not
     :param datasources: Mapping of datasource aliases and datasource configs
     :param database: Database config
+    :param runtimes: Mapping of runtime aliases and runtime configs
     :param contracts: Mapping of contract aliases and contract configs
     :param indexes: Mapping of index aliases and index configs
     :param templates: Mapping of template aliases and index templates
@@ -585,6 +597,7 @@ class DipDupConfig:
     database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
         default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
     )
+    runtimes: dict[str, RuntimeConfigU] = Field(default_factory=dict)
     contracts: dict[str, ContractConfigU] = Field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = Field(default_factory=dict)
     templates: dict[str, ResolvedIndexConfigU] = Field(default_factory=dict)
@@ -796,13 +809,24 @@ class DipDupConfig:
             raise ConfigurationError('`datasource` field must refer to Etherscan datasource')
         return datasource
 
+    def get_substrate_subsquid_datasource(self, name: str) -> SubstrateSubsquidDatasourceConfig:
+        datasource = self.get_datasource(name)
+        if not isinstance(datasource, SubstrateSubsquidDatasourceConfig):
+            raise ConfigurationError('`datasource` field must refer to Subsquid datasource')
+        return datasource
+
     def set_up_logging(self) -> None:
-        loglevels = {}
         if isinstance(self.logging, dict):
-            loglevels = {**self.logging}
+            loglevels = {
+                'dipdup': 'INFO',
+                self.package: 'INFO',
+                **self.logging,
+            }
         else:
-            loglevels['dipdup'] = self.logging
-            loglevels[self.package] = self.logging
+            loglevels = {
+                'dipdup': self.logging,
+                self.package: self.logging,
+            }
 
         # NOTE: Environment variables have higher priority
         if env.DEBUG:
@@ -823,7 +847,7 @@ class DipDupConfig:
     def initialize(self) -> None:
         self._set_names()
         self._resolve_templates()
-        self._resolve_links()
+        self._resolve_aliases()
         self._validate()
 
     def dump(self) -> str:
@@ -949,7 +973,7 @@ class DipDupConfig:
             if isinstance(index_config, IndexTemplateConfig):
                 self._resolve_template(index_config)
 
-    def _resolve_links(self) -> None:
+    def _resolve_aliases(self) -> None:
         for index_config in self.indexes.values():
             if isinstance(index_config, IndexTemplateConfig):
                 raise ConfigInitializationException('Index templates must be resolved first')
@@ -1072,6 +1096,13 @@ class DipDupConfig:
 
                 if isinstance(handler_config.contract, str):
                     handler_config.contract = self.get_starknet_contract(handler_config.contract)
+
+        elif isinstance(index_config, SubstrateEventsIndexConfig):
+            if isinstance(index_config.runtime, str):
+                index_config.runtime = self.runtimes[index_config.runtime]
+            for handler_config in index_config.handlers:
+                handler_config.parent = index_config
+
         else:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
@@ -1082,6 +1113,7 @@ class DipDupConfig:
             (
                 self.contracts,
                 self.datasources,
+                self.runtimes,
                 self.hooks,
                 self.jobs,
                 self.templates,
@@ -1112,6 +1144,11 @@ from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
 from dipdup.config.starknet_node import StarknetNodeDatasourceConfig
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
+from dipdup.config.substrate import SubstrateRuntimeConfig
+from dipdup.config.substrate_events import SubstrateEventsIndexConfig
+from dipdup.config.substrate_node import SubstrateNodeDatasourceConfig
+from dipdup.config.substrate_subscan import SubstrateSubscanDatasourceConfig
+from dipdup.config.substrate_subsquid import SubstrateSubsquidDatasourceConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.config.tezos_events import TezosEventsIndexConfig
@@ -1128,6 +1165,7 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
+RuntimeConfigU = SubstrateRuntimeConfig
 ContractConfigU = EvmContractConfig | TezosContractConfig | StarknetContractConfig
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
@@ -1140,6 +1178,9 @@ DatasourceConfigU = (
     | TezosTzktDatasourceConfig
     | StarknetSubsquidDatasourceConfig
     | StarknetNodeDatasourceConfig
+    | SubstrateSubsquidDatasourceConfig
+    | SubstrateSubscanDatasourceConfig
+    | SubstrateNodeDatasourceConfig
 )
 TezosIndexConfigU = (
     TezosBigMapsIndexConfig
@@ -1152,8 +1193,9 @@ TezosIndexConfigU = (
 )
 EvmIndexConfigU = EvmEventsIndexConfig | EvmTransactionsIndexConfig
 StarknetIndexConfigU = StarknetEventsIndexConfig
+SubstrateIndexConfigU = SubstrateEventsIndexConfig
 
-ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU | StarknetIndexConfigU
+ResolvedIndexConfigU = TezosIndexConfigU | EvmIndexConfigU | StarknetIndexConfigU | SubstrateIndexConfigU
 IndexConfigU = ResolvedIndexConfigU | IndexTemplateConfig
 
 

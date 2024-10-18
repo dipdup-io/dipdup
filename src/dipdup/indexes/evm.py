@@ -49,6 +49,7 @@ def get_sighash(
     raise ConfigurationError('Either `to` or `signature` filters are expected')
 
 
+# FIXME: Should be subsquid one
 class EvmIndex(
     Generic[IndexConfigT, IndexQueueItemT, DatasourceT],
     Index[IndexConfigT, IndexQueueItemT, DatasourceT],

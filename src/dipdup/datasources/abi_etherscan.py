@@ -10,11 +10,10 @@ from dipdup.config import HttpConfig
 from dipdup.config.abi_etherscan import AbiEtherscanDatasourceConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.datasources import Datasource
-from dipdup.datasources import EvmAbiProvider
 from dipdup.exceptions import DatasourceError
 
 
-class AbiEtherscanDatasource(AbiDatasource[AbiEtherscanDatasourceConfig], EvmAbiProvider):
+class AbiEtherscanDatasource(AbiDatasource[AbiEtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=1,
         ratelimit_period=5,
