@@ -373,9 +373,11 @@ def _render_templates(
             # NOTE: Remove ".j2" from extension
         ).with_suffix(path.suffix[:-3])
         output_path = Path(Template(str(output_path)).render(project=answers))
-        # FIXME
+
+        # FIXME: A very dirty hack for demo_substrate_events project
         if output_path.name == 'Dockerfile':
             force = True
+
         _render(answers, template_path, output_path, force)
 
     # NOTE: If there are files without .j2 extension, just copy them

@@ -85,11 +85,17 @@ class SubstrateRuntime:
     def get_spec_version(self, name: str) -> SubstrateSpecVersion:
         if name not in self._spec_versions:
             _logger.info('loading spec version `%s`', name)
-            metadata = orjson.loads(self._package.abi.joinpath(self._name, f'v{name}.json').read_bytes())
-            self._spec_versions[name] = SubstrateSpecVersion(
-                name=f'v{name}',
-                metadata=metadata,
-            )
+            try:
+                metadata = orjson.loads(self._package.abi.joinpath(self._name, f'v{name}.json').read_bytes())
+                self._spec_versions[name] = SubstrateSpecVersion(
+                    name=f'v{name}',
+                    metadata=metadata,
+                )
+            except FileNotFoundError:
+                # FIXME: Using last known version to help with missing abis
+                last_known = tuple(self._package.abi.joinpath(self._name).glob('v*.json'))[-1].stem
+                _logger.info('using last known version `%s`', last_known)
+                self._spec_versions[name] = self.get_spec_version(last_known[1:])
 
         return self._spec_versions[name]
 

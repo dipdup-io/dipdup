@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class V601(BaseModel):
     """
-    Some assets were transferred. \[asset_id, from, to, amount\]
+    Some assets were transferred. [asset_id, from, to, amount]
     """
 
     asset_id: int = Field(..., description='U32')

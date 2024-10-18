@@ -81,7 +81,7 @@ def event_metadata_to_jsonschema(
     type_registry: dict[str, Any],
     metadata: dict[str, Any],
 ) -> dict[str, Any]:
-    description = '\n'.join(metadata['docs'])
+    description = '\n'.join(metadata['docs']).replace('\[', '[').replace('\]', ']')
     args_name = [a for a in metadata.get('args_name', ()) if a]
     if not args_name:
         args_name = extract_args_name(description)
@@ -184,7 +184,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                             continue
                         latest_dumps[qualname] = dump
 
-                        # NOTE: Copy used abis to project
+                        # FIXME: Copy used abis to project. Should be somewhere else.
                         write(self._package.abi.joinpath(runtime_name, metadata_path.name), metadata_path.read_bytes())
 
                         schema_path = (

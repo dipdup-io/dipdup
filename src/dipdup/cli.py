@@ -833,8 +833,12 @@ async def new(
 
     if quiet:
         answers = get_default_answers()
+        if template:
+            answers['template'] = template
     elif replay:
         answers = answers_from_replay(replay)
+        if template:
+            answers['template'] = template
     else:
         try:
             answers = answers_from_terminal(template)

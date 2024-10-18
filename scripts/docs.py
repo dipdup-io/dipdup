@@ -229,12 +229,10 @@ class DocsBuilder(FileSystemEventHandler):
         self._callbacks = callbacks or []
 
     def on_rst_modified(self) -> None:
-        # FIXME
-        pass
-        # subprocess.run(
-        #     ('python3', 'scripts/docs.py', 'dump-references'),
-        #     check=True,
-        # )
+        subprocess.run(
+            ('python3', 'scripts/docs.py', 'dump-references'),
+            check=True,
+        )
 
     def on_modified(
         self,
@@ -527,7 +525,7 @@ def dump_references() -> None:
             red_echo(f'=> Reference is outdated! Update `docs/{ref}.rst` and try again.')
             red_echo(f'=> Add: {to_add}')
             red_echo(f'=> Remove: {to_remove}')
-            # FIXME
+            # FIXME: Substrate references are missing
             # exit(1)
 
     _compare('models', IGNORED_MODEL_CLASSES)
