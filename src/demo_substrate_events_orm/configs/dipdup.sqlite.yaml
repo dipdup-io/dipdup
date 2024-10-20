@@ -1,3 +1,0 @@
-database:
-  kind: sqlite
-  path: ${SQLITE_PATH:-/tmp/demo_substrate_events_orm.sqlite}

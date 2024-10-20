@@ -187,6 +187,8 @@ def get_schema_hash(conn: SupportedClient) -> str:
 
 @cache
 def read_sql_file(path: Path | str) -> str:
+    if isinstance(path, str):
+        path = Path(path)
     _logger.info('Reading SQL from `%s`', path.name)
     return path.read_text()
 
@@ -195,8 +197,8 @@ async def execute_script(
     sql: str | None = None,
     path: Path | None = None,
     conn: SupportedClient | None = None,
-    *args,
-    **kwargs,
+    args: Any | None = None,
+    kwargs: dict[str, Any] | None = None,
 ) -> None:
     """Execute SQL script(s) with formatting"""
     if not conn:
@@ -221,8 +223,8 @@ async def execute_script(
 
 
 async def execute_query(
-    *args: Any,
     sql: str | None = None,
+    args: Any | None = None,
     path: Path | None = None,
     conn: SupportedClient | None = None,
 ) -> Any:
@@ -249,7 +251,7 @@ async def generate_schema(
     await Tortoise.generate_schemas()
 
     if isinstance(conn, AsyncpgClient):
-        await _pg_run_scripts(conn)
+        await _pg_run_scripts(conn=conn)
 
 
 async def _pg_run_scripts(conn: AsyncpgClient) -> None:
@@ -259,7 +261,7 @@ async def _pg_run_scripts(conn: AsyncpgClient) -> None:
         'dipdup_status.sql',
     ):
         sql_path = Path(__file__).parent / 'sql' / fn
-        await execute_script(conn, sql_path)
+        await execute_script(conn=conn, path=sql_path)
 
 
 async def get_tables() -> set[str]:

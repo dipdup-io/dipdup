@@ -20,11 +20,11 @@ import orjson
 from aiolimiter import AsyncLimiter
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.performance import metrics
-from dipdup.utils import json_dumps
 
 safe_exceptions = (
     asyncio.TimeoutError,
@@ -96,7 +96,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         """Create underlying aiohttp session"""
         self.__session = aiohttp.ClientSession(
             base_url=self._url,
-            json_serialize=lambda *a, **kw: json_dumps(*a, **kw).decode(),
+            json_serialize=lambda v: orjson.dumps(v).decode(),
             connector=aiohttp.TCPConnector(limit=self._config.connection_limit),
             timeout=aiohttp.ClientTimeout(
                 total=self._config.request_timeout,
@@ -267,16 +267,20 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         weight: int = 1,
         **kwargs: Any,
     ) -> Any:
-        if not self._config.replay_path:
-            raise FrameworkException('Replay path is not set')
-
-        replay_path = Path(self._config.replay_path).expanduser()
+        replay_path = self._config.replay_path or env.REPLAY_PATH or Path('~/.cache/dipdup/replays')
+        if isinstance(replay_path, str):
+            replay_path = Path(replay_path)
         replay_path.mkdir(parents=True, exist_ok=True)
 
-        request_hash = hashlib.sha256(
-            f'{self._url} {method} {self._path}/{url} {kwargs}'.encode(),
-        ).hexdigest()
-        replay_path = Path(self._config.replay_path).joinpath(request_hash).expanduser()
+        hashable_kwargs = {**kwargs}
+        # NOTE: JSONRPC fix
+        if (json := hashable_kwargs.get('json')) and 'jsonrpc' in json:
+            json['id'] = ''
+
+        # FIXME: Fails for
+        request_repr = f'{self._url} {method} {self._path}/{url} {hashable_kwargs}'
+        request_hash = hashlib.sha256(request_repr.encode()).hexdigest()
+        replay_path = replay_path.joinpath(request_hash).expanduser()
 
         if replay_path.exists():
             if not replay_path.stat().st_size:
@@ -284,7 +288,12 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
             content = replay_path.read_bytes()
             with suppress(JSONDecodeError):
-                return orjson.loads(content)
+                response = orjson.loads(content)
+                # NOTE: JSONRPC fix
+                if isinstance(response, dict) and 'jsonrpc' in response:
+                    response['id'] = kwargs['json']['id']
+                return response
+
             return content
 
         response = await self._retry_request(method, url, weight, **kwargs)
@@ -292,7 +301,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         if isinstance(response, bytes):
             replay_path.write_bytes(response)
         else:
-            replay_path.write_bytes(json_dumps(response))
+            replay_path.write_bytes(orjson.dumps(response))
 
         return response
 
@@ -304,7 +313,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         **kwargs: Any,
     ) -> Any:
         """Performs an HTTP request."""
-        if self._config.replay_path:
+        if self._config.replay_path or self._config.replay is True or (self._config.replay is None and env.REPLAY_PATH):
             return await self._replay_request(method, url, weight, **kwargs)
         return await self._retry_request(method, url, weight, **kwargs)
 

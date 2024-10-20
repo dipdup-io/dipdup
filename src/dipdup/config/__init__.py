@@ -206,7 +206,8 @@ class HttpConfig:
     request_timeout: int | None = None
     batch_size: int | None = None
     polling_interval: float | None = None
-    replay_path: str | None = None
+    replay: bool | None = None
+    replay_path: str | Path | None = None
     alias: str | None = None
 
 
@@ -225,7 +226,8 @@ class ResolvedHttpConfig:
     request_timeout: int = 60
     batch_size: int = 10000
     polling_interval: float = 1.0
-    replay_path: str | None = None
+    replay: bool | None = None
+    replay_path: str | Path | None = None
     alias: str | None = None
 
     @classmethod

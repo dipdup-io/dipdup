@@ -700,31 +700,34 @@ class DipDupContext:
 
         await self.database.execute_script(
             sql=None,
-            path=self._get_sql_path(name),
             args=args,
             kwargs=kwargs,
+            path=self._get_sql_path(name),
+            conn=None,
         )
 
-    execute_sql = execute_sql_script
-
+    # TODO: named arguments
     async def execute_sql_query(
         self,
         name: str,
         *args: Any,
-        **kwargs: Any,
     ) -> Any:
         """Executes SQL query with given name included with the project
 
         :param name: SQL query name within `sql` directory
         :param values: Values to pass to the query
         """
-        if kwargs:
-            args = tuple(kwargs.values())
 
         return await self.database.execute_query(
-            *args,
+            sql=None,
+            args=args,
             path=self._get_sql_path(name),
+            conn=None,
         )
+
+    execute_sql = execute_sql_script
+    execute_script = execute_sql_script
+    execute_query = execute_sql_query
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:

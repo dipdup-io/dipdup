@@ -219,14 +219,6 @@ def _default_for_decimals(obj: Any) -> Any:
     raise TypeError
 
 
-def json_dumps_plain(obj: Any | str) -> str:
-    """Smarter json.dumps"""
-    return orjson.dumps(
-        obj,
-        default=_default_for_decimals,
-    ).decode()
-
-
 def json_dumps(obj: Any | str, option: int | None = orjson.OPT_INDENT_2) -> bytes:
     """Smarter json.dumps"""
     return orjson.dumps(

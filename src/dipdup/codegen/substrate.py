@@ -164,7 +164,7 @@ class SubstrateCodeGenerator(CodeGenerator):
         if not target_events:
             return
 
-        latest_dumps = defaultdict(lambda: '')
+        latest_dumps: defaultdict[str, str] = defaultdict(str)
 
         for runtime_name, events in target_events.items():
             for metadata_path in sorted_glob(self._package.abi_local, f'{runtime_name}/*.json'):
