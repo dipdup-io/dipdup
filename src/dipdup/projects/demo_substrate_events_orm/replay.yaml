@@ -1,0 +1,5 @@
+spec_version: 3.0
+replay:
+  description: Substrate balance transfers (ORM) [PREVIEW]
+  package: demo_substrate_events_orm
+  template: demo_substrate_events_orm

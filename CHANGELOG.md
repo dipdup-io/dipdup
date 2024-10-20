@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- cli: Fixed `--template` option being ignored when `--quiet` flag is set.
 - config: Fixed setting default loglevels when `logging` is a dict.
 
 ## [8.1.1] - 2024-10-17

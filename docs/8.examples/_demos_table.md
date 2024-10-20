@@ -3,6 +3,7 @@
 |-|-|-|-|
 | demo_blank |  | Empty config for a fresh start | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_blank) |
 | demo_substrate_events |  | Substrate balance transfers [PREVIEW] | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_substrate_events) |
+| demo_substrate_events_orm |  | Substrate balance transfers (ORM) [PREVIEW] | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_substrate_events_orm) |
 | demo_evm_events | EVM | ERC-20 token transfers (from event logs) | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_evm_events) |
 | demo_evm_transactions | EVM | ERC-20 token transfers (from transactions) | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_evm_transactions) |
 | demo_evm_uniswap | EVM | Uniswap V3 pools, positions, etc. (advanced, uses TimescaleDB) | [link](https://github.com/dipdup-io/dipdup/tree/8.1.1/src/demo_evm_uniswap) |

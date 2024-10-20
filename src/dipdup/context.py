@@ -17,6 +17,7 @@ from typing import TypeVar
 
 from tortoise.exceptions import OperationalError
 
+import dipdup.database
 from dipdup import env
 from dipdup.codegen import BatchHandlerConfig
 from dipdup.config import ContractConfigU
@@ -40,10 +41,6 @@ from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.config.tezos_token_balances import TezosTokenBalancesIndexConfig
 from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
-from dipdup.database import execute_sql
-from dipdup.database import execute_sql_query
-from dipdup.database import get_connection
-from dipdup.database import wipe_schema
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.abi_etherscan import AbiEtherscanDatasource
@@ -150,6 +147,8 @@ class DipDupContext:
     :param logger: Context-aware logger instance
     """
 
+    database = dipdup.database
+
     def __init__(
         self,
         config: DipDupConfig,
@@ -172,7 +171,7 @@ class DipDupContext:
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.package.name})'
 
-    # TODO: The next four properties are process-global. Document later.
+    # TODO: Process-global properties. Document later.
     @property
     def env(self) -> ModuleType:
         return env
@@ -230,10 +229,10 @@ class DipDupContext:
             raise ReindexingRequiredError(schema.reindex, context)
 
         elif action == ReindexingAction.wipe:
-            conn = get_connection()
+            conn = self.database.get_connection()
             # FIXME: Define a global var or config option for "always immune tables"
             immune_tables = self.config.database.immune_tables | {'dipdup_meta', 'aerich'}
-            await wipe_schema(
+            await self.database.wipe_schema(
                 conn=conn,
                 schema_name=self.config.database.schema_name,
                 immune_tables=immune_tables,
@@ -681,7 +680,7 @@ class DipDupContext:
         coro = _wrapper()
         await coro if wait else self._pending_hooks.put_nowait(coro)
 
-    async def execute_sql(
+    async def execute_sql_script(
         self,
         name: str,
         *args: Any,
@@ -699,24 +698,33 @@ class DipDupContext:
         if env.TEST:
             return
 
-        sql_path = self._get_sql_path(name)
-        conn = get_connection()
-        await execute_sql(conn, sql_path, *args, **kwargs)
+        await self.database.execute_script(
+            sql=None,
+            path=self._get_sql_path(name),
+            args=args,
+            kwargs=kwargs,
+        )
+
+    execute_sql = execute_sql_script
 
     async def execute_sql_query(
         self,
         name: str,
-        *values: Any,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """Executes SQL query with given name included with the project
 
         :param name: SQL query name within `sql` directory
         :param values: Values to pass to the query
         """
+        if kwargs:
+            args = tuple(kwargs.values())
 
-        sql_path = self._get_sql_path(name)
-        conn = get_connection()
-        return await execute_sql_query(conn, sql_path, *values)
+        return await self.database.execute_query(
+            *args,
+            path=self._get_sql_path(name),
+        )
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
@@ -744,7 +752,9 @@ class DipDupContext:
         subpackages = name.split('.')
         sql_path = Path(env.get_package_path(self.config.package), 'sql', *subpackages)
         if not sql_path.exists():
-            raise InitializationRequiredError(f'Missing SQL directory for hook `{name}`')
+            sql_path = sql_path.with_name(sql_path.name + '.sql')
+        if not sql_path.exists():
+            raise InitializationRequiredError(f'Missing SQL file/directory `{name}`')
 
         return sql_path
 

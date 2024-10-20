@@ -31,7 +31,7 @@ class MetadataVersion:
         return f'{self.spec_name}@{self.spec_version}'
 
 
-type MetadataHeader = MetadataVersion
+MetadataHeader = MetadataVersion
 
 
 def equal_specs(a: MetadataVersion, b: MetadataVersion) -> bool:

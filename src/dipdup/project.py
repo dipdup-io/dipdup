@@ -38,7 +38,10 @@ TEMPLATES: dict[str, tuple[str, ...]] = {
         'demo_evm_uniswap',
     ),
     'starknet': ('demo_starknet_events',),
-    'substrate': ('demo_substrate_events',),
+    'substrate': (
+        'demo_substrate_events',
+        'demo_substrate_events_orm',
+    ),
     'tezos': (
         'demo_tezos_auction',
         'demo_tezos_dao',

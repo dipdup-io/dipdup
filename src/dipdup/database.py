@@ -10,6 +10,7 @@ from collections.abc import Iterable
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from contextlib import suppress
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
@@ -19,7 +20,6 @@ import asyncpg.exceptions  # type: ignore[import-untyped]
 import sqlparse  # type: ignore[import-untyped]
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
-from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
@@ -30,8 +30,8 @@ from tortoise.utils import get_schema_sql
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidModelsError
-from dipdup.utils import iter_files
 from dipdup.utils import pascal_to_snake
+from dipdup.utils import sorted_glob
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -185,32 +185,58 @@ def get_schema_hash(conn: SupportedClient) -> str:
     return hashlib.sha256(processed_schema_sql).hexdigest()
 
 
-async def execute_sql(
-    conn: BaseDBAsyncClient,
-    path: Path,
-    *args: Any,
-    **kwargs: Any,
+@cache
+def read_sql_file(path: Path | str) -> str:
+    _logger.info('Reading SQL from `%s`', path.name)
+    return path.read_text()
+
+
+async def execute_script(
+    sql: str | None = None,
+    path: Path | None = None,
+    conn: SupportedClient | None = None,
+    *args,
+    **kwargs,
 ) -> None:
     """Execute SQL script(s) with formatting"""
-    for file in iter_files(path, ext='.sql'):
-        _logger.info('Executing script `%s`', file.name)
-        # NOTE: Usually string-formating SQL scripts is a very bad idea. But for indexers it's totally fine.
-        sql = file.read().format(*args, **kwargs)
-        for statement in sqlparse.split(sql):
+    if not conn:
+        conn = get_connection()
+
+    async def _execute(_sql: str) -> None:
+        _sql = _sql.format(*args, **kwargs)
+        for statement in sqlparse.split(_sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
                 await conn.execute_script(statement)
 
+    if sql:
+        await _execute(sql)
+    if path and path.is_file():
+        await _execute(read_sql_file(path))
+    elif path and path.is_dir():
+        for file in sorted_glob(path, '*.sql'):
+            await _execute(read_sql_file(file))
+    else:
+        raise Exception
 
-async def execute_sql_query(
-    conn: SupportedClient,
-    path: Path,
-    *values: Any,
+
+async def execute_query(
+    *args: Any,
+    sql: str | None = None,
+    path: Path | None = None,
+    conn: SupportedClient | None = None,
 ) -> Any:
     """Execute SQL query with arguments"""
-    _logger.info('Executing query `%s`', path.name)
-    sql = path.read_text()
-    return await conn.execute_query(sql, list(values))
+    if not conn:
+        conn = get_connection()
+    if sql:
+        query = sql
+    elif path:
+        query = read_sql_file(path)
+    else:
+        raise Exception
+
+    return await conn.execute_query(query, args)
 
 
 async def generate_schema(
@@ -233,7 +259,7 @@ async def _pg_run_scripts(conn: AsyncpgClient) -> None:
         'dipdup_status.sql',
     ):
         sql_path = Path(__file__).parent / 'sql' / fn
-        await execute_sql(conn, sql_path)
+        await execute_script(conn, sql_path)
 
 
 async def get_tables() -> set[str]:

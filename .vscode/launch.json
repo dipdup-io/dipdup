@@ -66,6 +66,38 @@
       }
     },
     {
+      "name": "demo_substrate_events_orm: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "run"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_substrate_events_orm",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
+      "name": "demo_substrate_events_orm: init",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "dipdup",
+      "args": [
+        "-e",
+        ".env",
+        "init"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/demo_substrate_events_orm",
+      "env": {
+        "DIPDUP_DEBUG": "1"
+      }
+    },
+    {
       "name": "demo_evm_events: run",
       "type": "debugpy",
       "request": "launch",
