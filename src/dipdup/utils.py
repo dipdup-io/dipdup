@@ -251,12 +251,12 @@ class Watchdog:
 
 
 def sorted_glob(path: Path, pattern: str) -> list[Path]:
-    def natural_sort_key(item: Path) -> tuple[list[int | str], list[int | str]]:
+    def natural_sort_key(item: Path) -> Any:
         def split_parts(text: str) -> list[int | str]:
             parts = re.split(r'(\d+)', text)
             return [int(part) if part.isdigit() else part.lower() for part in parts]
 
         # Sort by parent directories first, then by filename
-        return ([split_parts(part) for part in item.parent.parts], split_parts(item.name))
+        return [split_parts(part) for part in item.parent.parts], split_parts(item.name)
 
     return sorted(path.glob(pattern), key=natural_sort_key)

@@ -205,7 +205,7 @@ async def execute_script(
         conn = get_connection()
 
     async def _execute(_sql: str) -> None:
-        _sql = _sql.format(*args, **kwargs)
+        _sql = _sql.format(*(args or ()), **(kwargs or {}))
         for statement in sqlparse.split(_sql):
             # NOTE: Ignore empty statements
             with suppress(AttributeError):
@@ -278,8 +278,7 @@ async def get_tables() -> set[str]:
     raise NotImplementedError
 
 
-# FIXME: Private but used in dipdup.hasura
-async def _pg_get_views(conn: AsyncpgClient, schema_name: str) -> list[str]:
+async def pg_get_views(conn: AsyncpgClient, schema_name: str) -> list[str]:
     return [
         row[0]
         for row in (

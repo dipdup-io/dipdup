@@ -46,6 +46,7 @@ AERICH_CMDS = {
     'upgrade',
     'downgrade',
 }
+ALWAYS_IMMUNE_TABLES = {'dipdup_meta', 'aerich'}
 
 _logger = logging.getLogger(__name__)
 _click_wrap_text = click.formatting.wrap_text
@@ -673,14 +674,12 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     if isinstance(config.database, SqliteDatabaseConfig):
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
-            # FIXME: Define a global constant or config option for "always immune tables"
-            immune_tables = immune_tables | {'dipdup_meta', 'aerich'}
+            immune_tables = immune_tables | ALWAYS_IMMUNE_TABLES
             _logger.warning(message)
         elif immune_tables:
             raise ConfigurationError(message)
     else:
-        # FIXME: Define a global constant or config option for "always immune tables"
-        immune_tables = immune_tables | {'dipdup_meta', 'aerich'}
+        immune_tables = immune_tables | ALWAYS_IMMUNE_TABLES
 
     if not force:
         try:

@@ -525,8 +525,7 @@ def dump_references() -> None:
             red_echo(f'=> Reference is outdated! Update `docs/{ref}.rst` and try again.')
             red_echo(f'=> Add: {to_add}')
             red_echo(f'=> Remove: {to_remove}')
-            # FIXME: Substrate references are missing
-            # exit(1)
+            exit(1)
 
     _compare('models', IGNORED_MODEL_CLASSES)
 

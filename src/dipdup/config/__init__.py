@@ -191,6 +191,7 @@ class HttpConfig:
     :param request_timeout: Request timeout in seconds
     :param batch_size: Number of items fetched in a single paginated request (when applicable)
     :param polling_interval: Interval between polling requests in seconds (when applicable)
+    :param replay: Use cached HTTP responses instead of making real requests (dev only)
     :param replay_path: Use cached HTTP responses instead of making real requests (dev only)
     :param alias: Alias for this HTTP client (dev only)
     """
@@ -288,18 +289,6 @@ class DatasourceConfig(ABC, NameMixin):
     kind: str
     url: str
     http: HttpConfig | None = None
-
-
-class AbiDatasourceConfig(DatasourceConfig):
-    """Provider of EVM contract ABIs. Datasource kind starts with 'abi.'"""
-
-    ...
-
-
-class IndexDatasourceConfig(DatasourceConfig):
-    """Datasource that can be used as a primary source of historical data"""
-
-    ...
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)
@@ -629,10 +618,6 @@ class DipDupConfig:
     def package_path(self) -> Path:
         return env.get_package_path(self.package)
 
-    @property
-    def abi_datasources(self) -> tuple[AbiDatasourceConfig, ...]:
-        return tuple(c for c in self.datasources.values() if isinstance(c, AbiDatasourceConfig))
-
     @classmethod
     def load(
         cls,
@@ -905,25 +890,24 @@ class DipDupConfig:
                 raise ConfigurationError(f'`{name}` hook name is reserved by system hook')
 
         # NOTE: Rollback depth euristics and validation
-        rollback_depth = self.advanced.rollback_depth
-        if rollback_depth is None:
-            rollback_depth = 0
-            for name, datasource_config in self.datasources.items():
-                if not isinstance(datasource_config, IndexDatasourceConfig):
-                    continue
-                rollback_depth = max(rollback_depth, datasource_config.rollback_depth or 0)
+        rollback_depth = 0
+        for name, datasource_config in self.datasources.items():
+            try:
+                rollback_depth = max(rollback_depth, datasource_config.rollback_depth or 0)  # type: ignore
+            except AttributeError:
+                continue
 
-                if not isinstance(datasource_config, TezosTzktDatasourceConfig):
-                    continue
-                if datasource_config.buffer_size and self.advanced.rollback_depth:
-                    raise ConfigurationError(
-                        f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
-                    )
-        elif self.advanced.rollback_depth is not None and rollback_depth > self.advanced.rollback_depth:
+            if not isinstance(datasource_config, TezosTzktDatasourceConfig):
+                continue
+            if datasource_config.buffer_size and self.advanced.rollback_depth:
+                raise ConfigurationError(
+                    f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
+                )
+        if self.advanced.rollback_depth is not None and rollback_depth > self.advanced.rollback_depth:
             raise ConfigurationError(
                 '`advanced.rollback_depth` cannot be less than the maximum rollback depth of all index datasources'
             )
-        self.advanced.rollback_depth = rollback_depth
+        self.advanced.rollback_depth = max(rollback_depth, self.advanced.rollback_depth or 0)
 
         if self.advanced.early_realtime:
             return
@@ -1109,7 +1093,6 @@ class DipDupConfig:
             raise NotImplementedError(f'Index kind `{index_config.kind}` is not supported')
 
     def _set_names(self) -> None:
-        # TODO: Forbid reusing names between sections?
         named_config_sections = cast(
             tuple[dict[str, NameMixin], ...],
             (
@@ -1123,9 +1106,14 @@ class DipDupConfig:
             ),
         )
 
+        names: set[str] = set()
         for named_configs in named_config_sections:
             for name, config in named_configs.items():
                 config._name = name
+                if name in names:
+                    _logger.warning('Alias `%s` used multiple times')
+                else:
+                    names.add(name)
 
 
 """

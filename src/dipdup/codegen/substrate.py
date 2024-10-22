@@ -164,7 +164,7 @@ class SubstrateCodeGenerator(CodeGenerator):
         if not target_events:
             return
 
-        latest_dumps: defaultdict[str, str] = defaultdict(str)
+        latest_dumps: defaultdict[str, bytes] = defaultdict(bytes)
 
         for runtime_name, events in target_events.items():
             for metadata_path in sorted_glob(self._package.abi_local, f'{runtime_name}/*.json'):
@@ -184,7 +184,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                             continue
                         latest_dumps[qualname] = dump
 
-                        # FIXME: Copy used abis to project. Should be somewhere else.
+                        # TODO: Copy used abis to the project. This logic should be somewhere else.
                         write(self._package.abi.joinpath(runtime_name, metadata_path.name), metadata_path.read_bytes())
 
                         schema_path = (

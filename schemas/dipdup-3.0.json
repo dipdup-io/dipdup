@@ -880,9 +880,26 @@
           "title": "polling_interval",
           "description": "Interval between polling requests in seconds (when applicable)"
         },
+        "replay": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "replay",
+          "description": "Use cached HTTP responses instead of making real requests (dev only)"
+        },
         "replay_path": {
           "anyOf": [
             {
+              "type": "string"
+            },
+            {
+              "format": "path",
               "type": "string"
             },
             {

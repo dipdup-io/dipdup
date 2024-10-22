@@ -2,7 +2,6 @@
 
 .. autoclass:: dipdup.config.DipDupConfig
 
-.. autoclass:: dipdup.config.AbiDatasourceConfig
 .. autoclass:: dipdup.config.abi_etherscan.AbiEtherscanDatasourceConfig
 .. autoclass:: dipdup.config.AdvancedConfig
 .. autoclass:: dipdup.config.ApiConfig
@@ -19,7 +18,7 @@
 .. autoclass:: dipdup.config.HookConfig
 .. autoclass:: dipdup.config.HttpConfig
 .. autoclass:: dipdup.config.http.HttpDatasourceConfig
-.. autoclass:: dipdup.config.IndexDatasourceConfig
+.. autoclass:: dipdup.config.DatasourceConfig
 .. autoclass:: dipdup.config.IndexTemplateConfig
 .. autoclass:: dipdup.config.ipfs.IpfsDatasourceConfig
 .. autoclass:: dipdup.config.JobConfig

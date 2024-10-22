@@ -13,7 +13,6 @@ from pysignalr.messages import CompletionMessage
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
-from dipdup.config import IndexDatasourceConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -29,7 +28,7 @@ from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
-IndexDatasourceConfigT = TypeVar('IndexDatasourceConfigT', bound=IndexDatasourceConfig)
+
 
 EmptyCallback = Callable[[], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
@@ -61,10 +60,10 @@ class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
     async def get_abi(self, address: str) -> dict[str, Any]: ...
 
 
-class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourceConfigT]):
+class IndexDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
     def __init__(
         self,
-        config: IndexDatasourceConfigT,
+        config: DatasourceConfigT,
         merge_subscriptions: bool = False,
     ) -> None:
         super().__init__(config)
@@ -116,8 +115,8 @@ class IndexDatasource(Datasource[IndexDatasourceConfigT], Generic[IndexDatasourc
 
 
 # FIXME: Not necessary a index datasource
-class WebsocketDatasource(IndexDatasource[IndexDatasourceConfigT]):
-    def __init__(self, config: IndexDatasourceConfigT) -> None:
+class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
+    def __init__(self, config: DatasourceConfigT) -> None:
         super().__init__(config)
         self._ws_client: WebsocketTransport | None = None
 
@@ -163,8 +162,8 @@ class WebsocketDatasource(IndexDatasource[IndexDatasourceConfigT]):
 
 
 # FIXME: Not necessary a WS datasource
-class JsonRpcDatasource(WebsocketDatasource[IndexDatasourceConfigT]):
-    def __init__(self, config: IndexDatasourceConfigT) -> None:
+class JsonRpcDatasource(WebsocketDatasource[DatasourceConfigT]):
+    def __init__(self, config: DatasourceConfigT) -> None:
         super().__init__(config)
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
 

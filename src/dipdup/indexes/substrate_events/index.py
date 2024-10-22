@@ -24,8 +24,7 @@ if TYPE_CHECKING:
 
 class SubstrateEventsIndex(
     SubstrateIndex[SubstrateEventsIndexConfig, QueueItem, SubstrateDatasource],
-    # FIXME: stub message type
-    message_type=SubsquidMessageType.logs,
+    message_type=SubsquidMessageType.substrate_events,
 ):
     def __init__(
         self,

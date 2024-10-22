@@ -10,6 +10,7 @@ class SubsquidMessageType(MessageType, Enum):
     logs = 'logs'
     traces = 'traces'
     transactions = 'transactions'
+    substrate_events = 'substrate_events'
 
 
 FieldSelection = dict[str, dict[str, bool]]

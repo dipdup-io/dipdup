@@ -26,6 +26,8 @@ class BlockHeader(TypedDict):
     consensusParametersVersion: int
     stateTransitionBytecodeVersion: int
     messageOutboxRoot: str
+    # NOTE: There are more fields in header
+    specVersion: str
 
 
 @dataclass(frozen=True)

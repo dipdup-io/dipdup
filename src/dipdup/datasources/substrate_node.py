@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import math
-from collections.abc import AsyncIterator
 from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
@@ -104,18 +103,18 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateDatasourceConfigU]):
         self,
         from_block: int | None = None,
         to_block: int | None = None,
-    ) -> AsyncIterator[MetadataHeader]:
+    ) -> list[MetadataHeader]:
         height = await self.get_height()
 
         first_block = from_block or 0
         last_block = min(to_block, height) if to_block is not None else height
         if first_block > last_block:
-            return iter([])
+            raise StopAsyncIteration
 
         queue: list[tuple[MetadataVersion, MetadataVersion]] = []
         versions: dict[str, MetadataVersion] = {}
 
-        beg, end = await self.get_metadata_header_batch([from_block, last_block])
+        beg, end = await self.get_metadata_header_batch([first_block, last_block])
         versions[beg.key] = beg
 
         if not equal_specs(beg, end):
@@ -142,8 +141,8 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateDatasourceConfigU]):
 
         return sorted(versions.values(), key=lambda x: x.block_number)
 
-    async def get_metadata_version(self, block_hash: str) -> dict[str, Any]:
-        return await self._jsonrpc_request('state_getMetadata', [block_hash])
+    async def get_raw_metadata(self, block_hash: str) -> str:
+        return await self._jsonrpc_request('state_getMetadata', [block_hash])  # type: ignore[no-any-return]
 
     async def get_dev_metadata_version(self) -> MetadataVersion | None:
         genesis = await self.get_metadata_header(0)
@@ -200,7 +199,7 @@ async def fetch_metadata(
 
     for header in new_versions:
         version = copy(header)
-        version.metadata = (await datasource.get_metadata_version(version.block_hash),)
+        version.metadata = await datasource.get_raw_metadata(version.block_hash)
         storage.versions.append(version)
         _logger.info('saved %s block %s', version.key, version.block_number)
 
