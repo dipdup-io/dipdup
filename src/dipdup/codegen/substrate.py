@@ -101,6 +101,8 @@ def event_metadata_to_jsonschema(
 
 
 class SubstrateCodeGenerator(CodeGenerator):
+    kind = 'substrate'
+
     def __init__(
         self,
         config: DipDupConfig,
@@ -189,6 +191,7 @@ class SubstrateCodeGenerator(CodeGenerator):
 
                         schema_path = (
                             self._package.schemas
+                            / 'substrate'
                             / runtime_name
                             / 'substrate_events'
                             / pascal_to_snake(qualname)

@@ -66,6 +66,12 @@ class _BaseCodeGenerator(ABC):
         self._include = include or set()
         self._logger = _logger
 
+    kind: str
+
+    @property
+    def schemas_dir(self) -> Path:
+        return self._package.schemas / self.kind
+
     @abstractmethod
     async def generate_abis(self) -> None: ...
 
@@ -137,11 +143,11 @@ class _BaseCodeGenerator(ABC):
 
     async def _generate_types(self, force: bool = False) -> None:
         """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-        for path in sorted_glob(self._package.schemas, '**/*.json'):
+        for path in sorted_glob(self.schemas_dir, '**/*.json'):
             await self._generate_type(path, force)
 
     async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        rel_path = schema_path.relative_to(self._package.schemas)
+        rel_path = schema_path.relative_to(self.schemas_dir)
         type_pkg_path = self._package.types / rel_path
 
         if schema_path.is_dir():
@@ -254,10 +260,11 @@ class _BaseCodeGenerator(ABC):
 
     def _cleanup_schemas(self) -> None:
         rmtree(self._package.schemas)
-        self._package.schemas.mkdir(parents=True, exist_ok=True)
 
 
 class CommonCodeGenerator(_BaseCodeGenerator):
+    kind = 'common'
+
     async def generate_abis(self) -> None:
         pass
 
@@ -275,7 +282,8 @@ class CodeGenerator(_BaseCodeGenerator):
     async def _generate_models(self) -> None:
         pass
 
-    async def generate_hooks(self) -> None: ...
+    async def generate_hooks(self) -> None:
+        pass
 
     async def generate_system_hooks(self) -> None:
         pass
