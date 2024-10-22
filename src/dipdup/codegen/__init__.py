@@ -211,7 +211,7 @@ class _BaseCodeGenerator(ABC):
 
         code_deque: deque[str] = deque(code)
         if sql:
-            code_deque.append(f"await ctx.execute_sql('{original_callback}')")
+            code_deque.append(f"await ctx.execute_sql_script('{original_callback}')")
             # FIXME: move me
             if callback == 'on_index_rollback':
                 code_deque.append('await ctx.rollback(')
