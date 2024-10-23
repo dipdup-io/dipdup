@@ -6,8 +6,6 @@ from typing import TypedDict
 from typing import TypeVar
 from typing import cast
 
-from pydantic import BaseModel
-
 from dipdup.fetcher import HasLevel
 from dipdup.runtimes import SubstrateRuntime
 
@@ -44,7 +42,7 @@ class SubstrateEventData(HasLevel):
         return self.header['number']
 
 
-PayloadT = TypeVar('PayloadT', bound=BaseModel)
+PayloadT = TypeVar('PayloadT')
 
 
 @dataclass(frozen=True)

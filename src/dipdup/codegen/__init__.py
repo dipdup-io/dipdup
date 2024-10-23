@@ -178,7 +178,11 @@ class _BaseCodeGenerator(ABC):
             target_python_version=dmcg.PythonVersion.PY_312,
             custom_file_header=CODEGEN_HEADER,
             use_union_operator=True,
-            output_model_type=dmcg.DataModelType.PydanticV2BaseModel,
+            output_model_type=(
+                dmcg.DataModelType.TypingTypedDict
+                if self.kind == 'substrate'
+                else dmcg.DataModelType.PydanticV2BaseModel
+            ),
             use_schema_description=True,
         )
 
@@ -259,7 +263,7 @@ class _BaseCodeGenerator(ABC):
         write(path, content_path.read_text())
 
     def _cleanup_schemas(self) -> None:
-        rmtree(self._package.schemas)
+        rmtree(self.schemas_dir, ignore_errors=True)
 
 
 class CommonCodeGenerator(_BaseCodeGenerator):
