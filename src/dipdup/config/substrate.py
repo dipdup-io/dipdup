@@ -21,9 +21,11 @@ class SubstrateRuntimeConfig(RuntimeConfig):
     """Substrate runtime config
 
     :param kind: Always 'substrate'
+    :param type_registry: Path to type registry or its alias
     """
 
     kind: Literal['substrate'] = 'substrate'
+    type_registry: str | None = None
 
 
 @dataclass(config=ConfigDict(extra='forbid'), kw_only=True)

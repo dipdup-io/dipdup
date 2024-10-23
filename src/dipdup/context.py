@@ -56,7 +56,6 @@ from dipdup.datasources.substrate_subscan import SubstrateSubscanDatasource
 from dipdup.datasources.substrate_subsquid import SubstrateSubsquidDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 from dipdup.datasources.tzip_metadata import TzipMetadataDatasource
-from dipdup.exceptions import CallbackError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import ContractAlreadyExistsError
 from dipdup.exceptions import FrameworkException
@@ -725,6 +724,7 @@ class DipDupContext:
             conn=None,
         )
 
+    # NOTE: Aliases, remove later
     execute_sql = execute_sql_script
     execute_script = execute_sql_script
     execute_query = execute_sql_query
@@ -736,8 +736,8 @@ class DipDupContext:
         # NOTE: Do not wrap known errors like ProjectImportError
         except FrameworkException:
             raise
-        except Exception as e:
-            raise CallbackError(module, e) from e
+        # except Exception as e:
+        #     raise CallbackError(module, e) from e
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:

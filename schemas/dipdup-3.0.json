@@ -1717,6 +1717,19 @@
           "title": "kind",
           "type": "string",
           "description": "Always 'substrate'"
+        },
+        "type_registry": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "type_registry",
+          "description": "Path to type registry or its alias"
         }
       },
       "title": "SubstrateRuntimeConfig",

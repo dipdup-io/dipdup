@@ -249,7 +249,7 @@ class SubstrateCodeGenerator(CodeGenerator):
     def _get_runtime(self, name: str) -> SubstrateRuntime:
         if name not in self._runtimes:
             self._runtimes[name] = SubstrateRuntime(
-                name=name,
+                config=self._config.runtimes[name],
                 package=self._package,
             )
         return self._runtimes[name]

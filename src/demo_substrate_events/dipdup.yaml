@@ -4,6 +4,7 @@ package: demo_substrate_events
 runtimes:
   assethub:
     kind: substrate
+    type_registry: statemint
 
 datasources:
   subsquid:

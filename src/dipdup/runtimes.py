@@ -1,11 +1,14 @@
 import logging
 import re
+from functools import cache
 from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
 
+from dipdup.config.substrate import SubstrateRuntimeConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.package import DipDupPackage
 
@@ -13,10 +16,6 @@ if TYPE_CHECKING:
     from scalecodec.base import RuntimeConfigurationObject  # type: ignore[import-untyped]
 
 _logger = logging.getLogger(__name__)
-
-ALIASES = {
-    'assethub': 'statemint',
-}
 
 
 def extract_args_name(description: str) -> list[str]:
@@ -28,6 +27,17 @@ def extract_args_name(description: str) -> list[str]:
 
     args_str = match.group(1) or match.group(2)
     return [arg.strip('\\') for arg in args_str.split(', ')]
+
+
+@cache
+def get_type_registry(name_or_path: str | Path) -> 'RuntimeConfigurationObject':
+    from scalecodec.type_registry import load_type_registry_preset  # type: ignore[import-untyped]
+
+    if isinstance(name_or_path, str) and Path(name_or_path).is_file():
+        name_or_path = Path(name_or_path)
+    if isinstance(name_or_path, Path):
+        return orjson.loads(name_or_path.read_bytes())
+    return load_type_registry_preset(name_or_path)
 
 
 class SubstrateSpecVersion:
@@ -60,10 +70,10 @@ class SubstrateSpecVersion:
 class SubstrateRuntime:
     def __init__(
         self,
-        name: str,
+        config: SubstrateRuntimeConfig,
         package: DipDupPackage,
     ) -> None:
-        self._name = name
+        self._config = config
         self._package = package
         # TODO: unload by LRU?
         self._spec_versions: dict[str, SubstrateSpecVersion] = {}
@@ -71,14 +81,12 @@ class SubstrateRuntime:
     @cached_property
     def runtime_config(self) -> 'RuntimeConfigurationObject':
         from scalecodec.base import RuntimeConfigurationObject
-        from scalecodec.type_registry import load_type_registry_preset  # type: ignore[import-untyped]
 
         # FIXME: ss58_format
         runtime_config = RuntimeConfigurationObject(ss58_format=99)
-        for name in ('core', ALIASES.get(self._name, self._name)):
-            preset = load_type_registry_preset(name)
-            assert preset
-            runtime_config.update_type_registry(preset)
+        # FIXME: When to use 'legacy' instead?
+        runtime_config.update_type_registry(get_type_registry('core'))
+        runtime_config.update_type_registry(get_type_registry(self._config.type_registry))
 
         return runtime_config
 
@@ -86,14 +94,14 @@ class SubstrateRuntime:
         if name not in self._spec_versions:
             _logger.info('loading spec version `%s`', name)
             try:
-                metadata = orjson.loads(self._package.abi.joinpath(self._name, f'v{name}.json').read_bytes())
+                metadata = orjson.loads(self._package.abi.joinpath(self._config.name, f'v{name}.json').read_bytes())
                 self._spec_versions[name] = SubstrateSpecVersion(
                     name=f'v{name}',
                     metadata=metadata,
                 )
             except FileNotFoundError:
                 # FIXME: Using last known version to help with missing abis
-                last_known = tuple(self._package.abi.joinpath(self._name).glob('v*.json'))[-1].stem
+                last_known = tuple(self._package.abi.joinpath(self._config.name).glob('v*.json'))[-1].stem
                 _logger.info('using last known version `%s`', last_known)
                 self._spec_versions[name] = self.get_spec_version(last_known[1:])
 

@@ -34,6 +34,6 @@ class SubstrateIndex(
     ) -> None:
         super().__init__(ctx, config, datasources)
         self.runtime = SubstrateRuntime(
-            name=config.runtime.name,
+            config=config.runtime,
             package=ctx.package,
         )
