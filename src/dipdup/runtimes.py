@@ -33,8 +33,16 @@ def extract_args_name(description: str) -> list[str]:
 def get_type_registry(name_or_path: str | Path) -> 'RuntimeConfigurationObject':
     from scalecodec.type_registry import load_type_registry_preset  # type: ignore[import-untyped]
 
-    if isinstance(name_or_path, str) and Path(name_or_path).is_file():
-        name_or_path = Path(name_or_path)
+    if isinstance(name_or_path, str):
+        # NOTE: User path has higher priority
+        for path in (
+            Path(f'type_registries/{name_or_path}.json'),
+            Path(name_or_path),
+        ):
+            if not path.is_file():
+                continue
+            name_or_path = path
+
     if isinstance(name_or_path, Path):
         return orjson.loads(name_or_path.read_bytes())
     return load_type_registry_preset(name_or_path)
