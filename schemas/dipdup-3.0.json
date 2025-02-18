@@ -172,6 +172,55 @@
     "EvmAddress": {
       "$ref": "#/$defs/Hex"
     },
+    "EvmBlockvisionDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Blockvision datasource config",
+      "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key",
+          "title": "api_key"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP client configuration",
+          "title": "http"
+        },
+        "kind": {
+          "const": "evm.blockvision",
+          "default": "evm.blockvision",
+          "description": "always 'evm.blockvision'",
+          "title": "kind",
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "description": "API URL",
+          "title": "url"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "EvmBlockvisionDatasourceConfig",
+      "type": "object"
+    },
     "EvmContractConfig": {
       "additionalProperties": false,
       "description": "EVM contract config",
@@ -340,6 +389,9 @@
               },
               {
                 "$ref": "#/$defs/EvmNodeDatasourceConfig"
+              },
+              {
+                "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
               },
               {
                 "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
@@ -565,6 +617,9 @@
               },
               {
                 "$ref": "#/$defs/EvmNodeDatasourceConfig"
+              },
+              {
+                "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
               },
               {
                 "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
@@ -3056,6 +3111,9 @@
           },
           {
             "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
           },
           {
             "$ref": "#/$defs/HttpDatasourceConfig"

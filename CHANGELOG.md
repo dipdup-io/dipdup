@@ -11,10 +11,13 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Added
 
 - cli: Rewritten interactive mode for `new` command.
+- evm.blockvision: Added `evm.blockvision` datasource to fetch ABIs from Blockvision API.
+- evm.sourcify: Added `evm.sourcify` datasource to fetch ABIs from Sourcify API.
 
 ### Fixed
 
 - coinbase: Fixed crash when using coinbase datasource.
+- evm.node: Fixed crash when block range goes out of bounds.
 
 ## [8.2.0] - 2025-02-10
 

@@ -283,8 +283,10 @@ class JsonRpcDatasource(WebsocketDatasource[DatasourceConfigT]):
 
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.coinbase import CoinbaseDatasourceConfig
+    from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
     from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
+    from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
     from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -296,8 +298,10 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
     from dipdup.datasources.coinbase import CoinbaseDatasource
+    from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
     from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
     from dipdup.datasources.evm_node import EvmNodeDatasource
+    from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
     from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
@@ -311,6 +315,8 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
 
     by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
         EvmEtherscanDatasourceConfig: EvmEtherscanDatasource,
+        EvmSourcifyDatasourceConfig: EvmSourcifyDatasource,
+        EvmBlockvisionDatasourceConfig: EvmBlockvisionDatasource,
         CoinbaseDatasourceConfig: CoinbaseDatasource,
         TezosTzktDatasourceConfig: TezosTzktDatasource,
         TzipMetadataDatasourceConfig: TzipMetadataDatasource,
