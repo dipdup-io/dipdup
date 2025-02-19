@@ -391,6 +391,9 @@
                 "$ref": "#/$defs/EvmNodeDatasourceConfig"
               },
               {
+                "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
+              },
+              {
                 "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
               },
               {
@@ -489,6 +492,61 @@
         "url"
       ],
       "title": "EvmNodeDatasourceConfig",
+      "type": "object"
+    },
+    "EvmSourcifyDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Sourcify datasource config",
+      "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key",
+          "title": "api_key"
+        },
+        "chain_id": {
+          "description": "Chain ID",
+          "title": "chain_id",
+          "type": "integer"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP client configuration",
+          "title": "http"
+        },
+        "kind": {
+          "const": "evm.sourcify",
+          "default": "evm.sourcify",
+          "description": "always 'evm.sourcify'",
+          "title": "kind",
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "default": "https://sourcify.dev/server",
+          "description": "API URL",
+          "title": "url"
+        }
+      },
+      "required": [
+        "chain_id"
+      ],
+      "title": "EvmSourcifyDatasourceConfig",
       "type": "object"
     },
     "EvmSubsquidDatasourceConfig": {
@@ -617,6 +675,9 @@
               },
               {
                 "$ref": "#/$defs/EvmNodeDatasourceConfig"
+              },
+              {
+                "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
               },
               {
                 "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
@@ -3111,6 +3172,9 @@
           },
           {
             "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
           },
           {
             "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
