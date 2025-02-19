@@ -545,6 +545,18 @@ class ApiConfig:
     port: int = 46339  # dial INDEX 😎
 
 
+@dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
+class McpConfig:
+    """Config for MCP integration.
+
+    :param host: Host to bind to
+    :param port: Port to bind to
+    """
+
+    host: str = '127.0.0.1'
+    port: int = 9999
+
+
 # NOTE: Should be the only place where extras are allowed
 @dataclass(config=ConfigDict(extra='allow', defer_build=True), kw_only=True)
 class AdvancedConfig:
@@ -610,6 +622,7 @@ class DipDupConfig(InteractiveMixin):
     advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
+    mcp: McpConfig | None = None
 
     def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):

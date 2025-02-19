@@ -2,6 +2,7 @@ import functools
 from collections.abc import Awaitable
 from collections.abc import Callable
 from json import JSONDecodeError
+from typing import TYPE_CHECKING
 
 import orjson
 from aiohttp import web
@@ -11,6 +12,9 @@ from dipdup.context import DipDupContext
 from dipdup.exceptions import Error
 from dipdup.utils import json_dumps
 
+
+if TYPE_CHECKING:
+    from mcp.server.fastmcp import FastMCP
 
 def _method_wrapper(
     ctx: 'DipDupContext',
@@ -48,6 +52,32 @@ async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Respon
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
+async def create_mcp() -> 'FastMCP':
+    from mcp.server.fastmcp import FastMCP
+    from dipdup import models
+
+    mcp = FastMCP('DipDup', port=9999)
+
+    @mcp.tool(name='Indexes', description='Fetch the current state of the indexer')
+    async def indexes() -> str:
+        index = await models.Index.filter().limit(1).get()
+        return str(index.__dict__)
+
+
+    @mcp.tool(name='Head', description='Fetch the current head block')
+    async def head() -> str:
+        res = ''
+        for m in (await models.Head.all()):
+            res += f"""
+Datasource name: {m.name}
+Current height: {m.level}
+Block hash: {m.hash}
+Block timestamp: {m.timestamp}
+"""
+
+        return res
+
+    return mcp
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()

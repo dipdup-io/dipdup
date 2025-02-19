@@ -3,6 +3,7 @@ import asyncio
 import atexit
 import logging
 import sys
+from threading import Thread
 import traceback
 from collections import defaultdict
 from collections.abc import Callable
@@ -528,6 +529,35 @@ async def config_env(
 async def hasura(ctx: click.Context) -> None:
     pass
 
+
+@cli.group(help='Commands related to MCP integration.')
+@click.pass_context
+@_cli_wrapper
+async def mcp(ctx: click.Context) -> None:
+    pass
+
+
+@mcp.command(name='run')
+@click.pass_context
+@_cli_wrapper
+async def mcp_run(ctx: click.Context) -> None:
+    """Run MCP server."""
+
+    from dipdup.api import create_mcp
+
+    from anyio import run, from_thread
+
+    mcp = await create_mcp()
+
+
+    # async def main():
+    with from_thread.start_blocking_portal() as portal:
+        portal.call(mcp.run_sse_async)
+
+    # thread = Thread(target=mcp.run)
+    # thread.run()
+    # config: DipDupConfig = ctx.obj.config
+    # run_mcp(config)
 
 @hasura.command(name='configure')
 @click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
