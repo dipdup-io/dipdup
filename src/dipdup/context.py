@@ -45,8 +45,10 @@ from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
 from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
+from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -526,9 +528,17 @@ class DipDupContext:
     # NOTE: Alias, remove in 9.0
     get_abi_etherscan_datasource = get_evm_etherscan_datasource
 
-    def get_evm_datasource(self, name: str) -> EvmSubsquidDatasource | EvmNodeDatasource | EvmEtherscanDatasource:
+    def get_evm_datasource(
+        self, name: str
+    ) -> (
+        EvmSubsquidDatasource
+        | EvmNodeDatasource
+        | EvmEtherscanDatasource
+        | EvmSourcifyDatasource
+        | EvmBlockvisionDatasource
+    ):
         """Get `evm` datasource by name"""
-        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource)  # type: ignore[return-value]
+        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource, EvmSourcifyDatasource, EvmBlockvisionDatasource)  # type: ignore[return-value]
 
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
