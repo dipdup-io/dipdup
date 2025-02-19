@@ -1,5 +1,5 @@
 from typing import Any
-
+from typing import cast
 
 from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
 from dipdup.datasources import AbiDatasource
@@ -18,4 +18,4 @@ class EvmSourcifyDatasource(AbiDatasource[EvmSourcifyDatasourceConfig]):
                 'fields': 'abi',
             },
         )
-        return response['abi']
+        return cast(list[Any], response['abi'])

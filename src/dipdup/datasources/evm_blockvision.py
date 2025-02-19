@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast
 
 import orjson
 
@@ -17,4 +18,4 @@ class EvmBlockvisionDatasource(AbiDatasource[EvmBlockvisionDatasourceConfig]):
             url='verifyContractV2/data',
             params={'address': address},
         )
-        return orjson.loads(response['result']['contractABI'])
+        return cast(list[Any], orjson.loads(response['result']['contractABI']))
