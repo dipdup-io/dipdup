@@ -499,9 +499,9 @@ ruamel-yaml-clib==0.2.12 ; platform_python_implementation == 'CPython' \
 scalecodec==1.2.11 \
     --hash=sha256:99a2cdbfccdcaf22bd86b86da55a730a2855514ad2309faef4a4a93ac6cbeb8d \
     --hash=sha256:d15c94965f617caa25096f83a45f5f73031d05e6ee08d6039969f0a64fc35de1
-sentry-sdk==2.21.0 \
-    --hash=sha256:7623cfa9e2c8150948a81ca253b8e2bfe4ce0b96ab12f8cd78e3ac9c490fd92f \
-    --hash=sha256:a6d38e0fb35edda191acf80b188ec713c863aaa5ad8d5798decb8671d02077b6
+sentry-sdk==2.22.0 \
+    --hash=sha256:3d791d631a6c97aad4da7074081a57073126c69487560c6f8bffcf586461de66 \
+    --hash=sha256:b4bf43bb38f547c84b2eadcefbe389b36ef75f3f38253d7a74d6b928c07ae944
 six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
