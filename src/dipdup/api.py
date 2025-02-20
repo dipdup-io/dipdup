@@ -2,19 +2,14 @@ import functools
 from collections.abc import Awaitable
 from collections.abc import Callable
 from json import JSONDecodeError
-from typing import TYPE_CHECKING
 
 import orjson
 from aiohttp import web
 
 import dipdup.performance
 from dipdup.context import DipDupContext
-from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import Error
 from dipdup.utils import json_dumps
-
-if TYPE_CHECKING:
-    from mcp.server.fastmcp import FastMCP
 
 
 def _method_wrapper(
@@ -52,60 +47,6 @@ async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Respon
         dipdup.performance.get_stats(),
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
-
-
-async def create_mcp(ctx: DipDupContext) -> 'FastMCP':
-    import mcp.server.fastmcp.utilities.logging
-
-    mcp.server.fastmcp.utilities.logging.configure_logging = lambda _: None
-
-    from mcp.server.fastmcp import FastMCP
-
-    from dipdup import models
-
-    if not (mcp_config := ctx.config.mcp):
-        raise ConfigurationError('MCP config is not provided')
-
-    mcp = FastMCP(
-        'DipDup',
-        host=mcp_config.host,
-        port=mcp_config.port,
-        # FIXME: both not working
-        debug=True,
-        log_level='DEBUG',
-    )
-
-    @mcp.tool(name='Config', description='Describe the current configuration')
-    async def config() -> str:
-        # FIXME: strip secrets
-        return ctx.config.dump()
-
-    @mcp.tool(name='Indexes', description='Fetch the current state of the indexer')
-    async def indexes() -> str:
-        res = ''
-        for m in await models.Index.all():
-            res += f"""
-Index name: {m.name}
-Type: {m.type}
-Status: {m.status}
-Current height: {m.level}
-"""
-        return res
-
-    @mcp.tool(name='Heads', description='Fetch the current datasource head blocks')
-    async def head() -> str:
-        res = ''
-        for m in await models.Head.all():
-            res += f"""
-Datasource name: {m.name}
-Current height: {m.level}
-Block hash: {m.hash}
-Block timestamp: {m.timestamp}
-"""
-
-        return res
-
-    return mcp
 
 
 async def create_api(ctx: DipDupContext) -> web.Application:

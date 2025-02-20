@@ -214,6 +214,7 @@ def _skip_cli_group() -> bool:
         ['hasura'],
         ['package'],
         ['schema'],
+        ['mcp'],
     )
     # NOTE: Simple helpers that don't use any of our cli boilerplate
     is_script_group = args[0] in (
@@ -544,13 +545,19 @@ async def mcp_run(ctx: click.Context) -> None:
 
     from anyio import from_thread
 
-    from dipdup.api import create_mcp
     from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
+    from dipdup.mcp import configure_mcp
+    from dipdup.mcp import get_mcp
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
-    mcp = await create_mcp(dipdup._ctx)
+
+    mcp = get_mcp()
+    configure_mcp(dipdup._ctx)
+
+    # NOTE: Import all submodules to find @mcp.tool decorators
+    dipdup._ctx.package.verify()
 
     with from_thread.start_blocking_portal() as portal:
         async with AsyncExitStack() as stack:
