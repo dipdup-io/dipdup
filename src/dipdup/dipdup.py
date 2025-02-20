@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from threading import Thread
 import time
 from asyncio import CancelledError
 from asyncio import Event

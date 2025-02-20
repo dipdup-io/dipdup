@@ -8,13 +8,14 @@ import orjson
 from aiohttp import web
 
 import dipdup.performance
+from dipdup.config import McpConfig
 from dipdup.context import DipDupContext
 from dipdup.exceptions import Error
 from dipdup.utils import json_dumps
 
-
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
+
 
 def _method_wrapper(
     ctx: 'DipDupContext',
@@ -52,22 +53,33 @@ async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Respon
         dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
-async def create_mcp() -> 'FastMCP':
+
+async def create_mcp(config: McpConfig) -> 'FastMCP':
+    import mcp.server.fastmcp.utilities.logging
+
+    mcp.server.fastmcp.utilities.logging.configure_logging = lambda _: None
+
     from mcp.server.fastmcp import FastMCP
+
     from dipdup import models
 
-    mcp = FastMCP('DipDup', port=9999)
+    mcp = FastMCP(
+        'DipDup',
+        host=config.host,
+        port=config.port,
+        debug=True,
+        log_level='DEBUG',
+    )
 
     @mcp.tool(name='Indexes', description='Fetch the current state of the indexer')
     async def indexes() -> str:
         index = await models.Index.filter().limit(1).get()
         return str(index.__dict__)
 
-
     @mcp.tool(name='Head', description='Fetch the current head block')
     async def head() -> str:
         res = ''
-        for m in (await models.Head.all()):
+        for m in await models.Head.all():
             res += f"""
 Datasource name: {m.name}
 Current height: {m.level}
@@ -78,6 +90,7 @@ Block timestamp: {m.timestamp}
         return res
 
     return mcp
+
 
 async def create_api(ctx: DipDupContext) -> web.Application:
     routes = web.RouteTableDef()
