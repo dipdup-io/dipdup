@@ -73,10 +73,17 @@ async def create_mcp(config: McpConfig) -> 'FastMCP':
 
     @mcp.tool(name='Indexes', description='Fetch the current state of the indexer')
     async def indexes() -> str:
-        index = await models.Index.filter().limit(1).get()
-        return str(index.__dict__)
+        res = ''
+        for m in await models.Index.all():
+            res += f"""
+Index name: {m.name}
+Type: {m.type}
+Status: {m.status}
+Current height: {m.level}
+"""
+        return res
 
-    @mcp.tool(name='Head', description='Fetch the current head block')
+    @mcp.tool(name='Heads', description='Fetch the current datasource head blocks')
     async def head() -> str:
         res = ''
         for m in await models.Head.all():

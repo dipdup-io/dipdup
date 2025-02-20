@@ -715,7 +715,6 @@ class DipDup:
             await self._set_up_hooks()
             await self._set_up_prometheus()
             await self._set_up_api(stack)
-            # await self._set_up_mcp(tasks)
 
             await self._initialize_schema()
             await self._initialize_migrations()

@@ -545,6 +545,8 @@ async def mcp_run(ctx: click.Context) -> None:
     from anyio import from_thread
 
     from dipdup.api import create_mcp
+    from dipdup.config import DipDupConfig
+    from dipdup.database import tortoise_wrapper
     from dipdup.exceptions import ConfigurationError
 
     config: DipDupConfig = ctx.obj.config
@@ -554,7 +556,13 @@ async def mcp_run(ctx: click.Context) -> None:
     mcp = await create_mcp(config.mcp)
 
     with from_thread.start_blocking_portal() as portal:
-        portal.call(mcp.run_sse_async)
+        async with tortoise_wrapper(
+            url=config.database.connection_string,
+            models=config.package,
+            timeout=config.database.connection_timeout,
+        ):
+            # await portal.spawn(mcp.run)
+            portal.call(mcp.run_sse_async)
 
 
 @hasura.command(name='configure')
