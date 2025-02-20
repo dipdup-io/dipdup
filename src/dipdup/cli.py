@@ -546,22 +546,17 @@ async def mcp_run(ctx: click.Context) -> None:
 
     from dipdup.api import create_mcp
     from dipdup.config import DipDupConfig
-    from dipdup.database import tortoise_wrapper
-    from dipdup.exceptions import ConfigurationError
+    from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
-    if not config.mcp:
-        raise ConfigurationError('`mcp` config section is empty')
-
-    mcp = await create_mcp(config.mcp)
+    dipdup = DipDup(config)
+    mcp = await create_mcp(dipdup._ctx)
 
     with from_thread.start_blocking_portal() as portal:
-        async with tortoise_wrapper(
-            url=config.database.connection_string,
-            models=config.package,
-            timeout=config.database.connection_timeout,
-        ):
-            # await portal.spawn(mcp.run)
+        async with AsyncExitStack() as stack:
+            await dipdup._create_datasources()
+            await dipdup._set_up_database(stack)
+
             portal.call(mcp.run_sse_async)
 
 

@@ -8,8 +8,8 @@ import orjson
 from aiohttp import web
 
 import dipdup.performance
-from dipdup.config import McpConfig
 from dipdup.context import DipDupContext
+from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import Error
 from dipdup.utils import json_dumps
 
@@ -54,7 +54,7 @@ async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Respon
     )
 
 
-async def create_mcp(config: McpConfig) -> 'FastMCP':
+async def create_mcp(ctx: DipDupContext) -> 'FastMCP':
     import mcp.server.fastmcp.utilities.logging
 
     mcp.server.fastmcp.utilities.logging.configure_logging = lambda _: None
@@ -63,13 +63,22 @@ async def create_mcp(config: McpConfig) -> 'FastMCP':
 
     from dipdup import models
 
+    if not (mcp_config := ctx.config.mcp):
+        raise ConfigurationError('MCP config is not provided')
+
     mcp = FastMCP(
         'DipDup',
-        host=config.host,
-        port=config.port,
+        host=mcp_config.host,
+        port=mcp_config.port,
+        # FIXME: both not working
         debug=True,
         log_level='DEBUG',
     )
+
+    @mcp.tool(name='Config', description='Describe the current configuration')
+    async def config() -> str:
+        # FIXME: strip secrets
+        return ctx.config.dump()
 
     @mcp.tool(name='Indexes', description='Fetch the current state of the indexer')
     async def indexes() -> str:
