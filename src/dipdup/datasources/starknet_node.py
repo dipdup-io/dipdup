@@ -36,6 +36,10 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
         )
 
     @property
+    def has_events(self) -> bool:
+        return self._config.has_events
+
+    @property
     def starknetpy(self) -> 'StarknetpyClient':
         from dipdup.datasources._starknetpy import StarknetpyClient
 
