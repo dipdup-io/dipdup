@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from dipdup import models
 from dipdup.context import DipDupContext
@@ -6,11 +7,12 @@ from dipdup.context import DipDupContext
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
 
-_mcp = None
-_ctx = None
+_mcp: 'FastMCP | None' = None
+_ctx: DipDupContext | None = None
 
 
 async def _tool_config() -> str:
+    assert _ctx
     # FIXME: strip secrets
     return _ctx.config.dump()
 
@@ -89,5 +91,6 @@ def get_mcp() -> 'FastMCP':
     return _mcp
 
 
-def tool(name: str, description: str) -> Callable:
+def tool(name: str, description: str) -> Callable[..., None]:
+    assert ' ' not in name, 'Tool name should not contain spaces'
     return get_mcp().tool(name=name, description=description)
