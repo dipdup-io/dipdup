@@ -36,8 +36,8 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
         )
 
     @property
-    def has_events(self) -> bool:
-        return self._config.has_events
+    def has_events_timestamps(self) -> bool:
+        return self._config.has_events_timestamps
 
     @property
     def starknetpy(self) -> 'StarknetpyClient':

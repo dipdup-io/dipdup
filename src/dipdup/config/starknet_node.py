@@ -28,7 +28,7 @@ class StarknetNodeDatasourceConfig(DatasourceConfig):
     http: HttpConfig | None = None
     # FIXME: Is default value correct?
     rollback_depth: int = 32
-    has_events: bool = False
+    has_events_timestamps: bool = False
 
     @property
     def merge_subscriptions(self) -> bool:
