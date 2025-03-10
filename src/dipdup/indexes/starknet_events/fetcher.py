@@ -94,7 +94,7 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
         timestamp_datasources = [
             datasource
             for datasource in datasources
-            if datasource.has_events_timestamps
+            if datasource.fetch_block_headers
         ]
 
         timestamp_datasource = None
