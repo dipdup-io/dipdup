@@ -93,9 +93,14 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
     ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes']:
         if block := self._block_cache.get(block_hash, None):
             return block
-
-        block = await self.starknetpy.get_block_with_tx_hashes(block_hash=block_hash)
-        self._block_cache[block_hash] = block
+        
+        try:
+            block = await self.starknetpy.get_block_with_tx_hashes(block_hash=block_hash)
+            self._block_cache[block_hash] = block
+        except Exception as e:
+            self._logger.error("Can't fetch block headers", exc_info=e)
+            block = None
+        
         return block
 
     async def get_abi(self, address: str) -> AbiJson:

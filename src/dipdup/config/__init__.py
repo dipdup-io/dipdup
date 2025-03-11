@@ -711,6 +711,7 @@ class DipDupConfig(InteractiveMixin):
         raw: bool = False,
         unsafe: bool = False,
     ) -> DipDupConfig:
+
         config_json, config_environment = DipDupYAMLConfig.load(
             paths=paths,
             environment=environment,
