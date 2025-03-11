@@ -1615,6 +1615,12 @@
       "additionalProperties": false,
       "description": "Starknet node datasource config",
       "properties": {
+        "fetch_block_headers": {
+          "default": false,
+          "description": "Flag signalling that this datasource can be used for block headers fetching",
+          "title": "fetch_block_headers",
+          "type": "boolean"
+        },
         "http": {
           "anyOf": [
             {
