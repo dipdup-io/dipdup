@@ -36,6 +36,10 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
         )
 
     @property
+    def fetch_block_headers(self) -> bool:
+        return self._config.fetch_block_headers
+
+    @property
     def starknetpy(self) -> 'StarknetpyClient':
         from dipdup.datasources._starknetpy import StarknetpyClient
 
@@ -86,12 +90,17 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
 
     async def get_block_with_tx_hashes(
         self, block_hash: int
-    ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes']:
+    ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes', None]:
         if block := self._block_cache.get(block_hash, None):
             return block
-
-        block = await self.starknetpy.get_block_with_tx_hashes(block_hash=block_hash)
-        self._block_cache[block_hash] = block
+        
+        try:
+            block = await self.starknetpy.get_block_with_tx_hashes(block_hash=block_hash)
+            self._block_cache[block_hash] = block
+        except Exception as e:
+            self._logger.error("Can't fetch block headers", exc_info=e)
+            block = None
+        
         return block
 
     async def get_abi(self, address: str) -> AbiJson:
