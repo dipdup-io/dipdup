@@ -90,7 +90,7 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
 
     async def get_block_with_tx_hashes(
         self, block_hash: int
-    ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes']:
+    ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes', None]:
         if block := self._block_cache.get(block_hash, None):
             return block
         
