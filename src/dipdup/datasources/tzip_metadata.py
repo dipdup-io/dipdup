@@ -20,7 +20,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
             'get',
             url='api/rest/contract_metadata',
             params={
-                'network': self._config.network.value,
+                'network': self._config.network,
                 'contract': address,
             },
         )
@@ -34,7 +34,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
             'get',
             url='api/rest/token_metadata',
             params={
-                'network': self._config.network.value,
+                'network': self._config.network,
                 'contract': address,
                 'token_id': token_id,
             },
