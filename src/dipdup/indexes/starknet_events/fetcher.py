@@ -57,7 +57,9 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
 
     _offset: str | None
 
-    async def fetch_timestamps(self, for_event: 'EmittedEvent', using_datasource: StarknetNodeDatasource) -> tuple[int|None, int|None]:
+    async def fetch_timestamps(
+        self, for_event: 'EmittedEvent', using_datasource: StarknetNodeDatasource
+    ) -> tuple[int | None, int | None]:
         if for_event.block_hash is None or for_event.transaction_hash is None:
             _logger.info('Skipping event. No block_hash or transaction_hash found in %s', for_event)
             return None, None
@@ -77,25 +79,21 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
         if transaction_idx < 0:
             _logger.info('Skipping event. No transaction_hash exists in block. TxHash=%s', for_event.transaction_hash)
             return None, None
-        
+
         return timestamp, transaction_idx
 
     async def fetch(self) -> None:
         address, key0s = next(iter(self._filter))
 
         datasources = self._datasources
-        
+
         if not datasources:
             _logger.info('No datasource with events enabled.')
             return
-        
+
         datasource = datasources[0]
 
-        timestamp_datasources = [
-            datasource
-            for datasource in datasources
-            if datasource.fetch_block_headers
-        ]
+        timestamp_datasources = [datasource for datasource in datasources if datasource.fetch_block_headers]
 
         timestamp_datasource = None
         if len(timestamp_datasources):
@@ -111,7 +109,7 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
 
         for event in events_chunk.events:
             timestamp, transaction_idx = None, None
-            
+
             if timestamp_datasource:
                 timestamp, transaction_idx = await self.fetch_timestamps(
                     for_event=event, using_datasource=timestamp_datasource
