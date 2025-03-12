@@ -1,7 +1,7 @@
 <!-- markdownlint-disable first-line-h1 -->
-And that's all! We can run the indexer now.
-
 ## Next steps
+
+And that's all! We can run the indexer now.
 
 Run the indexer in memory:
 
@@ -28,10 +28,10 @@ DipDup will fetch all the historical data and then switch to realtime updates. Y
 
 If you use SQLite, run this query to check the data:
 
-```bash
+```shell
 sqlite3 /tmp/dipdup_indexer.sqlite 'SELECT * FROM holder LIMIT 10'
 ```
 
-If you run a Compose stack, open `http://127.0.0.1:8080` in your browser to see the Hasura console (an exposed port may differ). You can use it to explore the database and build GraphQL queries.
+If you run a Compose stack, open `http://127.0.0.1:8080` in your browser to see the Hasura console (the exposed port may differ). You can use it to explore the database and build GraphQL queries.
 
-Congratulations! You've just created your first DipDup indexer. Proceed to the Getting Started section to learn more about DipDup configuration and features.
+**Congratulations!** You've just created your first DipDup indexer. Proceed to the Getting Started section to learn more about DipDup configuration and features.
