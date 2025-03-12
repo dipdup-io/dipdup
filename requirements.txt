@@ -171,9 +171,9 @@ cytoolz==1.0.1 ; implementation_name == 'cpython' \
     --hash=sha256:c8231b9abbd8e368e036f4cc2e16902c9482d4cf9e02a6147ed0e9a3cd4a9ab0 \
     --hash=sha256:fb988c333f05ee30ad4693fe4da55d95ec0bb05775d2b60191236493ea2e01f9 \
     --hash=sha256:fcb8f7d0d65db1269022e7e0428471edee8c937bc288ebdcb72f13eaa67c2fe4
-datamodel-code-generator==0.28.3 \
-    --hash=sha256:697e8ac42f29b544e608dbad977cccdb8adb6c3f6b965f609d987abd15c36280 \
-    --hash=sha256:89c8163bbac954289ec0000d2ef8fad11aabb4652471305749c7fd06a9bd1651
+datamodel-code-generator==0.28.4 \
+    --hash=sha256:16a58933e7c2de692c88e0061ba9a7e23009fe298a726cbba027574fff25c9ba \
+    --hash=sha256:ae1056643cf3cdd298ef4b622085158ec7ef1722f6da1c20e7022c942f2e3ebb
 dictdiffer==0.9.0 \
     --hash=sha256:17bacf5fbfe613ccf1b6d512bd766e6b21fb798822a133aa86098b8ac9997578 \
     --hash=sha256:442bfc693cfcadaf46674575d2eba1c53b42f5e404218ca2c2ff549f2df56595

@@ -57,6 +57,11 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
 
     _offset: str | None
 
+    @property
+    def header_datasource(self) -> StarknetNodeDatasource | None:
+        header_datasources = tuple(d for d in self._datasources if d.fetch_block_headers)
+        return None if not header_datasources else random.choice(header_datasources)
+
     async def fetch_header(
         self,
         event: 'EmittedEvent',
@@ -87,8 +92,8 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
     async def fetch(self) -> None:
         address, key0s = next(iter(self._filter))
 
-        datasource = self._datasources[0]
-        header_datasource = next((d for d in self._datasources if d.fetch_block_headers), None)
+        datasource = self.random_datasource
+        header_datasource = self.header_datasource
 
         events_chunk = await datasource.get_events(
             address=address,
