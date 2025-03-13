@@ -18,7 +18,7 @@ help:           ## Show this help (default)
 ##
 
 install:        ## Install dependencies
-	uv sync --all-extras --all-groups --locked --link-mode symlink --locked
+	uv sync --all-extras --all-groups --link-mode symlink --locked
 
 update:         ## Update dependencies and dump requirements.txt
 	uv sync -U --all-extras --all-groups --link-mode symlink
