@@ -8,7 +8,6 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import Url
-from dipdup.models.tzip_metadata import TzipMetadataNetwork
 
 DEFAULT_TZIP_METADATA_URL = 'https://metadata.dipdup.net'
 
@@ -24,6 +23,6 @@ class TzipMetadataDatasourceConfig(DatasourceConfig):
     """
 
     kind: Literal['tzip_metadata'] = 'tzip_metadata'
-    network: TzipMetadataNetwork
+    network: str
     url: Url = DEFAULT_TZIP_METADATA_URL
     http: HttpConfig | None = None

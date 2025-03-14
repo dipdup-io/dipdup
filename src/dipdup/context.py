@@ -493,7 +493,7 @@ class DipDupContext:
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    def _get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
+    def get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
@@ -508,22 +508,22 @@ class DipDupContext:
 
     def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
         """Get `tezos.tzkt` datasource by name"""
-        return self._get_datasource(name, TezosTzktDatasource)
+        return self.get_datasource(name, TezosTzktDatasource)
 
     def get_evm_subsquid_datasource(self, name: str) -> EvmSubsquidDatasource:
         """Get `evm.subsquid` datasource by name"""
-        return self._get_datasource(name, EvmSubsquidDatasource)
+        return self.get_datasource(name, EvmSubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name"""
-        return self._get_datasource(name, EvmNodeDatasource)
+        return self.get_datasource(name, EvmNodeDatasource)
 
     def get_evm_etherscan_datasource(self, name: str) -> EvmEtherscanDatasource:
         """Get `evm.etherscan` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, EvmEtherscanDatasource)
+        return self.get_datasource(name, EvmEtherscanDatasource)
 
     # NOTE: Alias, remove in 9.0
     get_abi_etherscan_datasource = get_evm_etherscan_datasource
@@ -538,45 +538,45 @@ class DipDupContext:
         | EvmBlockvisionDatasource
     ):
         """Get `evm` datasource by name"""
-        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource, EvmSourcifyDatasource, EvmBlockvisionDatasource)  # type: ignore[return-value]
+        return self.get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource, EvmSourcifyDatasource, EvmBlockvisionDatasource)  # type: ignore[return-value]
 
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
-        return self._get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
+        return self.get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
 
     def get_substrate_datasource(
         self, name: str
     ) -> SubstrateSubsquidDatasource | SubstrateSubscanDatasource | SubstrateNodeDatasource:
         """Get `substrate` datasource by name"""
-        return self._get_datasource(name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource)  # type: ignore[return-value]
+        return self.get_datasource(name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource)  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, CoinbaseDatasource)
+        return self.get_datasource(name, CoinbaseDatasource)
 
     def get_tzip_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, TzipMetadataDatasource)
+        return self.get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         """Get `ipfs` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, IpfsDatasource)
+        return self.get_datasource(name, IpfsDatasource)
 
     def get_http_datasource(self, name: str) -> HttpDatasource:
         """Get `http` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, HttpDatasource)
+        return self.get_datasource(name, HttpDatasource)
 
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
         """Rollback index to a given level reverting all changes made since that level.

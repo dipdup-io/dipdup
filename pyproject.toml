@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.2.1"
+version = "8.2.2"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -76,7 +76,7 @@ dependencies = [
     "strict-rfc3339~=0.7",
     "survey~=5.4",
     "tabulate~=0.9",
-    "tortoise-orm==0.24.0",  # pinned
+    "tortoise-orm==0.24.2",  # pinned
     "uvloop~=0.20",
     "web3~=7.2",
 ]

@@ -3076,9 +3076,9 @@
           "type": "string"
         },
         "network": {
-          "$ref": "#/$defs/TzipMetadataNetwork",
           "description": "Network name, e.g. mainnet, ghostnet, etc.",
-          "title": "network"
+          "title": "network",
+          "type": "string"
         },
         "url": {
           "$ref": "#/$defs/Url",
@@ -3092,19 +3092,6 @@
       ],
       "title": "TzipMetadataDatasourceConfig",
       "type": "object"
-    },
-    "TzipMetadataNetwork": {
-      "description": "Tezos network enum for TZIP-16 metadata.\n\n:param mainnet: mainnet\n:param ghostnet: ghostnet\n:param nairobinet: nairobinet\n:param oxfordnet: oxfordnet\n:param parisnet: parisnet\n:param quebecnet: quebecnet",
-      "enum": [
-        "mainnet",
-        "ghostnet",
-        "nairobinet",
-        "oxfordnet",
-        "parisnet",
-        "quebecnet"
-      ],
-      "title": "TzipMetadataNetwork",
-      "type": "string"
     },
     "Url": {
       "type": "string"
