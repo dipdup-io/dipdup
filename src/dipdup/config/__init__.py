@@ -966,7 +966,7 @@ class DipDupConfig(InteractiveMixin):
         )
         template_config._name = name
         self._resolve_template(template_config)
-        index_config = cast(ResolvedIndexConfigU, self.indexes[name])
+        index_config = cast('ResolvedIndexConfigU', self.indexes[name])
         self._resolve_index_links(index_config)
         index_config._name = name
 
@@ -1195,7 +1195,7 @@ class DipDupConfig(InteractiveMixin):
 
     def _set_names(self) -> None:
         named_config_sections = cast(
-            tuple[dict[str, NameMixin], ...],
+            'tuple[dict[str, NameMixin], ...]',
             (
                 self.contracts,
                 self.datasources,

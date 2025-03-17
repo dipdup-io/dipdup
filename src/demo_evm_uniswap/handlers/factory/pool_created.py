@@ -1,14 +1,17 @@
 from contextlib import suppress
+from typing import TYPE_CHECKING
 from typing import cast
 
 from demo_evm_uniswap import models as models
 from demo_evm_uniswap.models.token import WHITELIST_TOKENS
 from demo_evm_uniswap.models.token import ERC20Token
 from demo_evm_uniswap.types.factory.evm_events.pool_created import PoolCreatedPayload
-from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
 from dipdup.models.evm import EvmEvent
 from tortoise.exceptions import OperationalError
+
+if TYPE_CHECKING:
+    from dipdup.config.evm import EvmContractConfig
 
 POOL_BLACKLIST = {'0x8fe8d9bb8eeba3ed688069c3d6b556c9ca258248'}
 WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
@@ -42,7 +45,7 @@ async def pool_created(
         ctx.logger.info('Pool %s is blacklisted', event.payload.pool)
         return
 
-    factory_address = cast(EvmContractConfig, ctx.config.get_contract('factory')).address
+    factory_address = cast('EvmContractConfig', ctx.config.get_contract('factory')).address
     factory, _ = await models.Factory.get_or_create(id=factory_address)
     factory.pool_count += 1
     await factory.save()

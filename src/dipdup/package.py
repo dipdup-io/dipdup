@@ -216,4 +216,4 @@ class DipDupPackage:
             if not callable(callback):
                 raise ProjectPackageError(f'`{path}.{name}` is not a valid callback')
             self._callbacks[key] = callback
-        return cast(Callable[..., Awaitable[None]], callback)
+        return cast('Callable[..., Awaitable[None]]', callback)

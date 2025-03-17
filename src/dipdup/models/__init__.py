@@ -45,11 +45,10 @@ tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-ass
 
 
 class IndexType(Enum):
-    """Enum for `dipdup.models.Index`"""
+    """Kind of the index"""
 
     evm_events = 'evm.events'
     evm_transactions = 'evm.transactions'
-    evm_subsquid_traces = 'evm.traces'
     tezos_big_maps = 'tezos.big_maps'
     tezos_events = 'tezos.events'
     tezos_head = 'tezos.head'
@@ -312,7 +311,7 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
     async def _execute_many(self, queries_with_params: list[tuple[str, list[Any]]]) -> int:
         for model in self._objects:
             if update := ModelUpdate.from_model(
-                cast(Model, model),
+                cast('Model', model),
                 ModelUpdateAction.UPDATE,
             ):
                 get_pending_updates().append(update)
@@ -324,7 +323,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
     async def _execute_many(self, insert_sql: str, insert_sql_all: str) -> None:
         for model in self._objects:
             if update := ModelUpdate.from_model(
-                cast(Model, model),
+                cast('Model', model),
                 ModelUpdateAction.INSERT,
             ):
                 get_pending_updates().append(update)

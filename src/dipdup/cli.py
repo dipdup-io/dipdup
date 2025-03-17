@@ -198,7 +198,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             package = ctx.obj.config.package
             save_report(package, None)
 
-    return cast(WrappedCommandT, wrapper)
+    return cast('WrappedCommandT', wrapper)
 
 
 def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
@@ -585,7 +585,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
     hasura_gateway = HasuraGateway(
         package=config.package,
         hasura_config=config.hasura,
-        database_config=cast(PostgresDatabaseConfig, config.database),
+        database_config=cast('PostgresDatabaseConfig', config.database),
     )
 
     async with AsyncExitStack() as stack:

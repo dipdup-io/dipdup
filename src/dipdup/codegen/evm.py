@@ -82,7 +82,7 @@ class EvmCodeGenerator(CodeGenerator):
         # deduplicated (by name) Datasource list
         datasources: list[AbiDatasource[Any]] = list(
             {
-                datasource_config.name: cast(AbiDatasource[Any], self._datasources[datasource_config.name])
+                datasource_config.name: cast('AbiDatasource[Any]', self._datasources[datasource_config.name])
                 for datasource_config in index_config.datasources
                 if isinstance(datasource_config, EvmEtherscanDatasourceConfig)
             }.values()

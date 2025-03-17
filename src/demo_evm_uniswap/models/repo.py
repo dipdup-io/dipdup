@@ -1,12 +1,15 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
-from dipdup.config.evm import EvmContractConfig
 from dipdup.context import HandlerContext
 from lru import LRU
 
 import demo_evm_uniswap.models as models
+
+if TYPE_CHECKING:
+    from dipdup.config.evm import EvmContractConfig
 
 USDC_WETH_03_POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8'
 
@@ -36,7 +39,7 @@ class ModelsRepo:
 
 
 async def get_ctx_factory(ctx: HandlerContext) -> models.Factory:
-    factory_address = cast(EvmContractConfig, ctx.config.get_contract('factory')).address
+    factory_address = cast('EvmContractConfig', ctx.config.get_contract('factory')).address
     if factory_address is None:
         raise Exception('Factory address is not specified')
     return await models.Factory.cached_get(factory_address)

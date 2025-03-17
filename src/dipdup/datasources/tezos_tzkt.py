@@ -431,7 +431,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         """Get contract summary"""
         self._logger.info('Fetching contract summary for address `%s`', address)
         return cast(
-            dict[str, Any],
+            'dict[str, Any]',
             await self.request(
                 'get',
                 url=f'v1/contracts/{address}',
@@ -464,7 +464,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             )
             if not response:
                 raise ValueError(f'Contract with code hash `{code_hash}` not found') from None
-            address = cast(str, response[0]['address'])
+            address = cast('str', response[0]['address'])
             self._contract_hashes.add(address, code_hash, type_hash)
             return address
 
@@ -472,7 +472,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         """Get contract storage"""
         self._logger.info('Fetching contract storage for address `%s`', address)
         return cast(
-            dict[str, Any],
+            'dict[str, Any]',
             await self.request(
                 'get',
                 url=f'v1/contracts/{address}/storage',
@@ -489,7 +489,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         else:
             raise NotImplementedError
         return cast(
-            dict[str, Any],
+            'dict[str, Any]',
             await self.request(
                 'get',
                 url=f'v1/{endpoint}/{address}/interface',
@@ -1095,7 +1095,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         async def _on_subscribe(message: CompletionMessage) -> None:
             if message.error:
                 await self._on_error(message)
-            level = cast(int, message.result)
+            level = cast('int', message.result)
             self._subscriptions.set_sync_level(subscription, level)
             event.set()
 
@@ -1261,17 +1261,17 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         # NOTE: Process extensive data from buffer
         for buffered_message in self._buffer.yield_from():
             if buffered_message.type == TezosTzktMessageType.operation:
-                await self._process_operations_data(cast(list[dict[str, Any]], buffered_message.data))
+                await self._process_operations_data(cast('list[dict[str, Any]]', buffered_message.data))
             elif buffered_message.type == TezosTzktMessageType.token_transfer:
-                await self._process_token_transfers_data(cast(list[dict[str, Any]], buffered_message.data))
+                await self._process_token_transfers_data(cast('list[dict[str, Any]]', buffered_message.data))
             elif buffered_message.type == TezosTzktMessageType.token_balance:
-                await self._process_token_balances_data(cast(list[dict[str, Any]], buffered_message.data))
+                await self._process_token_balances_data(cast('list[dict[str, Any]]', buffered_message.data))
             elif buffered_message.type == TezosTzktMessageType.big_map:
-                await self._process_big_maps_data(cast(list[dict[str, Any]], buffered_message.data))
+                await self._process_big_maps_data(cast('list[dict[str, Any]]', buffered_message.data))
             elif buffered_message.type == TezosTzktMessageType.head:
-                await self._process_head_data(cast(dict[str, Any], buffered_message.data))
+                await self._process_head_data(cast('dict[str, Any]', buffered_message.data))
             elif buffered_message.type == TezosTzktMessageType.event:
-                await self._process_events_data(cast(list[dict[str, Any]], buffered_message.data))
+                await self._process_events_data(cast('list[dict[str, Any]]', buffered_message.data))
             else:
                 raise NotImplementedError(f'Unknown message type: {buffered_message.type}')
 

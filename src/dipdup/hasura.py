@@ -209,7 +209,7 @@ class HasuraGateway(HTTPGateway):
     def _get_source(self, metadata: dict[str, Any], name: str) -> dict[str, Any] | None:
         for source in metadata['sources']:
             if source['name'] == name:
-                return cast(dict[str, Any], source)
+                return cast('dict[str, Any]', source)
         else:
             return None
 
@@ -242,7 +242,7 @@ class HasuraGateway(HTTPGateway):
         if errors := result.get('error') or result.get('errors'):
             raise HasuraError(errors)
 
-        return cast(dict[str, Any], result)
+        return cast('dict[str, Any]', result)
 
     async def _healthcheck(self) -> None:
         self._logger.info('Connecting to Hasura instance')
@@ -476,7 +476,7 @@ class HasuraGateway(HTTPGateway):
             },
         )
         try:
-            return cast(list[dict[str, Any]], result['data']['__type']['fields'])
+            return cast('list[dict[str, Any]]', result['data']['__type']['fields'])
         except TypeError as e:
             raise HasuraError(f'Unknown table `{name}`') from e
 

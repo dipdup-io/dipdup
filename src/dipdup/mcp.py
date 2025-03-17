@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
+from typing import Any
 
 from dipdup import models
 from dipdup.context import DipDupContext
@@ -11,35 +12,51 @@ _mcp: 'FastMCP | None' = None
 _ctx: DipDupContext | None = None
 
 
-async def _tool_config() -> str:
+async def _resource_config() -> str:
     assert _ctx
-    # FIXME: strip secrets
-    return _ctx.config.dump()
+    secret_keys = {'password', 'api_key', 'secret'}
+    dump = _ctx.config.dump()
+    # TODO: More accurate filtering
+    return '\n'.join(
+        line if not any(key in line for key in secret_keys) else f'{line.split(":")[0]}: ***'
+        for line in '\n'.split(dump)
+    )
 
 
-async def _tool_indexes() -> str:
-    res = ''
-    for m in await models.Index.all():
-        res += f"""
-Index name: {m.name}
-Type: {m.type}
-Status: {m.status}
-Current height: {m.level}
-"""
-    return res
+async def _resource_metrics() -> dict[str, Any]:
+    metrics_model = await models.Meta.get_or_none(key='dipdup_metrics')
+    if metrics_model:
+        return metrics_model.value
+    return {}
 
 
-async def _tool_heads() -> str:
-    res = ''
+async def _resource_heads() -> list[dict[str, Any]]:
+    res = []
     for m in await models.Head.all():
-        res += f"""
-Datasource name: {m.name}
-Current height: {m.level}
-Block hash: {m.hash}
-Block timestamp: {m.timestamp}
-"""
-
+        res.append(
+            {
+                'datasource_name': m.name,
+                'level': m.level,
+                'hash': m.hash,
+                'timestamp': m.timestamp,
+                'updated_at': m.updated_at,
+            }
+        )
     return res
+
+
+async def _resource_indexes() -> list[dict[str, Any]]:
+    res = []
+    for m in await models.Index.all():
+        res.append(
+            {
+                'name': m.name,
+                'kind': m.type,
+                'status': m.status,
+                'height': m.level,
+                'updated_at': m.updated_at,
+            }
+        )
 
 
 def _create_mcp() -> 'FastMCP':
@@ -54,20 +71,33 @@ def _create_mcp() -> 'FastMCP':
 
     # NOTE: Internal tools
 
-    mcp.tool(
+    mcp.resource(
+        uri='dipdup://config',
         name='Config',
-        description='Describe the current configuration',
-    )(_tool_config)
+        description='Dump the current indexer configuration in YAML format',
+        mime_type='application/yaml',
+    )(_resource_config)
 
-    mcp.tool(
-        name='Indexes',
-        description='Fetch the current state of the indexer',
-    )(_tool_indexes)
+    mcp.resource(
+        uri='dipdup://metrics',
+        name='Metrics',
+        description='Show the current indexer metrics',
+        mime_type='application/json',
+    )(_resource_metrics)
 
-    mcp.tool(
+    mcp.resource(
+        uri='dipdup://heads',
         name='Heads',
-        description='Fetch the current datasource head blocks',
-    )(_tool_heads)
+        description='Show the current datasource head blocks',
+        mime_type='application/json',
+    )(_resource_heads)
+
+    mcp.resource(
+        uri='dipdup://indexes',
+        name='Indexes',
+        description='Show the current indexer state',
+        mime_type='application/json',
+    )(_resource_indexes)
 
     return mcp
 
@@ -91,6 +121,41 @@ def get_mcp() -> 'FastMCP':
     return _mcp
 
 
-def tool(name: str, description: str) -> Callable[..., None]:
-    assert ' ' not in name, 'Tool name should not contain spaces'
-    return get_mcp().tool(name=name, description=description)
+def tool(
+    name: str,
+    description: str,
+) -> Callable[..., None]:
+    assert ' ' not in name, 'Name should not contain spaces'
+    return get_mcp().tool(
+        name=name,
+        description=description,
+    )
+
+
+def resource(
+    self,
+    uri: str,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+    mime_type: str | None = None,
+) -> Callable[..., None]:
+    assert ' ' not in name, 'Name should not contain spaces'
+    return get_mcp().resource(
+        uri,
+        name=name,
+        description=description,
+        mime_type=mime_type,
+    )
+
+
+def prompt(
+    self,
+    name: str | None = None,
+    description: str | None = None,
+) -> Callable[..., None]:
+    assert ' ' not in name, 'Name should not contain spaces'
+    return get_mcp().prompt(
+        name=name,
+        description=description,
+    )

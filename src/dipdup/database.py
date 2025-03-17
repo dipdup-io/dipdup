@@ -48,7 +48,7 @@ SupportedClient = SqliteClient | AsyncpgClient
 
 
 def get_connection() -> SupportedClient:
-    return cast(SupportedClient, connections.get(DEFAULT_CONNECTION_NAME))
+    return cast('SupportedClient', connections.get(DEFAULT_CONNECTION_NAME))
 
 
 def set_connection(conn: SupportedClient) -> None:

@@ -26,7 +26,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
         )
         response = response['contract_metadata']
         if response:
-            return cast(dict[str, Any], response[0]['metadata'])
+            return cast('dict[str, Any]', response[0]['metadata'])
         return None
 
     async def get_token_metadata(self, address: str, token_id: int) -> dict[str, Any] | None:
@@ -42,7 +42,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
         response = response['token_metadata']
         if response:
             return cast(
-                dict[str, Any],
+                'dict[str, Any]',
                 response[0]['metadata'],
             )
         return None
