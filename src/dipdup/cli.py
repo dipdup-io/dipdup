@@ -23,6 +23,7 @@ import uvloop
 from dipdup import __version__
 from dipdup import env
 from dipdup._version import check_version
+from dipdup.config import McpConfig
 from dipdup.exceptions import CallbackError
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
@@ -543,28 +544,62 @@ async def mcp(ctx: click.Context) -> None:
 async def mcp_run(ctx: click.Context) -> None:
     """Run MCP server."""
 
+    import uvicorn
     from anyio import from_thread
+    from mcp.server.sse import SseServerTransport
+    from starlette.applications import Starlette
+    from starlette.routing import Mount
+    from starlette.routing import Route
 
+    from dipdup import mcp
     from dipdup.config import DipDupConfig
     from dipdup.dipdup import DipDup
-    from dipdup.mcp import configure_mcp
-    from dipdup.mcp import get_mcp
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
 
-    mcp = get_mcp()
-    configure_mcp(dipdup._ctx)
+    mcp_config = config.mcp
+    if not mcp_config:
+        mcp_config = McpConfig()
+
+    mcp.set_ctx(dipdup._ctx)
 
     # NOTE: Import all submodules to find @mcp.tool decorators
     dipdup._ctx.package.verify()
 
+    # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
     with from_thread.start_blocking_portal() as portal:
         async with AsyncExitStack() as stack:
             await dipdup._create_datasources()
             await dipdup._set_up_database(stack)
 
-            portal.call(mcp.run_sse_async)
+            sse = SseServerTransport('/messages/')
+
+            async def handle_sse(request: Any) -> None:
+                async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+                    await mcp._app.run(
+                        read_stream=streams[0],
+                        write_stream=streams[1],
+                        initialization_options=mcp._app.create_initialization_options(),
+                        raise_exceptions=False,
+                    )
+
+            starlette_app = Starlette(
+                debug=True,
+                routes=[
+                    Route('/sse', endpoint=handle_sse),
+                    Mount('/messages/', app=sse.handle_post_message),
+                ],
+            )
+
+            config = uvicorn.Config(
+                starlette_app,
+                host=mcp_config.host,
+                port=mcp_config.port,
+                log_level='debug',
+            )
+            server = uvicorn.Server(config)
+            portal.call(server.serve)
 
 
 @hasura.command(name='configure')

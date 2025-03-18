@@ -1,26 +1,140 @@
-from collections.abc import Callable
-from typing import TYPE_CHECKING
+import logging
 from typing import Any
+
+from pydantic import AnyUrl
 
 from dipdup import models
 from dipdup.context import DipDupContext
+from dipdup.utils import json_dumps
 
-if TYPE_CHECKING:
-    from mcp.server.fastmcp import FastMCP
+_logger = logging.getLogger(__name__)
 
-_mcp: 'FastMCP | None' = None
 _ctx: DipDupContext | None = None
 
+import mcp.server
 
-async def _resource_config() -> str:
+mcp.server.logger = _logger
+
+import mcp.types as types
+
+
+def get_ctx() -> DipDupContext:
+    global _ctx
+    if _ctx is None:
+        raise ValueError('DipDup context is not initialized')
+    return _ctx
+
+
+def set_ctx(ctx: DipDupContext):
+    global _ctx
+    _ctx = ctx
+
+
+_app: mcp.server.Server = mcp.server.Server(name='DipDup')
+
+
+@_app.list_tools()  # type: ignore[no-untyped-call,misc]
+async def list_tools() -> list[types.Tool]:
+    return []
+    # return [
+    #     types.Tool(
+    #         name='config',
+    #         description='Dump the current indexer configuration in YAML format',
+    #         inputSchema={
+    #             'type': 'object',
+    #             'properties': {},
+    #         },
+    #     ),
+    #     types.Tool(
+    #         name='metrics',
+    #         description='Show the current indexer metrics',
+    #         inputSchema={
+    #             'type': 'object',
+    #             'properties': {},
+    #         },
+    #     ),
+    #     types.Tool(
+    #         name='heads',
+    #         description='Show the current datasource head blocks',
+    #         inputSchema={
+    #             'type': 'object',
+    #             'properties': {},
+    #         },
+    #     ),
+    #     types.Tool(
+    #         name='indexes',
+    #         description='Show the current indexer state',
+    #         inputSchema={
+    #             'type': 'object',
+    #             'properties': {},
+    #         },
+    #     ),
+    # ]
+
+
+@_app.list_resources()  # type: ignore[no-untyped-call,misc]
+async def list_resources() -> list[types.Resource]:
+    return [
+        types.Resource(
+            uri=AnyUrl('dipdup://config'),
+            name='config',
+            description='Dump the current indexer configuration in YAML format',
+            mimeType='application/yaml',
+        ),
+        types.Resource(
+            uri=AnyUrl('dipdup://metrics'),
+            name='metrics',
+            description='Show the current indexer metrics',
+            mimeType='application/json',
+        ),
+        types.Resource(
+            uri=AnyUrl('dipdup://heads'),
+            name='heads',
+            description='Show the current datasource head blocks',
+            mimeType='application/json',
+        ),
+        types.Resource(
+            uri=AnyUrl('dipdup://indexes'),
+            name='indexes',
+            description='Show the current indexer state',
+            mimeType='application/json',
+        ),
+    ]
+
+
+@_app.call_tool()  # type: ignore[no-untyped-call,misc]
+async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
+    # if name == 'config':
+    #     return [types.TextContent(type='text', text=str(await _resource_config()))]
+    # if name == 'metrics':
+    #     return [types.TextContent(type='text', text=str(await _resource_metrics()))]
+    # if name == 'heads':
+    #     return [types.TextContent(type='text', text=str(await _resource_heads()))]
+    # if name == 'indexes':
+    #     return [types.TextContent(type='text', text=str(await _resource_indexes()))]
+    return []
+
+
+@_app.read_resource()  # type: ignore[no-untyped-call,misc]
+async def read_resource(uri: AnyUrl) -> str:
+    uri = str(uri)
+    if uri == 'dipdup://config':
+        res = await _resource_config()
+    elif uri == 'dipdup://metrics':
+        res = await _resource_metrics()
+    elif uri == 'dipdup://heads':
+        res = await _resource_heads()
+    elif uri == 'dipdup://indexes':
+        res = await _resource_indexes()
+    else:
+        raise NotImplementedError(uri)
+
+    return json_dumps(res)
+
+
+async def _resource_config() -> dict[str, Any]:
     assert _ctx
-    secret_keys = {'password', 'api_key', 'secret'}
-    dump = _ctx.config.dump()
-    # TODO: More accurate filtering
-    return '\n'.join(
-        line if not any(key in line for key in secret_keys) else f'{line.split(":")[0]}: ***'
-        for line in '\n'.split(dump)
-    )
+    return _ctx.config._json.dump(strip_secrets=True)
 
 
 async def _resource_metrics() -> dict[str, Any]:
@@ -57,105 +171,4 @@ async def _resource_indexes() -> list[dict[str, Any]]:
                 'updated_at': m.updated_at,
             }
         )
-
-
-def _create_mcp() -> 'FastMCP':
-    from mcp.server.fastmcp import FastMCP
-
-    mcp = FastMCP(
-        'DipDup',
-        # FIXME: both not working
-        debug=True,
-        log_level='DEBUG',
-    )
-
-    # NOTE: Internal tools
-
-    mcp.resource(
-        uri='dipdup://config',
-        name='Config',
-        description='Dump the current indexer configuration in YAML format',
-        mime_type='application/yaml',
-    )(_resource_config)
-
-    mcp.resource(
-        uri='dipdup://metrics',
-        name='Metrics',
-        description='Show the current indexer metrics',
-        mime_type='application/json',
-    )(_resource_metrics)
-
-    mcp.resource(
-        uri='dipdup://heads',
-        name='Heads',
-        description='Show the current datasource head blocks',
-        mime_type='application/json',
-    )(_resource_heads)
-
-    mcp.resource(
-        uri='dipdup://indexes',
-        name='Indexes',
-        description='Show the current indexer state',
-        mime_type='application/json',
-    )(_resource_indexes)
-
-    return mcp
-
-
-def configure_mcp(ctx: DipDupContext) -> None:
-    global _ctx
-    _ctx = ctx
-
-    if mcp_config := ctx.config.mcp:
-        mcp = get_mcp()
-        mcp.settings.host = mcp_config.host
-        mcp.settings.port = mcp_config.port
-
-
-def get_mcp() -> 'FastMCP':
-    global _mcp
-
-    if not _mcp:
-        _mcp = _create_mcp()
-
-    return _mcp
-
-
-def tool(
-    name: str,
-    description: str,
-) -> Callable[..., None]:
-    assert ' ' not in name, 'Name should not contain spaces'
-    return get_mcp().tool(
-        name=name,
-        description=description,
-    )
-
-
-def resource(
-    self,
-    uri: str,
-    *,
-    name: str | None = None,
-    description: str | None = None,
-    mime_type: str | None = None,
-) -> Callable[..., None]:
-    assert ' ' not in name, 'Name should not contain spaces'
-    return get_mcp().resource(
-        uri,
-        name=name,
-        description=description,
-        mime_type=mime_type,
-    )
-
-
-def prompt(
-    self,
-    name: str | None = None,
-    description: str | None = None,
-) -> Callable[..., None]:
-    assert ' ' not in name, 'Name should not contain spaces'
-    return get_mcp().prompt(
-        name=name,
-        description=description,
-    )
+    return res
