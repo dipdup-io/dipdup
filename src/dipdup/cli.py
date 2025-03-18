@@ -592,13 +592,13 @@ async def mcp_run(ctx: click.Context) -> None:
                 ],
             )
 
-            config = uvicorn.Config(
-                starlette_app,
+            uv_config = uvicorn.Config(
+                app=starlette_app,
                 host=mcp_config.host,
                 port=mcp_config.port,
                 log_level='debug',
             )
-            server = uvicorn.Server(config)
+            server = uvicorn.Server(uv_config)
             portal.call(server.serve)
 
 
