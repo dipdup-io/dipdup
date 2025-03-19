@@ -122,9 +122,9 @@ def set_ctx(ctx: DipDupContext) -> None:
 
 _app: mcp.server.Server[Any] = mcp.server.Server(name='DipDup')
 _user_tools: dict[str, types.Tool] = {}
-_user_tools_fn: dict[str, Callable[..., Iterable[str]]] = {}
+_user_tools_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 _user_resources: dict[str, types.Resource] = {}
-_user_resources_fn: dict[str, Callable[..., Iterable[str]]] = {}
+_user_resources_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 
 
 # TODO: Push typehints to upstream
@@ -142,6 +142,7 @@ async def list_resources() -> list[types.Resource]:
         *list(DIPDUP_RESOURCES.values()),
         *list(_user_resources.values()),
     ]
+
 
 # FIXME: Not supported
 @_app.list_resource_templates()  # type: ignore[no-untyped-call,misc]
@@ -168,7 +169,7 @@ async def read_resource(uri: AnyUrl) -> str:
     if uri.scheme != 'dipdup':
         raise ValueError(f'Invalid scheme: {uri.scheme}')
 
-    name = uri.host.lstrip('/')
+    name = uri.host.lstrip('/')  # type: ignore[union-attr]
     if name in _user_resources_fn:
         res = await _user_resources_fn[name]()
     elif name in DIPDUP_RESOURCES_FN:

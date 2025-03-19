@@ -547,7 +547,7 @@ class ApiConfig:
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class McpConfig:
-    """Config for MCP integration.
+    """Config for MCP server
 
     :param host: Host to bind to
     :param port: Port to bind to
@@ -603,6 +603,7 @@ class DipDupConfig(InteractiveMixin):
     :param advanced: Advanced config
     :param custom: User-defined configuration to use in callbacks
     :param logging: Modify logging verbosity
+    :param mcp: MCP server config
     """
 
     spec_version: ToStr
