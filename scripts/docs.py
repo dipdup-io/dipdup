@@ -287,7 +287,6 @@ class DocsBuilder(FileSystemEventHandler):
 def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
         def replacer(match: re.Match[str], slice: bool) -> str:
-            # FIXME: Slices are not handled yet
             included_path = source / match.group(1).split(':')[0]
             included_file = included_path.read_text()
             _logger.info('including `%s`', included_path.relative_to(Path.cwd()))
@@ -296,7 +295,9 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
             else:
                 return included_file
 
-            from_, to = int(from_ or 0), int(to or len(included_file.split('\n')))
+            # NOTE: Line numbers start from 1
+            from_ = int(from_ or 1) - 1
+            to = int(to or len(included_file.split('\n')) + 1) - 1
             return '\n'.join(included_file.split('\n')[from_:to])
 
         data = re.sub(INCLUDE_REGEX, partial(replacer, slice=False), data)

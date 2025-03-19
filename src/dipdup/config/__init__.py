@@ -725,6 +725,7 @@ class DipDupConfig(InteractiveMixin):
         raw: bool = False,
         unsafe: bool = False,
     ) -> DipDupConfig:
+
         config_json, config_environment = DipDupYAMLConfig.load(
             paths=paths,
             environment=environment,
@@ -1225,9 +1226,11 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 # NOTE: Reimport to avoid circular imports
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
@@ -1263,6 +1266,8 @@ ContractConfigU = EvmContractConfig | TezosContractConfig | StarknetContractConf
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
     | EvmEtherscanDatasourceConfig
+    | EvmSourcifyDatasourceConfig
+    | EvmBlockvisionDatasourceConfig
     | HttpDatasourceConfig
     | IpfsDatasourceConfig
     | EvmSubsquidDatasourceConfig

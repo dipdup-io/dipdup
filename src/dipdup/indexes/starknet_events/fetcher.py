@@ -1,6 +1,7 @@
 import logging
 import random
 from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 from typing import Any
 
 from dipdup.datasources.starknet_node import StarknetNodeDatasource
@@ -11,6 +12,9 @@ from dipdup.indexes.starknet_node import StarknetNodeFetcher
 from dipdup.indexes.starknet_subsquid import StarknetSubsquidFetcher
 from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet_subsquid import EventRequest
+
+if TYPE_CHECKING:
+    from starknet_py.net.client_models import EmittedEvent
 
 _logger = logging.getLogger(__name__)
 
@@ -53,10 +57,43 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
 
     _offset: str | None
 
+    @property
+    def header_datasource(self) -> StarknetNodeDatasource | None:
+        header_datasources = tuple(d for d in self._datasources if d.fetch_block_headers)
+        return None if not header_datasources else random.choice(header_datasources)
+
+    async def fetch_header(
+        self,
+        event: 'EmittedEvent',
+        datasource: StarknetNodeDatasource,
+    ) -> tuple[int | None, int | None]:
+        if event.block_hash is None or event.transaction_hash is None:
+            _logger.info('Skipping event. No block_hash or transaction_hash found in %s', event)
+            return None, None
+
+        block = await datasource.get_block_with_tx_hashes(
+            block_hash=event.block_hash,
+        )
+
+        if block is None:
+            _logger.info('Skipping event. No block exists for block_hash. BlackHash=%s', event.block_hash)
+            return None, None
+
+        timestamp = block.timestamp
+        transaction_idx = block.transactions.index(event.transaction_hash)
+
+        # NOTE: This event is corrupt, possibly due to old age.
+        if transaction_idx < 0:
+            _logger.info('Skipping event. No transaction_hash exists in block. TxHash=%s', event.transaction_hash)
+            return None, None
+
+        return timestamp, transaction_idx
+
     async def fetch(self) -> None:
         address, key0s = next(iter(self._filter))
 
-        datasource = self._datasources[0]
+        datasource = self.random_datasource
+        header_datasource = self.header_datasource
 
         events_chunk = await datasource.get_events(
             address=address,
@@ -67,26 +104,10 @@ class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasour
         )
 
         for event in events_chunk.events:
-            # NOTE:
-            if event.block_hash is None or event.transaction_hash is None:
-                _logger.info('Skipping event. No block_hash or transaction_hash found in %s', event)
-                continue
+            timestamp, transaction_idx = None, None
 
-            block = await datasource.get_block_with_tx_hashes(
-                block_hash=event.block_hash,
-            )
-
-            if block is None:
-                _logger.info('Skipping event. No block exists for block_hash. BlackHash=%s', event.block_hash)
-                continue
-
-            timestamp = block.timestamp
-            transaction_idx = block.transactions.index(event.transaction_hash)
-
-            # NOTE: This event is corrupt, possibly due to old age.
-            if transaction_idx < 0:
-                _logger.info('Skipping event. No transaction_hash exists in block. TxHash=%s', event.transaction_hash)
-                continue
+            if header_datasource:
+                timestamp, transaction_idx = await self.fetch_header(event, header_datasource)
 
             self._buffer[event.block_number].append(  # type: ignore[index]
                 StarknetEventData.from_starknetpy(

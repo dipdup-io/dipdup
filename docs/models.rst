@@ -87,4 +87,3 @@ Other
 
 .. autoclass:: dipdup.models.coinbase.CoinbaseCandleData
 .. autoclass:: dipdup.models.coinbase.CoinbaseCandleInterval
-.. autoclass:: dipdup.models.tzip_metadata.TzipMetadataNetwork

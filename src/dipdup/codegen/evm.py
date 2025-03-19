@@ -9,9 +9,11 @@ from dipdup.config import EvmIndexConfigU
 from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
+from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
+from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
@@ -84,7 +86,10 @@ class EvmCodeGenerator(CodeGenerator):
             {
                 datasource_config.name: cast('AbiDatasource[Any]', self._datasources[datasource_config.name])
                 for datasource_config in index_config.datasources
-                if isinstance(datasource_config, EvmEtherscanDatasourceConfig)
+                if isinstance(
+                    datasource_config,
+                    EvmEtherscanDatasourceConfig | EvmSourcifyDatasourceConfig | EvmBlockvisionDatasourceConfig,
+                )
             }.values()
         )
 

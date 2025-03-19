@@ -6,15 +6,28 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.2.2] - 2025-03-13
+
+### Added
+
+- starknet.node: Added `fetch_block_headers` option to datasource config.
+
+### Fixed
+
+- evm.node: Fixed empty `gasPrice` field base conversion on evm transaction deserialization.
+
+## [8.2.1] - 2025-02-19
 
 ### Added
 
 - cli: Rewritten interactive mode for `new` command.
+- evm.blockvision: Added `evm.blockvision` datasource to fetch ABIs from Blockvision API.
+- evm.sourcify: Added `evm.sourcify` datasource to fetch ABIs from Sourcify API.
 
 ### Fixed
 
 - coinbase: Fixed crash when using coinbase datasource.
+- evm.node: Fixed crash when block range goes out of bounds.
 
 ## [8.2.0] - 2025-02-10
 
@@ -628,7 +641,9 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.2.0...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.2.2...HEAD
+[8.2.2]: https://github.com/dipdup-io/dipdup/compare/8.2.1...8.2.2
+[8.2.1]: https://github.com/dipdup-io/dipdup/compare/8.2.0...8.2.1
 [8.2.0]: https://github.com/dipdup-io/dipdup/compare/8.2.0rc1...8.2.0
 [8.2.0rc1]: https://github.com/dipdup-io/dipdup/compare/8.1.4...8.2.0rc1
 [8.1.4]: https://github.com/dipdup-io/dipdup/compare/8.1.3...8.1.4
