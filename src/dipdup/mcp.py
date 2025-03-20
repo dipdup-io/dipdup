@@ -194,11 +194,14 @@ def tool(name: str, description: str) -> Any:
             msg = f'Tool `{name}` is already registered'
             raise FrameworkException(msg)
 
+        from mcp.server.fastmcp.tools.base import Tool
+
+        tool_info = Tool.from_function(func, name=name, description=description)
+
         _user_tools[name] = types.Tool(
             name=name,
             description=description,
-            # FIXME: Generate schema from signature
-            inputSchema={'type': 'object'},
+            inputSchema=tool_info.parameters,
         )
         _user_tools_fn[name] = func
 
