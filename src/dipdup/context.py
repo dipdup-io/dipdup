@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import Self
 from typing import TypeVar
 
 from tortoise.exceptions import OperationalError
@@ -102,6 +103,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import ModuleType
 
+    from mcp.server import Server as McpServer
+
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
 
@@ -145,7 +148,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     """
 
@@ -788,7 +791,7 @@ class HookContext(DipDupContext):
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     :param hook_config: Configuration of the current hook
     """
@@ -820,7 +823,7 @@ class HookContext(DipDupContext):
         ctx: DipDupContext,
         logger: Logger,
         hook_config: HookConfig,
-    ) -> HookContext:
+    ) -> Self:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -851,7 +854,7 @@ class HandlerContext(DipDupContext):
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     :param handler_config: Configuration of the current handler
     """
@@ -887,7 +890,7 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: Logger,
         handler_config: HandlerConfig,
-    ) -> HandlerContext:
+    ) -> Self:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -903,3 +906,51 @@ class HandlerContext(DipDupContext):
     def is_finalized(self) -> bool:
         # FIXME: check the datasource
         return True
+
+
+class McpContext(DipDupContext):
+    """Execution context of MCP tools, resources and prompts.
+
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (low-level interface)
+    :param logger: Context-aware logger instance
+    :param server: Running MCP server instance
+    """
+
+    def __init__(
+        self,
+        config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
+        transactions: TransactionManager,
+        logger: Logger,
+        server: McpServer[Any],
+    ) -> None:
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            transactions=transactions,
+        )
+        self.logger = logger
+        self.server = server
+
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: Logger,
+        server: Any,
+    ) -> Self:
+        new_ctx = cls(
+            config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
+            transactions=ctx.transactions,
+            logger=logger,
+            server=server,
+        )
+        ctx._link(new_ctx)
+        return new_ctx

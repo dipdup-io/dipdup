@@ -8,12 +8,13 @@ from typing import cast
 from pydantic import AnyUrl
 
 from dipdup import models
-from dipdup.context import DipDupContext
+from dipdup.context import McpContext
+from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps
 
 _logger = logging.getLogger(__name__)
 
-_ctx: DipDupContext | None = None
+_ctx: McpContext | None = None
 
 import mcp.server
 import mcp.types as types
@@ -108,19 +109,21 @@ DIPDUP_TOOLS_FN: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 # NOTE: Context management
 
 
-def get_ctx() -> DipDupContext:
+def get_ctx() -> McpContext:
     global _ctx
     if _ctx is None:
-        raise ValueError('DipDup context is not initialized')
+        raise FrameworkException('DipDup context is not initialized')
     return _ctx
 
 
-def set_ctx(ctx: DipDupContext) -> None:
+def _set_ctx(ctx: McpContext) -> None:
     global _ctx
+    if _ctx is not None:
+        raise FrameworkException('DipDup context is already initialized')
     _ctx = ctx
 
 
-_app: mcp.server.Server[Any] = mcp.server.Server(name='DipDup')
+server: mcp.server.Server[Any] = mcp.server.Server(name='DipDup')
 _user_tools: dict[str, types.Tool] = {}
 _user_tools_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 _user_resources: dict[str, types.Resource] = {}
@@ -128,7 +131,7 @@ _user_resources_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 
 
 # TODO: Push typehints to upstream
-@_app.list_tools()  # type: ignore[no-untyped-call,misc]
+@server.list_tools()  # type: ignore[no-untyped-call,misc]
 async def list_tools() -> list[types.Tool]:
     return [
         *list(DIPDUP_TOOLS.values()),
@@ -136,7 +139,7 @@ async def list_tools() -> list[types.Tool]:
     ]
 
 
-@_app.list_resources()  # type: ignore[no-untyped-call,misc]
+@server.list_resources()  # type: ignore[no-untyped-call,misc]
 async def list_resources() -> list[types.Resource]:
     return [
         *list(DIPDUP_RESOURCES.values()),
@@ -145,12 +148,12 @@ async def list_resources() -> list[types.Resource]:
 
 
 # FIXME: Not supported
-@_app.list_resource_templates()  # type: ignore[no-untyped-call,misc]
+@server.list_resource_templates()  # type: ignore[no-untyped-call,misc]
 async def list_resource_templates() -> list[types.ResourceTemplate]:
     return []
 
 
-@_app.call_tool()  # type: ignore[no-untyped-call,misc]
+@server.call_tool()  # type: ignore[no-untyped-call,misc]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     if name in _user_tools_fn:
         res = await _user_tools_fn[name](**arguments)
@@ -163,7 +166,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
     raise NotImplementedError(name)
 
 
-@_app.read_resource()  # type: ignore[no-untyped-call,misc]
+@server.read_resource()  # type: ignore[no-untyped-call,misc]
 async def read_resource(uri: AnyUrl) -> str:
 
     if uri.scheme != 'dipdup':
@@ -175,7 +178,8 @@ async def read_resource(uri: AnyUrl) -> str:
     elif name in DIPDUP_RESOURCES_FN:
         res = await DIPDUP_RESOURCES_FN[name]()
     else:
-        raise NotImplementedError(name)
+        msg = f'Resource `{name}` not found'
+        raise FrameworkException(msg)
 
     # FIXME: mimeType is always `text/plain`
     return json_dumps(res, None).decode()
@@ -187,7 +191,8 @@ def tool(name: str, description: str) -> Any:
         global _user_tools_fn
 
         if name in _user_tools or name in DIPDUP_TOOLS:
-            raise ValueError(f'Tool `{name}` is already registered')
+            msg = f'Tool `{name}` is already registered'
+            raise FrameworkException(msg)
 
         _user_tools[name] = types.Tool(
             name=name,
@@ -208,7 +213,8 @@ def resource(name: str, description: str, mime_type: str) -> Any:
         global _user_resources_fn
 
         if name in _user_resources or name in DIPDUP_RESOURCES:
-            raise ValueError(f'Resource `{name}` is already registered')
+            msg = f'Resource `{name}` is already registered'
+            raise FrameworkException(msg)
 
         _user_resources[name] = types.Resource(
             uri=AnyUrl(f'dipdup://{name}'),

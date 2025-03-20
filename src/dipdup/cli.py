@@ -553,18 +553,24 @@ async def mcp_run(ctx: click.Context) -> None:
 
     from dipdup import mcp
     from dipdup.config import DipDupConfig
+    from dipdup.context import McpContext
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
 
+    if not config.mcp:
+        config.mcp = McpConfig()
     mcp_config = config.mcp
-    if not mcp_config:
-        mcp_config = McpConfig()
 
-    mcp.set_ctx(dipdup._ctx)
+    mcp_ctx = McpContext._wrap(
+        ctx=dipdup._ctx,
+        logger=mcp._logger,
+        server=mcp.server,
+    )
+    mcp._set_ctx(mcp_ctx)
 
-    # NOTE: Import all submodules to find @mcp.tool decorators
+    # NOTE: Import all submodules to find @mcp decorators
     dipdup._ctx.package.verify()
 
     # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
@@ -577,10 +583,10 @@ async def mcp_run(ctx: click.Context) -> None:
 
             async def handle_sse(request: Any) -> None:
                 async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                    await mcp._app.run(
+                    await mcp.server.run(
                         read_stream=streams[0],
                         write_stream=streams[1],
-                        initialization_options=mcp._app.create_initialization_options(),
+                        initialization_options=mcp.server.create_initialization_options(),
                         raise_exceptions=False,
                     )
 
