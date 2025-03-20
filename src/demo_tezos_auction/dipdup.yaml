@@ -1,6 +1,3 @@
-mcp: {}
-api: {}
-
 spec_version: 3.0
 package: demo_tezos_auction
 
@@ -43,10 +40,10 @@ templates:
             destination: <auction>
             entrypoint: withdraw
 
-# indexes:
-#   tzcolors:
-#     template: auction
-#     values:
-#       datasource: tzkt
-#       minter: tzcolors_minter
-#       auction: tzcolors_auction
+indexes:
+  tzcolors:
+    template: auction
+    values:
+      datasource: tzkt
+      minter: tzcolors_minter
+      auction: tzcolors_auction

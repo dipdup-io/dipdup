@@ -31,5 +31,3 @@ indexes:
       - callback: on_transfer
         contract: eth_usdt
         name: Transfer
-
-mcp: {}
