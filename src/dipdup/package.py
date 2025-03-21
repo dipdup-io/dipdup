@@ -77,6 +77,7 @@ class DipDupPackage:
         self.models = root / 'models'
         self.sql = root / 'sql'
         self.types = root / 'types'
+        self.mcp = root / 'mcp'
         # NOTE: Optional, created if aerich is installed
         self.migrations = root / 'migrations'
 
@@ -128,6 +129,7 @@ class DipDupPackage:
             self.models: '**/*.py',
             self.sql: '**/*.sql',
             self.types: '**/*.py',
+            self.mcp: '**/*.py',
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
         }
@@ -197,6 +199,7 @@ class DipDupPackage:
         import_submodules(f'{self.name}.handlers')
         import_submodules(f'{self.name}.hooks')
         import_submodules(f'{self.name}.types')
+        import_submodules(f'{self.name}.mcp')
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'
