@@ -123,6 +123,7 @@ def _set_ctx(ctx: McpContext) -> None:
     _ctx = ctx
 
 
+# TODO: Add instructions
 server: mcp.server.Server[Any] = mcp.server.Server(name='DipDup')
 _user_tools: dict[str, types.Tool] = {}
 _user_tools_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
