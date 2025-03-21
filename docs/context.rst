@@ -3,6 +3,7 @@
 .. autoclass:: dipdup.context.DipDupContext
 .. autoclass:: dipdup.context.HandlerContext
 .. autoclass:: dipdup.context.HookContext
+.. autoclass:: dipdup.context.McpContext
 
 .. automethod:: dipdup.context.DipDupContext.add_contract
 .. automethod:: dipdup.context.DipDupContext.add_index
