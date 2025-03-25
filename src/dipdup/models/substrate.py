@@ -123,7 +123,7 @@ class SubstrateEvent(Generic[PayloadT]):
         else:
             raise NotImplementedError
 
-        return cast(PayloadT, payload)
+        return cast('PayloadT', payload)
 
     @property
     def level(self) -> int:

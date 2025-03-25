@@ -18,4 +18,4 @@ class EvmSourcifyDatasource(AbiDatasource[EvmSourcifyDatasourceConfig]):
                 'fields': 'abi',
             },
         )
-        return cast(list[Any], response['abi'])
+        return cast('list[Any]', response['abi'])

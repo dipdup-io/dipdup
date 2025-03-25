@@ -218,7 +218,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        return max(cast(set[int], sync_levels))
+        return max(cast('set[int]', sync_levels))
 
     async def initialize_state(self, state: models.Index | None = None) -> None:
         if self._state:

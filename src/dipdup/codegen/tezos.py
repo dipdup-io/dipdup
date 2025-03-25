@@ -77,7 +77,7 @@ def preprocess_storage_jsonschema(schema: dict[str, Any]) -> dict[str, Any]:
             'additionalProperties': preprocess_storage_jsonschema(schema['additionalProperties']),
         }
     if schema.get('$comment') == 'big_map':
-        return cast(dict[str, Any], schema['oneOf'][1])
+        return cast('dict[str, Any]', schema['oneOf'][1])
     return schema
 
 
@@ -123,7 +123,7 @@ class TezosCodeGenerator(CodeGenerator):
         for index_config in self._config.indexes.values():
             if isinstance(index_config, TezosOperationsIndexConfig):
                 await self._fetch_operation_index_schema(index_config)
-                template = cast(TezosOperationsIndexConfig, index_config._parent)
+                template = cast('TezosOperationsIndexConfig', index_config._parent)
                 if template in unused_operation_templates:
                     unused_operation_templates.remove(template)
             elif isinstance(index_config, TezosBigMapsIndexConfig):
@@ -273,7 +273,7 @@ class TezosCodeGenerator(CodeGenerator):
             return
 
         parameter_schemas_path = contract_schemas_path / 'tezos_parameters'
-        entrypoint = cast(str, operation_pattern_config.entrypoint)
+        entrypoint = cast('str', operation_pattern_config.entrypoint)
 
         try:
             entrypoint_schema = match_entrypoint_schema(
@@ -375,7 +375,7 @@ class TezosCodeGenerator(CodeGenerator):
             self._logger.info('Fetching schemas for contract `%s`', address)
             address_schemas_json = await datasource.get_jsonschemas(address)
             schemas[datasource.name][address] = address_schemas_json
-        return cast(dict[str, Any], schemas[datasource.name][address])
+        return cast('dict[str, Any]', schemas[datasource.name][address])
 
 
 def get_storage_type(package: DipDupPackage, typename: str) -> TypeClass:

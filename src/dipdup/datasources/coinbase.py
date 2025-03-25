@@ -26,7 +26,7 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
 
     async def get_oracle_prices(self) -> dict[str, Any]:
         return cast(
-            dict[str, Any],
+            'dict[str, Any]',
             await self.request(
                 'get',
                 url='oracle',

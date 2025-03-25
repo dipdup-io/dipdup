@@ -23,6 +23,7 @@ import uvloop
 from dipdup import __version__
 from dipdup import env
 from dipdup._version import check_version
+from dipdup.config import McpConfig
 from dipdup.exceptions import CallbackError
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
@@ -198,7 +199,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             package = ctx.obj.config.package
             save_report(package, None)
 
-    return cast(WrappedCommandT, wrapper)
+    return cast('WrappedCommandT', wrapper)
 
 
 def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
@@ -214,6 +215,7 @@ def _skip_cli_group() -> bool:
         ['hasura'],
         ['package'],
         ['schema'],
+        ['mcp'],
     )
     # NOTE: Simple helpers that don't use any of our cli boilerplate
     is_script_group = args[0] in (
@@ -529,6 +531,83 @@ async def hasura(ctx: click.Context) -> None:
     pass
 
 
+@cli.group(help='Commands related to MCP integration.')
+@click.pass_context
+@_cli_wrapper
+async def mcp(ctx: click.Context) -> None:
+    pass
+
+
+@mcp.command(name='run')
+@click.pass_context
+@_cli_wrapper
+async def mcp_run(ctx: click.Context) -> None:
+    """Run MCP server."""
+
+    import uvicorn
+    from anyio import from_thread
+    from mcp.server.sse import SseServerTransport
+    from starlette.applications import Starlette
+    from starlette.routing import Mount
+    from starlette.routing import Route
+
+    from dipdup import mcp
+    from dipdup.config import DipDupConfig
+    from dipdup.context import McpContext
+    from dipdup.dipdup import DipDup
+
+    config: DipDupConfig = ctx.obj.config
+    dipdup = DipDup(config)
+
+    if not config.mcp:
+        config.mcp = McpConfig()
+    mcp_config = config.mcp
+
+    mcp_ctx = McpContext._wrap(
+        ctx=dipdup._ctx,
+        logger=mcp._logger,
+        server=mcp.server,
+    )
+    mcp._set_ctx(mcp_ctx)
+
+    # NOTE: Import all submodules to find @mcp decorators
+    dipdup._ctx.package.verify()
+
+    # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
+    with from_thread.start_blocking_portal() as portal:
+        async with AsyncExitStack() as stack:
+            await dipdup._create_datasources()
+            await dipdup._set_up_database(stack)
+
+            sse = SseServerTransport('/messages/')
+
+            async def handle_sse(request: Any) -> None:
+                async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+                    await mcp.server.run(
+                        read_stream=streams[0],
+                        write_stream=streams[1],
+                        initialization_options=mcp.server.create_initialization_options(),
+                        raise_exceptions=False,
+                    )
+
+            starlette_app = Starlette(
+                debug=True,
+                routes=[
+                    Route('/sse', endpoint=handle_sse),
+                    Mount('/messages/', app=sse.handle_post_message),
+                ],
+            )
+
+            uv_config = uvicorn.Config(
+                app=starlette_app,
+                host=mcp_config.host,
+                port=mcp_config.port,
+                log_level='debug',
+            )
+            server = uvicorn.Server(uv_config)
+            portal.call(server.serve)
+
+
 @hasura.command(name='configure')
 @click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
@@ -547,7 +626,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
     hasura_gateway = HasuraGateway(
         package=config.package,
         hasura_config=config.hasura,
-        database_config=cast(PostgresDatabaseConfig, config.database),
+        database_config=cast('PostgresDatabaseConfig', config.database),
     )
 
     async with AsyncExitStack() as stack:

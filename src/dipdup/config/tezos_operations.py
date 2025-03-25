@@ -139,7 +139,7 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
             yield self.format_parameter_import(
                 package,
                 module_name,
-                cast(str, self.entrypoint),
+                cast('str', self.entrypoint),
                 self.alias,
             )
             yield self.format_storage_import(package, module_name)
@@ -151,7 +151,7 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
             module_name = self.typed_contract.module_name
             yield self.format_operation_argument(
                 module_name,
-                cast(str, self.entrypoint),
+                cast('str', self.entrypoint),
                 self.optional,
                 self.alias,
             )

@@ -197,7 +197,7 @@ def install(
 
     pipx_packages = env._pipx_packages
 
-    python_inter_pipx = cast(str, which('python3.12'))
+    python_inter_pipx = cast('str', which('python3.12'))
     if 'pyenv' in python_inter_pipx:
         python_inter_pipx = (
             subprocess.run(

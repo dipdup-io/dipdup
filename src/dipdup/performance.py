@@ -93,7 +93,7 @@ class _CacheManager:
             stats[name] = {'size': len(plain_cache)}
         for name, fn_cache in chain(self._lru.items(), self._alru.items()):
             name = f'lru:{name}'
-            c = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
+            c = cast('_CacheInfo', fn_cache.cache_info())  # type: ignore[attr-defined]
             if not c.hits and not c.misses:
                 continue
             stats[name] = {
@@ -117,7 +117,7 @@ class _CacheManager:
             items += len(plain_cache)
             plain_cache.clear()
         for fn_cache in chain(self._lru.values(), self._alru.values()):
-            stats = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
+            stats = cast('_CacheInfo', fn_cache.cache_info())  # type: ignore[attr-defined]
             items += stats.currsize
             fn_cache.cache_clear()  # type: ignore[attr-defined]
         for model_cls in self._models:

@@ -33,7 +33,7 @@ async def tzkt() -> AsyncIterator[TezosTzktDatasource]:
 def index_config() -> TezosOperationsIndexConfig:
     config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yml'], True)
     config.initialize()
-    return cast(TezosOperationsIndexConfig, config.indexes['test'])
+    return cast('TezosOperationsIndexConfig', config.indexes['test'])
 
 
 async def test_ignored_type_filter(
@@ -155,7 +155,7 @@ async def test_realtime() -> None:
         await dipdup._set_up_datasources(stack)
 
         dispatcher = dipdup._index_dispatcher
-        index = cast(TezosOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
+        index = cast('TezosOperationsIndex', await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
 
         # NOTE: Start sync and realtime connection simultaneously.
         first_level = 1365000

@@ -28,7 +28,7 @@ def extract_root_outer_type(storage_type: type[BaseModel]) -> type[BaseModel]:
     root_field = storage_type.model_fields['root']
     if not root_field.is_required():
         # NOTE: Optional is a magic _SpecialForm
-        return cast(type[BaseModel], Optional[root_field.annotation])  # noqa: UP007
+        return cast('type[BaseModel]', Optional[root_field.annotation])  # noqa: UP007
 
     return root_field.annotation  # type: ignore[return-value]
 
@@ -102,7 +102,7 @@ def _preprocess_bigmap_diffs(diffs: Iterable[dict[str, Any]]) -> dict[int, Itera
         k: tuple(v)
         for k, v in groupby(
             filter(lambda d: d['action'] in ('add_key', 'update_key'), diffs),
-            lambda d: cast(int, d['bigmap']),
+            lambda d: cast('int', d['bigmap']),
         )
     }
 

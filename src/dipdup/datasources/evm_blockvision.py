@@ -18,4 +18,4 @@ class EvmBlockvisionDatasource(AbiDatasource[EvmBlockvisionDatasourceConfig]):
             url='verifyContractV2/data',
             params={'address': address},
         )
-        return cast(list[Any], orjson.loads(response['result']['contractABI']))
+        return cast('list[Any]', orjson.loads(response['result']['contractABI']))
