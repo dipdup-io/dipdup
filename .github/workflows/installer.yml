@@ -30,14 +30,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: macOS runner workaround
-        run: pip install --upgrade pip pipx
-
       - name: Install DipDup
         run: python src/dipdup/install.py --quiet --path .
 

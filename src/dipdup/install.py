@@ -1,4 +1,4 @@
-"""This script (un)installs DipDup and its dependencies with pipx.
+"""This script (un)installs DipDup and its dependencies with uv.
 
 WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic will break.
 And no 3.12-only code too. Just to print nice colored "not supported" message instead of crashing.
@@ -15,19 +15,8 @@ from pathlib import Path
 from shutil import which
 from typing import Any
 from typing import NoReturn
-from typing import cast
 
 GITHUB = 'https://github.com/dipdup-io/dipdup.git'
-WHICH_CMDS = (
-    'python3.12',
-    'pipx',
-    'dipdup',
-    'pdm',
-    'poetry',
-    'pyvenv',
-    'pyenv',
-    'uv',
-)
 ENV_VARS = (
     'SHELL',
     'VIRTUAL_ENV',
@@ -86,91 +75,65 @@ def done(msg: str) -> NoReturn:
 def _tab(text: str, indent: int = 23) -> str:
     return text + ' ' * (indent - len(text))
 
+def print_greeting() -> None:
+    print()
+    print(WELCOME_ASCII)
+    print(EPILOG)
+    print()
 
-class DipDupEnvironment:
-    def __init__(self) -> None:
-        self._os = os.uname().sysname
-        self._arch = os.uname().machine
-        self._commands: dict[str, str | None] = {}
-        self._pipx_packages: set[str] = set()
+    print(_tab('OS:') + f'{os.uname().sysname} ({os.uname().machine})')
+    print(_tab('Python:') + sys.version)
+    print()
 
-    def refresh(self) -> None:
-        for command in WHICH_CMDS:
-            old, new = self._commands.get(command), which(command)
-            if old == new:
-                continue
-            self._commands[command] = new
+    for var in ENV_VARS:
+        if var in os.environ:
+            print(_tab(var + ':') + os.environ[var])
+    print()
 
-    def print(self) -> None:
-        print()
-        print(WELCOME_ASCII)
-        print(EPILOG)
-        print()
+    print(_tab('uv tools:') + ', '.join(uvx_tool_list()))
+    print()
 
-        print(_tab('OS:') + f'{self._os} ({self._arch})')
-        print(_tab('Python:') + sys.version)
-        print()
+def uvx_tool_list() -> None:
+    """Get installed uvx packages"""
+    output = run_cmd('uv', 'tool', 'list', capture_output=True).stdout.decode()
+    return {line.split()[0] for line in output.splitlines() if line and not line.startswith('-')}
 
-        for var in ENV_VARS:
-            if var in os.environ:
-                print(_tab(var + ':') + os.environ[var])
-        print()
+def prepare() -> None:
+    # NOTE: Show warning if user is root
+    if os.geteuid() == 0:
+        echo('WARNING: Running as root, this is not generally recommended', Colors.YELLOW)
 
-        for command, path in self._commands.items():
-            print(_tab(f'{command}:') + (path or ''))
-        print(_tab('pipx packages:') + ', '.join(self._pipx_packages))
-        print()
+    # NOTE: Show warning if user is in virtualenv
+    if sys.base_prefix != sys.prefix:
+        echo('WARNING: Running in virtualenv, dipdup(and uv) will be installed globaly', Colors.YELLOW)
 
-    def refresh_pipx(self) -> None:
-        """Get installed pipx packages"""
-        self.ensure_pipx()
-        pipx_packages_raw = self.run_cmd('pipx', 'list', '--short', capture_output=True).stdout
-        self._pipx_packages = {p.split()[0].decode() for p in pipx_packages_raw.splitlines()}
+    ensure_uv()
 
-    def prepare(self) -> None:
-        # NOTE: Show warning if user is root
-        if os.geteuid() == 0:
-            echo('WARNING: Running as root, this is not generally recommended', Colors.YELLOW)
+def ensure_uv() -> None:
+    if not sys.version.startswith('3.12'):
+        fail('DipDup requires Python 3.12')
 
-        # NOTE: Show warning if user is in virtualenv
-        if sys.base_prefix != sys.prefix:
-            echo('WARNING: Running in virtualenv, this script affects only current user', Colors.YELLOW)
+    """Ensure uv is installed for current user"""
+    if which('uv'):
+        return
 
-        self.refresh()
-        self.refresh_pipx()
+    echo('Installing uv')
+    install_uv()
 
-    def run_cmd(self, cmd: str, *args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
-        """Run command safely (relatively lol)"""
-        if (found_cmd := self._commands.get(cmd)) is None:
-            fail(f'Command not found: {cmd}')
-        args = (found_cmd, *tuple(a for a in args if a))
-        print(Colors.YELLOW, f'$ {" ".join(args)}', Colors.ENDC)
-        try:
-            return subprocess.run(
-                args,
-                **kwargs,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            fail(f'{cmd} failed: {e.cmd} {e.returncode}')
+def install_uv() -> None:
+    run_cmd('curl -LsSf https://astral.sh/uv/install.sh | sh', shell=True)
+    # TODO: try source $HOME/.local/bin/env
+    os.environ['PATH'] = str(Path.home() / '.local' / 'bin') + os.pathsep + os.environ['PATH']
 
-    def ensure_pipx(self) -> None:
-        if not sys.version.startswith('3.12'):
-            fail('DipDup requires Python 3.12')
 
-        """Ensure pipx is installed for current user"""
-        if self._commands.get('pipx'):
-            return
+def uninstall(quiet: bool) -> NoReturn:
+    """Uninstall DipDup and its dependencies with uvx"""
 
-        echo('Installing pipx')
-        if sys.base_prefix != sys.prefix:
-            self.run_cmd('python3.12', '-m', 'pip', 'install', '-q', 'pipx')
-        else:
-            self.run_cmd('python3.12', '-m', 'pip', 'install', '--user', '-q', 'pipx')
-        self.run_cmd('python3.12', '-m', 'pipx', 'ensurepath')
-        pipx_path = str(Path.home() / '.local' / 'bin')
-        os.environ['PATH'] = pipx_path + os.pathsep + os.environ['PATH']
-        self._commands['pipx'] = which('pipx')
+    package = 'dipdup'
+    echo(f'Uninstalling {package}')
+    run_cmd('uv', 'tool', 'uninstall', package)
+
+    done('Done! DipDup is uninstalled.')
 
 
 def install(
@@ -181,76 +144,41 @@ def install(
     path: str | None,
     pre: bool = False,
     editable: bool = False,
-    update: bool = False,
-    with_pdm: bool = False,
-    with_poetry: bool = False,
-    with_uv: bool = False,
+    upgrade: bool = False,
 ) -> None:
-    """Install DipDup and its dependencies with pipx"""
+    """Install DipDup and its dependencies with uv"""
     if ref and path:
         fail('Specify either ref or path, not both')
 
-    env = DipDupEnvironment()
-    env.prepare()
+    prepare()
     if not quiet:
-        env.print()
+        print_greeting()
 
-    pipx_packages = env._pipx_packages
-
-    python_inter_pipx = cast(str, which('python3.12'))
-    if 'pyenv' in python_inter_pipx:
-        python_inter_pipx = (
-            subprocess.run(
-                ['pyenv', 'which', 'python3.12'],
-                capture_output=True,
-                text=True,
-            )
-            .stdout.strip()
-            .split('\n')[0]
-        )
-
-    pipx_args = []
+    uv_tool_args = []
     if force:
-        pipx_args.append('--force')
+        uv_tool_args.append('--force')
     if pre:
-        pipx_args.append('--pip-args="--pre"')
+        uv_tool_args.append('--prerelease')
+        uv_tool_args.append('allow')
     if editable:
-        pipx_args.append('--editable')
+        uv_tool_args.append('-e')
 
-    if 'dipdup' in pipx_packages and force:
-        env.run_cmd('pipx', 'uninstall', 'dipdup')
-        pipx_packages.remove('dipdup')
-
-    if 'dipdup' in pipx_packages:
-        if update:
-            env.run_cmd('pipx', 'upgrade', '--python', python_inter_pipx, 'dipdup', *pipx_args)
+    if which('dipdup'):
+        if version:
+            run_cmd('uv', 'tool', 'install', f'dipdup=={version}', *uv_tool_args)
+        elif upgrade:
+            run_cmd('uv', 'tool', 'upgrade', 'dipdup', *uv_tool_args)
     elif path:
         echo(f'Installing DipDup from `{path}`')
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, path, *pipx_args)
+        run_cmd('uv', 'tool', 'install', path, *uv_tool_args)
     elif ref:
         url = f'git+{GITHUB}@{ref}'
         echo(f'Installing DipDup from `{url}`')
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, url, *pipx_args)
+        run_cmd('uv', 'tool', 'install', url, *uv_tool_args)
     else:
         echo('Installing DipDup from PyPI')
         pkg = 'dipdup' if not version else f'dipdup=={version}'
-        env.run_cmd('pipx', 'install', '--python', python_inter_pipx, pkg, *pipx_args)
-
-    for pm, with_pm in (
-        ('pdm', with_pdm),
-        ('poetry', with_poetry),
-        ('uv', with_uv),
-    ):
-        if pm in pipx_packages:
-            if update:
-                env.run_cmd('pipx', 'upgrade', '--python', python_inter_pipx, pm, *pipx_args)
-        # NOTE: Installed from other sources; skip
-        elif env._commands.get(pm):
-            pass
-        elif with_pm or force or quiet or ask(f'Install `{pm}`?', False):
-            echo(f'Installing `{pm}`')
-            env.run_cmd('pipx', 'install', '--python', python_inter_pipx, *pipx_args, pm)
-            env._commands[pm] = which(pm)
+        run_cmd('uv', 'tool', 'install', pkg, *uv_tool_args)
 
     done(
         'Done! DipDup is ready to use.\n'
@@ -258,31 +186,16 @@ def install(
     )
 
 
-def ask(question: str, default: bool) -> bool:
-    """Ask user a yes/no question"""
-    while True:
-        answer = input(question + (' [Y/n] ' if default else ' [y/N] ')).lower().strip()
-        if not answer:
-            return default
-        if answer in ('n', 'no'):
-            return False
-        if answer in ('y', 'yes'):
-            return True
-
-
-def uninstall(quiet: bool) -> NoReturn:
-    """Uninstall DipDup and its dependencies with pipx"""
-    env = DipDupEnvironment()
-    env.prepare()
-    if not quiet:
-        env.print()
-
-    package = 'dipdup'
-    if package in env._pipx_packages:
-        echo(f'Uninstalling {package}')
-        env.run_cmd('pipx', 'uninstall', package)
-
-    done('Done! DipDup is uninstalled.')
+def run_cmd(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+    print(Colors.YELLOW, f'$ {" ".join(args)}', Colors.ENDC)
+    try:
+        return subprocess.run(
+            args,
+            **kwargs,
+            check=True, # shell=true for script
+        )
+    except subprocess.CalledProcessError as e:
+        fail(f'{args[0]} failed: {e.cmd} {e.returncode}')
 
 
 def cli() -> None:
@@ -290,17 +203,14 @@ def cli() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
-    parser.add_argument('-f', '--force', action='store_true', help='Force reinstall')
+    parser.add_argument('-f', '--force', action='store_true', help='Will replace any existing entry points with the same name in the executable directory')
     parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
-    parser.add_argument('-U', '--update', action='store_true', help='Update DipDup')
+    parser.add_argument('-U', '--upgrade', action='store_true', help='Upgrade DipDup')
     parser.add_argument('--pre', action='store_true', help='Include pre-release versions')
     parser.add_argument('-e', '--editable', action='store_true', help='Install DipDup in editable mode')
-    parser.add_argument('--with-pdm', action='store_true', help='Install PDM')
-    parser.add_argument('--with-poetry', action='store_true', help='Install Poetry')
-    parser.add_argument('--with-uv', action='store_true', help='Install uv')
     args = parser.parse_args()
 
     if not args.quiet:
@@ -309,6 +219,7 @@ def cli() -> None:
     if args.uninstall:
         uninstall(args.quiet)
     else:
+        # TODO: ensure resulted version match requested version (ensure uvx tool downgrades correctly) (old force reinstall flag)
         install(
             quiet=args.quiet,
             force=args.force,
@@ -317,10 +228,7 @@ def cli() -> None:
             path=args.path.strip() if args.path else None,
             pre=args.pre,
             editable=args.editable,
-            update=args.update,
-            with_pdm=args.with_pdm,
-            with_poetry=args.with_poetry,
-            with_uv=args.with_uv,
+            upgrade=args.upgrade,
         )
 
 
