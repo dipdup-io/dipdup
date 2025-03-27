@@ -2,6 +2,7 @@
 import asyncio
 import atexit
 import logging
+from shutil import which
 import sys
 import traceback
 from collections import defaultdict
@@ -984,6 +985,10 @@ async def new(
 
     green_echo('Project created successfully!')
     green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
+
+    if which('uv'):
+        import dipdup.install
+        dipdup.install.run_cmd(f'cd {env.get_package_path(config_dict['package'])} && uv lock', shell=True)
 
 
 @cli.group()
