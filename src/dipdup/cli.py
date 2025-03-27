@@ -2,7 +2,6 @@
 import asyncio
 import atexit
 import logging
-from shutil import which
 import sys
 import traceback
 from collections import defaultdict
@@ -13,6 +12,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
+from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -988,6 +988,7 @@ async def new(
 
     if which('uv'):
         import dipdup.install
+
         dipdup.install.run_cmd(f'cd {env.get_package_path(answers['package'])} && uv lock', shell=True)
 
 
@@ -1071,7 +1072,7 @@ async def self_update(
         ref=None,
         path=None,
         pre=pre,
-        upgrade=True,
+        update=True,
     )
 
 
