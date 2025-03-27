@@ -1076,15 +1076,6 @@ async def self_update(
     )
 
 
-@self.command(name='env', hidden=True)
-@click.pass_context
-@_cli_wrapper
-async def self_env(ctx: click.Context) -> None:
-    import dipdup.install
-
-    dipdup.install.print_greeting()
-
-
 @cli.group(hidden=True)
 @click.pass_context
 @_cli_wrapper
