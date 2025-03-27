@@ -78,7 +78,7 @@ def _tab(text: str, indent: int = 23) -> str:
 
 def print_greeting() -> None:
     print()
-    print(WELCOME_ASCII)
+    print(Colors.GREEN + WELCOME_ASCII + Colors.ENDC)
     print(EPILOG)
     print()
 
@@ -123,6 +123,7 @@ def ensure_uv() -> None:
 
     echo('Installing uv')
     install_uv()
+    print('_' * 80)
 
 
 def install_uv() -> None:
