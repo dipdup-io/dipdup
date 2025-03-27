@@ -149,7 +149,7 @@ def install(
     path: str | None,
     pre: bool = False,
     editable: bool = False,
-    upgrade: bool = False,
+    update: bool = False,
 ) -> None:
     """Install DipDup and its dependencies with uv"""
     if ref and path:
@@ -171,7 +171,7 @@ def install(
     if which('dipdup'):
         if version:
             run_cmd('uv', 'tool', 'install', f'dipdup=={version}', *uv_tool_args)
-        elif upgrade:
+        elif update:
             run_cmd('uv', 'tool', 'upgrade', 'dipdup', *uv_tool_args)
     elif path:
         echo(f'Installing DipDup from `{path}`')
@@ -208,17 +208,12 @@ def cli() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
-    parser.add_argument(
-        '-f',
-        '--force',
-        action='store_true',
-        help='Will replace any existing entry points with the same name in the executable directory',
-    )
+    parser.add_argument('-f', '--force', action='store_true', help='Force reinstall DipDup')
     parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')
     parser.add_argument('-u', '--uninstall', action='store_true', help='Uninstall DipDup')
-    parser.add_argument('-U', '--upgrade', action='store_true', help='Upgrade DipDup')
+    parser.add_argument('-U', '--update', action='store_true', help='Update DipDup')
     parser.add_argument('--pre', action='store_true', help='Include pre-release versions')
     parser.add_argument('-e', '--editable', action='store_true', help='Install DipDup in editable mode')
     args = parser.parse_args()
@@ -238,7 +233,7 @@ def cli() -> None:
             path=args.path.strip() if args.path else None,
             pre=args.pre,
             editable=args.editable,
-            upgrade=args.upgrade,
+            update=args.update,
         )
 
 
