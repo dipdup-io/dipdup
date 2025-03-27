@@ -40,7 +40,7 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Install dev dependencies
-        run: cd dipdup_indexer; make install; uv tool install --force .
+        run: cd dipdup_indexer; make install; uv tool install --force ..
 
       - name: make all
         run: cd dipdup_indexer; make all
