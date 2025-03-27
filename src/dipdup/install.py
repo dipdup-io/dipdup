@@ -75,6 +75,7 @@ def done(msg: str) -> NoReturn:
 def _tab(text: str, indent: int = 23) -> str:
     return text + ' ' * (indent - len(text))
 
+
 def print_greeting() -> None:
     print()
     print(WELCOME_ASCII)
@@ -93,10 +94,12 @@ def print_greeting() -> None:
     print(_tab('uv tools:') + ', '.join(uvx_tool_list()))
     print()
 
-def uvx_tool_list() -> None:
+
+def uvx_tool_list() -> set[str]:
     """Get installed uvx packages"""
     output = run_cmd('uv', 'tool', 'list', capture_output=True).stdout.decode()
     return {line.split()[0] for line in output.splitlines() if line and not line.startswith('-')}
+
 
 def prepare() -> None:
     # NOTE: Show warning if user is root
@@ -109,6 +112,7 @@ def prepare() -> None:
 
     ensure_uv()
 
+
 def ensure_uv() -> None:
     if not sys.version.startswith('3.12'):
         fail('DipDup requires Python 3.12')
@@ -119,6 +123,7 @@ def ensure_uv() -> None:
 
     echo('Installing uv')
     install_uv()
+
 
 def install_uv() -> None:
     run_cmd('curl -LsSf https://astral.sh/uv/install.sh | sh', shell=True)
@@ -192,7 +197,7 @@ def run_cmd(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
         return subprocess.run(
             args,
             **kwargs,
-            check=True, # shell=true for script
+            check=True,  # shell=true for script
         )
     except subprocess.CalledProcessError as e:
         fail(f'{args[0]} failed: {e.cmd} {e.returncode}')
@@ -203,7 +208,12 @@ def cli() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
-    parser.add_argument('-f', '--force', action='store_true', help='Will replace any existing entry points with the same name in the executable directory')
+    parser.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='Will replace any existing entry points with the same name in the executable directory',
+    )
     parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')
     parser.add_argument('-p', '--path', help='Install DipDup from a local path')

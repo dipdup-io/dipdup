@@ -939,7 +939,6 @@ async def self_install(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -948,9 +947,6 @@ async def self_install(
         path=path,
         pre=pre,
         editable=editable,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
     )
 
 
@@ -984,7 +980,6 @@ async def self_update(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -992,10 +987,7 @@ async def self_update(
         ref=None,
         path=None,
         pre=pre,
-        update=True,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
+        upgrade=True,
     )
 
 
@@ -1005,9 +997,7 @@ async def self_update(
 async def self_env(ctx: click.Context) -> None:
     import dipdup.install
 
-    env = dipdup.install.DipDupEnvironment()
-    env.refresh()
-    env.print()
+    dipdup.install.print_greeting()
 
 
 @cli.group(hidden=True)
