@@ -115,7 +115,7 @@ def prepare() -> None:
 
 def ensure_uv() -> None:
     if not sys.version.startswith('3.12'):
-        fail('DipDup requires Python 3.12')
+        echo('WARNING: DipDup requires Python 3.12, another Python version will be installed', Colors.YELLOW)
 
     """Ensure uv is installed for current user"""
     if which('uv'):
