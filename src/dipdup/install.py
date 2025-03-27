@@ -127,7 +127,6 @@ def ensure_uv() -> None:
 
 def install_uv() -> None:
     run_cmd('curl -LsSf https://astral.sh/uv/install.sh | sh', shell=True)
-    # TODO: try source $HOME/.local/bin/env
     os.environ['PATH'] = str(Path.home() / '.local' / 'bin') + os.pathsep + os.environ['PATH']
 
 
