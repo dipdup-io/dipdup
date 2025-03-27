@@ -988,7 +988,7 @@ async def new(
 
     if which('uv'):
         import dipdup.install
-        dipdup.install.run_cmd(f'cd {env.get_package_path(config_dict['package'])} && uv lock', shell=True)
+        dipdup.install.run_cmd(f'cd {env.get_package_path(answers['package'])} && uv lock', shell=True)
 
 
 @cli.group()
