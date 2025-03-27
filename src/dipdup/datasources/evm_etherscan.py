@@ -56,7 +56,7 @@ class EvmEtherscanDatasource(AbiDatasource[EvmEtherscanDatasourceConfig]):
                             self._logger.warning('Failed to get ABI: %s', e)
 
                 try:
-                    return cast(dict[str, Any], orjson.loads(result))
+                    return cast('dict[str, Any]', orjson.loads(result))
                 except orjson.JSONDecodeError as e:
                     raise DatasourceError(result, self.name) from e
 
@@ -78,5 +78,5 @@ class EvmEtherscanDatasource(AbiDatasource[EvmEtherscanDatasourceConfig]):
 
         regex = r'id=["\']js-copytextarea2(.*)>(\[.*?)\<\/pre'
         if (match := re.search(regex, html)) and (abi := match.group(2)):
-            return cast(dict[str, Any], orjson.loads(abi))
+            return cast('dict[str, Any]', orjson.loads(abi))
         raise DatasourceError('Failed to get ABI', self.name)

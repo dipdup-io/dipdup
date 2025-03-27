@@ -137,7 +137,7 @@ class SubstrateCodeGenerator(CodeGenerator):
 
             for datasource_config in index_config.datasources:
                 if isinstance(datasource_config, SubstrateSubscanDatasourceConfig):
-                    datasource = cast(SubstrateSubscanDatasource, self._datasources[datasource_config.name])
+                    datasource = cast('SubstrateSubscanDatasource', self._datasources[datasource_config.name])
                     break
             else:
                 raise NotImplementedError('Codegen currently requires `substrate.subscan` datasource')

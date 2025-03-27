@@ -1221,6 +1221,26 @@
       "title": "JobConfig",
       "type": "object"
     },
+    "McpConfig": {
+      "additionalProperties": false,
+      "description": "Config for MCP server",
+      "properties": {
+        "host": {
+          "default": "127.0.0.1",
+          "description": "Host to bind to",
+          "title": "host",
+          "type": "string"
+        },
+        "port": {
+          "default": 9999,
+          "description": "Port to bind to",
+          "title": "port",
+          "type": "integer"
+        }
+      },
+      "title": "McpConfig",
+      "type": "object"
+    },
     "PostgresDatabaseConfig": {
       "additionalProperties": false,
       "description": "Postgres database connection config",
@@ -3310,6 +3330,19 @@
       "default": "INFO",
       "description": "Modify logging verbosity",
       "title": "logging"
+    },
+    "mcp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/McpConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "MCP server config",
+      "title": "mcp"
     },
     "package": {
       "description": "Name of indexer's Python package, existing or not",

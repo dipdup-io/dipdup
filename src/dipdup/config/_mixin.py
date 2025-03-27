@@ -64,7 +64,7 @@ class CodegenMixin(ABC):
         kwargs: dict[str, type[Any] | None] = {}
         for name, cls in self.iter_arguments():
             cls = cls.split(' as ')[0]
-            kwargs[name] = cast(type | None, locate(cls))
+            kwargs[name] = cast('type | None', locate(cls))
         return kwargs
 
 

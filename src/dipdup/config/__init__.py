@@ -545,6 +545,18 @@ class ApiConfig:
     port: int = 46339  # dial INDEX 😎
 
 
+@dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
+class McpConfig:
+    """Config for MCP server
+
+    :param host: Host to bind to
+    :param port: Port to bind to
+    """
+
+    host: str = '127.0.0.1'
+    port: int = 9999
+
+
 # NOTE: Should be the only place where extras are allowed
 @dataclass(config=ConfigDict(extra='allow', defer_build=True), kw_only=True)
 class AdvancedConfig:
@@ -591,6 +603,7 @@ class DipDupConfig(InteractiveMixin):
     :param advanced: Advanced config
     :param custom: User-defined configuration to use in callbacks
     :param logging: Modify logging verbosity
+    :param mcp: MCP server config
     """
 
     spec_version: ToStr
@@ -610,6 +623,7 @@ class DipDupConfig(InteractiveMixin):
     advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
+    mcp: McpConfig | None = None
 
     def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):
@@ -954,7 +968,7 @@ class DipDupConfig(InteractiveMixin):
         )
         template_config._name = name
         self._resolve_template(template_config)
-        index_config = cast(ResolvedIndexConfigU, self.indexes[name])
+        index_config = cast('ResolvedIndexConfigU', self.indexes[name])
         self._resolve_index_links(index_config)
         index_config._name = name
 
@@ -1183,7 +1197,7 @@ class DipDupConfig(InteractiveMixin):
 
     def _set_names(self) -> None:
         named_config_sections = cast(
-            tuple[dict[str, NameMixin], ...],
+            'tuple[dict[str, NameMixin], ...]',
             (
                 self.contracts,
                 self.datasources,

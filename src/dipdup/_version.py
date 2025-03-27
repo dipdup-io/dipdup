@@ -63,7 +63,7 @@ async def _get_latest_version() -> str | None:
         try:
             response = await session.get(RELEASES_URL)
             response_json = await response.json()
-            return cast(str, response_json['tag_name'])
+            return cast('str', response_json['tag_name'])
         except Exception as e:
             _logger.debug('Failed to get the latest version from GitHub: %s', e)
     return None
@@ -81,7 +81,7 @@ def _read_cached_version() -> str | None:
 
     try:
         cached_version = cast(
-            CachedVersion,
+            'CachedVersion',
             json.loads(CACHE_PATH.read_bytes()),
         )
         # NOTE: Invalidate cache if installed version is different

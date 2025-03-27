@@ -30,7 +30,7 @@ class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
             url='',
             json=query,
         )
-        return cast(list[dict[str, Any]], response)
+        return cast('list[dict[str, Any]]', response)
 
 
 class AbstractSubsquidDatasource(
