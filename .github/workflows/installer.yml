@@ -30,14 +30,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: macOS runner workaround
-        run: pip install --upgrade pip pipx
-
       - name: Install DipDup
         run: python src/dipdup/install.py --quiet --path .
 
@@ -48,9 +40,9 @@ jobs:
         run: cd dipdup_indexer; dipdup init
 
       - name: Install dev dependencies
-        run: cd dipdup_indexer; pdm venv create; pdm remove dipdup; pdm add ..; pdm install
+        run: cd dipdup_indexer; make install; uv tool install --force ..
 
       - name: make all
-        run: cd dipdup_indexer; $(pdm venv activate); make all
+        run: cd dipdup_indexer; source .venv/bin/activate; make all
 
       # NOTE: Installer is published in `docs` workflow

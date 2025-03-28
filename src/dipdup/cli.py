@@ -12,6 +12,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
+from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -985,6 +986,11 @@ async def new(
     green_echo('Project created successfully!')
     green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
 
+    if which('uv'):
+        import dipdup.install
+
+        dipdup.install.run_cmd(f'cd {env.get_package_path(answers['package'])} && uv lock', shell=True)
+
 
 @cli.group()
 @click.pass_context
@@ -1018,7 +1024,6 @@ async def self_install(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -1027,9 +1032,6 @@ async def self_install(
         path=path,
         pre=pre,
         editable=editable,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
     )
 
 
@@ -1063,7 +1065,6 @@ async def self_update(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -1072,21 +1073,7 @@ async def self_update(
         path=None,
         pre=pre,
         update=True,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
     )
-
-
-@self.command(name='env', hidden=True)
-@click.pass_context
-@_cli_wrapper
-async def self_env(ctx: click.Context) -> None:
-    import dipdup.install
-
-    env = dipdup.install.DipDupEnvironment()
-    env.refresh()
-    env.print()
 
 
 @cli.group(hidden=True)

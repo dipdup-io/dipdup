@@ -256,7 +256,6 @@ test_params = (
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('config', 'export', '--full'), None),
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('package', 'tree'), None),
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('report', 'ls'), None),
-    ('demo_tezos_dex.yml', 'demo_tezos_dex', ('self', 'env'), None),
     ('demo_tezos_dex.yml', 'demo_tezos_dex', ('schema', 'export'), None),
 )
 
