@@ -16,8 +16,8 @@ from dipdup.exceptions import DatasourceError
 class EvmEtherscanDatasource(AbiDatasource[EvmEtherscanDatasourceConfig]):
     _default_http_config = HttpConfig(
         ratelimit_rate=1,
-        ratelimit_period=5,
-        ratelimit_sleep=15,
+        ratelimit_period=1,
+        ratelimit_sleep=5,
         retry_count=5,
     )
 

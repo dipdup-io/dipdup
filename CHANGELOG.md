@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [8.3.0] - ????-??-??
+
+### Added
+
+- mcp: Added initial implementation of Model Context Protocol (MCP) server.
+
+### Changed
+
+- cli: `install.py` script and `dipdup self` commands use `uv tool` instead of `pipx`.
+- cli: `new` command uses default values for some `replay.yaml` fields.
+
 ## [8.2.2] - 2025-03-13
 
 ### Added

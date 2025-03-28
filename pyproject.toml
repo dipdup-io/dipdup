@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.2.2"
+version = "8.3.0"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
@@ -152,8 +152,8 @@ exclude_lines = [
 includes = ["src/dipdup"]
 
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["uv_build"]
+build-backend = "uv_build"
 
 [dependency-groups]
 lint = [
