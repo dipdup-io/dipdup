@@ -6,7 +6,7 @@ Example of spawning indexes in runtime
 
 This project is based on [DipDup](https://dipdup.io), a framework for building featureful dapps.
 
-You need a Linux/macOS system with Python 3.12 installed. To install DipDup with pipx or use our installer:
+You need a Linux/macOS system with Python 3.12 installed. To install DipDup with uv or use our installer:
 
 ```shell
 curl -Lsf https://dipdup.io/install.py | python3.12
