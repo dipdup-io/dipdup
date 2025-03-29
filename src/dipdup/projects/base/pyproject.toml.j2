@@ -66,12 +66,9 @@ exclude = "{{ project.package }}"
 module = "ruamel"
 ignore_missing_imports = true
 
-{% if project.package_manager in ('pdm', 'uv', 'none') -%}
+[tool.hatch.build.targets.wheel]
+packages = ["{{ project.package }}"]
+
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-{%- elif project.package_manager == 'poetry' %}
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-{%- endif %}
+requires = ["hatchling"]
+build-backend = "hatchling.build"

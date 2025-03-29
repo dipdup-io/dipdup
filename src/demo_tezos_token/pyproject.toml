@@ -46,6 +46,9 @@ exclude = "demo_tezos_token"
 module = "ruamel"
 ignore_missing_imports = true
 
+[tool.hatch.build.targets.wheel]
+packages = ["demo_tezos_token"]
+
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
