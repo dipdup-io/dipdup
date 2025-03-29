@@ -1,9 +1,7 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
-import atexit
 import logging
 import sys
-import traceback
 from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Coroutine
@@ -12,7 +10,6 @@ from contextlib import suppress
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
-from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import TypeVar
@@ -21,15 +18,9 @@ from typing import cast
 import click
 import uvloop
 
-from dipdup import __version__
 from dipdup import env
-from dipdup._version import check_version
-from dipdup.config import McpConfig
-from dipdup.exceptions import CallbackError
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.sys import set_up_process
-from dipdup.yaml import DipDupYAMLConfig
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
@@ -138,6 +129,10 @@ def red_echo(message: str) -> None:
 
 def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
+    import atexit
+    import traceback
+
+    from dipdup.exceptions import CallbackError
     from dipdup.exceptions import Error
 
     def _print() -> None:
@@ -233,7 +228,7 @@ def _skip_cli_group() -> bool:
     help=WELCOME_ASCII,
     epilog=EPILOG,
 )
-@click.version_option(__version__)
+@click.version_option()
 @click.option(
     '--config',
     '-c',
@@ -265,6 +260,8 @@ def _skip_cli_group() -> bool:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: list[str]) -> None:
+    from dipdup.sys import set_up_process
+
     set_up_process()
 
     if _skip_cli_group():
@@ -313,6 +310,8 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
 
     # NOTE: Fire and forget, do not block instant commands
     if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
+        from dipdup._version import check_version
+
         # FIXME: https://github.com/dipdup-io/dipdup/issues/1114; replace with `fire_and_forget` call once resolved.
         await check_version()
 
@@ -554,6 +553,7 @@ async def mcp_run(ctx: click.Context) -> None:
 
     from dipdup import mcp
     from dipdup.config import DipDupConfig
+    from dipdup.config import McpConfig
     from dipdup.context import McpContext
     from dipdup.dipdup import DipDup
 
@@ -923,6 +923,8 @@ async def new(
 ) -> None:
     """Create a new project interactively."""
 
+    from shutil import which
+
     from survey._widgets import Escape  # type: ignore[import-untyped]
 
     from dipdup.config import DipDupConfig
@@ -931,6 +933,7 @@ async def new(
     from dipdup.project import get_default_answers
     from dipdup.project import render_project
     from dipdup.project import template_from_terminal
+    from dipdup.yaml import DipDupYAMLConfig
 
     config_dict: dict[str, Any] | None = None
 
