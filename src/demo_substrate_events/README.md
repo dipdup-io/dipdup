@@ -6,10 +6,10 @@ Substrate balance transfers
 
 This project is based on [DipDup](https://dipdup.io), a framework for building featureful dapps.
 
-You need a Linux/macOS system with Python 3.12 installed. To install DipDup with pipx or use our installer:
+You need a Linux/macOS system with Python 3.12 installed. To install DipDup use `uv tool` or our installer script:
 
 ```shell
-curl -Lsf https://dipdup.io/install.py | python3.12
+curl -Lsf https://dipdup.io/install.py | python3
 ```
 
 See the [Installation](https://dipdup.io/docs/installation) page for all options.

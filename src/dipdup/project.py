@@ -153,7 +153,6 @@ def namespace_from_terminal() -> str | None:
         ),
         default=0,
     )
-    print(res)
     if res == '[multiple]':
         return None
     return res.lower()
@@ -236,10 +235,6 @@ def answers_from_terminal() -> Answers:
         )
 
     answers['package'] = package
-    # answers['version'] = survey.routines.input(
-    #     'Enter project version: ',
-    #     value=answers['version'],
-    # )
 
     # NOTE: Used in pyproject.toml, README.md and some other places
     answers['description'] = survey.routines.input(
@@ -283,30 +278,6 @@ def answers_from_terminal() -> Answers:
             '`timescaledb-ha` Docker image uses `/home/postgres/pgdata/data` as a data path; generated files were updated accordingly.',
             fg='yellow',
         )
-
-    # big_yellow_echo('Miscellaneous tunables; leave default values if unsure')
-
-    # _, answers['package_manager'] = prompt_anyof(
-    #     question='Choose package manager',
-    #     options=(
-    #         'uv',
-    #         'poetry',
-    #         'pdm',
-    #         'none',
-    #     ),
-    #     comments=(
-    #         'uv (recommended)',
-    #         'Poetry',
-    #         'PDM',
-    #         '[none]',
-    #     ),
-    #     default=0,
-    # )
-
-    # answers['line_length'] = survey.routines.input(
-    #     'Enter maximum line length for linters: ',
-    #     value=answers['line_length'],
-    # )
 
     return answers
 

@@ -132,6 +132,7 @@ class DipDupPackage:
             self.mcp: '**/*.py',
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
+            Path(PACKAGE_MARKER): None,
         }
 
     def in_migration(self) -> bool:
@@ -181,11 +182,7 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
-        if env.NO_SYMLINK:
-            touch(self.root / PACKAGE_MARKER)
-            return
-
-        if self.root != Path.cwd():
+        if env.NO_SYMLINK or self.root != Path.cwd():
             return
 
         symlink_path = self.root.joinpath(self.name)
