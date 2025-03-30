@@ -12,7 +12,7 @@ help:           ## Show this help (default)
 	@grep -Fh "##" $(MAKEFILE_LIST) | grep -Fv grep -F | sed -e 's/\\$$//' | sed -e 's/##//'
 
 all:            ## Run an entire CI pipeline
-	make format lint
+	make install format lint
 
 ##
 
@@ -21,23 +21,13 @@ install:        ## Install dependencies
 
 update:         ## Update dependencies
 	dipdup self update -q
-	uv sync --all-extras --all-groups --link-mode symlink
+	uv sync --all-extras --all-groups --link-mode symlink -U
 
-format:         ## Format with all tools
-	make black
-
-lint:           ## Lint with all tools
-	make ruff mypy
-
-##
-
-black:          ## Format with black
+format:         ## Format code with black
 	black .
 
-ruff:           ## Lint with ruff
+lint:           ## Lint code with ruff and mypy
 	ruff check --fix .
-
-mypy:           ## Lint with mypy
 	mypy .
 
 ##

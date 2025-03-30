@@ -93,8 +93,8 @@ typeignore:     ## Find type:ignore comments
 ##
 
 demos:          ## Recreate demo projects from templates
-	python scripts/demos.py render ${DEMO}
-	python scripts/demos.py init ${DEMO}
+	DIPDUP_NO_SYMLINK=1 python scripts/demos.py render ${DEMO}
+	DIPDUP_NO_SYMLINK=1 python scripts/demos.py init ${DEMO}
 	make format lint
 
 demos_refresh:
