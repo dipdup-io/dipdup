@@ -46,11 +46,6 @@ image:          ## Build Docker image
 	docker buildx build . -t ${PACKAGE}:${TAG} --load
 
 ##
-ruff:           ## Lint with ruff
-
-mypy:           ## Lint with mypy
-
-##
 ##-- Docs
 ##
 
