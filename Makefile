@@ -33,7 +33,7 @@ all:            ## Run an entire CI pipeline
 	make format lint test
 
 format:         ## Format with all tools
-	ruff format
+	ruff format ${SOURCE}
 
 lint:           ## Lint with all tools
 	ruff check --fix --unsafe-fixes ${SOURCE}

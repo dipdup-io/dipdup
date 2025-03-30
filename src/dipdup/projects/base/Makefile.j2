@@ -40,7 +40,7 @@ update:         ## Update dependencies
 {% endif %}
 
 format:         ## Format code with ruff
-	ruff format
+	ruff format .
 
 lint:           ## Lint code with ruff and mypy
 	ruff check --fix .

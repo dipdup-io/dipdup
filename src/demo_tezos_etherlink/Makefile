@@ -24,7 +24,7 @@ update:         ## Update dependencies
 	uv sync --all-extras --all-groups --link-mode symlink -U
 
 format:         ## Format code with ruff
-	ruff format
+	ruff format .
 
 lint:           ## Lint code with ruff and mypy
 	ruff check --fix .
