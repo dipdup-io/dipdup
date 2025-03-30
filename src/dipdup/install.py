@@ -4,7 +4,6 @@ WARNING: No imports allowed here except stdlib! Otherwise, `curl | python` magic
 And no 3.12-only code too. Just to print nice colored "not supported" message instead of crashing.
 
 Some functions are importable to use in `dipdup.cli`.
-This script is also available as `dipdup-install` or `python -m dipdup.install`.
 """
 
 import argparse
@@ -91,15 +90,6 @@ def print_greeting() -> None:
             print(_tab(var + ':') + os.environ[var])
     print()
 
-    print(_tab('uv tools:') + ', '.join(uvx_tool_list()))
-    print()
-
-
-def uvx_tool_list() -> set[str]:
-    """Get installed uvx packages"""
-    output = run_cmd('uv', 'tool', 'list', capture_output=True).stdout.decode()
-    return {line.split()[0] for line in output.splitlines() if line and not line.startswith('-')}
-
 
 def prepare() -> None:
     # NOTE: Show warning if user is root
@@ -108,7 +98,7 @@ def prepare() -> None:
 
     # NOTE: Show warning if user is in virtualenv
     if sys.base_prefix != sys.prefix:
-        echo('WARNING: Running in virtualenv, dipdup(and uv) will be installed globaly', Colors.YELLOW)
+        echo('WARNING: Running in virtualenv, it will be ignored', Colors.YELLOW)
 
     ensure_uv()
 
@@ -168,7 +158,12 @@ def install(
     if editable:
         uv_tool_args.append('-e')
 
-    if which('dipdup'):
+    dipdup_path = which(
+        'dipdup',
+        path=os.environ['PATH'].replace('.venv', 'NULL'),
+    )
+
+    if dipdup_path is not None:
         if version:
             run_cmd('uv', 'tool', 'install', f'dipdup=={version}', *uv_tool_args)
         elif update:
@@ -185,10 +180,7 @@ def install(
         pkg = 'dipdup' if not version else f'dipdup=={version}'
         run_cmd('uv', 'tool', 'install', pkg, *uv_tool_args)
 
-    done(
-        'Done! DipDup is ready to use.\n'
-        'Run `dipdup new` to create a new project or `dipdup` to see all available commands.'
-    )
+    done('Done! DipDup is ready to use. Run `dipdup` see available commands.')
 
 
 def run_cmd(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
@@ -207,7 +199,7 @@ def cli() -> None:
     echo('Welcome to DipDup installer')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-q', '--quiet', action='store_true', help='Use default answers for all questions')
+    parser.add_argument('-q', '--quiet', action='store_true', help='Less verbose output')
     parser.add_argument('-f', '--force', action='store_true', help='Force reinstall DipDup')
     parser.add_argument('-v', '--version', help='Install DipDup from a specific version')
     parser.add_argument('-r', '--ref', help='Install DipDup from a specific git ref')

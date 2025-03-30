@@ -2,7 +2,6 @@
 import asyncio
 import logging
 import sys
-from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Coroutine
 from contextlib import AsyncExitStack

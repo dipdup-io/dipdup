@@ -28,7 +28,7 @@ install:        ## Install dependencies
 {% endif %}
 
 update:         ## Update dependencies
-	# dipdup self update -q
+	dipdup self update -q
 {%- if project.package_manager == 'uv' %}
 	uv sync --all-extras --all-groups --link-mode symlink
 {%- elif project.package_manager == 'poetry' %}

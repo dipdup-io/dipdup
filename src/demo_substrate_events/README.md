@@ -9,7 +9,7 @@ This project is based on [DipDup](https://dipdup.io), a framework for building f
 You need a Linux/macOS system with Python 3.12 installed. To install DipDup with `uv` use our installer:
 
 ```shell
-curl -Lsf https://dipdup.io/install.py | python3.12
+curl -Lsf https://dipdup.io/install.py | python3
 ```
 
 See the [Installation](https://dipdup.io/docs/installation) page for all options.

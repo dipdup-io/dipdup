@@ -20,7 +20,7 @@ install:        ## Install dependencies
 	uv sync --all-extras --all-groups --link-mode symlink --locked
 
 update:         ## Update dependencies
-	# dipdup self update -q
+	dipdup self update -q
 	uv sync --all-extras --all-groups --link-mode symlink
 
 format:         ## Format with all tools
