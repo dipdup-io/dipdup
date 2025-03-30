@@ -82,7 +82,19 @@ def get_path(key: str) -> Path | None:
 
 
 def reload_env() -> None:
-    global CI, DEBUG, DOCKER, JSON_LOG, LOW_MEMORY, MIGRATIONS, NEXT, NO_SYMLINK, NO_VERSION_CHECK, PACKAGE_PATH, REPLAY_PATH, TEST
+    global \
+        CI, \
+        DEBUG, \
+        DOCKER, \
+        JSON_LOG, \
+        LOW_MEMORY, \
+        MIGRATIONS, \
+        NEXT, \
+        NO_SYMLINK, \
+        NO_VERSION_CHECK, \
+        PACKAGE_PATH, \
+        REPLAY_PATH, \
+        TEST
 
     CI = get_bool('DIPDUP_CI')
     DEBUG = get_bool('DIPDUP_DEBUG')

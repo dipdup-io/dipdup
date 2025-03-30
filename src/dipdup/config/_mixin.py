@@ -132,7 +132,6 @@ class TerminalOptions:
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class InteractiveMixin:
-
     @classmethod
     @abstractmethod
     def from_terminal(cls, opts: TerminalOptions) -> Self: ...

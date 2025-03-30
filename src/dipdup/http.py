@@ -220,7 +220,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         elif url.startswith('http'):
             url = url.replace(self._url, '').rstrip('/')
         else:
-            url = f"{self._path.rstrip('/')}/{url}"
+            url = f'{self._path.rstrip("/")}/{url}'
 
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent

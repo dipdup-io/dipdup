@@ -301,7 +301,6 @@ def extract_multilocation_payload(data: Any) -> Any:
         return tuple(extract_multilocation_payload(item) for item in data)
 
     if isinstance(data, dict):
-
         if len(data) == 1 and (key := next(iter(data.keys()))).startswith('X'):
             return data[key]
 

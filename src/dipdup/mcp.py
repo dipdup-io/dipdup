@@ -169,7 +169,6 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
 
 @server.read_resource()  # type: ignore[no-untyped-call,misc]
 async def read_resource(uri: AnyUrl) -> str:
-
     if uri.scheme != 'dipdup':
         raise ValueError(f'Invalid scheme: {uri.scheme}')
 

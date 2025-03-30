@@ -33,10 +33,11 @@ all:            ## Run an entire CI pipeline
 	make format lint test
 
 format:         ## Format with all tools
-	make black
+	ruff format
 
 lint:           ## Lint with all tools
-	make ruff mypy
+	ruff check --fix --unsafe-fixes ${SOURCE}
+	mypy ${SOURCE}
 
 test:           ## Run tests
 	COVERAGE_CORE=sysmon pytest tests
@@ -45,15 +46,9 @@ image:          ## Build Docker image
 	docker buildx build . -t ${PACKAGE}:${TAG} --load
 
 ##
-
-black:          ## Format with black
-	black ${SOURCE}
-
 ruff:           ## Lint with ruff
-	ruff check --fix --unsafe-fixes ${SOURCE}
 
 mypy:           ## Lint with mypy
-	mypy ${SOURCE}
 
 ##
 ##-- Docs

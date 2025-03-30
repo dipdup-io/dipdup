@@ -44,7 +44,6 @@ class CairoAbi(TypedDict):
 
 
 def _convert_type(cairo_type: CairoType) -> dict[str, Any]:
-
     if isinstance(cairo_type, EventType | NamedTupleType):
         return {
             'type': 'object',
@@ -124,7 +123,6 @@ def sn_keccak(x: str) -> str:
 
 
 def _loaded_abis(package: DipDupPackage) -> dict[str, Abi]:
-
     from starknet_py.abi.v2.parser import AbiParser
     from starknet_py.abi.v2.parser import AbiParsingError
 

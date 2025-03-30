@@ -8,7 +8,6 @@ from dipdup.datasources import AbiDatasource
 
 
 class EvmBlockvisionDatasource(AbiDatasource[EvmBlockvisionDatasourceConfig]):
-
     async def run(self) -> None:
         pass
 

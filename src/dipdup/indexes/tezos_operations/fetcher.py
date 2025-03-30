@@ -120,7 +120,7 @@ async def get_origination_filters(
             if pattern_config.source:
                 _logger.warning(
                     "`source.address` filter significantly hurts indexing performance and doesn't support strict"
-                    " typing. Consider using `originated_contract.code_hash` instead"
+                    ' typing. Consider using `originated_contract.code_hash` instead'
                 )
                 if address := pattern_config.source.address:
                     datasource = random.choice(datasources)
@@ -205,7 +205,6 @@ async def get_sr_cement_filters(
 
 
 class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, str]):
-
     _offset: int | None
 
     async def fetch(self) -> None:
@@ -229,7 +228,6 @@ class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosT
 
 
 class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, int]):
-
     _offset: int | None
 
     async def fetch(self) -> None:
@@ -257,7 +255,6 @@ class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzkt
 
 
 class MigrationOriginationFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, None]):
-
     _offset: int | None
 
     async def fetch(self) -> None:

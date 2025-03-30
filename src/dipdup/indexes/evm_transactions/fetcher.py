@@ -40,7 +40,6 @@ class EvmSubsquidTransactionFetcher(EvmSubsquidFetcher[EvmTransactionData]):
 
 
 class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmTransactionData]):
-
     async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[EvmTransactionData, ...]]]:
         transaction_iter = self._fetch_by_level()
         async for level, batch in self.readahead_by_level(transaction_iter):
