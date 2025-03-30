@@ -28,7 +28,6 @@ from dipdup.prometheus import Histogram
 from dipdup.prometheus import Metric
 
 if TYPE_CHECKING:
-
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)

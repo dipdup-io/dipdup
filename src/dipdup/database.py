@@ -283,7 +283,7 @@ async def pg_get_views(conn: AsyncpgClient, schema_name: str) -> list[str]:
         row[0]
         for row in (
             await conn.execute_query(
-                "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                'SELECT table_name FROM information_schema.views WHERE table_schema ='
                 f" '{schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
                 f" WHERE schemaname = '{schema_name}'"
             )

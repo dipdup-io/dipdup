@@ -54,7 +54,6 @@ class StarknetSubsquidEventFetcher(StarknetSubsquidFetcher[StarknetEventData]):
 
 
 class EventFetcherChannel(FetcherChannel[StarknetEventData, StarknetNodeDatasource, tuple[str, tuple[str, ...]]]):
-
     _offset: str | None
 
     @property

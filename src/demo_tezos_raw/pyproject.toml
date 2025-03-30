@@ -15,25 +15,20 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black>=24.10.0",
     "ruff>=0.9.2",
     "mypy>=1.14.1",
 ]
-
-[tool.black]
-line-length = 120
-target-version = ['py312']
-skip-string-normalization = true
-extend-exclude = "demo_tezos_raw"
 
 [tool.ruff]
 line-length = 120
 target-version = 'py312'
 
 [tool.ruff.lint]
-extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
-flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "RET", "RUF", "TCH", "UP"]
 isort = { force-single-line = true}
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.mypy]
 python_version = "3.12"

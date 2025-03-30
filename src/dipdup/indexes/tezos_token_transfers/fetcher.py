@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 
 class TokenTransferFetcher(TezosTzktFetcher[TezosTokenTransferData]):
-
     def __init__(
         self,
         name: str,

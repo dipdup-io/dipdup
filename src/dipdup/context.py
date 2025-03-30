@@ -341,7 +341,6 @@ class DipDupContext:
         name: str,
         state: Index | None = None,
     ) -> IndexCls[Any, Any, Any]:
-
         index_config = self.config.get_index(name)
 
         index: IndexCls[Any, Any, Any]
@@ -541,7 +540,14 @@ class DipDupContext:
         | EvmBlockvisionDatasource
     ):
         """Get `evm` datasource by name"""
-        return self.get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource, EvmSourcifyDatasource, EvmBlockvisionDatasource)  # type: ignore[return-value]
+        return self.get_datasource(
+            name,
+            EvmSubsquidDatasource,
+            EvmNodeDatasource,
+            EvmEtherscanDatasource,
+            EvmSourcifyDatasource,
+            EvmBlockvisionDatasource,
+        )  # type: ignore[return-value]
 
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
@@ -551,7 +557,9 @@ class DipDupContext:
         self, name: str
     ) -> SubstrateSubsquidDatasource | SubstrateSubscanDatasource | SubstrateNodeDatasource:
         """Get `substrate` datasource by name"""
-        return self.get_datasource(name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource)  # type: ignore[return-value]
+        return self.get_datasource(
+            name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource
+        )  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name

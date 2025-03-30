@@ -463,7 +463,7 @@ def check_links(source: Path, http: bool) -> None:
         green_echo('=> Checking HTTP links')
 
         for i, link in enumerate(http_links):
-            green_echo(f'{i+1}/{len(http_links)}: checking link `{link}`')
+            green_echo(f'{i + 1}/{len(http_links)}: checking link `{link}`')
             try:
                 res = subprocess.run(
                     ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '10', link),
@@ -543,7 +543,7 @@ def dump_references() -> None:
     green_echo('=> Converting to ugly Markdown files')
     for page in REFERENCES:
         to = Path(page['md_path'])
-        from_ = Path(f"docs/_build/html/{page['html_path']}")
+        from_ = Path(f'docs/_build/html/{page["html_path"]}')
 
         # NOTE: Strip HTML boilerplate
         lines = from_.read_text().split('\n')
@@ -813,7 +813,7 @@ def move_pages(path: Path, insert: int, pop: int) -> None:
                 break
 
             file = toc[index]
-            new_name = path / f'{index + 1}.{'.'.join(file.stem.split(".")[1:])}.md'
+            new_name = path / f'{index + 1}.{".".join(file.stem.split(".")[1:])}.md'
             file.rename(new_name)
             toc[index + 1] = new_name
 
@@ -831,7 +831,7 @@ def move_pages(path: Path, insert: int, pop: int) -> None:
         for index in sorted(toc.keys()):
             if index > pop:
                 file = toc.pop(index)
-                new_name = path / f'{index + 1}.{'.'.join(file.stem.split(".")[1:])}.md'
+                new_name = path / f'{index + 1}.{".".join(file.stem.split(".")[1:])}.md'
                 file.rename(new_name)
                 toc[index - 1] = new_name
 

@@ -670,7 +670,7 @@ class DipDupConfig(InteractiveMixin):
                 section_singular = SINGULAR_FORMS[section]
 
                 if not prompt_bool(
-                    f'Do you want to add {'another' if another else 'the first'} {section_singular}?',
+                    f'Do you want to add {"another" if another else "the first"} {section_singular}?',
                     default=not another,
                 ):
                     break
@@ -696,7 +696,6 @@ class DipDupConfig(InteractiveMixin):
                 )
 
                 if issubclass(type_, InteractiveMixin):
-
                     res = type_.from_terminal(opts)
                 else:
                     _logger.debug('Not an `InteractiveMixin`; falling back to field inspection', type_.__name__)
@@ -725,7 +724,6 @@ class DipDupConfig(InteractiveMixin):
         raw: bool = False,
         unsafe: bool = False,
     ) -> DipDupConfig:
-
         config_json, config_environment = DipDupYAMLConfig.load(
             paths=paths,
             environment=environment,

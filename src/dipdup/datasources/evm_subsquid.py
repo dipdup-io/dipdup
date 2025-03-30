@@ -64,7 +64,6 @@ class _EvmSubsquidWorker(AbstractSubsquidWorker[Query]):
 
 
 class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig, Query]):
-
     def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
         super().__init__(config)
 

@@ -66,7 +66,6 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
 
 
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
-
     @abstractmethod
     async def get_abi(self, address: str) -> AbiJson: ...
 

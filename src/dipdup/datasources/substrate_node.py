@@ -178,7 +178,6 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
         data = message.data
 
         if 'id' in data:
-
             # NOTE: Save subscription id
             if self._pending_subscription:
                 self._subscription_ids[data['result']] = self._pending_subscription
@@ -247,7 +246,7 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
             event: dict[str, Any] = raw_event.decode()
             result.append(
                 {
-                    'name': f'{event['module_id']}.{event['event_id']}',
+                    'name': f'{event["module_id"]}.{event["event_id"]}',
                     'index': event['event_index'],
                     'extrinsic_index': event['extrinsic_idx'],
                     'decoded_args': event['attributes'],

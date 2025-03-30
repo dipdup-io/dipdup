@@ -6,7 +6,6 @@ from dipdup.datasources import AbiDatasource
 
 
 class EvmSourcifyDatasource(AbiDatasource[EvmSourcifyDatasourceConfig]):
-
     async def run(self) -> None:
         pass
 

@@ -37,7 +37,6 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
 
 
 class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
-
     def __init__(
         self,
         name: str,
@@ -95,7 +94,6 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
             ]
 
             for event_level_batch in event_level_batches:
-
                 started = time.time()
 
                 block_batch = await self.get_blocks_batch(event_level_batch)

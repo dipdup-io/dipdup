@@ -25,7 +25,6 @@ class ThreeZeroProjectMigration(ProjectMigration):
     to_spec = '3.0'
 
     def migrate_config(self, config: DipDupYAMLConfig) -> DipDupYAMLConfig:
-
         add_node = {}
 
         for alias, datasource in config.get('datasources', {}).items():

@@ -24,7 +24,6 @@ class EvmEventsIndex(
     EvmIndex[EvmEventsIndexConfig, QueueItem, EvmDatasource],
     message_type=SubsquidMessageType.evm_logs,
 ):
-
     async def _synchronize_subsquid(self, sync_level: int) -> None:
         first_level = self.state.level + 1
         fetcher = self._create_subsquid_fetcher(first_level, sync_level)

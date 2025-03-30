@@ -151,7 +151,6 @@ class DipDupYAMLConfig(dict[str, Any]):
         raw: bool = False,
         unsafe: bool = False,
     ) -> tuple[DipDupYAMLConfig, dict[str, Any]]:
-
         config = cls()
         config_environment: dict[str, str] = {}
 

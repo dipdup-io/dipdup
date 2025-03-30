@@ -417,7 +417,6 @@ def prompt_kind(
     types: tuple[type, ...],
     filter: str | None,
 ) -> type:
-
     matched = {}
     for entity_type in types:
         try:

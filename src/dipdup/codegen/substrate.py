@@ -211,7 +211,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                             / runtime_name
                             / 'substrate_events'
                             / pascal_to_snake(qualname.replace('.', ''))
-                            / f'{metadata_path.stem.replace('.', '_')}.json'
+                            / f'{metadata_path.stem.replace(".", "_")}.json'
                         )
                         if schema_path.exists():
                             continue
@@ -222,7 +222,7 @@ class SubstrateCodeGenerator(CodeGenerator):
 
         for runtime_name, events in target_events.items():
             if events:
-                msg = f'Runtime `{runtime_name}` misses following events: {', '.join(events)}'
+                msg = f'Runtime `{runtime_name}` misses following events: {", ".join(events)}'
                 raise ConfigurationError(msg)
 
     async def _generate_types(self, force: bool = False) -> None:
@@ -231,7 +231,6 @@ class SubstrateCodeGenerator(CodeGenerator):
         target_events = self.get_target_events()
 
         for typeclass_dir in self._package.types.glob('**/substrate_events/*'):
-
             # NOTE: Find corresponding event
             try:
                 events = target_events[typeclass_dir.parts[-3]]

@@ -47,7 +47,6 @@ class EvmTransactionsIndex(
             metrics._sqd_processor_last_block = _level
 
     def _create_subsquid_fetcher(self, first_level: int, last_level: int) -> EvmSubsquidTransactionFetcher:
-
         filters: deque[TransactionRequest] = deque()
         for handler_config in self._config.handlers:
             query: TransactionRequest = {}

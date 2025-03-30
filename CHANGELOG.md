@@ -21,6 +21,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: `install.py` script and `dipdup self` commands use `uv tool` instead of `pipx`.
 - cli: `new` command uses default values for some `replay.yaml` fields.
 - project: Use `hatchling` build backend for new projects.
+- project: Replace `black` with `ruff` as default formatter.
 
 ## [8.2.2] - 2025-03-13
 
