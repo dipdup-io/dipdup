@@ -39,8 +39,8 @@ update:         ## Update dependencies
 	true
 {% endif %}
 
-format:         ## Format code with black
-	black .
+format:         ## Format code with ruff
+	ruff format
 
 lint:           ## Lint code with ruff and mypy
 	ruff check --fix .

@@ -23,8 +23,8 @@ update:         ## Update dependencies
 	dipdup self update -q
 	uv sync --all-extras --all-groups --link-mode symlink -U
 
-format:         ## Format code with black
-	black .
+format:         ## Format code with ruff
+	ruff format
 
 lint:           ## Lint code with ruff and mypy
 	ruff check --fix .
