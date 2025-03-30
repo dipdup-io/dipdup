@@ -32,7 +32,7 @@ CONFIG_RE = r'dipdup.*\.ya?ml'
 NO_CONFIG_CMDS = {
     'new',
     'migrate',
-    'config',
+    'config',  # this one too
 }
 
 # NOTE: Click commands from `aerich` we use as is  for database migration
@@ -1081,51 +1081,6 @@ async def self_update(
         pre=pre,
         update=True,
     )
-
-
-@cli.group(hidden=True)
-@click.pass_context
-@_cli_wrapper
-async def abi(ctx: click.Context) -> None:
-    pass
-
-
-@abi.command(name='lookup', hidden=True)
-@click.pass_context
-@click.argument('query', type=str)
-@_cli_wrapper
-async def abi_lookup(ctx: click.Context, query: str) -> None:
-    import subprocess
-
-    from dipdup.package import DipDupPackage
-
-    config: DipDupConfig = ctx.obj.config
-    package = DipDupPackage(config.package_path)
-    package.initialize()
-
-    abi_paths = (
-        package.abi,
-        package.abi_local,
-    )
-    # NOTE: save output instead of printing it
-    res = subprocess.run(
-        ('grep', '-n', '-r', query, *abi_paths),
-        capture_output=True,
-        check=False,
-    )
-    out = res.stdout.decode()
-    lines = out.splitlines()
-    grouped_lines = defaultdict(list)
-    for line in lines:
-        path, lineno, content = line.split(':', 2)
-        grouped_lines[path].append(f'{lineno:>6}: {content}')
-
-    for path, lines in grouped_lines.items():
-        echo('')
-        echo(path)
-        for line in sorted(lines):
-            echo('- ' + line)
-        echo('')
 
 
 @cli.group()
