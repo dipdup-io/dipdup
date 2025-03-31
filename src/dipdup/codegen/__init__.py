@@ -114,6 +114,8 @@ class _BaseCodeGenerator(ABC):
         await self.generate_handlers()
         await self.generate_batch_handler()
 
+        self._package.format_lint()
+
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():
             await self._generate_callback(hook_config, 'hooks', sql=True)

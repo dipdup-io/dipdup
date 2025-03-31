@@ -85,11 +85,9 @@ typeignore:     ## Find type:ignore comments
 demos:          ## Recreate demo projects from templates
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py render ${DEMO}
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py init ${DEMO}
-	make format lint
 
 demos_refresh:
-	for demo in `ls src | grep demo | grep -v etherlink`; do cd src/$$demo && dipdup init -b -f && cd ../..; done
-	make format lint
+	for demo in `ls src | grep demo | grep -v etherlink`; do cd src/$$demo && DIPDUP_NO_SYMLINK=1 dipdup init -b -f && cd ../..; done
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format lint update demos test docs

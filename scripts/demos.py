@@ -7,7 +7,6 @@ from shutil import rmtree
 import click
 
 from dipdup.cli import green_echo
-from dipdup.cli import red_echo
 from dipdup.project import answers_from_replay
 from dipdup.project import render_project
 
@@ -38,9 +37,7 @@ def _render_demo(path: Path) -> None:
 
     render_project(answers, force=True)
 
-    package_path = Path(package).replace(f'src/{package}')
-    apply_ruff_lint(package_path)
-    apply_ruff_formatter(package_path)
+    Path(package).replace(f'src/{package}')
 
 
 def _init_demo(path: Path) -> None:
@@ -57,21 +54,6 @@ def _init_demo(path: Path) -> None:
 def _rm_demo(path: Path) -> None:
     rmtree(path, ignore_errors=True)
     rmtree(path.parent / 'src' / path.name, ignore_errors=True)
-
-
-def apply_ruff_lint(path: Path) -> None:
-    try:
-        subprocess.run(
-            ('ruff', 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
-        )
-    except subprocess.CalledProcessError as e:
-        red_echo(f'Linting errors in {path}')
-        print(f'Command: {" ".join(e.cmd)}\n{e.stdout.decode()}')
-        exit(e.returncode)
-
-
-def apply_ruff_formatter(path: Path) -> None:
-    subprocess.run(('ruff', 'format', str(path.absolute())), capture_output=True, check=True)
 
 
 @click.group(help='Various tools to generate demo projects from templates. Read the script source!')
