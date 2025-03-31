@@ -10,11 +10,14 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
-- mcp: Added initial implementation of Model Context Protocol (MCP) server.
+- mcp: Added Model Context Protocol (MCP) server implementation.
+- mcp: Added built-in resources for accessing indexer configuration and metrics.
+- mcp: Added support for exposing custom tools and resources via `@dipdup.mcp` decorators.
 
 ### Fixed
 
 - package: Create package marker even if helper symlink is present.
+- project: Fixed built sdist/wheel artifacts which contained unrelated files.
 
 ### Changed
 
