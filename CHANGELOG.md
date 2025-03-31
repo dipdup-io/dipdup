@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Added
 
 - mcp: Added initial implementation of Model Context Protocol (MCP) server.
+- demos: Added ruff linting and formating on demo rendering
 
 ### Fixed
 
