@@ -155,7 +155,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 lint = [
-    "black",
     "mypy",
     "types-pytz",
     "types-tabulate",
