@@ -55,12 +55,12 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
     return tuple(lines)
 
 
-def apply_ruff_lint(path: Path) -> None:
+def apply_ruff_lint(path: Path, ruff_executable: Path) -> None:
     from dipdup.cli import red_echo
 
     try:
         c_process = subprocess.run(
-            ('ruff', 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
+            (str(ruff_executable), 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
         )
     except subprocess.CalledProcessError as e:
         red_echo(f'Linting errors in {path}')
@@ -71,8 +71,8 @@ def apply_ruff_lint(path: Path) -> None:
     _logger.info('Linting output: %s', c_process.stdout.decode().rstrip())
 
 
-def apply_ruff_formatter(path: Path) -> None:
-    c_process = subprocess.run(('ruff', 'format', str(path.absolute())), capture_output=True, check=True)
+def apply_ruff_formatter(path: Path, ruff_executable: Path) -> None:
+    c_process = subprocess.run((str(ruff_executable), 'format', str(path.absolute())), capture_output=True, check=True)
     _logger.info('Applied ruff formatter to `%s`', path)
     _logger.info('Formatter output: %s', c_process.stdout.decode().rstrip())
 
@@ -222,8 +222,14 @@ class DipDupPackage:
         import_submodules(f'{self.name}.mcp')
 
     def format_lint(self) -> None:
-        apply_ruff_formatter(self.root)
-        apply_ruff_lint(self.root)
+        from os import getenv
+        print(getenv('PATH'))
+        from shutil import which
+        ruff_executable = Path(which('ruff')).parent / 'ruff'
+        print(ruff_executable)
+
+        apply_ruff_formatter(self.root, ruff_executable)
+        apply_ruff_lint(self.root, ruff_executable)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'
