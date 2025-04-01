@@ -418,6 +418,7 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
         ctx=ctx,
         base=True,
         force=True,
+        no_linter=True,
         include=[],
     )
 
@@ -985,6 +986,7 @@ async def new(
         ctx=ctx,
         base=False,
         force=force,
+        no_linter=False,
         include=[],
     )
 
