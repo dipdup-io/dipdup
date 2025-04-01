@@ -60,7 +60,7 @@ def apply_ruff_lint(path: Path) -> None:
 
     try:
         c_process = subprocess.run(
-            ('uv', 'run', 'ruff', 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
+            ('ruff', 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
         )
     except subprocess.CalledProcessError as e:
         red_echo(f'Linting errors in {path}')
@@ -72,7 +72,7 @@ def apply_ruff_lint(path: Path) -> None:
 
 
 def apply_ruff_formatter(path: Path) -> None:
-    c_process = subprocess.run(('uv', 'run', 'ruff', 'format', str(path.absolute())), capture_output=True, check=True)
+    c_process = subprocess.run(('ruff', 'format', str(path.absolute())), capture_output=True, check=True)
     _logger.info('Applied ruff formatter to `%s`', path)
     _logger.info('Formatter output: %s', c_process.stdout.decode().rstrip())
 
