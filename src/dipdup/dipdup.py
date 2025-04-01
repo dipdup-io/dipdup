@@ -693,6 +693,7 @@ class DipDup:
                 await codegen.init(
                     force=force,
                     base=base,
+                    no_linter=no_linter,
                 )
 
             await generate_environments(self._config, package)
