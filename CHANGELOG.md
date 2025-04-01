@@ -6,16 +6,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.3.0] - ????-??-??
+## [8.3.0] - 2025-05-01
 
 ### Added
 
-- mcp: Added initial implementation of Model Context Protocol (MCP) server.
-- demos: Added ruff linting and formating on demo rendering
+- cli: Apply ruff linting and formating on init.
+- mcp: Added Model Context Protocol (MCP) server implementation.
+- mcp: Added built-in resources for accessing indexer configuration and metrics.
+- mcp: Added support for exposing custom tools and resources via `@dipdup.mcp` decorators.
 
 ### Fixed
 
 - package: Create package marker even if helper symlink is present.
+- project: Fixed built sdist/wheel artifacts which contained unrelated files.
 
 ### Changed
 
@@ -659,7 +662,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.2.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.3.0...HEAD
+[8.3.0]: https://github.com/dipdup-io/dipdup/compare/8.2.2...8.3.0
 [8.2.2]: https://github.com/dipdup-io/dipdup/compare/8.2.1...8.2.2
 [8.2.1]: https://github.com/dipdup-io/dipdup/compare/8.2.0...8.2.1
 [8.2.0]: https://github.com/dipdup-io/dipdup/compare/8.2.0rc1...8.2.0
