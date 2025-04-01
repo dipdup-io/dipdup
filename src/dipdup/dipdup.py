@@ -658,6 +658,7 @@ class DipDup:
         self,
         force: bool = False,
         base: bool = False,
+        no_linter: bool = False,
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
