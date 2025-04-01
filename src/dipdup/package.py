@@ -225,8 +225,8 @@ class DipDupPackage:
         from ruff.__main__ import find_ruff_bin  # type: ignore[import-untyped]
         ruff_executable = find_ruff_bin()
 
-        apply_ruff_formatter(self.root, ruff_executable)
         apply_ruff_lint(self.root, ruff_executable)
+        apply_ruff_formatter(self.root, ruff_executable)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'
