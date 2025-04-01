@@ -222,7 +222,7 @@ class DipDupPackage:
         import_submodules(f'{self.name}.mcp')
 
     def format_lint(self) -> None:
-        from ruff.__main__ import find_ruff_bin
+        from ruff.__main__ import find_ruff_bin  # type: ignore[import-untyped]
         ruff_executable = find_ruff_bin()
 
         apply_ruff_formatter(self.root, ruff_executable)
