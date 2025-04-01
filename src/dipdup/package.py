@@ -225,7 +225,7 @@ class DipDupPackage:
         from os import getenv
         print(getenv('PATH'))
         from shutil import which
-        ruff_executable = Path(which('ruff')).parent / 'ruff'
+        ruff_executable = Path(which('dipdup')).parent / 'ruff'
         print(ruff_executable)
 
         apply_ruff_formatter(self.root, ruff_executable)
