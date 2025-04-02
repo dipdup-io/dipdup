@@ -1,4 +1,5 @@
 import logging
+import subprocess
 from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
@@ -52,6 +53,28 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
             lines.append(_branch + inner_pointer + relative_path.as_posix())
 
     return tuple(lines)
+
+
+def apply_ruff_lint(path: Path, ruff_executable: str) -> None:
+    from dipdup.cli import red_echo
+
+    try:
+        c_process = subprocess.run(
+            (ruff_executable, 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        red_echo(f'Linting errors in {path}')
+        print(f'Command: {" ".join(e.cmd)}\n{e.stdout.decode()}')
+        exit(e.returncode)
+
+    _logger.info('Applied ruff linter to `%s`', path)
+    _logger.info('Linting output: %s', c_process.stdout.decode().rstrip())
+
+
+def apply_ruff_formatter(path: Path, ruff_executable: str) -> None:
+    c_process = subprocess.run((ruff_executable, 'format', str(path.absolute())), capture_output=True, check=True)
+    _logger.info('Applied ruff formatter to `%s`', path)
+    _logger.info('Formatter output: %s', c_process.stdout.decode().rstrip())
 
 
 class DipDupPackage:
@@ -197,6 +220,14 @@ class DipDupPackage:
         import_submodules(f'{self.name}.hooks')
         import_submodules(f'{self.name}.types')
         import_submodules(f'{self.name}.mcp')
+
+    def format_lint(self) -> None:
+        from ruff.__main__ import find_ruff_bin  # type: ignore[import-untyped]
+
+        ruff_executable = find_ruff_bin()
+
+        apply_ruff_formatter(self.root, ruff_executable)
+        apply_ruff_lint(self.root, ruff_executable)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'

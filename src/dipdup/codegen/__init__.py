@@ -12,6 +12,7 @@ from typing import Any
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
+from dipdup import env
 from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
@@ -84,6 +85,7 @@ class _BaseCodeGenerator(ABC):
         self,
         force: bool = False,
         base: bool = False,
+        no_linter: bool = False,
     ) -> None:
         # NOTE: Package structure
         self._package.initialize()
@@ -113,6 +115,9 @@ class _BaseCodeGenerator(ABC):
         await self.generate_system_hooks()
         await self.generate_handlers()
         await self.generate_batch_handler()
+
+        if not env.NO_LINTER and not no_linter:
+            self._package.format_lint()
 
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():

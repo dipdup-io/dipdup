@@ -348,6 +348,7 @@ async def run(ctx: click.Context) -> None:
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
 @click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.option('--no-linter', is_flag=True, help='Skip linter and formatter.')
 @click.argument(
     'include',
     type=str,
@@ -360,6 +361,7 @@ async def init(
     ctx: click.Context,
     force: bool,
     base: bool,
+    no_linter: bool,
     include: list[str],
 ) -> None:
     """Generate project tree, typeclasses and callback stubs.
@@ -374,6 +376,7 @@ async def init(
     await dipdup.init(
         force=force,
         base=base or bool(include),
+        no_linter=no_linter,
         include=set(include),
     )
 
@@ -415,6 +418,7 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
         ctx=ctx,
         base=True,
         force=True,
+        no_linter=True,
         include=[],
     )
 
@@ -982,6 +986,7 @@ async def new(
         ctx=ctx,
         base=False,
         force=force,
+        no_linter=False,
         include=[],
     )
 

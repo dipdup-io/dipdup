@@ -658,6 +658,7 @@ class DipDup:
         self,
         force: bool = False,
         base: bool = False,
+        no_linter: bool = False,
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
@@ -692,6 +693,7 @@ class DipDup:
                 await codegen.init(
                     force=force,
                     base=base,
+                    no_linter=no_linter,
                 )
 
             await generate_environments(self._config, package)

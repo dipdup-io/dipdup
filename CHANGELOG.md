@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.3.0] - 2025-05-01
+## [8.3.0] - 2025-05-02
 
 ### Added
 
+- cli: Apply ruff linting and formating on init.
 - mcp: Added Model Context Protocol (MCP) server implementation.
 - mcp: Added built-in resources for accessing indexer configuration and metrics.
 - mcp: Added support for exposing custom tools and resources via `@dipdup.mcp` decorators.
