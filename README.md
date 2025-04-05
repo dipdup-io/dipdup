@@ -1,4 +1,4 @@
-[![Twitter](https://badgen.net/badge/icon/dipdup_io?icon=twitter&label=)](https://twitter.com/dipdup_io)
+[![Twitter](https://badgen.net/badge/follow/dipdup_io?color=2c2c2c)](https://x.com/dipdup_io)
 [![Monthly downloads](https://static.pepy.tech/badge/dipdup/month)](https://pepy.tech/project/dipdup)
 [![GitHub stars](https://img.shields.io/github/stars/dipdup-io/dipdup?color=2c2c2c&style=plain)](https://github.com/dipdup-io/dipdup)
 [![Python Version](https://img.shields.io/pypi/pyversions/dipdup?color=2c2c2c)](https://www.python.org)
