@@ -72,6 +72,10 @@ DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
+DEFAULT_API_PORT = 46339  # dial INDEX 😎
+DEFAULT_MCP_PORT = 9999
+DEFAULT_PROMETHEUS_PORT = 8000
+LOCAL = '127.0.0.1'
 
 
 def _valid_url(v: str, ws: bool) -> str:
@@ -469,8 +473,8 @@ class PrometheusConfig:
     :param update_interval: Interval to update some metrics in seconds
     """
 
-    host: str = '127.0.0.1'
-    port: int = 8000
+    host: str = LOCAL
+    port: int = DEFAULT_PROMETHEUS_PORT
     update_interval: float = 1.0
 
 
@@ -541,8 +545,8 @@ class ApiConfig:
     :param port: Port to bind to
     """
 
-    host: str = '127.0.0.1'
-    port: int = 46339  # dial INDEX 😎
+    host: str = LOCAL
+    port: int = DEFAULT_API_PORT
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
@@ -551,10 +555,18 @@ class McpConfig:
 
     :param host: Host to bind to
     :param port: Port to bind to
+    :param api_url: URL of the management API
+    :param compatibility: Whether to expose resources as tools for clients that don't support MCP resources
     """
 
-    host: str = '127.0.0.1'
-    port: int = 9999
+    host: str = LOCAL
+    port: int = DEFAULT_MCP_PORT
+    api_url: Url | None = None
+    compatibility: bool = True
+
+    @property
+    def default_api_url(self) -> Url:
+        return self.api_url or f'http://{self.host}:{DEFAULT_API_PORT}'
 
 
 # NOTE: Should be the only place where extras are allowed
@@ -938,7 +950,7 @@ class DipDupConfig(InteractiveMixin):
         self._resolve_aliases()
         self._validate()
 
-    def dump(self) -> str:
+    def dump(self, strip_secrets: bool = False) -> str:
         return DipDupYAMLConfig(
             **orjson.loads(
                 orjson.dumps(
@@ -946,7 +958,7 @@ class DipDupConfig(InteractiveMixin):
                     default=to_jsonable_python,
                 )
             )
-        ).dump()
+        ).dump(strip_secrets)
 
     def add_index(
         self,

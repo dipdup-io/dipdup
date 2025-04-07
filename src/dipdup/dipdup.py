@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import logging.config
 import time
 from asyncio import CancelledError
 from asyncio import Event
@@ -842,31 +843,47 @@ class DipDup:
         from prometheus_client import start_http_server
 
         _logger.info(
-            'Setting up Prometheus at http://%s:%s', self._config.prometheus.host, self._config.prometheus.port
+            'Setting up Prometheus at http://%s:%s',
+            self._config.prometheus.host,
+            self._config.prometheus.port,
         )
-        start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+        start_http_server(
+            self._config.prometheus.port,
+            self._config.prometheus.host,
+        )
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
         if not api_config or env.TEST or env.CI:
             return
 
-        _logger.info('Setting up internal API at http://%s:%s', api_config.host, api_config.port)
+        _logger.info(
+            'Setting up internal API at http://%s:%s',
+            api_config.host,
+            api_config.port,
+        )
 
-        from aiohttp import web
+        import uvicorn
+        from anyio import from_thread
 
         from dipdup.api import create_api
 
         api = await create_api(self._ctx)
-        runner = web.AppRunner(api)
-        await runner.setup()
-        site = web.TCPSite(runner, api_config.host, api_config.port)
+
+        uv_config = uvicorn.Config(
+            app=api,
+            host=api_config.host,
+            port=api_config.port,
+            log_config={'version': 1, 'disable_existing_loggers': False},
+            lifespan='off',
+        )
+        server = uvicorn.Server(uv_config)
 
         @asynccontextmanager
         async def _api_wrapper() -> AsyncIterator[None]:
-            await site.start()
-            yield
-            await site.stop()
+            with from_thread.start_blocking_portal() as portal:
+                portal.start_task_soon(server.serve)
+                yield
 
         await stack.enter_async_context(_api_wrapper())
 

@@ -242,7 +242,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             method=method,
             url=url,
             headers=headers,
-            raise_for_status=True,
+            raise_for_status=not raw,
             params=params,
             **kwargs,
         ) as response:

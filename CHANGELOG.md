@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [8.3.1] - 2025-04-??
+
+### Fixed
+
+- api: Fixed configuring logging.
+- api: Strip secret fields from API responses.
+- mcp: Expose resources as tools for clients that don't support MCP resources yet.
+- project: Fixed generation of compose manifest and configs for MCP environment.
+
+### Changed
+
+- api: Built-in management API is now using Starlette instead of plain aiohttp.
+
 ## [8.3.0] - 2025-04-02
 
 ### Added

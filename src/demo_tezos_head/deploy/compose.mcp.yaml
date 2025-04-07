@@ -1,4 +1,4 @@
-name: {{ project.package }}
+name: demo_tezos_head
 
 services:
   dipdup:
@@ -16,11 +16,11 @@ services:
       - hasura
 
   db:
-    image: {{ project.postgres_image }}
+    image: postgres:16
     ports:
       - "${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
-      - db:{{ project.postgres_data_path }}
+      - db:/var/lib/postgresql/data
     restart: always
     env_file: .env
     environment:
@@ -34,7 +34,7 @@ services:
       retries: 5
 
   hasura:
-    image: {{ project.hasura_image }}
+    image: hasura/graphql-engine:latest
     ports:
       - "${HASURA_HOST_PORT:-8080}:8080"
     depends_on:

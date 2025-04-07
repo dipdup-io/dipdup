@@ -1225,6 +1225,25 @@
       "additionalProperties": false,
       "description": "Config for MCP server",
       "properties": {
+        "api_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Url"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "URL of the management API",
+          "title": "api_url"
+        },
+        "compatibility": {
+          "default": true,
+          "description": "Whether to expose resources as tools for clients that don't support MCP resources",
+          "title": "compatibility",
+          "type": "boolean"
+        },
         "host": {
           "default": "127.0.0.1",
           "description": "Host to bind to",

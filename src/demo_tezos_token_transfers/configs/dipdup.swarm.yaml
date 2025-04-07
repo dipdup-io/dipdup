@@ -28,3 +28,4 @@ api:
 mcp:
   host: 0.0.0.0
   port: 9999
+  api_url: http://dipdup:46339

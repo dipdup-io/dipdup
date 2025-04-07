@@ -1,61 +1,69 @@
 import functools
+import logging
+import traceback
 from collections.abc import Awaitable
 from collections.abc import Callable
-from json import JSONDecodeError
 
-import orjson
-from aiohttp import web
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import JSONResponse
+from starlette.responses import Response
+from starlette.routing import Route
 
 import dipdup.performance
 from dipdup.context import DipDupContext
-from dipdup.exceptions import Error
-from dipdup.utils import json_dumps
+
+_logger = logging.getLogger(__name__)
 
 
 def _method_wrapper(
     ctx: 'DipDupContext',
-    method: Callable[[DipDupContext, web.Request], Awaitable[web.Response]],
-) -> Callable[[web.Request], Awaitable[web.Response]]:
+    method: Callable[[DipDupContext, Request], Awaitable[Response]],
+) -> Callable[[Request], Awaitable[Response]]:
     @functools.wraps(method)
-    async def resolved_method(request: web.Request) -> web.Response:
+    async def resolved_method(request: Request) -> Response:
         try:
             return await method(ctx, request)
-        except TypeError as e:
-            return web.Response(body=f'Invalid parameters: {e.args[0]}', status=400)
-        except JSONDecodeError:
-            return web.Response(body='Request is not a JSON', status=400)
-        except Error as e:
-            return web.Response(body=str(e), status=400)
         except Exception as e:
-            return web.Response(body=str(e), status=500)
+            error_msg = f'ERROR: {e}\n'
+            error_msg += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+            return Response(str(e), status_code=500)
 
     return resolved_method
 
 
-async def _add_index(ctx: 'DipDupContext', request: web.Request) -> web.Response:
-    await ctx.add_index(**(await request.json()))
-    return web.Response()
+async def _add_index(ctx: 'DipDupContext', request: Request) -> Response:
+    await ctx.add_index(**request.query_params)
+    return Response()
 
 
-async def _add_contract(ctx: 'DipDupContext', request: web.Request) -> web.Response:
-    await ctx.add_contract(**(await request.json()))
-    return web.Response()
+async def _add_contract(ctx: 'DipDupContext', request: Request) -> Response:
+    await ctx.add_contract(**request.query_params)
+    return Response()
 
 
-async def _performance(ctx: 'DipDupContext', request: web.Request) -> web.Response:
-    return web.json_response(
+async def _performance(ctx: 'DipDupContext', request: Request) -> Response:
+    return JSONResponse(
         dipdup.performance.get_stats(),
-        dumps=lambda x: json_dumps(x, option=orjson.OPT_SORT_KEYS).decode(),
     )
 
 
-async def create_api(ctx: DipDupContext) -> web.Application:
-    routes = web.RouteTableDef()
-    routes.get('/')(_method_wrapper(ctx, _performance))
-    routes.get('/performance')(_method_wrapper(ctx, _performance))
-    routes.post('/add_index')(_method_wrapper(ctx, _add_index))
-    routes.post('/add_contract')(_method_wrapper(ctx, _add_contract))
+async def _config(ctx: 'DipDupContext', request: Request) -> Response:
+    return Response(content=ctx.config.dump(strip_secrets=True))
 
-    app = web.Application()
-    app.add_routes(routes)
-    return app
+
+async def _home(request: Request) -> Response:
+    return Response('dipdup API is running')
+
+
+async def create_api(ctx: DipDupContext) -> Starlette:
+    routes = [
+        Route('/', _home),
+        Route('/performance', _method_wrapper(ctx, _performance)),
+        Route('/metrics', _method_wrapper(ctx, _performance)),
+        Route('/add_index', _method_wrapper(ctx, _add_index), methods=['POST']),
+        Route('/add_contract', _method_wrapper(ctx, _add_contract), methods=['POST']),
+        Route('/config', _method_wrapper(ctx, _config), methods=['GET']),
+    ]
+
+    return Starlette(routes=routes)
