@@ -875,11 +875,9 @@ class DipDup:
             host=api_config.host,
             port=api_config.port,
             log_config={'version': 1, 'disable_existing_loggers': False},
+            lifespan='off',
         )
         server = uvicorn.Server(uv_config)
-
-        logging.getLogger('uvicorn').setLevel(logging.INFO)
-        logging.getLogger('mcp').setLevel(logging.INFO)
 
         @asynccontextmanager
         async def _api_wrapper() -> AsyncIterator[None]:
