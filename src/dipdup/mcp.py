@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import logging
+import traceback
+from collections.abc import Awaitable
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import TypeVar
 from typing import cast
 
 from pydantic import AnyUrl
+
+T = TypeVar('T', bound=Callable[..., Awaitable[Any]])
 
 from dipdup import models
 from dipdup.context import McpContext
@@ -20,9 +26,8 @@ import mcp.server
 import mcp.types as types
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
-    from collections.abc import Callable
     from collections.abc import Iterable
+
 
 # NOTE: Resource and tool callbacks
 
@@ -66,6 +71,65 @@ async def _resource_indexes() -> list[dict[str, Any]]:
             }
         )
     return res
+
+
+def _get_indexer_url() -> str:
+    from dipdup.config import McpConfig
+
+    ctx = get_ctx()
+    return (ctx.config.mcp or McpConfig()).default_api_url
+
+
+async def _tool_api_config() -> str:
+    return await api_call(
+        url=_get_indexer_url(),
+        method='get',
+        path='/config',
+    )
+
+
+async def _tool_api_add_contract(
+    kind: str,
+    name: str,
+    address: str | None = None,
+    typename: str | None = None,
+    code_hash: str | int | None = None,
+) -> str:
+    await api_call(
+        url=_get_indexer_url(),
+        method='post',
+        path='/add_contract',
+        params={
+            'kind': kind,
+            'name': name,
+            'address': address,
+            'typename': typename,
+            'code_hash': code_hash,
+        },
+    )
+    return await _tool_api_config()
+
+
+async def _tool_api_add_index(
+    name: str,
+    template: str,
+    values: dict[str, Any],
+    first_level: int | None = None,
+    last_level: int | None = None,
+) -> str:
+    await api_call(
+        url=_get_indexer_url(),
+        method='post',
+        path='/add_index',
+        params={
+            'name': name,
+            'template': template,
+            'values': values,
+            'first_level': first_level,
+            'last_level': last_level,
+        },
+    )
+    return await _tool_api_config()
 
 
 # NOTE: Built-in tools and resources
@@ -116,11 +180,45 @@ def get_ctx() -> McpContext:
     return _ctx
 
 
-def _set_ctx(ctx: McpContext) -> None:
+def set_ctx(ctx: McpContext) -> None:
     global _ctx
     if _ctx is not None:
         raise FrameworkException('DipDup context is already initialized')
     _ctx = ctx
+
+
+async def api_call(
+    url: str,
+    method: str,
+    path: str,
+    params: dict[str, Any] | None = None,
+) -> str:
+    from dipdup.config import HttpConfig
+    from dipdup.config.http import HttpDatasourceConfig
+    from dipdup.datasources.http import HttpDatasource
+
+    _logger.info('Calling API: %s %s', method, url + path)
+
+    config = HttpDatasourceConfig(
+        kind='http',
+        url=url,
+        http=HttpConfig(
+            retry_count=0,
+        ),
+    )
+    config._name = 'dipdup_api'
+
+    datasource = HttpDatasource(config)
+    async with datasource:
+        res = await datasource.request(
+            method=method,
+            url=path.lstrip('/'),
+            json={k: v for k, v in (params or {}).items() if v is not None},
+            raw=True,
+        )
+        if res.status != 200:
+            return f'ERROR: {res.status} {res.reason}'
+        return await res.text()  # type: ignore[no-any-return]
 
 
 # TODO: Add instructions
@@ -157,14 +255,22 @@ async def list_resource_templates() -> list[types.ResourceTemplate]:
 @server.call_tool()  # type: ignore[no-untyped-call,misc]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     if name in _user_tools_fn:
-        res = await _user_tools_fn[name](**arguments)
-        return [types.TextContent(type='text', text=res)]
+        fn = _user_tools_fn[name]
+    elif name in DIPDUP_TOOLS_FN:
+        fn = DIPDUP_TOOLS_FN[name]
+    else:
+        msg = f'Tool `{name}` not found'
+        raise FrameworkException(msg)
 
-    if name in DIPDUP_TOOLS_FN:
-        res = await DIPDUP_TOOLS_FN[name](**arguments)
+    try:
+        res = await fn(**arguments)
         return [types.TextContent(type='text', text=res)]
+    except Exception as e:
+        res = f'ERROR: {e}\n'
+        res += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        _logger.error(res, exc_info=e)
 
-    raise NotImplementedError(name)
+    return [types.TextContent(type='text', text=res)]
 
 
 @server.read_resource()  # type: ignore[no-untyped-call,misc]
@@ -173,22 +279,38 @@ async def read_resource(uri: AnyUrl) -> str:
         raise ValueError(f'Invalid scheme: {uri.scheme}')
 
     name = uri.host.lstrip('/')  # type: ignore[union-attr]
-    if name in _user_resources_fn:
-        res = await _user_resources_fn[name]()
-    elif name in DIPDUP_RESOURCES_FN:
-        res = await DIPDUP_RESOURCES_FN[name]()
+
+    if name in _user_resources:
+        fn = _user_resources_fn[name]
+    elif name in DIPDUP_RESOURCES:
+        fn = DIPDUP_RESOURCES_FN[name]
     else:
         msg = f'Resource `{name}` not found'
         raise FrameworkException(msg)
 
-    # FIXME: mimeType is always `text/plain`
-    return json_dumps(res, None).decode()
+    try:
+        res = await fn()
+
+        # FIXME: mimeType is always `text/plain`
+        return json_dumps(res, None).decode()
+    except Exception as e:
+        error_msg = f'ERROR: {e}\n'
+        error_msg += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        _logger.error(error_msg, exc_info=e)
+        return error_msg
 
 
-def tool(name: str, description: str) -> Any:
-    def wrapper(func: Any) -> Any:
+def tool(
+    name: str,
+    description: str,
+    namespace: str = 'project',
+) -> Callable[[T], T]:
+    def wrapper(func: T) -> T:
+        nonlocal name
         global _user_tools
         global _user_tools_fn
+
+        name = f'{namespace}_{name}'
 
         if name in _user_tools or name in DIPDUP_TOOLS:
             msg = f'Tool `{name}` is already registered'
@@ -210,8 +332,8 @@ def tool(name: str, description: str) -> Any:
     return wrapper
 
 
-def resource(name: str, description: str, mime_type: str) -> Any:
-    def wrapper(func: Any) -> Any:
+def resource(name: str, description: str, mime_type: str) -> Callable[[T], T]:
+    def wrapper(func: T) -> T:
         global _user_resources
         global _user_resources_fn
 
@@ -229,3 +351,35 @@ def resource(name: str, description: str, mime_type: str) -> Any:
         return func
 
     return wrapper
+
+
+# NOTE: Register built-in tools
+tool(
+    name='add_contract',
+    description='Add a new contract to the running indexer',
+    namespace='api',
+)(_tool_api_add_contract)
+tool(
+    name='add_index',
+    description='Add a new index to the running indexer',
+    namespace='api',
+)(_tool_api_add_index)
+tool(
+    name='config',
+    description='Get the current indexer configuration',
+    namespace='api',
+)(_tool_api_config)
+
+
+# FIXME: Many clients still don't support resources. Expose them as tools too.
+def expose_resources_as_tools() -> None:
+    for name, res in DIPDUP_RESOURCES.items():
+        desc = f'Compatibility alias for resource `{name}`: {res.description}'
+
+        async def _proxy_resource(name: str = name) -> str:
+            res = await DIPDUP_RESOURCES_FN[name]()
+            if isinstance(res, str):
+                return res
+            return json_dumps(res, None).decode()
+
+        tool(name, desc, namespace='resource')(_proxy_resource)

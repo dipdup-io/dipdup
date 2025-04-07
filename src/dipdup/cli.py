@@ -572,44 +572,51 @@ async def mcp_run(ctx: click.Context) -> None:
         logger=mcp._logger,
         server=mcp.server,
     )
-    mcp._set_ctx(mcp_ctx)
+    mcp.set_ctx(mcp_ctx)
 
-    # NOTE: Import all submodules to find @mcp decorators
+    if mcp_config.compatibility:
+        mcp.expose_resources_as_tools()
+
+    # NOTE: Import all submodules to find @dipdup.mcp decorators
     dipdup._ctx.package.verify()
 
-    # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
-    with from_thread.start_blocking_portal() as portal:
-        async with AsyncExitStack() as stack:
-            await dipdup._create_datasources()
-            await dipdup._set_up_database(stack)
+    sse = SseServerTransport('/messages/')
 
-            sse = SseServerTransport('/messages/')
-
-            async def handle_sse(request: Any) -> None:
-                async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
-                    await mcp.server.run(
-                        read_stream=streams[0],
-                        write_stream=streams[1],
-                        initialization_options=mcp.server.create_initialization_options(),
-                        raise_exceptions=False,
-                    )
-
-            starlette_app = Starlette(
-                debug=True,
-                routes=[
-                    Route('/sse', endpoint=handle_sse),
-                    Mount('/messages/', app=sse.handle_post_message),
-                ],
+    async def handle_sse(request: Any) -> None:
+        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+            await mcp.server.run(
+                read_stream=streams[0],
+                write_stream=streams[1],
+                initialization_options=mcp.server.create_initialization_options(),
+                raise_exceptions=True,
             )
 
-            uv_config = uvicorn.Config(
-                app=starlette_app,
-                host=mcp_config.host,
-                port=mcp_config.port,
-                log_level='debug',
-            )
-            server = uvicorn.Server(uv_config)
-            portal.call(server.serve)
+    starlette_app = Starlette(
+        debug=True,
+        routes=[
+            Route('/sse', endpoint=handle_sse),
+            Mount('/messages/', app=sse.handle_post_message),
+        ],
+    )
+
+    uv_config = uvicorn.Config(
+        app=starlette_app,
+        host=mcp_config.host,
+        port=mcp_config.port,
+        log_config={'version': 1, 'disable_existing_loggers': False},
+    )
+    server = uvicorn.Server(uv_config)
+
+    logging.getLogger('uvicorn').setLevel(logging.INFO)
+    logging.getLogger('mcp').setLevel(logging.INFO)
+
+    async with AsyncExitStack() as stack:
+        await dipdup._create_datasources()
+        await dipdup._set_up_database(stack)
+
+        # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
+        portal = stack.enter_context(from_thread.start_blocking_portal())
+        portal.call(server.serve)
 
 
 @hasura.command(name='configure')
