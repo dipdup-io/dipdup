@@ -14,8 +14,9 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- api: Fixed configuring logging.
+- api: Fixed configuring uvicorn logging.
 - api: Strip secret fields from API responses.
+- cli: Fixed logging indexer status.
 - mcp: Expose resources as tools for clients that don't support MCP resources yet.
 - project: Fixed generation of compose manifest and configs for MCP environment.
 
