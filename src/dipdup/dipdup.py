@@ -223,13 +223,12 @@ class IndexDispatcher:
             await self._ctx.transactions.cleanup()
 
     async def _update_metrics(self) -> None:
-        if not self._indexes:
-            return
-        if not all(i.state.level for i in self._indexes.values()):
+        if not self._indexes or not all(i.state.level for i in self._indexes.values()):
             return
 
         active, synced, realtime = 0, 0, 0
         levels_indexed, levels_total, levels_interval = 0, 0, 0
+
         for index in self._indexes.values():
             if index.is_active:
                 active += 1
@@ -248,7 +247,7 @@ class IndexDispatcher:
 
             initial_level = self._initial_levels[index.name]
             if not initial_level:
-                self._initial_levels[index.name] |= index.state.level
+                self._initial_levels[index.name] = index.state.level
                 continue
 
             levels_interval += index.state.level - self._previous_levels[index.name]
@@ -264,18 +263,15 @@ class IndexDispatcher:
         update_interval = time.time() - float(metrics.metrics_updated_at)
         metrics.metrics_updated_at = time.time()
 
-        last_levels_nonempty, last_objects_indexed = self._last_levels_nonempty, self._last_objects_indexed
-        batch_levels_nonempty = metrics.levels_nonempty - last_levels_nonempty
-        batch_objects = metrics.objects_indexed - last_objects_indexed
+        batch_levels_nonempty = metrics.levels_nonempty - self._last_levels_nonempty
+        batch_objects = metrics.objects_indexed - self._last_objects_indexed
 
         levels_speed = levels_interval / update_interval
         levels_speed_average = levels_indexed / (time.time() - self._started_at)
         time_passed = time.time() - self._started_at
-        time_left, progress = 0.0, 0.0
-        if levels_speed_average:
-            time_left = (levels_total - levels_indexed) / levels_speed_average
-        if levels_total:
-            progress = levels_indexed / levels_total
+
+        time_left = (levels_total - levels_indexed) / levels_speed_average if levels_speed_average else 0.0
+        progress = levels_indexed / levels_total if levels_total else 0.0
 
         # FIXME: Only with Etherlink demo. Why?
         if levels_total <= 0:
@@ -311,18 +307,19 @@ class IndexDispatcher:
 
     def _log_status(self) -> None:
         total, indexed = int(metrics.levels_total), int(metrics.levels_indexed)
-        if metrics.realtime_at:
-            _logger.info('realtime: %s levels indexed and counting', indexed)
-            return
-
         progress, left = float(metrics.progress) * 100, total - indexed
         scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
+
+        if metrics.realtime_at:
+            _logger.info('realtime: %s levels indexed and counting', scanned_levels)
+            return
+
         if not progress:
             if self._indexes:
                 if scanned_levels:
                     msg = f'indexing: {scanned_levels} levels, estimating...'
                 elif metrics.objects_indexed:
-                    msg = f'indexing: {metrics.objects_indexed} objects, estimating...'
+                    msg = f'indexing: {int(metrics.objects_indexed)} objects, estimating...'
                 else:
                     msg = 'indexing: warming up...'
             else:
