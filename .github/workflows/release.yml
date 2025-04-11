@@ -27,11 +27,6 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
       - name: Run install
         run: make install
 
@@ -94,11 +89,6 @@ jobs:
             type=pep440,pattern={{version}}
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
