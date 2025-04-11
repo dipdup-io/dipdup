@@ -84,14 +84,14 @@ class _BaseCodeGenerator(ABC):
     async def init(
         self,
         force: bool = False,
-        base: bool = False,
         no_linter: bool = False,
+        no_base: bool = False,
     ) -> None:
         # NOTE: Package structure
         self._package.initialize()
 
         # NOTE: Common files
-        if base or self._include:
+        if not (env.NO_BASE or no_base):
             _logger.info('Recreating base template with replay.yaml')
             render_base(
                 answers=self._package.replay,
@@ -116,7 +116,7 @@ class _BaseCodeGenerator(ABC):
         await self.generate_handlers()
         await self.generate_batch_handler()
 
-        if not env.NO_LINTER and not no_linter:
+        if not (env.NO_LINTER or no_linter):
             self._package.format_lint()
 
     async def generate_hooks(self) -> None:

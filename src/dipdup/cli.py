@@ -180,6 +180,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            if isinstance(e, click.UsageError):
+                raise
+
             from dipdup.report import save_report
 
             package = ctx.obj.config.package if ctx.obj else 'unknown'
@@ -347,7 +350,8 @@ async def run(ctx: click.Context) -> None:
 
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
-@click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.option('--base', '-b', is_flag=True, help='Include template base (default)')
+@click.option('--no-base', '-b', is_flag=True, help='Skip template base')
 @click.option('--no-linter', is_flag=True, help='Skip linter and formatter.')
 @click.argument(
     'include',
@@ -361,6 +365,7 @@ async def init(
     ctx: click.Context,
     force: bool,
     base: bool,
+    no_base: bool,
     no_linter: bool,
     include: list[str],
 ) -> None:
@@ -370,12 +375,17 @@ async def init(
     """
     from dipdup.dipdup import DipDup
 
+    if base:
+        if no_base:
+            raise click.BadParameter('You cannot use both `--base` and `--no-base` options at the same time')
+        _logger.warning('`--base` option became default; use `--no-base` to disable it')
+
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
 
     await dipdup.init(
         force=force,
-        base=base or bool(include),
+        no_base=no_base or bool(include),
         no_linter=no_linter,
         include=set(include),
     )

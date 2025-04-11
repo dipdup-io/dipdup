@@ -91,6 +91,7 @@ def reload_env() -> None:
         MIGRATIONS, \
         NEXT, \
         NO_LINTER, \
+        NO_BASE, \
         NO_SYMLINK, \
         NO_VERSION_CHECK, \
         PACKAGE_PATH, \
@@ -105,6 +106,7 @@ def reload_env() -> None:
     MIGRATIONS = get_bool('DIPDUP_MIGRATIONS')
     NEXT = get_bool('DIPDUP_NEXT')
     NO_LINTER = get_bool('DIPDUP_NO_LINTER')
+    NO_BASE = get_bool('DIPDUP_NO_BASE')
     NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
     NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
     PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
@@ -126,6 +128,7 @@ LOW_MEMORY: bool = get_bool('DIPDUP_LOW_MEMORY')
 MIGRATIONS: bool = get_bool('DIPDUP_MIGRATIONS')
 NEXT: bool = get_bool('DIPDUP_NEXT')
 NO_LINTER: bool = get_bool('DIPDUP_NO_LINTER')
+NO_BASE: bool = get_bool('DIPDUP_NO_BASE')
 NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
 NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
 PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
