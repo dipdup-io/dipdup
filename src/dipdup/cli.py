@@ -947,26 +947,25 @@ async def new(
 
     config_dict: dict[str, Any] | None = None
 
-    if quiet:
-        answers = get_default_answers()
-        if template:
-            answers['template'] = template
-    elif replay:
-        answers = answers_from_replay(replay)
-        if template:
-            answers['template'] = template
-    else:
-        try:
+    # NOTE: Collect answers from appropriate source
+    try:
+        if quiet:
+            answers = get_default_answers()
+        elif replay:
+            answers = answers_from_replay(replay)
+        else:
             answers = answers_from_terminal()
-            answers['template'] = template or 'demo_blank'
 
-            if template:
-                echo(f'Using template `{template}`\n')
-            else:
+            # NOTE: Handle template selection for interactive mode
+            if not template:
                 template, config_dict = template_from_terminal(answers['package'])
 
-        except Escape:
-            return
+        # NOTE: Priority: CLI arg > interactive selection > default
+        template = answers['template'] = template or answers.get('template') or 'demo_blank'
+
+        _logger.info('Using template `%s`', template)
+    except Escape:
+        return
 
     _logger.info('Rendering project')
     render_project(answers, force)
