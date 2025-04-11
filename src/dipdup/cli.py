@@ -963,7 +963,8 @@ async def new(
             if template:
                 echo(f'Using template `{template}`\n')
             else:
-                template, config_dict = template_from_terminal(answers['package'])
+                selected_template, config_dict = template_from_terminal(answers['package'])
+                answers['template'] = selected_template or 'demo_blank'
 
         except Escape:
             return
