@@ -426,9 +426,10 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
     )
     await _cli_unwrapper(init)(
         ctx=ctx,
-        base=True,
+        base=False,
         force=True,
         no_linter=True,
+        no_base=False,
         include=[],
     )
 
@@ -1003,6 +1004,7 @@ async def new(
         base=False,
         force=force,
         no_linter=False,
+        no_base=False,
         include=[],
     )
 
