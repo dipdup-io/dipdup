@@ -925,6 +925,7 @@ class McpContext(DipDupContext):
     :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     :param server: Running MCP server instance
+    :param api: DipDup API datasource
     """
 
     def __init__(
@@ -935,6 +936,7 @@ class McpContext(DipDupContext):
         transactions: TransactionManager,
         logger: Logger,
         server: McpServer[Any],
+        api: HttpDatasource,
     ) -> None:
         super().__init__(
             config=config,
@@ -944,6 +946,7 @@ class McpContext(DipDupContext):
         )
         self.logger = logger
         self.server = server
+        self.api = api
 
     @classmethod
     def _wrap(
@@ -951,6 +954,7 @@ class McpContext(DipDupContext):
         ctx: DipDupContext,
         logger: Logger,
         server: Any,
+        api: Any,
     ) -> Self:
         new_ctx = cls(
             config=ctx.config,
@@ -959,6 +963,25 @@ class McpContext(DipDupContext):
             transactions=ctx.transactions,
             logger=logger,
             server=server,
+            api=api,
         )
         ctx._link(new_ctx)
         return new_ctx
+
+    async def call_api(
+        self,
+        method: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+    ) -> str:
+        _logger.info('Calling API: %s %s', method, path)
+
+        res = await self.api.request(
+            method=method,
+            url=path.lstrip('/'),
+            json={k: v for k, v in (params or {}).items() if v is not None},
+            raw=True,
+        )
+        if res.status != 200:
+            return f'ERROR: {res.status} {res.reason}'
+        return await res.text()  # type: ignore[no-any-return]

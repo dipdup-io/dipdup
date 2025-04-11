@@ -556,8 +556,11 @@ async def mcp_run(ctx: click.Context) -> None:
 
     from dipdup import mcp
     from dipdup.config import DipDupConfig
+    from dipdup.config import HttpConfig
     from dipdup.config import McpConfig
+    from dipdup.config.http import HttpDatasourceConfig
     from dipdup.context import McpContext
+    from dipdup.datasources.http import HttpDatasource
     from dipdup.dipdup import DipDup
 
     config: DipDupConfig = ctx.obj.config
@@ -567,10 +570,20 @@ async def mcp_run(ctx: click.Context) -> None:
         config.mcp = McpConfig()
     mcp_config = config.mcp
 
+    api_datasource = HttpDatasource(
+        HttpDatasourceConfig(
+            url=mcp_config.default_api_url,
+            http=HttpConfig(
+                retry_count=0,
+            ),
+        )
+    )
+
     mcp_ctx = McpContext._wrap(
         ctx=dipdup._ctx,
         logger=mcp._logger,
         server=mcp.server,
+        api=api_datasource,
     )
     mcp.set_ctx(mcp_ctx)
 
@@ -611,8 +624,12 @@ async def mcp_run(ctx: click.Context) -> None:
     logging.getLogger('mcp').setLevel(logging.INFO)
 
     async with AsyncExitStack() as stack:
+        # NOTE: Create, but doesn't initialize (no WS loop)
         await dipdup._create_datasources()
         await dipdup._set_up_database(stack)
+
+        # NOTE: Not available in `ctx.datasources`, but directly as `ctx.api`
+        await stack.enter_async_context(api_datasource)
 
         # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
         portal = stack.enter_context(from_thread.start_blocking_portal())

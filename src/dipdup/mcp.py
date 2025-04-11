@@ -14,7 +14,7 @@ from pydantic import AnyUrl
 T = TypeVar('T', bound=Callable[..., Awaitable[Any]])
 
 from dipdup import models
-from dipdup.context import McpContext
+from dipdup.context import McpContext as McpContext
 from dipdup.exceptions import FrameworkException
 from dipdup.utils import json_dumps
 
@@ -73,16 +73,9 @@ async def _resource_indexes() -> list[dict[str, Any]]:
     return res
 
 
-def _get_indexer_url() -> str:
-    from dipdup.config import McpConfig
-
-    ctx = get_ctx()
-    return (ctx.config.mcp or McpConfig()).default_api_url
-
-
 async def _tool_api_config() -> str:
-    return await api_call(
-        url=_get_indexer_url(),
+    ctx = get_ctx()
+    return await ctx.call_api(
         method='get',
         path='/config',
     )
@@ -95,8 +88,8 @@ async def _tool_api_add_contract(
     typename: str | None = None,
     code_hash: str | int | None = None,
 ) -> str:
-    await api_call(
-        url=_get_indexer_url(),
+    ctx = get_ctx()
+    await ctx.call_api(
         method='post',
         path='/add_contract',
         params={
@@ -117,8 +110,8 @@ async def _tool_api_add_index(
     first_level: int | None = None,
     last_level: int | None = None,
 ) -> str:
-    await api_call(
-        url=_get_indexer_url(),
+    ctx = get_ctx()
+    await ctx.call_api(
         method='post',
         path='/add_index',
         params={
@@ -185,40 +178,6 @@ def set_ctx(ctx: McpContext) -> None:
     if _ctx is not None:
         raise FrameworkException('DipDup context is already initialized')
     _ctx = ctx
-
-
-async def api_call(
-    url: str,
-    method: str,
-    path: str,
-    params: dict[str, Any] | None = None,
-) -> str:
-    from dipdup.config import HttpConfig
-    from dipdup.config.http import HttpDatasourceConfig
-    from dipdup.datasources.http import HttpDatasource
-
-    _logger.info('Calling API: %s %s', method, url + path)
-
-    config = HttpDatasourceConfig(
-        kind='http',
-        url=url,
-        http=HttpConfig(
-            retry_count=0,
-        ),
-    )
-    config._name = 'dipdup_api'
-
-    datasource = HttpDatasource(config)
-    async with datasource:
-        res = await datasource.request(
-            method=method,
-            url=path.lstrip('/'),
-            json={k: v for k, v in (params or {}).items() if v is not None},
-            raw=True,
-        )
-        if res.status != 200:
-            return f'ERROR: {res.status} {res.reason}'
-        return await res.text()  # type: ignore[no-any-return]
 
 
 # TODO: Add instructions

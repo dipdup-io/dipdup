@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- mcp: Added `ctx.api` datasource and `ctx.call_api` helper to server context.
+
 ### Fidex
 
 - cli: Fixed `new` command using incorrect template.
