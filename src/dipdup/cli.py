@@ -570,14 +570,14 @@ async def mcp_run(ctx: click.Context) -> None:
         config.mcp = McpConfig()
     mcp_config = config.mcp
 
-    api_datasource = HttpDatasource(
-        HttpDatasourceConfig(
-            url=mcp_config.default_api_url,
-            http=HttpConfig(
-                retry_count=0,
-            ),
-        )
+    api_datasource_config = HttpDatasourceConfig(
+        url=mcp_config.default_api_url,
+        http=HttpConfig(
+            retry_count=0,
+        ),
     )
+    api_datasource_config._name = 'api'
+    api_datasource = HttpDatasource(api_datasource_config)
 
     mcp_ctx = McpContext._wrap(
         ctx=dipdup._ctx,
