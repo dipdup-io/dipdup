@@ -8,7 +8,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'pdm.lock'
+      - 'uv.lock'
       - '.github/workflows/test.yml'
 
 jobs:
@@ -17,13 +17,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        # NOTE: arm64 macos is the fastest runner. Full matrix is tested in `release.yml`.
         include:
-          - os: ubuntu-latest
-            arch: amd64
-          - os: ubuntu-latest
-            arch: arm64
-          # - os: macos-latest
-          #   arch: amd64
           - os: macos-latest
             arch: arm64
     steps:
@@ -33,17 +28,11 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
       - name: Run install
         run: make install
 
       - name: Run lint
         run: uv run make lint
-        if: contains(matrix.os, 'ubuntu') && contains(matrix.arch, 'amd64')
 
       - name: Run tests
         run: uv run make test

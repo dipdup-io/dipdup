@@ -5,8 +5,44 @@ on:
       - '*.*.*'
 
 jobs:
+  release_test:
+    name: Release Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # NOTE: Test full matrix before release
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-latest
+            arch: arm64
+          - os: macos-latest
+            arch: amd64          
+          - os: macos-latest
+            arch: arm64
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run install
+        run: make install
+
+      - name: Run lint
+        run: uv run make lint
+
+      - name: Run tests
+        run: uv run make test
+        env:
+          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          ONFINALITY_API_KEY: ${{ secrets.ONFINALITY_API_KEY }}
+
   release:
     name: Release
+    needs: release_test
     runs-on: ubuntu-22.04
     env:
       DOCKER_REGISTRY: ghcr.io
@@ -54,23 +90,11 @@ jobs:
             type=pep440,pattern={{major}}
             type=pep440,pattern={{major}}.{{minor}}
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Run install
         run: make install
-
-      - name: Run all checks
-        run: uv run make all
-        env:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-          ONFINALITY_API_KEY: ${{ secrets.ONFINALITY_API_KEY }}
 
       - name: Publish stable image
         uses: docker/build-push-action@v5

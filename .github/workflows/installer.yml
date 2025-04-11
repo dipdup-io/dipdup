@@ -7,7 +7,7 @@ on:
     paths:
       - 'src/**'
       - 'pyproject.toml'
-      - 'pdm.lock'
+      - 'uv.lock'
       - '.github/workflows/docs.yml'
       - '.github/workflows/installer.yml'
 
@@ -17,13 +17,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        # NOTE: Test full matrix there - it's less than a minute per run
         include:
           - os: ubuntu-latest
             arch: amd64
           - os: ubuntu-latest
             arch: arm64
-          # - os: macos-latest
-          #   arch: amd64
+          - os: macos-latest
+            arch: amd64
           - os: macos-latest
             arch: arm64
     steps:

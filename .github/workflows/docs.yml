@@ -18,7 +18,7 @@ on:
       - '.github/workflows/installer.yml'
 
 env:
-  FRONTEND_BRANCH: ${{ github.ref_name == 'docs-next' && 'dev' || 'master' }}
+  FRONTEND_BRANCH: ${{ github.ref_name == 'docs' && 'master' || 'dev' }}
   GITHUB_TOKEN: ${{ secrets.DOCS_GITHUB_TOKEN }}
 
 jobs:
@@ -38,11 +38,6 @@ jobs:
 
       - name: Check out the repo
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
           
       - name: Install uv
         uses: astral-sh/setup-uv@v5
