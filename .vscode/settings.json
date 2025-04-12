@@ -2,7 +2,7 @@
     "yaml.schemas": {
         "schemas/dipdup-3.0.json": [
             "**/dipdup*.y[a]ml",
-            "tests/configs/*.yml"
+            "tests/configs/*.y[a]ml"
         ],
     },
     "files.associations": {
