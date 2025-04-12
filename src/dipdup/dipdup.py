@@ -655,8 +655,8 @@ class DipDup:
     async def init(
         self,
         force: bool = False,
-        base: bool = False,
         no_linter: bool = False,
+        no_base: bool = False,
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
@@ -690,7 +690,7 @@ class DipDup:
                 )
                 await codegen.init(
                     force=force,
-                    base=base,
+                    no_base=no_base,
                     no_linter=no_linter,
                 )
 

@@ -10,11 +10,17 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
+- cli: Added `init --no-base` option to skip creating the base template.
+- env: Added `DIPDUP_NO_BASE` environment variable to skip creating the base template.
 - mcp: Added `ctx.api` datasource and `ctx.call_api` helper to server context.
 
-### Fidex
+### Fixed
 
 - cli: Fixed `new` command using incorrect template.
+
+### Changed
+
+- cli: `init --base` option is now enabled by default.
 
 ## [8.3.1] - 2025-04-08
 
