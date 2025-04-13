@@ -634,17 +634,20 @@ async def mcp_run(ctx: click.Context) -> None:
     logging.getLogger('uvicorn').setLevel(logging.INFO)
     logging.getLogger('mcp').setLevel(logging.INFO)
 
-    async with AsyncExitStack() as stack:
-        # NOTE: Create, but doesn't initialize (no WS loop)
-        await dipdup._create_datasources()
-        await dipdup._set_up_database(stack)
+    async def wrapper():
+        async with AsyncExitStack() as stack:
+            # NOTE: Create, but doesn't initialize (no WS loop)
+            await dipdup._create_datasources()
+            await dipdup._set_up_database(stack)
 
-        # NOTE: Not available in `ctx.datasources`, but directly as `ctx.api`
-        await stack.enter_async_context(api_datasource)
+            # NOTE: Not available in `ctx.datasources`, but directly as `ctx.api`
+            await stack.enter_async_context(api_datasource)
 
-        # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
-        portal = stack.enter_context(from_thread.start_blocking_portal())
-        portal.call(server.serve)
+            await server.serve()
+
+    # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
+    with from_thread.start_blocking_portal() as portal:
+        portal.call(wrapper)
 
 
 @hasura.command(name='configure')
