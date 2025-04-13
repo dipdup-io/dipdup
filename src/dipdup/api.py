@@ -65,5 +65,7 @@ async def create_api(ctx: DipDupContext) -> Starlette:
         Route('/add_contract', _method_wrapper(ctx, _add_contract), methods=['POST']),
         Route('/config', _method_wrapper(ctx, _config), methods=['GET']),
     ]
-
-    return Starlette(routes=routes)
+    return Starlette(
+        debug=True,
+        routes=routes,
+    )
