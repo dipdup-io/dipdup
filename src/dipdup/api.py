@@ -27,6 +27,7 @@ def _method_wrapper(
         except Error as e:
             return Response(str(e), status_code=400)
         except Exception as e:
+            _logger.exception('Unhandled exception in API method')
             return Response(str(e), status_code=500)
 
     return resolved_method

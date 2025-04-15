@@ -861,7 +861,6 @@ class DipDup:
         )
 
         import uvicorn
-        from anyio import from_thread
 
         from dipdup.api import create_api
 
@@ -878,9 +877,13 @@ class DipDup:
 
         @asynccontextmanager
         async def _api_wrapper() -> AsyncIterator[None]:
-            with from_thread.start_blocking_portal() as portal:
-                portal.start_task_soon(server.serve)
+            with suppress(KeyboardInterrupt, CancelledError):
+                api_task = create_task(
+                    server.serve(),
+                    name='api:server',
+                )
                 yield
+                api_task.cancel()
 
         await stack.enter_async_context(_api_wrapper())
 
