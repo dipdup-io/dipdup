@@ -1,6 +1,5 @@
 import functools
 import logging
-import traceback
 from collections.abc import Awaitable
 from collections.abc import Callable
 
@@ -12,6 +11,7 @@ from starlette.routing import Route
 
 import dipdup.performance
 from dipdup.context import DipDupContext
+from dipdup.exceptions import Error
 
 _logger = logging.getLogger(__name__)
 
@@ -24,21 +24,23 @@ def _method_wrapper(
     async def resolved_method(request: Request) -> Response:
         try:
             return await method(ctx, request)
+        except Error as e:
+            return Response(str(e), status_code=400)
         except Exception as e:
-            error_msg = f'ERROR: {e}\n'
-            error_msg += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
             return Response(str(e), status_code=500)
 
     return resolved_method
 
 
 async def _add_index(ctx: 'DipDupContext', request: Request) -> Response:
-    await ctx.add_index(**request.query_params)
+    json = await request.json()
+    await ctx.add_index(**json)
     return Response()
 
 
 async def _add_contract(ctx: 'DipDupContext', request: Request) -> Response:
-    await ctx.add_contract(**request.query_params)
+    json = await request.json()
+    await ctx.add_contract(**json)
     return Response()
 
 

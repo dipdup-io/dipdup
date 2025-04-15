@@ -974,14 +974,29 @@ class McpContext(DipDupContext):
         path: str,
         params: dict[str, Any] | None = None,
     ) -> str:
-        _logger.info('Calling API: %s %s', method, path)
+        from mcp.shared.exceptions import McpError
+        from mcp.types import ErrorData
 
+        _logger.info('Calling API: %s %s', method, path)
         res = await self.api.request(
             method=method,
             url=path.lstrip('/'),
             json={k: v for k, v in (params or {}).items() if v is not None},
             raw=True,
         )
-        if res.status != 200:
-            return f'ERROR: {res.status} {res.reason}'
-        return await res.text()  # type: ignore[no-any-return]
+        if res.status == 200:
+            return await res.text()  # type: ignore[no-any-return]
+
+        raise McpError(
+            ErrorData(
+                code=res.status,
+                message=await res.text(),
+                data=str(
+                    {
+                        'method': method,
+                        'path': path,
+                        'params': params,
+                    }
+                ),
+            )
+        )

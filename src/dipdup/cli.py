@@ -34,7 +34,7 @@ NO_CONFIG_CMDS = {
     'config',  # this one too
 }
 
-# NOTE: Click commands from `aerich` we use as is  for database migration
+# NOTE: Click commands from `aerich` we use as is for database migration
 AERICH_CMDS = {
     'history',
     'heads',
@@ -634,9 +634,9 @@ async def mcp_run(ctx: click.Context) -> None:
     logging.getLogger('uvicorn').setLevel(logging.INFO)
     logging.getLogger('mcp').setLevel(logging.INFO)
 
-    async def wrapper():
+    async def wrapper() -> None:
         async with AsyncExitStack() as stack:
-            # NOTE: Create, but doesn't initialize (no WS loop)
+            # NOTE: Create, but don't initialize (no WS loop)
             await dipdup._create_datasources()
             await dipdup._set_up_database(stack)
 
@@ -646,6 +646,7 @@ async def mcp_run(ctx: click.Context) -> None:
             await server.serve()
 
     # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
+    # FIXME: SIGINT ignored
     with from_thread.start_blocking_portal() as portal:
         portal.call(wrapper)
 
