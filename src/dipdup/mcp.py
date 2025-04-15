@@ -231,7 +231,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
         raise McpError(
             ErrorData(
                 code=-1,
-                message=e,
+                message=str(e),
                 data=''.join(traceback.format_exception(type(e), e, e.__traceback__)),
             )
         ) from e
@@ -265,7 +265,7 @@ async def read_resource(uri: AnyUrl) -> str:
         raise McpError(
             ErrorData(
                 code=-1,
-                message=e,
+                message=str(e),
                 data=''.join(traceback.format_exception(type(e), e, e.__traceback__)),
             )
         ) from e
