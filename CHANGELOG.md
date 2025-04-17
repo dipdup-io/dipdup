@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.3.2] - 2025-04-15
+## [8.3.2] - 2025-04-17
 
 ### Added
 
@@ -17,6 +17,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Fixed `new` command using incorrect template.
+- mcp: Fixed handling exceptions in MCP tools.
 
 ### Changed
 

@@ -197,7 +197,7 @@ class IndexDispatcher:
         from dipdup.config.tezos_head import TezosHeadIndexConfig
 
         # NOTE: Empty config means indexes will be spawned later via API.
-        if not self._indexes:
+        if not self._indexes or self._ctx.config.api:
             return False
 
         if not self._ctx._pending_indexes.empty():
