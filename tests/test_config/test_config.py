@@ -24,7 +24,7 @@ from dipdup.yaml import DipDupYAMLConfig
 TEST_CONFIGS = Path(__file__).parent.parent / 'configs'
 
 
-@pytest.fixture(params=Path.glob(TEST_CONFIGS, 'demo_*.yml'))
+@pytest.fixture(params=Path.glob(TEST_CONFIGS, 'demo_*.yaml'))
 def test_dipdup_config(request: SubRequest) -> Generator[Path, None, None]:
     yield request.param
 
@@ -102,10 +102,10 @@ async def test_reserved_keywords() -> None:
     )
 
     # FIXME: Can't use `from_` field alias in dataclasses
-    raw_config, _ = DipDupYAMLConfig.load(paths=[TEST_CONFIGS / 'demo_tezos_token_transfers_4.yml'])
+    raw_config, _ = DipDupYAMLConfig.load(paths=[TEST_CONFIGS / 'demo_tezos_token_transfers_4.yaml'])
     assert raw_config['indexes']['tzbtc_holders_mainnet']['handlers'][1]['from_'] == 'tzbtc_mainnet'
 
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token_transfers_4.yml'])
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token_transfers_4.yaml'])
     assert config.indexes['tzbtc_holders_mainnet'].handlers[1].from_ == 'tzbtc_mainnet'  # type: ignore[misc,union-attr]
 
 

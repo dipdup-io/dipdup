@@ -31,7 +31,7 @@ async def tzkt() -> AsyncIterator[TezosTzktDatasource]:
 
 @pytest.fixture
 def index_config() -> TezosOperationsIndexConfig:
-    config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yaml'], True)
     config.initialize()
     return cast('TezosOperationsIndexConfig', config.indexes['test'])
 
@@ -124,7 +124,7 @@ async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: 
 
 
 async def test_get_sync_level() -> None:
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yaml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         index = await spawn_index(dipdup, 'tzbtc_holders_mainnet')
@@ -149,7 +149,7 @@ async def test_get_sync_level() -> None:
 async def test_realtime() -> None:
     from demo_tezos_token import models
 
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yaml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         await dipdup._set_up_datasources(stack)

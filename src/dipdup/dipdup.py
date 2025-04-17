@@ -197,7 +197,7 @@ class IndexDispatcher:
         from dipdup.config.tezos_head import TezosHeadIndexConfig
 
         # NOTE: Empty config means indexes will be spawned later via API.
-        if not self._indexes:
+        if not self._indexes or self._ctx.config.api:
             return False
 
         if not self._ctx._pending_indexes.empty():
@@ -861,7 +861,6 @@ class DipDup:
         )
 
         import uvicorn
-        from anyio import from_thread
 
         from dipdup.api import create_api
 
@@ -878,9 +877,13 @@ class DipDup:
 
         @asynccontextmanager
         async def _api_wrapper() -> AsyncIterator[None]:
-            with from_thread.start_blocking_portal() as portal:
-                portal.start_task_soon(server.serve)
+            with suppress(KeyboardInterrupt, CancelledError):
+                api_task = create_task(
+                    server.serve(),
+                    name='api:server',
+                )
                 yield
+                api_task.cancel()
 
         await stack.enter_async_context(_api_wrapper())
 

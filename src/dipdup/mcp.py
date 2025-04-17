@@ -20,13 +20,30 @@ from dipdup.utils import json_dumps
 
 _logger = logging.getLogger(__name__)
 
-_ctx: McpContext | None = None
 
 import mcp.server
 import mcp.types as types
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+
+# NOTE: Global context management
+_ctx: McpContext | None = None
+
+
+def get_ctx() -> McpContext:
+    global _ctx
+    if _ctx is None:
+        raise FrameworkException('DipDup MCP context is not initialized')
+    return _ctx
+
+
+def set_ctx(ctx: McpContext) -> None:
+    global _ctx
+    if _ctx is not None:
+        raise FrameworkException('DipDup MCP context is already initialized')
+    _ctx = ctx
 
 
 # NOTE: Resource and tool callbacks
@@ -89,7 +106,7 @@ async def _tool_api_add_contract(
     code_hash: str | int | None = None,
 ) -> str:
     ctx = get_ctx()
-    await ctx.call_api(
+    return await ctx.call_api(
         method='post',
         path='/add_contract',
         params={
@@ -100,7 +117,6 @@ async def _tool_api_add_contract(
             'code_hash': code_hash,
         },
     )
-    return await _tool_api_config()
 
 
 async def _tool_api_add_index(
@@ -111,7 +127,7 @@ async def _tool_api_add_index(
     last_level: int | None = None,
 ) -> str:
     ctx = get_ctx()
-    await ctx.call_api(
+    return await ctx.call_api(
         method='post',
         path='/add_index',
         params={
@@ -122,7 +138,6 @@ async def _tool_api_add_index(
             'last_level': last_level,
         },
     )
-    return await _tool_api_config()
 
 
 # NOTE: Built-in tools and resources
@@ -163,22 +178,6 @@ DIPDUP_RESOURCES_FN: dict[str, Callable[..., Awaitable[Any]]] = {
 DIPDUP_TOOLS: dict[str, types.Tool] = {}
 DIPDUP_TOOLS_FN: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 
-# NOTE: Context management
-
-
-def get_ctx() -> McpContext:
-    global _ctx
-    if _ctx is None:
-        raise FrameworkException('DipDup context is not initialized')
-    return _ctx
-
-
-def set_ctx(ctx: McpContext) -> None:
-    global _ctx
-    if _ctx is not None:
-        raise FrameworkException('DipDup context is already initialized')
-    _ctx = ctx
-
 
 # TODO: Add instructions
 server: mcp.server.Server[Any] = mcp.server.Server(name='DipDup')
@@ -213,6 +212,9 @@ async def list_resource_templates() -> list[types.ResourceTemplate]:
 
 @server.call_tool()  # type: ignore[no-untyped-call,misc]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
+    from mcp.shared.exceptions import McpError
+    from mcp.types import ErrorData
+
     if name in _user_tools_fn:
         fn = _user_tools_fn[name]
     elif name in DIPDUP_TOOLS_FN:
@@ -225,15 +227,21 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
         res = await fn(**arguments)
         return [types.TextContent(type='text', text=res)]
     except Exception as e:
-        res = f'ERROR: {e}\n'
-        res += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        _logger.error(res, exc_info=e)
-
-    return [types.TextContent(type='text', text=res)]
+        _logger.exception('Error while calling tool `%s`', name)
+        raise McpError(
+            ErrorData(
+                code=-1,
+                message=str(e),
+                data=''.join(traceback.format_exception(type(e), e, e.__traceback__)),
+            )
+        ) from e
 
 
 @server.read_resource()  # type: ignore[no-untyped-call,misc]
 async def read_resource(uri: AnyUrl) -> str:
+    from mcp.shared.exceptions import McpError
+    from mcp.types import ErrorData
+
     if uri.scheme != 'dipdup':
         raise ValueError(f'Invalid scheme: {uri.scheme}')
 
@@ -253,10 +261,14 @@ async def read_resource(uri: AnyUrl) -> str:
         # FIXME: mimeType is always `text/plain`
         return json_dumps(res, None).decode()
     except Exception as e:
-        error_msg = f'ERROR: {e}\n'
-        error_msg += ''.join(traceback.format_exception(type(e), e, e.__traceback__))
-        _logger.error(error_msg, exc_info=e)
-        return error_msg
+        _logger.exception('Error while calling tool `%s`', name)
+        raise McpError(
+            ErrorData(
+                code=-1,
+                message=str(e),
+                data=''.join(traceback.format_exception(type(e), e, e.__traceback__)),
+            )
+        ) from e
 
 
 def tool(

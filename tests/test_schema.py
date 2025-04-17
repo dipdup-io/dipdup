@@ -23,8 +23,8 @@ _dipdup_tables = {
 
 async def test_schema_sqlite() -> None:
     package = 'demo_tezos_domains'
-    config_path = TEST_CONFIGS / f'{package}.yml'
-    env_config_path = TEST_CONFIGS / 'test_sqlite.yaml'
+    config_path = TEST_CONFIGS / f'{package}.yaml'
+    env_config_path = TEST_CONFIGS / 'common_sqlite.yaml'
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
@@ -69,8 +69,8 @@ async def test_schema_sqlite() -> None:
 
 async def test_schema_sqlite_immune() -> None:
     package = 'demo_tezos_domains'
-    config_path = TEST_CONFIGS / f'{package}.yml'
-    env_config_path = TEST_CONFIGS / 'test_sqlite_immune.yaml'
+    config_path = TEST_CONFIGS / f'{package}.yaml'
+    env_config_path = TEST_CONFIGS / 'common_sqlite_immune.yaml'
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
@@ -115,8 +115,8 @@ async def test_schema_sqlite_immune() -> None:
 
 async def test_schema_postgres() -> None:
     package = 'demo_tezos_domains'
-    config_path = TEST_CONFIGS / f'{package}.yml'
-    env_config_path = TEST_CONFIGS / 'test_postgres.yaml'
+    config_path = TEST_CONFIGS / f'{package}.yaml'
+    env_config_path = TEST_CONFIGS / 'common_postgres.yaml'
 
     async with AsyncExitStack() as stack:
         database_config = await run_postgres_container()
@@ -156,8 +156,8 @@ async def test_schema_postgres() -> None:
 
 async def test_schema_postgres_immune() -> None:
     package = 'demo_tezos_domains'
-    config_path = TEST_CONFIGS / f'{package}.yml'
-    env_config_path = TEST_CONFIGS / 'test_postgres_immune.yaml'
+    config_path = TEST_CONFIGS / f'{package}.yaml'
+    env_config_path = TEST_CONFIGS / 'common_postgres_immune.yaml'
 
     async with AsyncExitStack() as stack:
         database_config = await run_postgres_container()

@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.3.2] - 2025-04-17
 
 ### Added
 
@@ -17,6 +17,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Fixed `new` command using incorrect template.
+- mcp: Fixed handling exceptions in MCP tools.
 
 ### Changed
 
@@ -696,7 +697,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.3.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.3.2...HEAD
+[8.3.2]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
 [8.3.1]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
 [8.3.0]: https://github.com/dipdup-io/dipdup/compare/8.2.2...8.3.0
 [8.2.2]: https://github.com/dipdup-io/dipdup/compare/8.2.1...8.2.2

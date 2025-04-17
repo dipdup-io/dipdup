@@ -30,7 +30,7 @@ async def test_configure_hasura() -> None:
     if os.uname().sysname != 'Linux' or 'microsoft' in os.uname().release:  # check for WSL, Windows, mac and else
         pytest.skip('Test is not supported for os archetecture', allow_module_level=True)
 
-    config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yml'
+    config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yaml'
 
     config = DipDupConfig.load([config_path])
     config.database = await run_postgres_container()
