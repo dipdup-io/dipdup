@@ -693,8 +693,15 @@ class DipDup:
                     no_linter=no_linter,
                     no_base=no_base,
                 )
+                if include and isinstance(codegen, CommonCodeGenerator):
+                    _logger.info('Run `init` command without arguments to perform a full initialization')
+                    return
 
-            await generate_environments(self._config, package)
+            await generate_environments(
+                config=self._config,
+                package=package,
+                force=force,
+            )
 
             if not (env.NO_LINTER or no_linter):
                 codegen._package.format_lint()

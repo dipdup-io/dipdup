@@ -17,6 +17,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: Fixed regression in `init` command behavior when run without flags.
 - cli: Fixed detecting package name in existing projects without `replay.yaml` file.
 - cli: Fixed `init` command processing the same paths multiple times.
+- cli: Fixed `init` command not respecting `--force` flag when generating default envfiles.
 
 ## [8.3.2] - 2025-04-17
 

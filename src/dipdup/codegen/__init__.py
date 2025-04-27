@@ -255,10 +255,6 @@ class CommonCodeGenerator(_BaseCodeGenerator):
         # NOTE: Package structure
         self._package.initialize()
 
-        if self._include:
-            _logger.info('Run `init` command without arguments to perform a full initialization')
-            return
-
         # NOTE: Common files
         if not (env.NO_BASE or no_base):
             _logger.info('Recreating base template with replay.yaml')
@@ -307,7 +303,11 @@ class CodeGenerator(_BaseCodeGenerator):
         pass
 
 
-async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+async def generate_environments(
+    config: DipDupConfig,
+    package: DipDupPackage,
+    force: bool = False,
+) -> None:
     for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
         default_env_path.unlink()
 
@@ -315,6 +315,16 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
         if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
             continue
 
+        env_filename = config_path.stem.replace('dipdup.', '')
+        if env_filename == 'compose':
+            env_filename = ''
+
+        env_path = package.deploy / (env_filename + DEFAULT_ENV)
+        if env_path.exists() and not force:
+            _logger.debug('Skipping `%s`: env file already exists', env_path)
+            continue
+
+        _logger.info('Generating env file `%s`', env_path)
         config_chain = [
             *config._paths,
             config_path,
@@ -332,10 +342,5 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             '',
         )
         content = '\n'.join(lines)
-
-        env_filename = config_path.stem.replace('dipdup.', '')
-        if env_filename == 'compose':
-            env_filename = ''
-        env_path = package.deploy / (env_filename + DEFAULT_ENV)
         env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text(content)
