@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Added
+
+- cli: Added `--name` option to `new` command to skip asking for the project name.
+
+### Fixed
+
+- cli: Fixed regression in `init` command behavior when run without flags.
+- cli: Fixed detecting package name in existing projects without `replay.yaml` file.
+- cli: Fixed `init` command processing the same paths multiple times.
+
 ## [8.3.2] - 2025-04-17
 
 ### Added

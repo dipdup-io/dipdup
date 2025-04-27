@@ -87,37 +87,9 @@ class _BaseCodeGenerator(ABC):
         no_linter: bool = False,
         no_base: bool = False,
     ) -> None:
-        # NOTE: Package structure
-        self._package.initialize()
-
-        # NOTE: Common files
-        if not (env.NO_BASE or no_base):
-            _logger.info('Recreating base template with replay.yaml')
-            render_base(
-                answers=self._package.replay,
-                force=force,
-                include=self._include,
-            )
-
-        if self._include:
-            force = any(str(path).startswith('types') for path in self._include)
-
-        # NOTE: ABIs and JSONSchemas
         await self.generate_abis()
         await self.generate_schemas()
-
-        # NOTE: Models and types
         await self._generate_types(force)
-        await self._generate_models()
-
-        # NOTE: Callback stubs
-        await self.generate_hooks()
-        await self.generate_system_hooks()
-        await self.generate_handlers()
-        await self.generate_batch_handler()
-
-        if not (env.NO_LINTER or no_linter):
-            self._package.format_lint()
 
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():
@@ -273,6 +245,37 @@ class _BaseCodeGenerator(ABC):
 
 class CommonCodeGenerator(_BaseCodeGenerator):
     kind = 'common'
+
+    async def init(
+        self,
+        force: bool = False,
+        no_linter: bool = False,
+        no_base: bool = False,
+    ) -> None:
+        # NOTE: Package structure
+        self._package.initialize()
+
+        if self._include:
+            _logger.info('Run `init` command without arguments to perform a full initialization')
+            return
+
+        # NOTE: Common files
+        if not (env.NO_BASE or no_base):
+            _logger.info('Recreating base template with replay.yaml')
+            render_base(
+                answers=self._package.replay,
+                force=force,
+                include=self._include,
+            )
+
+        await self._generate_models()
+
+        await self.generate_hooks()
+        await self.generate_system_hooks()
+
+        # NOTE: Callback stubs
+        await self.generate_handlers()
+        await self.generate_batch_handler()
 
     async def generate_abis(self) -> None:
         pass

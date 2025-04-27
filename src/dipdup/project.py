@@ -23,7 +23,6 @@ from dipdup.config import DipDupConfig
 from dipdup.config import ToStr
 from dipdup.config._mixin import TerminalOptions
 from dipdup.env import get_package_path
-from dipdup.env import get_pyproject_name
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -93,11 +92,11 @@ class Answers(TypedDict):
     package_manager: str
 
 
-def get_default_answers() -> Answers:
+def get_default_answers(package: str | None = None) -> Answers:
     return Answers(
         dipdup_version=__version__.split('.')[0],
         template='demo_blank',
-        package='dipdup_indexer',
+        package=package or 'dipdup_indexer',
         version='0.0.1',
         description='A blockchain indexer built with DipDup',
         license='MIT',
@@ -109,19 +108,6 @@ def get_default_answers() -> Answers:
         line_length='120',
         package_manager='uv',
     )
-
-
-def get_package_answers(package: str | None = None) -> Answers | None:
-    if not package:
-        package = get_pyproject_name()
-    if not package:
-        return None
-
-    replay_path = get_package_path(package) / 'configs' / 'replay.yaml'
-    if not replay_path.is_file():
-        return None
-
-    return answers_from_replay(replay_path)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
@@ -208,7 +194,7 @@ def template_from_terminal(package: str) -> tuple[str | None, dict[str, Any] | N
     raise NotImplementedError
 
 
-def answers_from_terminal() -> Answers:
+def answers_from_terminal(package: str | None = None) -> Answers:
     """Script running on dipdup new command and will create a new project base from interactive survey"""
     import survey  # type: ignore[import-untyped]
 
@@ -217,17 +203,18 @@ def answers_from_terminal() -> Answers:
         'You can abort at any time by pressing Ctrl+C twice. Press Enter to use default value.'
     )
 
-    answers = get_default_answers()
+    answers = get_default_answers(package)
 
     big_yellow_echo('Set up project')
 
-    while True:
+    while package is None:
         package = survey.routines.input(
             'Enter project name (the name will be used for folder name and package name): ',
             value=answers['package'],
         )
-        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
+        if package and re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', package):
             break
+        package = None
 
         echo(
             f'"{package}" is not valid Python package name. Please use only letters, numbers and underscores.',
@@ -488,9 +475,6 @@ def fill_type_from_input(
                 field_value = [field_value]
 
         entity_data[field_name] = field_value or default
-
-        # print(default, 'default')
-        # print(entity_data[field_name], 'field_value')
 
     # Validate and add the entity
     try:

@@ -690,11 +690,14 @@ class DipDup:
                 )
                 await codegen.init(
                     force=force,
-                    no_base=no_base,
                     no_linter=no_linter,
+                    no_base=no_base,
                 )
 
             await generate_environments(self._config, package)
+
+            if not (env.NO_LINTER or no_linter):
+                codegen._package.format_lint()
 
     async def run(self) -> None:
         """Run indexing process"""
