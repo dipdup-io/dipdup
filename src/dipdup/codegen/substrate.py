@@ -58,7 +58,7 @@ def scale_type_to_jsonschema(
                     },
                 }
 
-    # Handle primitives, default to str
+    # NOTE: Handle primitives, default to str
     schema: dict[str, Any] = {
         'description': type_string,
         'type': 'string',
@@ -197,7 +197,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                         target_events[runtime_name].remove(qualname)
 
                         # FIXME: ignore when only docs changed?
-                        dump = orjson.dumps({**event_item, 'name': ''})
+                        dump = orjson.dumps(event_item)
                         if dump == latest_dumps[qualname]:
                             continue
                         latest_dumps[qualname] = dump

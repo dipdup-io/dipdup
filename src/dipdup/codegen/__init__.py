@@ -143,6 +143,8 @@ class _BaseCodeGenerator(ABC):
 
 
 class CodeGenerator(_BaseCodeGenerator, ABC):
+    """Base class for blockchain-specific code generators."""
+
     kind: str
 
     @property
@@ -164,8 +166,13 @@ class CodeGenerator(_BaseCodeGenerator, ABC):
         no_linter: bool = False,
         no_base: bool = False,
     ) -> None:
+        _logger.info('%s: generating ABIs', self.kind)
         await self.generate_abis()
+
+        _logger.info('%s: generating JSONSchemas', self.kind)
         await self.generate_schemas()
+
+        _logger.info('%s: generating types', self.kind)
         await self._generate_types(force)
 
     async def _generate_types(self, force: bool = False) -> None:

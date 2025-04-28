@@ -32,8 +32,12 @@ from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.starknet import StarknetContractConfig
+from dipdup.config.starknet import StarknetIndexConfig
+from dipdup.config.substrate import SubstrateIndexConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.database import generate_schema
@@ -674,15 +678,26 @@ class DipDup:
             package = DipDupPackage(self._config.package_path)
             package.load_abis()
 
-            codegen_classes: tuple[type[CodeGenerator], ...] = (  # type: ignore[assignment]
-                CommonCodeGenerator,
-                EvmCodeGenerator,
-                StarknetCodeGenerator,
-                SubstrateCodeGenerator,
-                TezosCodeGenerator,
-            )
-            for codegen_cls in codegen_classes:
-                codegen = codegen_cls(
+            codegen_classes: set[type[CodeGenerator]] = set()
+
+            for index_config in self._config.indexes.values():
+                if isinstance(index_config, IndexTemplateConfig):
+                    index_config = self._config.templates[index_config.template]
+
+                if isinstance(index_config, TezosIndexConfig):
+                    codegen_classes.add(TezosCodeGenerator)
+                elif isinstance(index_config, EvmIndexConfig):
+                    codegen_classes.add(EvmCodeGenerator)
+                elif isinstance(index_config, StarknetIndexConfig):
+                    codegen_classes.add(StarknetCodeGenerator)
+                elif isinstance(index_config, SubstrateIndexConfig):
+                    codegen_classes.add(SubstrateCodeGenerator)
+                else:
+                    msg = f'Unsupported index config: {index_config}'
+                    raise FrameworkException(msg)
+
+            for codegen_cls in (CommonCodeGenerator, *tuple(codegen_classes)):
+                codegen = codegen_cls(  # type: ignore[operator]
                     config=self._config,
                     package=package,
                     datasources=self._datasources,
