@@ -103,10 +103,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import ModuleType
 
-    from mcp.server import Server as McpServer
-
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
+    from mcp.server import Server as McpServer
 
 
 _logger = getLogger(__name__)

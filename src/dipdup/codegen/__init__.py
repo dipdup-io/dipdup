@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from shutil import rmtree
 from typing import Any
+from typing import final
 
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
@@ -66,58 +67,13 @@ class _BaseCodeGenerator(ABC):
         self._include = include or set()
         self._logger = _logger
 
-    kind: str
-
-    @property
-    def schemas_dir(self) -> Path:
-        return self._package.schemas / self.kind
-
     @abstractmethod
-    async def generate_abis(self) -> None: ...
-
-    @abstractmethod
-    async def generate_schemas(self) -> None: ...
-
-    @abstractmethod
-    def get_typeclass_name(self, schema_path: Path) -> str: ...
-
     async def init(
         self,
         force: bool = False,
         no_linter: bool = False,
         no_base: bool = False,
-    ) -> None:
-        # NOTE: Package structure
-        self._package.initialize()
-
-        # NOTE: Common files
-        if not (env.NO_BASE or no_base):
-            _logger.info('Recreating base template with replay.yaml')
-            render_base(
-                answers=self._package.replay,
-                force=force,
-                include=self._include,
-            )
-
-        if self._include:
-            force = any(str(path).startswith('types') for path in self._include)
-
-        # NOTE: ABIs and JSONSchemas
-        await self.generate_abis()
-        await self.generate_schemas()
-
-        # NOTE: Models and types
-        await self._generate_types(force)
-        await self._generate_models()
-
-        # NOTE: Callback stubs
-        await self.generate_hooks()
-        await self.generate_system_hooks()
-        await self.generate_handlers()
-        await self.generate_batch_handler()
-
-        if not (env.NO_LINTER or no_linter):
-            self._package.format_lint()
+    ) -> None: ...
 
     async def generate_hooks(self) -> None:
         for hook_config in self._config.hooks.values():
@@ -143,52 +99,6 @@ class _BaseCodeGenerator(ABC):
                 'for handler in handlers:',
                 '    await ctx.fire_matched_handler(handler)',
             ),
-        )
-
-    async def _generate_types(self, force: bool = False) -> None:
-        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
-        for path in sorted_glob(self.schemas_dir, '**/*.json'):
-            await self._generate_type(path, force)
-
-    async def _generate_type(self, schema_path: Path, force: bool) -> None:
-        rel_path = schema_path.relative_to(self.schemas_dir)
-        type_pkg_path = self._package.types / rel_path
-
-        if schema_path.is_dir():
-            return
-
-        if not schema_path.name.endswith('.json'):
-            if schema_path.name != KEEP_MARKER:
-                self._logger.warning('Skipping `%s`: not a JSON schema', schema_path)
-            return
-
-        module_name = schema_path.stem
-        output_path = type_pkg_path.parent / f'{pascal_to_snake(module_name)}.py'
-        if output_path.exists() and not force:
-            self._logger.debug('Skipping `%s`: type already exists', schema_path)
-            return
-
-        import datamodel_code_generator as dmcg
-
-        class_name = self.get_typeclass_name(schema_path)
-        self._logger.info('Generating type `%s`', class_name)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        # TODO: make it configurable
-        if 'substrate' in str(output_path):
-            model_type = dmcg.DataModelType.TypingTypedDict
-        else:
-            model_type = dmcg.DataModelType.PydanticV2BaseModel
-        dmcg.generate(
-            input_=schema_path,
-            output=output_path,
-            class_name=class_name,
-            disable_timestamp=True,
-            input_file_type=dmcg.InputFileType.JsonSchema,
-            target_python_version=dmcg.PythonVersion.PY_312,
-            custom_file_header=CODEGEN_HEADER,
-            use_union_operator=True,
-            output_model_type=model_type,
-            use_schema_description=True,
         )
 
     async def _generate_callback(
@@ -267,44 +177,118 @@ class _BaseCodeGenerator(ABC):
         content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
         write(path, content_path.read_text())
 
+
+class CodeGenerator(_BaseCodeGenerator, ABC):
+    kind: str
+
+    @property
+    def schemas_dir(self) -> Path:
+        return self._package.schemas / self.kind
+
+    @abstractmethod
+    async def generate_abis(self) -> None: ...
+
+    @abstractmethod
+    async def generate_schemas(self) -> None: ...
+
+    @abstractmethod
+    def get_typeclass_name(self, schema_path: Path) -> str: ...
+
+    async def init(
+        self,
+        force: bool = False,
+        no_linter: bool = False,
+        no_base: bool = False,
+    ) -> None:
+        await self.generate_abis()
+        await self.generate_schemas()
+        await self._generate_types(force)
+
+    async def _generate_types(self, force: bool = False) -> None:
+        """Generate typeclasses from fetched JSONSchemas: contract's storage, parameters, big maps and events."""
+        for path in sorted_glob(self.schemas_dir, '**/*.json'):
+            await self._generate_type(path, force)
+
+    async def _generate_type(self, schema_path: Path, force: bool) -> None:
+        rel_path = schema_path.relative_to(self.schemas_dir)
+        type_pkg_path = self._package.types / rel_path
+
+        if schema_path.is_dir():
+            return
+
+        if not schema_path.name.endswith('.json'):
+            if schema_path.name != KEEP_MARKER:
+                self._logger.warning('Skipping `%s`: not a JSON schema', schema_path)
+            return
+
+        module_name = schema_path.stem
+        output_path = type_pkg_path.parent / f'{pascal_to_snake(module_name)}.py'
+        if output_path.exists() and not force:
+            self._logger.debug('Skipping `%s`: type already exists', schema_path)
+            return
+
+        import datamodel_code_generator as dmcg
+
+        class_name = self.get_typeclass_name(schema_path)
+        self._logger.info('Generating type `%s`', class_name)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # TODO: make it configurable
+        if 'substrate' in str(output_path):
+            model_type = dmcg.DataModelType.TypingTypedDict
+        else:
+            model_type = dmcg.DataModelType.PydanticV2BaseModel
+        dmcg.generate(
+            input_=schema_path,
+            output=output_path,
+            class_name=class_name,
+            disable_timestamp=True,
+            input_file_type=dmcg.InputFileType.JsonSchema,
+            target_python_version=dmcg.PythonVersion.PY_312,
+            custom_file_header=CODEGEN_HEADER,
+            use_union_operator=True,
+            output_model_type=model_type,
+            use_schema_description=True,
+        )
+
     def _cleanup_schemas(self) -> None:
         rmtree(self.schemas_dir, ignore_errors=True)
 
 
+@final
 class CommonCodeGenerator(_BaseCodeGenerator):
-    kind = 'common'
+    async def init(
+        self,
+        force: bool = False,
+        no_linter: bool = False,
+        no_base: bool = False,
+    ) -> None:
+        # NOTE: Package structure
+        self._package.initialize()
 
-    async def generate_abis(self) -> None:
-        pass
+        # NOTE: Common files
+        if not (env.NO_BASE or no_base):
+            _logger.info('Recreating base template with replay.yaml')
+            render_base(
+                answers=self._package.replay,
+                force=force,
+                include=self._include,
+            )
 
-    async def generate_schemas(self) -> None:
-        pass
+        await self._generate_models()
 
-    async def _generate_types(self, force: bool = False) -> None:
-        pass
+        await self.generate_hooks()
+        await self.generate_system_hooks()
 
-    def get_typeclass_name(self, schema_path: Path) -> str:
-        raise NotImplementedError
-
-
-class CodeGenerator(_BaseCodeGenerator):
-    async def _generate_models(self) -> None:
-        pass
-
-    async def generate_hooks(self) -> None:
-        pass
-
-    async def generate_system_hooks(self) -> None:
-        pass
-
-    async def generate_handlers(self) -> None:
-        pass
-
-    async def _generate_batch_handler(self) -> None:
-        pass
+        # NOTE: Callback stubs
+        await self.generate_handlers()
+        await self.generate_batch_handler()
 
 
-async def generate_environments(config: DipDupConfig, package: DipDupPackage) -> None:
+async def generate_environments(
+    config: DipDupConfig,
+    package: DipDupPackage,
+    force: bool = False,
+) -> None:
     for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
         default_env_path.unlink()
 
@@ -312,6 +296,16 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
         if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
             continue
 
+        env_filename = config_path.stem.replace('dipdup.', '')
+        if env_filename == 'compose':
+            env_filename = ''
+
+        env_path = package.deploy / (env_filename + DEFAULT_ENV)
+        if env_path.exists() and not force:
+            _logger.debug('Skipping `%s`: env file already exists', env_path)
+            continue
+
+        _logger.info('Generating env file `%s`', env_path)
         config_chain = [
             *config._paths,
             config_path,
@@ -329,10 +323,5 @@ async def generate_environments(config: DipDupConfig, package: DipDupPackage) ->
             '',
         )
         content = '\n'.join(lines)
-
-        env_filename = config_path.stem.replace('dipdup.', '')
-        if env_filename == 'compose':
-            env_filename = ''
-        env_path = package.deploy / (env_filename + DEFAULT_ENV)
         env_path.parent.mkdir(parents=True, exist_ok=True)
         env_path.write_text(content)

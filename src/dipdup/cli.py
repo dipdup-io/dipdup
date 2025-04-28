@@ -351,8 +351,8 @@ async def run(ctx: click.Context) -> None:
 @cli.command()
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
 @click.option('--base', '-b', is_flag=True, help='Include template base (default)')
-@click.option('--no-base', '-b', is_flag=True, help='Skip template base')
-@click.option('--no-linter', is_flag=True, help='Skip linter and formatter.')
+@click.option('--no-base', '-b', is_flag=True, help='Skip files from base template.')
+@click.option('--no-linter', is_flag=True, help='Skip applying linter and formatter.')
 @click.argument(
     'include',
     type=str,
@@ -385,7 +385,7 @@ async def init(
 
     await dipdup.init(
         force=force,
-        no_base=no_base or bool(include),
+        no_base=no_base,
         no_linter=no_linter,
         include=set(include),
     )
@@ -560,7 +560,6 @@ async def mcp_run(ctx: click.Context) -> None:
 
     import uvicorn
     from anyio import from_thread
-    from mcp.server.sse import SseServerTransport
     from starlette.applications import Starlette
     from starlette.routing import Mount
     from starlette.routing import Route
@@ -573,6 +572,7 @@ async def mcp_run(ctx: click.Context) -> None:
     from dipdup.context import McpContext
     from dipdup.datasources.http import HttpDatasource
     from dipdup.dipdup import DipDup
+    from mcp.server.sse import SseServerTransport
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
@@ -955,6 +955,7 @@ async def schema_export(ctx: click.Context) -> None:
     help='Use values from a replay file.',
 )
 @click.option('--template', '-t', type=str, default=None, help='Use a specific template.')
+@click.option('--name', '-n', type=str, default=None, help='Project name.')
 @_cli_wrapper
 async def new(
     ctx: click.Context,
@@ -962,6 +963,7 @@ async def new(
     force: bool,
     replay: Path | None,
     template: str | None,
+    name: str | None,
 ) -> None:
     """Create a new project interactively."""
 
@@ -982,7 +984,7 @@ async def new(
     # NOTE: Collect answers from appropriate source
     try:
         if quiet:
-            answers = get_default_answers()
+            answers = get_default_answers(package=name)
         elif replay:
             answers = answers_from_replay(replay)
         else:
