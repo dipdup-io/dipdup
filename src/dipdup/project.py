@@ -205,8 +205,6 @@ def answers_from_terminal(package: str | None = None) -> Answers:
 
     answers = get_default_answers(package)
 
-    big_yellow_echo('Set up project')
-
     while package is None:
         package = survey.routines.input(
             'Enter project name (the name will be used for folder name and package name): ',
@@ -230,7 +228,7 @@ def answers_from_terminal(package: str | None = None) -> Answers:
     )
 
     answers['license'] = survey.routines.input(
-        'Enter project license (DipDup itself is MIT-licensed.): ',
+        'Enter project license (DipDup itself is MIT-licensed): ',
         value=answers['license'],
     )
 
