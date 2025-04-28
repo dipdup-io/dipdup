@@ -75,32 +75,6 @@ class _BaseCodeGenerator(ABC):
         no_base: bool = False,
     ) -> None: ...
 
-    async def generate_hooks(self) -> None:
-        for hook_config in self._config.hooks.values():
-            await self._generate_callback(hook_config, 'hooks', sql=True)
-
-    async def generate_system_hooks(self) -> None:
-        for hook_config in SYSTEM_HOOKS.values():
-            await self._generate_callback(hook_config, 'hooks', sql=True)
-
-    async def generate_handlers(self) -> None:
-        for index_config in self._config.indexes.values():
-            if isinstance(index_config, IndexTemplateConfig):
-                continue
-
-            for handler_config in index_config.handlers:
-                await self._generate_callback(handler_config, 'handlers')
-
-    async def generate_batch_handler(self) -> None:
-        await self._generate_callback(
-            callback_config=BatchHandlerConfig(),
-            kind='handlers',
-            code=(
-                'for handler in handlers:',
-                '    await ctx.fire_matched_handler(handler)',
-            ),
-        )
-
     async def _generate_callback(
         self,
         callback_config: CallbackMixin,
@@ -166,16 +140,6 @@ class _BaseCodeGenerator(ABC):
             KEEP_MARKER,
         )
         touch(sql_path)
-
-    async def _generate_models(self) -> None:
-        for path in self._package.models.glob('**/*.py'):
-            if path.stat().st_size == 0:
-                continue
-            return
-
-        path = self._package.models / PACKAGE_MARKER
-        content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
-        write(path, content_path.read_text())
 
 
 class CodeGenerator(_BaseCodeGenerator, ABC):
@@ -274,7 +238,7 @@ class CommonCodeGenerator(_BaseCodeGenerator):
                 include=self._include,
             )
 
-        await self._generate_models()
+        await self.generate_models()
 
         await self.generate_hooks()
         await self.generate_system_hooks()
@@ -282,6 +246,42 @@ class CommonCodeGenerator(_BaseCodeGenerator):
         # NOTE: Callback stubs
         await self.generate_handlers()
         await self.generate_batch_handler()
+
+    async def generate_models(self) -> None:
+        for path in self._package.models.glob('**/*.py'):
+            if path.stat().st_size == 0:
+                continue
+            return
+
+        path = self._package.models / PACKAGE_MARKER
+        content_path = Path(__file__).parent.parent / 'templates' / 'models.py'
+        write(path, content_path.read_text())
+
+    async def generate_hooks(self) -> None:
+        for hook_config in self._config.hooks.values():
+            await self._generate_callback(hook_config, 'hooks', sql=True)
+
+    async def generate_system_hooks(self) -> None:
+        for hook_config in SYSTEM_HOOKS.values():
+            await self._generate_callback(hook_config, 'hooks', sql=True)
+
+    async def generate_handlers(self) -> None:
+        for index_config in self._config.indexes.values():
+            if isinstance(index_config, IndexTemplateConfig):
+                continue
+
+            for handler_config in index_config.handlers:
+                await self._generate_callback(handler_config, 'handlers')
+
+    async def generate_batch_handler(self) -> None:
+        await self._generate_callback(
+            callback_config=BatchHandlerConfig(),
+            kind='handlers',
+            code=(
+                'for handler in handlers:',
+                '    await ctx.fire_matched_handler(handler)',
+            ),
+        )
 
 
 async def generate_environments(
