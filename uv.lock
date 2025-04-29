@@ -465,7 +465,7 @@ wheels = [
 
 [[package]]
 name = "dipdup"
-version = "8.3.2"
+version = "8.3.3"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
