@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_tezos_nft_marketplace
-WORKDIR demo_tezos_nft_marketplace
+WORKDIR /home/dipdup/demo_tezos_nft_marketplace

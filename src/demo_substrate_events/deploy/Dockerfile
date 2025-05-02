@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_substrate_events
-WORKDIR demo_substrate_events
+WORKDIR /home/dipdup/demo_substrate_events
