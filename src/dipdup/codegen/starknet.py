@@ -1,15 +1,14 @@
 from pathlib import Path
 from typing import Any
-from typing import cast
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import HandlerConfig
-from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet_events import StarknetEventsHandlerConfig
 from dipdup.config.starknet_events import StarknetEventsIndexConfig
 from dipdup.config.starknet_node import StarknetNodeDatasourceConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
+from dipdup.package import CAIRO_ABI_JSON
 from dipdup.utils import json_dumps
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
@@ -24,34 +23,30 @@ class StarknetCodeGenerator(CodeGenerator):
                 await self._fetch_abi(index_config)
 
     async def _fetch_abi(self, index_config: StarknetEventsIndexConfig) -> None:
-        contracts: list[StarknetContractConfig] = [
-            handler_config.contract
-            for handler_config in index_config.handlers
-            if isinstance(handler_config, StarknetEventsHandlerConfig)
-        ]
+        datasources: list[AbiDatasource[Any]] = []
+        for datasource_config in index_config.datasources:
+            if not isinstance(
+                datasource_config,
+                StarknetNodeDatasourceConfig,
+            ):
+                continue
+            datasources.append(self._datasources[datasource_config.name])  # type: ignore[arg-type]
 
-        if not contracts:
-            self._logger.debug('No contract specified. No ABI to fetch.')
-            return
+        for handler_config in index_config.handlers:
+            if isinstance(handler_config, StarknetEventsHandlerConfig) and handler_config.contract:
+                contract = handler_config.contract
+            else:
+                continue
 
-        # deduplicated (by name) Datasource list
-        datasources: list[AbiDatasource[Any]] = list(
-            {
-                datasource_config.name: cast('AbiDatasource[Any]', self._datasources[datasource_config.name])
-                for datasource_config in index_config.datasources
-                if isinstance(datasource_config, StarknetNodeDatasourceConfig)
-            }.values()
-        )
-
-        if not datasources:
-            raise ConfigurationError('No Starknet ABI datasources found')
-
-        async for contract, abi_json in AbiDatasource.lookup_abi_for(contracts, using=datasources, logger=self._logger):
-            abi_path = self._package.abi / contract.module_name / 'cairo_abi.json'
-
+            abi_path = self._package.abi / contract.module_name / CAIRO_ABI_JSON
             if abi_path.exists():
                 continue
 
+            if not datasources:
+                msg = f'ABI not found at `{abi_path}` and no Cairo ABI datasources configured to fetch it'
+                raise ConfigurationError(msg)
+
+            abi_json = await self._lookup_abi(contract, datasources)
             touch(abi_path)
             abi_path.write_bytes(json_dumps(abi_json))
 

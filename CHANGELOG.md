@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- codegen: Fixed loading ABIs from the project with no ABI datasources configured.
 - project: Fixed `make image` command and default workdir.
 
 ## [8.3.3] - 2025-04-29

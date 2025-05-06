@@ -1,13 +1,9 @@
-from itertools import chain
 from pathlib import Path
-from typing import TYPE_CHECKING
 from typing import Any
-from typing import cast
 
 from dipdup.codegen import CodeGenerator
 from dipdup.config import EvmIndexConfigU
 from dipdup.config import HandlerConfig
-from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
@@ -18,12 +14,10 @@ from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources import AbiDatasource
 from dipdup.exceptions import ConfigurationError
+from dipdup.package import EVM_ABI_JSON
 from dipdup.utils import json_dumps
 from dipdup.utils import snake_to_pascal
 from dipdup.utils import touch
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
 
 
 class EvmCodeGenerator(CodeGenerator):
@@ -56,43 +50,32 @@ class EvmCodeGenerator(CodeGenerator):
         abi_to_jsonschemas(self._package, events, methods)
 
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
-        contracts_from_event_handlers: list[EvmContractConfig] = [
-            handler_config.contract
-            for handler_config in index_config.handlers
-            if isinstance(handler_config, EvmEventsHandlerConfig)
-        ]
-        contracts_from_transactions: list[EvmContractConfig] = [
-            handler_config.typed_contract
-            for handler_config in index_config.handlers
-            if (isinstance(handler_config, EvmTransactionsHandlerConfig) and handler_config.typed_contract is not None)
-        ]
-        contracts: Iterable[EvmContractConfig] = chain(contracts_from_event_handlers, contracts_from_transactions)
+        datasources: list[AbiDatasource[Any]] = []
+        for datasource_config in index_config.datasources:
+            if not isinstance(
+                datasource_config,
+                EvmEtherscanDatasourceConfig | EvmSourcifyDatasourceConfig | EvmBlockvisionDatasourceConfig,
+            ):
+                continue
+            datasources.append(self._datasources[datasource_config.name])  # type: ignore[arg-type]
 
-        if not contracts:
-            self._logger.debug('No contract specified. No ABI to fetch.')
-            return
+        for handler_config in index_config.handlers:
+            if isinstance(handler_config, EvmEventsHandlerConfig) and handler_config.contract:
+                contract = handler_config.contract
+            elif isinstance(handler_config, EvmTransactionsHandlerConfig) and handler_config.typed_contract:
+                contract = handler_config.typed_contract
+            else:
+                continue
 
-        # deduplicated (by name) Datasource list
-        datasources: list[AbiDatasource[Any]] = list(
-            {
-                datasource_config.name: cast('AbiDatasource[Any]', self._datasources[datasource_config.name])
-                for datasource_config in index_config.datasources
-                if isinstance(
-                    datasource_config,
-                    EvmEtherscanDatasourceConfig | EvmSourcifyDatasourceConfig | EvmBlockvisionDatasourceConfig,
-                )
-            }.values()
-        )
-
-        if not datasources:
-            raise ConfigurationError('No EVM ABI datasources found')
-
-        async for contract, abi_json in AbiDatasource.lookup_abi_for(contracts, using=datasources, logger=self._logger):
-            abi_path = self._package.abi / contract.module_name / 'abi.json'
-
+            abi_path = self._package.abi / contract.module_name / EVM_ABI_JSON
             if abi_path.exists():
                 continue
 
+            if not datasources:
+                msg = f'ABI not found at `{abi_path}` and no EVM ABI datasources configured to fetch it'
+                raise ConfigurationError(msg)
+
+            abi_json = await self._lookup_abi(contract, datasources)
             touch(abi_path)
             abi_path.write_bytes(json_dumps(abi_json))
 

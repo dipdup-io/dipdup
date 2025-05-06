@@ -19,7 +19,14 @@ from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config._mixin import CallbackMixin
+from dipdup.datasources import AbiDatasource
+from dipdup.datasources import AbiJson
+from dipdup.datasources import ContractConfigT
 from dipdup.datasources import Datasource
+from dipdup.datasources import DatasourceConfigT
+from dipdup.exceptions import AbiNotAvailableError
+from dipdup.exceptions import ConfigurationError
+from dipdup.exceptions import DatasourceError
 from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PACKAGE_MARKER
@@ -223,6 +230,29 @@ class CodeGenerator(_BaseCodeGenerator, ABC):
 
     def _cleanup_schemas(self) -> None:
         rmtree(self.schemas_dir, ignore_errors=True)
+
+    async def _lookup_abi(
+        self,
+        contract: ContractConfigT,
+        datasources: list[AbiDatasource[DatasourceConfigT]],
+    ) -> AbiJson:
+        """For every contract goes over each datasourse and tries to obtain abi file.
+        If no ABI exists for any of the contracts - raises error.
+        """
+        address = contract.address or contract.abi
+        if not address:
+            raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
+
+        for datasource in datasources:
+            try:
+                return await datasource.get_abi(address=address)
+            except DatasourceError as e:
+                _logger.warning('Failed to fetch ABI from `%s`: %s', datasource.name, e)
+
+        raise AbiNotAvailableError(
+            address=address,
+            typename=contract.module_name,
+        )
 
 
 @final
