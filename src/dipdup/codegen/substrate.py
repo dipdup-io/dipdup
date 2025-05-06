@@ -58,7 +58,7 @@ def scale_type_to_jsonschema(
                     },
                 }
 
-    # Handle primitives, default to str
+    # NOTE: Handle primitives, default to str
     schema: dict[str, Any] = {
         'description': type_string,
         'type': 'string',
@@ -197,7 +197,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                         target_events[runtime_name].remove(qualname)
 
                         # FIXME: ignore when only docs changed?
-                        dump = orjson.dumps({**event_item, 'name': ''})
+                        dump = orjson.dumps(event_item)
                         if dump == latest_dumps[qualname]:
                             continue
                         latest_dumps[qualname] = dump
@@ -259,15 +259,6 @@ class SubstrateCodeGenerator(CodeGenerator):
             ]
 
             write(typeclass_dir.joinpath('__init__.py'), '\n'.join(root_lines), overwrite=True)
-
-    async def generate_hooks(self) -> None:
-        pass
-
-    async def generate_system_hooks(self) -> None:
-        pass
-
-    async def generate_handlers(self) -> None:
-        pass
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem

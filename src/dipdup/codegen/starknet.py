@@ -70,15 +70,6 @@ class StarknetCodeGenerator(CodeGenerator):
 
         abi_to_jsonschemas(self._package, events)
 
-    async def generate_hooks(self) -> None:
-        pass
-
-    async def generate_system_hooks(self) -> None:
-        pass
-
-    async def generate_handlers(self) -> None:
-        pass
-
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem
         if schema_path.parent.name == 'starknet_events':

@@ -55,15 +55,6 @@ class EvmCodeGenerator(CodeGenerator):
 
         abi_to_jsonschemas(self._package, events, methods)
 
-    async def generate_hooks(self) -> None:
-        pass
-
-    async def generate_system_hooks(self) -> None:
-        pass
-
-    async def generate_handlers(self) -> None:
-        pass
-
     async def _fetch_abi(self, index_config: EvmIndexConfigU) -> None:
         contracts_from_event_handlers: list[EvmContractConfig] = [
             handler_config.contract
