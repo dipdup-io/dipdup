@@ -1,11 +1,8 @@
 import asyncio
 import time
 from abc import abstractmethod
-from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
-from collections.abc import Iterable
-from logging import Logger
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -20,8 +17,6 @@ from dipdup.config import IndexConfig
 from dipdup.config import ResolvedHttpConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
-from dipdup.exceptions import AbiNotAvailableError
-from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
@@ -68,35 +63,6 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
     @abstractmethod
     async def get_abi(self, address: str) -> AbiJson: ...
-
-    @staticmethod
-    async def lookup_abi_for(
-        contracts: Iterable[ContractConfigT], using: list['AbiDatasource[DatasourceConfigT]'], logger: Logger
-    ) -> AsyncIterator[tuple[ContractConfigT, AbiJson]]:
-        """For every contract goes over each datasourse and tries to obtain abi file.
-        If no ABI exists for any of the contracts - raises error.
-        """
-        for contract in contracts:
-            abi_json = None
-
-            address = contract.address or contract.abi
-            if not address:
-                raise ConfigurationError(f'`address` or `abi` must be specified for contract `{contract.module_name}`')
-
-            for datasource in using:
-                try:
-                    abi_json = await datasource.get_abi(address=address)
-                    break
-                except DatasourceError as e:
-                    logger.warning('Failed to fetch ABI from `%s`: %s', datasource.name, e)
-
-            if abi_json is None:
-                raise AbiNotAvailableError(
-                    address=address,
-                    typename=contract.module_name,
-                )
-
-            yield (contract, abi_json)
 
 
 # FIXME: inconsistent usage
