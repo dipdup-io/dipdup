@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_evm_uniswap
-WORKDIR demo_evm_uniswap
+WORKDIR /home/dipdup/demo_evm_uniswap

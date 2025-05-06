@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_starknet_events
-WORKDIR demo_starknet_events
+WORKDIR /home/dipdup/demo_starknet_events

@@ -6,4 +6,4 @@ FROM dipdup/dipdup:{{ project.dipdup_version }}
 # RUN pip install .
 
 COPY --chown=dipdup . {{ project.package }}
-WORKDIR {{ project.package }}
+WORKDIR /home/dipdup/{{ project.package }}

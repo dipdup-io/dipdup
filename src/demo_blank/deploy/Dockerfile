@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_blank
-WORKDIR demo_blank
+WORKDIR /home/dipdup/demo_blank

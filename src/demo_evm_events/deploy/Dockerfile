@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_evm_events
-WORKDIR demo_evm_events
+WORKDIR /home/dipdup/demo_evm_events

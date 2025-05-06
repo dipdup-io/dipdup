@@ -6,4 +6,4 @@ FROM dipdup/dipdup:8
 # RUN pip install .
 
 COPY --chown=dipdup . demo_tezos_domains
-WORKDIR demo_tezos_domains
+WORKDIR /home/dipdup/demo_tezos_domains
