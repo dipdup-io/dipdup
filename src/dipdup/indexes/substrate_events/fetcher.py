@@ -173,6 +173,8 @@ class SubstrateNodeEventFetcher(SubstrateNodeFetcher[SubstrateEventData]):
             with suppress(asyncio.TimeoutError):
                 while True:
                     header, events = await asyncio.wait_for(queues['events'].get(), timeout=1)
+                    for index in range(len(events)):
+                        events[index]['index'] = index
                     yield tuple(SubstrateEventData.from_node(event, header) for event in events)
 
         tasks[-1].cancel()
