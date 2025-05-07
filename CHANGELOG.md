@@ -12,6 +12,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.
 - project: Fixed `make image` command and default workdir.
+- substrate.node: Fixed Substrate Node Event Index.
 
 ## [8.3.3] - 2025-04-29
 
