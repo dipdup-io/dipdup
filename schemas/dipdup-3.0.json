@@ -56,7 +56,7 @@
             }
           ],
           "default": null,
-          "description": "A number of levels to keep for rollback.",
+          "description": "A number of blocks to keep for rollback (affects all datasources)",
           "title": "rollback_depth"
         },
         "scheduler": {
@@ -77,6 +77,17 @@
           "description": "Disable journaling and data integrity checks. Use only for testing.",
           "title": "unsafe_sqlite",
           "type": "boolean"
+        },
+        "watchdog": {
+          "additionalProperties": {
+            "$ref": "#/$defs/WatchdogAction"
+          },
+          "description": "Mapping of watchdog triggers and actions DipDup performs.",
+          "propertyNames": {
+            "$ref": "#/$defs/WatchdogTrigger"
+          },
+          "title": "watchdog",
+          "type": "object"
         }
       },
       "title": "AdvancedConfig",
@@ -3133,6 +3144,24 @@
       "type": "object"
     },
     "Url": {
+      "type": "string"
+    },
+    "WatchdogAction": {
+      "enum": [
+        "exception",
+        "warning",
+        "ignore"
+      ],
+      "title": "WatchdogAction",
+      "type": "string"
+    },
+    "WatchdogTrigger": {
+      "enum": [
+        "callback",
+        "transaction",
+        "websocket"
+      ],
+      "title": "WatchdogTrigger",
       "type": "string"
     },
     "WsUrl": {

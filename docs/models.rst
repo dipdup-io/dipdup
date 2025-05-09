@@ -20,9 +20,6 @@ Internal models
 .. autoclass:: dipdup.models.IndexStatus
 .. autoclass:: dipdup.models.IndexType
 .. autoclass:: dipdup.models.Schema
-.. autoclass:: dipdup.models.ReindexingAction
-.. autoclass:: dipdup.models.ReindexingReason
-.. autoclass:: dipdup.models.SkipHistory
 .. autoclass:: dipdup.models.Meta
 .. autoclass:: dipdup.models.ModelUpdate
 .. autoclass:: dipdup.models.ModelUpdateAction

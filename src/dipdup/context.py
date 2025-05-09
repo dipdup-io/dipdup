@@ -25,6 +25,9 @@ from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
+from dipdup.config import ReindexingAction
+from dipdup.config import ReindexingReason
+from dipdup.config import WatchdogTrigger
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
@@ -86,8 +89,6 @@ from dipdup.models import ContractMetadata
 from dipdup.models import Head
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
-from dipdup.models import ReindexingAction
-from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.performance import _CacheManager
@@ -96,6 +97,7 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
+from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
@@ -103,9 +105,10 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
     from types import ModuleType
 
+    from mcp.server import Server as McpServer
+
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
-    from mcp.server import Server as McpServer
 
 
 _logger = getLogger(__name__)
@@ -763,11 +766,9 @@ class DipDupContext:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        try:
-            yield
-        # NOTE: Do not wrap known errors like ProjectImportError
-        except FrameworkException:
-            raise
+        watchdog.heartbeat(WatchdogTrigger.callback)
+        yield
+        watchdog.reset(WatchdogTrigger.callback)
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:

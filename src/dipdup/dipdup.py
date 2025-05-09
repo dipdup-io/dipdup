@@ -30,6 +30,7 @@ from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ReindexingReason
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
@@ -72,7 +73,6 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import Meta
-from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
 from dipdup.models.evm import EvmEventData
@@ -93,6 +93,8 @@ from dipdup.performance import metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
+from dipdup.watchdog import DEFAULT_WATCHDOGS
+from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
     from dipdup.index import Index
@@ -101,6 +103,7 @@ METRICS_INTERVAL = 1.0 if env.DEBUG else 5.0
 STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
+WATCHDOG_INTERVAL = 5
 
 _logger = logging.getLogger(__name__)
 
@@ -769,6 +772,7 @@ class DipDup:
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
+                watchdog_config=advanced.watchdog,
             )
 
             if tasks:
@@ -954,6 +958,7 @@ class DipDup:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
+        watchdog_config: dict[Any, Any],
     ) -> None:
         index_dispatcher = self._index_dispatcher
 
@@ -974,6 +979,17 @@ class DipDup:
 
         # NOTE: Preloading `CachedModel`
         _add_task(preload_cached_models(self._config.package))
+
+        # NOTE: Watchdog
+        watchdog_config = {
+            **DEFAULT_WATCHDOGS,
+            **watchdog_config,
+        }
+        for trigger, pair in watchdog_config.items():
+            action, timeout = pair
+            watchdog.register(trigger, action, timeout)
+
+        _add_task(watchdog.run(WATCHDOG_INTERVAL))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()

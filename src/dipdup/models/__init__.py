@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import time
 from decimal import Decimal
 from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Self
@@ -44,7 +45,7 @@ _logger = logging.getLogger(__name__)
 tortoise.queryset.QuerySet._clone = lambda self: self  # type: ignore[method-assign]
 
 
-class IndexType(Enum):
+class IndexType(StrEnum):
     """Kind of the index"""
 
     evm_events = 'evm.events'
@@ -70,7 +71,7 @@ class RollbackMessage:
     to_level: int
 
 
-class IndexStatus(Enum):
+class IndexStatus(StrEnum):
     new = 'new'
     syncing = 'syncing'
     realtime = 'realtime'
@@ -78,48 +79,12 @@ class IndexStatus(Enum):
     failed = 'failed'
 
 
-# NOTE: Used as a key in config, must inherit from str
-class ReindexingReason(str, Enum):
-    """Reason that caused reindexing
-
-    :param manual: Manual reindexing.
-    :param migration: Migration of the database schema.
-    :param rollback: Rollback that couldn't be handled automatically.
-    :param config_modified: Index config was modified.
-    :param schema_modified: Project models or database schema were modified.
-    """
-
-    manual = 'manual'
-    migration = 'migration'
-    rollback = 'rollback'
-    config_modified = 'config_modified'
-    schema_modified = 'schema_modified'
-
-
-class ReindexingAction(Enum):
-    """Action that should be performed on reindexing
-
-    :param exception: Raise `ReindexingRequiredError` exception.
-    :param wipe: Wipe the database and reindex from scratch. (WARNING: This action is irreversible! All indexed data will be lost!)
-    :param ignore: Ignore the reindexing cause and continue.
-    """
-
-    exception = 'exception'
-    wipe = 'wipe'
-    ignore = 'ignore'
-
-
-class SkipHistory(Enum):
-    """Whether to skip indexing big map history and use only current state
-
-    :param never: Always index big map historical updates.
-    :param once: Skip history once after reindexing; process updates as usual on the next resync.
-    :param always: Always skip big map history.
-    """
-
-    never = 'never'
-    once = 'once'
-    always = 'always'
+# TODO: Compatibility aliases; remove in 9.0
+from dipdup.config import ReindexingAction  # noqa
+from dipdup.config import ReindexingReason
+from dipdup.config import SkipHistory  # noqa
+from dipdup.config import WatchdogAction  # noqa
+from dipdup.config import WatchdogTrigger  # noqa
 
 
 @dataclass
