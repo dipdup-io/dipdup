@@ -2,8 +2,6 @@
 
 .. autoclass:: dipdup.config.DipDupConfig
 
-.. autoclass:: dipdup.config.abi_etherscan.AbiEtherscanDatasourceConfig
-.. autoclass:: dipdup.config.ContractConfig
 .. autoclass:: dipdup.config.AdvancedConfig
 .. autoclass:: dipdup.config.ApiConfig
 .. autoclass:: dipdup.config.coinbase.CoinbaseDatasourceConfig
@@ -20,8 +18,6 @@
 .. autoclass:: dipdup.config.HookConfig
 .. autoclass:: dipdup.config.HttpConfig
 .. autoclass:: dipdup.config.http.HttpDatasourceConfig
-.. autoclass:: dipdup.config.IndexConfig
-.. autoclass:: dipdup.config.DatasourceConfig
 .. autoclass:: dipdup.config.IndexTemplateConfig
 .. autoclass:: dipdup.config.ipfs.IpfsDatasourceConfig
 .. autoclass:: dipdup.config.JobConfig
@@ -66,3 +62,12 @@
 .. autoclass:: dipdup.config.substrate_subsquid.SubstrateSubsquidDatasourceConfig
 .. autoclass:: dipdup.config.substrate_subscan.SubstrateSubscanDatasourceConfig
 .. autoclass:: dipdup.config.tzip_metadata.TzipMetadataDatasourceConfig
+.. autoclass:: dipdup.config.evm_sourcify.EvmSourcifyDatasourceConfig
+.. autoclass:: dipdup.config.SkipHistory
+.. autoclass:: dipdup.config.substrate_node.SubstrateNodeDatasourceConfig
+.. autoclass:: dipdup.config.McpConfig
+.. autoclass:: dipdup.config.ReindexingAction
+.. autoclass:: dipdup.config.WatchdogTrigger
+.. autoclass:: dipdup.config.WatchdogAction
+.. autoclass:: dipdup.config.evm_blockvision.EvmBlockvisionDatasourceConfig
+.. autoclass:: dipdup.config.ReindexingReason

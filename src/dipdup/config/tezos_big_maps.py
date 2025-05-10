@@ -10,10 +10,10 @@ from pydantic.dataclasses import dataclass
 from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import HandlerConfig
+from dipdup.config import SkipHistory
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models import SkipHistory
 from dipdup.models.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal

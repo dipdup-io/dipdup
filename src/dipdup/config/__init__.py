@@ -23,6 +23,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
 from contextlib import suppress
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from types import NoneType
@@ -56,9 +57,6 @@ from dipdup.config._mixin import TerminalOptions
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.models import ReindexingAction
-from dipdup.models import ReindexingReason
-from dipdup.models import SkipHistory
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -569,22 +567,80 @@ class McpConfig:
         return self.api_url or f'http://{self.host}:{DEFAULT_API_PORT}'
 
 
+# NOTE: Used as a key in config, must inherit from str
+class ReindexingReason(StrEnum):
+    """Reason that caused reindexing
+
+    :param manual: Manual reindexing.
+    :param migration: Migration of the database schema.
+    :param rollback: Rollback that couldn't be handled automatically.
+    :param config_modified: Index config was modified.
+    :param schema_modified: Project models or database schema were modified.
+    """
+
+    manual = 'manual'
+    migration = 'migration'
+    rollback = 'rollback'
+    config_modified = 'config_modified'
+    schema_modified = 'schema_modified'
+
+
+class ReindexingAction(StrEnum):
+    """Action that should be performed on reindexing
+
+    :param exception: Raise `ReindexingRequiredError` exception.
+    :param wipe: Wipe the database and reindex from scratch. (WARNING: This action is irreversible! All indexed data will be lost!)
+    :param ignore: Ignore the reindexing cause and continue.
+    """
+
+    exception = 'exception'
+    wipe = 'wipe'
+    ignore = 'ignore'
+
+
+class WatchdogTrigger(StrEnum):
+    callback = 'callback'
+    transaction = 'transaction'
+    websocket = 'websocket'
+
+
+class WatchdogAction(StrEnum):
+    exception = 'exception'
+    warning = 'warning'
+    ignore = 'ignore'
+
+
+class SkipHistory(StrEnum):
+    """Whether to skip indexing big map history and use only current state
+
+    :param never: Always index big map historical updates.
+    :param once: Skip history once after reindexing; process updates as usual on the next resync.
+    :param always: Always skip big map history.
+    """
+
+    never = 'never'
+    once = 'once'
+    always = 'always'
+
+
 # NOTE: Should be the only place where extras are allowed
 @dataclass(config=ConfigDict(extra='allow', defer_build=True), kw_only=True)
 class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
     :param reindex: Mapping of reindexing reasons and actions DipDup performs.
+    :param watchdog: Mapping of watchdog triggers and actions DipDup performs.
     :param scheduler: `apscheduler` scheduler config.
     :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
     :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
-    :param rollback_depth: A number of levels to keep for rollback.
+    :param rollback_depth: A number of blocks to keep for rollback (affects all datasources)
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
+    watchdog: dict[WatchdogTrigger, WatchdogAction] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
