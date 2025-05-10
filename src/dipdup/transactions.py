@@ -5,8 +5,10 @@ from contextlib import asynccontextmanager
 from tortoise.transactions import in_transaction
 
 import dipdup.models
+from dipdup.config import WatchdogTrigger
 from dipdup.database import get_connection
 from dipdup.database import set_connection
+from dipdup.watchdog import watchdog
 
 
 class TransactionManager:
@@ -43,6 +45,7 @@ class TransactionManager:
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
         try:
+            watchdog.heartbeat(WatchdogTrigger.transaction)
             original_conn = get_connection()
             async with in_transaction() as conn:
                 set_connection(conn)
@@ -65,6 +68,7 @@ class TransactionManager:
         finally:
             self._transaction = None
             set_connection(original_conn)
+            watchdog.reset(WatchdogTrigger.transaction)
 
     async def _commit(self) -> None:
         """Save pending updates to DB in the same order as they were added"""

@@ -9,7 +9,7 @@ from typing import Any
 if TYPE_CHECKING:
     from tortoise.models import Model
 
-    from dipdup.models import ReindexingReason
+    from dipdup.config import ReindexingReason
 
 tab = ('_' * 80) + '\n\n'
 
@@ -363,6 +363,16 @@ class MigrationError(FrameworkException):
 @dataclass(repr=False)
 class UnsupportedFeatureError(Error):
     """User trying to use an unsupported feature"""
+
+    msg: str
+
+    def _help(self) -> str:
+        return self.msg
+
+
+@dataclass(repr=False)
+class WatchdogTimeoutError(Error):
+    """Watchdog timeout expired"""
 
     msg: str
 

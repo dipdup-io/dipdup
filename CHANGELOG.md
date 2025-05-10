@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [8.3.4] - 2025-05-07
 
+### Added
+
+- context: Added configurable watchdog service to notify about long-running callbacks and transactions.
+
 ### Fixed
 
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.

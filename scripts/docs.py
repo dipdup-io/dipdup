@@ -531,6 +531,7 @@ def dump_references() -> None:
             exit(1)
 
     _compare('models', IGNORED_MODEL_CLASSES)
+    _compare('config', set())
 
     green_echo('=> Building Sphinx docs')
     rmtree('docs/_build', ignore_errors=True)

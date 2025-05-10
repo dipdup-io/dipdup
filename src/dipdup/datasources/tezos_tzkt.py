@@ -19,6 +19,7 @@ from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HttpConfig
+from dipdup.config import ReindexingReason
 from dipdup.config.tezos import SMART_CONTRACT_PREFIX
 from dipdup.config.tezos import SMART_ROLLUP_PREFIX
 from dipdup.config.tezos import TezosContractConfig
@@ -30,7 +31,6 @@ from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.models import Head
 from dipdup.models import MessageType
-from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosBigMapData
 from dipdup.models.tezos import TezosBlockData
