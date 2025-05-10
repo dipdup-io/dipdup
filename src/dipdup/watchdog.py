@@ -63,7 +63,7 @@ class WatchdogManager:
                 elif action == WatchdogAction.ignore:
                     _logger.debug('%s, ignoring', msg)
                 else:
-                    raise NotImplementedError
+                    raise NotImplementedError(f'Unsupported watchdog action: {action}')
 
             await asyncio.sleep(interval)
 
