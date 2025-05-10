@@ -97,6 +97,7 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
+from dipdup.watchdog import WatchdogManager
 from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
@@ -194,6 +195,10 @@ class DipDupContext:
     @property
     def queues(self) -> _QueueManager:
         return queues
+
+    @property
+    def watchdog(self) -> WatchdogManager:
+        return watchdog
 
     async def restart(self) -> None:
         """Restart process and continue indexing."""
