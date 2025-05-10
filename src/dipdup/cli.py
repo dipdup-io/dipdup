@@ -24,8 +24,6 @@ from dipdup.install import WELCOME_ASCII
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
-ROOT_CONFIG = 'dipdup.yaml'
-CONFIG_RE = r'dipdup.*\.ya?ml'
 
 # NOTE: Do not try to load config for these commands as they don't need it
 NO_CONFIG_CMDS = {
@@ -64,6 +62,7 @@ def _get_paths(
     params: dict[str, Any],
 ) -> tuple[list[Path], list[Path]]:
     from dipdup.exceptions import ConfigurationError
+    from dipdup.package import ROOT_CONFIG
 
     config_args: list[str] = params.pop('config', [])
     env_file_args: list[str] = params.pop('env_file', [])
@@ -99,6 +98,12 @@ def _get_paths(
 
 
 def _load_env_files(env_file_paths: list[Path]) -> None:
+    from dipdup.package import ROOT_ENV
+
+    # NOTE: If 'dipdup.env' exists, it will be loaded first
+    if Path(ROOT_ENV).is_file():
+        env_file_paths.insert(0, Path(ROOT_ENV))
+
     for path in env_file_paths:
         from dotenv import load_dotenv
 
@@ -560,6 +565,7 @@ async def mcp_run(ctx: click.Context) -> None:
 
     import uvicorn
     from anyio import from_thread
+    from mcp.server.sse import SseServerTransport
     from starlette.applications import Starlette
     from starlette.routing import Mount
     from starlette.routing import Route
@@ -572,7 +578,6 @@ async def mcp_run(ctx: click.Context) -> None:
     from dipdup.context import McpContext
     from dipdup.datasources.http import HttpDatasource
     from dipdup.dipdup import DipDup
-    from mcp.server.sse import SseServerTransport
 
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
@@ -972,6 +977,7 @@ async def new(
     from survey._widgets import Escape  # type: ignore[import-untyped]
 
     from dipdup.config import DipDupConfig
+    from dipdup.package import ROOT_CONFIG
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import get_default_answers

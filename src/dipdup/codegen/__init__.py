@@ -27,7 +27,6 @@ from dipdup.datasources import DatasourceConfigT
 from dipdup.exceptions import AbiNotAvailableError
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import DatasourceError
-from dipdup.package import DEFAULT_ENV
 from dipdup.package import KEEP_MARKER
 from dipdup.package import PACKAGE_MARKER
 from dipdup.package import DipDupPackage
@@ -39,6 +38,8 @@ from dipdup.utils import sorted_glob
 from dipdup.utils import touch
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
+
+DEFAULT_ENV = '.env.default'
 
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]

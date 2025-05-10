@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Added
 
 - context: Added configurable watchdog service to notify about long-running callbacks and transactions.
+- cli: Added loading env-file `dipdup.env` if presented in the current directory.
 
 ### Fixed
 
