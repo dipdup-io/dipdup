@@ -242,12 +242,12 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
             await asyncio.sleep(0.1)
 
         result: list[_SubstrateNodeEventResponse] = []
-        for raw_event in events:
+        for index, raw_event in enumerate(events):
             event: dict[str, Any] = raw_event.decode()
             result.append(
                 {
                     'name': f'{event["module_id"]}.{event["event_id"]}',
-                    'index': event['event_index'],
+                    'index': index,
                     'extrinsic_index': event['extrinsic_idx'],
                     'decoded_args': event['attributes'],
                 }
