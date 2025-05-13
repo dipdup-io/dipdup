@@ -222,7 +222,7 @@ class _MetricManager:
     time_left: Gauge | float = Gauge('dipdup_time_left_seconds', 'Time left estimated until the end')
     progress: Gauge | float = Gauge('dipdup_progress', 'Progress in percents')
 
-    # NOTE: Orignally in prometheus.py
+    # NOTE: Originally in prometheus.py
     _indexes_total = Gauge(
         'dipdup_indexes_total',
         'Number of indexes in operation by status',
