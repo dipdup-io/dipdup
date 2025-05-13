@@ -226,7 +226,7 @@ class SubstrateRuntime:
             if isinstance(value, str) and value[:2] != '0x':
                 return int(value)
 
-            # FIXME: Tuple type string have neither brackets no delimeters... Could be a Subscan thing, need to check.
+            # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
             if isinstance(value, list) and type_.startswith('Tuple:'):
                 inner_types = extract_tuple_inner_types(
                     type_=type_,
