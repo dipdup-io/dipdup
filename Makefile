@@ -86,7 +86,7 @@ demos:          ## Recreate demo projects from templates
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py render ${DEMO}
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py init ${DEMO}
 
-demos_refresh:
+demos_refresh:  ## Run `init --force` in all demo projects
 	for demo in `ls src | grep demo | grep -v etherlink`; do cd src/$$demo && DIPDUP_NO_SYMLINK=1 dipdup init --force && cd ../..; done
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml

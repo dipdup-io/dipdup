@@ -4,7 +4,9 @@ from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
+from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
@@ -12,8 +14,6 @@ import appdirs  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from dipdup import env
-from dipdup.abi.cairo import CairoAbiManager
-from dipdup.abi.evm import EvmAbiManager
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -23,11 +23,17 @@ from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
+if TYPE_CHECKING:
+    from dipdup.abi.cairo import CairoAbiManager
+    from dipdup.abi.evm import EvmAbiManager
+
+ROOT_CONFIG = 'dipdup.yaml'
+ROOT_ENV = 'dipdup.env'
+
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
-DEFAULT_ENV = '.env.default'
-
+PYPROJECT = 'pyproject.toml'
 
 EVM_ABI_JSON = 'abi.json'
 CAIRO_ABI_JSON = 'cairo_abi.json'
@@ -86,8 +92,9 @@ class DipDupPackage:
         self.name = root.name
 
         # NOTE: Paths expected to exist in package root
-        self.pyproject = root / 'pyproject.toml'
-        self.root_config = root / 'dipdup.yaml'
+        self.pyproject = root / PYPROJECT
+        self.root_config = root / ROOT_CONFIG
+        self.root_env = root / ROOT_ENV
 
         # NOTE: Package sections with .keep markers
         self.abi = root / 'abi'
@@ -114,11 +121,21 @@ class DipDupPackage:
         self._replay: Answers | None = None
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
-        self._evm_abis = EvmAbiManager(self)
-        self._cairo_abis = CairoAbiManager(self)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.root})'
+
+    @cached_property
+    def _evm_abis(self) -> 'EvmAbiManager':
+        from dipdup.abi.evm import EvmAbiManager
+
+        return EvmAbiManager(self)
+
+    @cached_property
+    def _cairo_abis(self) -> 'CairoAbiManager':
+        from dipdup.abi.cairo import CairoAbiManager
+
+        return CairoAbiManager(self)
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:

@@ -6,17 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.3.4] - 2025-05-07
 
 ### Added
 
 - context: Added configurable watchdog service to notify about long-running callbacks and transactions.
+- cli: Added loading env-file `dipdup.env` if presented in the current directory.
 
 ### Fixed
 
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.
 - project: Fixed `make image` command and default workdir.
-- substrate.node: Fixed Substrate Node Event Index.
+- substrate.node: Fixed event index field.
 
 ## [8.3.3] - 2025-04-29
 
@@ -722,9 +723,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.3.3...HEAD
-[8.3.3]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
-[8.3.2]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.3.4...HEAD
+[8.3.4]: https://github.com/dipdup-io/dipdup/compare/8.3.3...8.3.4
+[8.3.3]: https://github.com/dipdup-io/dipdup/compare/8.3.2...8.3.3
+[8.3.2]: https://github.com/dipdup-io/dipdup/compare/8.3.1...8.3.2
 [8.3.1]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
 [8.3.0]: https://github.com/dipdup-io/dipdup/compare/8.2.2...8.3.0
 [8.2.2]: https://github.com/dipdup-io/dipdup/compare/8.2.1...8.2.2
