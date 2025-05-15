@@ -711,7 +711,7 @@ def dump_ref_tables() -> None:
         '<!-- markdownlint-disable first-line-h1 -->',
         '| name | description |',
         '|-|-|',
-        *(f'| {name} | {description} |' for name, description in env.extract_docstrings().items()),
+        *(f'| `{name}` | {description} |' for name, description in env.extract_docstrings().items()),
         '',
     ]
 
