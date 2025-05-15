@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from dipdup.abi.evm import EvmAbiManager
 
 ROOT_CONFIG = 'dipdup.yaml'
-ROOT_ENV = 'dipdup.env'
+CWD_ENV = 'dipdup.env'
 
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
@@ -94,7 +94,6 @@ class DipDupPackage:
         # NOTE: Paths expected to exist in package root
         self.pyproject = root / PYPROJECT
         self.root_config = root / ROOT_CONFIG
-        self.root_env = root / ROOT_ENV
 
         # NOTE: Package sections with .keep markers
         self.abi = root / 'abi'
@@ -161,7 +160,7 @@ class DipDupPackage:
             # NOTE: Package sections
             self.abi: '**/*.json',
             self.configs: '**/*.y[a]ml',
-            self.deploy: '**/*[Dockerfile|.env.default|yml|yaml]',
+            self.deploy: '**/*[Dockerfile|yml|yaml]',
             self.graphql: '**/*.graphql',
             self.handlers: '**/*.py',
             self.hasura: '**/*.json',

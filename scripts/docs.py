@@ -40,6 +40,7 @@ from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
@@ -679,8 +680,8 @@ def merge_changelog() -> None:
         version_path.write_text('\n'.join(lines))
 
 
-@main.command('dump-metrics', help='Dump Markdown table of Prometheus metrics')
-def dump_metrics() -> None:
+@main.command('dump-ref-tables', help='Dump Markdown tables of Prometheus metrics and env vars')
+def dump_ref_tables() -> None:
     green_echo('=> Dumping metrics table')
     metrics: list[tuple[str, str, str]] = []
 
@@ -705,6 +706,16 @@ def dump_metrics() -> None:
     ]
 
     Path('docs/5.advanced/_metrics_table.md').write_text('\n'.join(lines))
+
+    lines = [
+        '<!-- markdownlint-disable first-line-h1 -->',
+        '| name | description |',
+        '|-|-|',
+        *(f'| {name} | {description} |' for name, description in env.extract_docstrings().items()),
+        '',
+    ]
+
+    Path('docs/5.advanced/_env_table.md').write_text('\n'.join(lines))
 
 
 @main.command('dump-demos', help='Dump Markdown table of available demo projects')

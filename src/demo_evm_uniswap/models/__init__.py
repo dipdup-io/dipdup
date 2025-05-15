@@ -337,7 +337,7 @@ class Swap(Model):
     transaction_hash = fields.TextField()
     # timestamp of transaction
     timestamp = fields.DatetimeField(db_index=True)
-    # pool swap occurred within
+    # pool swap occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='swaps')
     # allow indexing by tokens
     token0: fields.ForeignKeyRelation[Token] = fields.ForeignKeyField('models.Token', related_name='swaps_token0')
@@ -369,7 +369,7 @@ class Collect(Model):
     transaction_hash = fields.TextField()
     # timestamp of event
     timestamp = fields.BigIntField()
-    # pool collect occurred within
+    # pool collect occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='collects')
     # owner of position collect was performed on
     owner = fields.CharField(max_length=42, null=True)
@@ -393,7 +393,7 @@ class Flash(Model):
     transaction_hash = fields.TextField()
     # timestamp of event
     timestamp = fields.BigIntField()
-    # pool collect occurred within
+    # pool collect occured within
     pool: fields.ForeignKeyRelation[Pool] = fields.ForeignKeyField('models.Pool', related_name='flashed')
     # sender of the flash
     sender = fields.CharField(max_length=42)

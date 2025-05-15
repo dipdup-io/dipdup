@@ -37,9 +37,6 @@ from dipdup.utils import pascal_to_snake
 from dipdup.utils import sorted_glob
 from dipdup.utils import touch
 from dipdup.utils import write
-from dipdup.yaml import DipDupYAMLConfig
-
-DEFAULT_ENV = '.env.default'
 
 Callback = Callable[..., Awaitable[None]]
 TypeClass = type[BaseModel]
@@ -320,46 +317,3 @@ class CommonCodeGenerator(_BaseCodeGenerator):
                 '    await ctx.fire_matched_handler(handler)',
             ),
         )
-
-
-async def generate_environments(
-    config: DipDupConfig,
-    package: DipDupPackage,
-    force: bool = False,
-) -> None:
-    for default_env_path in package.deploy.glob(f'*{DEFAULT_ENV}'):
-        default_env_path.unlink()
-
-    for config_path in package.configs.iterdir():
-        if config_path.suffix not in ('.yml', '.yaml') or not config_path.stem.startswith('dipdup'):
-            continue
-
-        env_filename = config_path.stem.replace('dipdup.', '')
-        if env_filename == 'compose':
-            env_filename = ''
-
-        env_path = package.deploy / (env_filename + DEFAULT_ENV)
-        if env_path.exists() and not force:
-            _logger.debug('Skipping `%s`: env file already exists', env_path)
-            continue
-
-        _logger.info('Generating env file `%s`', env_path)
-        config_chain = [
-            *config._paths,
-            config_path,
-        ]
-        _, environment = DipDupYAMLConfig.load(
-            paths=config_chain,
-            environment=True,
-        )
-        env_lines = (f'{k}={v}' for k, v in sorted(environment.items()))
-        lines: tuple[str, ...] = (
-            '# This env file was generated automatically by DipDup. Do not edit it!',
-            '# Create a copy with .env extension, fill it with your values and run DipDup with `--env-file` option.',
-            '#',
-            *env_lines,
-            '',
-        )
-        content = '\n'.join(lines)
-        env_path.parent.mkdir(parents=True, exist_ok=True)
-        env_path.write_text(content)

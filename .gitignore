@@ -27,7 +27,6 @@
 !**/*.yml
 !**/*.sh
 !**/*.j2
-!**/*.env.default
 
 # Docs
 !docs/**

@@ -25,7 +25,6 @@ from tortoise.exceptions import OperationalError
 from dipdup import env
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
-from dipdup.codegen import generate_environments
 from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
@@ -664,6 +663,7 @@ class DipDup:
         force: bool = False,
         no_linter: bool = False,
         no_base: bool = False,
+        no_types: bool = False,
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
@@ -699,8 +699,9 @@ class DipDup:
                     msg = f'Unsupported index config: {index_config}'
                     raise FrameworkException(msg)
 
-            for codegen_cls in (CommonCodeGenerator, *tuple(codegen_classes)):
-                codegen = codegen_cls(  # type: ignore[operator]
+            codegen_classes = (CommonCodeGenerator,) if no_types else (CommonCodeGenerator, *tuple(codegen_classes))  # type: ignore[assignment]
+            for codegen_cls in codegen_classes:
+                codegen = codegen_cls(
                     config=self._config,
                     package=package,
                     datasources=self._datasources,
@@ -714,12 +715,6 @@ class DipDup:
                 if include and isinstance(codegen, CommonCodeGenerator):
                     _logger.info('Run `init` command without arguments to perform a full initialization')
                     return
-
-            await generate_environments(
-                config=self._config,
-                package=package,
-                force=force,
-            )
 
             if not (env.NO_LINTER or no_linter):
                 codegen._package.format_lint()
