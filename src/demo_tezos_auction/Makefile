@@ -34,6 +34,7 @@ lint:           ## Lint code with ruff and mypy
 
 image:          ## Build Docker image
 	docker buildx build . -f deploy/Dockerfile -t ${PACKAGE}:${TAG} --load
+	docker images | grep ${PACKAGE}
 
 up:             ## Start Compose stack
 	docker-compose -f ${COMPOSE} up -d --build

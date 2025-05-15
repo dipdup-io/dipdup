@@ -23,6 +23,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.
 - env: Skip detection of some variables if set explicitly.
 - project: Fixed `make image` command and default workdir.
+- project: Fixed missing codegen headers in project base.
 - substrate.node: Fixed event index field.
 
 ### Removed
