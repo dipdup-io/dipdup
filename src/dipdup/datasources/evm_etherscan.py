@@ -1,6 +1,4 @@
 import asyncio
-import re
-from copy import copy
 from typing import Any
 from typing import cast
 
@@ -9,7 +7,6 @@ import orjson
 from dipdup.config import HttpConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.datasources import AbiDatasource
-from dipdup.datasources import Datasource
 from dipdup.exceptions import DatasourceError
 
 
