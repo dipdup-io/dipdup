@@ -365,7 +365,7 @@ async def run(ctx: click.Context) -> None:
 @click.option('--base', '-b', is_flag=True, help='Include template base (default)')
 @click.option('--no-base', is_flag=True, help='Skip files from base template.')
 @click.option('--no-linter', is_flag=True, help='Skip applying linter and formatter.')
-@click.option('--no-types', is_flag=True, help='Skit generating ABIs and typeclasses.')
+@click.option('--no-types', is_flag=True, help='Skip generating ABIs and typeclasses.')
 @click.argument(
     'include',
     type=str,
