@@ -24,6 +24,10 @@ from dipdup.install import WELCOME_ASCII
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
+CONTEXT_SETTINGS = {
+    'help_option_names': ['-h', '--help'],
+    'max_content_width': 120,
+}
 
 # NOTE: Do not try to load config for these commands as they don't need it
 NO_CONFIG_CMDS = {
@@ -98,11 +102,11 @@ def _get_paths(
 
 
 def _load_env_files(env_file_paths: list[Path]) -> None:
-    from dipdup.package import ROOT_ENV
+    from dipdup.package import CWD_ENV
 
-    # NOTE: If 'dipdup.env' exists, it will be loaded first
-    if Path(ROOT_ENV).is_file():
-        env_file_paths.insert(0, Path(ROOT_ENV))
+    # NOTE: If 'dipdup.env' exists it's loaded automatically after other files
+    if (cwd_env := Path.cwd().joinpath(CWD_ENV)).is_file():
+        env_file_paths.append(cwd_env)
 
     for path in env_file_paths:
         from dotenv import load_dotenv
@@ -110,6 +114,7 @@ def _load_env_files(env_file_paths: list[Path]) -> None:
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
 
+    # NOTE: Make `dipdup.env` aware of possible changes
     if env_file_paths:
         env.reload_env()
 
@@ -211,27 +216,28 @@ def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None
 
 def _skip_cli_group() -> bool:
     # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    is_help = '--help' in args
-    is_empty_group = args in (
+    args = sys.argv[1:]
+    is_help = '--help' in args or '-h' in args
+    is_empty_group = args[-1:] in (
         ['config'],
         ['hasura'],
+        ['mcp'],
         ['package'],
         ['schema'],
-        ['mcp'],
     )
     # NOTE: Simple helpers that don't use any of our cli boilerplate
     is_script_group = args[0] in (
         'report',
         'self',
     )
-    if not (is_help or is_empty_group or is_script_group):
-        return False
-    return True
+
+    if is_help or is_empty_group or is_script_group:
+        return True
+    return False
 
 
 @click.group(
-    context_settings={'max_content_width': 120},
+    context_settings=CONTEXT_SETTINGS,
     help=WELCOME_ASCII,
     epilog=EPILOG,
 )
@@ -271,6 +277,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
 
     set_up_process()
 
+    # FIXME: This check fails for non-existing commands. Some Click magic could help here.
     if _skip_cli_group():
         return
 
@@ -336,7 +343,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
     )
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def run(ctx: click.Context) -> None:
@@ -353,11 +360,12 @@ async def run(ctx: click.Context) -> None:
     await dipdup.run()
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
 @click.option('--base', '-b', is_flag=True, help='Include template base (default)')
-@click.option('--no-base', '-b', is_flag=True, help='Skip files from base template.')
+@click.option('--no-base', is_flag=True, help='Skip files from base template.')
 @click.option('--no-linter', is_flag=True, help='Skip applying linter and formatter.')
+@click.option('--no-types', is_flag=True, help='Skip generating ABIs and typeclasses.')
 @click.argument(
     'include',
     type=str,
@@ -372,6 +380,7 @@ async def init(
     base: bool,
     no_base: bool,
     no_linter: bool,
+    no_types: bool,
     include: list[str],
 ) -> None:
     """Generate project tree, typeclasses and callback stubs.
@@ -392,11 +401,12 @@ async def init(
         force=force,
         no_base=no_base,
         no_linter=no_linter,
+        no_types=no_types,
         include=set(include),
     )
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--dry-run', '-n', is_flag=True, help='Print changes without applying them.')
 @click.pass_context
 @_cli_wrapper
@@ -435,11 +445,12 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
         force=True,
         no_linter=True,
         no_base=False,
+        no_types=False,
         include=[],
     )
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def config(ctx: click.Context) -> None:
@@ -447,7 +458,7 @@ async def config(ctx: click.Context) -> None:
     pass
 
 
-@config.command(name='export')
+@config.command(name='export', context_settings=CONTEXT_SETTINGS)
 @click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
 @click.option('--raw', '-r', is_flag=True, help='Do not initialize config; preserve file structure.')
@@ -492,7 +503,7 @@ async def config_export(
         echo(config.dump())
 
 
-@config.command(name='env')
+@config.command(name='env', context_settings=CONTEXT_SETTINGS)
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--compose', '-c', is_flag=True, help='Output in docker-compose format.')
@@ -543,21 +554,24 @@ async def config_env(
         echo(content)
 
 
-@cli.group(help='Commands related to Hasura integration.')
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def hasura(ctx: click.Context) -> None:
+    "Commands related to Hasura integration."
+
     pass
 
 
-@cli.group(help='Commands related to MCP integration.')
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def mcp(ctx: click.Context) -> None:
+    "Commands related to MCP integration."
     pass
 
 
-@mcp.command(name='run')
+@mcp.command(name='run', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def mcp_run(ctx: click.Context) -> None:
@@ -656,7 +670,7 @@ async def mcp_run(ctx: click.Context) -> None:
         portal.call(wrapper)
 
 
-@hasura.command(name='configure')
+@hasura.command(name='configure', context_settings=CONTEXT_SETTINGS)
 @click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @_cli_wrapper
@@ -690,7 +704,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
         await hasura_gateway.configure(force)
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
@@ -765,7 +779,7 @@ if 'schema' in sys.argv:
         _logger.debug('aerich is not installed, skipping database migration commands')
 
 
-@schema.command(name='approve')
+@schema.command(name='approve', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_approve(ctx: click.Context) -> None:
@@ -798,7 +812,7 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Schema approved')
 
 
-@schema.command(name='wipe')
+@schema.command(name='wipe', context_settings=CONTEXT_SETTINGS)
 @click.option('--immune', '-i', is_flag=True, help='Drop immune tables too.')
 @click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
@@ -873,7 +887,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     _logger.info('Schema wiped')
 
 
-@schema.command(name='init')
+@schema.command(name='init', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_init(ctx: click.Context) -> None:
@@ -909,7 +923,7 @@ async def schema_init(ctx: click.Context) -> None:
     _logger.info('Schema initialized')
 
 
-@schema.command(name='export')
+@schema.command(name='export', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_export(ctx: click.Context) -> None:
@@ -948,7 +962,7 @@ async def schema_export(ctx: click.Context) -> None:
         echo(output)
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
@@ -1034,6 +1048,7 @@ async def new(
         force=force,
         no_linter=False,
         no_base=False,
+        no_types=False,
         include=[],
     )
 
@@ -1050,7 +1065,7 @@ async def new(
     green_echo(f'Enter `{answers["package"]}` directory and see README.md for the next steps.')
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def self(ctx: click.Context) -> None:
@@ -1058,7 +1073,7 @@ async def self(ctx: click.Context) -> None:
     pass
 
 
-@self.command(name='install')
+@self.command(name='install', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
@@ -1093,7 +1108,7 @@ async def self_install(
     )
 
 
-@self.command(name='uninstall')
+@self.command(name='uninstall', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @_cli_wrapper
@@ -1107,7 +1122,7 @@ async def self_uninstall(
     dipdup.install.uninstall(quiet)
 
 
-@self.command(name='update')
+@self.command(name='update', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
@@ -1134,7 +1149,7 @@ async def self_update(
     )
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
@@ -1144,7 +1159,7 @@ async def report(ctx: click.Context) -> None:
     cleanup_reports()
 
 
-@report.command(name='ls')
+@report.command(name='ls', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def report_ls(ctx: click.Context) -> None:
@@ -1170,7 +1185,7 @@ async def report_ls(ctx: click.Context) -> None:
     echo(tabulate(rows, headers=header))
 
 
-@report.command(name='show')
+@report.command(name='show', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.argument('id', type=str)
 @_cli_wrapper
@@ -1193,7 +1208,7 @@ async def report_show(ctx: click.Context, id: str) -> None:
     echo(path.read_text())
 
 
-@report.command(name='rm')
+@report.command(name='rm', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.argument('id', type=str, required=False)
 @click.option('--all', '-a', is_flag=True, help='Remove all reports.')
@@ -1218,7 +1233,7 @@ async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
     path.unlink()
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package(ctx: click.Context) -> None:
@@ -1226,7 +1241,7 @@ async def package(ctx: click.Context) -> None:
     pass
 
 
-@package.command(name='tree')
+@package.command(name='tree', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package_tree(ctx: click.Context) -> None:
@@ -1244,7 +1259,7 @@ async def package_tree(ctx: click.Context) -> None:
         echo(line)
 
 
-@package.command(name='verify')
+@package.command(name='verify', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package_verify(ctx: click.Context) -> None:

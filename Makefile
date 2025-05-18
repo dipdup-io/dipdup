@@ -54,7 +54,7 @@ docs:           ## Build docs
 	python scripts/docs.py check-links --source docs
 	python scripts/docs.py dump-references
 	python scripts/docs.py dump-demos
-	python scripts/docs.py dump-metrics
+	python scripts/docs.py dump-ref-tables
 	python scripts/docs.py dump-jsonschema
 	python scripts/docs.py merge-changelog
 	python scripts/docs.py markdownlint
@@ -87,7 +87,7 @@ demos:          ## Recreate demo projects from templates
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py init ${DEMO}
 
 demos_refresh:  ## Run `init --force` in all demo projects
-	for demo in `ls src | grep demo | grep -v etherlink`; do cd src/$$demo && DIPDUP_NO_SYMLINK=1 dipdup init --force && cd ../..; done
+	for demo in `ls src | grep demo | grep -v etherlink`; do DIPDUP_NO_SYMLINK=1 dipdup -c src/$$demo init --force --no-types; done
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format lint update demos test docs

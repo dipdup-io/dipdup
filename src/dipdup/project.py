@@ -17,12 +17,12 @@ from pydantic.fields import FieldInfo
 from typing_extensions import TypedDict
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.cli import big_yellow_echo
 from dipdup.cli import echo
 from dipdup.config import DipDupConfig
 from dipdup.config import ToStr
 from dipdup.config._mixin import TerminalOptions
-from dipdup.env import get_package_path
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -292,7 +292,7 @@ def render_project(
     _render(
         answers,
         template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
-        output_path=get_package_path(answers['package']) / 'configs' / 'replay.yaml',
+        output_path=env.get_package_path(answers['package']) / 'configs' / 'replay.yaml',
         force=force,
     )
 
@@ -315,7 +315,7 @@ def render_base(
     _render(
         answers=answers,
         template_path=Path(__file__).parent / 'templates' / 'replay.yaml.j2',
-        output_path=get_package_path(answers['package']) / Path('configs') / 'replay.yaml',
+        output_path=env.get_package_path(answers['package']) / Path('configs') / 'replay.yaml',
         force=force,
     )
 
@@ -340,7 +340,7 @@ def _render_templates(
         if include and not any(relative_path.startswith(i) for i in include):
             continue
 
-        output_base = get_package_path(answers['package']) if exists else Path(answers['package'])
+        output_base = env.get_package_path(answers['package']) if exists else Path(answers['package'])
         output_path = Path(
             output_base,
             *path.relative_to(project_path).parts,
@@ -355,7 +355,7 @@ def _render_templates(
         if path.is_dir() or path.name == 'replay.yaml':
             continue
         output_path = Path(
-            get_package_path(answers['package']),
+            env.get_package_path(answers['package']),
             *path.relative_to(project_path).parts,
         )
         write(output_path, path.read_bytes(), overwrite=force)
@@ -369,16 +369,13 @@ def _render(answers: Answers, template_path: Path, output_path: Path, force: boo
     template = load_template(str(template_path))
     content = ''
 
-    if 'dipdup.yaml.j2' in str(template_path):
-        content = template.render(
-            project=answers,
-            header=CODEGEN_HEADER,
-        )
-    else:
-        content = template.render(
-            project={k: str(v) for k, v in answers.items()},
-            header=CODEGEN_HEADER,
-        )
+    project = {k: str(v) for k, v in answers.items()} if 'dipdup.yaml.j2' in str(template_path) else answers
+    env_file = '\n'.join(f'# {k}=' for k in env.extract_docstrings()) if 'dipdup.env.j2' in str(template_path) else ''
+    content = template.render(
+        project=project,
+        header=CODEGEN_HEADER,
+        env_file=env_file,
+    )
 
     write(output_path, content, overwrite=force)
 

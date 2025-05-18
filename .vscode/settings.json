@@ -5,7 +5,4 @@
             "tests/configs/*.y[a]ml"
         ],
     },
-    "files.associations": {
-        "*.env.default": "shellscript"
-    }
 }

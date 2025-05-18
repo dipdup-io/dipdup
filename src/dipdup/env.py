@@ -1,5 +1,6 @@
 import importlib
 import importlib.util
+import os
 import platform
 import sys
 import tomllib
@@ -15,7 +16,7 @@ def dump() -> dict[str, str]:
     result: dict[str, str] = {}
     for key in globals().keys():
         if key.isupper():
-            result[key] = getenv(f'DIPDUP_{key}') or ''
+            result[f'DIPDUP_{key}'] = getenv(f'DIPDUP_{key}') or ''
     return result
 
 
@@ -58,9 +59,10 @@ def get_package_path(package: str) -> Path:
     # NOTE: Detect existing package in current environment
     with suppress(ImportError):
         module = importlib.import_module(package)
-        if module.__file__ is None:
-            raise ImportError(f'`{module.__name__}` package has no `__file__` attribute')
-        return Path(module.__file__).parent
+        if module.__file__:
+            return Path(module.__file__).parent
+        if module.__path__:
+            return Path(module.__path__[0])
 
     # NOTE: Create a new package
     return Path.cwd() / package
@@ -120,22 +122,61 @@ def set_test() -> None:
     REPLAY_PATH = Path(__file__).parent.parent.parent / 'tests' / 'replays'
 
 
-CI: bool = get_bool('DIPDUP_CI')
-DEBUG: bool = get_bool('DIPDUP_DEBUG')
-DOCKER: bool = get_bool('DIPDUP_DOCKER')
-JSON_LOG: bool = get_bool('DIPDUP_JSON_LOG')
-LOW_MEMORY: bool = get_bool('DIPDUP_LOW_MEMORY')
-MIGRATIONS: bool = get_bool('DIPDUP_MIGRATIONS')
-NEXT: bool = get_bool('DIPDUP_NEXT')
-NO_LINTER: bool = get_bool('DIPDUP_NO_LINTER')
-NO_BASE: bool = get_bool('DIPDUP_NO_BASE')
-NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
-NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
-PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
-REPLAY_PATH: Path | None = get_path('DIPDUP_REPLAY_PATH')
-TEST: bool = get_bool('DIPDUP_TEST')
+def extract_docstrings() -> dict[str, str]:
+    import inspect
+    import re
 
-if getenv('CI') == 'true':
+    source = inspect.getsource(sys.modules[__name__])
+    pattern = r'([A-Za-z_][A-Za-z0-9_]*)\s*(?::\s*[^=\n]+)?\s*=\s*[^\n]+\n\s*"""([^"]*)"""'
+    matches = re.findall(pattern, source)
+    return {f'DIPDUP_{k}': v.strip() for k, v in matches}
+
+
+CI: bool = get_bool('DIPDUP_CI')
+"""Running in GitHub Actions (detected if not set)"""
+
+DEBUG: bool = get_bool('DIPDUP_DEBUG')
+"""Enable debug logging and additional checks"""
+
+DOCKER: bool = get_bool('DIPDUP_DOCKER')
+"""Running in Docker (detected if not set)"""
+
+JSON_LOG: bool = get_bool('DIPDUP_JSON_LOG')
+"""Print logs in JSON format"""
+
+LOW_MEMORY: bool = get_bool('DIPDUP_LOW_MEMORY')
+"""Reduce the size of caches and buffers for low-memory environments (only for debugging!)"""
+
+MIGRATIONS: bool = get_bool('DIPDUP_MIGRATIONS')
+"""Enable migrations with `aerich`"""
+
+NEXT: bool = get_bool('DIPDUP_NEXT')
+"""Enable experimental and breaking features from the next major release"""
+
+NO_LINTER: bool = get_bool('DIPDUP_NO_LINTER')
+"""Don't format and lint generated files with ruff"""
+
+NO_BASE: bool = get_bool('DIPDUP_NO_BASE')
+"""Don't recreate files from base project template"""
+
+NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
+"""Don't create magic symlink in the package root even when used as cwd"""
+
+NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
+"""Disable warning about running unstable or out-of-date DipDup version"""
+
+PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
+"""Disable package discovery and use the specified path"""
+
+REPLAY_PATH: Path | None = get_path('DIPDUP_REPLAY_PATH')
+"""Path to datasource replay files; used in tests (dev only)"""
+
+TEST: bool = get_bool('DIPDUP_TEST')
+"""Running in tests (disables Sentry and some checks)"""
+
+
+# NOTE: Detecting CI environment
+if 'DIPDUP_CI' not in os.environ and getenv('CI') == 'true':
     CI = True
-if platform.system() == 'Linux' and Path('/.dockerenv').exists():
+if 'DIPDUP_DOCKER' not in os.environ and platform.system() == 'Linux' and Path('/.dockerenv').exists():
     DOCKER = True

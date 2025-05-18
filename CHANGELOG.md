@@ -6,18 +6,29 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.3.4] - 2025-05-07
+## [8.3.4] - 2025-05-19
 
 ### Added
 
 - context: Added configurable watchdog service to notify about long-running callbacks and transactions.
 - cli: Added loading env-file `dipdup.env` if presented in the current directory.
+- cli: Added `-h` shorthand for `--help` option in all commands.
+- cli: Added `--no-types` option to `init` command to skip generating type classes.
 
 ### Fixed
 
+- cli: Fixed `config env -i` command output.
+- cli: Fixed discovering package path.
+- cli: Fixed printing help message when running commands without arguments.
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.
+- env: Skip detection of some variables if set explicitly.
 - project: Fixed `make image` command and default workdir.
+- project: Fixed missing codegen headers in project base.
 - substrate.node: Fixed event index field.
+
+### Removed
+
+- project: Do not generate and track `.env.default` files on init. Use `config env` command for new environments.
 
 ## [8.3.3] - 2025-04-29
 
