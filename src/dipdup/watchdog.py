@@ -3,15 +3,16 @@ import logging
 import time
 
 from dipdup.config import WatchdogAction
+from dipdup.config import WatchdogConfig
 from dipdup.config import WatchdogTrigger
 from dipdup.exceptions import WatchdogTimeoutError
 
 _logger = logging.getLogger(__name__)
 
 DEFAULT_WATCHDOGS = {
-    WatchdogTrigger.callback: (WatchdogAction.warning, 10),
-    WatchdogTrigger.transaction: (WatchdogAction.warning, 10),
-    WatchdogTrigger.websocket: (WatchdogAction.warning, 60),
+    WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=10),
+    WatchdogTrigger.transaction: WatchdogConfig(action=WatchdogAction.warning, timeout=10),
+    WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=60),
 }
 
 
@@ -39,14 +40,17 @@ class WatchdogManager:
         self._watchdogs: dict[WatchdogTrigger, Watchdog] = {}
         self._actions: dict[WatchdogTrigger, WatchdogAction] = {}
 
-    def register(
-        self,
-        trigger: WatchdogTrigger,
-        action: WatchdogAction,
-        timeout: int,
-    ) -> None:
-        self._watchdogs[trigger] = Watchdog(timeout)
-        self._actions[trigger] = action
+    def initialize(self, config: dict[WatchdogTrigger, WatchdogConfig]) -> None:
+        merged_config = {**DEFAULT_WATCHDOGS}
+        for key, value in config.items():
+            if value.timeout is not None:
+                merged_config[key].timeout = value.timeout
+            if value.action is not None:
+                merged_config[key].action = value.action
+
+        for trigger, watchdog_config in merged_config.items():
+            self._watchdogs[trigger] = Watchdog(watchdog_config.timeout)  # type: ignore
+            self._actions[trigger] = watchdog_config.action  # type: ignore
 
     async def run(self, interval: int) -> None:
         while True:
