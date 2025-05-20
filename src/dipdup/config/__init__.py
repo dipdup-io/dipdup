@@ -630,6 +630,7 @@ class WatchdogConfig:
     :param action: Action to perform when watchdog timeout is reached
     :param timeout: Watchdog timeout in seconds
     """
+
     action: WatchdogAction | None = None
     timeout: int | None = None
 

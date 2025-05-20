@@ -215,12 +215,12 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         metrics.requests_total[self._alias] += 1
-        if not url:
-            url = self._path or '/'
-        elif url.startswith('http'):
-            url = url.replace(self._url, '').rstrip('/')
-        else:
-            url = f'{self._path.rstrip("/")}/{url}'
+        url = url or '/'
+
+        if url.startswith('http'):
+            raise InvalidRequestError(msg='URL should not start with http(s)://', url=url)
+
+        url = f'{self._path.strip("/")}/{url.strip("/")}'
 
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent

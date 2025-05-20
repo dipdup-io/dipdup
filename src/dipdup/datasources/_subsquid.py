@@ -112,7 +112,7 @@ class AbstractSubsquidDatasource(
         worker_url = (
             await self._http.request(
                 'get',
-                f'{self._config.url}/{level}/worker',
+                f'{level}/worker',
             )
         ).decode()
 
