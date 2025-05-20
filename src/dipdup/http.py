@@ -53,7 +53,7 @@ class HTTPGateway(AbstractAsyncContextManager[None]):
     @property
     def url(self) -> str:
         """HTTP endpoint URL"""
-        return self._http._url
+        return self._http._url + self._http._path
 
     async def request(
         self,
@@ -220,7 +220,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
         if url.startswith('http'):
             raise InvalidRequestError(msg='URL should not start with http(s)://', url=url)
 
-        url = f'{self._path.strip("/")}/{url.strip("/")}'
+        url = f'{self._path.strip("/")}/{url.strip("/")}'.rstrip('/')
 
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
