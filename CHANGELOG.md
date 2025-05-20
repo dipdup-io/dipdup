@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.4.0] - 2025-05-19
+## [8.4.0] - 2025-05-20
 
 ### Added
 
@@ -22,6 +22,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: Fixed printing help message when running commands without arguments.
 - codegen: Fixed loading ABIs from the project with no ABI datasources configured.
 - env: Skip detection of some variables if set explicitly.
+- http: Fixed merging request URL with base path.
 - project: Fixed `make image` command and default workdir.
 - project: Fixed missing codegen headers in project base.
 - substrate.node: Fixed event index field.
