@@ -80,7 +80,7 @@
         },
         "watchdog": {
           "additionalProperties": {
-            "$ref": "#/$defs/WatchdogAction"
+            "$ref": "#/$defs/WatchdogConfig"
           },
           "description": "Mapping of watchdog triggers and actions DipDup performs.",
           "propertyNames": {
@@ -3154,6 +3154,40 @@
       ],
       "title": "WatchdogAction",
       "type": "string"
+    },
+    "WatchdogConfig": {
+      "additionalProperties": false,
+      "description": "Config for the watchdog",
+      "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WatchdogAction"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Action to perform when watchdog timeout is reached",
+          "title": "action"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Watchdog timeout in seconds",
+          "title": "timeout"
+        }
+      },
+      "title": "WatchdogConfig",
+      "type": "object"
     },
     "WatchdogTrigger": {
       "enum": [

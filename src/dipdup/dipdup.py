@@ -92,7 +92,6 @@ from dipdup.performance import metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
-from dipdup.watchdog import DEFAULT_WATCHDOGS
 from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
@@ -767,7 +766,6 @@ class DipDup:
                 spawn_datasources_event=spawn_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
-                watchdog_config=advanced.watchdog,
             )
 
             if tasks:
@@ -953,7 +951,6 @@ class DipDup:
         spawn_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
-        watchdog_config: dict[Any, Any],
     ) -> None:
         index_dispatcher = self._index_dispatcher
 
@@ -976,14 +973,7 @@ class DipDup:
         _add_task(preload_cached_models(self._config.package))
 
         # NOTE: Watchdog
-        watchdog_config = {
-            **DEFAULT_WATCHDOGS,
-            **watchdog_config,
-        }
-        for trigger, pair in watchdog_config.items():
-            action, timeout = pair
-            watchdog.register(trigger, action, timeout)
-
+        watchdog.initialize(self._ctx.config.advanced.watchdog)
         _add_task(watchdog.run(WATCHDOG_INTERVAL))
 
     async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:

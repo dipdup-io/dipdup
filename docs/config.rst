@@ -69,5 +69,7 @@
 .. autoclass:: dipdup.config.ReindexingAction
 .. autoclass:: dipdup.config.WatchdogTrigger
 .. autoclass:: dipdup.config.WatchdogAction
+.. autoclass:: dipdup.config.WatchdogConfig
 .. autoclass:: dipdup.config.evm_blockvision.EvmBlockvisionDatasourceConfig
 .. autoclass:: dipdup.config.ReindexingReason
+

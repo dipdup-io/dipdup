@@ -623,6 +623,18 @@ class SkipHistory(StrEnum):
     always = 'always'
 
 
+@dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
+class WatchdogConfig:
+    """Config for the watchdog
+
+    :param action: Action to perform when watchdog timeout is reached
+    :param timeout: Watchdog timeout in seconds
+    """
+
+    action: WatchdogAction | None = None
+    timeout: int | None = None
+
+
 # NOTE: Should be the only place where extras are allowed
 @dataclass(config=ConfigDict(extra='allow', defer_build=True), kw_only=True)
 class AdvancedConfig:
@@ -640,7 +652,7 @@ class AdvancedConfig:
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
-    watchdog: dict[WatchdogTrigger, WatchdogAction] = Field(default_factory=dict)
+    watchdog: dict[WatchdogTrigger, WatchdogConfig] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
