@@ -4,14 +4,13 @@ description = "Modular framework for creating selective indexers and featureful 
 version = "8.4.0"
 license = { text = "MIT" }
 authors = [
-    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
+    { name = "Lev Gorodetskii", email = "github@drsr.io" },
     { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
     { name = "Michael Zaikin", email = "mz@baking-bad.org" },
     { name = "Igor Sereda", email = "sereda.igor.s@gmail.com" },
 ]
 maintainers = [
-    { name = "Lev Gorodetskii", email = "dipdup@drsr.io" },
-    { name = "Vladimir Bobrikov", email = "vladimir_bobrikov@pm.me" },
+    { name = "Baking Bad team", email = "hello@baking-bad.org" },
 ]
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
