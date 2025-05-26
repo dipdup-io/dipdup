@@ -78,6 +78,9 @@ todo:           ## Find FIXME and TODO comments
 typeignore:     ## Find type:ignore comments
 	grep -r -e 'type: ignore' -n src/dipdup --color
 
+docstrings:     ## Find missing docstrings in public API
+	ruff check --select D1 src/dipdup/models/ src/dipdup/config src/dipdup/exceptions src/dipdup/context
+
 ##
 ##-- Release
 ##

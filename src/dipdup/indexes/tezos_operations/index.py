@@ -30,8 +30,8 @@ from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import DEFAULT_ENTRYPOINT
 from dipdup.models.tezos import TezosOperationData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 
 if TYPE_CHECKING:
     from dipdup.context import DipDupContext

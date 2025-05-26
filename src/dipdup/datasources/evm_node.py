@@ -20,14 +20,14 @@ from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
-from dipdup.models.evm_node import EvmNodeHeadSubscription
-from dipdup.models.evm_node import EvmNodeLogsSubscription
-from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
-from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketTransport
+from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
+from dipdup.subscriptions.evm_node import EvmNodeLogsSubscription
+from dipdup.subscriptions.evm_node import EvmNodeSubscription
+from dipdup.subscriptions.evm_node import EvmNodeSyncingSubscription
 from dipdup.utils import Watchdog
 
 if TYPE_CHECKING:

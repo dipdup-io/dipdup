@@ -11,8 +11,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmDatasourceConfigU
 from dipdup.config.evm import EvmIndexConfig
-from dipdup.models.evm_node import EvmNodeHeadSubscription
-from dipdup.models.evm_node import EvmNodeLogsSubscription
+from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
+from dipdup.subscriptions.evm_node import EvmNodeLogsSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 

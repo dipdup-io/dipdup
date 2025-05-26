@@ -14,7 +14,7 @@ from dipdup.config import SkipHistory
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models.tezos_tzkt import BigMapSubscription
+from dipdup.subscriptions.tezos_tzkt import BigMapSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 

@@ -19,10 +19,10 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
-from dipdup.models.tezos_tzkt import OriginationSubscription
-from dipdup.models.tezos_tzkt import SmartRollupCementSubscription
-from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.subscriptions.tezos_tzkt import OriginationSubscription
+from dipdup.subscriptions.tezos_tzkt import SmartRollupCementSubscription
+from dipdup.subscriptions.tezos_tzkt import SmartRollupExecuteSubscription
+from dipdup.subscriptions.tezos_tzkt import TransactionSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
