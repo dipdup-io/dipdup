@@ -37,6 +37,9 @@ EVM
 .. autoclass:: dipdup.models.evm.EvmTransactionData
 .. autoclass:: dipdup.models.evm.EvmEvent
 .. autoclass:: dipdup.models.evm.EvmEventData
+.. autoclass:: dipdup.models.evm_node.EvmNodeHeadData
+.. autoclass:: dipdup.models.evm_node.EvmNodeSyncingData
+
 
 -------------------------------------------------------------------------------
 Starknet

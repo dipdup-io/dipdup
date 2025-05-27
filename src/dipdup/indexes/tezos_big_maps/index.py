@@ -13,8 +13,8 @@ from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosBigMapAction
 from dipdup.models.tezos import TezosBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 
 QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 

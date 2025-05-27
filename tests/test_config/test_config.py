@@ -16,9 +16,9 @@ from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.models.tezos import TezosOperationType
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import OriginationSubscription
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions.tezos_tzkt import OriginationSubscription
+from dipdup.subscriptions.tezos_tzkt import TransactionSubscription
 from dipdup.yaml import DipDupYAMLConfig
 
 TEST_CONFIGS = Path(__file__).parent.parent / 'configs'

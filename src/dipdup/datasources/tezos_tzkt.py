@@ -40,10 +40,10 @@ from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos import TezosQuoteData
 from dipdup.models.tezos import TezosTokenBalanceData
 from dipdup.models.tezos import TezosTokenTransferData
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
-from dipdup.models.tezos_tzkt import TezosTzktSubscription
 from dipdup.pysignalr import WebsocketTransport
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
+from dipdup.subscriptions.tezos_tzkt import TezosTzktSubscription
 from dipdup.utils import split_by_chunks
 
 ORIGINATION_REQUEST_LIMIT = 100

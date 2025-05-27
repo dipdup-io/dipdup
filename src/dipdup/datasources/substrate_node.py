@@ -24,10 +24,10 @@ from dipdup.models.substrate import SubstrateEventData
 from dipdup.models.substrate import SubstrateHeadBlockData
 from dipdup.models.substrate import _BlockHeader
 from dipdup.models.substrate import _SubstrateNodeEventResponse
-from dipdup.models.substrate_node import SubstrateNodeHeadSubscription
-from dipdup.models.substrate_node import SubstrateNodeSubscription
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
+from dipdup.subscriptions.substrate_node import SubstrateNodeHeadSubscription
+from dipdup.subscriptions.substrate_node import SubstrateNodeSubscription
 
 if TYPE_CHECKING:
     from aiosubstrate.base import SubstrateInterface

@@ -14,8 +14,8 @@ from dipdup.config import IndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import FrameworkException
-from dipdup.models.tezos_tzkt import HeadSubscription
 from dipdup.subscriptions import Subscription
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 
 ADDRESS_LENGTH = 36
 SMART_CONTRACT_PREFIX = 'KT1'

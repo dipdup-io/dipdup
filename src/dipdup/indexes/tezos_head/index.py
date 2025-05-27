@@ -7,7 +7,7 @@ from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
 from dipdup.models.tezos import TezosHeadBlockData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 
 HeadQueueItem = TezosHeadBlockData | RollbackMessage
 

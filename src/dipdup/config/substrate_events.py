@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.substrate import SubstrateDatasourceConfigU
 from dipdup.config.substrate import SubstrateIndexConfig
 from dipdup.config.substrate import SubstrateRuntimeConfig
-from dipdup.models.substrate_node import SubstrateNodeHeadSubscription
+from dipdup.subscriptions.substrate_node import SubstrateNodeHeadSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 

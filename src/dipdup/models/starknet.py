@@ -15,12 +15,6 @@ if TYPE_CHECKING:
     from starknet_py.net.client_models import EmittedEvent
 
 
-@dataclass(frozen=True)
-class StarknetSubscription(Subscription):
-    name: Literal['starknet'] = 'starknet'
-
-    def get_params(self) -> list[Any]:
-        return [self.name]
 
 
 @dataclass(frozen=True)
