@@ -243,7 +243,7 @@ test_params = (
     ('demo_evm_events', 'demo_evm_events', 'init', None),
     ('demo_evm_transactions', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions', 'demo_evm_transactions', 'init', None),
-    # NOTE: EVM indexes with node only
+    # NOTE: EVM indexes (node only)
     ('demo_evm_events_node', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     # NOTE: Starknet indexes
@@ -252,6 +252,8 @@ test_params = (
     # NOTE: Substrate indexes
     ('demo_substrate_events', 'demo_substrate_events', 'run', assert_run_substrate_events),
     ('demo_substrate_events', 'demo_substrate_events', 'init', None),
+    # NOTE: Substrate indexes (node only)
+    ('demo_substrate_events_node', 'demo_substrate_events', 'run', None),    
     # NOTE: Smoke tests for small tools
     ('demo_tezos_dex', 'demo_tezos_dex', ('config', 'env', '--compose', '--internal'), None),
     ('demo_tezos_dex', 'demo_tezos_dex', ('config', 'export', '--full'), None),
