@@ -4,7 +4,6 @@ import math
 from asyncio import Queue
 from collections.abc import Awaitable
 from collections.abc import Callable
-from contextlib import suppress
 from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
@@ -234,7 +233,6 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
         return await self._jsonrpc_request('chain_getBlock', [hash])  # type: ignore[no-any-return]
 
     async def get_events(self, block_hash: str) -> tuple[_SubstrateNodeEventResponse, ...]:
-
         events = await self._interface.get_events(block_hash)
         result: list[_SubstrateNodeEventResponse] = []
         for index, raw_event in enumerate(events):

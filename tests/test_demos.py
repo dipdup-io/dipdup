@@ -253,7 +253,7 @@ test_params = (
     ('demo_substrate_events', 'demo_substrate_events', 'run', assert_run_substrate_events),
     ('demo_substrate_events', 'demo_substrate_events', 'init', None),
     # NOTE: Substrate indexes (node only)
-    ('demo_substrate_events_node', 'demo_substrate_events', 'run', None),    
+    ('demo_substrate_events_node', 'demo_substrate_events', 'run', None),
     # NOTE: Smoke tests for small tools
     ('demo_tezos_dex', 'demo_tezos_dex', ('config', 'env', '--compose', '--internal'), None),
     ('demo_tezos_dex', 'demo_tezos_dex', ('config', 'export', '--full'), None),
