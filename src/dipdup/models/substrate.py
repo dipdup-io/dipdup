@@ -7,6 +7,7 @@ from typing import TypedDict
 from typing import TypeVar
 from typing import cast
 
+from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import HasLevel
 from dipdup.runtimes import SubstrateRuntime
 
@@ -115,11 +116,20 @@ class SubstrateEvent(Generic[PayloadT]):
         if self.data.decoded_args is not None:
             payload = self.data.decoded_args
         elif self.data.args and self.data.header_extra:
-            payload = self.runtime.decode_event_args(
-                name=self.data.name,
-                args=self.data.args,
-                spec_version=str(self.data.header_extra['specVersion']),
-            )
+            spec_version = str(self.data.header_extra['specVersion'])
+            try:
+                payload = self.runtime.decode_event_args(
+                    name=self.data.name,
+                    args=self.data.args,
+                    spec_version=spec_version,
+                )
+            except FrameworkException:
+                spec_version = str(int(spec_version) - 1)
+                payload = self.runtime.decode_event_args(
+                    name=self.data.name,
+                    args=self.data.args,
+                    spec_version=spec_version,
+                )
         else:
             raise NotImplementedError
 
