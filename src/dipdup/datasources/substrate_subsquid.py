@@ -53,7 +53,8 @@ class SubstrateSubsquidDatasource(AbstractSubsquidDatasource[SubstrateSubsquidDa
                 'toBlock': last_level,
                 'type': 'substrate',
             }
-            response = await self.query_worker(query, current_level)
+            # NOTE: to decode event we have to use previous level's specification version
+            response = await self.query_worker(query, current_level - 1)
 
             for prev_level_item, level_item in pairwise(response):
                 for event_item in level_item['events']:
