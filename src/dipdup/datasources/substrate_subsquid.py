@@ -1,5 +1,4 @@
 from collections.abc import AsyncIterator
-from itertools import pairwise
 
 from dipdup.config.substrate_subsquid import SubstrateSubsquidDatasourceConfig
 from dipdup.datasources._subsquid import AbstractSubsquidDatasource
@@ -19,10 +18,6 @@ class SubstrateSubsquidDatasource(AbstractSubsquidDatasource[SubstrateSubsquidDa
         current_level = first_level
 
         while current_level <= last_level:
-            # NOTE: we have to query previous level to decode event
-            if current_level == 0:
-                current_level = 1
-                continue
             query: Query = {  # type: ignore[typeddict-unknown-key]
                 'fields': {
                     'event': {
@@ -48,19 +43,14 @@ class SubstrateSubsquidDatasource(AbstractSubsquidDatasource[SubstrateSubsquidDa
                         'name': list(names),
                     },
                 ],
-                # NOTE: to decode event we have to use previous level's specification version
-                'fromBlock': current_level - 1,
+                'fromBlock': current_level,
                 'toBlock': last_level,
                 'type': 'substrate',
             }
-            # NOTE: to decode event we have to use previous level's specification version
-            response = await self.query_worker(query, current_level - 1)
+            response = await self.query_worker(query, current_level)
 
-            for prev_level_item, level_item in pairwise(response):
+            for level_item in response:
                 for event_item in level_item['events']:
                     event_item['header'] = level_item['header']
-                    # NOTE: to decode event we have to use previous level's specification version
-                    level_item['header'] = level_item['header'].copy()
-                    event_item['header']['specVersion'] = prev_level_item['header']['specVersion']
                 yield tuple(level_item['events'])
                 current_level = level_item['header']['number'] + 1
