@@ -264,9 +264,8 @@ class SubstrateRuntime:
                 payload[new_key] = payload.pop(key)
 
         # NOTE: Also, we need to unpack TypeScript structures to the original form
-        payload = extract_subsquid_payload(payload)
+        return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
 
-        return payload  # noqa: RET504
 
 
 def extract_subsquid_payload(data: Any) -> Any:

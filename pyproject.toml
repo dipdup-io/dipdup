@@ -152,9 +152,6 @@ environments = [
     "sys_platform == 'linux'",
 ]
 
-[tool.uv.sources]
-aiosubstrate = { git = "https://github.com/dipdup-io/aiosubstrate.git", rev = "fix/empty-metadata" }
-
 [build-system]
 requires = ["uv_build"]
 build-backend = "uv_build"
