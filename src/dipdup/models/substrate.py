@@ -10,6 +10,9 @@ from typing import cast
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import HasLevel
 from dipdup.runtimes import SubstrateRuntime
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class _BlockHeader(TypedDict):
@@ -123,7 +126,13 @@ class SubstrateEvent(Generic[PayloadT]):
                     args=self.data.args,
                     spec_version=spec_version,
                 )
-            except FrameworkException:
+            except FrameworkException as e:
+                _logger.warning(
+                    'Failed to decode event args for `%s` at level %d (%s), trying previous spec version',
+                    self.data.name,
+                    self.data.level,
+                    e,
+                )
                 spec_version = str(int(spec_version) - 1)
                 payload = self.runtime.decode_event_args(
                     name=self.data.name,
