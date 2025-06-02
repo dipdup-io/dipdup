@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from functools import cached_property
 from typing import Any
@@ -10,7 +11,6 @@ from typing import cast
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import HasLevel
 from dipdup.runtimes import SubstrateRuntime
-import logging
 
 _logger = logging.getLogger(__name__)
 
