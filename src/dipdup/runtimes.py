@@ -267,7 +267,6 @@ class SubstrateRuntime:
         return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
 
 
-
 def extract_subsquid_payload(data: Any) -> Any:
     if isinstance(data, list | tuple):
         return tuple(extract_subsquid_payload(item) for item in data)
