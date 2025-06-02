@@ -11,8 +11,8 @@ from dipdup.config import HandlerConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.config.starknet import StarknetDatasourceConfigU
 from dipdup.config.starknet import StarknetIndexConfig
-from dipdup.subscriptions.starknet import StarknetSubscription
 from dipdup.subscriptions import Subscription
+from dipdup.subscriptions.starknet import StarknetSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
