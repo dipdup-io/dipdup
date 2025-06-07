@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Skip logging indexer status if it has not changed.
+- config: Do not trigger `config_modified` reindexing when datasource URLs are updated.
 
 ## [8.4.1] - 2025-06-02
 

@@ -355,25 +355,38 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     @abstractmethod
     def get_subscriptions(self) -> set[Subscription]: ...
 
-    def hash(self) -> str:
+    def hashes(self) -> tuple[str, ...]:
         """Calculate hash to ensure config has not changed since last run."""
         import hashlib
+
+        hashes = []
 
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)
 
-        self.strip(config_dict)
-
+        self._strip_v1(config_dict)
         config_json = orjson.dumps(config_dict)
-        return hashlib.sha256(config_json).hexdigest()
+        hashes.append(hashlib.sha256(config_json).hexdigest())
 
+        self._strip_v2(config_dict)
+        config_json = orjson.dumps(config_dict)
+        hashes.append(hashlib.sha256(config_json).hexdigest())
+
+        return tuple(hashes)
+
+    # NOTE: Both versions are kept for compatibility
     @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        """Strip config from tunables that are not needed for hash calculation."""
+    def _strip_v1(cls, config_dict: dict[str, Any]) -> None:
         for datasource in config_dict['datasources']:
             datasource.pop('http', None)
             datasource.pop('buffer_size', None)
+
+    @classmethod
+    def _strip_v2(cls, config_dict: dict[str, Any]) -> None:
+        for datasource in config_dict['datasources']:
+            datasource.pop('url', None)
+            datasource.pop('ws_url', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)

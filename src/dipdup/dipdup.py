@@ -413,17 +413,17 @@ class IndexDispatcher:
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
 
-                new_hash = index_config.hash()
+                new_hashes = index_config.hashes()
                 if not index_state.config_hash:
-                    index_state.config_hash = new_hash
+                    index_state.config_hash = new_hashes[-1]
                     await index_state.save()
-                elif new_hash != index_state.config_hash:
+                elif index_state.config_hash not in new_hashes:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
                         message='Config hash mismatch',
                         index_name=index_state.name,
                         old_hash=index_state.config_hash,
-                        new_hash=new_hash,
+                        new_hash=new_hashes[-1],
                     )
 
             # NOTE: Templated index: recreate index config, verify hash

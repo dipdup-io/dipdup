@@ -353,8 +353,8 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
         return subs
 
     @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        super().strip(config_dict)
+    def _strip_v1(cls, config_dict: dict[str, Any]) -> None:
+        super()._strip_v1(config_dict)
         for handler in config_dict['handlers']:
             for item in handler['pattern']:
                 item.pop('alias', None)
