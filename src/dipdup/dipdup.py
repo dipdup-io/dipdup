@@ -306,18 +306,23 @@ class IndexDispatcher:
         )
 
     async def _status_loop(self, update_interval: float) -> None:
+        last_status = ''
+
         while True:
             await asyncio.sleep(update_interval)
-            self._log_status()
+            status = self._get_status()
+            if status == last_status:
+                continue
+            last_status = status
+            _logger.info(status)
 
-    def _log_status(self) -> None:
+    def _get_status(self) -> str:
         total, indexed = int(metrics.levels_total), int(metrics.levels_indexed)
         progress, left = float(metrics.progress) * 100, total - indexed
         scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
 
         if metrics.realtime_at:
-            _logger.info('realtime: %s levels indexed and counting', scanned_levels)
-            return
+            return f'realtime: {scanned_levels} levels indexed and counting'
 
         if not progress:
             if self._indexes:
@@ -329,8 +334,7 @@ class IndexDispatcher:
                     msg = 'indexing: warming up...'
             else:
                 msg = 'no indexes, idling'
-            _logger.info(msg)
-            return
+            return msg
 
         levels_speed, objects_speed = float(metrics.levels_nonempty_speed), float(metrics.objects_speed)
         msg = 'last mile' if metrics.synchronized_at else 'indexing'
@@ -343,7 +347,7 @@ class IndexDispatcher:
             return '    0' if speed < 0.1 else f'{speed:5.{0 if speed >= 1 else 1}f}'
 
         msg += f' {fmt(levels_speed)} L {fmt(objects_speed)} O'
-        _logger.info(msg)
+        return msg
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
