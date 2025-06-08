@@ -292,12 +292,14 @@ class DatasourceConfig(ABC, NameMixin):
     :param kind: Defined by child class
     :param url: URL of the API
     :param http: HTTP connection tunables
+    :param realtime: Whether to establish a realtime connection/polling. If not set, defined by the index.
     """
 
     kind: str
     url: Url
     ws_url: WsUrl | None = None
     http: HttpConfig | None = None
+    realtime: bool | None = None
 
     # @classmethod
     # def from_terminal(cls, opts):
@@ -387,6 +389,7 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         for datasource in config_dict['datasources']:
             datasource.pop('url', None)
             datasource.pop('ws_url', None)
+            datasource.pop('realtime', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)

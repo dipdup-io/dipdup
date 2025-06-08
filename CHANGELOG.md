@@ -12,6 +12,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - cli: Skip logging indexer status if it has not changed.
 - config: Do not trigger `config_modified` reindexing when datasource URLs are updated.
+- datasources: Do not run datasources not linked to any index and without `realtime` flag set.
 
 ## [8.4.1] - 2025-06-02
 

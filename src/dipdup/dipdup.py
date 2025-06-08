@@ -125,7 +125,7 @@ class IndexDispatcher:
 
     async def run(
         self,
-        spawn_datasources_event: Event,
+        start_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
@@ -144,11 +144,11 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set() and not self.is_oneshot():
+            if not start_datasources_event.is_set() and not self.is_oneshot():
                 if self._every_index_is(IndexStatus.realtime) or early_realtime:
-                    spawn_datasources_event.set()
+                    start_datasources_event.set()
 
-            if spawn_datasources_event.is_set():
+            if start_datasources_event.is_set():
                 for datasource in self._ctx.datasources.values():
                     if not isinstance(datasource, IndexDatasource):
                         continue
@@ -757,17 +757,17 @@ class DipDup:
 
             if self._index_dispatcher.is_oneshot():
                 start_scheduler_event = Event()
-                spawn_datasources_event = Event()
+                start_datasources_event = Event()
             else:
-                start_scheduler_event = await self._set_up_scheduler(tasks)
-                spawn_datasources_event = await self._spawn_datasources(tasks)
+                start_scheduler_event = await self._start_scheduler(tasks)
+                start_datasources_event = await self._start_datasources(tasks)
 
                 if not advanced.postpone_jobs:
                     start_scheduler_event.set()
 
             await self._set_up_background_tasks(
                 tasks=tasks,
-                spawn_datasources_event=spawn_datasources_event,
+                start_datasources_event=start_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
             )
@@ -952,7 +952,7 @@ class DipDup:
     async def _set_up_background_tasks(
         self,
         tasks: set[Task[None]],
-        spawn_datasources_event: Event,
+        start_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
@@ -962,7 +962,7 @@ class DipDup:
             tasks.add(create_task(coro, name=f'loop:{coro.__name__.strip("_")}'))
 
         # NOTE: The main loop; cancels other tasks on exit.
-        _add_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event, early_realtime))
+        _add_task(index_dispatcher.run(start_datasources_event, start_scheduler_event, early_realtime))
 
         # NOTE: Monitoring tasks
         _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
@@ -980,16 +980,32 @@ class DipDup:
         watchdog.initialize(self._ctx.config.advanced.watchdog)
         _add_task(watchdog.run(WATCHDOG_INTERVAL))
 
-    async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
+    async def _start_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
 
         async def _event_wrapper() -> None:
-            _logger.info('Waiting for indexes to synchronize before spawning datasources')
+            _logger.info('Waiting for indexes to synchronize before starting datasources')
             await event.wait()
 
-            _logger.info('Spawning datasources')
             _run_tasks: deque[Task[None]] = deque()
+            index_datasources: set[str] = set()
+            for index_config in self._config.indexes.values():
+                index_datasources.update(d.name for d in index_config.datasources)  # type: ignore[union-attr]
+
+            _logger.info('Starting datasources: %s of %s used', len(index_datasources), len(self._datasources))
+
             for datasource in self._datasources.values():
+                if not isinstance(datasource, IndexDatasource):
+                    _logger.debug('Skipping datasource %s: not an IndexDatasource', datasource.name)
+                    continue
+                if datasource._config.realtime is False:
+                    _logger.debug('Skipping datasource %s: realtime is disabled', datasource.name)
+                    continue
+                if datasource.name not in index_datasources and datasource._config.realtime is not True:
+                    _logger.debug('Skipping datasource %s: not used by any index', datasource.name)
+                    continue
+
+                _logger.info('Starting datasource: %s', datasource.name)
                 _run_tasks.append(
                     create_task(
                         datasource.run(),
@@ -1034,7 +1050,7 @@ class DipDup:
             if Path(e.filename).is_relative_to(migrations_dir):
                 _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
-    async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
+    async def _start_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()
         scheduler = SchedulerManager(
             jobs=self._config.jobs,
