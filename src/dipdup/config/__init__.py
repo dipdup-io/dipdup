@@ -1040,6 +1040,7 @@ class DipDupConfig(InteractiveMixin):
                 orjson.dumps(
                     self,
                     default=to_jsonable_python,
+                    option=orjson.OPT_NON_STR_KEYS,
                 )
             )
         ).dump(strip_secrets)

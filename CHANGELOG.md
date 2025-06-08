@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Skip logging indexer status if it has not changed.
+- config: Fixed `config export` command crash when `advanced.reindex` section is present in config.
 - config: Do not trigger `config_modified` reindexing when datasource URLs are updated.
 - datasources: Do not run datasources not linked to any index and without `realtime` flag set.
 
