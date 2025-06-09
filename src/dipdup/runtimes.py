@@ -1,5 +1,4 @@
 import logging
-from copy import copy
 from functools import cache
 from functools import cached_property
 from pathlib import Path
@@ -206,7 +205,14 @@ class SubstrateRuntime:
         arg_types = event_abi['args']
         arg_names = get_event_arg_names(event_abi)
 
-        if isinstance(args, list):
+        # NOTE: Subsquid camelcases arg keys, convert them to snake_case first
+        if isinstance(args, dict):
+            snake_case_args = {}
+            for key, value in args.items():
+                snake_key = pascal_to_snake(key)
+                snake_case_args[snake_key] = value
+            args = snake_case_args
+        elif isinstance(args, list):
             # FIXME: Optionals are processed incorrectly now
             args, unprocessed_args = [], [*args]
             for arg_type in arg_types:
@@ -216,6 +222,16 @@ class SubstrateRuntime:
                     args.append(unprocessed_args.pop(0))
 
             args = dict(zip(arg_names, args, strict=True))
+
+        # NOTE: Process values by matching arg_names to arg_types, handling optionals
+        processed_args = {}
+        for arg_name, arg_type in zip(arg_names, arg_types, strict=True):
+            if arg_name in args:
+                processed_args[arg_name] = args[arg_name]
+            elif arg_type.lower().startswith('option<'):
+                processed_args[arg_name] = None
+            else:
+                raise FrameworkException(f'Required argument `{arg_name}` not found in args')
 
         payload = {}
 
@@ -254,14 +270,8 @@ class SubstrateRuntime:
             )
             return scale_obj.process()
 
-        for (key, value), type_ in zip(args.items(), arg_types, strict=True):
+        for (key, value), type_ in zip(processed_args.items(), arg_types, strict=True):
             payload[key] = parse(value, type_)
-
-        # NOTE: Subsquid camelcases arg keys for some reason
-        for key in copy(payload):
-            if key not in arg_names:
-                new_key = pascal_to_snake(key)
-                payload[new_key] = payload.pop(key)
 
         # NOTE: Also, we need to unpack TypeScript structures to the original form
         return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
