@@ -212,6 +212,7 @@ class SubstrateRuntime:
                 snake_key = pascal_to_snake(key)
                 snake_case_args[snake_key] = value
             args = snake_case_args
+        # NOTE: Args are lists only on very old metadata versions.
         elif isinstance(args, list):
             # FIXME: Optionals are processed incorrectly now
             args, unprocessed_args = [], [*args]
@@ -250,6 +251,19 @@ class SubstrateRuntime:
                 )
                 return [parse(v, t) for v, t in zip(value, inner_types, strict=True)]
 
+            # NOTE: Remember if the value is optional and strip the part
+            if type_.lower().startswith('option<'):
+                is_optional = True
+                type_ = type_[7:-1]
+            else:
+                is_optional = False
+
+            # NOTE: BoundedVec fixup. Turn them into Vecs
+            if type_.startswith('bounded_collections:bounded_vec:'):
+                type_ = type_[32:]
+            if type_.startswith('BoundedVec<'):
+                type_ = 'Vec<' + type_[11:-1].split(',')[0].strip() + '>'
+
             # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
             if type_.startswith('Vec<'):
                 if isinstance(value, str):
@@ -263,6 +277,9 @@ class SubstrateRuntime:
 
             if not isinstance(value, str):
                 return value
+
+            if is_optional:
+                type_ = 'Option<' + type_ + '>'
 
             scale_obj = self.runtime_config.create_scale_object(
                 type_string=type_,
