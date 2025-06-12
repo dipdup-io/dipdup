@@ -200,9 +200,7 @@ class SubstrateRuntime:
         spec_obj = self.get_spec_version(spec_version)
         event_abi = spec_obj.get_event_abi(name)
 
-        # FIXME: Do we need original type names?
-        # arg_types = event_abi.get('args_type_name') or event_abi['args']
-        arg_types = event_abi['args']
+        arg_types = event_abi.get('args_type_name') or event_abi['args']
         arg_names = get_event_arg_names(event_abi)
 
         # NOTE: Subsquid camelcases arg keys, convert them to snake_case first
@@ -260,9 +258,10 @@ class SubstrateRuntime:
 
             # NOTE: BoundedVec fixup. Turn them into Vecs
             if type_.startswith('bounded_collections:bounded_vec:'):
-                type_ = type_[32:]
+                # FIXME: actual type is in `args_type_name`
+                type_ = 'Vec<u8>'
             if type_.startswith('BoundedVec<'):
-                type_ = type_[11:-1].split(',')[0].split('@')[0]
+                type_ = type_[11:-1].split(', ')[0].split('@')[0]
                 type_ = f'Vec<{type_}>'
 
             # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
