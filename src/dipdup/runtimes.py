@@ -262,7 +262,8 @@ class SubstrateRuntime:
             if type_.startswith('bounded_collections:bounded_vec:'):
                 type_ = type_[32:]
             if type_.startswith('BoundedVec<'):
-                type_ = 'Vec<' + type_[11:-1].split(',')[0].strip() + '>'
+                type_ = type_[11:-1].split(',')[0].split('@')[0]
+                type_ = f'Vec<{type_}>'
 
             # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
             if type_.startswith('Vec<'):
