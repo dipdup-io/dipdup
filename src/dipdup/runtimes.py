@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
+from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
+from scalecodec.types import CompactU32
 
 from dipdup.config.substrate import SubstrateRuntimeConfig
 from dipdup.exceptions import FrameworkException
@@ -72,15 +74,12 @@ def get_type_registry(name_or_path: str | Path) -> 'RuntimeConfigurationObject':
     if isinstance(name_or_path, str):
         # NOTE: User path has higher priority
         for path in (
-            Path(f'type_registries/{name_or_path}.json'),
+            Path(__file__).parent / 'type_registries' / f'{name_or_path}.json',
             Path(name_or_path),
         ):
-            if not path.is_file():
-                continue
-            name_or_path = path
+            if path.is_file():
+                return orjson.loads(path.read_bytes())['types']
 
-    if isinstance(name_or_path, Path):
-        return orjson.loads(name_or_path.read_bytes())
     return load_type_registry_preset(name_or_path)
 
 
@@ -248,7 +247,11 @@ class SubstrateRuntime:
                     type_=type_,
                     registry=self.runtime_config.type_registry,
                 )
-                return [parse(v, t, '') for v, t in zip(value, inner_types, strict=True)]
+                return [parse(v, t, t) for v, t in zip(value, inner_types, strict=True)]
+
+            # NOTE: BoundedVec fixup. Turn them into Vecs
+            if 'bounded_collections:bounded_vec:' in type_:
+                type_ = full_type
 
             # NOTE: Remember if the value is optional and strip the part
             if type_.lower().startswith('option<'):
@@ -256,10 +259,6 @@ class SubstrateRuntime:
                 type_ = type_[7:-1]
             else:
                 is_optional = False
-
-            # NOTE: BoundedVec fixup. Turn them into Vecs
-            if 'bounded_collections:bounded_vec:' in type_:
-                type_ = full_type
 
             if type_.startswith('BoundedVec<'):
                 type_ = type_[11:-1].split(', ')[0]
@@ -272,7 +271,7 @@ class SubstrateRuntime:
                     value = f'0x{value_len:02x}{value[2:]}'
                 elif isinstance(value, list):
                     inner = type_[4:-1]
-                    return [parse(v, inner, '') for v in value]
+                    return [parse(v, inner, inner) for v in value]
                 else:
                     raise NotImplementedError('Unsupported Vec type')
 
@@ -286,7 +285,16 @@ class SubstrateRuntime:
                 type_string=type_,
                 data=ScaleBytes(value),
             )
-            return scale_obj.process()
+            try:
+                return scale_obj.process()
+            except RemainingScaleBytesNotEmptyException as e:
+                _logger.error(
+                    'Failed to decode value `%s` with type `%s`: %s, trying to decode as hex',
+                    value,
+                    type_,
+                    e,
+                )
+                return bytes.fromhex(value[4:]).decode()
 
         for (key, value), type_, full_type in zip(processed_args.items(), arg_types, arg_types_full, strict=True):
             payload[key] = parse(value, type_, full_type)
