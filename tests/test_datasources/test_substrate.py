@@ -392,3 +392,123 @@ class TestSubstrateRuntimeDecodeEventArgs:
                 'is_active': True,
             }
             assert_field_values(result, expected_values)
+
+    def test_decode_event_args_assets_updated_event(self) -> None:
+        """Test decoding event args for Assets.Updated event with specific real-world data."""
+        runtime = create_test_runtime()
+
+        event_abi = {
+            'args': [
+                'U32',
+                'option<bounded_collections:bounded_vec:BoundedVec@194>',
+                'pallet_asset_registry:types:AssetType',
+                'U128',
+                'option<U128>',
+                'option<bounded_collections:bounded_vec:BoundedVec@194>',
+                'option<U8>',
+                'Bool',
+            ],
+            'args_name': [
+                'asset_id',
+                'asset_name',
+                'asset_type',
+                'existential_deposit',
+                'xcm_rate_limit',
+                'symbol',
+                'decimals',
+                'is_sufficient',
+            ],
+            'args_type_name': [
+                'AssetId',
+                'Option<BoundedVec<u8, StringLimit>>',
+                'AssetType',
+                'Balance',
+                'Option<Balance>',
+                'Option<BoundedVec<u8, StringLimit>>',
+                'Option<u8>',
+                'bool',
+            ],
+            'docs': [],
+            'lookup': '3302',
+            'name': 'Updated',
+        }
+
+        arg_names = (
+            'asset_id',
+            'asset_name',
+            'asset_type',
+            'existential_deposit',
+            'xcm_rate_limit',
+            'symbol',
+            'decimals',
+            'is_sufficient',
+        )
+
+        with mock_runtime_dependencies() as (runtime_config_mock, scale_obj_mock, runtimes):
+            # Setup mocks with specific return values for this test case
+            _, scale_obj_mock_actual = setup_runtime_mocks(runtime, event_abi, arg_names)
+            runtimes.get_event_arg_names = Mock(return_value=arg_names)
+
+            # Create a mapping of expected decoded values
+            decode_mapping = {
+                '0x47494741444f54': 'GIGADOT',  # asset_name hex to string
+                '0x47444f54': 'GDOT',  # symbol hex to string
+                '1000000000000000000': 1000000000000000000,  # existential_deposit
+            }
+
+            # Configure scale object to return decoded values based on input
+            def mock_create_scale_object(type_string, data):  # type: ignore[no-untyped-def]
+                mock_scale_obj = Mock()
+                data_str = str(data)
+
+                # Check if this data matches any of our expected hex values
+                for hex_input, decoded_output in decode_mapping.items():
+                    if hex_input in data_str:
+                        mock_scale_obj.process.return_value = decoded_output
+                        return mock_scale_obj
+
+                # Default case - just return the string representation
+                mock_scale_obj.process.return_value = data_str
+                return mock_scale_obj
+
+            # Mock the runtime config's create_scale_object method
+            runtime.runtime_config.create_scale_object.side_effect = mock_create_scale_object
+
+            # Real args data from the user
+            args = {
+                'asset_id': 69,
+                'asset_name': '0x47494741444f54',
+                'asset_type': {'__kind': 'Erc20'},
+                'decimals': 18,
+                'existential_deposit': '1000000000000000000',  # 1 token in wei
+                'is_sufficient': True,
+                'symbol': '0x47444f54',
+            }
+
+            result = runtime.decode_event_args('Assets.Updated', args, '1000')
+
+            # Verify the result contains all expected fields
+            expected_fields = [
+                'asset_id',
+                'asset_name',
+                'asset_type',
+                'existential_deposit',
+                'xcm_rate_limit',
+                'symbol',
+                'decimals',
+                'is_sufficient',
+            ]
+            assert_result_contains_fields(result, expected_fields)
+
+            # Verify field values are correctly processed
+            expected_values = {
+                'asset_id': 69,
+                'asset_name': 'GIGADOT',  # Should be decoded from hex
+                'asset_type': 'Erc20',  # Should extract kind from subsquid structure
+                'existential_deposit': 1000000000000000000,  # Should be decoded to integer
+                'xcm_rate_limit': None,  # Missing optional field
+                'symbol': 'GDOT',  # Should be decoded from hex
+                'decimals': 18,  # Direct value
+                'is_sufficient': True,  # Direct value
+            }
+            assert_field_values(result, expected_values)

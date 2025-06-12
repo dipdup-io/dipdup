@@ -200,7 +200,8 @@ class SubstrateRuntime:
         spec_obj = self.get_spec_version(spec_version)
         event_abi = spec_obj.get_event_abi(name)
 
-        arg_types = event_abi.get('args_type_name') or event_abi['args']
+        arg_types = event_abi['args']
+        arg_types_full = event_abi.get('args_type_name') or arg_types
         arg_names = get_event_arg_names(event_abi)
 
         # NOTE: Subsquid camelcases arg keys, convert them to snake_case first
@@ -234,7 +235,7 @@ class SubstrateRuntime:
 
         payload = {}
 
-        def parse(value: Any, type_: str) -> Any:
+        def parse(value: Any, type_: str, full_type: str) -> Any:
             if isinstance(value, int):
                 return value
 
@@ -247,7 +248,7 @@ class SubstrateRuntime:
                     type_=type_,
                     registry=self.runtime_config.type_registry,
                 )
-                return [parse(v, t) for v, t in zip(value, inner_types, strict=True)]
+                return [parse(v, t, '') for v, t in zip(value, inner_types, strict=True)]
 
             # NOTE: Remember if the value is optional and strip the part
             if type_.lower().startswith('option<'):
@@ -257,11 +258,11 @@ class SubstrateRuntime:
                 is_optional = False
 
             # NOTE: BoundedVec fixup. Turn them into Vecs
-            if type_.startswith('bounded_collections:bounded_vec:'):
-                # FIXME: actual type is in `args_type_name`
-                type_ = 'Vec<u8>'
+            if 'bounded_collections:bounded_vec:' in type_:
+                type_ = full_type
+
             if type_.startswith('BoundedVec<'):
-                type_ = type_[11:-1].split(', ')[0].split('@')[0]
+                type_ = type_[11:-1].split(', ')[0]
                 type_ = f'Vec<{type_}>'
 
             # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
@@ -271,7 +272,7 @@ class SubstrateRuntime:
                     value = f'0x{value_len:02x}{value[2:]}'
                 elif isinstance(value, list):
                     inner = type_[4:-1]
-                    return [parse(v, inner) for v in value]
+                    return [parse(v, inner, '') for v in value]
                 else:
                     raise NotImplementedError('Unsupported Vec type')
 
@@ -287,8 +288,8 @@ class SubstrateRuntime:
             )
             return scale_obj.process()
 
-        for (key, value), type_ in zip(processed_args.items(), arg_types, strict=True):
-            payload[key] = parse(value, type_)
+        for (key, value), type_, full_type in zip(processed_args.items(), arg_types, arg_types_full, strict=True):
+            payload[key] = parse(value, type_, full_type)
 
         # NOTE: Also, we need to unpack TypeScript structures to the original form
         return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
