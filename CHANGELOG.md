@@ -8,12 +8,18 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- config: Added `realtime` flag to datasource config to enable websockets/polling implicitly.
+
 ### Fixed
 
 - cli: Skip logging indexer status if it has not changed.
 - config: Fixed `config export` command crash when `advanced.reindex` section is present in config.
 - config: Do not trigger `config_modified` reindexing when datasource URLs are updated.
 - datasources: Do not run datasources not linked to any index and without `realtime` flag set.
+- substrate: Fixed loading type registries when specified in config.
+- substrate: Fixed processing several vector types.
 
 ## [8.4.1] - 2025-06-02
 

@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
-from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
-from scalecodec.types import CompactU32
+from scalecodec.exceptions import RemainingScaleBytesNotEmptyException  # type: ignore[import-untyped]
 
 from dipdup.config.substrate import SubstrateRuntimeConfig
 from dipdup.exceptions import FrameworkException
@@ -287,8 +286,11 @@ class SubstrateRuntime:
             )
             try:
                 return scale_obj.process()
+            # FIXME: This is an ugly workaround for BoundedVec decoding issue. Investigate.
             except RemainingScaleBytesNotEmptyException as e:
-                _logger.error(
+                if 'Vec<' not in type_:
+                    raise
+                _logger.warning(
                     'Failed to decode value `%s` with type `%s`: %s, trying to decode as hex',
                     value,
                     type_,
