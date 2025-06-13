@@ -1,11 +1,16 @@
 {{ header }}
 
+#### Uncomment another FROM line to use a different base image
 FROM dipdup/dipdup:{{ project.dipdup_version }}
 # FROM ghcr.io/dipdup-io/dipdup:{{ project.dipdup_version }}
 # FROM ghcr.io/dipdup-io/dipdup:next
 
+#### Uncomment lines below if your project requires additional dependencies 
 # COPY --chown=dipdup pyproject.toml README.md .
 # RUN pip install .
+
+#### Uncomment if you have implemented a custom CLI command (see Services in docs)
+# ENTRYPOINT ["python", "-m", "{{ project.package }}"]
 
 COPY --chown=dipdup . {{ project.package }}
 WORKDIR /home/dipdup/{{ project.package }}
