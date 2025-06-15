@@ -233,8 +233,8 @@ class SubstrateRuntime:
 
         payload = {}
 
-        def parse(value: Any, type_: str, full_type: str) -> Any:
-            if isinstance(value, int):
+        def parse(value: Any | None, type_: str, full_type: str) -> Any:
+            if isinstance(value, int | None):
                 return value
 
             if isinstance(value, str) and value[:2] != '0x':
