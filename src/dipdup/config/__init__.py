@@ -383,13 +383,13 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
         for datasource in config_dict['datasources']:
             datasource.pop('http', None)
             datasource.pop('buffer_size', None)
+            datasource.pop('realtime', None)
 
     @classmethod
     def _strip_v2(cls, config_dict: dict[str, Any]) -> None:
         for datasource in config_dict['datasources']:
             datasource.pop('url', None)
             datasource.pop('ws_url', None)
-            datasource.pop('realtime', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
