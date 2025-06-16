@@ -1,0 +1,10 @@
+{
+  "asset_id": 1000074,
+  "asset_name": "0x7e420f0048445489420f00",
+  "asset_type": "XYK",
+  "existential_deposit": "1",
+  "xcm_rate_limit": null,
+  "symbol": null,
+  "decimals": null,
+  "is_sufficient": false
+}

@@ -123,7 +123,7 @@ module = "ruamel"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts="--cov-report=term-missing --cov=dipdup --cov-report=xml -n auto -s -v"
+addopts="-n auto -s -v"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 log_cli_level = "WARNING"

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
 
+import orjson
 import pytest
 
 from dipdup.config.substrate import SubstrateRuntimeConfig
@@ -303,6 +304,26 @@ updated_abi_3302 = {
 }
 
 
+def load_json(name: str):  # type: ignore[no-untyped-def]
+    text = Path(__file__).parent.joinpath('../data/substrate/').joinpath(name).read_text()
+    return orjson.loads(text)
+
+
+def try_decoding(  # type: ignore[no-untyped-def]
+    qualname: str,
+    abi: str,
+    args: str,
+    expected: dict[str, Any],
+):
+    event_abi = load_json(abi)
+    event_args = load_json(args)
+
+    runtime = create_test_runtime()
+    setup_runtime_mocks(runtime, event_abi)
+    result = runtime.decode_event_args(qualname, event_args, '')
+    assert result == expected
+
+
 class TestSubstrateRuntimeDecodeEventArgs:
     """Test cases for SubstrateRuntime.decode_event_args method."""
 
@@ -345,3 +366,20 @@ class TestSubstrateRuntimeDecodeEventArgs:
             'is_sufficient': True,  # Direct value
         }
         assert result == expected_values
+
+    def test_227_assetregistry_registered(self) -> None:
+        try_decoding(
+            'AssetRegistry.Registered',
+            'event_abi_227_AssetRegistry.Registered.json',
+            'event_args_227_AssetRegistry.Registered.json',
+            {
+                'asset_id': 1000074,
+                'asset_name': '0x7e420f0048445489420f00',
+                'asset_type': 'XYK',
+                'existential_deposit': 1,
+                'xcm_rate_limit': None,
+                'symbol': None,
+                'decimals': None,
+                'is_sufficient': False,
+            },
+        )

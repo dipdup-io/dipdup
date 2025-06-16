@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
-from scalecodec.exceptions import RemainingScaleBytesNotEmptyException  # type: ignore[import-untyped]
 from scalecodec.types import CompactU32  # type: ignore[import-untyped]
 
 from dipdup.config.substrate import SubstrateRuntimeConfig
@@ -238,8 +237,11 @@ class SubstrateRuntime:
             if isinstance(value, int | None):
                 return value
 
-            if isinstance(value, str) and value[:2] != '0x':
-                return int(value)
+            if isinstance(value, str):
+                if value.isnumeric():
+                    return int(value)
+                if value[:2] != '0x':
+                    return value
 
             # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
             if isinstance(value, list) and type_.startswith('Tuple:'):
@@ -255,22 +257,16 @@ class SubstrateRuntime:
 
             # NOTE: Remember if the value is optional and strip the part
             if type_.lower().startswith('option<'):
-                is_optional = True
                 type_ = type_[7:-1]
-            else:
-                is_optional = False
-
-            if type_.startswith('BoundedVec<'):
-                type_ = type_[11:-1].split(', ')[0]
-                type_ = f'Vec<{type_}>'
 
             # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
-            if type_.startswith('Vec<'):
+            if type_.startswith(('Vec<', 'BoundedVec<')):
                 if isinstance(value, str):
                     # Remove 0x, count bytes
                     byte_len = len(value[2:]) // 2
-                    length_prefix = CompactU32().process_encode(byte_len).to_hex()
-                    value = f'{length_prefix}{value[2:]}'
+                    length_prefix = CompactU32().process_encode(byte_len)
+                    value = length_prefix + ScaleBytes(value)
+                    value = value.to_hex()
                 elif isinstance(value, list):
                     inner = type_[4:-1]
                     return [parse(v, inner, inner) for v in value]
@@ -280,26 +276,11 @@ class SubstrateRuntime:
             if not isinstance(value, str):
                 return value
 
-            if is_optional:
-                type_ = 'Option<' + type_ + '>'
-
             scale_obj = self.runtime_config.create_scale_object(
                 type_string=type_,
                 data=ScaleBytes(value),
             )
-            try:
-                return scale_obj.process()
-            # FIXME: This is an ugly workaround for BoundedVec decoding issue. Investigate.
-            except RemainingScaleBytesNotEmptyException as e:
-                if 'Vec<' not in type_:
-                    raise
-                _logger.warning(
-                    'Failed to decode value `%s` with type `%s`: %s, trying to decode as hex',
-                    value,
-                    type_,
-                    e,
-                )
-                return bytes.fromhex(value[4:]).decode()
+            return scale_obj.process()
 
         for (key, value), type_, full_type in zip(processed_args.items(), arg_types, arg_types_full, strict=True):
             payload[key] = parse(value, type_, full_type)
