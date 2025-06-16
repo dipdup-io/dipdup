@@ -21,14 +21,14 @@ def create_test_runtime() -> SubstrateRuntime:
     return SubstrateRuntime(config, package, None)
 
 
-def setup_runtime_mocks(runtime: SubstrateRuntime, event_abi: dict[str, Any]) -> None:
+def setup_runtime_mocks(runtime: SubstrateRuntime, event_abi: dict[str, Any], pallet: str) -> None:
     """Setup common mocks for SubstrateRuntime testing."""
     # Mock spec version and event ABI
     spec_version_mock = SubstrateSpecVersion(
         name='1000',
         metadata=[
             {
-                'name': 'AssetRegistry',
+                'name': pallet,
                 'events': [event_abi],
             },
         ],
@@ -319,7 +319,7 @@ def try_decoding(  # type: ignore[no-untyped-def]
     event_args = load_json(args)
 
     runtime = create_test_runtime()
-    setup_runtime_mocks(runtime, event_abi)
+    setup_runtime_mocks(runtime, event_abi, qualname.split('.')[0])
     result = runtime.decode_event_args(qualname, event_args, '')
     assert result == expected
 
@@ -340,7 +340,7 @@ class TestSubstrateRuntimeDecodeEventArgs:
             'symbol': '0x47444f54',
         }
 
-        setup_runtime_mocks(runtime, updated_abi_3301)
+        setup_runtime_mocks(runtime, updated_abi_3301, 'AssetRegistry')
         result = runtime.decode_event_args('AssetRegistry.Updated', args, '302')
 
         expected_values = {
@@ -352,7 +352,7 @@ class TestSubstrateRuntimeDecodeEventArgs:
         }
         assert result == expected_values
 
-        setup_runtime_mocks(runtime, updated_abi_3302)
+        setup_runtime_mocks(runtime, updated_abi_3302, 'AssetRegistry')
         result = runtime.decode_event_args('AssetRegistry.Updated', args, '302')
 
         expected_values = {
@@ -381,5 +381,16 @@ class TestSubstrateRuntimeDecodeEventArgs:
                 'symbol': None,
                 'decimals': None,
                 'is_sufficient': False,
+            },
+        )
+
+    def test_104_balances_withdraw(self) -> None:
+        try_decoding(
+            'Balances.Withdraw',
+            'event_abi_104_Balances.Withdraw.json',
+            'event_args_104_Balances.Withdraw.json',
+            {
+                'amount': 1491073332371,
+                'who': '0xee836cb29c6b52d739a1aeb37498d863128949346666d56a2aff40361c3d8f7c',
             },
         )

@@ -4,6 +4,7 @@ from pathlib import Path
 import orjson
 
 from dipdup.runtimes import SubstrateSpecVersion
+from dipdup.runtimes import get_event_arg_names
 from dipdup.sys import set_up_logging
 
 
@@ -21,6 +22,12 @@ SUBSTATE_DATA = (
         spec_version=227,
         event_qualname='AssetRegistry.Registered',
         event_id='4936483-5',
+    ),
+    Substrate(
+        subscan='https://hydration.api.subscan.io/api',
+        spec_version=104,
+        event_qualname='Balances.Withdraw',
+        event_id='418506-3',
     ),
 )
 SUBSTRATE_DATA_PATH = Path(__file__).parent.joinpath('../tests/data/substrate/')
@@ -45,32 +52,45 @@ async def fetch_test_data(item: Substrate) -> None:
 
     async with subscan:
         # Fetch metadata
-        metadata = await subscan.get_runtime_metadata(item.spec_version)
-        spec = SubstrateSpecVersion(
-            name=f'v{item.spec_version}',
-            metadata=metadata,
-        )
-        event_abi = spec.get_event_abi(item.event_qualname)
         event_abi_path = SUBSTRATE_DATA_PATH.joinpath(f'event_abi_{item.spec_version}_{item.event_qualname}.json')
-        event_abi_path.parent.mkdir(parents=True, exist_ok=True)
-        event_abi_path.write_text(orjson.dumps(event_abi, option=orjson.OPT_INDENT_2).decode('utf-8'))
+
+        if event_abi_path.exists():
+            event_abi = orjson.loads(event_abi_path.read_text())
+        else:
+            metadata = await subscan.get_runtime_metadata(item.spec_version)
+            spec = SubstrateSpecVersion(
+                name=f'v{item.spec_version}',
+                metadata=metadata,
+            )
+            event_abi = spec.get_event_abi(item.event_qualname)
+            event_abi_path.parent.mkdir(parents=True, exist_ok=True)
+            event_abi_path.write_text(orjson.dumps(event_abi, option=orjson.OPT_INDENT_2).decode('utf-8'))
 
         # Fetch event params
-        params = await subscan.request(
-            'post',
-            'scan/event/params',
-            json={
-                'event_index': [item.event_id],
-            },
-        )
-        args = {i['name']: i['value'] for i in params['data'][0]['params']}
-
         args_path = SUBSTRATE_DATA_PATH.joinpath(f'event_args_{item.spec_version}_{item.event_qualname}.json')
-        args_path.parent.mkdir(parents=True, exist_ok=True)
-        args_path.write_text(orjson.dumps(args, option=orjson.OPT_INDENT_2).decode('utf-8'))
+
+        if not args_path.exists():
+            params = await subscan.request(
+                'post',
+                'scan/event/params',
+                json={
+                    'event_index': [item.event_id],
+                },
+            )
+            params = params['data'][0]['params']
+
+            if 'name' not in params[0]:
+                arg_names = get_event_arg_names(event_abi)
+                for i, t in enumerate(arg_names):
+                    params[i]['name'] = t
+
+            args = {i['name']: i['value'] for i in params}
+            args_path.parent.mkdir(parents=True, exist_ok=True)
+            args_path.write_text(orjson.dumps(args, option=orjson.OPT_INDENT_2).decode('utf-8'))
 
 
 if __name__ == '__main__':
     import asyncio
 
-    asyncio.run(fetch_test_data(SUBSTATE_DATA[0]))
+    for data in SUBSTATE_DATA:
+        asyncio.run(fetch_test_data(data))
