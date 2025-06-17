@@ -10,7 +10,6 @@ from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import Sequence
 from decimal import Decimal
-from uuid import UUID
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -18,6 +17,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TextIO
 from typing import TypeVar
+from uuid import UUID
 
 import orjson
 from humps import main as humps
