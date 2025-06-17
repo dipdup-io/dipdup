@@ -10,7 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- utils: Serialize custom UUIDs to JSON
+- models: Serialize to JSONField custom UUIDs
 
 ## [8.4.1] - 2025-06-02
 
