@@ -10,6 +10,7 @@ from collections.abc import Iterator
 from collections.abc import Mapping
 from collections.abc import Sequence
 from decimal import Decimal
+from uuid import UUID
 from functools import reduce
 from logging import Logger
 from pathlib import Path
@@ -228,6 +229,9 @@ def parse_object(
 
 def _default_for_decimals(obj: Any) -> Any:
     if isinstance(obj, Decimal):
+        return str(obj)
+    # NOTE: although UUID is serializable by orjson, asyncpg UUID type is not
+    if isinstance(obj, UUID):
         return str(obj)
     raise TypeError
 
