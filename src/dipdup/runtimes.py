@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 
 import orjson
-from scalecodec.types import CompactU32  # type: ignore[import-untyped]
 
 from dipdup.config.substrate import SubstrateRuntimeConfig
 from dipdup.exceptions import FrameworkException
@@ -120,6 +119,64 @@ def get_event_arg_names(event_abi: dict[str, Any]) -> tuple[str, ...]:
     return tuple(arg_names)
 
 
+def decode_arg(
+    runtime_config: 'RuntimeConfigurationObject',
+    value: Any | None,
+    type_: str,
+    full_type: str,
+) -> Any:
+    from scalecodec import CompactU32  # type: ignore[import-untyped]
+    from scalecodec.base import ScaleBytes
+
+    if isinstance(value, int | None):
+        return value
+
+    if isinstance(value, str):
+        if value.isnumeric():
+            return int(value)
+        if value[:2] != '0x':
+            return value
+
+    # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
+    if isinstance(value, list) and type_.startswith('Tuple:'):
+        inner_types = extract_tuple_inner_types(
+            type_=type_,
+            registry=runtime_config.type_registry,
+        )
+        return [decode_arg(runtime_config, v, t, t) for v, t in zip(value, inner_types, strict=True)]
+
+    # NOTE: BoundedVec fixup. Turn them into Vecs
+    if 'bounded_collections:bounded_vec:' in type_:
+        type_ = full_type
+
+    # NOTE: Remember if the value is optional and strip the part
+    if type_.lower().startswith('option<'):
+        type_ = type_[7:-1]
+
+    # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
+    if type_.startswith(('Vec<', 'BoundedVec<')):
+        if isinstance(value, str):
+            # Remove 0x, count bytes
+            byte_len = len(value[2:]) // 2
+            length_prefix = CompactU32().process_encode(byte_len)
+            value = length_prefix + ScaleBytes(value)
+            value = value.to_hex()
+        elif isinstance(value, list):
+            inner = type_[4:-1]
+            return [decode_arg(runtime_config, v, inner, inner) for v in value]
+        else:
+            raise NotImplementedError('Unsupported Vec type')
+
+    if not isinstance(value, str):
+        return value
+
+    scale_obj = runtime_config.create_scale_object(
+        type_string=type_,
+        data=ScaleBytes(value),
+    )
+    return scale_obj.process()
+
+
 class SubstrateRuntime:
     def __init__(
         self,
@@ -193,8 +250,6 @@ class SubstrateRuntime:
         args: list[Any] | dict[str, Any],
         spec_version: str,
     ) -> dict[str, Any]:
-        from scalecodec.base import ScaleBytes
-
         spec_obj = self.get_spec_version(spec_version)
         event_abi = spec_obj.get_event_abi(name)
 
@@ -233,57 +288,8 @@ class SubstrateRuntime:
 
         payload = {}
 
-        def parse(value: Any | None, type_: str, full_type: str) -> Any:
-            if isinstance(value, int | None):
-                return value
-
-            if isinstance(value, str):
-                if value.isnumeric():
-                    return int(value)
-                if value[:2] != '0x':
-                    return value
-
-            # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
-            if isinstance(value, list) and type_.startswith('Tuple:'):
-                inner_types = extract_tuple_inner_types(
-                    type_=type_,
-                    registry=self.runtime_config.type_registry,
-                )
-                return [parse(v, t, t) for v, t in zip(value, inner_types, strict=True)]
-
-            # NOTE: BoundedVec fixup. Turn them into Vecs
-            if 'bounded_collections:bounded_vec:' in type_:
-                type_ = full_type
-
-            # NOTE: Remember if the value is optional and strip the part
-            if type_.lower().startswith('option<'):
-                type_ = type_[7:-1]
-
-            # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
-            if type_.startswith(('Vec<', 'BoundedVec<')):
-                if isinstance(value, str):
-                    # Remove 0x, count bytes
-                    byte_len = len(value[2:]) // 2
-                    length_prefix = CompactU32().process_encode(byte_len)
-                    value = length_prefix + ScaleBytes(value)
-                    value = value.to_hex()
-                elif isinstance(value, list):
-                    inner = type_[4:-1]
-                    return [parse(v, inner, inner) for v in value]
-                else:
-                    raise NotImplementedError('Unsupported Vec type')
-
-            if not isinstance(value, str):
-                return value
-
-            scale_obj = self.runtime_config.create_scale_object(
-                type_string=type_,
-                data=ScaleBytes(value),
-            )
-            return scale_obj.process()
-
         for (key, value), type_, full_type in zip(processed_args.items(), arg_types, arg_types_full, strict=True):
-            payload[key] = parse(value, type_, full_type)
+            payload[key] = decode_arg(self.runtime_config, value, type_, full_type)
 
         # NOTE: Also, we need to unpack TypeScript structures to the original form
         return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
