@@ -145,15 +145,13 @@ class SubstrateNodeEventFetcher(SubstrateNodeFetcher[SubstrateEventData]):
                 await _batch(batch)
 
         async def _log_loop() -> None:
+            last_status = ''
             while True:
+                status = f'queues: levels={queues["levels"].qsize()} hashes={queues["hashes"].qsize()} headers={queues["headers"].qsize()} events={queues["events"].qsize()}'
+                if status != last_status:
+                    self._logger.debug(status)
+                    last_status = status
                 await asyncio.sleep(1)
-                self._logger.debug(
-                    'queues: levels=%d hashes=%d headers=%d events=%d',
-                    queues['levels'].qsize(),
-                    queues['hashes'].qsize(),
-                    queues['headers'].qsize(),
-                    queues['events'].qsize(),
-                )
 
         tasks = (
             asyncio.create_task(_hashes_loop()),

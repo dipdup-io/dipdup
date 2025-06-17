@@ -1,5 +1,4 @@
 import logging
-from copy import copy
 from functools import cache
 from functools import cached_property
 from pathlib import Path
@@ -73,15 +72,12 @@ def get_type_registry(name_or_path: str | Path) -> 'RuntimeConfigurationObject':
     if isinstance(name_or_path, str):
         # NOTE: User path has higher priority
         for path in (
-            Path(f'type_registries/{name_or_path}.json'),
+            Path(__file__).parent / 'type_registries' / f'{name_or_path}.json',
             Path(name_or_path),
         ):
-            if not path.is_file():
-                continue
-            name_or_path = path
+            if path.is_file():
+                return orjson.loads(path.read_bytes())['types']
 
-    if isinstance(name_or_path, Path):
-        return orjson.loads(name_or_path.read_bytes())
     return load_type_registry_preset(name_or_path)
 
 
@@ -121,6 +117,64 @@ def get_event_arg_names(event_abi: dict[str, Any]) -> tuple[str, ...]:
         arg_names = extract_args_name(tuple(event_abi['docs']))
 
     return tuple(arg_names)
+
+
+def decode_arg(
+    runtime_config: 'RuntimeConfigurationObject',
+    value: Any | None,
+    type_: str,
+    full_type: str,
+) -> Any:
+    from scalecodec import CompactU32  # type: ignore[import-untyped]
+    from scalecodec.base import ScaleBytes
+
+    if isinstance(value, int | None):
+        return value
+
+    if isinstance(value, str):
+        if value.isnumeric():
+            return int(value)
+        if value[:2] != '0x':
+            return value
+
+    # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
+    if isinstance(value, list) and type_.startswith('Tuple:'):
+        inner_types = extract_tuple_inner_types(
+            type_=type_,
+            registry=runtime_config.type_registry,
+        )
+        return [decode_arg(runtime_config, v, t, t) for v, t in zip(value, inner_types, strict=True)]
+
+    # NOTE: BoundedVec fixup. Turn them into Vecs
+    if 'bounded_collections:bounded_vec:' in type_:
+        type_ = full_type
+
+    # NOTE: Remember if the value is optional and strip the part
+    if type_.lower().startswith('option<'):
+        type_ = type_[7:-1]
+
+    # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
+    if type_.startswith(('Vec<', 'BoundedVec<')):
+        if isinstance(value, str):
+            # Remove 0x, count bytes
+            byte_len = len(value[2:]) // 2
+            length_prefix = CompactU32().process_encode(byte_len)
+            value = length_prefix + ScaleBytes(value)
+            value = value.to_hex()
+        elif isinstance(value, list):
+            inner = type_[4:-1]
+            return [decode_arg(runtime_config, v, inner, inner) for v in value]
+        else:
+            raise NotImplementedError('Unsupported Vec type')
+
+    if not isinstance(value, str):
+        return value
+
+    scale_obj = runtime_config.create_scale_object(
+        type_string=type_,
+        data=ScaleBytes(value),
+    )
+    return scale_obj.process()
 
 
 class SubstrateRuntime:
@@ -196,17 +250,22 @@ class SubstrateRuntime:
         args: list[Any] | dict[str, Any],
         spec_version: str,
     ) -> dict[str, Any]:
-        from scalecodec.base import ScaleBytes
-
         spec_obj = self.get_spec_version(spec_version)
         event_abi = spec_obj.get_event_abi(name)
 
-        # FIXME: Do we need original type names?
-        # arg_types = event_abi.get('args_type_name') or event_abi['args']
         arg_types = event_abi['args']
+        arg_types_full = event_abi.get('args_type_name') or arg_types
         arg_names = get_event_arg_names(event_abi)
 
-        if isinstance(args, list):
+        # NOTE: Subsquid camelcases arg keys, convert them to snake_case first
+        if isinstance(args, dict):
+            snake_case_args = {}
+            for key, value in args.items():
+                snake_key = pascal_to_snake(key)
+                snake_case_args[snake_key] = value
+            args = snake_case_args
+        # NOTE: Args are lists only on very old metadata versions.
+        elif isinstance(args, list):
             # FIXME: Optionals are processed incorrectly now
             args, unprocessed_args = [], [*args]
             for arg_type in arg_types:
@@ -217,51 +276,20 @@ class SubstrateRuntime:
 
             args = dict(zip(arg_names, args, strict=True))
 
+        # NOTE: Process values by matching arg_names to arg_types, handling optionals
+        processed_args = {}
+        for arg_name, arg_type in zip(arg_names, arg_types, strict=True):
+            if arg_name in args:
+                processed_args[arg_name] = args[arg_name]
+            elif arg_type.lower().startswith('option<'):
+                processed_args[arg_name] = None
+            else:
+                raise FrameworkException(f'Required argument `{arg_name}` not found in args')
+
         payload = {}
 
-        def parse(value: Any, type_: str) -> Any:
-            if isinstance(value, int):
-                return value
-
-            if isinstance(value, str) and value[:2] != '0x':
-                return int(value)
-
-            # FIXME: Tuple type string have neither brackets no delimiters... Could be a Subscan thing, need to check.
-            if isinstance(value, list) and type_.startswith('Tuple:'):
-                inner_types = extract_tuple_inner_types(
-                    type_=type_,
-                    registry=self.runtime_config.type_registry,
-                )
-                return [parse(v, t) for v, t in zip(value, inner_types, strict=True)]
-
-            # NOTE: Scale decoder expects vec length at the beginning; Subsquid strips it
-            if type_.startswith('Vec<'):
-                if isinstance(value, str):
-                    value_len = len(value[2:]) * 2
-                    value = f'0x{value_len:02x}{value[2:]}'
-                elif isinstance(value, list):
-                    inner = type_[4:-1]
-                    return [parse(v, inner) for v in value]
-                else:
-                    raise NotImplementedError('Unsupported Vec type')
-
-            if not isinstance(value, str):
-                return value
-
-            scale_obj = self.runtime_config.create_scale_object(
-                type_string=type_,
-                data=ScaleBytes(value),
-            )
-            return scale_obj.process()
-
-        for (key, value), type_ in zip(args.items(), arg_types, strict=True):
-            payload[key] = parse(value, type_)
-
-        # NOTE: Subsquid camelcases arg keys for some reason
-        for key in copy(payload):
-            if key not in arg_names:
-                new_key = pascal_to_snake(key)
-                payload[new_key] = payload.pop(key)
+        for (key, value), type_, full_type in zip(processed_args.items(), arg_types, arg_types_full, strict=True):
+            payload[key] = decode_arg(self.runtime_config, value, type_, full_type)
 
         # NOTE: Also, we need to unpack TypeScript structures to the original form
         return extract_subsquid_payload(payload)  # type: ignore[no-any-return]
