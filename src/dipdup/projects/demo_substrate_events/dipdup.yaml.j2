@@ -15,8 +15,8 @@ datasources:
     url: https://assethub-polkadot.api.subscan.io/api
   node:
     kind: substrate.node
-    url: https://statemint.api.onfinality.io/rpc?apikey=${NODE_API_KEY:-''}
-    ws_url: wss://statemint.api.onfinality.io/ws?apikey=${NODE_API_KEY:-''}
+    url: https://statemint.api.onfinality.io/rpc?apikey=${ONFINALITY_API_KEY:-''}
+    ws_url: wss://statemint.api.onfinality.io/ws?apikey=${ONFINALITY_API_KEY:-''}
 
 indexes:
   assethub_transfers:
