@@ -72,7 +72,7 @@ def get_type_registry(name_or_path: str | Path) -> 'RuntimeConfigurationObject':
     if isinstance(name_or_path, str):
         # NOTE: User path has higher priority
         for path in (
-            Path(__file__).parent / 'type_registries' / f'{name_or_path}.json',
+            Path(__file__).parent.parent / 'type_registries' / f'{name_or_path}.json',
             Path(name_or_path),
         ):
             if path.is_file():

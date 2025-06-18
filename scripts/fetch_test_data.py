@@ -3,8 +3,8 @@ from pathlib import Path
 
 import orjson
 
-from dipdup.runtimes import SubstrateSpecVersion
-from dipdup.runtimes import get_event_arg_names
+from dipdup.abi.substrate import SubstrateSpecVersion
+from dipdup.abi.substrate import get_event_arg_names
 from dipdup.sys import set_up_logging
 
 

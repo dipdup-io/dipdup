@@ -6,6 +6,10 @@ from typing import cast
 
 import orjson
 
+from dipdup.abi.substrate import SubstrateRuntime
+from dipdup.abi.substrate import extract_args_name
+from dipdup.abi.substrate import extract_tuple_inner_types
+from dipdup.abi.substrate import get_type_key
 from dipdup.codegen import CodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config.substrate import SubstrateIndexConfig
@@ -16,10 +20,6 @@ from dipdup.datasources.substrate_node import SubstrateNodeDatasource
 from dipdup.datasources.substrate_subscan import SubstrateSubscanDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.package import DipDupPackage
-from dipdup.runtimes import SubstrateRuntime
-from dipdup.runtimes import extract_args_name
-from dipdup.runtimes import extract_tuple_inner_types
-from dipdup.runtimes import get_type_key
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
