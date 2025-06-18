@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TextIO
 from typing import TypeVar
+from uuid import UUID
 
 import orjson
 from humps import main as humps
@@ -228,6 +229,9 @@ def parse_object(
 
 def _default_for_decimals(obj: Any) -> Any:
     if isinstance(obj, Decimal):
+        return str(obj)
+    # NOTE: although UUID is serializable by orjson, asyncpg UUID type is not
+    if isinstance(obj, UUID):
         return str(obj)
     raise TypeError
 
