@@ -22,7 +22,7 @@ contracts:
 datasources:
   tzkt_mainnet:
     kind: tezos.tzkt
-    url: https://api.tzkt.io
+    url: ${TZKT_URL:-https://api.tzkt.io}
 
 templates:
   quipuswap_fa12:

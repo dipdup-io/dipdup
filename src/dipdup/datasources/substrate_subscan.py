@@ -21,10 +21,10 @@ class SubstrateSubscanDatasource(AbiDatasource[SubstrateSubscanDatasourceConfig]
         )
         return cast('list[dict[str, Any]]', res['data']['list'])
 
-    async def get_runtime_metadata(self, spec_version: int) -> dict[str, Any]:
+    async def get_runtime_metadata(self, spec_version: int) -> list[dict[str, Any]]:
         res = await self.request(
             'post',
             'scan/runtime/metadata',
             json={'spec': spec_version},
         )
-        return cast('dict[str, Any]', res['data']['info']['metadata'])
+        return cast('list[dict[str, Any]]', res['data']['info']['metadata'])
