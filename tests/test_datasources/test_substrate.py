@@ -5,12 +5,12 @@ from unittest.mock import Mock
 import orjson
 import pytest
 
+from dipdup.abi.substrate import SubstrateRuntime
+from dipdup.abi.substrate import SubstrateSpecVersion
+from dipdup.abi.substrate import extract_multilocation_payload
+from dipdup.abi.substrate import extract_subsquid_payload
 from dipdup.config.substrate import SubstrateRuntimeConfig
 from dipdup.package import DipDupPackage
-from dipdup.runtimes import SubstrateRuntime
-from dipdup.runtimes import SubstrateSpecVersion
-from dipdup.runtimes import extract_multilocation_payload
-from dipdup.runtimes import extract_subsquid_payload
 
 
 def create_test_runtime() -> SubstrateRuntime:

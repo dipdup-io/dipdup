@@ -8,9 +8,9 @@ from typing import TypedDict
 from typing import TypeVar
 from typing import cast
 
+from dipdup.abi.substrate import SubstrateRuntime
 from dipdup.exceptions import FrameworkException
 from dipdup.fetcher import HasLevel
-from dipdup.runtimes import SubstrateRuntime
 
 _logger = logging.getLogger(__name__)
 
