@@ -414,10 +414,10 @@ class HasuraConfig:
     admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
-    select_limit: int = 1000
+    select_limit: int = 10_000
     allow_aggregations: bool = True
     allow_inconsistent_metadata: bool = False
-    camel_case: bool = False
+    camel_case: bool = True
     rest: bool = True
     http: HttpConfig | None = None
     hide_internal: bool = False
