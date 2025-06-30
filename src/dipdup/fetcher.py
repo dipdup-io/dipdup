@@ -148,7 +148,7 @@ class FetcherChannel(ABC, Generic[BufferT, DatasourceT, FilterT]):
 
     @abstractmethod
     async def fetch(self) -> None:
-        """Fetch a single `requets_limit` batch of items, bump channel offset"""
+        """Fetch a single `requests_limit` batch of items, bump channel offset"""
         ...
 
 
