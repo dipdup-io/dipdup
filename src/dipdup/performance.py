@@ -241,11 +241,11 @@ class _MetricManager:
 
     _index_total_sync_duration: Histogram = Histogram(
         'dipdup_index_total_sync_duration_seconds',
-        'Duration of the last index syncronization',
+        'Duration of the last index synchronization',
     )
     _index_total_realtime_duration: Histogram = Histogram(
         'dipdup_index_total_realtime_duration_seconds',
-        'Duration of the last index realtime syncronization',
+        'Duration of the last index realtime synchronization',
     )
 
     _datasource_head_updated = Gauge(
