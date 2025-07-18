@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Added
+
+- env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
+
+### Fixed
+
+- database: Fixed `dipdup_wipe` function affecting non-public tables.
+
+### Changed
+
+- env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
+
 ## [8.4.2] - 2025-06-18
 
 ### Added
@@ -147,7 +161,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [8.2.0] - 2025-02-10
 
-### Added
+### Addeddebugpy
 
 - starknet.node: Added methods for fetching contract ABIs for `init` command.
 
