@@ -59,6 +59,7 @@ dependencies = [
     # FIXME: 0.29 to 0.30.2 in `demo_tezos_dao`: tezos_storage.py:17:11: F821 Undefined name `bool_aliased`
     # Probably https://github.com/koxudaxi/datamodel-code-generator/issues/2391
     "datamodel-code-generator==0.28.5", # pinned
+    "debugpy>=1.8.15",
     "eth-abi~=5.0",
     "lru-dict~=1.3",
     "mcp~=1.9",
