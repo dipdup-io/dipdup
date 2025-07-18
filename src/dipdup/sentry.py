@@ -68,11 +68,11 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
     server_name = config.server_name
 
     if not environment:
-        if env.DOCKER:
+        if env.is_in_docker():
             environment = 'docker'
         elif env.TEST:
             environment = 'tests'
-        elif env.CI:
+        elif env.is_in_gha():
             environment = 'gha'
         else:
             environment = 'local'

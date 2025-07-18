@@ -700,6 +700,10 @@ class DipDupContext:
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
+        if env.NO_HOOKS:
+            _logger.info('Ignoring hook `%s`, `DIPDUP_NO_HOOKS` is set', name)
+            return
+
         new_ctx = HookContext._wrap(
             self,
             logger=getLogger(module),
