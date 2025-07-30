@@ -183,7 +183,7 @@ class DataFetcher(ABC, Generic[BufferT, DatasourceT]):
     def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[BufferT, ...]]]:
         """Iterate over events data from REST.
 
-        Resulting data is splitted by level, deduped, sorted and ready to be processed by TezosEventsIndex.
+        Resulting data is split by level, deduped, sorted and ready to be processed by TezosEventsIndex.
         """
         ...
 
