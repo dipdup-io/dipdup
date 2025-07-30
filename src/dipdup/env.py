@@ -178,6 +178,7 @@ def is_in_docker() -> bool:
     """Check if running in Docker environment"""
     return getenv('DOCKER') == 'true' and platform.system() == 'Linux'
 
+
 # TODO: Compatibility aliases, remove in 9.0
 CI = is_in_gha()
 DOCKER = is_in_docker()

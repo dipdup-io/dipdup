@@ -1,8 +1,8 @@
 import asyncio
 import logging
+import os
 import sys
 import warnings
-import os
 from collections import deque
 from collections.abc import Awaitable
 from pathlib import Path
@@ -69,7 +69,7 @@ def set_up_process() -> None:
 
 def set_up_debugger() -> None:
     """Set up debugger for the process"""
-    import debugpy
+    import debugpy  # type: ignore[import-untyped]
 
     port = int(os.environ.get('DEBUGPY_PORT', 5678))
     debugpy.listen(('0.0.0.0', port))
