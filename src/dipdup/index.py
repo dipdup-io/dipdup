@@ -170,6 +170,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         metrics.levels_nonempty += 1
         metrics.time_in_callbacks[self.name] += time.time() - started_at
 
+        await self._ctx._wait_for_hooks()
+
     @property
     def name(self) -> str:
         return self._config.name
