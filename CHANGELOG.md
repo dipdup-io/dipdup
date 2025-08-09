@@ -10,12 +10,14 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
+- database: Support running multiple indexers on different schemas in the same database.
 - env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
-- env: Added debugpy support to connect to the running indexer; requires `DIPDUP_DEBUG` environment variable.
+- env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
 
 ### Fixed
 
 - database: Fixed `dipdup_wipe` function affecting non-public tables.
+- substrate.events: Fixed fetching events with node datasource.
 
 ### Changed
 
@@ -162,7 +164,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [8.2.0] - 2025-02-10
 
-### Addeddebugpy
+### Added
 
 - starknet.node: Added methods for fetching contract ABIs for `init` command.
 

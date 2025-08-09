@@ -97,7 +97,6 @@ class SubstrateNodeEventFetcher(SubstrateNodeFetcher[SubstrateEventData]):
 
             if batch:
                 await _batch(batch)
-            # Add sentinel
             await queues['hashes'].put(None)
 
         async def _headers_loop() -> None:
@@ -125,7 +124,6 @@ class SubstrateNodeEventFetcher(SubstrateNodeFetcher[SubstrateEventData]):
 
             if batch:
                 await _batch(batch)
-            # Add sentinel
             await queues['headers'].put(None)
 
         async def _events_loop() -> None:
@@ -151,7 +149,6 @@ class SubstrateNodeEventFetcher(SubstrateNodeFetcher[SubstrateEventData]):
 
             if batch:
                 await _batch(batch)
-            # Add sentinel
             await queues['events'].put(None)
 
         async def _log_loop() -> None:

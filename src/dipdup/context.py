@@ -727,7 +727,10 @@ class DipDupContext:
                 await fn(new_ctx, **kwargs)
 
         coro = _wrapper()
-        await coro if wait else self._pending_hooks.put_nowait(coro)
+        if wait:
+            await coro
+        else:
+            await self._pending_hooks.put(coro)
 
     async def execute_sql_script(
         self,
