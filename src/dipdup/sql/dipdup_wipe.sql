@@ -76,6 +76,7 @@ BEGIN
     -- Drop TimescaleDB hypertables and chunks (if any)
     IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'hypertable' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'timescaledb_information')) THEN
         FOR rec IN
+            -- Use a very large interval ('10000 years') to ensure all TimescaleDB chunks are dropped, regardless of their age.
             SELECT 'SELECT drop_chunks(interval ''10000 years'', ''' || quote_ident(schema_name) || '.' || quote_ident(table_name) || ''');'
             FROM timescaledb_information.hypertables
             WHERE table_schema = schema_name
