@@ -83,3 +83,70 @@ async def test_seoulnet_response() -> None:
 
     TezosHeadBlockData.from_json(tzkt_head_json)
     TezosBlockData.from_json(tzkt_block_json)
+
+
+async def test_quebec_response() -> None:
+    from dipdup.models.tezos import TezosBlockData
+    from dipdup.models.tezos import TezosHeadBlockData
+
+    tzkt_head_json = {
+        'chain': 'mainnet',
+        'chainId': 'NetXdQprcVkpaWU',
+        'cycle': 960,
+        'level': 9873411,
+        'hash': 'BMHVLX1TubLDTLH1zTjGWoVNXtevbEomZTDJPwyVRev2pz5fEGA',
+        'protocol': 'PsRiotumaAMotcRoDWW1bysEhQy2n1M5fy8JgRp8jjRfHGmfeA7',
+        'nextProtocol': 'PsRiotumaAMotcRoDWW1bysEhQy2n1M5fy8JgRp8jjRfHGmfeA7',
+        'timestamp': '2025-08-12T18:04:00Z',
+        'votingEpoch': 78,
+        'votingPeriod': 154,
+        'knownLevel': 9873411,
+        'lastSync': '2025-08-12T18:04:01Z',
+        'synced': True,
+        'quoteLevel': 9873411,
+        'quoteBtc': 7.334524035797446e-06,
+        'quoteEur': 0.7494559363959915,
+        'quoteUsd': 0.8751727518543674,
+        'quoteCny': 6.290916774879567,
+        'quoteJpy': 129.29946014527138,
+        'quoteKrw': 1211.218037161072,
+        'quoteEth': 0.00019496473517306226,
+        'quoteGbp': 0.6477844922948142,
+    }
+    tzkt_block_json = {
+        'cycle': 960,
+        'level': 9873411,
+        'hash': 'BMHVLX1TubLDTLH1zTjGWoVNXtevbEomZTDJPwyVRev2pz5fEGA',
+        'timestamp': '2025-08-12T18:04:00Z',
+        'proto': 22,
+        'payloadRound': 0,
+        'blockRound': 0,
+        'validations': 6999,
+        'deposit': 0,
+        'rewardDelegated': 507309,
+        'rewardStakedOwn': 244133,
+        'rewardStakedEdge': 175102,
+        'rewardStakedShared': 1575915,
+        'bonusDelegated': 506318,
+        'bonusStakedOwn': 243656,
+        'bonusStakedEdge': 174760,
+        'bonusStakedShared': 1572838,
+        'fees': 94684,
+        'nonceRevealed': False,
+        'proposer': {'alias': 'Kraken Baker', 'address': 'tz1RCFbB9GpALpsZtu6J58sb74dm8qe6XBzv'},
+        'producer': {'alias': 'Kraken Baker', 'address': 'tz1RCFbB9GpALpsZtu6J58sb74dm8qe6XBzv'},
+        'software': {'version': 'v22.1', 'date': '2025-06-11T08:47:52Z'},
+        'lbToggleEma': 70797933,
+        'aiToggleEma': 763645047,
+        'rewardLiquid': 507309,
+        'bonusLiquid': 506318,
+        'reward': 2502459,
+        'bonus': 2497572,
+        'priority': 0,
+        'baker': {'alias': 'Kraken Baker', 'address': 'tz1RCFbB9GpALpsZtu6J58sb74dm8qe6XBzv'},
+        'lbEscapeVote': False,
+        'lbEscapeEma': 70797933,
+    }
+
+    TezosHeadBlockData.from_json(tzkt_head_json)
+    TezosBlockData.from_json(tzkt_block_json)
