@@ -68,7 +68,7 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
     assert f'{random_balance:f}' == expected_balance
 
 
-@pytest.mark.skip(reason='FIXME: result changed in Seoulnet, investigate')  # type: ignore[misc]
+@pytest.mark.skip(reason='FIXME: result changed in Seoulnet, investigate')
 async def assert_run_balances() -> None:
     import demo_tezos_token_balances.models
 
@@ -178,8 +178,8 @@ async def assert_run_dao() -> None:
 async def assert_run_etherlink() -> None:
     query_set = demo_tezos_etherlink.models.Deposit.all()
     deposits: int = await query_set.count()
-    tokens: list[str] = await query_set.distinct().values_list('token', flat=True)
-    volume: int = await query_set.annotate(volume=Sum('amount')).first().values_list('volume', flat=True)
+    tokens: list[str] = await query_set.distinct().values_list('token', flat=True)  # type: ignore
+    volume: int = await query_set.annotate(volume=Sum('amount')).first().values_list('volume', flat=True)  # type: ignore
 
     assert deposits == 3
     assert tokens == ['KT1MZg99PxMDEENwB4Fi64xkqAVh5d1rv8Z9']
