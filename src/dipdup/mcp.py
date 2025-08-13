@@ -210,7 +210,7 @@ async def list_resource_templates() -> list[types.ResourceTemplate]:
     return []
 
 
-@server.call_tool()  # type: ignore[no-untyped-call,misc]
+@server.call_tool()  # type: ignore[misc]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     from mcp.shared.exceptions import McpError
     from mcp.types import ErrorData

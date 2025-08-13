@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'next'
+      - 'fix/seoulnet'
     paths:
       - 'src/**'
       - 'Dockerfile'
