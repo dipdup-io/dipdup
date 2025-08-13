@@ -4,7 +4,7 @@ package: demo_tezos_events
 datasources:
   tzkt:
     kind: tezos.tzkt
-    url: ${TZKT_GHOSTNET_API_URL:-https://new.api.ghostnet.tzkt.io}
+    url: https://api.ghostnet.tzkt.io
 
 contracts:
   events_contract:
