@@ -174,6 +174,8 @@ def _process_storage(
     elif isinstance(storage, dict):
         for key, value in storage.items():
             value_type = get_dict_value_type(storage_type, key)
+            if value_type is Any:
+                continue
             storage[key] = _process_storage(value, value_type, bigmap_diffs)
 
     # NOTE: Leave others untouched
