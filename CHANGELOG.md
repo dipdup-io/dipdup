@@ -23,6 +23,12 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
 
+## [8.4.3] - 2025-08-13
+
+### Fixed
+
+- tezos.tzkt: Updated models to match 1.16 version of API (Seoulnet).
+
 ## [8.4.2] - 2025-06-18
 
 ### Added
@@ -774,7 +780,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.4.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.4.3...HEAD
+[8.4.3]: https://github.com/dipdup-io/dipdup/compare/8.4.2...8.4.3
 [8.4.2]: https://github.com/dipdup-io/dipdup/compare/8.4.1...8.4.2
 [8.4.1]: https://github.com/dipdup-io/dipdup/compare/8.4.0...8.4.1
 [8.4.0]: https://github.com/dipdup-io/dipdup/compare/8.3.3...8.4.0

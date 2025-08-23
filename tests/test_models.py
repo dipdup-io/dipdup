@@ -39,6 +39,22 @@ def get_operation_data(storage: Any, diffs: tuple[dict[str, Any], ...]) -> Tezos
         amount=0,
         status='',
         has_internals=False,
+        block=None,
+        sender_alias=None,
+        nonce=None,
+        target_alias=None,
+        initiator_alias=None,
+        entrypoint=None,
+        parameter_json=None,
+        originated_contract_address=None,
+        originated_contract_alias=None,
+        originated_contract_type_hash=None,
+        originated_contract_code_hash=None,
+        originated_contract_tzips=None,
+        delegate_address=None,
+        delegate_alias=None,
+        target_code_hash=None,
+        sender_code_hash=None,
     )
 
 
