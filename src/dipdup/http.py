@@ -8,6 +8,7 @@ from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
 from pathlib import Path
+from random import random
 from typing import Any
 from typing import Literal
 from typing import overload
@@ -168,6 +169,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))  # type: ignore[index]
+                        # randomize to avoid thundering herd
+                        ratelimit_sleep *= 1 + (random() - 0.5) / 5
                 else:
                     metrics.set_http_error(self._url, 0)
 
