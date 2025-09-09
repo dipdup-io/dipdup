@@ -13,6 +13,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - database: Support running multiple indexers on different schemas in the same database.
 - env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
 - env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
+- hasura: Automatic Hasura tables and fields descriptions from models docstrings
 
 ### Fixed
 

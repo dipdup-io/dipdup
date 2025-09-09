@@ -732,20 +732,20 @@ class HasuraGateway(HTTPGateway):
             return
 
         # Debug: Log the package being processed
-        self._logger.info(f'Processing package: {self._package}')
+        self._logger.debug('Processing package: %s', self._package)
 
         # Iterate through all models
         model_count = 0
         for app_name, model_class in iter_models(self._package):
             model_count += 1
-            self._logger.info(f'Processing model {model_count}: {model_class.__name__} from {app_name}')
+            self._logger.debug('Processing model %s: %s from %s', model_count, model_class.__name__, app_name)
 
             if not hasattr(model_class, '_meta') or not hasattr(model_class._meta, 'db_table'):
-                self._logger.warning(f'Model {model_class.__name__} missing _meta or db_table')
+                self._logger.warning('Model %s missing _meta or db_table', model_class.__name__)
                 continue
 
             table_name = model_class._meta.db_table
-            self._logger.info(f'Table name: {table_name}')
+            self._logger.debug('Table name: %s', table_name)
 
             # Extract table-level docstring
             table_doc = model_class.__doc__ or ''
@@ -758,13 +758,13 @@ class HasuraGateway(HTTPGateway):
                 # Apply table comment
                 try:
                     sql = f"COMMENT ON TABLE {self._database_config.schema_name}.{table_name} IS '{table_doc}';"
-                    self._logger.info(f'Executing table comment SQL: {sql}')
+                    self._logger.debug('Executing table comment SQL: %s', sql)
                     await conn.execute_script(sql)
-                    self._logger.info(f'Successfully applied table comment to {table_name}')
+                    self._logger.debug('Successfully applied table comment to %s', table_name)
                 except Exception as e:
-                    self._logger.warning(f'Failed to apply table comment to {table_name}: {e}')
+                    self._logger.warning('Failed to apply table comment to %s: %s', table_name, e)
             else:
-                self._logger.info(f'No table docstring found for {table_name}')
+                self._logger.debug('No table docstring found for %s', table_name)
 
             # Extract field-level comments from model source code
             # Since Tortoise doesn't natively support field descriptions, we'll look for
@@ -773,7 +773,7 @@ class HasuraGateway(HTTPGateway):
                 source_lines = inspect.getsource(model_class).split('\n')
                 field_comments = {}
 
-                self._logger.info(f'Extracting field comments from {table_name}, {len(source_lines)} lines')
+                self._logger.debug('Extracting field comments from %s, %s lines', table_name, len(source_lines))
 
                 for i, line in enumerate(source_lines):
                     line = line.strip()
@@ -801,15 +801,15 @@ class HasuraGateway(HTTPGateway):
 
                             if comment_lines:
                                 field_comments[field_name] = ' '.join(comment_lines)
-                                self._logger.info(f'Found comment for field {field_name}: {field_comments[field_name]}')
+                                self._logger.debug('Found comment for field %s: %s', field_name, field_comments[field_name])
 
-                self._logger.info(f'Found {len(field_comments)} field comments for {table_name}')
+                self._logger.debug('Found %s field comments for %s', len(field_comments), table_name)
 
                 # Apply field comments
                 if hasattr(model_class._meta, 'fields_map'):
-                    self._logger.info(f'Processing {len(model_class._meta.fields_map)} fields for {table_name}')
+                    self._logger.debug('Processing %s fields for %s', len(model_class._meta.fields_map), table_name)
                     for field_name, _field in model_class._meta.fields_map.items():
-                        self._logger.info(f'Checking field: {field_name}')
+                        self._logger.debug('Checking field: %s', field_name)
                         if field_name in field_comments:
                             field_doc = field_comments[field_name].strip().replace("'", "''")
                             if len(field_doc) > 1000:
@@ -820,17 +820,17 @@ class HasuraGateway(HTTPGateway):
 
                             try:
                                 sql = f"COMMENT ON COLUMN {self._database_config.schema_name}.{table_name}.{db_column} IS '{field_doc}';"
-                                self._logger.info(f'Executing column comment SQL: {sql}')
+                                self._logger.debug('Executing column comment SQL: %s', sql)
                                 await conn.execute_script(sql)
-                                self._logger.info(f'Successfully applied column comment to {table_name}.{db_column}')
+                                self._logger.debug('Successfully applied column comment to %s.%s', table_name, db_column)
                             except Exception as e:
-                                self._logger.warning(f'Failed to apply column comment to {table_name}.{db_column}: {e}')
+                                self._logger.warning('Failed to apply column comment to %s.%s: %s', table_name, db_column, e)
                         else:
-                            self._logger.info(f'No comment found for field {field_name} in {table_name}')
+                            self._logger.debug('No comment found for field %s in %s', field_name, table_name)
                 else:
-                    self._logger.warning(f'No fields_map found for {table_name}')
+                    self._logger.warning('No fields_map found for %s', table_name)
 
             except Exception as e:
-                self._logger.warning(f'Failed to extract field comments from {table_name}: {e}')
+                self._logger.warning('Failed to extract field comments from %s: %s', table_name, e)
 
-        self._logger.info(f'Finished applying model comments to database. Processed {model_count} models.')
+        self._logger.debug('Finished applying model comments to database. Processed %s models.', model_count)
