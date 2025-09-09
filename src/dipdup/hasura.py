@@ -787,7 +787,7 @@ class HasuraGateway(HTTPGateway):
                         field_name = line.split('=')[0].strip()
                         if field_name and not field_name.startswith('_'):
                             # Look for comments above this line
-                            comment_lines = []
+                            comment_lines: list[str] = []
                             j = i - 1
                             while j >= 0:
                                 prev_line = source_lines[j].strip()
@@ -801,7 +801,9 @@ class HasuraGateway(HTTPGateway):
 
                             if comment_lines:
                                 field_comments[field_name] = ' '.join(comment_lines)
-                                self._logger.debug('Found comment for field %s: %s', field_name, field_comments[field_name])
+                                self._logger.debug(
+                                    'Found comment for field %s: %s', field_name, field_comments[field_name]
+                                )
 
                 self._logger.debug('Found %s field comments for %s', len(field_comments), table_name)
 
@@ -822,9 +824,13 @@ class HasuraGateway(HTTPGateway):
                                 sql = f"COMMENT ON COLUMN {self._database_config.schema_name}.{table_name}.{db_column} IS '{field_doc}';"
                                 self._logger.debug('Executing column comment SQL: %s', sql)
                                 await conn.execute_script(sql)
-                                self._logger.debug('Successfully applied column comment to %s.%s', table_name, db_column)
+                                self._logger.debug(
+                                    'Successfully applied column comment to %s.%s', table_name, db_column
+                                )
                             except Exception as e:
-                                self._logger.warning('Failed to apply column comment to %s.%s: %s', table_name, db_column, e)
+                                self._logger.warning(
+                                    'Failed to apply column comment to %s.%s: %s', table_name, db_column, e
+                                )
                         else:
                             self._logger.debug('No comment found for field %s in %s', field_name, table_name)
                 else:

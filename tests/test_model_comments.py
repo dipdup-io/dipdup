@@ -74,7 +74,7 @@ def test_field_comment_extraction() -> None:
         if '=' in line and ('fields.' in line or "'fields." in line or '"fields.' in line) and not line.startswith('#'):
             field_name = line.split('=')[0].strip()
             if field_name and not field_name.startswith('_'):
-                comment_lines = []
+                comment_lines: list[str] = []
                 j = i - 1
                 while j >= 0:
                     prev_line = source_lines[j].strip()
