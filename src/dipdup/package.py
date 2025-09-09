@@ -152,7 +152,7 @@ class DipDupPackage:
     def replay(self) -> Answers:
         if self.replay_path.exists():
             return answers_from_replay(self.replay_path)
-        return get_default_answers()
+        return get_default_answers(self.name)
 
     @property
     def skel(self) -> dict[Path, str | None]:

@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Added
+
+- database: Support running multiple indexers on different schemas in the same database.
+- env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
+- env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
+
+### Fixed
+
+- config: Fixed detection of missing env variables.
+- database: Fixed `dipdup_wipe` function affecting non-public tables.
+- package: Fixed incorrect package name in replay files.
+- substrate.events: Fixed fetching events with node datasource.
+- tezos: Fixed parsing payload when model class has been modified.
+- tezos.operations: Fixed missing migration originations when enabled in `types` filter.
+
+### Changed
+
+- env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
+- http: Randomize ratelimit sleep time in 10% range.
+
 ## [8.4.3] - 2025-08-13
 
 ### Fixed

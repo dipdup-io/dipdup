@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sys
 import warnings
 from collections import deque
@@ -61,3 +62,15 @@ def set_up_process() -> None:
     # NOTE: Format warnings as normal log messages
     logging.captureWarnings(True)
     warnings.formatwarning = lambda msg, *a, **kw: str(msg)
+
+    if env.DEBUG:
+        set_up_debugger()
+
+
+def set_up_debugger() -> None:
+    """Set up debugger for the process"""
+    import debugpy  # type: ignore[import-untyped]
+
+    port = int(os.environ.get('DEBUGPY_PORT', 5678))
+    debugpy.listen(('0.0.0.0', port))
+    logging.getLogger('dipdup').info('debugpy is listening on 0.0.0.0:%d', port)

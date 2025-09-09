@@ -6,7 +6,8 @@ on:
   push:
     branches:
       - 'next'
-      - 'fix/seoulnet'
+      # FIXME
+      - aux/no-hooks
     paths:
       - 'src/**'
       - 'Dockerfile'

@@ -877,7 +877,7 @@ class DipDup:
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
-        if not api_config or env.TEST or env.CI:
+        if not api_config or env.TEST or env.is_in_gha():
             return
 
         _logger.info(
@@ -935,12 +935,16 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         init_tzkt = False
+        tasks = []
         for datasource in self._datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            await datasource.initialize()
+            tasks.append(create_task(datasource.initialize()))
             if isinstance(datasource, TezosTzktDatasource):
                 init_tzkt = True
+
+        if tasks:
+            await gather(*tasks)
 
         if init_tzkt:
             await late_tzkt_initialization(
