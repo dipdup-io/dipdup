@@ -231,7 +231,7 @@ def match_operation_subgroup(
                 if operation.type == 'transaction':
                     matched = match_transaction(pattern_config, operation)
             elif isinstance(pattern_config, OriginationPatternConfig):
-                if operation.type == 'origination':
+                if operation.type in ('origination', 'migration'):
                     matched = match_origination(pattern_config, operation)
             elif isinstance(pattern_config, SmartRollupExecutePatternConfig):
                 if operation.type == 'sr_execute':

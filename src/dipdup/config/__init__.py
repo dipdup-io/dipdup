@@ -1137,9 +1137,9 @@ class DipDupConfig(InteractiveMixin):
                 string=raw_template,
             )
 
-        if missing_value := re.search(r'<*>', raw_template):
+        if missing_value := re.search(r'<[w]*>', raw_template):
             raise ConfigurationError(
-                f'`{template_config.name}` index config is missing required template value `{missing_value.group()}`'
+                f'{template_config.name} index config is missing required template value {missing_value.group(0)}'
             )
 
         json_template = orjson.loads(raw_template)

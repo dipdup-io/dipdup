@@ -512,7 +512,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
             'first_level': self._first_level,
             'last_level': self._last_level,
         }
-        channels: tuple[FetcherChannel[TezosOperationData, Any, Any], ...] = (
+        channels: list[FetcherChannel[TezosOperationData, Any, Any]] = [
             TransactionAddressFetcherChannel(
                 filter=self._transaction_addresses,
                 field='sender',
@@ -551,7 +551,14 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
                 field='rollup',
                 **channel_kwargs,  # type: ignore[arg-type]
             ),
-        )
+        ]
+        if self._migration_originations:
+            channels.append(
+                MigrationOriginationFetcherChannel(
+                    filter=set(),
+                    **channel_kwargs,  # type: ignore[arg-type]
+                ),
+            )
 
         operations_iter = self._merged_iter(
             channels=set(channels),

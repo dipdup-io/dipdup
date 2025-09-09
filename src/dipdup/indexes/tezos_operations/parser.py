@@ -50,6 +50,9 @@ def is_array_type(storage_type: type[Any]) -> bool:
 
 def get_list_elt_type(list_type: type[Any]) -> type[Any]:
     """Extract list item type from list type"""
+    if list_type is Any:
+        return type(Any)
+
     # NOTE: regular list
     if get_origin(list_type) == list:  # noqa: E721
         return get_args(list_type)[0]  # type: ignore[no-any-return]
@@ -61,6 +64,9 @@ def get_list_elt_type(list_type: type[Any]) -> type[Any]:
 
 def get_dict_value_type(dict_type: type[Any], key: str | None = None) -> type[Any]:
     """Extract dict value types from field type"""
+    if dict_type is Any:
+        return type(Any)
+
     # NOTE: Regular dict
     if get_origin(dict_type) == dict:  # noqa: E721
         return get_args(dict_type)[1]  # type: ignore[no-any-return]
@@ -78,7 +84,10 @@ def get_dict_value_type(dict_type: type[Any], key: str | None = None) -> type[An
         if key in (name, field.alias):
             return field.annotation  # type: ignore[no-any-return]
 
-    # NOTE: Either we try the wrong Union path or model was modifier by user
+    if dict_type.model_config['extra'] in ('ignore', 'allow'):
+        return dict_type
+
+    # NOTE: Either we tried wrong Union path or model was modifier by user
     raise KeyError(f'Field `{key}` not found in {dict_type}')
 
 
@@ -114,18 +123,26 @@ def _apply_bigmap_diffs(
 ) -> list[dict[str, Any]] | dict[str, Any]:
     """Apply bigmap diffs to the storage"""
     diffs = bigmap_diffs.get(bigmap_id, ())
-    diffs_items = ((d['content']['key'], d['content']['value']) for d in diffs)
 
-    if is_array:
-        list_storage: list[dict[str, Any]] = []
-        for key, value in diffs_items:
-            list_storage.append({'key': key, 'value': value})
-        return list_storage
-
+    list_storage: list[dict[str, Any]] = []
     dict_storage: dict[str, Any] = {}
-    for key, value in diffs_items:
-        dict_storage[key] = value
-    return dict_storage
+
+    for item in diffs:
+        key, value = item['content']['key'], item['content']['value']
+
+        if is_array:
+            list_storage.append({'key': key, 'value': value})
+            continue
+        try:
+            dict_storage[key] = value
+        except TypeError:
+            list_storage.append({'key': key, 'value': value})
+    else:
+        return list_storage if is_array else dict_storage
+
+    if list_storage and dict_storage:
+        raise Exception
+    return list_storage or dict_storage
 
 
 def _process_storage(
@@ -157,6 +174,8 @@ def _process_storage(
     elif isinstance(storage, dict):
         for key, value in storage.items():
             value_type = get_dict_value_type(storage_type, key)
+            if value_type is Any:
+                continue
             storage[key] = _process_storage(value, value_type, bigmap_diffs)
 
     # NOTE: Leave others untouched

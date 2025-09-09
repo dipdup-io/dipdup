@@ -1,6 +1,5 @@
 import importlib
 import importlib.util
-import os
 import platform
 import sys
 import tomllib
@@ -85,30 +84,28 @@ def get_path(key: str) -> Path | None:
 
 def reload_env() -> None:
     global \
-        CI, \
         DEBUG, \
-        DOCKER, \
         JSON_LOG, \
         LOW_MEMORY, \
         MIGRATIONS, \
         NEXT, \
         NO_LINTER, \
         NO_BASE, \
+        NO_HOOKS, \
         NO_SYMLINK, \
         NO_VERSION_CHECK, \
         PACKAGE_PATH, \
         REPLAY_PATH, \
         TEST
 
-    CI = get_bool('DIPDUP_CI')
     DEBUG = get_bool('DIPDUP_DEBUG')
-    DOCKER = get_bool('DIPDUP_DOCKER')
     JSON_LOG = get_bool('DIPDUP_JSON_LOG')
     LOW_MEMORY = get_bool('DIPDUP_LOW_MEMORY')
     MIGRATIONS = get_bool('DIPDUP_MIGRATIONS')
     NEXT = get_bool('DIPDUP_NEXT')
     NO_LINTER = get_bool('DIPDUP_NO_LINTER')
     NO_BASE = get_bool('DIPDUP_NO_BASE')
+    NO_HOOKS = get_bool('DIPDUP_NO_HOOKS')
     NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
     NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
     PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
@@ -132,14 +129,8 @@ def extract_docstrings() -> dict[str, str]:
     return {f'DIPDUP_{k}': v.strip() for k, v in matches}
 
 
-CI: bool = get_bool('DIPDUP_CI')
-"""Running in GitHub Actions (detected if not set)"""
-
 DEBUG: bool = get_bool('DIPDUP_DEBUG')
 """Enable debug logging and additional checks"""
-
-DOCKER: bool = get_bool('DIPDUP_DOCKER')
-"""Running in Docker (detected if not set)"""
 
 JSON_LOG: bool = get_bool('DIPDUP_JSON_LOG')
 """Print logs in JSON format"""
@@ -159,6 +150,9 @@ NO_LINTER: bool = get_bool('DIPDUP_NO_LINTER')
 NO_BASE: bool = get_bool('DIPDUP_NO_BASE')
 """Don't recreate files from base project template"""
 
+NO_HOOKS: bool = get_bool('DIPDUP_NO_HOOKS')
+"""Don't run hooks, both internal and user-defined"""
+
 NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
 """Don't create magic symlink in the package root even when used as cwd"""
 
@@ -175,8 +169,16 @@ TEST: bool = get_bool('DIPDUP_TEST')
 """Running in tests (disables Sentry and some checks)"""
 
 
-# NOTE: Detecting CI environment
-if 'DIPDUP_CI' not in os.environ and getenv('CI') == 'true':
-    CI = True
-if 'DIPDUP_DOCKER' not in os.environ and platform.system() == 'Linux' and Path('/.dockerenv').exists():
-    DOCKER = True
+def is_in_gha() -> bool:
+    """Check if running in GitHub Actions environment"""
+    return getenv('CI') == 'true'
+
+
+def is_in_docker() -> bool:
+    """Check if running in Docker environment"""
+    return getenv('DOCKER') == 'true' and platform.system() == 'Linux'
+
+
+# TODO: Compatibility aliases, remove in 9.0
+CI = is_in_gha()
+DOCKER = is_in_docker()

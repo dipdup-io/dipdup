@@ -8,9 +8,31 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- database: Support running multiple indexers on different schemas in the same database.
+- env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
+- env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
+
+### Fixed
+
+- config: Fixed detection of missing env variables.
+- database: Fixed `dipdup_wipe` function affecting non-public tables.
+- package: Fixed incorrect package name in replay files.
+- substrate.events: Fixed fetching events with node datasource.
+- tezos: Fixed parsing payload when model class has been modified.
+- tezos.operations: Fixed missing migration originations when enabled in `types` filter.
+
 ### Changed
 
-- config: Default Hasura to `camel_case=true` and `select_limit=10000` for all environments.
+- env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
+- http: Randomize ratelimit sleep time in 10% range.
+
+## [8.4.3] - 2025-08-13
+
+### Fixed
+
+- tezos.tzkt: Updated models to match 1.16 version of API (Seoulnet).
 
 ## [8.4.2] - 2025-06-18
 
@@ -763,7 +785,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.4.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.4.3...HEAD
+[8.4.3]: https://github.com/dipdup-io/dipdup/compare/8.4.2...8.4.3
 [8.4.2]: https://github.com/dipdup-io/dipdup/compare/8.4.1...8.4.2
 [8.4.1]: https://github.com/dipdup-io/dipdup/compare/8.4.0...8.4.1
 [8.4.0]: https://github.com/dipdup-io/dipdup/compare/8.3.3...8.4.0

@@ -638,7 +638,13 @@ class DipDupContext:
 
     async def _hooks_loop(self) -> None:
         while True:
-            await self._pending_hooks.get()
+            coro = await self._pending_hooks.get()
+            await coro
+
+    async def _wait_for_hooks(self) -> None:
+        while not self._pending_hooks.empty():
+            coro = await self._pending_hooks.get()
+            await coro
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         # NOTE: Same handlers can be linked to different indexes, we need to use exact config
@@ -700,6 +706,10 @@ class DipDupContext:
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
+        if env.NO_HOOKS:
+            _logger.info('Ignoring hook `%s`, `DIPDUP_NO_HOOKS` is set', name)
+            return
+
         new_ctx = HookContext._wrap(
             self,
             logger=getLogger(module),
@@ -717,7 +727,10 @@ class DipDupContext:
                 await fn(new_ctx, **kwargs)
 
         coro = _wrapper()
-        await coro if wait else self._pending_hooks.put_nowait(coro)
+        if wait:
+            await coro
+        else:
+            await self._pending_hooks.put(coro)
 
     async def execute_sql_script(
         self,

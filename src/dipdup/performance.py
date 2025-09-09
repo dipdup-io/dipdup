@@ -241,11 +241,11 @@ class _MetricManager:
 
     _index_total_sync_duration: Histogram = Histogram(
         'dipdup_index_total_sync_duration_seconds',
-        'Duration of the last index syncronization',
+        'Duration of the last index synchronization',
     )
     _index_total_realtime_duration: Histogram = Histogram(
         'dipdup_index_total_realtime_duration_seconds',
-        'Duration of the last index realtime syncronization',
+        'Duration of the last index realtime synchronization',
     )
 
     _datasource_head_updated = Gauge(
@@ -326,9 +326,10 @@ class _MetricManager:
         self._http_errors.labels(url=url, status=status).inc()
 
     def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
-        self._http_errors_in_row.inc(errors_count)
+        # Gauge semantics: represent the current consecutive error count, not the delta
+        self._http_errors_in_row.set(errors_count)
         if 'subsquid' in url:
-            self._sqd_processor_archive_http_errors_in_row.inc(errors_count)
+            self._sqd_processor_archive_http_errors_in_row.set(errors_count)
 
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:
