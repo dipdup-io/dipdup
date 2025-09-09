@@ -16,12 +16,17 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- config: Fixed detection of missing env variables.
 - database: Fixed `dipdup_wipe` function affecting non-public tables.
+- package: Fixed incorrect package name in replay files.
 - substrate.events: Fixed fetching events with node datasource.
+- tezos: Fixed parsing payload when model class has been modified.
+- tezos.operations: Fixed missing migration originations when enabled in `types` filter.
 
 ### Changed
 
 - env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
+- http: Randomize ratelimit sleep time in 10% range.
 
 ## [8.4.3] - 2025-08-13
 
