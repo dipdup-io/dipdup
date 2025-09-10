@@ -766,7 +766,7 @@
           "type": "boolean"
         },
         "camel_case": {
-          "default": false,
+          "default": true,
           "description": "Whether to use camelCase instead of default pascal_case for the field names.",
           "title": "camel_case",
           "type": "boolean"
@@ -811,7 +811,7 @@
           "type": "boolean"
         },
         "select_limit": {
-          "default": 1000,
+          "default": 10000,
           "description": "Row limit for unauthenticated queries.",
           "title": "select_limit",
           "type": "integer"
