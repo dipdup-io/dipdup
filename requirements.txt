@@ -542,9 +542,9 @@ tabulate==0.9.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
 toolz==1.0.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'pypy' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux') or (implementation_name == 'pypy' and sys_platform == 'linux') \
     --hash=sha256:292c8f1c4e7516bf9086f8850935c799a874039c8bcf959d47b600e4c44a6236 \
     --hash=sha256:2c86e3d9a04798ac556793bced838816296a2f085017664e4995cb40a1047a02
-tortoise-orm==0.25.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:7d0aaf31c33a25a9efad8f94b44ee50febae15889f4da119cf184ffe98002673 \
-    --hash=sha256:b853acae52bc309800ec2954f3e261746cdac7e6b0e0a96ba20393dcb100a357
+tortoise-orm==0.25.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:4d5bfd13d5750935ffe636a6b25597c5c8f51c47e5b72d7509d712eda1a239fe \
+    --hash=sha256:df0ef7e06eb0650a7e5074399a51ee6e532043308c612db2cac3882486a3fd9f
 typeguard==4.4.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:3a7fd2dffb705d4d0efaed4306a704c89b9dee850b688f060a8b1615a79e5f74 \
     --hash=sha256:b5f562281b6bfa1f5492470464730ef001646128b180769880468bd84b68b09e

@@ -68,7 +68,6 @@ async def assert_run_token_transfers(expected_holders: int, expected_balance: st
     assert f'{random_balance:f}' == expected_balance
 
 
-@pytest.mark.skip(reason='FIXME: result changed in Seoulnet, investigate')
 async def assert_run_balances() -> None:
     import demo_tezos_token_balances.models
 
@@ -78,7 +77,7 @@ async def assert_run_balances() -> None:
     random_balance = holder.balance
 
     assert holders == 1
-    assert random_balance == 0
+    assert random_balance == Decimal('0.00106173')
 
 
 async def assert_init(package: str) -> None:
