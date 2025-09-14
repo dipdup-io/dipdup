@@ -6,14 +6,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.5.0] - 2025-09-14
 
 ### Added
 
 - database: Support running multiple indexers on different schemas in the same database.
 - env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
 - env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
-- hasura: Automatic Hasura tables and fields descriptions from models docstrings
+- hasura: Extract table/field descriptions from models' docstrings and apply as database comments.
 
 ### Fixed
 

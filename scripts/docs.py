@@ -625,9 +625,6 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
-            # FIXME: Remove after the first 8.0 release
-            line = line.replace('## [Unreleased]', '## [8.0.0]')
-
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:

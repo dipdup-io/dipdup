@@ -12,10 +12,10 @@ from dipdup.hasura import HasuraGateway
 from dipdup.models import Model
 
 
-class TestUser(Model):
+class User(Model):
     """Represents a user in the system with authentication and profile information."""
 
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
 
     # The user's unique username for login
     username = fields.CharField(max_length=50, unique=True)
@@ -36,10 +36,10 @@ class TestUser(Model):
         table = 'test_users'
 
 
-class TestProduct(Model):
+class Product(Model):
     """Represents a product in the marketplace."""
 
-    id = fields.IntField(pk=True)
+    id = fields.IntField(primary_key=True)
 
     # Product name
     name = fields.CharField(max_length=200)
@@ -56,17 +56,17 @@ class TestProduct(Model):
 
 def test_docstring_extraction() -> None:
     """Test that class docstrings are properly extracted."""
-    table_doc = TestUser.__doc__ or ''
+    table_doc = User.__doc__ or ''
     assert 'user in the system' in table_doc
     assert 'authentication' in table_doc
 
-    table_doc = TestProduct.__doc__ or ''
+    table_doc = Product.__doc__ or ''
     assert 'product in the marketplace' in table_doc
 
 
 def test_field_comment_extraction() -> None:
     """Test that field comments are properly extracted from source code."""
-    source_lines = inspect.getsource(TestUser).split('\n')
+    source_lines = inspect.getsource(User).split('\n')
     field_comments = {}
 
     for i, line in enumerate(source_lines):
@@ -237,14 +237,14 @@ async def test_metadata_refresh_integration() -> None:
 
 def test_model_meta_attributes() -> None:
     """Test that model meta attributes are properly accessible."""
-    assert hasattr(TestUser, '_meta')
-    assert hasattr(TestUser._meta, 'db_table')
-    assert TestUser._meta.db_table == 'test_users'
+    assert hasattr(User, '_meta')
+    assert hasattr(User._meta, 'db_table')
+    assert User._meta.db_table == 'test_users'
 
-    assert hasattr(TestUser._meta, 'fields_map')
-    assert 'username' in TestUser._meta.fields_map
-    assert 'email' in TestUser._meta.fields_map
+    assert hasattr(User._meta, 'fields_map')
+    assert 'username' in User._meta.fields_map
+    assert 'email' in User._meta.fields_map
 
     # Test fields_db_projection
-    if hasattr(TestUser._meta, 'fields_db_projection'):
-        assert 'username' in TestUser._meta.fields_db_projection
+    if hasattr(User._meta, 'fields_db_projection'):
+        assert 'username' in User._meta.fields_db_projection

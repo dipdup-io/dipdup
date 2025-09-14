@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from starknet_py.abi.v1.shape import AbiDictList as AbiDictListV1
     from starknet_py.abi.v2.shape import AbiDictList as AbiDictListV2
     from starknet_py.net.client_models import EventsChunk
-    from starknet_py.net.client_models import PendingStarknetBlockWithTxHashes
+    from starknet_py.net.client_models import PreConfirmedStarknetBlockWithTxHashes
     from starknet_py.net.client_models import StarknetBlockWithTxHashes
 
 BLOCK_CACHE_SIZE = 10
@@ -31,7 +31,7 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
     def __init__(self, config: StarknetNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
         self._starknetpy: StarknetpyClient | None = None
-        self._block_cache: LRU[int, StarknetBlockWithTxHashes | PendingStarknetBlockWithTxHashes] = LRU(
+        self._block_cache: LRU[int, StarknetBlockWithTxHashes | PreConfirmedStarknetBlockWithTxHashes] = LRU(
             BLOCK_CACHE_SIZE
         )
 
@@ -90,7 +90,7 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
 
     async def get_block_with_tx_hashes(
         self, block_hash: int
-    ) -> Union['StarknetBlockWithTxHashes', 'PendingStarknetBlockWithTxHashes', None]:
+    ) -> Union['StarknetBlockWithTxHashes', 'PreConfirmedStarknetBlockWithTxHashes', None]:
         if block := self._block_cache.get(block_hash, None):
             return block
 
