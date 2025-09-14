@@ -523,11 +523,11 @@ sqlparse==0.5.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
 sse-starlette==3.0.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:16b7cbfddbcd4eaca11f7b586f3b8a080f1afe952c15813455b162edea619e5a \
     --hash=sha256:ccd60b5765ebb3584d0de2d7a6e4f745672581de4f5005ab31c3a25d10b52b3a
-starknet-py==0.27.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:18f1408a230b8a8bfdd88c8ec734c784b3dfc5e327205c467f8be1d883923085
-starlette==0.47.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:6bc94f839cc176c4858894f1f8908f0ab79dfec1a6b8402f6da9be26ebea52e9 \
-    --hash=sha256:89c0778ca62a76b826101e7c709e70680a1699ca7da6b44d38eb0a7e61fe4b51
+starknet-py==0.28.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:2eacb065119801604efc0995ecedfad1dcee74bde8b3570809b2751d8bc9ad1e
+starlette==0.48.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:0764ca97b097582558ecb498132ed0c7d942f233f365b86ba37770e026510659 \
+    --hash=sha256:7e8cee469a8ab2352911528110ce9088fdc6a37d9876926e73da7ce4aa4c7a46
 strict-rfc3339==0.7 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:5cad17bedfc3af57b399db0fed32771f18fc54bbd917e85546088607ac5e1277
 survey==5.4.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
@@ -548,9 +548,9 @@ tortoise-orm==0.25.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
 typeguard==4.4.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:3a7fd2dffb705d4d0efaed4306a704c89b9dee850b688f060a8b1615a79e5f74 \
     --hash=sha256:b5f562281b6bfa1f5492470464730ef001646128b180769880468bd84b68b09e
-types-requests==2.32.4.20250809 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:d8060de1c8ee599311f56ff58010fb4902f462a1470802cf9f6ed27bc46c4df3 \
-    --hash=sha256:f73d1832fb519ece02c85b1f09d5f0dd3108938e7d47e7f94bbfa18a6782b163
+types-requests==2.32.4.20250913 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1 \
+    --hash=sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d
 typing-extensions==4.15.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548

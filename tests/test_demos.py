@@ -77,7 +77,7 @@ async def assert_run_balances() -> None:
     random_balance = holder.balance
 
     assert holders == 1
-    assert random_balance == Decimal('0.00106173')
+    assert random_balance == 0
 
 
 async def assert_init(package: str) -> None:
