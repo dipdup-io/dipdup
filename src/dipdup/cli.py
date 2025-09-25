@@ -322,13 +322,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
     # NOTE: Imports will be loaded later if needed
     _config.initialize()
 
-    # NOTE: Fire and forget, do not block instant commands
-    if not (env.TEST or env.is_in_gha() or env.NO_VERSION_CHECK):
-        from dipdup._version import check_version
-
-        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114; replace with `fire_and_forget` call once resolved.
-        await check_version()
-
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
         # NOTE: `ConfigurationError` will be raised later with more details.
