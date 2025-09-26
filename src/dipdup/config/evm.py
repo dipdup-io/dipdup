@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from typing import Annotated
 from typing import Literal
-from typing import TypeAlias
 
 from pydantic import AfterValidator
 from pydantic import ConfigDict
@@ -23,7 +22,7 @@ from dipdup.exceptions import ConfigurationError
 EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
 
-EvmDatasourceConfigU: TypeAlias = (
+type EvmDatasourceConfigU = (
     EvmSubsquidDatasourceConfig
     | EvmNodeDatasourceConfig
     | EvmSourcifyDatasourceConfig

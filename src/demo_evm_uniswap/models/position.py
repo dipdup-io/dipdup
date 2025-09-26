@@ -32,7 +32,7 @@ async def position_validate(
         # tokensOwed0 uint128,
         # tokensOwed1 uint128
         response = await manager.functions.positions(position_id).call()
-        _, owner, token0, token1, _, tick_lower, tick_upper, _, _, _, _, _ = response
+        _, _owner, token0, token1, _, tick_lower, tick_upper, _, _, _, _, _ = response
     except Exception as e:
         ctx.logger.warning('Failed to eth_call %s with param %d: %s', contract_address, position_id, str(e))
         return
@@ -54,7 +54,7 @@ async def position_validate(
 
 
 async def save_position_snapshot(position: models.Position, level: int, timestamp: int) -> None:
-    snapshot, exists = await models.PositionSnapshot.get_or_create(
+    snapshot, _exists = await models.PositionSnapshot.get_or_create(
         id=f'{position.id}#{level}',
         defaults={
             'owner': position.owner,
