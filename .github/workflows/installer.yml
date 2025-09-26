@@ -23,11 +23,10 @@ jobs:
             arch: amd64
           - os: ubuntu-latest
             arch: arm64
-          # FIXME: Reenable after 8.5.0 release with starknet-py 0.28.0
-          # - os: macos-latest
-          #   arch: amd64
-          # - os: macos-latest
-          #   arch: arm64
+          - os: macos-latest
+            arch: amd64
+          - os: macos-latest
+            arch: arm64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

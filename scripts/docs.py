@@ -625,6 +625,7 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
+            line = line.replace('## [Unreleased]', '## [0.0.0]')
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:
@@ -634,6 +635,8 @@ def merge_changelog() -> None:
             curr_group = line[4:]
         elif line.startswith('- '):
             changelog_tree[curr_version][curr_group].append(line)
+
+    changelog_tree.pop('0.0.0', None)
 
     for version in sorted(changelog_tree.keys()):
         major = int(version.split('.')[0])
