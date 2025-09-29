@@ -72,7 +72,7 @@ dependencies = [
     "python-dotenv~=1.0",
     "python-json-logger~=2.0", # pinned
     "ruamel.yaml~=0.18.6",
-    "ruff~=0.11.2",
+    "ruff~=0.13.2",
     "sentry-sdk~=2.16",
     "sqlparse~=0.5",
     "starknet-py~=0.28.0",
@@ -106,7 +106,9 @@ ignore = [
     "E402",   # module level import not at top of file
     "E501",   # line too long
     "TC001",  # breaks our runtime Pydantic magic
-    "UP040",  # PEP 695 type aliases are not yet supported by mypy
+    "UP046",  # Generic function should use type parameters
+    "UP047",  # Generic class uses `Generic` subclass instead of type parameters
+    "PTH211", # `os.symlink` should be replaced by `Path.symlink_to`
 ]
 extend-select = ["B", "C4", "FA", "G", "I", "PTH", "RET", "RUF", "TCH", "UP"]
 isort = { force-single-line = true, known-first-party = ["dipdup"] }

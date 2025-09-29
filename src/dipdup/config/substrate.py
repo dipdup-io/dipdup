@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC
 from typing import Literal
-from typing import TypeAlias
 
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
@@ -14,7 +13,7 @@ from dipdup.config.substrate_node import SubstrateNodeDatasourceConfig
 from dipdup.config.substrate_subscan import SubstrateSubscanDatasourceConfig
 from dipdup.config.substrate_subsquid import SubstrateSubsquidDatasourceConfig
 
-SubstrateDatasourceConfigU: TypeAlias = (
+type SubstrateDatasourceConfigU = (
     SubstrateSubsquidDatasourceConfig | SubstrateSubscanDatasourceConfig | SubstrateNodeDatasourceConfig
 )
 
