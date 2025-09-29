@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - 'next'
-      # FIXME
-      - aux/no-hooks
     paths:
       - 'src/**'
       - 'Dockerfile'
