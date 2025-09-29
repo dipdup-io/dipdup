@@ -5,9 +5,10 @@ FROM dipdup/dipdup:8
 # FROM ghcr.io/dipdup-io/dipdup:8
 # FROM ghcr.io/dipdup-io/dipdup:next
 
-#### Uncomment lines below if your project requires additional dependencies 
+#### Uncomment lines below if your project requires additional dependencies
+# COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # COPY --chown=dipdup pyproject.toml README.md .
-# RUN pip install .
+# RUN uv pip install .
 
 #### Uncomment if you have implemented a custom CLI command (see Services in docs)
 # ENTRYPOINT ["python", "-m", "demo_tezos_dao"]
