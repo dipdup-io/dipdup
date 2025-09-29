@@ -793,6 +793,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 <!-- Versions -->
 [Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.4.3...HEAD
+[8.5.0]: https://github.com/dipdup-io/dipdup/compare/8.4.3...8.5.0
 [8.4.3]: https://github.com/dipdup-io/dipdup/compare/8.4.2...8.4.3
 [8.4.2]: https://github.com/dipdup-io/dipdup/compare/8.4.1...8.4.2
 [8.4.1]: https://github.com/dipdup-io/dipdup/compare/8.4.0...8.4.1

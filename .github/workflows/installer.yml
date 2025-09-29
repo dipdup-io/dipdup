@@ -23,14 +23,20 @@ jobs:
             arch: amd64
           - os: ubuntu-latest
             arch: arm64
-          # FIXME: Reenable after 8.5.0 release with starknet-py 0.28.0
-          # - os: macos-latest
-          #   arch: amd64
-          # - os: macos-latest
-          #   arch: arm64
+          - os: macos-latest
+            arch: amd64
+          - os: macos-latest
+            arch: arm64
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+
+      # NOTE: GitHub updated cmake in macOS runners breaking `crypto-cpp-py` build
+      # See https://github.com/actions/runner-images/issues/11926
+      - name: Install cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.x'
 
       - name: Install DipDup
         run: python src/dipdup/install.py --quiet --path .
