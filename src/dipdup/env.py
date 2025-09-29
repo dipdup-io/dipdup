@@ -93,7 +93,6 @@ def reload_env() -> None:
         NO_BASE, \
         NO_HOOKS, \
         NO_SYMLINK, \
-        NO_VERSION_CHECK, \
         PACKAGE_PATH, \
         REPLAY_PATH, \
         TEST
@@ -107,7 +106,6 @@ def reload_env() -> None:
     NO_BASE = get_bool('DIPDUP_NO_BASE')
     NO_HOOKS = get_bool('DIPDUP_NO_HOOKS')
     NO_SYMLINK = get_bool('DIPDUP_NO_SYMLINK')
-    NO_VERSION_CHECK = get_bool('DIPDUP_NO_VERSION_CHECK')
     PACKAGE_PATH = get_path('DIPDUP_PACKAGE_PATH')
     REPLAY_PATH = get_path('DIPDUP_REPLAY_PATH')
     TEST = get_bool('DIPDUP_TEST')
@@ -155,9 +153,6 @@ NO_HOOKS: bool = get_bool('DIPDUP_NO_HOOKS')
 
 NO_SYMLINK: bool = get_bool('DIPDUP_NO_SYMLINK')
 """Don't create magic symlink in the package root even when used as cwd"""
-
-NO_VERSION_CHECK: bool = get_bool('DIPDUP_NO_VERSION_CHECK')
-"""Disable warning about running unstable or out-of-date DipDup version"""
 
 PACKAGE_PATH: Path | None = get_path('DIPDUP_PACKAGE_PATH')
 """Disable package discovery and use the specified path"""
