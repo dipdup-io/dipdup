@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Fixed
+
+- mcp: Fixed crash when using `mcp.tool` decorator.
+
 ### Changed
 
 - cli: Don't notify about new framework versions available.
