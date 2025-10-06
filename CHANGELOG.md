@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Fixed
+
+- demos: Use Etherscan v2 API endpoints in EVM templates.
+
 ### Changed
 
 - cli: Don't notify about new framework versions available.
