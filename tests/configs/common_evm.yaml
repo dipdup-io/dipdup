@@ -4,7 +4,7 @@ datasources:
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
   etherscan:
     kind: evm.etherscan
-    url: ${ETHERSCAN_URL:-https://api.etherscan.io/api}
+    url: ${ETHERSCAN_URL:-https://api.etherscan.io/v2/api?chainId=1}
     api_key: ${ETHERSCAN_API_KEY:-''}
   evm_node:
     kind: evm.node
