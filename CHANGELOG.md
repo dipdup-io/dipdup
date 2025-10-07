@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - demos: Use Etherscan v2 API endpoints in EVM templates.
+- mcp: Fixed crash when using `mcp.tool` decorator.
 
 ### Changed
 
