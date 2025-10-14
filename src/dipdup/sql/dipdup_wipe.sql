@@ -1,5 +1,5 @@
 -- Drops all user-defined objects (views, materialized views, tables, sequences, types, functions, TimescaleDB hypertables/chunks) 
--- in the specified schema. A complete schema wipe without dropping the schema itself. Afair this was implemented for compatibility
+-- in the specified schema. A complete schema wipe without dropping the schema itself. Affair this was implemented for compatibility
 -- with some cloud providers.
 CREATE OR REPLACE FUNCTION dipdup_wipe(schema_name VARCHAR) RETURNS void AS $$
 DECLARE

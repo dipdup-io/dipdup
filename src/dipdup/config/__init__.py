@@ -1087,7 +1087,7 @@ class DipDupConfig(InteractiveMixin):
             if name in SYSTEM_HOOKS:
                 raise ConfigurationError(f'`{name}` hook name is reserved by system hook')
 
-        # NOTE: Rollback depth euristics and validation
+        # NOTE: Rollback depth heuristics and validation
         rollback_depth = 0
         for name, datasource_config in self.datasources.items():
             try:

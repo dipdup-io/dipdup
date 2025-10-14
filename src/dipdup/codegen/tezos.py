@@ -133,7 +133,7 @@ class TezosCodeGenerator(CodeGenerator):
             else:
                 pass
 
-        # NOTE: Euristics for complex cases like templated `similar_to` factories.
+        # NOTE: Heuristics for complex cases like templated `similar_to` factories.
         # NOTE: Try different contracts and datasources from config until one succeeds.
         for template_config in unused_operation_templates:
             self._logger.warning(
