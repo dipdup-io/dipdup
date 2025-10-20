@@ -31,6 +31,14 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python 3.12
+        run: uv python install 3.12
+
       # NOTE: GitHub updated cmake in macOS runners breaking `crypto-cpp-py` build
       # See https://github.com/actions/runner-images/issues/11926
       - name: Install cmake
@@ -39,7 +47,7 @@ jobs:
           cmake-version: '3.x'
 
       - name: Install DipDup
-        run: python src/dipdup/install.py --quiet --path .
+        run: uv run python src/dipdup/install.py --quiet --path .
 
       - name: dipdup new
         run: dipdup new --quiet
