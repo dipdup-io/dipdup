@@ -52,7 +52,7 @@ class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmTransactionData]):
 
         while batch_first_level <= self._last_level:
             node = random.choice(self._datasources)
-            batch_size = self.get_next_batch_size(batch_size, ratelimited)
+            batch_size = min(node._http_config.batch_size - 1, self.get_next_batch_size(batch_size, ratelimited))
             ratelimited = False
 
             started = time.time()

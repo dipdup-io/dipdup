@@ -12,6 +12,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - demos: Use Etherscan v2 API endpoints in EVM templates.
 - mcp: Fixed crash when using `mcp.tool` decorator.
+- evm.node: Respect `http.batch_size` when fetching events and transactions.
 
 ### Changed
 
