@@ -292,6 +292,25 @@
       "title": "EvmContractConfig",
       "type": "object"
     },
+    "EvmDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmNodeDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+        }
+      ]
+    },
     "EvmEtherscanDatasourceConfig": {
       "additionalProperties": false,
       "description": "Etherscan datasource config",
@@ -396,19 +415,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmNodeDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+                "$ref": "#/$defs/EvmDatasourceConfigU"
               }
             ]
           },
@@ -682,19 +689,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmNodeDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+                "$ref": "#/$defs/EvmDatasourceConfigU"
               }
             ]
           },
@@ -1569,6 +1564,16 @@
       "title": "StarknetContractConfig",
       "type": "object"
     },
+    "StarknetDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/StarknetNodeDatasourceConfig"
+        }
+      ]
+    },
     "StarknetEventsHandlerConfig": {
       "additionalProperties": false,
       "description": "Subsquid event handler",
@@ -1616,10 +1621,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/StarknetNodeDatasourceConfig"
+                "$ref": "#/$defs/StarknetDatasourceConfigU"
               }
             ]
           },
@@ -1758,6 +1760,19 @@
       "title": "StarknetSubsquidDatasourceConfig",
       "type": "object"
     },
+    "SubstrateDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/SubstrateNodeDatasourceConfig"
+        }
+      ]
+    },
     "SubstrateEventsHandlerConfig": {
       "additionalProperties": false,
       "description": "Subsquid event handler",
@@ -1792,13 +1807,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/SubstrateNodeDatasourceConfig"
+                "$ref": "#/$defs/SubstrateDatasourceConfigU"
               }
             ]
           },

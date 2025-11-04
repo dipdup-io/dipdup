@@ -645,16 +645,14 @@
         "doc": [
           "The name of specification does not match between the current runtime",
           "and the new runtime."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "SpecVersionNeedsToIncrease",
         "doc": [
           "The specification version is not allowed to decrease between the current runtime",
           "and the new runtime."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "FailedToExtractRuntimeVersion",
@@ -662,22 +660,19 @@
           "Failed to extract the runtime version from the new runtime.",
           "",
           "Either calling `Core_version` or decoding `RuntimeVersion` failed."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "NonDefaultComposite",
         "doc": [
           "Suicide called when the account has non-default composite data."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "NonZeroRefCount",
         "doc": [
           "There is a non-zero reference count preventing the account from being purged."
-        ],
-        "index": 4
+        ]
       }
     ],
     "errors_value": {
@@ -1127,58 +1122,50 @@
         "name": "OverlappingUpgrades",
         "doc": [
           "Attempt to upgrade validation function while existing upgrade pending"
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "ProhibitedByPolkadot",
         "doc": [
           "Polkadot currently prohibits this parachain from upgrading its validation function"
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "TooBig",
         "doc": [
           "The supplied validation function has compiled into a blob larger than Polkadot is",
           "willing to run"
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "ValidationDataNotAvailable",
         "doc": [
           "The inherent which supplies the validation data did not run this block"
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "HostConfigurationNotAvailable",
         "doc": [
           "The inherent which supplies the host configuration did not run this block"
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "NotScheduled",
         "doc": [
           "No validation function upgrade is currently scheduled."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "NothingAuthorized",
         "doc": [
           "No code upgrade has been authorized."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "Unauthorized",
         "doc": [
           "The given code upgrade has not been authorized."
-        ],
-        "index": 7
+        ]
       }
     ],
     "errors_value": {
@@ -1844,57 +1831,49 @@
         "name": "VestingBalance",
         "doc": [
           "Vesting balance too high to send value"
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "LiquidityRestrictions",
         "doc": [
           "Account liquidity restrictions prevent withdrawal"
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "InsufficientBalance",
         "doc": [
           "Balance too low to send value"
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "ExistentialDeposit",
         "doc": [
           "Value too low to create account due to existential deposit"
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "KeepAlive",
         "doc": [
           "Transfer/payment would kill account"
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "ExistingVestingSchedule",
         "doc": [
           "A vesting schedule already exists for this account"
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "DeadAccount",
         "doc": [
           "Beneficiary account must pre-exist"
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "TooManyReserves",
         "doc": [
           "Number of named reserves exceed MaxReserves"
-        ],
-        "index": 7
+        ]
       }
     ],
     "errors_value": {
@@ -2071,50 +2050,43 @@
         "name": "InvalidUncleParent",
         "doc": [
           "The uncle parent not in the chain."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "UnclesAlreadySet",
         "doc": [
           "Uncles already set in the block."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "TooManyUncles",
         "doc": [
           "Too many uncles."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "GenesisUncle",
         "doc": [
           "The uncle is genesis."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "TooHighUncle",
         "doc": [
           "The uncle is too high in chain."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "UncleAlreadyIncluded",
         "doc": [
           "The uncle is already included."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "OldUncle",
         "doc": [
           "The uncle isn't recent enough to be included."
-        ],
-        "index": 6
+        ]
       }
     ],
     "errors_value": {
@@ -2339,64 +2311,55 @@
         "name": "TooManyCandidates",
         "doc": [
           "Too many candidates"
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "TooFewCandidates",
         "doc": [
           "Too few candidates"
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "Unknown",
         "doc": [
           "Unknown error"
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "Permission",
         "doc": [
           "Permission issue"
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "AlreadyCandidate",
         "doc": [
           "User is already a candidate"
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "NotCandidate",
         "doc": [
           "User is not a candidate"
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "AlreadyInvulnerable",
         "doc": [
           "User is already an Invulnerable"
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "NoAssociatedValidatorId",
         "doc": [
           "Account has no associated validator ID"
-        ],
-        "index": 7
+        ]
       },
       {
         "name": "ValidatorNotRegistered",
         "doc": [
           "Validator ID is not yet registered"
-        ],
-        "index": 8
+        ]
       }
     ],
     "errors_value": {
@@ -2511,7 +2474,8 @@
               "Twox64Concat"
             ],
             "key_vec": [
-              "Tuple:[U8; 4]Vec<U8>"
+              "[U8; 4]",
+              "Vec<U8>"
             ],
             "value": "AccountId",
             "keys_id": 178,
@@ -2611,36 +2575,31 @@
         "name": "InvalidProof",
         "doc": [
           "Invalid ownership proof."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "NoAssociatedValidatorId",
         "doc": [
           "No associated validator ID for account."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "DuplicatedKey",
         "doc": [
           "Registered duplicate key."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "NoKeys",
         "doc": [
           "No keys are associated with this account."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "NoAccount",
         "doc": [
           "Key setting account is not live, so it's impossible to associate keys."
-        ],
-        "index": 4
+        ]
       }
     ],
     "errors_value": {
@@ -2942,22 +2901,19 @@
         "name": "FailedToSend",
         "doc": [
           "Failed to send XCM message."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "BadXcmOrigin",
         "doc": [
           "Bad XCM origin."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "BadXcm",
         "doc": [
           "Bad XCM data."
-        ],
-        "index": 2
+        ]
       }
     ],
     "errors_value": {
@@ -3847,94 +3803,81 @@
         "doc": [
           "The desired destination was unreachable, generally because there is a no way of routing",
           "to it."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "SendFailure",
         "doc": [
           "There was some other issue (i.e. not to do with routing) in sending the message. Perhaps",
           "a lack of space for buffering the message."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "Filtered",
         "doc": [
           "The message execution fails the filter."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "UnweighableMessage",
         "doc": [
           "The message's weight could not be determined."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "DestinationNotInvertible",
         "doc": [
           "The destination `MultiLocation` provided cannot be inverted."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "Empty",
         "doc": [
           "The assets to be sent are empty."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "CannotReanchor",
         "doc": [
           "Could not re-anchor the assets to declare the fees for the destination chain."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "TooManyAssets",
         "doc": [
           "Too many assets have been attempted for transfer."
-        ],
-        "index": 7
+        ]
       },
       {
         "name": "InvalidOrigin",
         "doc": [
           "Origin is invalid for sending."
-        ],
-        "index": 8
+        ]
       },
       {
         "name": "BadVersion",
         "doc": [
           "The version of the `Versioned` value used is not able to be interpreted."
-        ],
-        "index": 9
+        ]
       },
       {
         "name": "BadLocation",
         "doc": [
           "The given location could not be used (e.g. because it cannot be expressed in the",
           "desired version of XCM)."
-        ],
-        "index": 10
+        ]
       },
       {
         "name": "NoSubscription",
         "doc": [
           "The referenced subscription could not be found."
-        ],
-        "index": 11
+        ]
       },
       {
         "name": "AlreadySubscribed",
         "doc": [
           "The location is invalid since it already has a subscription from us."
-        ],
-        "index": 12
+        ]
       }
     ],
     "errors_value": {
@@ -4251,15 +4194,13 @@
         "name": "Unknown",
         "doc": [
           "The message index given is unknown."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "OverLimit",
         "doc": [
           "The amount of weight given is possibly not enough for executing the message."
-        ],
-        "index": 1
+        ]
       }
     ],
     "errors_value": {
@@ -4423,8 +4364,7 @@
         "name": "TooManyCalls",
         "doc": [
           "Too many calls batched."
-        ],
-        "index": 0
+        ]
       }
     ],
     "errors_value": {
@@ -4872,99 +4812,85 @@
         "name": "MinimumThreshold",
         "doc": [
           "Threshold must be 2 or greater."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "AlreadyApproved",
         "doc": [
           "Call is already approved by this signatory."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "NoApprovalsNeeded",
         "doc": [
           "Call doesn't need any (more) approvals."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "TooFewSignatories",
         "doc": [
           "There are too few signatories in the list."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "TooManySignatories",
         "doc": [
           "There are too many signatories in the list."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "SignatoriesOutOfOrder",
         "doc": [
           "The signatories were provided out of order; they should be ordered."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "SenderInSignatories",
         "doc": [
           "The sender was contained in the other signatories; it shouldn't be."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "NotFound",
         "doc": [
           "Multisig operation not found when attempting to cancel."
-        ],
-        "index": 7
+        ]
       },
       {
         "name": "NotOwner",
         "doc": [
           "Only the account that originally created the multisig is able to cancel it."
-        ],
-        "index": 8
+        ]
       },
       {
         "name": "NoTimepoint",
         "doc": [
           "No timepoint was given, yet the multisig operation is already underway."
-        ],
-        "index": 9
+        ]
       },
       {
         "name": "WrongTimepoint",
         "doc": [
           "A different timepoint was given to the multisig operation that is underway."
-        ],
-        "index": 10
+        ]
       },
       {
         "name": "UnexpectedTimepoint",
         "doc": [
           "A timepoint was given, yet no multisig operation is underway."
-        ],
-        "index": 11
+        ]
       },
       {
         "name": "MaxWeightTooLow",
         "doc": [
           "The maximum weight information provided was too low."
-        ],
-        "index": 12
+        ]
       },
       {
         "name": "AlreadyStored",
         "doc": [
           "The data to be stored is already stored."
-        ],
-        "index": 13
+        ]
       }
     ],
     "errors_value": {
@@ -5572,57 +5498,49 @@
         "name": "TooMany",
         "doc": [
           "There are too many proxies registered or too many announcements pending."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "NotFound",
         "doc": [
           "Proxy registration not found."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "NotProxy",
         "doc": [
           "Sender is not a proxy of the account to be proxied."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "Unproxyable",
         "doc": [
           "A call which is incompatible with the proxy type's filter was attempted."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "Duplicate",
         "doc": [
           "Account is already a proxy."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "NoPermission",
         "doc": [
           "Call may not be made by proxy because it may escalate its privileges."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "Unannounced",
         "doc": [
           "Announcement, if made at all, was made too recently."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "NoSelfProxy",
         "doc": [
           "Cannot add self as proxy."
-        ],
-        "index": 7
+        ]
       }
     ],
     "errors_value": {
@@ -7034,86 +6952,74 @@
         "name": "BalanceLow",
         "doc": [
           "Account balance must be greater than or equal to the transfer amount."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "BalanceZero",
         "doc": [
           "Balance should be non-zero."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "NoPermission",
         "doc": [
           "The signing account has no permission to do the operation."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "Unknown",
         "doc": [
           "The given asset ID is unknown."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "Frozen",
         "doc": [
           "The origin account is frozen."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "InUse",
         "doc": [
           "The asset ID is already taken."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "BadWitness",
         "doc": [
           "Invalid witness data given."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "MinBalanceZero",
         "doc": [
           "Minimum balance should be non-zero."
-        ],
-        "index": 7
+        ]
       },
       {
         "name": "NoProvider",
         "doc": [
           "No provider reference exists to allow a non-zero balance of a non-self-sufficient",
           "asset."
-        ],
-        "index": 8
+        ]
       },
       {
         "name": "BadMetadata",
         "doc": [
           "Invalid metadata given."
-        ],
-        "index": 9
+        ]
       },
       {
         "name": "Unapproved",
         "doc": [
           "No approval exists that would allow the transfer."
-        ],
-        "index": 10
+        ]
       },
       {
         "name": "WouldDie",
         "doc": [
           "The source account would not survive the transfer and it needs to stay alive."
-        ],
-        "index": 11
+        ]
       }
     ],
     "errors_value": {
@@ -8598,71 +8504,61 @@
         "name": "NoPermission",
         "doc": [
           "The signing account has no permission to do the operation."
-        ],
-        "index": 0
+        ]
       },
       {
         "name": "Unknown",
         "doc": [
           "The given asset ID is unknown."
-        ],
-        "index": 1
+        ]
       },
       {
         "name": "AlreadyExists",
         "doc": [
           "The asset instance ID has already been used for an asset."
-        ],
-        "index": 2
+        ]
       },
       {
         "name": "WrongOwner",
         "doc": [
           "The owner turned out to be different to what was expected."
-        ],
-        "index": 3
+        ]
       },
       {
         "name": "BadWitness",
         "doc": [
           "Invalid witness data given."
-        ],
-        "index": 4
+        ]
       },
       {
         "name": "InUse",
         "doc": [
           "The asset ID is already taken."
-        ],
-        "index": 5
+        ]
       },
       {
         "name": "Frozen",
         "doc": [
           "The asset instance or class is frozen."
-        ],
-        "index": 6
+        ]
       },
       {
         "name": "WrongDelegate",
         "doc": [
           "The delegate turned out to be different to what was expected."
-        ],
-        "index": 7
+        ]
       },
       {
         "name": "NoDelegate",
         "doc": [
           "There is no delegate approved."
-        ],
-        "index": 8
+        ]
       },
       {
         "name": "Unapproved",
         "doc": [
           "No approval exists that would allow the transfer."
-        ],
-        "index": 9
+        ]
       }
     ],
     "errors_value": {
