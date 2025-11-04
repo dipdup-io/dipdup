@@ -1036,7 +1036,7 @@ class DipDup:
 
         migrations_dir = self._ctx.package.migrations
         try:
-            from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+            from aerich import Command as AerichCommand
 
             tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
             aerich_command = AerichCommand(

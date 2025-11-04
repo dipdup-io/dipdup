@@ -51,7 +51,7 @@ def convert_token_amount(amount: int, decimals: int) -> Decimal:
 
 
 class ERC20Token:
-    def __init__(self, address: ChecksumAddress, web3: AsyncWeb3):
+    def __init__(self, address: ChecksumAddress, web3: AsyncWeb3):  # type: ignore[type-arg]
         self.web3 = web3
         self.address = address
         self.contract = self.web3.eth.contract(
@@ -60,7 +60,7 @@ class ERC20Token:
         )
 
     @classmethod
-    def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':
+    def from_address(cls, web3: AsyncWeb3, token_address: str | bytes) -> 'ERC20Token':  # type: ignore[type-arg]
         address = to_checksum_address(token_address)
         return ERC20Token(address, web3)
 
