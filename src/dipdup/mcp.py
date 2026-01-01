@@ -185,7 +185,7 @@ _user_resources_fn: dict[str, Callable[..., Awaitable[Iterable[str]]]] = {}
 
 
 # TODO: Push typehints to upstream
-@server.list_tools()  # type: ignore[no-untyped-call,misc]
+@server.list_tools()  # type: ignore[no-untyped-call,untyped-decorator]
 async def list_tools() -> list[types.Tool]:
     return [
         *list(DIPDUP_TOOLS.values()),
@@ -193,7 +193,7 @@ async def list_tools() -> list[types.Tool]:
     ]
 
 
-@server.list_resources()  # type: ignore[no-untyped-call,misc]
+@server.list_resources()  # type: ignore[no-untyped-call,untyped-decorator]
 async def list_resources() -> list[types.Resource]:
     return [
         *list(DIPDUP_RESOURCES.values()),
@@ -202,12 +202,12 @@ async def list_resources() -> list[types.Resource]:
 
 
 # FIXME: Not supported
-@server.list_resource_templates()  # type: ignore[no-untyped-call,misc]
+@server.list_resource_templates()  # type: ignore[no-untyped-call,untyped-decorator]
 async def list_resource_templates() -> list[types.ResourceTemplate]:
     return []
 
 
-@server.call_tool()  # type: ignore[misc]
+@server.call_tool()  # type: ignore[untyped-decorator]
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextContent]:
     from mcp.shared.exceptions import McpError
     from mcp.types import ErrorData
@@ -234,7 +234,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[types.TextCont
         ) from e
 
 
-@server.read_resource()  # type: ignore[no-untyped-call,misc]
+@server.read_resource()  # type: ignore[no-untyped-call,untyped-decorator]
 async def read_resource(uri: AnyUrl) -> str:
     from mcp.shared.exceptions import McpError
     from mcp.types import ErrorData
