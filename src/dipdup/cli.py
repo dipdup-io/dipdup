@@ -827,6 +827,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     immune_tables = set() if immune else config.database.immune_tables
 
     if isinstance(config.database, SqliteDatabaseConfig):
+        if config.database.path == ':memory:':
+            _logger.warning('Attempted to wipe in-memory database; no action required')
+            return
+
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
             immune_tables = immune_tables | ALWAYS_IMMUNE_TABLES
