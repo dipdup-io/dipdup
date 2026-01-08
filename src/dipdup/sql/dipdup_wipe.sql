@@ -37,26 +37,42 @@ BEGIN
         EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop composite types
+    -- Drop composite types (excluding extension-owned)
     FOR rec IN
         SELECT format('DROP TYPE IF EXISTS %I.%I CASCADE', schema_name, t.typname) AS stmt
         FROM pg_type t
         JOIN pg_namespace n ON n.oid = t.typnamespace
-        WHERE n.nspname = schema_name AND t.typtype IN ('c', 'e', 'd')  -- composite, enum, domain
+        WHERE n.nspname = schema_name 
+        AND t.typtype = 'c'
+        AND NOT EXISTS (
+            SELECT 1 FROM pg_depend d
+            WHERE d.classid = 'pg_type'::regclass
+            AND d.objid = t.oid
+            AND d.deptype = 'e'
+        )
     LOOP
         EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop functions and procedures
+
+    -- Drop functions and procedures (excluding extension-owned)
     FOR rec IN
-        SELECT format('DROP ROUTINE IF EXISTS %I.%I(%s) CASCADE', schema_name, p.proname, oidvectortypes(p.proargtypes)) AS stmt
+        SELECT format('DROP ROUTINE IF EXISTS %I.%I(%s) CASCADE', 
+                    schema_name, p.proname, pg_get_function_identity_arguments(p.oid)) AS stmt
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = schema_name
-        AND p.prokind IN ('f', 'p')  -- functions and procedures only
+        AND p.prokind IN ('f', 'p')
+        AND NOT EXISTS (
+            SELECT 1 FROM pg_depend d
+            WHERE d.classid = 'pg_proc'::regclass
+            AND d.objid = p.oid
+            AND d.deptype = 'e'
+        )
     LOOP
         EXECUTE rec.stmt;
     END LOOP;
+
 
 END;
 $$ LANGUAGE plpgsql;
