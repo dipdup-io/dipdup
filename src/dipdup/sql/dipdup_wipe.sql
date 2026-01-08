@@ -1,95 +1,62 @@
--- Drops all user-defined objects (views, materialized views, tables, sequences, types, functions, TimescaleDB hypertables/chunks) 
--- in the specified schema. A complete schema wipe without dropping the schema itself. Afair this was implemented for compatibility
--- with some cloud providers.
+-- Drops all user-defined objects in the specified schema. A complete schema wipe without dropping the schema itself.
+-- Affects views, materialized views, tables (including hypertables), sequences, composite types, functions, and procedures. 
+-- This functionality was implemented for compatibility with some cloud provider I can't remember, who doesn't allow dropping schemas directly.
 CREATE OR REPLACE FUNCTION dipdup_wipe(schema_name VARCHAR) RETURNS void AS $$
 DECLARE
     rec RECORD;
 BEGIN
     -- Drop views
     FOR rec IN
-        SELECT 'DROP VIEW IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(viewname) || ' CASCADE;'
-        FROM pg_views
-        WHERE schemaname = schema_name
+        SELECT format('DROP VIEW IF EXISTS %I.%I CASCADE', schema_name, viewname) AS stmt
+        FROM pg_views WHERE schemaname = schema_name
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
     -- Drop materialized views
     FOR rec IN
-        SELECT 'DROP MATERIALIZED VIEW IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(matviewname) || ' CASCADE;'
-        FROM pg_matviews
-        WHERE schemaname = schema_name
+        SELECT format('DROP MATERIALIZED VIEW IF EXISTS %I.%I CASCADE', schema_name, matviewname) AS stmt
+        FROM pg_matviews WHERE schemaname = schema_name
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop tables
+    -- Drop tables (includes hypertables; CASCADE handles chunks automatically)
     FOR rec IN
-        SELECT 'DROP TABLE IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(tablename) || ' CASCADE;'
-        FROM pg_tables
-        WHERE schemaname = schema_name
+        SELECT format('DROP TABLE IF EXISTS %I.%I CASCADE', schema_name, tablename) AS stmt
+        FROM pg_tables WHERE schemaname = schema_name
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
     -- Drop sequences
     FOR rec IN
-        SELECT 'DROP SEQUENCE IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(sequencename) || ' CASCADE;'
-        FROM pg_sequences
-        WHERE schemaname = schema_name
+        SELECT format('DROP SEQUENCE IF EXISTS %I.%I CASCADE', schema_name, sequencename) AS stmt
+        FROM pg_sequences WHERE schemaname = schema_name
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop types
+    -- Drop composite types
     FOR rec IN
-        SELECT 'DROP TYPE IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(t.typname) || ' CASCADE;'
+        SELECT format('DROP TYPE IF EXISTS %I.%I CASCADE', schema_name, t.typname) AS stmt
         FROM pg_type t
         JOIN pg_namespace n ON n.oid = t.typnamespace
-        WHERE n.nspname = schema_name AND t.typtype = 'c'
+        WHERE n.nspname = schema_name AND t.typtype IN ('c', 'e', 'd')  -- composite, enum, domain
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop functions
+    -- Drop functions and procedures
     FOR rec IN
-        SELECT 'DROP FUNCTION IF EXISTS ' || quote_ident(schema_name) || '.' || quote_ident(p.proname) || '(' || oidvectortypes(p.proargtypes) || ') CASCADE;'
+        SELECT format('DROP ROUTINE IF EXISTS %I.%I(%s) CASCADE', schema_name, p.proname, oidvectortypes(p.proargtypes)) AS stmt
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = schema_name
+        AND p.prokind IN ('f', 'p')  -- functions and procedures only
     LOOP
-        BEGIN
-            EXECUTE rec."?column?";
-        EXCEPTION WHEN others THEN END;
+        EXECUTE rec.stmt;
     END LOOP;
 
-    -- Drop TimescaleDB hypertables and chunks (if any)
-    IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'hypertable' AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'timescaledb_information')) THEN
-        FOR rec IN
-            -- Use a very large interval ('10000 years') to ensure all TimescaleDB chunks are dropped, regardless of their age.
-            SELECT 'SELECT drop_chunks(interval ''10000 years'', ''' || quote_ident(schema_name) || '.' || quote_ident(table_name) || ''');'
-            FROM timescaledb_information.hypertables
-            WHERE table_schema = schema_name
-        LOOP
-            BEGIN
-                EXECUTE rec."?column?";
-            EXCEPTION WHEN others THEN END;
-        END LOOP;
-    END IF;
-
-    -- Drop all remaining objects (extensions, etc.) if needed
-    -- (Extensions are usually global, not per-schema, so not dropped here)
-
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;

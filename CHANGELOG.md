@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - cli: Fixed crash when running `schema wipe` on empty or in-memory database.
+- database: Fixed `dipdup_wipe` function not dropping all user-defined objects in some cases.
 - database: Fix exception when creating connections with aiosqlite==0.22.0.
 ## [8.5.1] - 2025-11-03
 
