@@ -23,6 +23,7 @@ from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
+from tortoise.exceptions import OperationalError
 from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
@@ -304,8 +305,16 @@ async def _pg_wipe_schema(
         for table in immune_tables:
             await _pg_move_table(conn, table, schema_name, immune_schema_name)
 
-    await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
-
+    try:
+        await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
+    except OperationalError as e:
+        if 'function dipdup_wipe' not in str(e):
+            raise
+        _logger.warning('`dipdup_wipe` function is not defined in the database.')
+        _logger.info(
+            'Either the schema is empty already or you are connecting to the wrong database. No actions were performed.'
+        )
+        return
     if immune_tables:
         for table in immune_tables:
             await _pg_move_table(conn, table, immune_schema_name, schema_name)
