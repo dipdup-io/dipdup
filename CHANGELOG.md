@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Fixed
+
+- evm.node: Retry JSON-RPC requests on "invalid block range params" error.
+
 ## [8.5.1] - 2025-11-03
 
 ### Fixed
