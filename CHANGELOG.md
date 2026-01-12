@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Fixed
+
+- database: Fix exception when creating connections with aiosqlite==0.22.0.
+
 ## [8.5.1] - 2025-11-03
 
 ### Fixed
