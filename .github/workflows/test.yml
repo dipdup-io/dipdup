@@ -19,7 +19,7 @@ jobs:
       matrix:
         # NOTE: arm64 macos is the fastest runner. Full matrix is tested in `release.yml`.
         include:
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
     steps:
       - name: Check out the repo
