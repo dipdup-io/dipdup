@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- database: Fix exception when creating connections with aiosqlite==0.22.0.
 - evm.node: Retry JSON-RPC requests on "invalid block range params" error.
 
 ## [8.5.1] - 2025-11-03

@@ -17,7 +17,7 @@ from typing import Any
 from typing import cast
 
 import asyncpg.exceptions  # type: ignore[import-untyped]
-import sqlparse  # type: ignore[import-untyped]
+import sqlparse
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
