@@ -1,4 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable first-line-h1 table-column-style -->
 | name | network | description | source |
 |-|-|-|-|
 | demo_blank |  | Empty config for a fresh start | [link](https://github.com/dipdup-io/dipdup/tree/8.5.1/src/demo_blank) |
