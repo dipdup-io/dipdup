@@ -19,13 +19,13 @@ jobs:
       matrix:
         # NOTE: Test full matrix there - it's less than a minute per run
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: amd64
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: arm64
-          - os: macos-latest
+          - os: macos-15
             arch: amd64
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
     steps:
       - name: Check out the repo
