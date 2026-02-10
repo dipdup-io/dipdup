@@ -98,7 +98,10 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
     )
     atexit.register(postgres_container.stop)
     postgres_container.reload()
-    postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
+    try:
+        postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
+    except KeyError:
+        postgres_ip = postgres_container.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
 
     while not postgres_container.exec_run('pg_isready').exit_code == 0:
         await asyncio.sleep(0.1)
@@ -126,7 +129,10 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
     )
     atexit.register(hasura_container.stop)
     hasura_container.reload()
-    hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
+    try:
+        hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
+    except KeyError:
+        hasura_ip = hasura_container.attrs['NetworkSettings']['Networks']['bridge']['IPAddress']
 
     return HasuraConfig(
         url=f'http://{hasura_ip}:8080',
