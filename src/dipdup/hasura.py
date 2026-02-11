@@ -390,7 +390,7 @@ class HasuraGateway(HTTPGateway):
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    related_table_name = model_tables.get(field.model_name)
+                    related_table_name = model_tables.get(field.model_name)  # type: ignore[arg-type]
                     if not related_table_name:
                         continue
 
@@ -411,7 +411,7 @@ class HasuraGateway(HTTPGateway):
                         )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    related_table_name = model_tables.get(field.model_name)
+                    related_table_name = model_tables.get(field.model_name)  # type: ignore[arg-type]
                     if not related_table_name:
                         continue
 
