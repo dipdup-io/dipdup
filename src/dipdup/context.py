@@ -610,7 +610,8 @@ class DipDupContext:
 
     async def _hooks_loop(self) -> None:
         while True:
-            await self._pending_hooks.get()
+            coro = await self._pending_hooks.get()
+            await coro
 
     def register_handler(self, handler_config: HandlerConfig) -> None:
         # NOTE: Same handlers can be linked to different indexes, we need to use exact config
