@@ -20,14 +20,14 @@ from dipdup.models._subsquid import SubsquidMessageType
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_node import EvmNodeHeadData
-from dipdup.models.evm_node import EvmNodeHeadSubscription
-from dipdup.models.evm_node import EvmNodeLogsSubscription
-from dipdup.models.evm_node import EvmNodeSubscription
 from dipdup.models.evm_node import EvmNodeSyncingData
-from dipdup.models.evm_node import EvmNodeSyncingSubscription
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
 from dipdup.pysignalr import WebsocketTransport
+from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
+from dipdup.subscriptions.evm_node import EvmNodeLogsSubscription
+from dipdup.subscriptions.evm_node import EvmNodeSubscription
+from dipdup.subscriptions.evm_node import EvmNodeSyncingSubscription
 from dipdup.utils import Watchdog
 
 if TYPE_CHECKING:
@@ -74,7 +74,7 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config)
-        self._web3_client: AsyncWeb3 | None = None
+        self._web3_client: AsyncWeb3 | None = None  # type: ignore[type-arg]
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
@@ -88,7 +88,7 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
     @property
-    def web3(self) -> 'AsyncWeb3':
+    def web3(self) -> 'AsyncWeb3':  # type: ignore[type-arg]
         if not self._web3_client:
             raise FrameworkException('web3 client is not initialized; is datasource running?')
         return self._web3_client

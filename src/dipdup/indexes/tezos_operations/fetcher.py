@@ -120,7 +120,7 @@ async def get_origination_filters(
             if pattern_config.source:
                 _logger.warning(
                     "`source.address` filter significantly hurts indexing performance and doesn't support strict"
-                    " typing. Consider using `originated_contract.code_hash` instead"
+                    ' typing. Consider using `originated_contract.code_hash` instead'
                 )
                 if address := pattern_config.source.address:
                     datasource = random.choice(datasources)
@@ -205,7 +205,6 @@ async def get_sr_cement_filters(
 
 
 class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, str]):
-
     _offset: int | None
 
     async def fetch(self) -> None:
@@ -229,7 +228,6 @@ class OriginationAddressFetcherChannel(FetcherChannel[TezosOperationData, TezosT
 
 
 class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, int]):
-
     _offset: int | None
 
     async def fetch(self) -> None:
@@ -257,7 +255,6 @@ class OriginationHashFetcherChannel(FetcherChannel[TezosOperationData, TezosTzkt
 
 
 class MigrationOriginationFetcherChannel(FetcherChannel[TezosOperationData, TezosTzktDatasource, None]):
-
     _offset: int | None
 
     async def fetch(self) -> None:
@@ -515,7 +512,7 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
             'first_level': self._first_level,
             'last_level': self._last_level,
         }
-        channels: tuple[FetcherChannel[TezosOperationData, Any, Any], ...] = (
+        channels: list[FetcherChannel[TezosOperationData, Any, Any]] = [
             TransactionAddressFetcherChannel(
                 filter=self._transaction_addresses,
                 field='sender',
@@ -554,7 +551,14 @@ class OperationsFetcher(TezosTzktFetcher[TezosOperationData]):
                 field='rollup',
                 **channel_kwargs,  # type: ignore[arg-type]
             ),
-        )
+        ]
+        if self._migration_originations:
+            channels.append(
+                MigrationOriginationFetcherChannel(
+                    filter=set(),
+                    **channel_kwargs,  # type: ignore[arg-type]
+                ),
+            )
 
         operations_iter = self._merged_iter(
             channels=set(channels),

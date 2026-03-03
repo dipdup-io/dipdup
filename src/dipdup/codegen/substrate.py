@@ -6,6 +6,10 @@ from typing import cast
 
 import orjson
 
+from dipdup.abi.substrate import SubstrateRuntime
+from dipdup.abi.substrate import extract_args_name
+from dipdup.abi.substrate import extract_tuple_inner_types
+from dipdup.abi.substrate import get_type_key
 from dipdup.codegen import CodeGenerator
 from dipdup.config import DipDupConfig
 from dipdup.config.substrate import SubstrateIndexConfig
@@ -16,10 +20,6 @@ from dipdup.datasources.substrate_node import SubstrateNodeDatasource
 from dipdup.datasources.substrate_subscan import SubstrateSubscanDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.package import DipDupPackage
-from dipdup.runtimes import SubstrateRuntime
-from dipdup.runtimes import extract_args_name
-from dipdup.runtimes import extract_tuple_inner_types
-from dipdup.runtimes import get_type_key
 from dipdup.utils import json_dumps
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
@@ -58,7 +58,7 @@ def scale_type_to_jsonschema(
                     },
                 }
 
-    # Handle primitives, default to str
+    # NOTE: Handle primitives, default to str
     schema: dict[str, Any] = {
         'description': type_string,
         'type': 'string',
@@ -70,7 +70,7 @@ def scale_type_to_jsonschema(
         schema['type'] = 'boolean'
     elif type_string in ['String', 'str']:
         schema['type'] = 'string'
-    # FIXME: We need to parse weird values like `Tuple:staging_xcm:v4:location:Locationstaging_xcm:v4:location:Location`; mind the missing delimeters
+    # FIXME: We need to parse weird values like `Tuple:staging_xcm:v4:location:Locationstaging_xcm:v4:location:Location`; mind the missing delimiters
     elif type_string.startswith('Tuple:'):
         inner_types = extract_tuple_inner_types(type_string, type_registry)
         schema['type'] = 'array'
@@ -137,7 +137,7 @@ class SubstrateCodeGenerator(CodeGenerator):
 
             for datasource_config in index_config.datasources:
                 if isinstance(datasource_config, SubstrateSubscanDatasourceConfig):
-                    datasource = cast(SubstrateSubscanDatasource, self._datasources[datasource_config.name])
+                    datasource = cast('SubstrateSubscanDatasource', self._datasources[datasource_config.name])
                     break
             else:
                 raise NotImplementedError('Codegen currently requires `substrate.subscan` datasource')
@@ -197,7 +197,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                         target_events[runtime_name].remove(qualname)
 
                         # FIXME: ignore when only docs changed?
-                        dump = orjson.dumps({**event_item, 'name': ''})
+                        dump = orjson.dumps(event_item)
                         if dump == latest_dumps[qualname]:
                             continue
                         latest_dumps[qualname] = dump
@@ -211,7 +211,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                             / runtime_name
                             / 'substrate_events'
                             / pascal_to_snake(qualname.replace('.', ''))
-                            / f'{metadata_path.stem.replace('.', '_')}.json'
+                            / f'{metadata_path.stem.replace(".", "_")}.json'
                         )
                         if schema_path.exists():
                             continue
@@ -222,7 +222,7 @@ class SubstrateCodeGenerator(CodeGenerator):
 
         for runtime_name, events in target_events.items():
             if events:
-                msg = f'Runtime `{runtime_name}` misses following events: {', '.join(events)}'
+                msg = f'Runtime `{runtime_name}` misses following events: {", ".join(events)}'
                 raise ConfigurationError(msg)
 
     async def _generate_types(self, force: bool = False) -> None:
@@ -231,7 +231,6 @@ class SubstrateCodeGenerator(CodeGenerator):
         target_events = self.get_target_events()
 
         for typeclass_dir in self._package.types.glob('**/substrate_events/*'):
-
             # NOTE: Find corresponding event
             try:
                 events = target_events[typeclass_dir.parts[-3]]
@@ -246,7 +245,7 @@ class SubstrateCodeGenerator(CodeGenerator):
                     name = event_name
                     break
             else:
-                raise Exception(f'Event not found for {typeclass_dir.stem}')
+                continue
 
             # NOTE: Don't extract from typeclass path! XYK.Sell -> xyk_sell -> XykSellPayload; should be XYKSellPayload.
             typeclass_name = f'{snake_to_pascal(name)}Payload'
@@ -260,15 +259,6 @@ class SubstrateCodeGenerator(CodeGenerator):
             ]
 
             write(typeclass_dir.joinpath('__init__.py'), '\n'.join(root_lines), overwrite=True)
-
-    async def generate_hooks(self) -> None:
-        pass
-
-    async def generate_system_hooks(self) -> None:
-        pass
-
-    async def generate_handlers(self) -> None:
-        pass
 
     def get_typeclass_name(self, schema_path: Path) -> str:
         module_name = schema_path.stem

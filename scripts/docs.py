@@ -40,6 +40,7 @@ from watchdog.observers import Observer
 from watchdog.observers.api import BaseObserver
 
 from dipdup import __version__
+from dipdup import env
 from dipdup.cli import green_echo
 from dipdup.cli import red_echo
 from dipdup.config import DipDupConfig
@@ -126,12 +127,6 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.BulkCreateQuery',
     'dipdup.models.BulkUpdateQuery',
     'dipdup.models.DeleteQuery',
-    'dipdup.models.evm_node.EvmNodeHeadData',
-    'dipdup.models.evm_node.EvmNodeHeadSubscription',
-    'dipdup.models.evm_node.EvmNodeLogsSubscription',
-    'dipdup.models.evm_node.EvmNodeSubscription',
-    'dipdup.models.evm_node.EvmNodeSyncingData',
-    'dipdup.models.evm_node.EvmNodeSyncingSubscription',
     'dipdup.models.evm_subsquid.BlockFieldSelection',
     'dipdup.models.evm_subsquid.FieldSelection',
     'dipdup.models.evm_subsquid.LogFieldSelection',
@@ -145,10 +140,8 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.QuerySet',
     'dipdup.models.RollbackMessage',
     'dipdup.models.substrate.HeadBlock',
-    'dipdup.models.substrate_node.SubstrateNodeHeadSubscription',
     'dipdup.models.subsquid.AbstractSubsquidQuery',
     'dipdup.models.subsquid.SubsquidMessageType',
-    'dipdup.models.starknet.StarknetSubscription',
     'dipdup.models.starknet_subsquid.Query',
     'dipdup.models.starknet_subsquid.TransactionFieldSelection',
     'dipdup.models.starknet_subsquid.EventRequest',
@@ -156,17 +149,6 @@ IGNORED_MODEL_CLASSES = {
     'dipdup.models.starknet_subsquid.FieldSelection',
     'dipdup.models.starknet_subsquid.TransactionRequest',
     'dipdup.models.starknet_subsquid.BlockFieldSelection',
-    'dipdup.models.tezos_tzkt.BigMapSubscription',
-    'dipdup.models.tezos_tzkt.EventSubscription',
-    'dipdup.models.tezos_tzkt.HeadSubscription',
-    'dipdup.models.tezos_tzkt.OriginationSubscription',
-    'dipdup.models.tezos_tzkt.SmartRollupCementSubscription',
-    'dipdup.models.tezos_tzkt.SmartRollupExecuteSubscription',
-    'dipdup.models.tezos_tzkt.TezosTzktMessageType',
-    'dipdup.models.tezos_tzkt.TezosTzktSubscription',
-    'dipdup.models.tezos_tzkt.TokenBalanceSubscription',
-    'dipdup.models.tezos_tzkt.TokenTransferSubscription',
-    'dipdup.models.tezos_tzkt.TransactionSubscription',
     'dipdup.models.UpdateQuery',
     'dipdup.models.VersionedTransaction',
 }
@@ -187,6 +169,7 @@ MARKDOWNLINT_IGNORE = (
     'line-length',
     'single-title',
     'single-h1',
+    'descriptive-link-text',
 )
 MARKDOWNLINT_CMD = (
     'markdownlint',
@@ -287,7 +270,6 @@ class DocsBuilder(FileSystemEventHandler):
 def create_include_callback(source: Path) -> Callable[[str], str]:
     def callback(data: str) -> str:
         def replacer(match: re.Match[str], slice: bool) -> str:
-            # FIXME: Slices are not handled yet
             included_path = source / match.group(1).split(':')[0]
             included_file = included_path.read_text()
             _logger.info('including `%s`', included_path.relative_to(Path.cwd()))
@@ -296,7 +278,9 @@ def create_include_callback(source: Path) -> Callable[[str], str]:
             else:
                 return included_file
 
-            from_, to = int(from_ or 0), int(to or len(included_file.split('\n')))
+            # NOTE: Line numbers start from 1
+            from_ = int(from_ or 1) - 1
+            to = int(to or len(included_file.split('\n')) + 1) - 1
             return '\n'.join(included_file.split('\n')[from_:to])
 
         data = re.sub(INCLUDE_REGEX, partial(replacer, slice=False), data)
@@ -462,10 +446,10 @@ def check_links(source: Path, http: bool) -> None:
         green_echo('=> Checking HTTP links')
 
         for i, link in enumerate(http_links):
-            green_echo(f'{i+1}/{len(http_links)}: checking link `{link}`')
+            green_echo(f'{i + 1}/{len(http_links)}: checking link `{link}`')
             try:
                 res = subprocess.run(
-                    ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', link),
+                    ('curl', '-s', '-L', '-o', '/dev/null', '-w', '%{http_code}', '--max-time', '10', link),
                     check=True,
                     capture_output=True,
                 )
@@ -530,6 +514,7 @@ def dump_references() -> None:
             exit(1)
 
     _compare('models', IGNORED_MODEL_CLASSES)
+    _compare('config', set())
 
     green_echo('=> Building Sphinx docs')
     rmtree('docs/_build', ignore_errors=True)
@@ -542,7 +527,7 @@ def dump_references() -> None:
     green_echo('=> Converting to ugly Markdown files')
     for page in REFERENCES:
         to = Path(page['md_path'])
-        from_ = Path(f"docs/_build/html/{page['html_path']}")
+        from_ = Path(f'docs/_build/html/{page["html_path"]}')
 
         # NOTE: Strip HTML boilerplate
         lines = from_.read_text().split('\n')
@@ -640,9 +625,7 @@ def merge_changelog() -> None:
         line = line.strip()
 
         if line.startswith('## '):
-            # FIXME: Remove after the first 8.0 release
-            line = line.replace('## [Unreleased]', '## [8.0.0]')
-
+            line = line.replace('## [Unreleased]', '## [0.0.0]')
             try:
                 curr_version = line.split('[', 1)[1].split(']')[0]
             except IndexError:
@@ -652,6 +635,8 @@ def merge_changelog() -> None:
             curr_group = line[4:]
         elif line.startswith('- '):
             changelog_tree[curr_version][curr_group].append(line)
+
+    changelog_tree.pop('0.0.0', None)
 
     for version in sorted(changelog_tree.keys()):
         major = int(version.split('.')[0])
@@ -677,8 +662,8 @@ def merge_changelog() -> None:
         version_path.write_text('\n'.join(lines))
 
 
-@main.command('dump-metrics', help='Dump Markdown table of Prometheus metrics')
-def dump_metrics() -> None:
+@main.command('dump-ref-tables', help='Dump Markdown tables of Prometheus metrics and env vars')
+def dump_ref_tables() -> None:
     green_echo('=> Dumping metrics table')
     metrics: list[tuple[str, str, str]] = []
 
@@ -695,7 +680,7 @@ def dump_metrics() -> None:
     metrics = sorted(metrics, key=lambda x: x[0])
 
     lines = [
-        '<!-- markdownlint-disable first-line-h1 -->',
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
         '| name | description | type |',
         '|-|-|-|',
         *(f'| {name} | {description} | {type_} |' for name, description, type_ in metrics),
@@ -703,6 +688,16 @@ def dump_metrics() -> None:
     ]
 
     Path('docs/5.advanced/_metrics_table.md').write_text('\n'.join(lines))
+
+    lines = [
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
+        '| name | description |',
+        '|-|-|',
+        *(f'| `{name}` | {description} |' for name, description in env.extract_docstrings().items()),
+        '',
+    ]
+
+    Path('docs/5.advanced/_env_table.md').write_text('\n'.join(lines))
 
 
 @main.command('dump-demos', help='Dump Markdown table of available demo projects')
@@ -719,10 +714,12 @@ def dump_demos() -> None:
         package, description = replay['package'], replay['description']
         if package in TEMPLATES['evm']:
             network = 'EVM'
-        elif package in TEMPLATES['tezos']:
-            network = 'Tezos'
         elif package in TEMPLATES['starknet']:
             network = 'Starknet'
+        elif package in TEMPLATES['substrate']:
+            network = 'Substrate'
+        elif package in TEMPLATES['tezos']:
+            network = 'Tezos'
         else:
             network = ''
         demos.append((package, network, description))
@@ -731,7 +728,7 @@ def dump_demos() -> None:
     demos = sorted(demos, key=lambda x: (x[1], x[0]))
 
     lines = [
-        '<!-- markdownlint-disable first-line-h1 -->',
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
         '| name | network | description | source |',
         '|-|-|-|-|',
         *(
@@ -810,7 +807,7 @@ def move_pages(path: Path, insert: int, pop: int) -> None:
                 break
 
             file = toc[index]
-            new_name = path / f'{index + 1}.{'.'.join(file.stem.split(".")[1:])}.md'
+            new_name = path / f'{index + 1}.{".".join(file.stem.split(".")[1:])}.md'
             file.rename(new_name)
             toc[index + 1] = new_name
 
@@ -828,7 +825,7 @@ def move_pages(path: Path, insert: int, pop: int) -> None:
         for index in sorted(toc.keys()):
             if index > pop:
                 file = toc.pop(index)
-                new_name = path / f'{index + 1}.{'.'.join(file.stem.split(".")[1:])}.md'
+                new_name = path / f'{index + 1}.{".".join(file.stem.split(".")[1:])}.md'
                 file.rename(new_name)
                 toc[index - 1] = new_name
 

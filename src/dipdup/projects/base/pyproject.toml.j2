@@ -16,7 +16,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black>=24.10.0",
     "ruff>=0.9.2",
     "mypy>=1.14.1",
 ]
@@ -36,24 +35,19 @@ python = ">=3.12,<3.13"
 dipdup = ">={{ project.dipdup_version }},<{{ project.dipdup_version | int + 1 }}"
 
 [tool.poetry.group.dev.dependencies]
-black = "*"
 ruff = "*"
 mypy = "*"
 {% endif %}
-[tool.black]
-line-length = {{ project.line_length }}
-target-version = ['py312']
-skip-string-normalization = true
-extend-exclude = "{{ project.package }}"
-
 [tool.ruff]
 line-length = {{ project.line_length }}
 target-version = 'py312'
 
 [tool.ruff.lint]
-extend-select = ["B", "C4", "FA", "G", "I", "PTH", "Q", "RET", "RUF", "TCH", "UP"]
-flake8-quotes = { inline-quotes = "single", multiline-quotes = "double" }
+extend-select = ["B", "C4", "FA", "G", "I", "PTH", "RET", "RUF", "TCH", "UP"]
 isort = { force-single-line = true}
+
+[tool.ruff.format]
+quote-style = "single"
 
 [tool.mypy]
 python_version = "3.12"
@@ -66,12 +60,9 @@ exclude = "{{ project.package }}"
 module = "ruamel"
 ignore_missing_imports = true
 
-{% if project.package_manager in ('pdm', 'uv', 'none') -%}
+[tool.hatch.build.targets.wheel]
+packages = ["{{ project.package }}"]
+
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-{%- elif project.package_manager == 'poetry' %}
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-{%- endif %}
+requires = ["hatchling"]
+build-backend = "hatchling.build"

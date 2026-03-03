@@ -37,7 +37,6 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
 
 
 class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
-
     def __init__(
         self,
         name: str,
@@ -66,7 +65,7 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
 
         while batch_first_level <= self._last_level:
             node = self.random_datasource
-            batch_size = self.get_next_batch_size(batch_size, ratelimited)
+            batch_size = min(node._http_config.batch_size - 1, self.get_next_batch_size(batch_size, ratelimited))
             ratelimited = False
 
             started = time.time()
@@ -95,7 +94,6 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
             ]
 
             for event_level_batch in event_level_batches:
-
                 started = time.time()
 
                 block_batch = await self.get_blocks_batch(event_level_batch)

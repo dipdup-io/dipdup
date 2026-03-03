@@ -1,0 +1,19 @@
+{
+  "lookup": "0208",
+  "name": "Withdraw",
+  "docs": [
+    "Some amount was withdrawn from the account (e.g. for transaction fees)."
+  ],
+  "args": [
+    "AccountId",
+    "U128"
+  ],
+  "args_name": [
+    "who",
+    "amount"
+  ],
+  "args_type_name": [
+    "AccountId",
+    "Balance"
+  ]
+}

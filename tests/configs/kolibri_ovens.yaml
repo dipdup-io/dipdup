@@ -1,0 +1,28 @@
+spec_version: 3.0
+package: kolibri_ovens
+
+contracts:
+  kolibri_ovens:
+    kind: tezos
+    address: KT1KV31DTzktr8t7edCLUzzgEN54cQtksJou
+    typename: kolibri_ovens
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: ${TZKT_URL:-https://api.tzkt.io}
+    http:
+      replay_path: ${DIPDUP_REPLAY_PATH:-}
+
+indexes:
+  kolibri_ovens:
+    kind: tezos.operations
+    datasources:
+      - tzkt
+    contracts:
+      - kolibri_ovens
+    handlers:
+      - callback: on_set_delegate
+        pattern:
+          - destination: kolibri_ovens
+            entrypoint: setDelegate

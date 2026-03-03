@@ -15,8 +15,8 @@ from dipdup.indexes.tezos_operations.fetcher import get_origination_filters
 from dipdup.indexes.tezos_operations.fetcher import get_transaction_filters
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.models.tezos import TezosOperationType
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions.tezos_tzkt import TransactionSubscription
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
 from tests import TEST_CONFIGS
@@ -31,9 +31,9 @@ async def tzkt() -> AsyncIterator[TezosTzktDatasource]:
 
 @pytest.fixture
 def index_config() -> TezosOperationsIndexConfig:
-    config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'operation_filters.yaml'], True)
     config.initialize()
-    return cast(TezosOperationsIndexConfig, config.indexes['test'])
+    return cast('TezosOperationsIndexConfig', config.indexes['test'])
 
 
 async def test_ignored_type_filter(
@@ -124,7 +124,7 @@ async def test_get_transaction_filters(tzkt: TezosTzktDatasource, index_config: 
 
 
 async def test_get_sync_level() -> None:
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yaml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         index = await spawn_index(dipdup, 'tzbtc_holders_mainnet')
@@ -149,13 +149,13 @@ async def test_get_sync_level() -> None:
 async def test_realtime() -> None:
     from demo_tezos_token import models
 
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yml'], True)
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_token.yaml'], True)
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         await dipdup._set_up_datasources(stack)
 
         dispatcher = dipdup._index_dispatcher
-        index = cast(TezosOperationsIndex, await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
+        index = cast('TezosOperationsIndex', await spawn_index(dipdup, 'tzbtc_holders_mainnet'))
 
         # NOTE: Start sync and realtime connection simultaneously.
         first_level = 1365000

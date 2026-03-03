@@ -1,14 +1,24 @@
 import asyncio
 from typing import TYPE_CHECKING
+from typing import Union
+
+from lru import LRU
 
 from dipdup.config import HttpConfig
 from dipdup.config.starknet_node import StarknetNodeDatasourceConfig
+from dipdup.datasources import AbiJson
 from dipdup.datasources import IndexDatasource
+from dipdup.datasources._starknetpy import StarknetpyClient
 
 if TYPE_CHECKING:
+    from starknet_py.abi.v0.shape import AbiDictList as AbiDictListV0
+    from starknet_py.abi.v1.shape import AbiDictList as AbiDictListV1
+    from starknet_py.abi.v2.shape import AbiDictList as AbiDictListV2
     from starknet_py.net.client_models import EventsChunk
+    from starknet_py.net.client_models import PreConfirmedStarknetBlockWithTxHashes
+    from starknet_py.net.client_models import StarknetBlockWithTxHashes
 
-    from dipdup.datasources._starknetpy import StarknetpyClient
+BLOCK_CACHE_SIZE = 10
 
 
 class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
@@ -21,6 +31,13 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
     def __init__(self, config: StarknetNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config, merge_subscriptions)
         self._starknetpy: StarknetpyClient | None = None
+        self._block_cache: LRU[int, StarknetBlockWithTxHashes | PreConfirmedStarknetBlockWithTxHashes] = LRU(
+            BLOCK_CACHE_SIZE
+        )
+
+    @property
+    def fetch_block_headers(self) -> bool:
+        return self._config.fetch_block_headers
 
     @property
     def starknetpy(self) -> 'StarknetpyClient':
@@ -70,3 +87,34 @@ class StarknetNodeDatasource(IndexDatasource[StarknetNodeDatasourceConfig]):
             chunk_size=self._http_config.batch_size,
             continuation_token=continuation_token,
         )
+
+    async def get_block_with_tx_hashes(
+        self, block_hash: int
+    ) -> Union['StarknetBlockWithTxHashes', 'PreConfirmedStarknetBlockWithTxHashes', None]:
+        if block := self._block_cache.get(block_hash, None):
+            return block
+
+        try:
+            block = await self.starknetpy.get_block_with_tx_hashes(block_hash=block_hash)
+            self._block_cache[block_hash] = block
+        except Exception as e:
+            self._logger.error("Can't fetch block headers", exc_info=e)
+            block = None
+
+        return block
+
+    async def get_abi(self, address: str) -> AbiJson:
+        from starknet_py.net.client_models import DeprecatedContractClass
+        from starknet_py.net.client_models import SierraContractClass
+
+        class_at_response = await self.starknetpy.get_class_at(address, block_number='latest')
+        # NOTE: for some reason
+        parsed_abi: AbiDictListV0 | None | AbiDictListV1 | AbiDictListV2
+        if isinstance(class_at_response, SierraContractClass):
+            parsed_abi = class_at_response.parsed_abi
+        elif isinstance(class_at_response, DeprecatedContractClass):
+            parsed_abi = class_at_response.abi
+        else:
+            raise NotImplementedError(f'Unknown response class: {class_at_response}')
+
+        return parsed_abi or []

@@ -3,6 +3,7 @@ from collections import deque
 from datetime import datetime
 from typing import Any
 
+from dipdup.config import SkipHistory
 from dipdup.config.tezos_big_maps import TezosBigMapsIndexConfig
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.tezos_big_maps.fetcher import BigMapFetcher
@@ -10,11 +11,10 @@ from dipdup.indexes.tezos_big_maps.fetcher import get_big_map_pairs
 from dipdup.indexes.tezos_big_maps.matcher import match_big_maps
 from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import RollbackMessage
-from dipdup.models import SkipHistory
 from dipdup.models.tezos import TezosBigMapAction
 from dipdup.models.tezos import TezosBigMapData
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
 from dipdup.performance import metrics
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 
 QueueItem = tuple[TezosBigMapData, ...] | RollbackMessage
 

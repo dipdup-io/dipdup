@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import logging
 import re
 from collections.abc import Iterable
@@ -81,11 +82,7 @@ query introspectionQuery($name: String!) {
     }
   }
 }
-""".replace(
-    '\n', ' '
-).replace(
-    '  ', ''
-)
+""".replace('\n', ' ').replace('  ', '')
 
 
 @dataclass
@@ -197,6 +194,22 @@ class HasuraGateway(HTTPGateway):
 
         await self._apply_custom_metadata()
 
+        # Apply model docstrings as database comments
+        await self._apply_model_comments()
+
+        # Force metadata refresh to pick up new database comments
+        self._logger.info('Refreshing Hasura metadata to pick up new database comments')
+        await self._hasura_request(
+            endpoint='metadata',
+            json={
+                'type': 'reload_metadata',
+                'args': {
+                    'reload_remote_schemas': True,
+                    'recreate_event_triggers': True,
+                },
+            },
+        )
+
         # TODO: Find out why it is necessary
         # NOTE: Fetch metadata once again and save its hash for future comparisons
         metadata = await self._fetch_metadata()
@@ -209,7 +222,7 @@ class HasuraGateway(HTTPGateway):
     def _get_source(self, metadata: dict[str, Any], name: str) -> dict[str, Any] | None:
         for source in metadata['sources']:
             if source['name'] == name:
-                return cast(dict[str, Any], source)
+                return cast('dict[str, Any]', source)
         else:
             return None
 
@@ -242,7 +255,7 @@ class HasuraGateway(HTTPGateway):
         if errors := result.get('error') or result.get('errors'):
             raise HasuraError(errors)
 
-        return cast(dict[str, Any], result)
+        return cast('dict[str, Any]', result)
 
     async def _healthcheck(self) -> None:
         self._logger.info('Connecting to Hasura instance')
@@ -476,7 +489,7 @@ class HasuraGateway(HTTPGateway):
             },
         )
         try:
-            return cast(list[dict[str, Any]], result['data']['__type']['fields'])
+            return cast('list[dict[str, Any]]', result['data']['__type']['fields'])
         except TypeError as e:
             raise HasuraError(f'Unknown table `{name}`') from e
 
@@ -630,7 +643,7 @@ class HasuraGateway(HTTPGateway):
     def _format_custom_column_names(self, fields: list[Field]) -> dict[str, Any]:
         """
         Deprecated
-        See: https://hasura.io/docs/latest/api-reference/syntax-defs/#customcolumnnames
+        See: https://hasura.io/docs/2.0/api-reference/syntax-defs/#customcolumnnames
         """
         if self._hasura_config.camel_case:
             return {humps.decamelize(f.name): humps.camelize(f.name) for f in fields}
@@ -702,3 +715,128 @@ class HasuraGateway(HTTPGateway):
     def _iterate_metadata_requests(self) -> Iterator[TextIO]:
         metadata_path = env.get_package_path(self._package) / 'hasura'
         yield from iter_files(metadata_path, '.json')
+
+    async def _apply_model_comments(self) -> None:
+        """Extract docstrings from Tortoise models and apply them as database comments.
+
+        This method scans all models in the project and extracts their docstrings,
+        then applies them as SQL comments to the corresponding database tables and columns.
+        These comments will be visible in Hasura's GraphQL playground.
+        """
+        self._logger.info('Extracting model docstrings and applying database comments')
+
+        # Get database connection
+        conn = get_connection()
+        if not isinstance(conn, AsyncpgClient):
+            self._logger.warning('Model comments only supported for PostgreSQL databases')
+            return
+
+        # Debug: Log the package being processed
+        self._logger.debug('Processing package: %s', self._package)
+
+        # Iterate through all models
+        model_count = 0
+        for app_name, model_class in iter_models(self._package):
+            model_count += 1
+            self._logger.debug('Processing model %s: %s from %s', model_count, model_class.__name__, app_name)
+
+            if not hasattr(model_class, '_meta') or not hasattr(model_class._meta, 'db_table'):
+                self._logger.warning('Model %s missing _meta or db_table', model_class.__name__)
+                continue
+
+            table_name = model_class._meta.db_table
+            self._logger.debug('Table name: %s', table_name)
+
+            # Extract table-level docstring
+            table_doc = model_class.__doc__ or ''
+            if table_doc:
+                # Clean up the docstring
+                table_doc = table_doc.strip().replace("'", "''")  # Escape single quotes
+                if len(table_doc) > 1000:  # Limit comment length
+                    table_doc = table_doc[:997] + '...'
+
+                # Apply table comment
+                try:
+                    sql = f"COMMENT ON TABLE {self._database_config.schema_name}.{table_name} IS '{table_doc}';"
+                    self._logger.debug('Executing table comment SQL: %s', sql)
+                    await conn.execute_script(sql)
+                    self._logger.debug('Successfully applied table comment to %s', table_name)
+                except Exception as e:
+                    self._logger.warning('Failed to apply table comment to %s: %s', table_name, e)
+            else:
+                self._logger.debug('No table docstring found for %s', table_name)
+
+            # Extract field-level comments from model source code
+            # Since Tortoise doesn't natively support field descriptions, we'll look for
+            # comments in the model definition using inspect
+            try:
+                source_lines = inspect.getsource(model_class).split('\n')
+                field_comments = {}
+
+                self._logger.debug('Extracting field comments from %s, %s lines', table_name, len(source_lines))
+
+                for i, line in enumerate(source_lines):
+                    line = line.strip()
+                    # Look for field definitions - check for both quoted and unquoted field references
+                    if (
+                        '=' in line
+                        and ('fields.' in line or "'fields." in line or '"fields.' in line)
+                        and not line.startswith('#')
+                    ):
+                        # Extract field name
+                        field_name = line.split('=')[0].strip()
+                        if field_name and not field_name.startswith('_'):
+                            # Look for comments above this line
+                            comment_lines: list[str] = []
+                            j = i - 1
+                            while j >= 0:
+                                prev_line = source_lines[j].strip()
+                                if prev_line.startswith('#'):
+                                    comment_lines.insert(0, prev_line[1:].strip())
+                                    j -= 1
+                                elif prev_line == '':
+                                    j -= 1
+                                else:
+                                    break
+
+                            if comment_lines:
+                                field_comments[field_name] = ' '.join(comment_lines)
+                                self._logger.debug(
+                                    'Found comment for field %s: %s', field_name, field_comments[field_name]
+                                )
+
+                self._logger.debug('Found %s field comments for %s', len(field_comments), table_name)
+
+                # Apply field comments
+                if hasattr(model_class._meta, 'fields_map'):
+                    self._logger.debug('Processing %s fields for %s', len(model_class._meta.fields_map), table_name)
+                    for field_name, _field in model_class._meta.fields_map.items():
+                        self._logger.debug('Checking field: %s', field_name)
+                        if field_name in field_comments:
+                            field_doc = field_comments[field_name].strip().replace("'", "''")
+                            if len(field_doc) > 1000:
+                                field_doc = field_doc[:997] + '...'
+
+                            # Get the actual database column name
+                            db_column = model_class._meta.fields_db_projection.get(field_name, field_name)
+
+                            try:
+                                sql = f"COMMENT ON COLUMN {self._database_config.schema_name}.{table_name}.{db_column} IS '{field_doc}';"
+                                self._logger.debug('Executing column comment SQL: %s', sql)
+                                await conn.execute_script(sql)
+                                self._logger.debug(
+                                    'Successfully applied column comment to %s.%s', table_name, db_column
+                                )
+                            except Exception as e:
+                                self._logger.warning(
+                                    'Failed to apply column comment to %s.%s: %s', table_name, db_column, e
+                                )
+                        else:
+                            self._logger.debug('No comment found for field %s in %s', field_name, table_name)
+                else:
+                    self._logger.warning('No fields_map found for %s', table_name)
+
+            except Exception as e:
+                self._logger.warning('Failed to extract field comments from %s: %s', table_name, e)
+
+        self._logger.debug('Finished applying model comments to database. Processed %s models.', model_count)

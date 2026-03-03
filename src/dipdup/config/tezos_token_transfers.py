@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
-from dipdup.models.tezos_tzkt import TokenTransferSubscription
+from dipdup.subscriptions.tezos_tzkt import TokenTransferSubscription
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -59,7 +59,7 @@ class TezosTokenTransfersIndexConfig(TezosIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.token_transfers']
+    kind: Literal['tezos.token_transfers'] = 'tezos.token_transfers'
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosTokenTransfersHandlerConfig, ...]
 

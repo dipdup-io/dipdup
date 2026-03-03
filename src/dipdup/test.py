@@ -21,6 +21,7 @@ from dipdup.config import PostgresDatabaseConfig
 from dipdup.dipdup import DipDup
 from dipdup.exceptions import FrameworkException
 from dipdup.index import Index
+from dipdup.package import CWD_ENV
 from dipdup.project import get_default_answers
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -180,7 +181,6 @@ async def tmp_project(
             'PYTHONPATH': str(tmp_package_path),
             'DIPDUP_TEST': '1',
             'DIPDUP_DEBUG': '1',
-            'DIPDUP_NO_VERSION_CHECK': '1',
         }
 
         yield Path(tmp_package_path), env
@@ -192,10 +192,12 @@ async def run_in_tmp(
     *args: str,
 ) -> None:
     """Run DipDup in existing temporary project."""
+    if not (tmp_path / CWD_ENV).exists() and (env_path := Path.cwd().joinpath(CWD_ENV)).exists():
+        os.symlink(env_path, tmp_path / CWD_ENV)
     tmp_config_path = Path(tmp_path) / 'dipdup.yaml'
-
+    command = f'dipdup -c {tmp_config_path} {" ".join(args)}'
     proc = await asyncio.subprocess.create_subprocess_shell(
-        f'dipdup -c {tmp_config_path} {" ".join(args)}',
+        command,
         cwd=tmp_path,
         shell=True,
         env={

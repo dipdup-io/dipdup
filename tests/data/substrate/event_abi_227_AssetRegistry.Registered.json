@@ -1,0 +1,37 @@
+{
+  "lookup": "3301",
+  "name": "Registered",
+  "docs": [
+    "Asset was registered."
+  ],
+  "args": [
+    "U32",
+    "option<bounded_collections:bounded_vec:BoundedVec@65>",
+    "pallet_asset_registry:types:AssetType",
+    "U128",
+    "option<U128>",
+    "option<bounded_collections:bounded_vec:BoundedVec@65>",
+    "option<U8>",
+    "Bool"
+  ],
+  "args_name": [
+    "asset_id",
+    "asset_name",
+    "asset_type",
+    "existential_deposit",
+    "xcm_rate_limit",
+    "symbol",
+    "decimals",
+    "is_sufficient"
+  ],
+  "args_type_name": [
+    "AssetId",
+    "Option<BoundedVec<u8, StringLimit>>",
+    "AssetType",
+    "Balance",
+    "Option<Balance>",
+    "Option<BoundedVec<u8, StringLimit>>",
+    "Option<u8>",
+    "bool"
+  ]
+}

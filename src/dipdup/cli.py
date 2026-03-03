@@ -1,10 +1,7 @@
 # NOTE: All imports except the basic ones are very lazy in this module. Let's keep it that way.
 import asyncio
-import atexit
 import logging
 import sys
-import traceback
-from collections import defaultdict
 from collections.abc import Callable
 from collections.abc import Coroutine
 from contextlib import AsyncExitStack
@@ -20,28 +17,26 @@ from typing import cast
 import click
 import uvloop
 
-from dipdup import __version__
 from dipdup import env
-from dipdup._version import check_version
-from dipdup.exceptions import CallbackError
 from dipdup.install import EPILOG
 from dipdup.install import WELCOME_ASCII
-from dipdup.sys import set_up_process
 
 if TYPE_CHECKING:
     from dipdup.config import DipDupConfig
 
-ROOT_CONFIG = 'dipdup.yaml'
-CONFIG_RE = r'dipdup.*\.ya?ml'
+CONTEXT_SETTINGS = {
+    'help_option_names': ['-h', '--help'],
+    'max_content_width': 120,
+}
 
 # NOTE: Do not try to load config for these commands as they don't need it
 NO_CONFIG_CMDS = {
     'new',
     'migrate',
-    'config',
+    'config',  # this one too
 }
 
-# NOTE: Click commands from `aerich` we use as is  for database migration
+# NOTE: Click commands from `aerich` we use as is for database migration
 AERICH_CMDS = {
     'history',
     'heads',
@@ -71,6 +66,7 @@ def _get_paths(
     params: dict[str, Any],
 ) -> tuple[list[Path], list[Path]]:
     from dipdup.exceptions import ConfigurationError
+    from dipdup.package import ROOT_CONFIG
 
     config_args: list[str] = params.pop('config', [])
     env_file_args: list[str] = params.pop('env_file', [])
@@ -106,12 +102,19 @@ def _get_paths(
 
 
 def _load_env_files(env_file_paths: list[Path]) -> None:
+    from dipdup.package import CWD_ENV
+
+    # NOTE: If 'dipdup.env' exists it's loaded automatically after other files
+    if (cwd_env := Path.cwd().joinpath(CWD_ENV)).is_file():
+        env_file_paths.append(cwd_env)
+
     for path in env_file_paths:
         from dotenv import load_dotenv
 
         _logger.info('Applying env_file `%s`', path)
         load_dotenv(path, override=True)
 
+    # NOTE: Make `dipdup.env` aware of possible changes
     if env_file_paths:
         env.reload_env()
 
@@ -135,6 +138,10 @@ def red_echo(message: str) -> None:
 
 def _print_help_atexit(error: Exception, report_id: str) -> None:
     """Prints a helpful error message after the traceback"""
+    import atexit
+    import traceback
+
+    from dipdup.exceptions import CallbackError
     from dipdup.exceptions import Error
 
     def _print() -> None:
@@ -143,12 +150,13 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
         if isinstance(error, Error):
             echo(error.help(), err=True)
         else:
-            # NOTE: check the traceback  to find out if it's from a callback
+            # NOTE: Check the traceback to find out if exception is from a callback
             tb = traceback.extract_tb(error.__traceback__)
             for frame in tb:
                 if frame.name == 'fire_handler':
-                    module = next(f.filename for f in tb if '/handlers/' in f.filename or '/hooks/' in f.filename)
-                    echo(CallbackError(module=Path(module).stem, exc=error).help(), err=True)
+                    modules = tuple(f.filename for f in tb if '/handlers/' in f.filename or '/hooks/' in f.filename)
+                    module = '.'.join(Path(f).stem for f in modules)
+                    echo(CallbackError(module=module, exc=error).help(), err=True)
                     break
             else:
                 echo(Error.default_help(), err=True)
@@ -182,6 +190,9 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
         except Exception as e:
+            if isinstance(e, click.UsageError):
+                raise
+
             from dipdup.report import save_report
 
             package = ctx.obj.config.package if ctx.obj else 'unknown'
@@ -196,7 +207,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             package = ctx.obj.config.package
             save_report(package, None)
 
-    return cast(WrappedCommandT, wrapper)
+    return cast('WrappedCommandT', wrapper)
 
 
 def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None]]:
@@ -205,11 +216,12 @@ def _cli_unwrapper(cmd: click.Command) -> Callable[..., Coroutine[Any, Any, None
 
 def _skip_cli_group() -> bool:
     # NOTE: Workaround for help pages. First argument check is for the test runner.
-    args = sys.argv[1:] if sys.argv else ['--help']
-    is_help = '--help' in args
-    is_empty_group = args in (
+    args = sys.argv[1:]
+    is_help = '--help' in args or '-h' in args
+    is_empty_group = args[-1:] in (
         ['config'],
         ['hasura'],
+        ['mcp'],
         ['package'],
         ['schema'],
     )
@@ -218,17 +230,18 @@ def _skip_cli_group() -> bool:
         'report',
         'self',
     )
-    if not (is_help or is_empty_group or is_script_group):
-        return False
-    return True
+
+    if is_help or is_empty_group or is_script_group:
+        return True
+    return False
 
 
 @click.group(
-    context_settings={'max_content_width': 120},
+    context_settings=CONTEXT_SETTINGS,
     help=WELCOME_ASCII,
     epilog=EPILOG,
 )
-@click.version_option(__version__)
+@click.version_option()
 @click.option(
     '--config',
     '-c',
@@ -260,8 +273,11 @@ def _skip_cli_group() -> bool:
 @click.pass_context
 @_cli_wrapper
 async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: list[str]) -> None:
+    from dipdup.sys import set_up_process
+
     set_up_process()
 
+    # FIXME: This check fails for non-existing commands. Some Click magic could help here.
     if _skip_cli_group():
         return
 
@@ -306,11 +322,6 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
     # NOTE: Imports will be loaded later if needed
     _config.initialize()
 
-    # NOTE: Fire and forget, do not block instant commands
-    if not (env.TEST or env.CI or env.NO_VERSION_CHECK):
-        # FIXME: https://github.com/dipdup-io/dipdup/issues/1114; replace with `fire_and_forget` call once resolved.
-        await check_version()
-
     try:
         # NOTE: Avoid early import errors if project package is incomplete.
         # NOTE: `ConfigurationError` will be raised later with more details.
@@ -325,7 +336,7 @@ async def cli(ctx: click.Context, config: list[str], env_file: list[str], c: lis
     )
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def run(ctx: click.Context) -> None:
@@ -342,9 +353,12 @@ async def run(ctx: click.Context) -> None:
     await dipdup.run()
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing types and ABIs.')
-@click.option('--base', '-b', is_flag=True, help='Include template base: pyproject.toml, Dockerfile, etc.')
+@click.option('--base', '-b', is_flag=True, help='Include template base (default)')
+@click.option('--no-base', is_flag=True, help='Skip files from base template.')
+@click.option('--no-linter', is_flag=True, help='Skip applying linter and formatter.')
+@click.option('--no-types', is_flag=True, help='Skip generating ABIs and typeclasses.')
 @click.argument(
     'include',
     type=str,
@@ -357,6 +371,9 @@ async def init(
     ctx: click.Context,
     force: bool,
     base: bool,
+    no_base: bool,
+    no_linter: bool,
+    no_types: bool,
     include: list[str],
 ) -> None:
     """Generate project tree, typeclasses and callback stubs.
@@ -365,17 +382,24 @@ async def init(
     """
     from dipdup.dipdup import DipDup
 
+    if base:
+        if no_base:
+            raise click.BadParameter('You cannot use both `--base` and `--no-base` options at the same time')
+        _logger.warning('`--base` option became default; use `--no-base` to disable it')
+
     config: DipDupConfig = ctx.obj.config
     dipdup = DipDup(config)
 
     await dipdup.init(
         force=force,
-        base=base or bool(include),
+        no_base=no_base,
+        no_linter=no_linter,
+        no_types=no_types,
         include=set(include),
     )
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--dry-run', '-n', is_flag=True, help='Print changes without applying them.')
 @click.pass_context
 @_cli_wrapper
@@ -410,13 +434,16 @@ async def migrate(ctx: click.Context, dry_run: bool) -> None:
     )
     await _cli_unwrapper(init)(
         ctx=ctx,
-        base=True,
+        base=False,
         force=True,
+        no_linter=True,
+        no_base=False,
+        no_types=False,
         include=[],
     )
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def config(ctx: click.Context) -> None:
@@ -424,7 +451,7 @@ async def config(ctx: click.Context) -> None:
     pass
 
 
-@config.command(name='export')
+@config.command(name='export', context_settings=CONTEXT_SETTINGS)
 @click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--full', '-f', is_flag=True, help='Resolve index templates.')
 @click.option('--raw', '-r', is_flag=True, help='Do not initialize config; preserve file structure.')
@@ -469,7 +496,7 @@ async def config_export(
         echo(config.dump())
 
 
-@config.command(name='env')
+@config.command(name='env', context_settings=CONTEXT_SETTINGS)
 @click.option('--output', '-o', type=str, default=None, help='Output to file instead of stdout.')
 @click.option('--unsafe', is_flag=True, help='Use actual environment variables instead of default values.')
 @click.option('--compose', '-c', is_flag=True, help='Output in docker-compose format.')
@@ -520,14 +547,123 @@ async def config_env(
         echo(content)
 
 
-@cli.group(help='Commands related to Hasura integration.')
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def hasura(ctx: click.Context) -> None:
+    "Commands related to Hasura integration."
+
     pass
 
 
-@hasura.command(name='configure')
+@cli.group(context_settings=CONTEXT_SETTINGS)
+@click.pass_context
+@_cli_wrapper
+async def mcp(ctx: click.Context) -> None:
+    "Commands related to MCP integration."
+    pass
+
+
+@mcp.command(name='run', context_settings=CONTEXT_SETTINGS)
+@click.pass_context
+@_cli_wrapper
+async def mcp_run(ctx: click.Context) -> None:
+    """Run MCP server."""
+
+    import uvicorn
+    from anyio import from_thread
+    from mcp.server.sse import SseServerTransport
+    from starlette.applications import Starlette
+    from starlette.routing import Mount
+    from starlette.routing import Route
+
+    from dipdup import mcp
+    from dipdup.config import DipDupConfig
+    from dipdup.config import HttpConfig
+    from dipdup.config import McpConfig
+    from dipdup.config.http import HttpDatasourceConfig
+    from dipdup.context import McpContext
+    from dipdup.datasources.http import HttpDatasource
+    from dipdup.dipdup import DipDup
+
+    config: DipDupConfig = ctx.obj.config
+    dipdup = DipDup(config)
+
+    if not config.mcp:
+        config.mcp = McpConfig()
+    mcp_config = config.mcp
+
+    api_datasource_config = HttpDatasourceConfig(
+        url=mcp_config.default_api_url,
+        http=HttpConfig(
+            retry_count=0,
+        ),
+    )
+    api_datasource_config._name = 'api'
+    api_datasource = HttpDatasource(api_datasource_config)
+
+    mcp_ctx = McpContext._wrap(
+        ctx=dipdup._ctx,
+        logger=mcp._logger,
+        server=mcp.server,
+        api=api_datasource,
+    )
+    mcp.set_ctx(mcp_ctx)
+
+    if mcp_config.compatibility:
+        mcp.expose_resources_as_tools()
+
+    # NOTE: Import all submodules to find @dipdup.mcp decorators
+    dipdup._ctx.package.verify()
+
+    sse = SseServerTransport('/messages/')
+
+    async def handle_sse(request: Any) -> None:
+        async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+            await mcp.server.run(
+                read_stream=streams[0],
+                write_stream=streams[1],
+                initialization_options=mcp.server.create_initialization_options(),
+                raise_exceptions=True,
+            )
+
+    starlette_app = Starlette(
+        debug=True,
+        routes=[
+            Route('/sse', endpoint=handle_sse),
+            Mount('/messages/', app=sse.handle_post_message),
+        ],
+    )
+
+    uv_config = uvicorn.Config(
+        app=starlette_app,
+        host=mcp_config.host,
+        port=mcp_config.port,
+        log_config={'version': 1, 'disable_existing_loggers': False},
+    )
+    server = uvicorn.Server(uv_config)
+
+    logging.getLogger('uvicorn').setLevel(logging.INFO)
+    logging.getLogger('mcp').setLevel(logging.INFO)
+
+    async def wrapper() -> None:
+        async with AsyncExitStack() as stack:
+            # NOTE: Create, but don't initialize (no WS loop)
+            await dipdup._create_datasources()
+            await dipdup._set_up_database(stack)
+
+            # NOTE: Not available in `ctx.datasources`, but directly as `ctx.api`
+            await stack.enter_async_context(api_datasource)
+
+            await server.serve()
+
+    # NOTE: Run MCP in a separate thread to avoid blocking the DB connection
+    # FIXME: SIGINT ignored
+    with from_thread.start_blocking_portal() as portal:
+        portal.call(wrapper)
+
+
+@hasura.command(name='configure', context_settings=CONTEXT_SETTINGS)
 @click.option('--force', '-f', is_flag=True, help='Proceed even if Hasura is already configured.')
 @click.pass_context
 @_cli_wrapper
@@ -545,7 +681,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
     hasura_gateway = HasuraGateway(
         package=config.package,
         hasura_config=config.hasura,
-        database_config=cast(PostgresDatabaseConfig, config.database),
+        database_config=cast('PostgresDatabaseConfig', config.database),
     )
 
     async with AsyncExitStack() as stack:
@@ -561,7 +697,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
         await hasura_gateway.configure(force)
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema(ctx: click.Context) -> None:
@@ -594,7 +730,7 @@ async def schema(ctx: click.Context) -> None:
             Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
         )
 
-    from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+    from aerich import Command as AerichCommand
 
     from dipdup.database import get_tortoise_config
 
@@ -625,18 +761,18 @@ def _approve_schema_after(command: click.Command) -> click.Command:
 # NOTE: Saving 0.45s on imports and hiding from reference
 if 'schema' in sys.argv:
     try:
-        from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
+        from aerich.cli import cli as aerich_cli
 
-        schema.add_command(aerich_cli.commands['history'])
-        schema.add_command(aerich_cli.commands['heads'])
-        schema.add_command(aerich_cli.commands['migrate'])
-        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
-        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+        schema.add_command(aerich_cli.commands['history'])  # type: ignore
+        schema.add_command(aerich_cli.commands['heads'])  # type: ignore
+        schema.add_command(aerich_cli.commands['migrate'])  # type: ignore
+        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))  # type: ignore
+        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))  # type: ignore
     except ImportError:
         _logger.debug('aerich is not installed, skipping database migration commands')
 
 
-@schema.command(name='approve')
+@schema.command(name='approve', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_approve(ctx: click.Context) -> None:
@@ -669,7 +805,7 @@ async def schema_approve(ctx: click.Context) -> None:
     _logger.info('Schema approved')
 
 
-@schema.command(name='wipe')
+@schema.command(name='wipe', context_settings=CONTEXT_SETTINGS)
 @click.option('--immune', '-i', is_flag=True, help='Drop immune tables too.')
 @click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt.')
 @click.pass_context
@@ -744,7 +880,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     _logger.info('Schema wiped')
 
 
-@schema.command(name='init')
+@schema.command(name='init', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_init(ctx: click.Context) -> None:
@@ -780,7 +916,7 @@ async def schema_init(ctx: click.Context) -> None:
     _logger.info('Schema initialized')
 
 
-@schema.command(name='export')
+@schema.command(name='export', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def schema_export(ctx: click.Context) -> None:
@@ -819,7 +955,7 @@ async def schema_export(ctx: click.Context) -> None:
         echo(output)
 
 
-@cli.command()
+@cli.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Overwrite existing files.')
@@ -831,6 +967,7 @@ async def schema_export(ctx: click.Context) -> None:
     help='Use values from a replay file.',
 )
 @click.option('--template', '-t', type=str, default=None, help='Use a specific template.')
+@click.option('--name', '-n', type=str, default=None, help='Project name.')
 @_cli_wrapper
 async def new(
     ctx: click.Context,
@@ -838,33 +975,57 @@ async def new(
     force: bool,
     replay: Path | None,
     template: str | None,
+    name: str | None,
 ) -> None:
     """Create a new project interactively."""
+
+    from shutil import which
 
     from survey._widgets import Escape  # type: ignore[import-untyped]
 
     from dipdup.config import DipDupConfig
+    from dipdup.package import ROOT_CONFIG
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import get_default_answers
     from dipdup.project import render_project
+    from dipdup.project import template_from_terminal
+    from dipdup.yaml import DipDupYAMLConfig
 
-    if quiet:
-        answers = get_default_answers()
-        if template:
-            answers['template'] = template
-    elif replay:
-        answers = answers_from_replay(replay)
-        if template:
-            answers['template'] = template
-    else:
-        try:
-            answers = answers_from_terminal(template)
-        except Escape:
-            return
+    config_dict: dict[str, Any] | None = None
+
+    # NOTE: Collect answers from appropriate source
+    try:
+        if quiet:
+            answers = get_default_answers(package=name)
+        elif replay:
+            answers = answers_from_replay(replay)
+        else:
+            answers = answers_from_terminal()
+
+            # NOTE: Handle template selection for interactive mode
+            if not template:
+                template, config_dict = template_from_terminal(answers['package'])
+
+        # NOTE: Priority: CLI arg > interactive selection > default
+        template = answers['template'] = template or answers.get('template') or 'demo_blank'
+
+        _logger.info('Using template `%s`', template)
+    except Escape:
+        return
 
     _logger.info('Rendering project')
     render_project(answers, force)
+
+    if config_dict:
+        # NOTE: Preserve the header at the top of the file
+        config_dict = {
+            'package': answers['package'],
+            'spec_version': '3.0',
+            **config_dict,
+        }
+        path = env.get_package_path(config_dict['package']) / ROOT_CONFIG
+        path.write_text(DipDupYAMLConfig(**config_dict).dump())
 
     _logger.info('Initializing project')
     config = DipDupConfig.load([Path(answers['package'])])
@@ -878,14 +1039,26 @@ async def new(
         ctx=ctx,
         base=False,
         force=force,
+        no_linter=False,
+        no_base=False,
+        no_types=False,
         include=[],
     )
 
+    if which('uv'):
+        import dipdup.install
+
+        dipdup.install.run_cmd(
+            'uv lock',
+            shell=True,
+            cwd=env.get_package_path(answers['package']),
+        )
+
     green_echo('Project created successfully!')
-    green_echo(f"Enter `{answers['package']}` directory and see README.md for the next steps.")
+    green_echo(f'Enter `{answers["package"]}` directory and see README.md for the next steps.')
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def self(ctx: click.Context) -> None:
@@ -893,7 +1066,7 @@ async def self(ctx: click.Context) -> None:
     pass
 
 
-@self.command(name='install')
+@self.command(name='install', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
@@ -917,7 +1090,6 @@ async def self_install(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -926,13 +1098,10 @@ async def self_install(
         path=path,
         pre=pre,
         editable=editable,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
     )
 
 
-@self.command(name='uninstall')
+@self.command(name='uninstall', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @_cli_wrapper
@@ -946,7 +1115,7 @@ async def self_uninstall(
     dipdup.install.uninstall(quiet)
 
 
-@self.command(name='update')
+@self.command(name='update', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.option('--quiet', '-q', is_flag=True, help='Use default values for all prompts.')
 @click.option('--force', '-f', is_flag=True, help='Force reinstall.')
@@ -962,7 +1131,6 @@ async def self_update(
     import dipdup.install
     import dipdup.project
 
-    replay = dipdup.project.get_package_answers()
     dipdup.install.install(
         quiet=quiet,
         force=force,
@@ -971,69 +1139,10 @@ async def self_update(
         path=None,
         pre=pre,
         update=True,
-        with_pdm=replay is not None and replay['package_manager'] == 'pdm',
-        with_poetry=replay is not None and replay['package_manager'] == 'poetry',
-        with_uv=replay is not None and replay['package_manager'] == 'uv',
     )
 
 
-@self.command(name='env', hidden=True)
-@click.pass_context
-@_cli_wrapper
-async def self_env(ctx: click.Context) -> None:
-    import dipdup.install
-
-    env = dipdup.install.DipDupEnvironment()
-    env.refresh()
-    env.print()
-
-
-@cli.group(hidden=True)
-@click.pass_context
-@_cli_wrapper
-async def abi(ctx: click.Context) -> None:
-    pass
-
-
-@abi.command(name='lookup', hidden=True)
-@click.pass_context
-@click.argument('query', type=str)
-@_cli_wrapper
-async def abi_lookup(ctx: click.Context, query: str) -> None:
-    import subprocess
-
-    from dipdup.package import DipDupPackage
-
-    config: DipDupConfig = ctx.obj.config
-    package = DipDupPackage(config.package_path)
-    package.initialize()
-
-    abi_paths = (
-        package.abi,
-        package.abi_local,
-    )
-    # NOTE: save output instead of printing it
-    res = subprocess.run(
-        ('grep', '-n', '-r', query, *abi_paths),
-        capture_output=True,
-        check=False,
-    )
-    out = res.stdout.decode()
-    lines = out.splitlines()
-    grouped_lines = defaultdict(list)
-    for line in lines:
-        path, lineno, content = line.split(':', 2)
-        grouped_lines[path].append(f'{lineno:>6}: {content}')
-
-    for path, lines in grouped_lines.items():
-        echo('')
-        echo(path)
-        for line in sorted(lines):
-            echo('- ' + line)
-        echo('')
-
-
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def report(ctx: click.Context) -> None:
@@ -1043,7 +1152,7 @@ async def report(ctx: click.Context) -> None:
     cleanup_reports()
 
 
-@report.command(name='ls')
+@report.command(name='ls', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def report_ls(ctx: click.Context) -> None:
@@ -1069,7 +1178,7 @@ async def report_ls(ctx: click.Context) -> None:
     echo(tabulate(rows, headers=header))
 
 
-@report.command(name='show')
+@report.command(name='show', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.argument('id', type=str)
 @_cli_wrapper
@@ -1092,7 +1201,7 @@ async def report_show(ctx: click.Context, id: str) -> None:
     echo(path.read_text())
 
 
-@report.command(name='rm')
+@report.command(name='rm', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @click.argument('id', type=str, required=False)
 @click.option('--all', '-a', is_flag=True, help='Remove all reports.')
@@ -1117,7 +1226,7 @@ async def report_rm(ctx: click.Context, id: str | None, all: bool) -> None:
     path.unlink()
 
 
-@cli.group()
+@cli.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package(ctx: click.Context) -> None:
@@ -1125,7 +1234,7 @@ async def package(ctx: click.Context) -> None:
     pass
 
 
-@package.command(name='tree')
+@package.command(name='tree', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package_tree(ctx: click.Context) -> None:
@@ -1143,7 +1252,7 @@ async def package_tree(ctx: click.Context) -> None:
         echo(line)
 
 
-@package.command(name='verify')
+@package.command(name='verify', context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 @_cli_wrapper
 async def package_verify(ctx: click.Context) -> None:

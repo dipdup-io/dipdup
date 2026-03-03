@@ -11,8 +11,8 @@ from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.exceptions import InvalidRequestError
 from dipdup.models.tezos import TezosOperationData
-from dipdup.models.tezos_tzkt import HeadSubscription
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 from tests import tzkt_replay
 
 T = TypeVar('T')

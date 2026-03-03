@@ -1,7 +1,7 @@
+from dipdup.abi.substrate import extract_tuple_inner_types
+from dipdup.abi.substrate import get_type_registry
 from dipdup.config.substrate_node import SubstrateNodeDatasourceConfig
 from dipdup.datasources.substrate_node import SubstrateNodeDatasource
-from dipdup.runtimes import extract_tuple_inner_types
-from dipdup.runtimes import get_type_registry
 
 
 def get_dummy_node() -> 'SubstrateNodeDatasource':

@@ -1,4 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable first-line-h1 table-column-style -->
 | name | description | type |
 |-|-|-|
 | dipdup_datasource_head_updated_timestamp | Timestamp of the last head update | Gauge |
@@ -12,8 +12,8 @@
 | dipdup_index_levels_to_sync_total | Number of levels to reach synced state | Histogram |
 | dipdup_index_time_in_callbacks_seconds | Time spent in callbacks | Histogram |
 | dipdup_index_time_in_matcher_seconds | Time spent in matcher | Histogram |
-| dipdup_index_total_realtime_duration_seconds | Duration of the last index realtime syncronization | Histogram |
-| dipdup_index_total_sync_duration_seconds | Duration of the last index syncronization | Histogram |
+| dipdup_index_total_realtime_duration_seconds | Duration of the last index realtime synchronization | Histogram |
+| dipdup_index_total_sync_duration_seconds | Duration of the last index synchronization | Histogram |
 | dipdup_indexes_total | Number of indexes in operation by status | Gauge |
 | dipdup_levels_indexed_total | Total number of levels indexed | Gauge |
 | dipdup_levels_nonempty | Total number of nonempty levels indexed | Counter |

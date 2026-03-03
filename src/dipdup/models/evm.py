@@ -67,7 +67,7 @@ class EvmTransactionData(HasLevel):
     effective_gas_price: int | None
     from_: str
     gas: int
-    gas_price: int
+    gas_price: int | None
     gas_used: int | None
     hash: str
     input: str
@@ -107,7 +107,7 @@ class EvmTransactionData(HasLevel):
             effective_gas_price=None,
             from_=transaction_json['from'],
             gas=int(transaction_json['gas'], 16),
-            gas_price=int(transaction_json['gasPrice'], 16),
+            gas_price=int(transaction_json['gasPrice'], 16) if transaction_json.get('gasPrice') else None,
             gas_used=None,
             hash=transaction_json['hash'],
             input=transaction_json['input'],

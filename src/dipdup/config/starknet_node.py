@@ -20,14 +20,16 @@ class StarknetNodeDatasourceConfig(DatasourceConfig):
     :param ws_url: Starknet node WebSocket URL
     :param http: HTTP client configuration
     :param rollback_depth: A number of blocks to store in database for rollback
+    :param fetch_block_headers: Flag signalling that this datasource can be used for block headers fetching
     """
 
-    kind: Literal['starknet.node']
+    kind: Literal['starknet.node'] = 'starknet.node'
     url: Url
     ws_url: WsUrl | None = None
     http: HttpConfig | None = None
     # FIXME: Is default value correct?
     rollback_depth: int = 32
+    fetch_block_headers: bool = False
 
     @property
     def merge_subscriptions(self) -> bool:

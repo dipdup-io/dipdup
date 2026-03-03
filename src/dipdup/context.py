@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import Self
 from typing import TypeVar
 
 from tortoise.exceptions import OperationalError
@@ -24,6 +25,9 @@ from dipdup.config import ContractConfigU
 from dipdup.config import DipDupConfig
 from dipdup.config import HandlerConfig
 from dipdup.config import HookConfig
+from dipdup.config import ReindexingAction
+from dipdup.config import ReindexingReason
+from dipdup.config import WatchdogTrigger
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
@@ -45,8 +49,10 @@ from dipdup.config.tezos_token_transfers import TezosTokenTransfersIndexConfig
 from dipdup.datasources import Datasource
 from dipdup.datasources import IndexDatasource
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
 from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
+from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -83,8 +89,6 @@ from dipdup.models import ContractMetadata
 from dipdup.models import Head
 from dipdup.models import Index
 from dipdup.models import ModelUpdate
-from dipdup.models import ReindexingAction
-from dipdup.models import ReindexingReason
 from dipdup.models import Schema
 from dipdup.models import TokenMetadata
 from dipdup.performance import _CacheManager
@@ -93,12 +97,16 @@ from dipdup.performance import _QueueManager
 from dipdup.performance import caches
 from dipdup.performance import metrics
 from dipdup.performance import queues
+from dipdup.watchdog import WatchdogManager
+from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable
     from collections.abc import Iterable
     from collections.abc import Iterator
     from types import ModuleType
+
+    from mcp.server import Server as McpServer
 
     from dipdup.package import DipDupPackage
     from dipdup.transactions import TransactionManager
@@ -143,7 +151,7 @@ class DipDupContext:
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     """
 
@@ -187,6 +195,10 @@ class DipDupContext:
     @property
     def queues(self) -> _QueueManager:
         return queues
+
+    @property
+    def watchdog(self) -> WatchdogManager:
+        return watchdog
 
     async def restart(self) -> None:
         """Restart process and continue indexing."""
@@ -336,7 +348,6 @@ class DipDupContext:
         name: str,
         state: Index | None = None,
     ) -> IndexCls[Any, Any, Any]:
-
         index_config = self.config.get_index(name)
 
         index: IndexCls[Any, Any, Any]
@@ -491,7 +502,7 @@ class DipDupContext:
             defaults={'metadata': metadata, 'update_id': update_id},
         )
 
-    def _get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
+    def get_datasource(self, name: str, *types: type[DatasourceT]) -> DatasourceT:
         datasource = self.datasources.get(name)
         if not datasource:
             raise ConfigurationError(f'Datasource `{name}` is missing')
@@ -506,67 +517,84 @@ class DipDupContext:
 
     def get_tezos_tzkt_datasource(self, name: str) -> TezosTzktDatasource:
         """Get `tezos.tzkt` datasource by name"""
-        return self._get_datasource(name, TezosTzktDatasource)
+        return self.get_datasource(name, TezosTzktDatasource)
 
     def get_evm_subsquid_datasource(self, name: str) -> EvmSubsquidDatasource:
         """Get `evm.subsquid` datasource by name"""
-        return self._get_datasource(name, EvmSubsquidDatasource)
+        return self.get_datasource(name, EvmSubsquidDatasource)
 
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name"""
-        return self._get_datasource(name, EvmNodeDatasource)
+        return self.get_datasource(name, EvmNodeDatasource)
 
     def get_evm_etherscan_datasource(self, name: str) -> EvmEtherscanDatasource:
         """Get `evm.etherscan` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, EvmEtherscanDatasource)
+        return self.get_datasource(name, EvmEtherscanDatasource)
 
     # NOTE: Alias, remove in 9.0
     get_abi_etherscan_datasource = get_evm_etherscan_datasource
 
-    def get_evm_datasource(self, name: str) -> EvmSubsquidDatasource | EvmNodeDatasource | EvmEtherscanDatasource:
+    def get_evm_datasource(
+        self, name: str
+    ) -> (
+        EvmSubsquidDatasource
+        | EvmNodeDatasource
+        | EvmEtherscanDatasource
+        | EvmSourcifyDatasource
+        | EvmBlockvisionDatasource
+    ):
         """Get `evm` datasource by name"""
-        return self._get_datasource(name, EvmSubsquidDatasource, EvmNodeDatasource, EvmEtherscanDatasource)  # type: ignore[return-value]
+        return self.get_datasource(
+            name,
+            EvmSubsquidDatasource,
+            EvmNodeDatasource,
+            EvmEtherscanDatasource,
+            EvmSourcifyDatasource,
+            EvmBlockvisionDatasource,
+        )  # type: ignore[return-value]
 
     def get_starknet_datasource(self, name: str) -> StarknetSubsquidDatasource | StarknetNodeDatasource:
         """Get `starknet` datasource by name"""
-        return self._get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
+        return self.get_datasource(name, StarknetSubsquidDatasource, StarknetNodeDatasource)  # type: ignore[return-value]
 
     def get_substrate_datasource(
         self, name: str
     ) -> SubstrateSubsquidDatasource | SubstrateSubscanDatasource | SubstrateNodeDatasource:
         """Get `substrate` datasource by name"""
-        return self._get_datasource(name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource)  # type: ignore[return-value]
+        return self.get_datasource(
+            name, SubstrateSubsquidDatasource, SubstrateSubscanDatasource, SubstrateNodeDatasource
+        )  # type: ignore[return-value]
 
     def get_coinbase_datasource(self, name: str) -> CoinbaseDatasource:
         """Get `coinbase` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, CoinbaseDatasource)
+        return self.get_datasource(name, CoinbaseDatasource)
 
     def get_tzip_metadata_datasource(self, name: str) -> TzipMetadataDatasource:
         """Get `metadata` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, TzipMetadataDatasource)
+        return self.get_datasource(name, TzipMetadataDatasource)
 
     def get_ipfs_datasource(self, name: str) -> IpfsDatasource:
         """Get `ipfs` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, IpfsDatasource)
+        return self.get_datasource(name, IpfsDatasource)
 
     def get_http_datasource(self, name: str) -> HttpDatasource:
         """Get `http` datasource by name
 
         :param name: Name of the datasource
         """
-        return self._get_datasource(name, HttpDatasource)
+        return self.get_datasource(name, HttpDatasource)
 
     async def rollback(self, index: str, from_level: int, to_level: int) -> None:
         """Rollback index to a given level reverting all changes made since that level.
@@ -610,6 +638,11 @@ class DipDupContext:
 
     async def _hooks_loop(self) -> None:
         while True:
+            coro = await self._pending_hooks.get()
+            await coro
+
+    async def _wait_for_hooks(self) -> None:
+        while not self._pending_hooks.empty():
             coro = await self._pending_hooks.get()
             await coro
 
@@ -673,6 +706,10 @@ class DipDupContext:
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
+        if env.NO_HOOKS:
+            _logger.info('Ignoring hook `%s`, `DIPDUP_NO_HOOKS` is set', name)
+            return
+
         new_ctx = HookContext._wrap(
             self,
             logger=getLogger(module),
@@ -690,7 +727,10 @@ class DipDupContext:
                 await fn(new_ctx, **kwargs)
 
         coro = _wrapper()
-        await coro if wait else self._pending_hooks.put_nowait(coro)
+        if wait:
+            await coro
+        else:
+            await self._pending_hooks.put(coro)
 
     async def execute_sql_script(
         self,
@@ -744,11 +784,9 @@ class DipDupContext:
 
     @contextmanager
     def _callback_wrapper(self, module: str) -> Iterator[None]:
-        try:
-            yield
-        # NOTE: Do not wrap known errors like ProjectImportError
-        except FrameworkException:
-            raise
+        watchdog.heartbeat(WatchdogTrigger.callback)
+        yield
+        watchdog.reset(WatchdogTrigger.callback)
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:
@@ -779,7 +817,7 @@ class HookContext(DipDupContext):
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     :param hook_config: Configuration of the current hook
     """
@@ -811,7 +849,7 @@ class HookContext(DipDupContext):
         ctx: DipDupContext,
         logger: Logger,
         hook_config: HookConfig,
-    ) -> HookContext:
+    ) -> Self:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -842,7 +880,7 @@ class HandlerContext(DipDupContext):
     :param config: DipDup configuration
     :param package: DipDup package
     :param datasources: Mapping of available datasources
-    :param transactions: Transaction manager (don't use it directly)
+    :param transactions: Transaction manager (low-level interface)
     :param logger: Context-aware logger instance
     :param handler_config: Configuration of the current handler
     """
@@ -878,7 +916,7 @@ class HandlerContext(DipDupContext):
         ctx: DipDupContext,
         logger: Logger,
         handler_config: HandlerConfig,
-    ) -> HandlerContext:
+    ) -> Self:
         new_ctx = cls(
             config=ctx.config,
             package=ctx.package,
@@ -894,3 +932,89 @@ class HandlerContext(DipDupContext):
     def is_finalized(self) -> bool:
         # FIXME: check the datasource
         return True
+
+
+class McpContext(DipDupContext):
+    """Execution context of MCP tools, resources and prompts.
+
+    :param config: DipDup configuration
+    :param package: DipDup package
+    :param datasources: Mapping of available datasources
+    :param transactions: Transaction manager (low-level interface)
+    :param logger: Context-aware logger instance
+    :param server: Running MCP server instance
+    :param api: DipDup API datasource
+    """
+
+    def __init__(
+        self,
+        config: DipDupConfig,
+        package: DipDupPackage,
+        datasources: dict[str, Datasource[Any]],
+        transactions: TransactionManager,
+        logger: Logger,
+        server: McpServer[Any],
+        api: HttpDatasource,
+    ) -> None:
+        super().__init__(
+            config=config,
+            package=package,
+            datasources=datasources,
+            transactions=transactions,
+        )
+        self.logger = logger
+        self.server = server
+        self.api = api
+
+    @classmethod
+    def _wrap(
+        cls,
+        ctx: DipDupContext,
+        logger: Logger,
+        server: Any,
+        api: Any,
+    ) -> Self:
+        new_ctx = cls(
+            config=ctx.config,
+            package=ctx.package,
+            datasources=ctx.datasources,
+            transactions=ctx.transactions,
+            logger=logger,
+            server=server,
+            api=api,
+        )
+        ctx._link(new_ctx)
+        return new_ctx
+
+    async def call_api(
+        self,
+        method: str,
+        path: str,
+        params: dict[str, Any] | None = None,
+    ) -> str:
+        from mcp.shared.exceptions import McpError
+        from mcp.types import ErrorData
+
+        _logger.info('Calling API: %s %s', method, path)
+        res = await self.api.request(
+            method=method,
+            url=path.lstrip('/'),
+            json={k: v for k, v in (params or {}).items() if v is not None},
+            raw=True,
+        )
+        if res.status == 200:
+            return await res.text()  # type: ignore[no-any-return]
+
+        raise McpError(
+            ErrorData(
+                code=res.status,
+                message=await res.text(),
+                data=str(
+                    {
+                        'method': method,
+                        'path': path,
+                        'params': params,
+                    }
+                ),
+            )
+        )

@@ -11,7 +11,6 @@ from dipdup.models.coinbase import CoinbaseCandleData
 from dipdup.models.coinbase import CoinbaseCandleInterval
 
 CANDLES_REQUEST_LIMIT = 300
-API_URL = 'https://api.pro.coinbase.com'
 
 
 class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
@@ -27,7 +26,7 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
 
     async def get_oracle_prices(self) -> dict[str, Any]:
         return cast(
-            dict[str, Any],
+            'dict[str, Any]',
             await self.request(
                 'get',
                 url='oracle',

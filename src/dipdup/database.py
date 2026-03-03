@@ -17,7 +17,7 @@ from typing import Any
 from typing import cast
 
 import asyncpg.exceptions  # type: ignore[import-untyped]
-import sqlparse  # type: ignore[import-untyped]
+import sqlparse
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.executor import EXECUTOR_CACHE
@@ -48,7 +48,7 @@ SupportedClient = SqliteClient | AsyncpgClient
 
 
 def get_connection() -> SupportedClient:
-    return cast(SupportedClient, connections.get(DEFAULT_CONNECTION_NAME))
+    return cast('SupportedClient', connections.get(DEFAULT_CONNECTION_NAME))
 
 
 def set_connection(conn: SupportedClient) -> None:
@@ -283,7 +283,7 @@ async def pg_get_views(conn: AsyncpgClient, schema_name: str) -> list[str]:
         row[0]
         for row in (
             await conn.execute_query(
-                "SELECT table_name FROM information_schema.views WHERE table_schema ="
+                'SELECT table_name FROM information_schema.views WHERE table_schema ='
                 f" '{schema_name}' UNION SELECT matviewname as table_name FROM pg_matviews"
                 f" WHERE schemaname = '{schema_name}'"
             )

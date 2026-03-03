@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from typing import Annotated
 from typing import Literal
-from typing import TypeAlias
 
 from pydantic import AfterValidator
 from pydantic import ConfigDict
@@ -13,15 +12,23 @@ from dipdup.config import Alias
 from dipdup.config import ContractConfig
 from dipdup.config import Hex
 from dipdup.config import IndexConfig
+from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
 EVM_ADDRESS_PREFIXES = ('0x',)
 EVM_ADDRESS_LENGTH = 42
 
-EvmDatasourceConfigU: TypeAlias = EvmSubsquidDatasourceConfig | EvmNodeDatasourceConfig | EvmEtherscanDatasourceConfig
+type EvmDatasourceConfigU = (
+    EvmSubsquidDatasourceConfig
+    | EvmNodeDatasourceConfig
+    | EvmSourcifyDatasourceConfig
+    | EvmBlockvisionDatasourceConfig
+    | EvmEtherscanDatasourceConfig
+)
 
 
 def _validate_evm_address(v: str) -> str:
@@ -55,7 +62,7 @@ class EvmContractConfig(ContractConfig):
     :param typename: Alias for the contract script
     """
 
-    kind: Literal['evm']
+    kind: Literal['evm'] = 'evm'
     address: EvmAddress | None = None
     abi: EvmAddress | None = None
     typename: str | None = None

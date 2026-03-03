@@ -18,13 +18,13 @@ on:
       - '.github/workflows/installer.yml'
 
 env:
-  FRONTEND_BRANCH: ${{ github.ref_name == 'docs-next' && 'dev' || 'master' }}
+  FRONTEND_BRANCH: ${{ github.ref_name == 'docs' && 'master' || 'dev' }}
   GITHUB_TOKEN: ${{ secrets.DOCS_GITHUB_TOKEN }}
 
 jobs:
   docs:
     name: Docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       # NOTE: Uncomment for local testing with act
       # - name: Install GitHub CLI (act only)
@@ -38,17 +38,12 @@ jobs:
 
       - name: Check out the repo
         uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
           
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Install markdownlint-cli
-        run: npm install -g markdownlint-cli
+        run: npm install -g markdownlint-cli@0.47.0
 
       - name: Install project
         run: make install

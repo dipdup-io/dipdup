@@ -1,15 +1,18 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from typing import cast
 
 from demo_tezos_domains.models import Record
 from dipdup.context import HookContext
-from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
+
+if TYPE_CHECKING:
+    from dipdup.datasources.tezos_tzkt import TezosTzktDatasource
 
 
 async def check_expiration(
     ctx: HookContext,
 ) -> None:
-    ds = cast(TezosTzktDatasource, next(iter(ctx.datasources.values())))
+    ds = cast('TezosTzktDatasource', next(iter(ctx.datasources.values())))
     expiring_records = (
         await Record.filter(expired=False, domain__expires_at__lt=datetime.utcnow()).all().prefetch_related('domain')
     )

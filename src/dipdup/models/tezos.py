@@ -47,7 +47,7 @@ class TezosOperationType(Enum):
     sr_cement = 'sr_cement'
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosOperationData(HasLevel):
     """Basic structure for operations from TzKT response"""
 
@@ -65,22 +65,22 @@ class TezosOperationData(HasLevel):
     has_internals: bool | None
     storage: Any
     diffs: tuple[dict[str, Any], ...] = Field(default_factory=tuple)
-    block: str | None = None
-    sender_alias: str | None = None
-    nonce: int | None = None
-    target_alias: str | None = None
-    initiator_alias: str | None = None
-    entrypoint: str | None = None
-    parameter_json: Any | None = None
-    originated_contract_address: str | None = None
-    originated_contract_alias: str | None = None
-    originated_contract_type_hash: int | None = None
-    originated_contract_code_hash: int | None = None
-    originated_contract_tzips: tuple[str, ...] | None = None
-    delegate_address: str | None = None
-    delegate_alias: str | None = None
-    target_code_hash: int | None = None
-    sender_code_hash: int | None = None
+    block: str | None
+    sender_alias: str | None
+    nonce: int | None
+    target_alias: str | None
+    initiator_alias: str | None
+    entrypoint: str | None
+    parameter_json: Any | None
+    originated_contract_address: str | None
+    originated_contract_alias: str | None
+    originated_contract_type_hash: int | None
+    originated_contract_code_hash: int | None
+    originated_contract_tzips: tuple[str, ...] | None
+    delegate_address: str | None
+    delegate_alias: str | None
+    target_code_hash: int | None
+    sender_code_hash: int | None
     commitment_json: dict[str, Any] = Field(default_factory=dict)
 
     @classmethod
@@ -117,37 +117,37 @@ class TezosOperationData(HasLevel):
                     parameter = {}
 
         return TezosOperationData(
-            type=type_ or operation_json['type'],
-            id=operation_json['id'],
-            level=operation_json['level'],
-            timestamp=_parse_timestamp(operation_json['timestamp']),
-            block=operation_json.get('block'),
-            hash=operation_json['hash'],
-            counter=operation_json['counter'],
-            sender_address=sender_json.get('address'),
-            sender_code_hash=operation_json.get('senderCodeHash'),
-            target_address=target_json.get('address'),
-            target_code_hash=operation_json.get('targetCodeHash'),
-            initiator_address=initiator_json.get('address'),
             amount=amount,
-            status=operation_json['status'],
-            has_internals=operation_json.get('hasInternals'),
-            sender_alias=operation_json['sender'].get('alias'),
-            nonce=operation_json.get('nonce'),
-            target_alias=target_json.get('alias'),
-            initiator_alias=initiator_json.get('alias'),
-            entrypoint=entrypoint,
-            parameter_json=parameter,
-            originated_contract_address=originated_contract_json.get('address'),
-            originated_contract_alias=originated_contract_json.get('alias'),
-            originated_contract_type_hash=originated_contract_json.get('typeHash'),
-            originated_contract_code_hash=originated_contract_json.get('codeHash'),
-            originated_contract_tzips=originated_contract_json.get('tzips'),
-            storage=operation_json.get('storage'),
-            diffs=operation_json.get('diffs') or (),
+            block=operation_json.get('block'),
+            commitment_json=commitment_json,
+            counter=operation_json['counter'],
             delegate_address=delegate_json.get('address'),
             delegate_alias=delegate_json.get('alias'),
-            commitment_json=commitment_json,
+            diffs=operation_json.get('diffs') or (),
+            entrypoint=entrypoint,
+            has_internals=operation_json.get('hasInternals'),
+            hash=operation_json['hash'],
+            id=operation_json['id'],
+            initiator_address=initiator_json.get('address'),
+            initiator_alias=initiator_json.get('alias'),
+            level=operation_json['level'],
+            nonce=operation_json.get('nonce'),
+            originated_contract_address=originated_contract_json.get('address'),
+            originated_contract_alias=originated_contract_json.get('alias'),
+            originated_contract_code_hash=originated_contract_json.get('codeHash'),
+            originated_contract_tzips=originated_contract_json.get('tzips'),
+            originated_contract_type_hash=originated_contract_json.get('typeHash'),
+            parameter_json=parameter,
+            sender_address=sender_json.get('address'),
+            sender_alias=operation_json['sender'].get('alias'),
+            sender_code_hash=operation_json.get('senderCodeHash'),
+            status=operation_json['status'],
+            storage=operation_json.get('storage'),
+            target_address=target_json.get('address'),
+            target_alias=target_json.get('alias'),
+            target_code_hash=operation_json.get('targetCodeHash'),
+            timestamp=_parse_timestamp(operation_json['timestamp']),
+            type=type_ or operation_json['type'],
         )
 
     @classmethod
@@ -157,29 +157,41 @@ class TezosOperationData(HasLevel):
     ) -> 'TezosOperationData':
         """Convert raw migration message from REST into dataclass"""
         return TezosOperationData(
-            type='migration',
-            id=migration_origination_json['id'],
-            level=migration_origination_json['level'],
-            timestamp=_parse_timestamp(migration_origination_json['timestamp']),
-            block=migration_origination_json.get('block'),
-            originated_contract_address=migration_origination_json['account']['address'],
-            originated_contract_alias=migration_origination_json['account'].get('alias'),
             amount=migration_origination_json['balanceChange'],
-            storage=migration_origination_json.get('storage'),
+            block=migration_origination_json.get('block'),
+            commitment_json={},
+            counter=0,
+            delegate_address=None,
+            delegate_alias=None,
             diffs=migration_origination_json.get('diffs') or (),
-            status='applied',
+            entrypoint=None,
             has_internals=False,
             hash='[none]',
-            counter=0,
-            sender_address='[none]',
-            sender_code_hash=None,
-            target_address=None,
-            target_code_hash=None,
+            id=migration_origination_json['id'],
             initiator_address=None,
+            initiator_alias=None,
+            level=migration_origination_json['level'],
+            nonce=None,
+            originated_contract_address=migration_origination_json['account']['address'],
+            originated_contract_alias=migration_origination_json['account'].get('alias'),
+            originated_contract_code_hash=None,
+            originated_contract_tzips=None,
+            originated_contract_type_hash=None,
+            parameter_json=None,
+            sender_address='[none]',
+            sender_alias=None,
+            sender_code_hash=None,
+            status='applied',
+            storage=migration_origination_json.get('storage'),
+            target_address=None,
+            target_alias=None,
+            target_code_hash=None,
+            timestamp=_parse_timestamp(migration_origination_json['timestamp']),
+            type='migration',
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosTransaction(Generic[ParameterType, StorageType]):
     """Wrapper for matched transaction with typed data passed to the handler"""
 
@@ -188,7 +200,7 @@ class TezosTransaction(Generic[ParameterType, StorageType]):
     storage: StorageType
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosOrigination(Generic[StorageType]):
     """Wrapper for matched origination with typed data passed to the handler"""
 
@@ -196,7 +208,7 @@ class TezosOrigination(Generic[StorageType]):
     storage: StorageType
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosSmartRollupCommitment:
     id: int
     initiator_address: str
@@ -225,7 +237,7 @@ class TezosSmartRollupCommitment:
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosSmartRollupExecute:
     """Wrapper for matched smart rollup execute to the handler"""
 
@@ -241,7 +253,7 @@ class TezosSmartRollupExecute:
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosSmartRollupCement:
     """Wrapper for matched smart rollup cement to the handler"""
 
@@ -279,7 +291,7 @@ class TezosBigMapAction(Enum):
         return self in (TezosBigMapAction.ADD_KEY, TezosBigMapAction.UPDATE_KEY)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosBigMapData(HasLevel):
     """Basic structure for big map diffs from TzKT response"""
 
@@ -292,8 +304,8 @@ class TezosBigMapData(HasLevel):
     path: str
     action: TezosBigMapAction
     active: bool
-    key: Any | None = None
-    value: Any | None = None
+    key: Any | None
+    value: Any | None
 
     @classmethod
     def from_json(
@@ -319,7 +331,7 @@ class TezosBigMapData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosBigMapDiff(Generic[KeyType, ValueType]):
     """Wrapper for matched big map diff with typed data passed to the handler"""
 
@@ -329,48 +341,90 @@ class TezosBigMapDiff(Generic[KeyType, ValueType]):
     value: ValueType | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosBlockData(HasLevel):
-    """Basic structure for blocks received from TzKT REST API"""
+    """Updated structure for blocks received from TzKT REST API (1.16, Seoulnet)"""
 
     level: int
     hash: str
     timestamp: datetime
     proto: int
+    payload_round: int | None
+    block_round: int | None
     validations: int
     deposit: int
-    reward: int
+    reward_delegated: int | None
+    reward_staked_own: int | None
+    reward_staked_edge: int | None
+    reward_staked_shared: int | None
+    bonus_delegated: int | None
+    bonus_staked_own: int | None
+    bonus_staked_edge: int | None
+    bonus_staked_shared: int | None
+    reward: int | None  # legacy
+    bonus: int | None  # legacy
     fees: int
     nonce_revealed: bool
-    priority: int | None = None
-    baker_address: str | None = None
-    baker_alias: str | None = None
+    proposer_address: str | None
+    proposer_alias: str | None
+    producer_address: str | None
+    producer_alias: str | None
+    software_version: str | None
+    software_date: str | None
+    lb_toggle: bool | None
+    lb_toggle_ema: int | None
+    ai_toggle_ema: int | None
+    priority: int | None
+    baker_address: str | None  # legacy
+    baker_alias: str | None  # legacy
 
     @classmethod
     def from_json(
         cls,
         block_json: dict[str, Any],
     ) -> 'TezosBlockData':
-        """Convert raw block message from REST into dataclass"""
+        proposer = block_json.get('proposer', {})
+        producer = block_json.get('producer', {})
+        software = block_json.get('software', {})
         return TezosBlockData(
             level=block_json['level'],
             hash=block_json['hash'],
             timestamp=_parse_timestamp(block_json['timestamp']),
             proto=block_json['proto'],
-            priority=block_json.get('priority'),
+            payload_round=block_json.get('payloadRound'),
+            block_round=block_json.get('blockRound'),
             validations=block_json['validations'],
             deposit=block_json['deposit'],
-            reward=block_json['reward'],
+            reward_delegated=block_json.get('rewardDelegated'),
+            reward_staked_own=block_json.get('rewardStakedOwn'),
+            reward_staked_edge=block_json.get('rewardStakedEdge'),
+            reward_staked_shared=block_json.get('rewardStakedShared'),
+            bonus_delegated=block_json.get('bonusDelegated'),
+            bonus_staked_own=block_json.get('bonusStakedOwn'),
+            bonus_staked_edge=block_json.get('bonusStakedEdge'),
+            bonus_staked_shared=block_json.get('bonusStakedShared'),
+            reward=block_json.get('reward'),
+            bonus=block_json.get('bonus'),
             fees=block_json['fees'],
             nonce_revealed=block_json['nonceRevealed'],
+            proposer_address=proposer.get('address'),
+            proposer_alias=proposer.get('alias'),
+            producer_address=producer.get('address'),
+            producer_alias=producer.get('alias'),
+            software_version=software.get('version'),
+            software_date=software.get('date'),
+            lb_toggle=block_json.get('lbToggle'),
+            lb_toggle_ema=block_json.get('lbToggleEma'),
+            ai_toggle_ema=block_json.get('aiToggleEma'),
+            priority=block_json.get('priority'),
             baker_address=block_json.get('baker', {}).get('address'),
             baker_alias=block_json.get('baker', {}).get('alias'),
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosHeadBlockData(HasLevel):
-    """Basic structure for head block received from TzKT SignalR API"""
+    """Head block received from TzKT SignalR API (1.16, Seoulnet)"""
 
     chain: str
     chain_id: str
@@ -400,7 +454,6 @@ class TezosHeadBlockData(HasLevel):
         cls,
         head_block_json: dict[str, Any],
     ) -> 'TezosHeadBlockData':
-        """Convert raw head block message from WS/REST into dataclass"""
         return TezosHeadBlockData(
             chain=head_block_json['chain'],
             chain_id=head_block_json['chainId'],
@@ -413,7 +466,7 @@ class TezosHeadBlockData(HasLevel):
             voting_epoch=head_block_json['votingEpoch'],
             voting_period=head_block_json['votingPeriod'],
             known_level=head_block_json['knownLevel'],
-            last_sync=head_block_json['lastSync'],
+            last_sync=_parse_timestamp(head_block_json['lastSync']),
             synced=head_block_json['synced'],
             quote_level=head_block_json['quoteLevel'],
             quote_btc=Decimal(head_block_json['quoteBtc']),
@@ -427,7 +480,7 @@ class TezosHeadBlockData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosQuoteData(HasLevel):
     """Basic structure for quotes received from TzKT REST API"""
 
@@ -459,7 +512,7 @@ class TezosQuoteData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosTokenTransferData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
@@ -467,19 +520,19 @@ class TezosTokenTransferData(HasLevel):
     level: int
     timestamp: datetime
     tzkt_token_id: int
-    contract_address: str | None = None
-    contract_alias: str | None = None
-    token_id: int | None = None
-    standard: TezosTokenStandard | None = None
-    metadata: dict[str, Any] | None = None
-    from_alias: str | None = None
-    from_address: str | None = None
-    to_alias: str | None = None
-    to_address: str | None = None
-    amount: int | None = None
-    tzkt_transaction_id: int | None = None
-    tzkt_origination_id: int | None = None
-    tzkt_migration_id: int | None = None
+    contract_address: str | None
+    contract_alias: str | None
+    token_id: int | None
+    standard: TezosTokenStandard | None
+    metadata: dict[str, Any] | None
+    from_alias: str | None
+    from_address: str | None
+    to_alias: str | None
+    to_address: str | None
+    amount: int | None
+    tzkt_transaction_id: int | None
+    tzkt_origination_id: int | None
+    tzkt_migration_id: int | None
 
     @classmethod
     def from_json(cls, token_transfer_json: dict[str, Any]) -> 'TezosTokenTransferData':
@@ -514,7 +567,7 @@ class TezosTokenTransferData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosTokenBalanceData(HasLevel):
     """Basic structure for token transver received from TzKT SignalR API"""
 
@@ -525,17 +578,17 @@ class TezosTokenBalanceData(HasLevel):
     # NOTE: Level of the block where the token balance has been changed for the last time.
     last_level: int
     last_time: datetime
-    account_address: str | None = None
-    account_alias: str | None = None
-    tzkt_token_id: int | None = None
-    contract_address: str | None = None
-    contract_alias: str | None = None
-    token_id: int | None = None
-    standard: TezosTokenStandard | None = None
-    metadata: dict[str, Any] | None = None
+    account_address: str | None
+    account_alias: str | None
+    tzkt_token_id: int | None
+    contract_address: str | None
+    contract_alias: str | None
+    token_id: int | None
+    standard: TezosTokenStandard | None
+    metadata: dict[str, Any] | None
 
-    balance: str | None = None
-    balance_value: float | None = None
+    balance: str | None
+    balance_value: float | None
 
     @property
     def level(self) -> int:  # type: ignore[override]
@@ -569,7 +622,7 @@ class TezosTokenBalanceData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosEventData(HasLevel):
     """Basic structure for events received from TzKT REST API"""
 
@@ -579,9 +632,9 @@ class TezosEventData(HasLevel):
     tag: str
     payload: Any | None
     contract_address: str
-    contract_alias: str | None = None
-    contract_code_hash: int | None = None
-    transaction_id: int | None = None
+    contract_alias: str | None
+    contract_code_hash: int | None
+    transaction_id: int | None
 
     @classmethod
     def from_json(cls, event_json: dict[str, Any]) -> 'TezosEventData':
@@ -599,13 +652,13 @@ class TezosEventData(HasLevel):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosEvent(Generic[EventType]):
     data: TezosEventData
     payload: EventType
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TezosUnknownEvent:
     data: TezosEventData
     payload: Any | None

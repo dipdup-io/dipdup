@@ -170,6 +170,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         metrics.levels_nonempty += 1
         metrics.time_in_callbacks[self.name] += time.time() - started_at
 
+        await self._ctx._wait_for_hooks()
+
     @property
     def name(self) -> str:
         return self._config.name
@@ -218,7 +220,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         # NOTE: Multiple sync levels means index with new subscriptions was added in runtime.
         # NOTE: Choose the highest level; outdated realtime messages will be dropped from the queue anyway.
-        return max(cast(set[int], sync_levels))
+        return max(cast('set[int]', sync_levels))
 
     async def initialize_state(self, state: models.Index | None = None) -> None:
         if self._state:
@@ -238,7 +240,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             type=self._config.kind,
             defaults={
                 'level': index_level,
-                'config_hash': self._config.hash(),
+                'config_hash': self._config.hashes()[-1],
                 'template': self._config._parent.name if self._config._parent else None,
                 'template_values': self._config._template_values,
             },

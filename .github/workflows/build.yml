@@ -5,9 +5,7 @@ concurrency:
 on:
   push:
     branches:
-      - '**'
-    tags:
-      - '*.*.*'
+      - 'next'
     paths:
       - 'src/**'
       - 'Dockerfile'
@@ -19,7 +17,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}
@@ -65,3 +63,4 @@ jobs:
           cache-to: type=gha,mode=max
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+ 

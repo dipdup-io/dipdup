@@ -41,11 +41,21 @@ yaml_dumper.default_flow_style = False
 yaml_dumper.indent(mapping=2, sequence=4, offset=2)
 
 
-def exclude_none(config_json: Any) -> Any:
+def filter_config_json(config_json: Any, strip_secrets: bool = False) -> Any:
+    """Exclude `None` values, private fields and secrets from config JSON."""
+    secrets = {'password', 'api_key', 'secret'}
     if isinstance(config_json, list | tuple):
-        return [exclude_none(i) for i in config_json if i is not None]
+        return [
+            filter_config_json(i, strip_secrets)
+            for i in config_json
+            if i is not None and not (strip_secrets and isinstance(i, str) and any(s in i for s in secrets))
+        ]
     if isinstance(config_json, dict):
-        return {k: exclude_none(v) for k, v in config_json.items() if v is not None}
+        return {
+            k: filter_config_json(v, strip_secrets)
+            for k, v in config_json.items()
+            if v is not None and not k.startswith('_') and not (strip_secrets and any(s in k for s in secrets))
+        }
     return config_json
 
 
@@ -77,8 +87,8 @@ def read_config_yaml(path: Path) -> str:
         raise ConfigurationError(f'Config file `{path}` is not readable: {e}') from e
 
 
-def dump(value: dict[str, Any]) -> str:
-    value = exclude_none(value)
+def dump(value: dict[str, Any], strip_secrets: bool = False) -> str:
+    value = filter_config_json(value, strip_secrets)
     buffer = StringIO()
     yaml_dumper.dump(value, buffer)
     return buffer.getvalue()
@@ -141,7 +151,6 @@ class DipDupYAMLConfig(dict[str, Any]):
         raw: bool = False,
         unsafe: bool = False,
     ) -> tuple[DipDupYAMLConfig, dict[str, Any]]:
-
         config = cls()
         config_environment: dict[str, str] = {}
 
@@ -162,5 +171,5 @@ class DipDupYAMLConfig(dict[str, Any]):
 
         return config, config_environment
 
-    def dump(self) -> str:
-        return dump(self)
+    def dump(self, strip_secrets: bool = False) -> str:
+        return dump(self, strip_secrets)

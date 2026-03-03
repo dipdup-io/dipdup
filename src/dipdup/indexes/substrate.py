@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 from typing import Generic
 from typing import TypeVar
 
+from dipdup.abi.substrate import SubstrateRuntime
 from dipdup.config import SubstrateIndexConfigU
 from dipdup.datasources.substrate_node import SubstrateNodeDatasource
 from dipdup.datasources.substrate_subscan import SubstrateSubscanDatasource
 from dipdup.datasources.substrate_subsquid import SubstrateSubsquidDatasource
 from dipdup.index import IndexQueueItemT
 from dipdup.indexes._subsquid import SubsquidIndex
-from dipdup.runtimes import SubstrateRuntime
 
 SubstrateDatasource = SubstrateSubsquidDatasource | SubstrateSubscanDatasource | SubstrateNodeDatasource
 

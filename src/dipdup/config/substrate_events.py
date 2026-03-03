@@ -12,7 +12,7 @@ from dipdup.config import HandlerConfig
 from dipdup.config.substrate import SubstrateDatasourceConfigU
 from dipdup.config.substrate import SubstrateIndexConfig
 from dipdup.config.substrate import SubstrateRuntimeConfig
-from dipdup.models.substrate_node import SubstrateNodeHeadSubscription
+from dipdup.subscriptions.substrate_node import SubstrateNodeHeadSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -40,7 +40,7 @@ class SubstrateEventsHandlerConfig(HandlerConfig):
         event_cls = snake_to_pascal(self.name) + 'Payload'
         event_module = pascal_to_snake(self.name.replace('.', ''))
 
-        parent = cast(SubstrateIndexConfig, self.parent)
+        parent = cast('SubstrateIndexConfig', self.parent)
         yield f'{package}.types.{parent.runtime.name}.substrate_events.{event_module}', event_cls
 
     def iter_arguments(self) -> Iterator[tuple[str, str]]:
@@ -62,7 +62,7 @@ class SubstrateEventsIndexConfig(SubstrateIndexConfig):
     :param runtime: Substrate runtime
     """
 
-    kind: Literal['substrate.events']
+    kind: Literal['substrate.events'] = 'substrate.events'
     datasources: tuple[Alias[SubstrateDatasourceConfigU], ...]
     handlers: tuple[SubstrateEventsHandlerConfig, ...]
     runtime: Alias[SubstrateRuntimeConfig]

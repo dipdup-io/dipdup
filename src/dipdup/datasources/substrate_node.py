@@ -4,7 +4,6 @@ import math
 from asyncio import Queue
 from collections.abc import Awaitable
 from collections.abc import Callable
-from contextlib import suppress
 from copy import copy
 from dataclasses import dataclass
 from dataclasses import field
@@ -24,10 +23,10 @@ from dipdup.models.substrate import SubstrateEventData
 from dipdup.models.substrate import SubstrateHeadBlockData
 from dipdup.models.substrate import _BlockHeader
 from dipdup.models.substrate import _SubstrateNodeEventResponse
-from dipdup.models.substrate_node import SubstrateNodeHeadSubscription
-from dipdup.models.substrate_node import SubstrateNodeSubscription
 from dipdup.pysignalr import Message
 from dipdup.pysignalr import WebsocketMessage
+from dipdup.subscriptions.substrate_node import SubstrateNodeHeadSubscription
+from dipdup.subscriptions.substrate_node import SubstrateNodeSubscription
 
 if TYPE_CHECKING:
     from aiosubstrate.base import SubstrateInterface
@@ -178,7 +177,6 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
         data = message.data
 
         if 'id' in data:
-
             # NOTE: Save subscription id
             if self._pending_subscription:
                 self._subscription_ids[data['result']] = self._pending_subscription
@@ -235,20 +233,14 @@ class SubstrateNodeDatasource(JsonRpcDatasource[SubstrateNodeDatasourceConfig]):
         return await self._jsonrpc_request('chain_getBlock', [hash])  # type: ignore[no-any-return]
 
     async def get_events(self, block_hash: str) -> tuple[_SubstrateNodeEventResponse, ...]:
-        # FIXME: aiosubstrate bug, fix asap
-        while True:
-            with suppress(AttributeError):
-                events = await self._interface.get_events(block_hash)
-                break
-            await asyncio.sleep(0.1)
-
+        events = await self._interface.get_events(block_hash)
         result: list[_SubstrateNodeEventResponse] = []
-        for raw_event in events:
+        for index, raw_event in enumerate(events):
             event: dict[str, Any] = raw_event.decode()
             result.append(
                 {
-                    'name': f'{event['module_id']}.{event['event_id']}',
-                    'index': event['event_index'],
+                    'name': f'{event["module_id"]}.{event["event_id"]}',
+                    'index': index,
                     'extrinsic_index': event['extrinsic_idx'],
                     'decoded_args': event['attributes'],
                 }

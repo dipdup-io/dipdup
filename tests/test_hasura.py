@@ -13,11 +13,11 @@ from tortoise import Tortoise
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ReindexingAction
+from dipdup.config import ReindexingReason
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
-from dipdup.models import ReindexingAction
-from dipdup.models import ReindexingReason
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import run_hasura_container
 from dipdup.test import run_postgres_container
@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 
 async def test_configure_hasura() -> None:
     if os.uname().sysname != 'Linux' or 'microsoft' in os.uname().release:  # check for WSL, Windows, mac and else
-        pytest.skip('Test is not supported for os archetecture', allow_module_level=True)
+        pytest.skip('Test is not supported for os architecture', allow_module_level=True)
 
-    config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yml'
+    config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yaml'
 
     config = DipDupConfig.load([config_path])
     config.database = await run_postgres_container()

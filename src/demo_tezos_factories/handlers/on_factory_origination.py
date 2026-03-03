@@ -12,8 +12,8 @@ async def on_factory_origination(
     origination_1: TezosOperationData,
 ) -> None:
     assert transaction_0.parameter_json
-    dex_contract = cast(str, origination_1.originated_contract_address)
-    token_contract = cast(str, transaction_0.parameter_json['token']['address'])
+    dex_contract = cast('str', origination_1.originated_contract_address)
+    token_contract = cast('str', transaction_0.parameter_json['token']['address'])
 
     await ctx.add_contract(
         kind='tezos',

@@ -2,7 +2,7 @@ import pytest
 
 from dipdup.datasources.tezos_tzkt import BufferedMessage
 from dipdup.datasources.tezos_tzkt import MessageBuffer
-from dipdup.models.tezos_tzkt import TezosTzktMessageType
+from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 
 
 @pytest.fixture

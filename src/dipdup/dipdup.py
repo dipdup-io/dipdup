@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import logging.config
 import time
 from asyncio import CancelledError
 from asyncio import Event
@@ -24,15 +25,19 @@ from tortoise.exceptions import OperationalError
 from dipdup import env
 from dipdup.codegen import CodeGenerator
 from dipdup.codegen import CommonCodeGenerator
-from dipdup.codegen import generate_environments
 from dipdup.config import SYSTEM_HOOKS
 from dipdup.config import DipDupConfig
 from dipdup.config import IndexTemplateConfig
 from dipdup.config import PostgresDatabaseConfig
+from dipdup.config import ReindexingReason
 from dipdup.config import SqliteDatabaseConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm import EvmIndexConfig
 from dipdup.config.starknet import StarknetContractConfig
+from dipdup.config.starknet import StarknetIndexConfig
+from dipdup.config.substrate import SubstrateIndexConfig
 from dipdup.config.tezos import TezosContractConfig
+from dipdup.config.tezos import TezosIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.database import generate_schema
@@ -67,7 +72,6 @@ from dipdup.models import Index as IndexState
 from dipdup.models import IndexStatus
 from dipdup.models import MessageType
 from dipdup.models import Meta
-from dipdup.models import ReindexingReason
 from dipdup.models import RollbackMessage
 from dipdup.models import Schema
 from dipdup.models.evm import EvmEventData
@@ -88,6 +92,7 @@ from dipdup.performance import metrics
 from dipdup.scheduler import SchedulerManager
 from dipdup.sys import fire_and_forget
 from dipdup.transactions import TransactionManager
+from dipdup.watchdog import watchdog
 
 if TYPE_CHECKING:
     from dipdup.index import Index
@@ -96,6 +101,7 @@ METRICS_INTERVAL = 1.0 if env.DEBUG else 5.0
 STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
+WATCHDOG_INTERVAL = 5
 
 _logger = logging.getLogger(__name__)
 
@@ -119,7 +125,7 @@ class IndexDispatcher:
 
     async def run(
         self,
-        spawn_datasources_event: Event,
+        start_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool = False,
     ) -> None:
@@ -138,11 +144,11 @@ class IndexDispatcher:
                 await self._apply_filters(index)
 
         while True:
-            if not spawn_datasources_event.is_set() and not self.is_oneshot():
+            if not start_datasources_event.is_set() and not self.is_oneshot():
                 if self._every_index_is(IndexStatus.realtime) or early_realtime:
-                    spawn_datasources_event.set()
+                    start_datasources_event.set()
 
-            if spawn_datasources_event.is_set():
+            if start_datasources_event.is_set():
                 for datasource in self._ctx.datasources.values():
                     if not isinstance(datasource, IndexDatasource):
                         continue
@@ -196,7 +202,7 @@ class IndexDispatcher:
         from dipdup.config.tezos_head import TezosHeadIndexConfig
 
         # NOTE: Empty config means indexes will be spawned later via API.
-        if not self._indexes:
+        if not self._indexes or self._ctx.config.api:
             return False
 
         if not self._ctx._pending_indexes.empty():
@@ -222,13 +228,12 @@ class IndexDispatcher:
             await self._ctx.transactions.cleanup()
 
     async def _update_metrics(self) -> None:
-        if not self._indexes:
-            return
-        if not all(i.state.level for i in self._indexes.values()):
+        if not self._indexes or not all(i.state.level for i in self._indexes.values()):
             return
 
         active, synced, realtime = 0, 0, 0
         levels_indexed, levels_total, levels_interval = 0, 0, 0
+
         for index in self._indexes.values():
             if index.is_active:
                 active += 1
@@ -247,7 +252,7 @@ class IndexDispatcher:
 
             initial_level = self._initial_levels[index.name]
             if not initial_level:
-                self._initial_levels[index.name] |= index.state.level
+                self._initial_levels[index.name] = index.state.level
                 continue
 
             levels_interval += index.state.level - self._previous_levels[index.name]
@@ -263,18 +268,15 @@ class IndexDispatcher:
         update_interval = time.time() - float(metrics.metrics_updated_at)
         metrics.metrics_updated_at = time.time()
 
-        last_levels_nonempty, last_objects_indexed = self._last_levels_nonempty, self._last_objects_indexed
-        batch_levels_nonempty = metrics.levels_nonempty - last_levels_nonempty
-        batch_objects = metrics.objects_indexed - last_objects_indexed
+        batch_levels_nonempty = metrics.levels_nonempty - self._last_levels_nonempty
+        batch_objects = metrics.objects_indexed - self._last_objects_indexed
 
         levels_speed = levels_interval / update_interval
         levels_speed_average = levels_indexed / (time.time() - self._started_at)
         time_passed = time.time() - self._started_at
-        time_left, progress = 0.0, 0.0
-        if levels_speed_average:
-            time_left = (levels_total - levels_indexed) / levels_speed_average
-        if levels_total:
-            progress = levels_indexed / levels_total
+
+        time_left = (levels_total - levels_indexed) / levels_speed_average if levels_speed_average else 0.0
+        progress = levels_indexed / levels_total if levels_total else 0.0
 
         # FIXME: Only with Etherlink demo. Why?
         if levels_total <= 0:
@@ -304,30 +306,35 @@ class IndexDispatcher:
         )
 
     async def _status_loop(self, update_interval: float) -> None:
+        last_status = ''
+
         while True:
             await asyncio.sleep(update_interval)
-            self._log_status()
+            status = self._get_status()
+            if status == last_status:
+                continue
+            last_status = status
+            _logger.info(status)
 
-    def _log_status(self) -> None:
+    def _get_status(self) -> str:
         total, indexed = int(metrics.levels_total), int(metrics.levels_indexed)
-        if metrics.realtime_at:
-            _logger.info('realtime: %s levels indexed and counting', indexed)
-            return
-
         progress, left = float(metrics.progress) * 100, total - indexed
         scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
+
+        if metrics.realtime_at:
+            return f'realtime: {scanned_levels} levels indexed and counting'
+
         if not progress:
             if self._indexes:
                 if scanned_levels:
                     msg = f'indexing: {scanned_levels} levels, estimating...'
                 elif metrics.objects_indexed:
-                    msg = f'indexing: {metrics.objects_indexed} objects, estimating...'
+                    msg = f'indexing: {int(metrics.objects_indexed)} objects, estimating...'
                 else:
                     msg = 'indexing: warming up...'
             else:
                 msg = 'no indexes, idling'
-            _logger.info(msg)
-            return
+            return msg
 
         levels_speed, objects_speed = float(metrics.levels_nonempty_speed), float(metrics.objects_speed)
         msg = 'last mile' if metrics.synchronized_at else 'indexing'
@@ -340,7 +347,7 @@ class IndexDispatcher:
             return '    0' if speed < 0.1 else f'{speed:5.{0 if speed >= 1 else 1}f}'
 
         msg += f' {fmt(levels_speed)} L {fmt(objects_speed)} O'
-        _logger.info(msg)
+        return msg
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
@@ -406,17 +413,17 @@ class IndexDispatcher:
                 if isinstance(index_config, IndexTemplateConfig):
                     raise ConfigInitializationException
 
-                new_hash = index_config.hash()
+                new_hashes = index_config.hashes()
                 if not index_state.config_hash:
-                    index_state.config_hash = new_hash
+                    index_state.config_hash = new_hashes[-1]
                     await index_state.save()
-                elif new_hash != index_state.config_hash:
+                elif index_state.config_hash not in new_hashes:
                     await self._ctx.reindex(
                         ReindexingReason.config_modified,
                         message='Config hash mismatch',
                         index_name=index_state.name,
                         old_hash=index_state.config_hash,
-                        new_hash=new_hash,
+                        new_hash=new_hashes[-1],
                     )
 
             # NOTE: Templated index: recreate index config, verify hash
@@ -657,7 +664,9 @@ class DipDup:
     async def init(
         self,
         force: bool = False,
-        base: bool = False,
+        no_linter: bool = False,
+        no_base: bool = False,
+        no_types: bool = False,
         include: set[str] | None = None,
     ) -> None:
         """Create new or update existing dipdup project"""
@@ -675,13 +684,25 @@ class DipDup:
             package = DipDupPackage(self._config.package_path)
             package.load_abis()
 
-            codegen_classes: tuple[type[CodeGenerator], ...] = (  # type: ignore[assignment]
-                CommonCodeGenerator,
-                EvmCodeGenerator,
-                StarknetCodeGenerator,
-                SubstrateCodeGenerator,
-                TezosCodeGenerator,
-            )
+            codegen_classes: set[type[CodeGenerator]] = set()
+
+            for index_config in self._config.indexes.values():
+                if isinstance(index_config, IndexTemplateConfig):
+                    index_config = self._config.templates[index_config.template]
+
+                if isinstance(index_config, TezosIndexConfig):
+                    codegen_classes.add(TezosCodeGenerator)
+                elif isinstance(index_config, EvmIndexConfig):
+                    codegen_classes.add(EvmCodeGenerator)
+                elif isinstance(index_config, StarknetIndexConfig):
+                    codegen_classes.add(StarknetCodeGenerator)
+                elif isinstance(index_config, SubstrateIndexConfig):
+                    codegen_classes.add(SubstrateCodeGenerator)
+                else:
+                    msg = f'Unsupported index config: {index_config}'
+                    raise FrameworkException(msg)
+
+            codegen_classes = (CommonCodeGenerator,) if no_types else (CommonCodeGenerator, *tuple(codegen_classes))  # type: ignore[assignment]
             for codegen_cls in codegen_classes:
                 codegen = codegen_cls(
                     config=self._config,
@@ -691,10 +712,15 @@ class DipDup:
                 )
                 await codegen.init(
                     force=force,
-                    base=base,
+                    no_linter=no_linter,
+                    no_base=no_base,
                 )
+                if include and isinstance(codegen, CommonCodeGenerator):
+                    _logger.info('Run `init` command without arguments to perform a full initialization')
+                    return
 
-            await generate_environments(self._config, package)
+            if not (env.NO_LINTER or no_linter):
+                codegen._package.format_lint()
 
     async def run(self) -> None:
         """Run indexing process"""
@@ -731,17 +757,17 @@ class DipDup:
 
             if self._index_dispatcher.is_oneshot():
                 start_scheduler_event = Event()
-                spawn_datasources_event = Event()
+                start_datasources_event = Event()
             else:
-                start_scheduler_event = await self._set_up_scheduler(tasks)
-                spawn_datasources_event = await self._spawn_datasources(tasks)
+                start_scheduler_event = await self._start_scheduler(tasks)
+                start_datasources_event = await self._start_datasources(tasks)
 
                 if not advanced.postpone_jobs:
                     start_scheduler_event.set()
 
             await self._set_up_background_tasks(
                 tasks=tasks,
-                spawn_datasources_event=spawn_datasources_event,
+                start_datasources_event=start_datasources_event,
                 start_scheduler_event=start_scheduler_event,
                 early_realtime=advanced.early_realtime,
             )
@@ -840,31 +866,50 @@ class DipDup:
         from prometheus_client import start_http_server
 
         _logger.info(
-            'Setting up Prometheus at http://%s:%s', self._config.prometheus.host, self._config.prometheus.port
+            'Setting up Prometheus at http://%s:%s',
+            self._config.prometheus.host,
+            self._config.prometheus.port,
         )
-        start_http_server(self._config.prometheus.port, self._config.prometheus.host)
+        start_http_server(
+            self._config.prometheus.port,
+            self._config.prometheus.host,
+        )
 
     async def _set_up_api(self, stack: AsyncExitStack) -> None:
         api_config = self._config.api
-        if not api_config or env.TEST or env.CI:
+        if not api_config or env.TEST or env.is_in_gha():
             return
 
-        _logger.info('Setting up internal API at http://%s:%s', api_config.host, api_config.port)
+        _logger.info(
+            'Setting up internal API at http://%s:%s',
+            api_config.host,
+            api_config.port,
+        )
 
-        from aiohttp import web
+        import uvicorn
 
         from dipdup.api import create_api
 
         api = await create_api(self._ctx)
-        runner = web.AppRunner(api)
-        await runner.setup()
-        site = web.TCPSite(runner, api_config.host, api_config.port)
+
+        uv_config = uvicorn.Config(
+            app=api,
+            host=api_config.host,
+            port=api_config.port,
+            log_config={'version': 1, 'disable_existing_loggers': False},
+            lifespan='off',
+        )
+        server = uvicorn.Server(uv_config)
 
         @asynccontextmanager
         async def _api_wrapper() -> AsyncIterator[None]:
-            await site.start()
-            yield
-            await site.stop()
+            with suppress(KeyboardInterrupt, CancelledError):
+                api_task = create_task(
+                    server.serve(),
+                    name='api:server',
+                )
+                yield
+                api_task.cancel()
 
         await stack.enter_async_context(_api_wrapper())
 
@@ -890,12 +935,16 @@ class DipDup:
 
     async def _initialize_datasources(self) -> None:
         init_tzkt = False
+        tasks = []
         for datasource in self._datasources.values():
             if not isinstance(datasource, IndexDatasource):
                 continue
-            await datasource.initialize()
+            tasks.append(create_task(datasource.initialize()))
             if isinstance(datasource, TezosTzktDatasource):
                 init_tzkt = True
+
+        if tasks:
+            await gather(*tasks)
 
         if init_tzkt:
             await late_tzkt_initialization(
@@ -907,7 +956,7 @@ class DipDup:
     async def _set_up_background_tasks(
         self,
         tasks: set[Task[None]],
-        spawn_datasources_event: Event,
+        start_datasources_event: Event,
         start_scheduler_event: Event,
         early_realtime: bool,
     ) -> None:
@@ -917,7 +966,7 @@ class DipDup:
             tasks.add(create_task(coro, name=f'loop:{coro.__name__.strip("_")}'))
 
         # NOTE: The main loop; cancels other tasks on exit.
-        _add_task(index_dispatcher.run(spawn_datasources_event, start_scheduler_event, early_realtime))
+        _add_task(index_dispatcher.run(start_datasources_event, start_scheduler_event, early_realtime))
 
         # NOTE: Monitoring tasks
         _add_task(index_dispatcher._metrics_loop(METRICS_INTERVAL))
@@ -931,16 +980,36 @@ class DipDup:
         # NOTE: Preloading `CachedModel`
         _add_task(preload_cached_models(self._config.package))
 
-    async def _spawn_datasources(self, tasks: set[Task[None]]) -> Event:
+        # NOTE: Watchdog
+        watchdog.initialize(self._ctx.config.advanced.watchdog)
+        _add_task(watchdog.run(WATCHDOG_INTERVAL))
+
+    async def _start_datasources(self, tasks: set[Task[None]]) -> Event:
         event = Event()
 
         async def _event_wrapper() -> None:
-            _logger.info('Waiting for indexes to synchronize before spawning datasources')
+            _logger.info('Waiting for indexes to synchronize before starting datasources')
             await event.wait()
 
-            _logger.info('Spawning datasources')
             _run_tasks: deque[Task[None]] = deque()
+            index_datasources: set[str] = set()
+            for index_config in self._config.indexes.values():
+                index_datasources.update(d.name for d in index_config.datasources)  # type: ignore[union-attr]
+
+            _logger.info('Starting datasources: %s of %s used', len(index_datasources), len(self._datasources))
+
             for datasource in self._datasources.values():
+                if not isinstance(datasource, IndexDatasource):
+                    _logger.debug('Skipping datasource %s: not an IndexDatasource', datasource.name)
+                    continue
+                if datasource._config.realtime is False:
+                    _logger.debug('Skipping datasource %s: realtime is disabled', datasource.name)
+                    continue
+                if datasource.name not in index_datasources and datasource._config.realtime is not True:
+                    _logger.debug('Skipping datasource %s: not used by any index', datasource.name)
+                    continue
+
+                _logger.info('Starting datasource: %s', datasource.name)
                 _run_tasks.append(
                     create_task(
                         datasource.run(),
@@ -967,7 +1036,7 @@ class DipDup:
 
         migrations_dir = self._ctx.package.migrations
         try:
-            from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+            from aerich import Command as AerichCommand
 
             tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
             aerich_command = AerichCommand(
@@ -985,7 +1054,7 @@ class DipDup:
             if Path(e.filename).is_relative_to(migrations_dir):
                 _logger.debug("Database migrations already initialized at '%s'", migrations_dir)
 
-    async def _set_up_scheduler(self, tasks: set[Task[None]]) -> Event:
+    async def _start_scheduler(self, tasks: set[Task[None]]) -> Event:
         event = Event()
         scheduler = SchedulerManager(
             jobs=self._config.jobs,

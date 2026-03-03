@@ -19,10 +19,10 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
-from dipdup.models.tezos_tzkt import OriginationSubscription
-from dipdup.models.tezos_tzkt import SmartRollupCementSubscription
-from dipdup.models.tezos_tzkt import SmartRollupExecuteSubscription
-from dipdup.models.tezos_tzkt import TransactionSubscription
+from dipdup.subscriptions.tezos_tzkt import OriginationSubscription
+from dipdup.subscriptions.tezos_tzkt import SmartRollupCementSubscription
+from dipdup.subscriptions.tezos_tzkt import SmartRollupExecuteSubscription
+from dipdup.subscriptions.tezos_tzkt import TransactionSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -139,7 +139,7 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
             yield self.format_parameter_import(
                 package,
                 module_name,
-                cast(str, self.entrypoint),
+                cast('str', self.entrypoint),
                 self.alias,
             )
             yield self.format_storage_import(package, module_name)
@@ -151,7 +151,7 @@ class TezosOperationsHandlerTransactionPatternConfig(TezosOperationsPatternConfi
             module_name = self.typed_contract.module_name
             yield self.format_operation_argument(
                 module_name,
-                cast(str, self.entrypoint),
+                cast('str', self.entrypoint),
                 self.optional,
                 self.alias,
             )
@@ -306,7 +306,7 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.operations']
+    kind: Literal['tezos.operations'] = 'tezos.operations'
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     handlers: tuple[TezosOperationsHandlerConfig, ...]
     contracts: list[Alias[TezosContractConfig]] = Field(default_factory=list)
@@ -353,8 +353,8 @@ class TezosOperationsIndexConfig(TezosIndexConfig):
         return subs
 
     @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        super().strip(config_dict)
+    def _strip_v1(cls, config_dict: dict[str, Any]) -> None:
+        super()._strip_v1(config_dict)
         for handler in config_dict['handlers']:
             for item in handler['pattern']:
                 item.pop('alias', None)
@@ -431,7 +431,7 @@ class TezosOperationsUnfilteredIndexConfig(TezosIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['tezos.operations_unfiltered']
+    kind: Literal['tezos.operations_unfiltered'] = 'tezos.operations_unfiltered'
     datasources: tuple[Alias[TezosTzktDatasourceConfig], ...]
     callback: str
     types: tuple[TezosOperationType, ...] = (TezosOperationType.transaction,)

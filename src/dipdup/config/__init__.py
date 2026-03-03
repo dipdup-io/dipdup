@@ -23,6 +23,7 @@ from abc import ABC
 from abc import abstractmethod
 from collections import defaultdict
 from contextlib import suppress
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from types import NoneType
@@ -30,8 +31,10 @@ from typing import TYPE_CHECKING
 from typing import Annotated
 from typing import Any
 from typing import Literal
+from typing import Self
 from typing import TypeVar
 from typing import cast
+from typing import get_args
 from urllib.parse import quote_plus
 
 import orjson
@@ -47,14 +50,13 @@ from pydantic_core import to_jsonable_python
 from dipdup import __spec_version__
 from dipdup import env
 from dipdup.config._mixin import CallbackMixin
+from dipdup.config._mixin import InteractiveMixin
 from dipdup.config._mixin import NameMixin
 from dipdup.config._mixin import ParentMixin
+from dipdup.config._mixin import TerminalOptions
 from dipdup.exceptions import ConfigInitializationException
 from dipdup.exceptions import ConfigurationError
 from dipdup.exceptions import IndexAlreadyExistsError
-from dipdup.models import ReindexingAction
-from dipdup.models import ReindexingReason
-from dipdup.models import SkipHistory
 from dipdup.utils import pascal_to_snake
 from dipdup.yaml import DipDupYAMLConfig
 
@@ -68,9 +70,15 @@ DEFAULT_POSTGRES_DATABASE = 'postgres'
 DEFAULT_POSTGRES_USER = 'postgres'
 DEFAULT_POSTGRES_PORT = 5432
 DEFAULT_SQLITE_PATH = ':memory:'
+DEFAULT_API_PORT = 46339  # dial INDEX 😎
+DEFAULT_MCP_PORT = 9999
+DEFAULT_PROMETHEUS_PORT = 8000
+LOCAL = '127.0.0.1'
 
 
 def _valid_url(v: str, ws: bool) -> str:
+    if not v:
+        raise ConfigurationError('URL is required')
     if not ws and not v.startswith(('http://', 'https://')):
         raise ConfigurationError(f'`{v}` is not a valid HTTP URL')
     if ws and not v.startswith(('ws://', 'wss://')):
@@ -100,7 +108,7 @@ class SqliteDatabaseConfig:
     :param immune_tables: List of tables to preserve during reindexing
     """
 
-    kind: Literal['sqlite']
+    kind: Literal['sqlite'] = 'sqlite'
     path: str = DEFAULT_SQLITE_PATH
     immune_tables: set[str] = Field(default_factory=set)
 
@@ -139,7 +147,7 @@ class PostgresDatabaseConfig:
     :param connection_timeout: Connection timeout
     """
 
-    kind: Literal['postgres']
+    kind: Literal['postgres'] = 'postgres'
     host: str
     user: str = DEFAULT_POSTGRES_USER
     database: str = DEFAULT_POSTGRES_DATABASE
@@ -284,12 +292,18 @@ class DatasourceConfig(ABC, NameMixin):
     :param kind: Defined by child class
     :param url: URL of the API
     :param http: HTTP connection tunables
+    :param realtime: Whether to establish a realtime connection/polling. If not set, defined by the index.
     """
 
     kind: str
     url: Url
     ws_url: WsUrl | None = None
     http: HttpConfig | None = None
+    realtime: bool | None = None
+
+    # @classmethod
+    # def from_terminal(cls, opts):
+    #     return super().from_terminal(opts)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
@@ -316,7 +330,7 @@ class IndexTemplateConfig(NameMixin):
 
     """
 
-    kind = 'template'
+    kind: Literal['template'] = 'template'
     template: str
     values: dict[str, Any]
     first_level: int = 0
@@ -343,25 +357,39 @@ class IndexConfig(ABC, NameMixin, ParentMixin['ResolvedIndexConfigU']):
     @abstractmethod
     def get_subscriptions(self) -> set[Subscription]: ...
 
-    def hash(self) -> str:
+    def hashes(self) -> tuple[str, ...]:
         """Calculate hash to ensure config has not changed since last run."""
         import hashlib
+
+        hashes = []
 
         # FIXME: How to convert pydantic dataclass into dict without json.dumps? asdict is not recursive.
         config_json = orjson.dumps(self, default=to_jsonable_python)
         config_dict = orjson.loads(config_json)
 
-        self.strip(config_dict)
-
+        self._strip_v1(config_dict)
         config_json = orjson.dumps(config_dict)
-        return hashlib.sha256(config_json).hexdigest()
+        hashes.append(hashlib.sha256(config_json).hexdigest())
 
+        self._strip_v2(config_dict)
+        config_json = orjson.dumps(config_dict)
+        hashes.append(hashlib.sha256(config_json).hexdigest())
+
+        return tuple(hashes)
+
+    # NOTE: Both versions are kept for compatibility
     @classmethod
-    def strip(cls, config_dict: dict[str, Any]) -> None:
-        """Strip config from tunables that are not needed for hash calculation."""
+    def _strip_v1(cls, config_dict: dict[str, Any]) -> None:
         for datasource in config_dict['datasources']:
             datasource.pop('http', None)
             datasource.pop('buffer_size', None)
+            datasource.pop('realtime', None)
+
+    @classmethod
+    def _strip_v2(cls, config_dict: dict[str, Any]) -> None:
+        for datasource in config_dict['datasources']:
+            datasource.pop('url', None)
+            datasource.pop('ws_url', None)
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
@@ -386,10 +414,10 @@ class HasuraConfig:
     admin_secret: str | None = Field(default=None, repr=False)
     create_source: bool = False
     source: str = 'default'
-    select_limit: int = 1000
+    select_limit: int = 10_000
     allow_aggregations: bool = True
     allow_inconsistent_metadata: bool = False
-    camel_case: bool = False
+    camel_case: bool = True
     rest: bool = True
     http: HttpConfig | None = None
     hide_internal: bool = False
@@ -459,8 +487,8 @@ class PrometheusConfig:
     :param update_interval: Interval to update some metrics in seconds
     """
 
-    host: str = '127.0.0.1'
-    port: int = 8000
+    host: str = LOCAL
+    port: int = DEFAULT_PROMETHEUS_PORT
     update_interval: float = 1.0
 
 
@@ -531,8 +559,96 @@ class ApiConfig:
     :param port: Port to bind to
     """
 
-    host: str = '127.0.0.1'
-    port: int = 46339  # dial INDEX 😎
+    host: str = LOCAL
+    port: int = DEFAULT_API_PORT
+
+
+@dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
+class McpConfig:
+    """Config for MCP server
+
+    :param host: Host to bind to
+    :param port: Port to bind to
+    :param api_url: URL of the management API
+    :param compatibility: Whether to expose resources as tools for clients that don't support MCP resources
+    """
+
+    host: str = LOCAL
+    port: int = DEFAULT_MCP_PORT
+    api_url: Url | None = None
+    compatibility: bool = True
+
+    @property
+    def default_api_url(self) -> Url:
+        return self.api_url or f'http://{self.host}:{DEFAULT_API_PORT}'
+
+
+# NOTE: Used as a key in config, must inherit from str
+class ReindexingReason(StrEnum):
+    """Reason that caused reindexing
+
+    :param manual: Manual reindexing.
+    :param migration: Migration of the database schema.
+    :param rollback: Rollback that couldn't be handled automatically.
+    :param config_modified: Index config was modified.
+    :param schema_modified: Project models or database schema were modified.
+    """
+
+    manual = 'manual'
+    migration = 'migration'
+    rollback = 'rollback'
+    config_modified = 'config_modified'
+    schema_modified = 'schema_modified'
+
+
+class ReindexingAction(StrEnum):
+    """Action that should be performed on reindexing
+
+    :param exception: Raise `ReindexingRequiredError` exception.
+    :param wipe: Wipe the database and reindex from scratch. (WARNING: This action is irreversible! All indexed data will be lost!)
+    :param ignore: Ignore the reindexing cause and continue.
+    """
+
+    exception = 'exception'
+    wipe = 'wipe'
+    ignore = 'ignore'
+
+
+class WatchdogTrigger(StrEnum):
+    callback = 'callback'
+    transaction = 'transaction'
+    websocket = 'websocket'
+
+
+class WatchdogAction(StrEnum):
+    exception = 'exception'
+    warning = 'warning'
+    ignore = 'ignore'
+
+
+class SkipHistory(StrEnum):
+    """Whether to skip indexing big map history and use only current state
+
+    :param never: Always index big map historical updates.
+    :param once: Skip history once after reindexing; process updates as usual on the next resync.
+    :param always: Always skip big map history.
+    """
+
+    never = 'never'
+    once = 'once'
+    always = 'always'
+
+
+@dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
+class WatchdogConfig:
+    """Config for the watchdog
+
+    :param action: Action to perform when watchdog timeout is reached
+    :param timeout: Watchdog timeout in seconds
+    """
+
+    action: WatchdogAction | None = None
+    timeout: int | None = None
 
 
 # NOTE: Should be the only place where extras are allowed
@@ -541,16 +657,18 @@ class AdvancedConfig:
     """This section allows users to tune some system-wide options, either experimental or unsuitable for generic configurations.
 
     :param reindex: Mapping of reindexing reasons and actions DipDup performs.
+    :param watchdog: Mapping of watchdog triggers and actions DipDup performs.
     :param scheduler: `apscheduler` scheduler config.
     :param postpone_jobs: Do not start job scheduler until all indexes reach the realtime state.
     :param early_realtime: Establish realtime connection and start collecting messages while sync is in progress (faster, but consumes more RAM).
-    :param rollback_depth: A number of levels to keep for rollback.
+    :param rollback_depth: A number of blocks to keep for rollback (affects all datasources)
     :param decimal_precision: Overwrite precision if it's not guessed correctly based on project models.
     :param unsafe_sqlite: Disable journaling and data integrity checks. Use only for testing.
     :param alt_operation_matcher: Use different algorithm to match Tezos operations (dev only)
     """
 
     reindex: dict[ReindexingReason, ReindexingAction] = Field(default_factory=dict)
+    watchdog: dict[WatchdogTrigger, WatchdogConfig] = Field(default_factory=dict)
     scheduler: dict[str, Any] | None = None
     postpone_jobs: bool = False
     early_realtime: bool = False
@@ -561,7 +679,7 @@ class AdvancedConfig:
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
-class DipDupConfig:
+class DipDupConfig(InteractiveMixin):
     """DipDup project configuration file
 
     :param spec_version: Version of config specification, currently always `3.0`
@@ -581,14 +699,13 @@ class DipDupConfig:
     :param advanced: Advanced config
     :param custom: User-defined configuration to use in callbacks
     :param logging: Modify logging verbosity
+    :param mcp: MCP server config
     """
 
     spec_version: ToStr
     package: str
     datasources: dict[str, DatasourceConfigU] = Field(default_factory=dict)
-    database: SqliteDatabaseConfig | PostgresDatabaseConfig = Field(
-        default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite')
-    )
+    database: DatabaseConfigU = Field(default_factory=lambda *a, **kw: SqliteDatabaseConfig(kind='sqlite'))
     runtimes: dict[str, RuntimeConfigU] = Field(default_factory=dict)
     contracts: dict[str, ContractConfigU] = Field(default_factory=dict)
     indexes: dict[str, IndexConfigU] = Field(default_factory=dict)
@@ -602,6 +719,7 @@ class DipDupConfig:
     advanced: AdvancedConfig = Field(default_factory=AdvancedConfig)
     custom: dict[str, Any] = Field(default_factory=dict)
     logging: dict[str, str | int] | str | int = 'INFO'
+    mcp: McpConfig | None = None
 
     def __post_init__(self) -> None:
         if self.package != pascal_to_snake(self.package):
@@ -620,6 +738,81 @@ class DipDupConfig:
         return env.get_package_path(self.package)
 
     @classmethod
+    def from_terminal(cls, opts: TerminalOptions) -> Self:
+        import survey  # type: ignore[import-untyped]
+
+        from dipdup.project import SINGULAR_FORMS
+        from dipdup.project import fill_type_from_input
+        from dipdup.project import prompt_bool
+        from dipdup.project import prompt_kind
+
+        config_dict: defaultdict[str, dict[str, Any]] = defaultdict(dict)
+
+        sections = {
+            'datasources': get_args(DatasourceConfigU),
+            'runtimes': get_args(RuntimeConfigU),
+            'contracts': get_args(ContractConfigU),
+            # NOTE: Skip the `template` kind
+            'indexes': get_args(ResolvedIndexConfigU),
+        }
+        # NOTE: Substrate or multichain
+        if opts.namespace in {'substrate', None}:
+            sections['runtimes'] = get_args(RuntimeConfigU)
+
+        for section, types in sections.items():
+            another = False
+
+            while True:
+                section_singular = SINGULAR_FORMS[section]
+
+                if not prompt_bool(
+                    f'Do you want to add {"another" if another else "the first"} {section_singular}?',
+                    default=not another,
+                ):
+                    break
+
+                # NOTE: All sections are mappings alias to dict
+                name = None
+                while True:
+                    name = survey.routines.input(
+                        f'Enter {section_singular} name: ',
+                    )
+                    if not name:
+                        print('Name is required')
+                        continue
+                    if name in config_dict[section]:
+                        print(f'{section_singular.capitalize()} with name `{name}` already exists')
+                        continue
+                    break
+
+                type_ = prompt_kind(
+                    section_singular,
+                    types,
+                    opts.namespace,
+                )
+
+                if issubclass(type_, InteractiveMixin):
+                    res = type_.from_terminal(opts)
+                else:
+                    _logger.debug('Not an `InteractiveMixin`; falling back to field inspection', type_.__name__)
+                    res = fill_type_from_input(type_)
+
+                if res is not None:
+                    config_dict[section][name] = res
+                    another = True
+
+        # NOTE: Make sure that header is above other sections
+        config_dict = {  # type: ignore[assignment]
+            'package': opts.package,
+            'spec_version': '3.0',
+            **config_dict,
+        }
+
+        self = cls(**config_dict)  # type: ignore[arg-type]
+        self._json = config_dict  # type: ignore[assignment]
+        return self
+
+    @classmethod
     def load(
         cls,
         paths: list[Path],
@@ -635,9 +828,6 @@ class DipDupConfig:
         )
 
         try:
-            # from pydantic.dataclasses import rebuild_dataclass
-            # rebuild_dataclass(cls, force=True)
-
             config = TypeAdapter(cls).validate_python(config_json)
         except ConfigurationError:
             raise
@@ -844,15 +1034,16 @@ class DipDupConfig:
         self._resolve_aliases()
         self._validate()
 
-    def dump(self) -> str:
+    def dump(self, strip_secrets: bool = False) -> str:
         return DipDupYAMLConfig(
             **orjson.loads(
                 orjson.dumps(
                     self,
                     default=to_jsonable_python,
+                    option=orjson.OPT_NON_STR_KEYS,
                 )
             )
-        ).dump()
+        ).dump(strip_secrets)
 
     def add_index(
         self,
@@ -872,7 +1063,7 @@ class DipDupConfig:
         )
         template_config._name = name
         self._resolve_template(template_config)
-        index_config = cast(ResolvedIndexConfigU, self.indexes[name])
+        index_config = cast('ResolvedIndexConfigU', self.indexes[name])
         self._resolve_index_links(index_config)
         index_config._name = name
 
@@ -946,9 +1137,9 @@ class DipDupConfig:
                 string=raw_template,
             )
 
-        if missing_value := re.search(r'<*>', raw_template):
+        if missing_value := re.search(r'<[w]*>', raw_template):
             raise ConfigurationError(
-                f'`{template_config.name}` index config is missing required template value `{missing_value.group()}`'
+                f'{template_config.name} index config is missing required template value {missing_value.group(0)}'
             )
 
         json_template = orjson.loads(raw_template)
@@ -1101,7 +1292,7 @@ class DipDupConfig:
 
     def _set_names(self) -> None:
         named_config_sections = cast(
-            tuple[dict[str, NameMixin], ...],
+            'tuple[dict[str, NameMixin], ...]',
             (
                 self.contracts,
                 self.datasources,
@@ -1118,7 +1309,7 @@ class DipDupConfig:
             for name, config in named_configs.items():
                 config._name = name
                 if name in names:
-                    _logger.warning('Alias `%s` used multiple times')
+                    _logger.warning('Alias `%s` used multiple times', name)
                 else:
                     names.add(name)
 
@@ -1130,9 +1321,11 @@ WARNING: A very dark magic ahead. Be extra careful when editing code below.
 # NOTE: Reimport to avoid circular imports
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.config.evm import EvmContractConfig
+from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
@@ -1162,11 +1355,14 @@ from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
 from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
 
 # NOTE: Unions for Pydantic config deserialization
+DatabaseConfigU = SqliteDatabaseConfig | PostgresDatabaseConfig
 RuntimeConfigU = SubstrateRuntimeConfig
 ContractConfigU = EvmContractConfig | TezosContractConfig | StarknetContractConfig
 DatasourceConfigU = (
     CoinbaseDatasourceConfig
     | EvmEtherscanDatasourceConfig
+    | EvmSourcifyDatasourceConfig
+    | EvmBlockvisionDatasourceConfig
     | HttpDatasourceConfig
     | IpfsDatasourceConfig
     | EvmSubsquidDatasourceConfig

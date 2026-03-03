@@ -28,7 +28,6 @@ from dipdup.prometheus import Histogram
 from dipdup.prometheus import Metric
 
 if TYPE_CHECKING:
-
     from dipdup.models import CachedModel
 
 _logger = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ class _CacheManager:
             stats[name] = {'size': len(plain_cache)}
         for name, fn_cache in chain(self._lru.items(), self._alru.items()):
             name = f'lru:{name}'
-            c = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
+            c = cast('_CacheInfo', fn_cache.cache_info())  # type: ignore[attr-defined]
             if not c.hits and not c.misses:
                 continue
             stats[name] = {
@@ -117,7 +116,7 @@ class _CacheManager:
             items += len(plain_cache)
             plain_cache.clear()
         for fn_cache in chain(self._lru.values(), self._alru.values()):
-            stats = cast(_CacheInfo, fn_cache.cache_info())  # type: ignore[attr-defined]
+            stats = cast('_CacheInfo', fn_cache.cache_info())  # type: ignore[attr-defined]
             items += stats.currsize
             fn_cache.cache_clear()  # type: ignore[attr-defined]
         for model_cls in self._models:
@@ -223,7 +222,7 @@ class _MetricManager:
     time_left: Gauge | float = Gauge('dipdup_time_left_seconds', 'Time left estimated until the end')
     progress: Gauge | float = Gauge('dipdup_progress', 'Progress in percents')
 
-    # NOTE: Orignally in prometheus.py
+    # NOTE: Originally in prometheus.py
     _indexes_total = Gauge(
         'dipdup_indexes_total',
         'Number of indexes in operation by status',
@@ -242,11 +241,11 @@ class _MetricManager:
 
     _index_total_sync_duration: Histogram = Histogram(
         'dipdup_index_total_sync_duration_seconds',
-        'Duration of the last index syncronization',
+        'Duration of the last index synchronization',
     )
     _index_total_realtime_duration: Histogram = Histogram(
         'dipdup_index_total_realtime_duration_seconds',
-        'Duration of the last index realtime syncronization',
+        'Duration of the last index realtime synchronization',
     )
 
     _datasource_head_updated = Gauge(
@@ -327,9 +326,10 @@ class _MetricManager:
         self._http_errors.labels(url=url, status=status).inc()
 
     def set_http_errors_in_row(self, url: str, errors_count: int) -> None:
-        self._http_errors_in_row.inc(errors_count)
+        # Gauge semantics: represent the current consecutive error count, not the delta
+        self._http_errors_in_row.set(errors_count)
         if 'subsquid' in url:
-            self._sqd_processor_archive_http_errors_in_row.inc(errors_count)
+            self._sqd_processor_archive_http_errors_in_row.set(errors_count)
 
     def stats(self) -> dict[str, Any]:
         def _round(value: Any) -> Any:

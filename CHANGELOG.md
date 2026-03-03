@@ -10,7 +10,201 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- database: Fix exception when creating connections with aiosqlite==0.22.0.
+
+## [8.5.1] - 2025-11-03
+
+### Fixed
+
+- demos: Use Etherscan v2 API endpoints in EVM templates.
+- mcp: Fixed crash when using `mcp.tool` decorator.
+- evm.node: Respect `http.batch_size` when fetching events and transactions.
+
+### Changed
+
+- cli: Don't notify about new framework versions available.
+
+## [8.5.0] - 2025-09-14
+
+### Added
+
+- database: Support running multiple indexers on different schemas in the same database.
+- env: Added `DIPDUP_NO_HOOKS` environment variable to temporary disable internal and user-defined hooks.
+- env: Added debugpy support to connect to the running indexer; enable with `DIPDUP_DEBUG` environment variable.
+- hasura: Extract table/field descriptions from models' docstrings and apply as database comments.
+
+### Fixed
+
+- config: Fixed detection of missing env variables.
+- database: Fixed `dipdup_wipe` function affecting non-public tables.
+- package: Fixed incorrect package name in replay files.
+- substrate.events: Fixed fetching events with node datasource.
+- tezos: Fixed parsing payload when model class has been modified.
+- tezos.operations: Fixed missing migration originations when enabled in `types` filter.
+
+### Changed
+
+- env: Autodetected variables `DIPDUP_CI` and `DIPDUP_DOCKER` have been replaced with `env.is_in_gha`, `env.is_in_docker` helpers.
+- http: Randomize ratelimit sleep time in 10% range.
+
+## [8.4.3] - 2025-08-13
+
+### Fixed
+
+- tezos.tzkt: Updated models to match 1.16 version of API (Seoulnet).
+
+## [8.4.2] - 2025-06-18
+
+### Added
+
+- config: Added `realtime` flag to datasource config to enable websockets/polling implicitly.
+
+### Fixed
+
+- cli: Skip logging indexer status if it has not changed.
+- config: Fixed `config export` command crash when `advanced.reindex` section is present in config.
+- config: Do not trigger `config_modified` reindexing when datasource URLs are updated.
+- datasources: Do not run datasources not linked to any index and without `realtime` flag set.
+- models: Fixed serializing UUIDs in `JSONField`.
+- substrate: Fixed loading type registries when specified in config.
+- substrate: Fixed processing several vector types.
+
+## [8.4.1] - 2025-06-02
+
+### Fixed
+
+- substrate.events: Fixed crash caused by choosing incorrect runtime metadata for decoding.
+
+## [8.4.0] - 2025-05-20
+
+### Added
+
+- context: Added configurable watchdog service to notify about long-running callbacks and transactions.
+- cli: Added loading env-file `dipdup.env` if presented in the current directory.
+- cli: Added `-h` shorthand for `--help` option in all commands.
+- cli: Added `--no-types` option to `init` command to skip generating type classes.
+
+### Fixed
+
+- cli: Fixed `config env -i` command output.
+- cli: Fixed discovering package path.
+- cli: Fixed printing help message when running commands without arguments.
+- codegen: Fixed loading ABIs from the project with no ABI datasources configured.
+- env: Skip detection of some variables if set explicitly.
+- http: Fixed merging request URL with base path.
+- project: Fixed `make image` command and default workdir.
+- project: Fixed missing codegen headers in project base.
+- substrate.node: Fixed event index field.
+
+### Removed
+
+- project: Do not generate and track `.env.default` files on init. Use `config env` command for new environments.
+
+## [8.3.3] - 2025-04-29
+
+### Added
+
+- cli: Added `--name` option to `new` command to skip asking for the project name.
+
+### Fixed
+
+- cli: Fixed regression in `init` command behavior when run without flags.
+- cli: Fixed detecting package name in existing projects without `replay.yaml` file.
+- cli: Fixed `init` command processing the same paths multiple times.
+- cli: Fixed `init` command not respecting `--force` flag when generating default envfiles.
+
+## [8.3.2] - 2025-04-17
+
+### Added
+
+- cli: Added `init --no-base` option to skip creating the base template.
+- env: Added `DIPDUP_NO_BASE` environment variable to skip creating the base template.
+- mcp: Added `ctx.api` datasource and `ctx.call_api` helper to server context.
+
+### Fixed
+
+- cli: Fixed `new` command using incorrect template.
+- mcp: Fixed handling exceptions in MCP tools.
+
+### Changed
+
+- cli: `init --base` option is now enabled by default.
+
+## [8.3.1] - 2025-04-08
+
+### Added
+
+- config: Added `api_url` and `compatibility` fields to MCP config.
+
+### Fixed
+
+- api: Fixed configuring uvicorn logging.
+- api: Strip secret fields from API responses.
+- cli: Fixed logging indexer status.
+- mcp: Expose resources as tools for clients that don't support MCP resources yet.
+- project: Fixed generation of compose manifest and configs for MCP environment.
+
+### Changed
+
+- api: Built-in management API is now using Starlette instead of plain aiohttp.
+
+## [8.3.0] - 2025-04-02
+
+### Added
+
+- cli: Apply ruff linting and formating on init.
+- mcp: Added Model Context Protocol (MCP) server implementation.
+- mcp: Added built-in resources for accessing indexer configuration and metrics.
+- mcp: Added support for exposing custom tools and resources via `@dipdup.mcp` decorators.
+
+### Fixed
+
+- package: Create package marker even if helper symlink is present.
+- project: Fixed built sdist/wheel artifacts which contained unrelated files.
+
+### Changed
+
+- cli: `install.py` script and `dipdup self` commands use `uv tool` instead of `pipx`.
+- cli: `new` command uses default values for some `replay.yaml` fields.
+- project: Use `hatchling` build backend for new projects.
+- project: Replace `black` with `ruff` as default formatter.
+
+## [8.2.2] - 2025-03-13
+
+### Added
+
+- starknet.node: Added `fetch_block_headers` option to datasource config.
+
+### Fixed
+
+- evm.node: Fixed empty `gasPrice` field base conversion on evm transaction deserialization.
+
+## [8.2.1] - 2025-02-19
+
+### Added
+
+- cli: Rewritten interactive mode for `new` command.
+- evm.blockvision: Added `evm.blockvision` datasource to fetch ABIs from Blockvision API.
+- evm.sourcify: Added `evm.sourcify` datasource to fetch ABIs from Sourcify API.
+
+### Fixed
+
+- coinbase: Fixed crash when using coinbase datasource.
+- evm.node: Fixed crash when block range goes out of bounds.
+
+## [8.2.0] - 2025-02-10
+
+### Added
+
+- starknet.node: Added methods for fetching contract ABIs for `init` command.
+
+### Fixed
+
+- cli: Fixed help message on `CallbackError` reporting `batch` handler instead of actual one.
+- starknet: Process all data types correctly.
+- starknet.node: Fetch missing block timestamp and txn id when synching with node.
 - substrate.subsquid: Fixed parsing nested structures in response.
+- substrate.subsquid: Fixed parsing for `__kind` junctions with multiple keys.
 
 ### Changed
 
@@ -610,7 +804,20 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.2.0rc1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.5.1...HEAD
+[8.5.1]: https://github.com/dipdup-io/dipdup/compare/8.5.0...8.5.1
+[8.5.0]: https://github.com/dipdup-io/dipdup/compare/8.4.3...8.5.0
+[8.4.3]: https://github.com/dipdup-io/dipdup/compare/8.4.2...8.4.3
+[8.4.2]: https://github.com/dipdup-io/dipdup/compare/8.4.1...8.4.2
+[8.4.1]: https://github.com/dipdup-io/dipdup/compare/8.4.0...8.4.1
+[8.4.0]: https://github.com/dipdup-io/dipdup/compare/8.3.3...8.4.0
+[8.3.3]: https://github.com/dipdup-io/dipdup/compare/8.3.2...8.3.3
+[8.3.2]: https://github.com/dipdup-io/dipdup/compare/8.3.1...8.3.2
+[8.3.1]: https://github.com/dipdup-io/dipdup/compare/8.3.0...8.3.1
+[8.3.0]: https://github.com/dipdup-io/dipdup/compare/8.2.2...8.3.0
+[8.2.2]: https://github.com/dipdup-io/dipdup/compare/8.2.1...8.2.2
+[8.2.1]: https://github.com/dipdup-io/dipdup/compare/8.2.0...8.2.1
+[8.2.0]: https://github.com/dipdup-io/dipdup/compare/8.2.0rc1...8.2.0
 [8.2.0rc1]: https://github.com/dipdup-io/dipdup/compare/8.1.4...8.2.0rc1
 [8.1.4]: https://github.com/dipdup-io/dipdup/compare/8.1.3...8.1.4
 [8.1.3]: https://github.com/dipdup-io/dipdup/compare/8.1.2...8.1.3

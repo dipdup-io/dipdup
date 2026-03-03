@@ -8,6 +8,7 @@ from contextlib import suppress
 from http import HTTPStatus
 from json import JSONDecodeError
 from pathlib import Path
+from random import random
 from typing import Any
 from typing import Literal
 from typing import overload
@@ -53,7 +54,7 @@ class HTTPGateway(AbstractAsyncContextManager[None]):
     @property
     def url(self) -> str:
         """HTTP endpoint URL"""
-        return self._http._url
+        return self._http._url + self._http._path
 
     async def request(
         self,
@@ -168,6 +169,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))  # type: ignore[index]
+                        # randomize to avoid thundering herd
+                        ratelimit_sleep *= 1 + (random() - 0.5) / 5
                 else:
                     metrics.set_http_error(self._url, 0)
 
@@ -215,12 +218,12 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
     ) -> Any:
         """Wrapped aiohttp call with preconfigured headers and ratelimiting"""
         metrics.requests_total[self._alias] += 1
-        if not url:
-            url = self._path or '/'
-        elif url.startswith('http'):
-            url = url.replace(self._url, '').rstrip('/')
-        else:
-            url = f"{self._path.rstrip('/')}/{url}"
+        url = url or '/'
+
+        if url.startswith('http'):
+            raise InvalidRequestError(msg='URL should not start with http(s)://', url=url)
+
+        url = f'{self._path.strip("/")}/{url.strip("/")}'.rstrip('/')
 
         headers = kwargs.pop('headers', {})
         headers['User-Agent'] = self.user_agent
@@ -242,7 +245,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
             method=method,
             url=url,
             headers=headers,
-            raise_for_status=True,
+            raise_for_status=not raw,
             params=params,
             **kwargs,
         ) as response:

@@ -30,7 +30,7 @@ class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
             url='',
             json=query,
         )
-        return cast(list[dict[str, Any]], response)
+        return cast('list[dict[str, Any]]', response)
 
 
 class AbstractSubsquidDatasource(
@@ -112,7 +112,7 @@ class AbstractSubsquidDatasource(
         worker_url = (
             await self._http.request(
                 'get',
-                f'{self._config.url}/{level}/worker',
+                f'{level}/worker',
             )
         ).decode()
 

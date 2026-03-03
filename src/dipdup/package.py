@@ -1,9 +1,12 @@
 import logging
+import subprocess
 from collections import deque
 from collections.abc import Awaitable
 from collections.abc import Callable
 from collections.abc import Generator
+from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import cast
 
@@ -11,8 +14,6 @@ import appdirs  # type: ignore[import-untyped]
 from pydantic import BaseModel
 
 from dipdup import env
-from dipdup.abi.cairo import CairoAbiManager
-from dipdup.abi.evm import EvmAbiManager
 from dipdup.exceptions import ProjectPackageError
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
@@ -22,11 +23,17 @@ from dipdup.utils import import_submodules
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import touch
 
+if TYPE_CHECKING:
+    from dipdup.abi.cairo import CairoAbiManager
+    from dipdup.abi.evm import EvmAbiManager
+
+ROOT_CONFIG = 'dipdup.yaml'
+CWD_ENV = 'dipdup.env'
+
 KEEP_MARKER = '.keep'
 PACKAGE_MARKER = '__init__.py'
 PEP_561_MARKER = 'py.typed'
-DEFAULT_ENV = '.env.default'
-
+PYPROJECT = 'pyproject.toml'
 
 EVM_ABI_JSON = 'abi.json'
 CAIRO_ABI_JSON = 'cairo_abi.json'
@@ -54,6 +61,28 @@ def draw_package_tree(root: Path, project_tree: dict[str, tuple[Path, ...]]) -> 
     return tuple(lines)
 
 
+def apply_ruff_lint(path: Path, ruff_executable: str) -> None:
+    from dipdup.cli import red_echo
+
+    try:
+        c_process = subprocess.run(
+            (ruff_executable, 'check', '--fix', '--unsafe-fixes', str(path.absolute())), capture_output=True, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        red_echo(f'Linting errors in {path}')
+        print(f'Command: {" ".join(e.cmd)}\n{e.stdout.decode()}')
+        exit(e.returncode)
+
+    _logger.info('Applied ruff linter to `%s`', path)
+    _logger.info('Linting output: %s', c_process.stdout.decode().rstrip())
+
+
+def apply_ruff_formatter(path: Path, ruff_executable: str) -> None:
+    c_process = subprocess.run((ruff_executable, 'format', str(path.absolute())), capture_output=True, check=True)
+    _logger.info('Applied ruff formatter to `%s`', path)
+    _logger.info('Formatter output: %s', c_process.stdout.decode().rstrip())
+
+
 class DipDupPackage:
     def __init__(self, root: Path, quiet: bool = False) -> None:
         _log = _logger.debug if quiet else _logger.info
@@ -63,8 +92,8 @@ class DipDupPackage:
         self.name = root.name
 
         # NOTE: Paths expected to exist in package root
-        self.pyproject = root / 'pyproject.toml'
-        self.root_config = root / 'dipdup.yaml'
+        self.pyproject = root / PYPROJECT
+        self.root_config = root / ROOT_CONFIG
 
         # NOTE: Package sections with .keep markers
         self.abi = root / 'abi'
@@ -77,6 +106,7 @@ class DipDupPackage:
         self.models = root / 'models'
         self.sql = root / 'sql'
         self.types = root / 'types'
+        self.mcp = root / 'mcp'
         # NOTE: Optional, created if aerich is installed
         self.migrations = root / 'migrations'
 
@@ -90,11 +120,21 @@ class DipDupPackage:
         self._replay: Answers | None = None
         self._callbacks: dict[str, Callable[..., Awaitable[Any]]] = {}
         self._types: dict[str, type[BaseModel]] = {}
-        self._evm_abis = EvmAbiManager(self)
-        self._cairo_abis = CairoAbiManager(self)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.root})'
+
+    @cached_property
+    def _evm_abis(self) -> 'EvmAbiManager':
+        from dipdup.abi.evm import EvmAbiManager
+
+        return EvmAbiManager(self)
+
+    @cached_property
+    def _cairo_abis(self) -> 'CairoAbiManager':
+        from dipdup.abi.cairo import CairoAbiManager
+
+        return CairoAbiManager(self)
 
     @property
     def cairo_abi_paths(self) -> Generator[Any, None, None]:
@@ -112,7 +152,7 @@ class DipDupPackage:
     def replay(self) -> Answers:
         if self.replay_path.exists():
             return answers_from_replay(self.replay_path)
-        return get_default_answers()
+        return get_default_answers(self.name)
 
     @property
     def skel(self) -> dict[Path, str | None]:
@@ -120,7 +160,7 @@ class DipDupPackage:
             # NOTE: Package sections
             self.abi: '**/*.json',
             self.configs: '**/*.y[a]ml',
-            self.deploy: '**/*[Dockerfile|.env.default|yml|yaml]',
+            self.deploy: '**/*[Dockerfile|yml|yaml]',
             self.graphql: '**/*.graphql',
             self.handlers: '**/*.py',
             self.hasura: '**/*.json',
@@ -128,8 +168,10 @@ class DipDupPackage:
             self.models: '**/*.py',
             self.sql: '**/*.sql',
             self.types: '**/*.py',
+            self.mcp: '**/*.py',
             # NOTE: Python metadata
             Path(PEP_561_MARKER): None,
+            Path(PACKAGE_MARKER): None,
         }
 
     def in_migration(self) -> bool:
@@ -179,11 +221,7 @@ class DipDupPackage:
 
     def _post_init(self) -> None:
         # NOTE: Allows plain package structure to be imported
-        if env.NO_SYMLINK:
-            touch(self.root / PACKAGE_MARKER)
-            return
-
-        if self.root != Path.cwd():
+        if env.NO_SYMLINK or self.root != Path.cwd():
             return
 
         symlink_path = self.root.joinpath(self.name)
@@ -197,6 +235,15 @@ class DipDupPackage:
         import_submodules(f'{self.name}.handlers')
         import_submodules(f'{self.name}.hooks')
         import_submodules(f'{self.name}.types')
+        import_submodules(f'{self.name}.mcp')
+
+    def format_lint(self) -> None:
+        from ruff.__main__ import find_ruff_bin  # type: ignore[import-untyped]
+
+        ruff_executable = find_ruff_bin()
+
+        apply_ruff_formatter(self.root, ruff_executable)
+        apply_ruff_lint(self.root, ruff_executable)
 
     def get_type(self, typename: str, module: str, name: str) -> type[BaseModel]:
         key = f'{typename}{module}{name}'
@@ -216,4 +263,4 @@ class DipDupPackage:
             if not callable(callback):
                 raise ProjectPackageError(f'`{path}.{name}` is not a valid callback')
             self._callbacks[key] = callback
-        return cast(Callable[..., Awaitable[None]], callback)
+        return cast('Callable[..., Awaitable[None]]', callback)

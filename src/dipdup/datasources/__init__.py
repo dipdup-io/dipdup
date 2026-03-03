@@ -15,6 +15,8 @@ from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config.evm import EvmContractConfig
+from dipdup.config.starknet import StarknetContractConfig
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
 from dipdup.http import HTTPGateway
@@ -29,10 +31,12 @@ from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
+ContractConfigT = TypeVar('ContractConfigT', bound=StarknetContractConfig | EvmContractConfig)
 
 
 EmptyCallback = Callable[[], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
+AbiJson = dict[str, Any] | list[Any]
 
 
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
@@ -58,7 +62,7 @@ class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
 
 class AbiDatasource(Datasource[DatasourceConfigT], Generic[DatasourceConfigT]):
     @abstractmethod
-    async def get_abi(self, address: str) -> dict[str, Any]: ...
+    async def get_abi(self, address: str) -> AbiJson: ...
 
 
 # FIXME: inconsistent usage
@@ -244,8 +248,10 @@ class JsonRpcDatasource(WebsocketDatasource[DatasourceConfigT]):
 
 def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.coinbase import CoinbaseDatasourceConfig
+    from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
     from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
+    from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
     from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -257,8 +263,10 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
     from dipdup.config.tzip_metadata import TzipMetadataDatasourceConfig
     from dipdup.datasources.coinbase import CoinbaseDatasource
+    from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
     from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
     from dipdup.datasources.evm_node import EvmNodeDatasource
+    from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
     from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
@@ -272,6 +280,8 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
 
     by_config: dict[type[DatasourceConfig], type[Datasource[Any]]] = {
         EvmEtherscanDatasourceConfig: EvmEtherscanDatasource,
+        EvmSourcifyDatasourceConfig: EvmSourcifyDatasource,
+        EvmBlockvisionDatasourceConfig: EvmBlockvisionDatasource,
         CoinbaseDatasourceConfig: CoinbaseDatasource,
         TezosTzktDatasourceConfig: TezosTzktDatasource,
         TzipMetadataDatasourceConfig: TzipMetadataDatasource,

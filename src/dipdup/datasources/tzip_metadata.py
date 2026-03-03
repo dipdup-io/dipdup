@@ -20,13 +20,13 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
             'get',
             url='api/rest/contract_metadata',
             params={
-                'network': self._config.network.value,
+                'network': self._config.network,
                 'contract': address,
             },
         )
         response = response['contract_metadata']
         if response:
-            return cast(dict[str, Any], response[0]['metadata'])
+            return cast('dict[str, Any]', response[0]['metadata'])
         return None
 
     async def get_token_metadata(self, address: str, token_id: int) -> dict[str, Any] | None:
@@ -34,7 +34,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
             'get',
             url='api/rest/token_metadata',
             params={
-                'network': self._config.network.value,
+                'network': self._config.network,
                 'contract': address,
                 'token_id': token_id,
             },
@@ -42,7 +42,7 @@ class TzipMetadataDatasource(Datasource[TzipMetadataDatasourceConfig]):
         response = response['token_metadata']
         if response:
             return cast(
-                dict[str, Any],
+                'dict[str, Any]',
                 response[0]['metadata'],
             )
         return None

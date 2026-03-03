@@ -56,7 +56,7 @@
             }
           ],
           "default": null,
-          "description": "A number of levels to keep for rollback.",
+          "description": "A number of blocks to keep for rollback (affects all datasources)",
           "title": "rollback_depth"
         },
         "scheduler": {
@@ -77,6 +77,17 @@
           "description": "Disable journaling and data integrity checks. Use only for testing.",
           "title": "unsafe_sqlite",
           "type": "boolean"
+        },
+        "watchdog": {
+          "additionalProperties": {
+            "$ref": "#/$defs/WatchdogConfig"
+          },
+          "description": "Mapping of watchdog triggers and actions DipDup performs.",
+          "propertyNames": {
+            "$ref": "#/$defs/WatchdogTrigger"
+          },
+          "title": "watchdog",
+          "type": "object"
         }
       },
       "title": "AdvancedConfig",
@@ -134,6 +145,7 @@
         },
         "kind": {
           "const": "coinbase",
+          "default": "coinbase",
           "description": "always 'coinbase'",
           "title": "kind",
           "type": "string"
@@ -165,14 +177,60 @@
           "title": "secret_key"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "CoinbaseDatasourceConfig",
       "type": "object"
     },
     "EvmAddress": {
       "$ref": "#/$defs/Hex"
+    },
+    "EvmBlockvisionDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Blockvision datasource config",
+      "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key",
+          "title": "api_key"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP client configuration",
+          "title": "http"
+        },
+        "kind": {
+          "const": "evm.blockvision",
+          "default": "evm.blockvision",
+          "description": "always 'evm.blockvision'",
+          "title": "kind",
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "description": "API URL",
+          "title": "url"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "EvmBlockvisionDatasourceConfig",
+      "type": "object"
     },
     "EvmContractConfig": {
       "additionalProperties": false,
@@ -212,6 +270,7 @@
         },
         "kind": {
           "const": "evm",
+          "default": "evm",
           "description": "Always `evm`",
           "title": "kind",
           "type": "string"
@@ -230,11 +289,27 @@
           "title": "typename"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "EvmContractConfig",
       "type": "object"
+    },
+    "EvmDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmNodeDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+        }
+      ]
     },
     "EvmEtherscanDatasourceConfig": {
       "additionalProperties": false,
@@ -277,17 +352,17 @@
               "type": "string"
             }
           ],
+          "default": "evm.etherscan",
           "description": "always 'evm.etherscan'",
           "title": "kind"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "description": "API URL",
-          "title": "url",
-          "type": "string"
+          "title": "url"
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "EvmEtherscanDatasourceConfig",
@@ -340,13 +415,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmNodeDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+                "$ref": "#/$defs/EvmDatasourceConfigU"
               }
             ]
           },
@@ -369,6 +438,7 @@
         },
         "kind": {
           "const": "evm.events",
+          "default": "evm.events",
           "description": "Always 'evm.events'",
           "title": "kind",
           "type": "string"
@@ -381,7 +451,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -407,6 +476,7 @@
         },
         "kind": {
           "const": "evm.node",
+          "default": "evm.node",
           "description": "Always 'evm.node'",
           "title": "kind",
           "type": "string"
@@ -437,10 +507,64 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "EvmNodeDatasourceConfig",
+      "type": "object"
+    },
+    "EvmSourcifyDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "Sourcify datasource config",
+      "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key",
+          "title": "api_key"
+        },
+        "chain_id": {
+          "description": "Chain ID",
+          "title": "chain_id",
+          "type": "integer"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP client configuration",
+          "title": "http"
+        },
+        "kind": {
+          "const": "evm.sourcify",
+          "default": "evm.sourcify",
+          "description": "always 'evm.sourcify'",
+          "title": "kind",
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "default": "https://sourcify.dev/server",
+          "description": "API URL",
+          "title": "url"
+        }
+      },
+      "required": [
+        "chain_id"
+      ],
+      "title": "EvmSourcifyDatasourceConfig",
       "type": "object"
     },
     "EvmSubsquidDatasourceConfig": {
@@ -462,6 +586,7 @@
         },
         "kind": {
           "const": "evm.subsquid",
+          "default": "evm.subsquid",
           "description": "always 'evm.subsquid'",
           "title": "kind",
           "type": "string"
@@ -473,7 +598,6 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "EvmSubsquidDatasourceConfig",
@@ -565,13 +689,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmNodeDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+                "$ref": "#/$defs/EvmDatasourceConfigU"
               }
             ]
           },
@@ -594,6 +712,7 @@
         },
         "kind": {
           "const": "evm.transactions",
+          "default": "evm.transactions",
           "description": "always 'evm.transactions'",
           "title": "kind",
           "type": "string"
@@ -606,7 +725,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -643,7 +761,7 @@
           "type": "boolean"
         },
         "camel_case": {
-          "default": false,
+          "default": true,
           "description": "Whether to use camelCase instead of default pascal_case for the field names.",
           "title": "camel_case",
           "type": "boolean"
@@ -688,7 +806,7 @@
           "type": "boolean"
         },
         "select_limit": {
-          "default": 1000,
+          "default": 10000,
           "description": "Row limit for unauthenticated queries.",
           "title": "select_limit",
           "type": "integer"
@@ -957,18 +1075,18 @@
         },
         "kind": {
           "const": "http",
+          "default": "http",
           "description": "always 'http'",
           "title": "kind",
           "type": "string"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "description": "URL to fetch data from",
-          "title": "url",
-          "type": "string"
+          "title": "url"
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "HttpDatasourceConfig",
@@ -983,6 +1101,13 @@
           "description": "Level to start indexing from",
           "title": "first_level",
           "type": "integer"
+        },
+        "kind": {
+          "const": "template",
+          "default": "template",
+          "description": "always 'template'",
+          "title": "kind",
+          "type": "string"
         },
         "last_level": {
           "default": 0,
@@ -1027,20 +1152,18 @@
         },
         "kind": {
           "const": "ipfs",
+          "default": "ipfs",
           "description": "always 'ipfs'",
           "title": "kind",
           "type": "string"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "default": "https://ipfs.io/ipfs",
           "description": "IPFS node URL, e.g. https://ipfs.io/ipfs/",
-          "title": "url",
-          "type": "string"
+          "title": "url"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "IpfsDatasourceConfig",
       "type": "object"
     },
@@ -1104,6 +1227,45 @@
       "title": "JobConfig",
       "type": "object"
     },
+    "McpConfig": {
+      "additionalProperties": false,
+      "description": "Config for MCP server",
+      "properties": {
+        "api_url": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Url"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "URL of the management API",
+          "title": "api_url"
+        },
+        "compatibility": {
+          "default": true,
+          "description": "Whether to expose resources as tools for clients that don't support MCP resources",
+          "title": "compatibility",
+          "type": "boolean"
+        },
+        "host": {
+          "default": "127.0.0.1",
+          "description": "Host to bind to",
+          "title": "host",
+          "type": "string"
+        },
+        "port": {
+          "default": 9999,
+          "description": "Port to bind to",
+          "title": "port",
+          "type": "integer"
+        }
+      },
+      "title": "McpConfig",
+      "type": "object"
+    },
     "PostgresDatabaseConfig": {
       "additionalProperties": false,
       "description": "Postgres database connection config",
@@ -1136,6 +1298,7 @@
         },
         "kind": {
           "const": "postgres",
+          "default": "postgres",
           "description": "always 'postgres'",
           "title": "kind",
           "type": "string"
@@ -1166,7 +1329,6 @@
         }
       },
       "required": [
-        "kind",
         "host"
       ],
       "title": "PostgresDatabaseConfig",
@@ -1324,6 +1486,7 @@
         },
         "kind": {
           "const": "sqlite",
+          "default": "sqlite",
           "description": "always 'sqlite'",
           "title": "kind",
           "type": "string"
@@ -1335,9 +1498,6 @@
           "type": "string"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "SqliteDatabaseConfig",
       "type": "object"
     },
@@ -1382,6 +1542,7 @@
         },
         "kind": {
           "const": "starknet",
+          "default": "starknet",
           "description": "Always `starknet`",
           "title": "kind",
           "type": "string"
@@ -1400,11 +1561,18 @@
           "title": "typename"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "StarknetContractConfig",
       "type": "object"
+    },
+    "StarknetDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/StarknetNodeDatasourceConfig"
+        }
+      ]
     },
     "StarknetEventsHandlerConfig": {
       "additionalProperties": false,
@@ -1453,10 +1621,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/StarknetSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/StarknetNodeDatasourceConfig"
+                "$ref": "#/$defs/StarknetDatasourceConfigU"
               }
             ]
           },
@@ -1479,6 +1644,7 @@
         },
         "kind": {
           "const": "starknet.events",
+          "default": "starknet.events",
           "description": "Always 'starknet.events'",
           "title": "kind",
           "type": "string"
@@ -1491,7 +1657,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -1502,6 +1667,12 @@
       "additionalProperties": false,
       "description": "Starknet node datasource config",
       "properties": {
+        "fetch_block_headers": {
+          "default": false,
+          "description": "Flag signalling that this datasource can be used for block headers fetching",
+          "title": "fetch_block_headers",
+          "type": "boolean"
+        },
         "http": {
           "anyOf": [
             {
@@ -1517,6 +1688,7 @@
         },
         "kind": {
           "const": "starknet.node",
+          "default": "starknet.node",
           "description": "Always 'starknet.node'",
           "title": "kind",
           "type": "string"
@@ -1547,7 +1719,6 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "StarknetNodeDatasourceConfig",
@@ -1572,6 +1743,7 @@
         },
         "kind": {
           "const": "starknet.subsquid",
+          "default": "starknet.subsquid",
           "description": "always 'starknet.subsquid'",
           "title": "kind",
           "type": "string"
@@ -1583,11 +1755,23 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "StarknetSubsquidDatasourceConfig",
       "type": "object"
+    },
+    "SubstrateDatasourceConfigU": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
+        },
+        {
+          "$ref": "#/$defs/SubstrateNodeDatasourceConfig"
+        }
+      ]
     },
     "SubstrateEventsHandlerConfig": {
       "additionalProperties": false,
@@ -1623,13 +1807,7 @@
                 "type": "string"
               },
               {
-                "$ref": "#/$defs/SubstrateSubsquidDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/SubstrateSubscanDatasourceConfig"
-              },
-              {
-                "$ref": "#/$defs/SubstrateNodeDatasourceConfig"
+                "$ref": "#/$defs/SubstrateDatasourceConfigU"
               }
             ]
           },
@@ -1652,6 +1830,7 @@
         },
         "kind": {
           "const": "substrate.events",
+          "default": "substrate.events",
           "description": "Always 'substrate.events'",
           "title": "kind",
           "type": "string"
@@ -1676,7 +1855,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "runtime",
         "handlers"
@@ -1703,6 +1881,7 @@
         },
         "kind": {
           "const": "substrate.node",
+          "default": "substrate.node",
           "description": "Always 'substrate.node'",
           "title": "kind",
           "type": "string"
@@ -1727,7 +1906,6 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "SubstrateNodeDatasourceConfig",
@@ -1793,18 +1971,18 @@
         },
         "kind": {
           "const": "substrate.subscan",
+          "default": "substrate.subscan",
           "description": "always 'substrate.subscan'",
           "title": "kind",
           "type": "string"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "description": "API URL",
-          "title": "url",
-          "type": "string"
+          "title": "url"
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "SubstrateSubscanDatasourceConfig",
@@ -1829,6 +2007,7 @@
         },
         "kind": {
           "const": "substrate.subsquid",
+          "default": "substrate.subsquid",
           "description": "always 'substrate.subsquid'",
           "title": "kind",
           "type": "string"
@@ -1840,7 +2019,6 @@
         }
       },
       "required": [
-        "kind",
         "url"
       ],
       "title": "SubstrateSubsquidDatasourceConfig",
@@ -1919,6 +2097,7 @@
         },
         "kind": {
           "const": "tezos.big_maps",
+          "default": "tezos.big_maps",
           "description": "always 'tezos.big_maps'",
           "title": "kind",
           "type": "string"
@@ -1937,7 +2116,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -1979,6 +2157,7 @@
         },
         "kind": {
           "const": "tezos",
+          "default": "tezos",
           "description": "Always `tezos`",
           "title": "kind",
           "type": "string"
@@ -1997,9 +2176,6 @@
           "title": "typename"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "TezosContractConfig",
       "type": "object"
     },
@@ -2080,6 +2256,7 @@
         },
         "kind": {
           "const": "tezos.events",
+          "default": "tezos.events",
           "description": "always 'tezos.events'",
           "title": "kind",
           "type": "string"
@@ -2092,7 +2269,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -2154,13 +2330,13 @@
         },
         "kind": {
           "const": "tezos.head",
+          "default": "tezos.head",
           "description": "always 'tezos.head'",
           "title": "kind",
           "type": "string"
         }
       },
       "required": [
-        "kind",
         "datasources",
         "callback"
       ],
@@ -2550,6 +2726,7 @@
         },
         "kind": {
           "const": "tezos.operations",
+          "default": "tezos.operations",
           "description": "always 'tezos.operations'",
           "title": "kind",
           "type": "string"
@@ -2573,7 +2750,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -2612,6 +2788,7 @@
         },
         "kind": {
           "const": "tezos.operations_unfiltered",
+          "default": "tezos.operations_unfiltered",
           "description": "always 'tezos.operations_unfiltered'",
           "title": "kind",
           "type": "string"
@@ -2635,7 +2812,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "callback"
       ],
@@ -2722,6 +2898,7 @@
         },
         "kind": {
           "const": "tezos.token_balances",
+          "default": "tezos.token_balances",
           "description": "always 'tezos.token_balances'",
           "title": "kind",
           "type": "string"
@@ -2734,7 +2911,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -2853,6 +3029,7 @@
         },
         "kind": {
           "const": "tezos.token_transfers",
+          "default": "tezos.token_transfers",
           "description": "always 'tezos.token_transfers'",
           "title": "kind",
           "type": "string"
@@ -2865,7 +3042,6 @@
         }
       },
       "required": [
-        "kind",
         "datasources",
         "handlers"
       ],
@@ -2897,6 +3073,7 @@
         },
         "kind": {
           "const": "tezos.tzkt",
+          "default": "tezos.tzkt",
           "description": "always 'tezos.tzkt'",
           "title": "kind",
           "type": "string"
@@ -2920,9 +3097,6 @@
           "title": "url"
         }
       },
-      "required": [
-        "kind"
-      ],
       "title": "TezosTzktDatasourceConfig",
       "type": "object"
     },
@@ -2955,43 +3129,82 @@
         },
         "kind": {
           "const": "tzip_metadata",
+          "default": "tzip_metadata",
           "description": "always 'tzip_metadata'",
           "title": "kind",
           "type": "string"
         },
         "network": {
-          "$ref": "#/$defs/TzipMetadataNetwork",
           "description": "Network name, e.g. mainnet, ghostnet, etc.",
-          "title": "network"
+          "title": "network",
+          "type": "string"
         },
         "url": {
+          "$ref": "#/$defs/Url",
           "default": "https://metadata.dipdup.net",
           "description": "GraphQL API URL, e.g. https://metadata.dipdup.net",
-          "title": "url",
-          "type": "string"
+          "title": "url"
         }
       },
       "required": [
-        "kind",
         "network"
       ],
       "title": "TzipMetadataDatasourceConfig",
       "type": "object"
     },
-    "TzipMetadataNetwork": {
-      "description": "Tezos network enum for TZIP-16 metadata.\n\n:param mainnet: mainnet\n:param ghostnet: ghostnet\n:param nairobinet: nairobinet\n:param oxfordnet: oxfordnet\n:param parisnet: parisnet\n:param quebecnet: quebecnet",
-      "enum": [
-        "mainnet",
-        "ghostnet",
-        "nairobinet",
-        "oxfordnet",
-        "parisnet",
-        "quebecnet"
-      ],
-      "title": "TzipMetadataNetwork",
+    "Url": {
       "type": "string"
     },
-    "Url": {
+    "WatchdogAction": {
+      "enum": [
+        "exception",
+        "warning",
+        "ignore"
+      ],
+      "title": "WatchdogAction",
+      "type": "string"
+    },
+    "WatchdogConfig": {
+      "additionalProperties": false,
+      "description": "Config for the watchdog",
+      "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WatchdogAction"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Action to perform when watchdog timeout is reached",
+          "title": "action"
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Watchdog timeout in seconds",
+          "title": "timeout"
+        }
+      },
+      "title": "WatchdogConfig",
+      "type": "object"
+    },
+    "WatchdogTrigger": {
+      "enum": [
+        "callback",
+        "transaction",
+        "websocket"
+      ],
+      "title": "WatchdogTrigger",
       "type": "string"
     },
     "WsUrl": {
@@ -3063,6 +3276,12 @@
           },
           {
             "$ref": "#/$defs/EvmEtherscanDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/EvmSourcifyDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/EvmBlockvisionDatasourceConfig"
           },
           {
             "$ref": "#/$defs/HttpDatasourceConfig"
@@ -3202,6 +3421,19 @@
       "default": "INFO",
       "description": "Modify logging verbosity",
       "title": "logging"
+    },
+    "mcp": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/McpConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "MCP server config",
+      "title": "mcp"
     },
     "package": {
       "description": "Name of indexer's Python package, existing or not",

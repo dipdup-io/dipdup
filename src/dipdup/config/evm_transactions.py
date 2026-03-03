@@ -13,8 +13,8 @@ from dipdup.config.evm import EvmContractConfig
 from dipdup.config.evm import EvmDatasourceConfigU
 from dipdup.config.evm import EvmIndexConfig
 from dipdup.exceptions import ConfigurationError
-from dipdup.models.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions import Subscription
+from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 from dipdup.utils import pascal_to_snake
 from dipdup.utils import snake_to_pascal
 
@@ -93,7 +93,7 @@ class EvmTransactionsIndexConfig(EvmIndexConfig):
     :param last_level: Level to stop indexing at
     """
 
-    kind: Literal['evm.transactions']
+    kind: Literal['evm.transactions'] = 'evm.transactions'
 
     datasources: tuple[Alias[EvmDatasourceConfigU], ...]
     handlers: tuple[EvmTransactionsHandlerConfig, ...]
