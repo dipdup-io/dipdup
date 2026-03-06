@@ -1,6 +1,7 @@
 -- Drops all user-defined objects in the specified schema. A complete schema wipe without dropping the schema itself.
 -- Affects views, materialized views, tables (including hypertables), sequences, composite types, functions, and procedures. 
 -- This functionality was implemented for compatibility with some cloud provider I can't remember, who doesn't allow dropping schemas directly.
+-- Should work with PostgreSQL 11+ and TimescaleDB 2.0+.
 CREATE OR REPLACE FUNCTION dipdup_wipe(schema_name VARCHAR) RETURNS void AS $$
 DECLARE
     rec RECORD;
@@ -43,7 +44,7 @@ BEGIN
         FROM pg_type t
         JOIN pg_namespace n ON n.oid = t.typnamespace
         WHERE n.nspname = schema_name 
-        AND t.typtype = 'c'
+        AND t.typtype IN ('c', 'e', 'd', 'r')
         AND NOT EXISTS (
             SELECT 1 FROM pg_depend d
             WHERE d.classid = 'pg_type'::regclass
@@ -62,7 +63,7 @@ BEGIN
         FROM pg_proc p
         JOIN pg_namespace n ON n.oid = p.pronamespace
         WHERE n.nspname = schema_name
-        AND p.prokind IN ('f', 'p')
+        AND p.prokind IN ('f', 'p', 'a', 'w')
         AND NOT EXISTS (
             SELECT 1 FROM pg_depend d
             WHERE d.classid = 'pg_proc'::regclass
