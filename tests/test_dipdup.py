@@ -1,9 +1,9 @@
 from contextlib import AsyncExitStack
+from datetime import UTC
 from datetime import datetime
 from pathlib import Path
 
 import pytest
-from pytz import UTC
 
 from dipdup.config import DipDupConfig
 from dipdup.config import SqliteDatabaseConfig

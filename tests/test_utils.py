@@ -23,7 +23,7 @@ class SomeException(Exception): ...
 
 async def test_in_global_transaction() -> None:
     transactions = TransactionManager()
-    async with tortoise_wrapper('sqlite://:memory:'):
+    async with tortoise_wrapper('sqlite://:memory:', models='demo_tezos_token.models'):
         await Tortoise.generate_schemas()
 
         # 1. Success query without transaction

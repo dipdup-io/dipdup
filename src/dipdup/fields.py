@@ -106,7 +106,7 @@ class EnumField(Field[_EnumFieldT]):
         raise FrameworkException(f'Invalid enum value: {value}')
 
 
-class DecimalField(Field[Decimal], Decimal):
+class DecimalField(Field[Decimal], Decimal):  # type: ignore[misc]
     """
     Accurate decimal field.
 
