@@ -13,6 +13,7 @@ datasources:
   subscan:
     kind: substrate.subscan
     url: https://assethub-polkadot.api.subscan.io/api
+    api_key: ${SUBSCAN_API_KEY:-}
   node:
     kind: substrate.node
     url: https://statemint.api.onfinality.io/rpc?apikey=${ONFINALITY_API_KEY:-''}
