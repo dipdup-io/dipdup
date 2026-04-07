@@ -161,6 +161,33 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
 
             del self._level_data[head.hash]
 
+    async def _jsonrpc_request(
+        self,
+        method: str,
+        params: Any,
+        raw: bool = False,
+        ws: bool = False,
+    ) -> Any:
+        attempt = 1
+        retry_sleep = self._http_config.retry_sleep
+        retry_count = self._http_config.retry_count
+        last_attempt = retry_count + 1
+
+        while True:
+            try:
+                return await super()._jsonrpc_request(method, params, raw=raw, ws=ws)
+            except DatasourceError as e:
+                # NOTE: Special case: node is out of sync, but we don't track
+                # `syncing` events, so just retry as a safe HTTP exception.
+                if 'invalid block range params' not in str(e) or attempt == last_attempt:
+                    raise
+
+                self._logger.warning('JSON-RPC request `%s` failed, retrying: %s', method, e)
+                to_sleep = float(f'{retry_sleep:.1f}')
+                self._logger.info('Waiting %s seconds before retry', to_sleep)
+                await asyncio.sleep(to_sleep)
+                attempt += 1
+
     @property
     def ws_available(self) -> bool:
         return self._config.ws_url is not None
