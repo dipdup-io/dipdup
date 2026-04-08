@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.5.1"
+version = "8.5.2"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "github@drsr.io" },
@@ -120,6 +120,7 @@ quote-style = "single"
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
+exclude = ["^src/demo_"]
 
 [[tool.mypy.overrides]]
 module = "ruamel"

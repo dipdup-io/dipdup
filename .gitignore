@@ -33,3 +33,4 @@
 docs/_build
 
 dipdup_indexer
+.claude/settings.local.json

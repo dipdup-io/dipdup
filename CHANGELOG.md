@@ -8,6 +8,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+## [8.5.2] - 2026-04-08
+
 ### Fixed
 
 - cli: Fixed crash when running `schema wipe` on empty or in-memory database.
@@ -808,7 +810,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.5.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.5.2...HEAD
+[8.5.2]: https://github.com/dipdup-io/dipdup/compare/8.5.1...8.5.2
 [8.5.1]: https://github.com/dipdup-io/dipdup/compare/8.5.0...8.5.1
 [8.5.0]: https://github.com/dipdup-io/dipdup/compare/8.4.3...8.5.0
 [8.4.3]: https://github.com/dipdup-io/dipdup/compare/8.4.2...8.4.3
