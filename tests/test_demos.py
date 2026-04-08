@@ -292,6 +292,8 @@ async def test_run_init(
         pytest.skip('Starknet tests require ALCHEMY_API_KEY environment variable')
     if 'substrate' in config and not {'ONFINALITY_API_KEY'} <= set(os.environ):
         pytest.skip('Substrate tests require ONFINALITY_API_KEY environment variable')
+    if 'substrate' in config and cmd == 'init' and not {'SUBSCAN_API_KEY'} <= set(os.environ):
+        pytest.skip('Substrate init tests require SUBSCAN_API_KEY environment variable')
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(

@@ -14,6 +14,7 @@ from pathlib import Path
 from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import cast
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
@@ -98,7 +99,10 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
     )
     atexit.register(postgres_container.stop)
     postgres_container.reload()
-    postgres_ip = postgres_container.attrs['NetworkSettings']['IPAddress']
+
+    network_settings = postgres_container.attrs['NetworkSettings']
+    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
+    postgres_ip = cast('str', ip)
 
     while not postgres_container.exec_run('pg_isready').exit_code == 0:
         await asyncio.sleep(0.1)
@@ -126,7 +130,10 @@ async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
     )
     atexit.register(hasura_container.stop)
     hasura_container.reload()
-    hasura_ip = hasura_container.attrs['NetworkSettings']['IPAddress']
+
+    network_settings = hasura_container.attrs['NetworkSettings']
+    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
+    hasura_ip = cast('str', ip)
 
     return HasuraConfig(
         url=f'http://{hasura_ip}:8080',
