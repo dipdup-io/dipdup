@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run mypy:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(gh pr:*)",
+      "Bash(awk 'BEGIN{p=0} /^diff --git/{p=0} /^diff --git.*CHANGELOG.md/{p=1} p{print}')"
+    ]
+  }
+}

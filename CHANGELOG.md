@@ -8,6 +8,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+## [8.5.2] - 2026-04-08
+
 ### Fixed
 
 - cli: Fixed crash when running `schema wipe` on empty or in-memory database.
