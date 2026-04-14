@@ -53,7 +53,6 @@ def _init_demo(path: Path) -> None:
 
 def _rm_demo(path: Path) -> None:
     rmtree(path, ignore_errors=True)
-    rmtree(path.parent / 'src' / path.name, ignore_errors=True)
 
 
 @click.group(help='Various tools to generate demo projects from templates. Read the script source!')
