@@ -11,6 +11,7 @@
 !**/requirements*
 !**/*.lock
 !**/README.md
+!/CLAUDE.md
 !**/.keep
 !**/py.typed
 
