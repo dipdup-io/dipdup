@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- evm.subsquid, starknet.subsquid, substrate.subsquid: Added `api_key` option to authenticate with self-hosted `v2.archive.subsquid.io` gateways, which require a key since 2026-05-19.
+
 ## [8.5.2] - 2026-04-08
 
 ### Fixed

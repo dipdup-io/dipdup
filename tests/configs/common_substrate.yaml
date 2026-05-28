@@ -2,6 +2,7 @@ datasources:
   subsquid:
     kind: substrate.subsquid
     url: https://v2.archive.subsquid.io/network/asset-hub-polkadot
+    api_key: ${SUBSQUID_API_KEY:-}
   subscan:
     kind: substrate.subscan
     url: https://assethub-polkadot.api.subscan.io/api

@@ -16,11 +16,13 @@ class StarknetSubsquidDatasourceConfig(DatasourceConfig):
 
     :param kind: always 'starknet.subsquid'
     :param url: URL of Subsquid Network API
+    :param api_key: API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)
     :param http: HTTP client configuration
     """
 
     kind: Literal['starknet.subsquid'] = 'starknet.subsquid'
     url: Url
+    api_key: str | None = None
     http: HttpConfig | None = None
 
     @property

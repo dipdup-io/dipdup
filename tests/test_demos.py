@@ -294,6 +294,15 @@ async def test_run_init(
         pytest.skip('Substrate tests require ONFINALITY_API_KEY environment variable')
     if 'substrate' in config and cmd == 'init' and not {'SUBSCAN_API_KEY'} <= set(os.environ):
         pytest.skip('Substrate init tests require SUBSCAN_API_KEY environment variable')
+    if (
+        any(chain in config for chain in ('evm', 'starknet', 'substrate'))
+        and not config.endswith('_node')
+        and cmd == 'run'
+        and not {'SUBSQUID_API_KEY'} <= set(os.environ)
+    ):
+        pytest.skip(
+            'Subsquid run tests require SUBSQUID_API_KEY environment variable (v2.archive gateways need a key since 2026-05-19)'
+        )
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(

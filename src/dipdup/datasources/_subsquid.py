@@ -19,6 +19,14 @@ from dipdup.sys import fire_and_forget
 QueryT = TypeVar('QueryT', bound=AbstractSubsquidQuery)
 
 
+def _api_key_headers(api_key: str | None) -> dict[str, str]:
+    # NOTE: Self-hosted `v2.archive.subsquid.io` gateways require an API key since 2026-05-19. squid-sdk's
+    # NOTE: `ArchiveClient` sends both headers at once, so we mirror it. https://docs.sqd.dev/v2-keys
+    if not api_key:
+        return {}
+    return {'Authorization': f'Bearer {api_key}', 'Token': api_key}
+
+
 class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
     async def run(self) -> None:
         raise FrameworkException('Subsquid worker datasource should not be run')
@@ -29,6 +37,7 @@ class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
             'post',
             url='',
             json=query,
+            headers=_api_key_headers(self._config.api_key),
         )
         return cast('list[dict[str, Any]]', response)
 
@@ -104,8 +113,11 @@ class AbstractSubsquidDatasource(
             ),
         )
 
+    def _api_key_headers(self) -> dict[str, str]:
+        return _api_key_headers(getattr(self._config, 'api_key', None))
+
     async def get_head_level(self) -> int:
-        response = await self.request('get', 'height')
+        response = await self.request('get', 'height', headers=self._api_key_headers())
         return int(response)
 
     async def _fetch_worker(self, level: int) -> DatasourceConfigT:
@@ -113,6 +125,7 @@ class AbstractSubsquidDatasource(
             await self._http.request(
                 'get',
                 f'{level}/worker',
+                headers=self._api_key_headers(),
             )
         ).decode()
 

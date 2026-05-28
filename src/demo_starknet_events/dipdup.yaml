@@ -5,6 +5,7 @@ datasources:
   subsquid:
     kind: starknet.subsquid
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/starknet-mainnet}
+    api_key: ${SUBSQUID_API_KEY:-}
   node:
     kind: starknet.node
     url: ${NODE_URL:-https://starknet-mainnet.g.alchemy.com/v2}/${ALCHEMY_API_KEY:-''}

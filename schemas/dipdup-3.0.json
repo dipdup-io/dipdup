@@ -571,6 +571,19 @@
       "additionalProperties": false,
       "description": "Subsquid datasource config",
       "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "title": "api_key"
+        },
         "http": {
           "anyOf": [
             {
@@ -1728,6 +1741,19 @@
       "additionalProperties": false,
       "description": "Subsquid datasource config",
       "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "title": "api_key"
+        },
         "http": {
           "anyOf": [
             {
@@ -1992,6 +2018,19 @@
       "additionalProperties": false,
       "description": "Subsquid datasource config",
       "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "title": "api_key"
+        },
         "http": {
           "anyOf": [
             {
