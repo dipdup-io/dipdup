@@ -6,8 +6,8 @@ from typing import TypeVar
 from typing import cast
 
 from dipdup.config import HttpConfig
+from dipdup.config._subsquid import SubsquidDatasourceConfig
 from dipdup.datasources import Datasource
-from dipdup.datasources import DatasourceConfigT
 from dipdup.datasources import IndexDatasource
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -17,17 +17,18 @@ from dipdup.models._subsquid import AbstractSubsquidQuery
 from dipdup.sys import fire_and_forget
 
 QueryT = TypeVar('QueryT', bound=AbstractSubsquidQuery)
+SubsquidDatasourceConfigT = TypeVar('SubsquidDatasourceConfigT', bound=SubsquidDatasourceConfig)
 
 
 def _api_key_headers(api_key: str | None) -> dict[str, str]:
-    # NOTE: Self-hosted `v2.archive.subsquid.io` gateways require an API key since 2026-05-19. squid-sdk's
+    # NOTE: `v2.archive.subsquid.io` gateways require an API key since 2026-05-19. squid-sdk's
     # NOTE: `ArchiveClient` sends both headers at once, so we mirror it. https://docs.sqd.dev/v2-keys
     if not api_key:
         return {}
     return {'Authorization': f'Bearer {api_key}', 'Token': api_key}
 
 
-class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
+class AbstractSubsquidWorker(Datasource[SubsquidDatasourceConfig], Generic[QueryT]):
     async def run(self) -> None:
         raise FrameworkException('Subsquid worker datasource should not be run')
 
@@ -43,8 +44,8 @@ class AbstractSubsquidWorker(Datasource[Any], Generic[QueryT]):
 
 
 class AbstractSubsquidDatasource(
-    IndexDatasource[DatasourceConfigT],
-    Generic[DatasourceConfigT, QueryT],
+    IndexDatasource[SubsquidDatasourceConfigT],
+    Generic[SubsquidDatasourceConfigT, QueryT],
 ):
     _default_http_config = HttpConfig(
         polling_interval=1.0,
@@ -114,13 +115,13 @@ class AbstractSubsquidDatasource(
         )
 
     def _api_key_headers(self) -> dict[str, str]:
-        return _api_key_headers(getattr(self._config, 'api_key', None))
+        return _api_key_headers(self._config.api_key)
 
     async def get_head_level(self) -> int:
         response = await self.request('get', 'height', headers=self._api_key_headers())
         return int(response)
 
-    async def _fetch_worker(self, level: int) -> DatasourceConfigT:
+    async def _fetch_worker(self, level: int) -> SubsquidDatasourceConfigT:
         worker_url = (
             await self._http.request(
                 'get',
@@ -129,7 +130,7 @@ class AbstractSubsquidDatasource(
             )
         ).decode()
 
-        worker_config: DatasourceConfigT = copy(self._config)
+        worker_config: SubsquidDatasourceConfigT = copy(self._config)
         worker_config.url = worker_url
         if not worker_config.http:
             worker_config.http = self._default_http_config

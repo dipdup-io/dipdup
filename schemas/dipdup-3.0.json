@@ -581,7 +581,7 @@
             }
           ],
           "default": null,
-          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "description": "API key",
           "title": "api_key"
         },
         "http": {
@@ -1751,7 +1751,7 @@
             }
           ],
           "default": null,
-          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "description": "API key",
           "title": "api_key"
         },
         "http": {
@@ -2028,7 +2028,7 @@
             }
           ],
           "default": null,
-          "description": "API key for self-hosted Subsquid gateways (required by `v2.archive.subsquid.io` since 2026-05-19)",
+          "description": "API key",
           "title": "api_key"
         },
         "http": {
