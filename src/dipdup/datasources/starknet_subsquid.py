@@ -3,8 +3,8 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
-from dipdup.datasources._subsquid import AbstractSubsquidDatasource
 from dipdup.datasources._subsquid import AbstractSubsquidWorker
+from dipdup.datasources._subsquid import _ArchiveTransport
 from dipdup.models.starknet import StarknetEventData
 from dipdup.models.starknet import StarknetTransactionData
 from dipdup.models.starknet_subsquid import EventRequest
@@ -53,7 +53,7 @@ class _StarknetSubsquidWorker(AbstractSubsquidWorker[Query]):
     pass
 
 
-class StarknetSubsquidDatasource(AbstractSubsquidDatasource[StarknetSubsquidDatasourceConfig, Query]):
+class StarknetSubsquidDatasource(_ArchiveTransport[StarknetSubsquidDatasourceConfig, Query]):
     async def _get_worker(self, level: int) -> _StarknetSubsquidWorker:
         return _StarknetSubsquidWorker(await self._fetch_worker(level))
 

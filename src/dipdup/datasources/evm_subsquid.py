@@ -1,11 +1,12 @@
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
-from typing import Any
 
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources._subsquid import AbstractSubsquidDatasource
 from dipdup.datasources._subsquid import AbstractSubsquidWorker
+from dipdup.datasources._subsquid import SubsquidDatasourceConfigT
+from dipdup.datasources._subsquid import _ArchiveTransport
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
@@ -63,15 +64,8 @@ class _EvmSubsquidWorker(AbstractSubsquidWorker[Query]):
     pass
 
 
-class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig, Query]):
-    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
-        super().__init__(config)
-
-    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
-        return _EvmSubsquidWorker(await self._fetch_worker(level))
-
-    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
-        return await super().query_worker(query, current_level)
+class _AbstractEvmSubsquidDatasource(AbstractSubsquidDatasource[SubsquidDatasourceConfigT, Query]):
+    """EVM chain logic (query build + parse) shared by the v2.archive and Portal transports."""
 
     async def iter_events(
         self,
@@ -144,3 +138,14 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
                     if transaction.status != 0:
                         transactions.append(transaction)
                 yield tuple(transactions)
+
+
+class EvmSubsquidDatasource(
+    _AbstractEvmSubsquidDatasource[EvmSubsquidDatasourceConfig],
+    _ArchiveTransport[EvmSubsquidDatasourceConfig, Query],
+):
+    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
+        super().__init__(config)
+
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
+        return _EvmSubsquidWorker(await self._fetch_worker(level))

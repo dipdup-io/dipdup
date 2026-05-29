@@ -3,6 +3,7 @@ from typing import Any
 
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
+from dipdup.datasources.evm_sqd_portal import EvmPortalDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.indexes.evm import EvmIndex
 from dipdup.indexes.evm import get_sighash
@@ -16,7 +17,7 @@ from dipdup.models.evm_subsquid import TransactionRequest
 from dipdup.performance import metrics
 
 QueueItem = tuple[EvmTransactionData, ...] | RollbackMessage
-EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
+EvmDatasource = EvmSubsquidDatasource | EvmPortalDatasource | EvmNodeDatasource
 
 
 class EvmTransactionsIndex(
