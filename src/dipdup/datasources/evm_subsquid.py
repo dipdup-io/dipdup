@@ -16,6 +16,10 @@ from dipdup.models.evm_subsquid import TransactionRequest
 
 _LOG_FIELDS: FieldSelection = {
     'block': {
+        # NOTE: Portal returns only requested block fields; v2.archive always included
+        # number/hash, so request them explicitly — the parser needs all three.
+        'number': True,
+        'hash': True,
         'timestamp': True,
     },
     'log': {
@@ -29,6 +33,9 @@ _LOG_FIELDS: FieldSelection = {
 }
 _TRANSACTION_FIELDS: FieldSelection = {
     'block': {
+        # NOTE: see _LOG_FIELDS — Portal only returns requested block fields.
+        'number': True,
+        'hash': True,
         'timestamp': True,
     },
     'transaction': {

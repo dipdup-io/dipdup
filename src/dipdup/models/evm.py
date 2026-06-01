@@ -150,7 +150,14 @@ class EvmTransactionData(HasLevel):
             int(transaction_json['maxPriorityFeePerGas'], 16) if transaction_json['maxPriorityFeePerGas'] else None
         )
         v = int(transaction_json['v'], 16) if transaction_json['v'] else None
-        y_parity = bool(int(transaction_json['yParity'], 16)) if transaction_json['yParity'] else None
+        # NOTE: v2.archive returns yParity as a hex string ('0x1'); Portal as a native int (1).
+        raw_y_parity = transaction_json['yParity']
+        if not raw_y_parity:
+            y_parity = None
+        elif isinstance(raw_y_parity, str):
+            y_parity = bool(int(raw_y_parity, 16))
+        else:
+            y_parity = bool(raw_y_parity)
         return cls(
             # FIXME: 500
             # access_list=tuple(transaction_json['accessList']) if transaction_json['accessList'] else None,

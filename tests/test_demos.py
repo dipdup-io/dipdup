@@ -241,6 +241,8 @@ test_params = (
     # NOTE: EVM indexes
     ('demo_evm_events', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events', 'demo_evm_events', 'init', None),
+    # NOTE: EVM events via SQD Portal (public, no key) instead of v2.archive
+    ('demo_evm_events_portal', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions', 'demo_evm_transactions', 'init', None),
     # NOTE: EVM indexes (node only)
@@ -297,6 +299,7 @@ async def test_run_init(
     if (
         any(chain in config for chain in ('evm', 'starknet', 'substrate'))
         and not config.endswith('_node')
+        and 'portal' not in config
         and cmd == 'run'
         and not {'SUBSQUID_API_KEY'} <= set(os.environ)
     ):
