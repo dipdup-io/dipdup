@@ -524,6 +524,10 @@ class DipDupContext:
         """Get `evm.subsquid` datasource by name"""
         return self.get_datasource(name, EvmSubsquidDatasource)
 
+    def get_evm_portal_datasource(self, name: str) -> EvmPortalDatasource:
+        """Get `evm.sqd_portal` datasource by name"""
+        return self.get_datasource(name, EvmPortalDatasource)
+
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name"""
         return self.get_datasource(name, EvmNodeDatasource)
