@@ -1,18 +1,19 @@
 from abc import ABC
+from typing import Any
 from typing import Generic
 
-from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
+from dipdup.datasources.evm_subsquid import _AbstractEvmSubsquidDatasource
 from dipdup.fetcher import BufferT
 from dipdup.fetcher import DataFetcher
 
 EVM_SUBSQUID_READAHEAD_LIMIT = 10000
 
 
-class EvmSubsquidFetcher(Generic[BufferT], DataFetcher[BufferT, EvmSubsquidDatasource], ABC):
+class EvmSubsquidFetcher(Generic[BufferT], DataFetcher[BufferT, _AbstractEvmSubsquidDatasource[Any]], ABC):
     def __init__(
         self,
         name: str,
-        datasources: tuple[EvmSubsquidDatasource, ...],
+        datasources: tuple[_AbstractEvmSubsquidDatasource[Any], ...],
         first_level: int,
         last_level: int,
     ) -> None:

@@ -13,6 +13,7 @@
 .. automethod:: dipdup.context.DipDupContext.get_abi_etherscan_datasource
 .. automethod:: dipdup.context.DipDupContext.get_coinbase_datasource
 .. automethod:: dipdup.context.DipDupContext.get_evm_node_datasource
+.. automethod:: dipdup.context.DipDupContext.get_evm_portal_datasource
 .. automethod:: dipdup.context.DipDupContext.get_evm_subsquid_datasource
 .. automethod:: dipdup.context.DipDupContext.get_http_datasource
 .. automethod:: dipdup.context.DipDupContext.get_ipfs_datasource

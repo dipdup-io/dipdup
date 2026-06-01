@@ -252,6 +252,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
     from dipdup.config.evm_node import EvmNodeDatasourceConfig
     from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
+    from dipdup.config.evm_sqd_portal import EvmPortalDatasourceConfig
     from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
     from dipdup.config.http import HttpDatasourceConfig
     from dipdup.config.ipfs import IpfsDatasourceConfig
@@ -267,6 +268,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
     from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
     from dipdup.datasources.evm_node import EvmNodeDatasource
     from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
+    from dipdup.datasources.evm_sqd_portal import EvmPortalDatasource
     from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
     from dipdup.datasources.http import HttpDatasource
     from dipdup.datasources.ipfs import IpfsDatasource
@@ -288,6 +290,7 @@ def create_datasource(config: DatasourceConfig) -> Datasource[Any]:
         HttpDatasourceConfig: HttpDatasource,
         IpfsDatasourceConfig: IpfsDatasource,
         EvmSubsquidDatasourceConfig: EvmSubsquidDatasource,
+        EvmPortalDatasourceConfig: EvmPortalDatasource,
         EvmNodeDatasourceConfig: EvmNodeDatasource,
         StarknetSubsquidDatasourceConfig: StarknetSubsquidDatasource,
         StarknetNodeDatasourceConfig: StarknetNodeDatasource,

@@ -22,5 +22,4 @@ class EvmSubsquidDatasourceConfig(SubsquidDatasourceConfig):
 
     kind: Literal['evm.subsquid'] = 'evm.subsquid'
     url: Url
-    api_key: str | None = None
     http: HttpConfig | None = None

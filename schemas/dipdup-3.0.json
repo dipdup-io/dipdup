@@ -298,6 +298,9 @@
           "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
         },
         {
+          "$ref": "#/$defs/EvmPortalDatasourceConfig"
+        },
+        {
           "$ref": "#/$defs/EvmNodeDatasourceConfig"
         },
         {
@@ -510,6 +513,55 @@
         "url"
       ],
       "title": "EvmNodeDatasourceConfig",
+      "type": "object"
+    },
+    "EvmPortalDatasourceConfig": {
+      "additionalProperties": false,
+      "description": "SQD Portal datasource config",
+      "properties": {
+        "api_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API key",
+          "title": "api_key"
+        },
+        "http": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HttpConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "HTTP client configuration",
+          "title": "http"
+        },
+        "kind": {
+          "const": "evm.sqd_portal",
+          "default": "evm.sqd_portal",
+          "description": "always 'evm.sqd_portal'",
+          "title": "kind",
+          "type": "string"
+        },
+        "url": {
+          "$ref": "#/$defs/Url",
+          "description": "URL of the SQD Portal dataset",
+          "title": "url"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "EvmPortalDatasourceConfig",
       "type": "object"
     },
     "EvmSourcifyDatasourceConfig": {
@@ -3330,6 +3382,9 @@
           },
           {
             "$ref": "#/$defs/EvmSubsquidDatasourceConfig"
+          },
+          {
+            "$ref": "#/$defs/EvmPortalDatasourceConfig"
           },
           {
             "$ref": "#/$defs/EvmNodeDatasourceConfig"

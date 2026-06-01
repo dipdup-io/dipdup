@@ -1,14 +1,14 @@
 from collections.abc import AsyncIterator
 
 from dipdup.config.substrate_subsquid import SubstrateSubsquidDatasourceConfig
-from dipdup.datasources._subsquid import AbstractSubsquidDatasource
+from dipdup.datasources._subsquid import _ArchiveTransport
 from dipdup.models._subsquid import AbstractSubsquidQuery
 from dipdup.models.substrate import _SubstrateSubsquidEventResponse
 
 Query = AbstractSubsquidQuery
 
 
-class SubstrateSubsquidDatasource(AbstractSubsquidDatasource[SubstrateSubsquidDatasourceConfig, Query]):
+class SubstrateSubsquidDatasource(_ArchiveTransport[SubstrateSubsquidDatasourceConfig, Query]):
     async def iter_events(
         self,
         first_level: int,

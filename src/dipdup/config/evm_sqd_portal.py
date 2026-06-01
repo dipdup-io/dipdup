@@ -11,15 +11,15 @@ from dipdup.config._subsquid import SubsquidDatasourceConfig
 
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
-class StarknetSubsquidDatasourceConfig(SubsquidDatasourceConfig):
-    """Subsquid datasource config
+class EvmPortalDatasourceConfig(SubsquidDatasourceConfig):
+    """SQD Portal datasource config
 
-    :param kind: always 'starknet.subsquid'
-    :param url: URL of Subsquid Network API
+    :param kind: always 'evm.sqd_portal'
+    :param url: URL of the SQD Portal dataset
     :param api_key: API key
     :param http: HTTP client configuration
     """
 
-    kind: Literal['starknet.subsquid'] = 'starknet.subsquid'
+    kind: Literal['evm.sqd_portal'] = 'evm.sqd_portal'
     url: Url
     http: HttpConfig | None = None

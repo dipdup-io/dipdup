@@ -1326,6 +1326,7 @@ from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
+from dipdup.config.evm_sqd_portal import EvmPortalDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
@@ -1366,6 +1367,7 @@ DatasourceConfigU = (
     | HttpDatasourceConfig
     | IpfsDatasourceConfig
     | EvmSubsquidDatasourceConfig
+    | EvmPortalDatasourceConfig
     | EvmNodeDatasourceConfig
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig
