@@ -14,6 +14,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - evm.sqd_portal: Added a new datasource backed by the SQD Portal (`portal.sqd.dev`), a streaming alternative to the v2.archive `evm.subsquid` gateway.
 - evm.subsquid, starknet.subsquid, substrate.subsquid: Added `api_key` option to authenticate with `v2.archive.subsquid.io` gateways, which require a key since 2026-05-19.
 
+### Changed
+
+- tezos.tzkt: Replaced decommissioned ghostnet with shadownet in known testnet URLs and the `demo_tezos_events` project.
+
 ## [8.5.2] - 2026-04-08
 
 ### Fixed

@@ -12,7 +12,7 @@ from dipdup.exceptions import ConfigurationError
 
 TZKT_API_URLS: dict[str, str] = {
     'https://api.tzkt.io': 'mainnet',
-    'https://api.ghostnet.tzkt.io': 'ghostnet',
+    'https://api.shadownet.tzkt.io': 'shadownet',
     'https://api.limanet.tzkt.io': 'limanet',
     'https://staging.api.tzkt.io': 'staging',
 }

@@ -6,13 +6,12 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 
 
-class MovePayload(BaseModel):
+class WrapPayload(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    address: str
-    a: str
-    b: str
-    roll: str
-    epoch: str
-    rolls: str
+    id: str
+    user: str
+    ethereum_token: str
+    token_address: str
+    token_amount: str
