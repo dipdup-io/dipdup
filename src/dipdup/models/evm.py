@@ -151,8 +151,10 @@ class EvmTransactionData(HasLevel):
         )
         v = int(transaction_json['v'], 16) if transaction_json['v'] else None
         # NOTE: v2.archive returns yParity as a hex string ('0x1'); Portal as a native int (1).
+        # Check `is None` (not falsiness): Portal's native int 0 is a valid even parity and must
+        # decode to False, mirroring v2.archive's string '0x0' — not collapse to None.
         raw_y_parity = transaction_json['yParity']
-        if not raw_y_parity:
+        if raw_y_parity is None:
             y_parity = None
         elif isinstance(raw_y_parity, str):
             y_parity = bool(int(raw_y_parity, 16))

@@ -103,6 +103,12 @@ class _AbstractEvmSubsquidDatasource(AbstractSubsquidDatasource[SubsquidDatasour
             }
             response = await self.query_worker(query, current_level)
 
+            # NOTE: Portal's `/finalized-stream` returns an empty body once no blocks in
+            # [current_level, last_level] match the query. `current_level` only advances inside
+            # the loop below, so without this guard an empty response re-queries forever.
+            if not response:
+                break
+
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
                 logs: deque[EvmEventData] = deque()
@@ -131,6 +137,11 @@ class _AbstractEvmSubsquidDatasource(AbstractSubsquidDatasource[SubsquidDatasour
                 'transactions': list(filters),
             }
             response = await self.query_worker(query, current_level)
+
+            # NOTE: see `iter_events` — an empty Portal stream means the range is exhausted;
+            # break instead of re-querying the same range forever.
+            if not response:
+                break
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
