@@ -1,6 +1,5 @@
 from collections import deque
 from collections.abc import AsyncIterator
-from typing import Any
 
 from dipdup.config.starknet_subsquid import StarknetSubsquidDatasourceConfig
 from dipdup.datasources._subsquid import AbstractSubsquidWorker
@@ -56,9 +55,6 @@ class _StarknetSubsquidWorker(AbstractSubsquidWorker[Query]):
 class StarknetSubsquidDatasource(_ArchiveTransport[StarknetSubsquidDatasourceConfig, Query]):
     async def _get_worker(self, level: int) -> _StarknetSubsquidWorker:
         return _StarknetSubsquidWorker(await self._fetch_worker(level))
-
-    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
-        return await super().query_worker(query, current_level)
 
     async def iter_events(
         self,

@@ -22,5 +22,4 @@ class SubstrateSubsquidDatasourceConfig(SubsquidDatasourceConfig):
 
     kind: Literal['substrate.subsquid'] = 'substrate.subsquid'
     url: Url
-    api_key: str | None = None
     http: HttpConfig | None = None

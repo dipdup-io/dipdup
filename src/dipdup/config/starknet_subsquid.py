@@ -22,5 +22,4 @@ class StarknetSubsquidDatasourceConfig(SubsquidDatasourceConfig):
 
     kind: Literal['starknet.subsquid'] = 'starknet.subsquid'
     url: Url
-    api_key: str | None = None
     http: HttpConfig | None = None

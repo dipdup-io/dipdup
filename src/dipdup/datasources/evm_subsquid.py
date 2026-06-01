@@ -128,13 +128,14 @@ class _AbstractEvmSubsquidDatasource(AbstractSubsquidDatasource[SubsquidDatasour
         filters: tuple[TransactionRequest, ...],
     ) -> AsyncIterator[tuple[EvmTransactionData, ...]]:
         current_level = first_level
+        transaction_request = list(filters)
 
         while current_level <= last_level:
             query: Query = {
                 'fields': _TRANSACTION_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
-                'transactions': list(filters),
+                'transactions': transaction_request,
             }
             response = await self.query_worker(query, current_level)
 

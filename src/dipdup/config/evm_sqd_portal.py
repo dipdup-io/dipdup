@@ -22,5 +22,4 @@ class EvmPortalDatasourceConfig(SubsquidDatasourceConfig):
 
     kind: Literal['evm.sqd_portal'] = 'evm.sqd_portal'
     url: Url
-    api_key: str | None = None
     http: HttpConfig | None = None
