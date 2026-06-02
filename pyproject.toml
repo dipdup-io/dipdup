@@ -1,7 +1,7 @@
 [project]
 name = "dipdup"
 description = "Modular framework for creating selective indexers and featureful backends for dapps"
-version = "8.5.2"
+version = "8.6.0"
 license = { text = "MIT" }
 authors = [
     { name = "Lev Gorodetskii", email = "github@drsr.io" },

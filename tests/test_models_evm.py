@@ -127,13 +127,14 @@ def test_y_parity_portal_zero_is_false() -> None:
 
 @pytest.mark.parametrize('transaction_index', [0, 6])
 def test_event_from_subsquid_json(transaction_index: int) -> None:
+    topics = ['0xddf2', '0xfrom', '0xto']
     log = {
         'address': '0xdac17f958d2ee523a2206206994597c13d831ec7',
         'data': '0x00',
         'logIndex': 12,
         'transactionIndex': transaction_index,
         'transactionHash': '0xabc',
-        'topics': ['0xddf2', '0xfrom', '0xto'],
+        'topics': topics,
     }
     event = EvmEventData.from_subsquid_json(event_json=log, header=_HEADER)
 
@@ -142,7 +143,7 @@ def test_event_from_subsquid_json(transaction_index: int) -> None:
     assert event.timestamp == _HEADER['timestamp']
     assert event.log_index == 12
     assert event.transaction_index == transaction_index
-    assert event.topics == tuple(log['topics'])
+    assert event.topics == tuple(topics)
     assert event.removed is False
 
 

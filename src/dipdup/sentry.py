@@ -87,8 +87,8 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
         release=release,
         environment=environment,
         server_name=server_name,
-        # NOTE: Increase __repr__ length limit
-        max_value_length=sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH * 10,
+        # NOTE: Increase __repr__ length limit; sentry's default is 1024 (None since sentry-sdk 2.61)
+        max_value_length=(sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH or 1024) * 10,
     )
 
     # NOTE: Setting session tags

@@ -6,13 +6,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.6.0] - 2026-06-01
 
 ### Added
 
 - context: Added `get_evm_portal_datasource` method to access `evm.sqd_portal` datasources from handlers and hooks with a precise type.
 - evm.sqd_portal: Added a new datasource backed by the SQD Portal (`portal.sqd.dev`), a streaming alternative to the v2.archive `evm.subsquid` gateway.
 - evm.subsquid, starknet.subsquid, substrate.subsquid: Added `api_key` option to authenticate with `v2.archive.subsquid.io` gateways, which require a key since 2026-05-19.
+
+### Fixed
+
+- sentry: Fixed crash on init with sentry-sdk 2.61+, where `DEFAULT_MAX_VALUE_LENGTH` became `None`.
 
 ### Changed
 
@@ -820,7 +824,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.5.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.6.0...HEAD
+[8.6.0]: https://github.com/dipdup-io/dipdup/compare/8.5.2...8.6.0
 [8.5.2]: https://github.com/dipdup-io/dipdup/compare/8.5.1...8.5.2
 [8.5.1]: https://github.com/dipdup-io/dipdup/compare/8.5.0...8.5.1
 [8.5.0]: https://github.com/dipdup-io/dipdup/compare/8.4.3...8.5.0
