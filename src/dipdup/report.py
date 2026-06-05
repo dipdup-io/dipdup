@@ -34,7 +34,12 @@ def save_report(package: str, error: Exception | None) -> str:
 
         # NOTE: Merge pieces of code into a single list
         for exception in event['exception']['values']:
-            for frame in exception['stacktrace']['frames']:
+            # NOTE: Exceptions without a traceback (e.g. chained `__context__`/`__cause__` causes) have no
+            # NOTE: stacktrace; keep them in the report with their type/value/mechanism, just no code frames
+            stacktrace = exception.get('stacktrace')
+            if not stacktrace:
+                continue
+            for frame in stacktrace['frames']:
                 frame['code'] = [*frame.pop('pre_context'), frame.pop('context_line'), *frame.pop('post_context')]
 
     # NOTE: Performance stats if any
