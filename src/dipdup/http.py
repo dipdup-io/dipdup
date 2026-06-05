@@ -164,7 +164,8 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 if isinstance(e, aiohttp.ClientResponseError):
                     metrics.set_http_error(self._url, e.status)
 
-                    if e.status == HTTPStatus.TOO_MANY_REQUESTS:
+                    # NOTE: Many gateways (e.g. nginx `limit_req`) shed load with 503 instead of 429
+                    if e.status in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE):
                         ratelimit_sleep = self._config.ratelimit_sleep
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):

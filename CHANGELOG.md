@@ -16,6 +16,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- http: Treat HTTP 503 responses as rate limiting, applying `ratelimit_sleep` backoff like 429; many gateways shed load with 503 instead of 429.
 - sentry: Fixed crash on init with sentry-sdk 2.61+, where `DEFAULT_MAX_VALUE_LENGTH` became `None`.
 
 ### Changed
