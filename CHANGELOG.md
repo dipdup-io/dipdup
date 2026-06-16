@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [8.6.0] - 2026-06-01
+## [8.6.0] - 2026-06-16
 
 ### Added
 
@@ -16,6 +16,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- evm.node: Omit unset `address`/`topics` from `logs` subscriptions instead of sending `null`, which strict JSON-RPC nodes (Octez/Etherlink EVM) reject.
 - http: Treat HTTP 503 responses as rate limiting, applying `ratelimit_sleep` backoff like 429; many gateways shed load with 503 instead of 429.
 - report: Fixed `KeyError: 'stacktrace'` when saving a crashdump for a chained exception whose `__context__`/`__cause__` cause has no traceback.
 - sentry: Fixed crash on init with sentry-sdk 2.61+, where `DEFAULT_MAX_VALUE_LENGTH` became `None`.
