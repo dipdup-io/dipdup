@@ -248,7 +248,7 @@ test_params = (
     # NOTE: EVM indexes (node only)
     ('demo_evm_events_node', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
-    # NOTE: Starknet indexes
+    # NOTE: Starknet indexes (node only — subsquid decommissioned the `starknet-mainnet` v2.archive dataset)
     ('demo_starknet_events', 'demo_starknet_events', 'run', assert_run_starknet_events),
     ('demo_starknet_events', 'demo_starknet_events', 'init', None),
     # NOTE: Substrate indexes
@@ -297,7 +297,8 @@ async def test_run_init(
     if 'substrate' in config and cmd == 'init' and not {'SUBSCAN_API_KEY'} <= set(os.environ):
         pytest.skip('Substrate init tests require SUBSCAN_API_KEY environment variable')
     if (
-        any(chain in config for chain in ('evm', 'starknet', 'substrate'))
+        # NOTE: starknet demo is node-only (subsquid decommissioned its v2.archive dataset), so it needs no key here
+        any(chain in config for chain in ('evm', 'substrate'))
         and not config.endswith('_node')
         and 'portal' not in config
         and cmd == 'run'
