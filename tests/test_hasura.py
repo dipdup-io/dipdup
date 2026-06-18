@@ -33,8 +33,9 @@ async def test_configure_hasura() -> None:
     config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yaml'
 
     config = DipDupConfig.load([config_path])
-    config.database = await run_postgres_container()
-    config.hasura = await run_hasura_container(config.database.host)
+    postgres = await run_postgres_container()
+    config.database = postgres.config
+    config.hasura = await run_hasura_container(postgres.internal_host)
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
     config.initialize()
 
