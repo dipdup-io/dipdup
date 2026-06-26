@@ -9,9 +9,11 @@ import pytest
 from tortoise.functions import Sum
 
 import demo_tezos_etherlink.models
+from dipdup.database import get_tables
 from dipdup.database import tortoise_wrapper
 from dipdup.models.tezos import TezosOperationType
 from dipdup.test import run_in_tmp
+from dipdup.test import run_postgres_container
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
 
@@ -327,3 +329,36 @@ async def test_run_init(
             )
         )
         await assert_fn()
+
+
+async def test_run_dex_postgres() -> None:
+    package = 'demo_tezos_dex'
+    config_paths = [
+        TEST_CONFIGS / 'demo_tezos_dex.yaml',
+        TEST_CONFIGS / 'common_tezos.yaml',
+        TEST_CONFIGS / 'common_postgres.yaml',
+    ]
+
+    async with AsyncExitStack() as stack:
+        database_config = (await run_postgres_container()).config
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                config_paths,
+                package,
+                exists=True,
+                env={'POSTGRES_HOST': database_config.host, 'POSTGRES_PORT': str(database_config.port)},
+            ),
+        )
+        await run_in_tmp(tmp_package_path, env, 'run')
+
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                database_config.connection_string,
+                f'{package}.models',
+            )
+        )
+        await assert_run_dex()
+
+        # NOTE: Postgres-specific sanity check — the aerich migration table proves the PG migration path ran
+        tables = await get_tables()
+        assert 'aerich' in tables
