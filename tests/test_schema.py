@@ -119,13 +119,13 @@ async def test_schema_postgres() -> None:
     env_config_path = TEST_CONFIGS / 'common_postgres.yaml'
 
     async with AsyncExitStack() as stack:
-        database_config = await run_postgres_container()
+        database_config = (await run_postgres_container()).config
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
                 [config_path, env_config_path],
                 package,
                 exists=True,
-                env={'POSTGRES_HOST': database_config.host},
+                env={'POSTGRES_HOST': database_config.host, 'POSTGRES_PORT': str(database_config.port)},
             ),
         )
 
@@ -160,13 +160,13 @@ async def test_schema_postgres_immune() -> None:
     env_config_path = TEST_CONFIGS / 'common_postgres_immune.yaml'
 
     async with AsyncExitStack() as stack:
-        database_config = await run_postgres_container()
+        database_config = (await run_postgres_container()).config
         tmp_package_path, env = await stack.enter_async_context(
             tmp_project(
                 [config_path, env_config_path],
                 package,
                 exists=True,
-                env={'POSTGRES_HOST': database_config.host},
+                env={'POSTGRES_HOST': database_config.host, 'POSTGRES_PORT': str(database_config.port)},
             ),
         )
 

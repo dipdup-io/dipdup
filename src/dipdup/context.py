@@ -53,6 +53,7 @@ from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
 from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
+from dipdup.datasources.evm_sqd_portal import EvmPortalDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -523,6 +524,10 @@ class DipDupContext:
         """Get `evm.subsquid` datasource by name"""
         return self.get_datasource(name, EvmSubsquidDatasource)
 
+    def get_evm_portal_datasource(self, name: str) -> EvmPortalDatasource:
+        """Get `evm.sqd_portal` datasource by name"""
+        return self.get_datasource(name, EvmPortalDatasource)
+
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name"""
         return self.get_datasource(name, EvmNodeDatasource)
@@ -541,6 +546,7 @@ class DipDupContext:
         self, name: str
     ) -> (
         EvmSubsquidDatasource
+        | EvmPortalDatasource
         | EvmNodeDatasource
         | EvmEtherscanDatasource
         | EvmSourcifyDatasource
@@ -550,6 +556,7 @@ class DipDupContext:
         return self.get_datasource(
             name,
             EvmSubsquidDatasource,
+            EvmPortalDatasource,
             EvmNodeDatasource,
             EvmEtherscanDatasource,
             EvmSourcifyDatasource,

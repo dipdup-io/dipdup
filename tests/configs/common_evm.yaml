@@ -2,6 +2,10 @@ datasources:
   subsquid:
     kind: evm.subsquid
     url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/ethereum-mainnet}
+    api_key: ${SUBSQUID_API_KEY:-}
+  sqd_portal:
+    kind: evm.sqd_portal
+    url: ${SQD_PORTAL_URL:-https://portal.sqd.dev/datasets/ethereum-mainnet}
   etherscan:
     kind: evm.etherscan
     url: ${ETHERSCAN_URL:-https://api.etherscan.io/v2/api?chainId=1}

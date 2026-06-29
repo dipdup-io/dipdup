@@ -10,6 +10,7 @@
 .. autoclass:: dipdup.config.evm_etherscan.EvmEtherscanDatasourceConfig
 .. autoclass:: dipdup.config.evm_events.EvmEventsHandlerConfig
 .. autoclass:: dipdup.config.evm_events.EvmEventsIndexConfig
+.. autoclass:: dipdup.config.evm_sqd_portal.EvmPortalDatasourceConfig
 .. autoclass:: dipdup.config.evm_subsquid.EvmSubsquidDatasourceConfig
 .. autoclass:: dipdup.config.evm_transactions.EvmTransactionsHandlerConfig
 .. autoclass:: dipdup.config.evm_transactions.EvmTransactionsIndexConfig

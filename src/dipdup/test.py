@@ -14,6 +14,7 @@ from pathlib import Path
 from shutil import which
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import NamedTuple
 from typing import cast
 
 from dipdup.config import DipDupConfig
@@ -84,8 +85,54 @@ def get_docker_client() -> 'DockerClient':
     )
 
 
-async def run_postgres_container() -> PostgresDatabaseConfig:
-    """Run Postgres container (destroyed on exit) and return database config with its IP."""
+# NOTE: Tests connect to containers from the host (not from another container). On native Linux the host can
+# NOTE: route to container bridge IPs, but under Docker Desktop (incl. WSL2) it cannot — only published ports on
+# NOTE: localhost are reachable. So we publish a random host port and connect via 127.0.0.1, which works in both
+# NOTE: setups. Container-to-container traffic (Hasura -> Postgres) still uses the bridge IP (`internal_host`).
+def _published_port(container: Any, internal_port: int) -> int:
+    """Read the random host port Docker assigned to `internal_port/tcp` (retry until populated)."""
+    for _ in range(100):
+        container.reload()
+        ports = container.attrs['NetworkSettings']['Ports'] or {}
+        if mapping := ports.get(f'{internal_port}/tcp'):
+            return int(mapping[0]['HostPort'])
+        import time
+
+        time.sleep(0.1)
+    raise FrameworkException(f'Container did not publish port {internal_port}')
+
+
+def _container_ip(container: Any) -> str:
+    """Bridge IP for container-to-container traffic."""
+    network_settings = container.attrs['NetworkSettings']
+    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
+    return cast('str', ip)
+
+
+async def _wait_tcp(host: str, port: int, timeout: float = 60.0) -> None:
+    """Wait until host:port accepts TCP connections (host-side readiness; covers published-port wiring)."""
+    deadline = asyncio.get_event_loop().time() + timeout
+    while True:
+        try:
+            _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=5)
+            writer.close()
+            await writer.wait_closed()
+            return
+        except (OSError, TimeoutError) as e:
+            if asyncio.get_event_loop().time() > deadline:
+                raise FrameworkException(f'`{host}:{port}` not reachable after {timeout}s') from e
+            await asyncio.sleep(0.2)
+
+
+class PostgresContainer(NamedTuple):
+    config: PostgresDatabaseConfig
+    """Host-facing config (connect from the host via 127.0.0.1:<published port>)."""
+    internal_host: str
+    """Bridge IP for container-to-container use (e.g. Hasura -> Postgres)."""
+
+
+async def run_postgres_container() -> PostgresContainer:
+    """Run Postgres container (destroyed on exit); reachable from the host via a published port."""
     docker = get_docker_client()
     postgres_container = docker.containers.run(
         image=get_default_answers()['postgres_image'],
@@ -96,47 +143,52 @@ async def run_postgres_container() -> PostgresDatabaseConfig:
         },
         detach=True,
         remove=True,
+        ports={'5432/tcp': None},
     )
     atexit.register(postgres_container.stop)
-    postgres_container.reload()
 
-    network_settings = postgres_container.attrs['NetworkSettings']
-    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
-    postgres_ip = cast('str', ip)
+    host_port = _published_port(postgres_container, 5432)
+    internal_host = _container_ip(postgres_container)
 
     while not postgres_container.exec_run('pg_isready').exit_code == 0:
         await asyncio.sleep(0.1)
+    await _wait_tcp('127.0.0.1', host_port)
 
-    return PostgresDatabaseConfig(
-        kind='postgres',
-        host=postgres_ip,
-        port=5432,
-        user='test',
-        database='test',
-        password='test',
+    return PostgresContainer(
+        config=PostgresDatabaseConfig(
+            kind='postgres',
+            host='127.0.0.1',
+            port=host_port,
+            user='test',
+            database='test',
+            password='test',
+        ),
+        internal_host=internal_host,
     )
 
 
-async def run_hasura_container(postgres_ip: str) -> HasuraConfig:
-    """Run Hasura container (destroyed on exit) and return config with its IP."""
+async def run_hasura_container(postgres_internal_host: str) -> HasuraConfig:
+    """Run Hasura container (destroyed on exit); reachable from the host via a published port.
+
+    `postgres_internal_host` is the Postgres container's bridge IP (container-to-container traffic).
+    """
     docker = get_docker_client()
     hasura_container = docker.containers.run(
         image=get_default_answers()['hasura_image'],
         environment={
-            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_ip}:5432',
+            'HASURA_GRAPHQL_DATABASE_URL': f'postgres://test:test@{postgres_internal_host}:5432',
         },
         detach=True,
+        ports={'8080/tcp': None},
         # remove=True,
     )
     atexit.register(hasura_container.stop)
-    hasura_container.reload()
 
-    network_settings = hasura_container.attrs['NetworkSettings']
-    ip = network_settings.get('IPAddress') or next(iter(network_settings['Networks'].values()))['IPAddress']
-    hasura_ip = cast('str', ip)
+    host_port = _published_port(hasura_container, 8080)
+    await _wait_tcp('127.0.0.1', host_port)
 
     return HasuraConfig(
-        url=f'http://{hasura_ip}:8080',
+        url=f'http://127.0.0.1:{host_port}',
         source='new_source',
         create_source=True,
     )

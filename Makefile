@@ -66,7 +66,7 @@ docs_serve:     ## Build docs and start frontend server
 docs_watch:     ## Build docs and watch for changes
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs --watch
 
-docs_publish:   ## Tag and push `docs-next` ref
+docs_publish:   ## Tag and push `docs` ref
 	git tag -d docs && git tag docs && git push --force origin docs
 
 docs_publish_dev:   ## Tag and push `docs-next` ref

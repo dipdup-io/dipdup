@@ -2,9 +2,6 @@ spec_version: 3.0
 package: {{ project.package }}
 
 datasources:
-  subsquid:
-    kind: starknet.subsquid
-    url: ${SUBSQUID_URL:-https://v2.archive.subsquid.io/network/starknet-mainnet}
   node:
     kind: starknet.node
     url: ${NODE_URL:-https://starknet-mainnet.g.alchemy.com/v2}/${ALCHEMY_API_KEY:-''}
@@ -19,7 +16,6 @@ indexes:
   starknet_usdt_events:
     kind: starknet.events
     datasources:
-      - subsquid
       - node
     handlers:
       - callback: on_transfer
