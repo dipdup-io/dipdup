@@ -1,4 +1,3 @@
-import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -27,13 +26,11 @@ if TYPE_CHECKING:
 
 
 async def test_configure_hasura() -> None:
-    if os.uname().sysname != 'Linux' or 'microsoft' in os.uname().release:  # check for WSL, Windows, mac and else
-        pytest.skip('Test is not supported for os architecture', allow_module_level=True)
-
     config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yaml'
 
     config = DipDupConfig.load([config_path])
     postgres = await run_postgres_container()
+    # NOTE: The host (this test process) reaches Postgres via 127.0.0.1:<published>.
     config.database = postgres.config
     config.hasura = await run_hasura_container(postgres.internal_host)
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
@@ -41,6 +38,21 @@ async def test_configure_hasura() -> None:
 
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
+
+        # NOTE: Hasura connects to Postgres from inside its own container, where 127.0.0.1 points at
+        # NOTE: Hasura itself — so its source must use the container bridge IP. The host keeps its
+        # NOTE: already-open connection (via the published port), and Hasura reaches Postgres
+        # NOTE: container-to-container. Both paths hold on Linux, Docker Desktop and WSL alike, so this
+        # NOTE: test no longer needs an OS-based skip.
+        config.database = PostgresDatabaseConfig(
+            kind='postgres',
+            host=postgres.internal_host,
+            port=5432,
+            user='test',
+            database='test',
+            password='test',
+        )
+
         hasura_gateway = await dipdup._set_up_hasura(stack)
         assert isinstance(hasura_gateway, HasuraGateway)
 
