@@ -43,5 +43,5 @@ class TicketHelperStorage(BaseModel):
     token: Token | Token1
     ticketer: str
     erc_proxy: str
-    context: Context | None = None
+    context: Context | None
     metadata: dict[str, str]

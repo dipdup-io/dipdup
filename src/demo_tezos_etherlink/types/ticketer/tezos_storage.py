@@ -33,7 +33,7 @@ class Content(BaseModel):
         extra='forbid',
     )
     nat: str
-    bytes: str | None = None
+    bytes: str | None
 
 
 class TicketerStorage(BaseModel):
