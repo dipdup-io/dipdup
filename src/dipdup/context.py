@@ -628,8 +628,10 @@ class DipDupContext:
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self.transactions.in_transaction():
+            # NOTE: `from_level` belongs to the datasource channel and can lag behind the index
+            # NOTE: itself; revert everything above `to_level` or the index would keep changes
+            # NOTE: made at levels it's about to process again.
             updates = await ModelUpdate.filter(
-                level__lte=from_level,
                 level__gt=to_level,
                 index=index,
             ).order_by('-id')

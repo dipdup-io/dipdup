@@ -120,7 +120,9 @@ quote-style = "single"
 python_version = "3.12"
 plugins = ["pydantic.mypy"]
 strict = true
-exclude = ["^src/demo_"]
+# NOTE: `tests/packages/*` are indexer packages: imported by their own name, not by path
+exclude = ["^src/demo_", "^tests/packages/"]
+mypy_path = "tests/packages"
 
 [[tool.mypy.overrides]]
 module = "ruamel"

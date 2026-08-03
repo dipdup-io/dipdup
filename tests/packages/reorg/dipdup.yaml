@@ -1,0 +1,14 @@
+spec_version: 3.0
+package: reorg
+
+datasources:
+  tzkt:
+    kind: tezos.tzkt
+    url: https://api.tzkt.io
+
+indexes:
+  head:
+    kind: tezos.head
+    datasources:
+      - tzkt
+    callback: on_head
