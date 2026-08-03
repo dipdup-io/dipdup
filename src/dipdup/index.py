@@ -320,6 +320,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         from_level: int,
         to_level: int,
     ) -> None:
+        # NOTE: Index level is only known for sure when the message is dequeued; realtime
+        # NOTE: messages processed in the meantime could have moved it above `to_level`.
+        if to_level >= self.state.level:
+            self._logger.debug('Skipping outdated rollback: %s >= %s', to_level, self.state.level)
+            return
+
         await self._ctx.fire_hook(
             name='on_index_rollback',
             index=self,

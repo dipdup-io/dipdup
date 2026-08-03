@@ -607,7 +607,9 @@ class IndexDispatcher:
             elif datasource not in index.datasources:
                 _logger.debug('%s: different datasource, skipping', index_name)
 
-            elif to_level >= index_level:
+            # NOTE: Queued messages are not applied yet, so index level could be higher than
+            # NOTE: the persisted one; let the index decide when it reaches this message.
+            elif to_level >= index_level and not index.queue:
                 _logger.debug('%s: level is too low, skipping', index_name)
 
             else:
