@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import TextIO
 from typing import TypeVar
+from typing import cast
 from uuid import UUID
 
 import orjson
@@ -42,7 +43,7 @@ def load_template(*path: str) -> 'Template':
     from jinja2 import Template
 
     full_path = Path(__file__).parent.joinpath(*path)
-    return Template(full_path.read_text())
+    return cast('Template', Template(full_path.read_text()))
 
 
 def touch(path: Path) -> None:
