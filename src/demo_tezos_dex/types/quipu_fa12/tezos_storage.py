@@ -27,7 +27,7 @@ class Voters(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    candidate: str | None = None
+    candidate: str | None
     last_veto: str
     veto: str
     vote: str
@@ -38,8 +38,8 @@ class Storage(BaseModel):
         extra='forbid',
     )
     baker_validator: str
-    current_candidate: str | None = None
-    current_delegated: str | None = None
+    current_candidate: str | None
+    current_delegated: str | None
     last_update_time: str
     last_veto: str
     ledger: dict[str, Ledger]
