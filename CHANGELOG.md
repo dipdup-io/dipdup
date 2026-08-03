@@ -19,7 +19,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - codegen: Empty-object Michelson `unit` fields are now generated with `max_length=0`, so a non-empty object fails validation instead of being accepted.
 - codegen: Fields named after Python builtins are now suffixed and aliased (`bool` becomes `bool_: bool = Field(..., alias='bool')`); JSON parsing is unaffected, but attribute access in handlers must be updated after regenerating types.
-- codegen: Nullable required fields no longer get an implicit `= None` default, so constructing such models from Python now requires the argument explicitly.
+- codegen: Nullable required fields no longer get an implicit `= None` default, so a payload that omits the key now fails validation instead of parsing as `None`; regenerate types and check handlers that read such fields.
 - codegen: Root models generated from non-nullable schemas no longer accept `None`.
 
 ### Security

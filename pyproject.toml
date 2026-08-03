@@ -59,6 +59,7 @@ dependencies = [
     # NOTE: Pinned; bumping requires regenerating `src/demo_*/types` and reviewing the diff.
     # NOTE: Avoid 0.29-0.46: F821 Undefined name `bool_aliased` (#2431), fixed in 0.47.
     # NOTE: Avoid 0.57-0.61: invalid Python for our substrate TypedDict codegen (IndentationError).
+    # NOTE: Do not go below 0.64: earlier versions inject `x-python-import` schema keys verbatim (GHSA-5578-w22f-pfx9).
     "datamodel-code-generator==0.71.0", # pinned
     "debugpy>=1.8.15",
     "eth-abi~=5.0",
