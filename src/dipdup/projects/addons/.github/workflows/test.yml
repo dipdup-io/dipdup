@@ -1,0 +1,59 @@
+name: Build
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+    env:
+      DOCKER_REGISTRY: ghcr.io
+      DOCKER_IMAGE_NAME: ${{ github.repository }}
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      # NOTE: Uncomment to enable multi-arch builds
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Log in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Publish image
+        uses: docker/build-push-action@v5
+        with:
+          file: deploy/Dockerfile
+          # NOTE: Uncomment to enable multi-arch builds
+          # platforms: linux/amd64,linux/arm64
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
