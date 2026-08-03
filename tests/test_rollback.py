@@ -8,10 +8,14 @@ import demo_tezos_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
 from dipdup.context import HookContext
 from dipdup.models import Index
+from dipdup.models import IndexStatus
 from dipdup.models import IndexType
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
+from dipdup.models import RollbackMessage
 from dipdup.test import create_dummy_dipdup
+from dipdup.test import spawn_index
+from tests import TEST_CONFIGS
 
 
 async def test_model_updates() -> None:
@@ -384,3 +388,47 @@ async def test_update_arithmetics() -> None:
 
         model_updates = await ModelUpdate.filter().count()
         assert model_updates == 4
+
+
+async def test_index_ahead_of_channel() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        # NOTE: INSERT
+        for level in (1000, 1001):
+            async with in_transaction(level=level, index='test'):
+                await hen_models.Holder(address=str(level)).save()
+
+        # NOTE: Index has processed level 1001, but the channel has rolled back from 1000
+        await HookContext.rollback(
+            self=dipdup._ctx,
+            index='test',
+            from_level=1000,
+            to_level=999,
+        )
+
+        holders = await hen_models.Holder.filter().count()
+        assert holders == 0
+        model_updates = await ModelUpdate.filter().count()
+        assert model_updates == 0
+
+
+async def test_outdated_rollback() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.advanced.rollback_depth = 2
+    config.initialize()
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1000)
+
+        # NOTE: Rollback of levels the index hasn't reached yet must not touch its state
+        index.push_realtime_message(RollbackMessage(1005, 1002))
+        await index._process_queue()
+
+        assert index.state.level == 1000
