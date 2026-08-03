@@ -13,6 +13,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: `dipdup self install` no longer silently does nothing when `--path`, `--ref` or `--pre` is passed and DipDup is already on `PATH`.
 - cli: `dipdup self update` now explains how to upgrade installations not managed by `uv tool`, instead of relaying uv's "`dipdup` is not installed".
 - context: `ctx.rollback` now reverts all model updates above `to_level` instead of stopping at `from_level`, which belongs to the datasource channel and can lag behind the index.
+- evm.events: Fixed parsing nested tuples in event payloads when a field is named after a Python keyword (`from`); the lookup used a literal `{k}_ ` instead of the field name and always raised `KeyError`.
 - index: Rollbacks are no longer dropped when the affected levels are still queued as realtime messages; the decision is made when the index reaches the message.
 
 ### Changed

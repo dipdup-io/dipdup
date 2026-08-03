@@ -97,3 +97,23 @@ async def test_parse_object() -> None:
     map_ = parse_object(QwerStorage, [[{'R': {'a': 'b'}}, {'R': {}}], [{'L': 'test'}]])
     assert isinstance(map_.root[0][0], QwerStorageItem1)
     assert map_.root[0][0].R['a'] == 'b'
+
+
+async def test_parse_object_nested_reserved_keyword() -> None:
+    from pydantic import BaseModel
+    from pydantic import Field
+
+    class Inner(BaseModel):
+        token: str
+        amount: int
+
+    class Outer(BaseModel):
+        # NOTE: `from` is reserved, so codegen emits the field as `from_` with an alias
+        from_: Inner = Field(..., alias='from')
+        to: str
+
+    # NOTE: EVM payloads arrive positionally, inner tuples are parsed by the same rules
+    parsed = parse_object(Outer, [['KT1', 42], 'tz1'], plain=True, nested=True)
+    assert parsed.from_.token == 'KT1'
+    assert parsed.from_.amount == 42
+    assert parsed.to == 'tz1'
