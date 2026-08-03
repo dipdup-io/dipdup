@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 
 
 class Key(BaseModel):
@@ -21,7 +22,7 @@ class Delegate(BaseModel):
         extra='forbid',
     )
     key: Key
-    value: dict[str, Any]
+    value: dict[str, Any] = Field(..., max_length=0)
 
 
 class FreezeHistory(BaseModel):
@@ -55,7 +56,7 @@ class Key1(BaseModel):
         extra='forbid',
     )
     address: str
-    bool: bool
+    bool_: bool = Field(..., alias='bool')
 
 
 class Voter(BaseModel):

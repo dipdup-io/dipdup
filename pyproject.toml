@@ -56,9 +56,11 @@ dependencies = [
     "async-lru~=2.0",
     "asyncpg~=0.29",
     "click~=8.1",
-    # NOTE: Bug introduded 0.29: F821 Undefined name `bool_aliased` (#2431)
-    # NOTE: Fixed in 0.51.0, but it breaks our codegen.
-    "datamodel-code-generator==0.28.5", # pinned
+    # NOTE: Pinned; bumping requires regenerating `src/demo_*/types` and reviewing the diff.
+    # NOTE: Avoid 0.29-0.46: F821 Undefined name `bool_aliased` (#2431), fixed in 0.47.
+    # NOTE: Avoid 0.57-0.61: invalid Python for our substrate TypedDict codegen (IndentationError).
+    # NOTE: Do not go below 0.64: earlier versions inject `x-python-import` schema keys verbatim (GHSA-5578-w22f-pfx9).
+    "datamodel-code-generator==0.71.0", # pinned
     "debugpy>=1.8.15",
     "eth-abi~=5.0",
     "lru-dict~=1.3",

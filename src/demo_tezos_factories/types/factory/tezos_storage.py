@@ -51,7 +51,7 @@ class Voters(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    candidate: str | None = None
+    candidate: str | None
     last_veto: str
     veto: str
     vote: str

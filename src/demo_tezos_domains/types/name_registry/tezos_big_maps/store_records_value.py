@@ -10,10 +10,10 @@ class StoreRecordsValue(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    address: str | None = None
+    address: str | None
     data: dict[str, str]
-    expiry_key: str | None = None
+    expiry_key: str | None
     internal_data: dict[str, str]
     level: str
     owner: str
-    tzip12_token_id: str | None = None
+    tzip12_token_id: str | None
