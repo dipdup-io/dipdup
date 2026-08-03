@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- cli: `dipdup self install` no longer silently does nothing when `--path`, `--ref` or `--pre` is passed and DipDup is already on `PATH`.
+- cli: `dipdup self update` now explains how to upgrade installations not managed by `uv tool`, instead of relaying uv's "`dipdup` is not installed".
+
 ## [8.6.0] - 2026-06-29
 
 ### Added
