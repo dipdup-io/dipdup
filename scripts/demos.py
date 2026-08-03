@@ -67,10 +67,6 @@ def init(package: str | None) -> None:
     projects = {package: PROJECTS_PATH / package} if package else _get_projects()
 
     for package, path in projects.items():
-        # FIXME: parisnet is dead
-        if package == 'demo_tezos_etherlink':
-            continue
-
         green_echo(f'=> Initializing `{package}`')
         _init_demo(path)
 
@@ -82,18 +78,10 @@ def render(package: str | None) -> None:
     projects = {package: PROJECTS_PATH / package} if package else _get_projects()
 
     for package, path in demos.items():
-        # FIXME: parisnet is dead
-        if package == 'demo_tezos_etherlink':
-            continue
-
         green_echo(f'=> Removing `{package}`')
         _rm_demo(path)
 
     for package, path in projects.items():
-        # FIXME: parisnet is dead
-        if package == 'demo_tezos_etherlink':
-            continue
-
         green_echo(f'=> Rendering `{package}`')
         _render_demo(path)
 

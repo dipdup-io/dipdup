@@ -52,5 +52,18 @@ services:
       - HASURA_GRAPHQL_UNAUTHORIZED_ROLE=user
       - HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true
 
+  mcp:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: always
+    env_file: .env
+    ports:
+      - 9999
+    command: ["-C", "compose", "mcp", "run"]
+    depends_on:
+      - db
+      - hasura
+
 volumes:
   db:

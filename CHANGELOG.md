@@ -15,6 +15,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - context: `ctx.rollback` now reverts all model updates above `to_level` instead of stopping at `from_level`, which belongs to the datasource channel and can lag behind the index.
 - index: Rollbacks are no longer dropped when the affected levels are still queued as realtime messages; the decision is made when the index reaches the message.
 
+### Changed
+
+- demo_tezos_etherlink: Replaced decommissioned parisnet contracts and TzKT URL with live shadownet ones, so `dipdup init` works again.
+
 ## [8.6.0] - 2026-06-29
 
 ### Added
