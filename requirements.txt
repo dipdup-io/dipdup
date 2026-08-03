@@ -203,9 +203,9 @@ cytoolz==1.1.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin')
     --hash=sha256:de425c5a8e3be7bb3a195e19191d28d9eb3c2038046064a92edc4505033ec9cb \
     --hash=sha256:e7e29a1a03f00b4322196cfe8e2c38da9a6c8d573566052c586df83aacc5663c
     # via eth-utils
-datamodel-code-generator==0.28.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:20e8b817d301d2d0bb15f436e81c97b25ad1c2ef922c99249c2444141ae15a6a \
-    --hash=sha256:f899c1da5af04b5d5b6e3edbd718c1bf3a00fc4b2fe8210cef609d93a9983e9e
+datamodel-code-generator==0.71.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:680b68338d59e98a0559eeb54d8e5ca33c35b3ec0bef922ec2cc783f2cb28e9a \
+    --hash=sha256:d27cd7a0d10f9b2db74a41db7f3e050c226da9cf0afb4916a7ab56275ebacbf2
     # via dipdup
 debugpy==1.8.21 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:9f96713896f39c3dff0ee841f47320c3f2983d33c341e009361bb0ebc79adc4e \
@@ -469,7 +469,6 @@ packaging==26.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661
     # via
     #   black
-    #   datamodel-code-generator
     #   marshmallow
 parsimonious==0.10.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:8281600da180ec8ae35427a4ab4f7b82bfec1e3d1e52f80cb60ea82b9512501c \

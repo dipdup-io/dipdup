@@ -13,11 +13,20 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - cli: `dipdup self install` no longer silently does nothing when `--path`, `--ref` or `--pre` is passed and DipDup is already on `PATH`.
 - cli: `dipdup self update` now explains how to upgrade installations not managed by `uv tool`, instead of relaying uv's "`dipdup` is not installed".
 - context: `ctx.rollback` now reverts all model updates above `to_level` instead of stopping at `from_level`, which belongs to the datasource channel and can lag behind the index.
+- evm.events: Fixed parsing nested tuples in event payloads when a field is named after a Python keyword (`from`); the lookup used a literal `{k}_ ` instead of the field name and always raised `KeyError`.
 - index: Rollbacks are no longer dropped when the affected levels are still queued as realtime messages; the decision is made when the index reaches the message.
 
 ### Changed
 
+- codegen: Empty-object Michelson `unit` fields are now generated with `max_length=0`, so a non-empty object fails validation instead of being accepted.
+- codegen: Fields named after Python builtins are now suffixed and aliased (`bool` becomes `bool_: bool = Field(..., alias='bool')`); JSON parsing is unaffected, but attribute access in handlers must be updated after regenerating types.
+- codegen: Nullable required fields no longer get an implicit `= None` default, so a payload that omits the key now fails validation instead of parsing as `None`; regenerate types and check handlers that read such fields.
+- codegen: Root models generated from non-nullable schemas no longer accept `None`.
 - demo_tezos_etherlink: Replaced decommissioned parisnet contracts and TzKT URL with live shadownet ones, so `dipdup init` works again.
+
+### Security
+
+- deps: `datamodel-code-generator` updated to 0.71.0, fixing 9 advisories affecting 0.28.5 — most notably arbitrary import injection into generated modules via the `x-python-import`/`customTypePath` schema keys ([GHSA-5578-w22f-pfx9](https://github.com/advisories/GHSA-5578-w22f-pfx9)), reachable because schemas are derived from remote ABIs and contract metadata.
 
 ## [8.6.0] - 2026-06-29
 

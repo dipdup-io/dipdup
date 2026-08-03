@@ -6,6 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from pydantic import Field
 
 
 class Key(BaseModel):
@@ -38,7 +39,7 @@ class Operator(BaseModel):
         extra='forbid',
     )
     key: Key1
-    value: dict[str, Any]
+    value: dict[str, Any] = Field(..., max_length=0)
 
 
 class TokenMetadata(BaseModel):

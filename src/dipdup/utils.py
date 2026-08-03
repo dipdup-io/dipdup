@@ -211,13 +211,13 @@ def parse_object(
         model_dict = dict(zip(model_keys, data, strict=True))
 
         if nested:
+            # NOTE: Keys above are aliases; fields named after reserved keywords are `from_` and friends
+            field_names = {field.alias or key: key for key, field in type_.model_fields.items()}
             for k, v in model_dict.items():
                 if not isinstance(v, list | tuple):
                     continue
 
-                # NOTE: Might be `from_` or other reserved keyword
-                field_k = '{k}_ ' if k not in type_.model_fields else k
-                nested_type = type_.model_fields[field_k].annotation
+                nested_type = type_.model_fields[field_names[k]].annotation
                 model_dict[k] = parse_object(nested_type, v, plain=True)  # type: ignore[arg-type]
 
         return type_(**model_dict)

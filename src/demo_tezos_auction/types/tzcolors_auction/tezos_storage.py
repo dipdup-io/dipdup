@@ -20,5 +20,5 @@ class TzcolorsAuctionStorage1(BaseModel):
     bidder: str
 
 
-class TzcolorsAuctionStorage(RootModel[dict[str, TzcolorsAuctionStorage1] | None]):
-    root: dict[str, TzcolorsAuctionStorage1] | None = None
+class TzcolorsAuctionStorage(RootModel[dict[str, TzcolorsAuctionStorage1]]):
+    root: dict[str, TzcolorsAuctionStorage1]

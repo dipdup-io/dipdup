@@ -14,4 +14,4 @@ class TzbtcStorage(BaseModel):
     big_map: dict[str, str]
     lambda_: str = Field(..., alias='lambda')
     nat: str
-    bool: bool
+    bool_: bool = Field(..., alias='bool')
