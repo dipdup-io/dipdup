@@ -775,7 +775,15 @@ class DipDup:
             )
 
             if tasks:
-                await gather(*tasks)
+                try:
+                    await gather(*tasks)
+                finally:
+                    # NOTE: Datasource connections must be closed while the loop is still running;
+                    # NOTE: otherwise their asyncgens fail on teardown, masking the error above.
+                    for task in tasks:
+                        task.cancel()
+                    with suppress(CancelledError):
+                        await gather(*tasks, return_exceptions=True)
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():
