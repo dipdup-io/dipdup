@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
+- evm.node: A project with both `evm.events` and `evm.transactions` indexes on one node datasource opens two `newHeads` subscriptions and gets every head announced twice; the second announcement no longer crashes the datasource with a `KeyError` and fires a phantom rollback.
 - tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
 
 ## [8.6.1] - 2026-08-03
