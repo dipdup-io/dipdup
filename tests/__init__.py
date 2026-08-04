@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,6 +12,17 @@ env.set_test()
 
 
 TEST_CONFIGS = Path(__file__).parent / 'configs'
+
+REPO_ROOT = Path(__file__).parent.parent
+
+
+def has_api_keys(*names: str) -> bool:
+    """Check that every API key is set to a non-empty value.
+
+    NOTE: GitHub exposes secrets unavailable to the job (e.g. on fork pull requests) as empty strings,
+    NOTE: so a bare presence check would send guarded tests to the network without credentials.
+    """
+    return all(os.environ.get(name) for name in names)
 
 
 @asynccontextmanager
