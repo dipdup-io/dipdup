@@ -191,9 +191,8 @@ class MessageBuffer:
             if level not in self._messages:
                 return False
 
-            for i, message in enumerate(self._messages[level]):
-                if message.type == type_:
-                    del self._messages[level][i]
+            # NOTE: Rebuild the list; deleting during iteration skips the message right after each match
+            self._messages[level] = [message for message in self._messages[level] if message.type != type_]
 
         return True
 

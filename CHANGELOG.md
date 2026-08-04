@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
+- tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
+
 ## [8.6.1] - 2026-08-03
 
 ### Fixed
