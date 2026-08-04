@@ -728,6 +728,9 @@ class DipDupConfig(InteractiveMixin):
         self._paths: list[Path] = []
         self._environment: dict[str, str] = {}
         self._json = DipDupYAMLConfig()
+        # NOTE: Validation writes the effective value back to `advanced.rollback_depth`; keep what
+        # NOTE: the user actually declared so a second `initialize()` doesn't mistake it for input.
+        self._declared_rollback_depth: int | None = self.advanced.rollback_depth
 
     @property
     def schema_name(self) -> str:
@@ -1097,7 +1100,7 @@ class DipDupConfig(InteractiveMixin):
 
             if not isinstance(datasource_config, TezosTzktDatasourceConfig):
                 continue
-            if datasource_config.buffer_size and self.advanced.rollback_depth:
+            if datasource_config.buffer_size and self._declared_rollback_depth:
                 raise ConfigurationError(
                     f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
                 )

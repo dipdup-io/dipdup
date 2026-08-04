@@ -15,6 +15,7 @@ from dipdup.config.evm_transactions import EvmTransactionsHandlerConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_tzkt import TezosTzktDatasourceConfig
+from dipdup.exceptions import ConfigurationError
 from dipdup.models.tezos import TezosOperationType
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 from dipdup.subscriptions.tezos_tzkt import OriginationSubscription
@@ -166,3 +167,25 @@ async def test_load_demo_config(demo_dipdup_config: Path) -> None:
 
 async def test_load_test_config(test_dipdup_config: Path) -> None:
     DipDupConfig.load([test_dipdup_config])
+
+
+async def test_rollback_depth_initialize_is_idempotent() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'dipdup.yaml'])
+    config.datasources['tzkt_mainnet'].buffer_size = 2  # type: ignore[union-attr]
+    assert config.advanced.rollback_depth is None
+
+    config.initialize()
+    assert config.advanced.rollback_depth == 2
+
+    # NOTE: The first pass writes the derived depth back; it must not read as user input
+    config.initialize()
+
+
+async def test_buffer_size_conflicts_with_declared_rollback_depth(tmp_path: Path) -> None:
+    overlay = tmp_path / 'overlay.yaml'
+    overlay.write_text('advanced:\n  rollback_depth: 5\n')
+    config = DipDupConfig.load([TEST_CONFIGS / 'dipdup.yaml', overlay])
+    config.datasources['tzkt_mainnet'].buffer_size = 2  # type: ignore[union-attr]
+
+    with pytest.raises(ConfigurationError):
+        config.initialize()
