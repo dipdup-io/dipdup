@@ -10,8 +10,6 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- ci: Pull requests are checked by the test workflow, including ones opened from forks.
-- ci: Tests requiring Docker are run on a Linux runner instead of being skipped.
 - config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
 - tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
 
