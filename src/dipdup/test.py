@@ -45,7 +45,17 @@ async def create_dummy_dipdup(
 
     You need to enter `AsyncExitStack` context manager prior to calling this method.
     """
+    from dipdup.performance import queues
+
     config.initialize()
+
+    # NOTE: Queue registry is process-wide, so two tests spawning the same index collide on it
+    known_queues = set(queues._queues)
+
+    @stack.callback
+    def _remove_spawned_queues() -> None:
+        for name in set(queues._queues) - known_queues:
+            queues.remove_queue(name)
 
     dipdup = DipDup(config)
     await dipdup._create_datasources()
