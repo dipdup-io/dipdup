@@ -6,6 +6,8 @@ from tortoise.expressions import F
 import demo_tezos_domains.models as domains_models
 import demo_tezos_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
+from dipdup.config import ReindexingAction
+from dipdup.config import ReindexingReason
 from dipdup.context import HookContext
 from dipdup.models import Index
 from dipdup.models import IndexStatus
@@ -13,6 +15,7 @@ from dipdup.models import IndexType
 from dipdup.models import ModelUpdate
 from dipdup.models import ModelUpdateAction
 from dipdup.models import RollbackMessage
+from dipdup.models import Schema
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
 from tests import TEST_CONFIGS
@@ -161,6 +164,75 @@ async def test_cleanup_and_filtering() -> None:
 
         model_update_levels = await ModelUpdate.filter().values_list('level', flat=True)
         assert model_update_levels == [1003, 1004]  # type: ignore[comparison-overlap]
+
+
+async def test_cleanup_watermark_is_per_index() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        # NOTE: Slow index writes within its own `rollback_depth` window
+        for level in (1000, 1001, 1002):
+            async with in_transaction(level=level, sync_level=level, index='slow'):
+                await hen_models.Holder(address=f'slow-{level}').save()
+
+        # NOTE: Fast index shares the datasource, but is 100 levels ahead
+        async with in_transaction(level=1102, sync_level=1102, index='fast'):
+            await hen_models.Holder(address='fast-1102').save()
+
+        await Index(name='slow', type=IndexType.tezos_operations, config_hash='', level=1002).save()
+        await Index(name='fast', type=IndexType.tezos_operations, config_hash='', level=1102).save()
+
+        await dipdup._transactions.cleanup()
+
+        # NOTE: Same window the slow index would keep if it were the only one
+        slow_levels = await ModelUpdate.filter(index='slow').values_list('level', flat=True)
+        assert sorted(slow_levels) == [1000, 1001, 1002]  # type: ignore[comparison-overlap]
+        fast_levels = await ModelUpdate.filter(index='fast').values_list('level', flat=True)
+        assert sorted(fast_levels) == [1102]  # type: ignore[comparison-overlap]
+
+
+async def test_cleanup_sweeps_unknown_indexes() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+
+        async with dipdup._transactions.in_transaction(level=1002, sync_level=1002, index='gone'):
+            await hen_models.Holder(address='gone-1002').save()
+
+        await Index(name='test', type=IndexType.tezos_operations, config_hash='', level=1002).save()
+        await dipdup._transactions.cleanup()
+
+        assert await ModelUpdate.filter(index='gone').count() == 0
+
+
+async def test_rollback_stops_on_ignored_reindex() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.advanced.rollback_depth = 2
+    config.advanced.reindex[ReindexingReason.rollback] = ReindexingAction.ignore
+    config.initialize()
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1002)
+
+        # NOTE: Deeper than `rollback_depth`, so reindexing is requested and ignored
+        index.push_realtime_message(RollbackMessage(1043, 999))
+        await index._process_queue()
+
+        # NOTE: Nothing was reverted, so the index must not be rewound onto un-reverted rows
+        assert index.state.level == 1002
+        state = await Index.filter(name='mainnet_head').get()
+        assert state.level == 1002
+
+        schema = await Schema.filter(name=config.database.schema_name).get()
+        assert schema.reindex == ReindexingReason.rollback
 
 
 async def test_optionals() -> None:

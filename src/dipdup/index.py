@@ -332,4 +332,11 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             from_level=from_level,
             to_level=to_level,
         )
+
+        # NOTE: Nothing was reverted, so rewinding the index would replay levels onto rows
+        # NOTE: that are still there.
+        if self.name in self._ctx._skipped_rollbacks:
+            self._ctx._skipped_rollbacks.discard(self.name)
+            return
+
         await self._update_state(level=to_level)

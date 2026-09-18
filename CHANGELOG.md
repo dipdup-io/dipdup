@@ -11,7 +11,9 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
+- context: An index is no longer rewound when the rollback was skipped because reindexing is ignored.
 - tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
+- transactions: Every index keeps model updates for its own `rollback_depth` levels instead of the most advanced index deciding for all of them.
 
 ## [8.6.1] - 2026-08-03
 
