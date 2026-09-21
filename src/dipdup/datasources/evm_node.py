@@ -290,10 +290,14 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeHeadSubscription):
             level_data = self._level_data[data['hash']]
+            # NOTE: Node can announce the same head more than once before the emitter drains
+            # the queue; both announcements share one LevelData, so queue it only once.
+            already_queued = level_data.head is not None
             level_data.head = data
             if subscription.transactions:
                 level_data.fetch_transactions = True
-            self._emitter_queue.put_nowait(level_data)
+            if not already_queued:
+                self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level_data = self._level_data[data['blockHash']]
             level_data.events.append(data)
