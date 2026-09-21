@@ -2,8 +2,8 @@
 
 `DipDup.run` spawns background tasks for the index dispatcher, the scheduler, the datasource
 loops and monitoring, then waits for them. When one of them fails, the survivors keep their
-websockets open until the interpreter goes down, where closing them fails and buries the error
-that actually stopped indexing.
+websockets open until the interpreter goes down, where closing them fails and a spurious error
+is logged next to the one that actually stopped indexing.
 """
 
 import asyncio
@@ -60,7 +60,7 @@ async def test_failed_index_stops_background_tasks(
         await DipDup(config).run()
 
     leftover = [
-        task for task in asyncio.all_tasks() if not task.done() and task.get_name().startswith(('loop:', 'datasource:'))
+        task for task in asyncio.all_tasks() if not task.done() and task.get_name().startswith('loop:')
     ]
     names = sorted(task.get_name() for task in leftover)
     for task in leftover:

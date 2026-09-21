@@ -10,7 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- cli: A failed `dipdup run` reports the error that stopped indexing instead of an asyncio generator one.
+- cli: A crashed `dipdup run` no longer logs a spurious `RuntimeError: aclose()` next to the actual error, which reached Sentry as a separate issue.
 - config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
 - tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
 

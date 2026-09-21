@@ -778,8 +778,9 @@ class DipDup:
                 try:
                     await gather(*tasks)
                 finally:
-                    # NOTE: Datasource connections must be closed while the loop is still running;
-                    # NOTE: otherwise their asyncgens fail on teardown, masking the error above.
+                    # NOTE: Cancel the survivors while the loop is running; otherwise `asyncio.run` tears them down
+                    # NOTE: after it stopped, and `shutdown_asyncgens()` collides with a websocket close still in
+                    # NOTE: flight, logging a spurious `RuntimeError: aclose()` next to the real error.
                     for task in tasks:
                         task.cancel()
                     with suppress(CancelledError):
