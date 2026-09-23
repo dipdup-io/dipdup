@@ -59,9 +59,7 @@ async def test_failed_index_stops_background_tasks(
     with pytest.raises(RuntimeError, match='callback execution failed'):
         await DipDup(config).run()
 
-    leftover = [
-        task for task in asyncio.all_tasks() if not task.done() and task.get_name().startswith('loop:')
-    ]
+    leftover = [task for task in asyncio.all_tasks() if not task.done() and task.get_name().startswith('loop:')]
     names = sorted(task.get_name() for task in leftover)
     for task in leftover:
         task.cancel()
