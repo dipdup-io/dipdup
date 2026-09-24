@@ -775,7 +775,16 @@ class DipDup:
             )
 
             if tasks:
-                await gather(*tasks)
+                try:
+                    await gather(*tasks)
+                finally:
+                    # NOTE: Cancel the survivors while the loop is running; otherwise `asyncio.run` tears them down
+                    # NOTE: after it stopped, and `shutdown_asyncgens()` collides with a websocket close still in
+                    # NOTE: flight, logging a spurious `RuntimeError: aclose()` next to the real error.
+                    for task in tasks:
+                        task.cancel()
+                    with suppress(CancelledError):
+                        await gather(*tasks, return_exceptions=True)
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():

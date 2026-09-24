@@ -174,6 +174,7 @@ class DipDupContext:
         self._pending_indexes: asyncio.Queue[Any] = asyncio.Queue()
         self._pending_hooks: asyncio.Queue[Awaitable[None]] = asyncio.Queue()
         self._rolled_back_indexes: set[str] = set()
+        self._skipped_rollbacks: set[str] = set()
         self._handlers: dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: dict[str, HookConfig] = {}
 
@@ -341,6 +342,7 @@ class DipDupContext:
         new_ctx._pending_indexes = self._pending_indexes
         new_ctx._pending_hooks = self._pending_hooks
         new_ctx._rolled_back_indexes = self._rolled_back_indexes
+        new_ctx._skipped_rollbacks = self._skipped_rollbacks
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
@@ -625,6 +627,19 @@ class DipDupContext:
                 to_level=to_level,
                 rollback_depth=rollback_depth,
             )
+            # NOTE: `reindex` returned instead of raising, so the action is `ignore` and the database
+            # NOTE: was left as is. Rewinding the index would replay levels that were never reverted.
+            self.logger.error(
+                'Rollback of `%s` to level %s is not possible; run `dipdup schema approve` to dismiss',
+                index,
+                to_level,
+            )
+            schema = await Schema.filter(name=self.config.schema_name).get()
+            if not schema.reindex:
+                schema.reindex = ReindexingReason.rollback
+                await schema.save()
+            self._skipped_rollbacks.add(index)
+            return
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self.transactions.in_transaction():

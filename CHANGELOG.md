@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [8.6.2] - 2026-09-23
+
+### Fixed
+
+- cli: A crashed `dipdup run` no longer logs a spurious `RuntimeError: aclose()` next to the actual error, which reached Sentry as a separate issue.
+- config: `buffer_size` no longer conflicts with the `advanced.rollback_depth` value that validation derives itself, which made the option unusable.
+- context: An index is no longer rewound when the rollback was skipped because reindexing is ignored.
+- evm.node: A project with both `evm.events` and `evm.transactions` indexes on one node datasource opens two `newHeads` subscriptions and gets every head announced twice; the second announcement no longer crashes the datasource with a `KeyError` nor fires a phantom rollback.
+- tezos.tzkt: All buffered messages of a rolled-back level are dropped; one message per level could survive the reorg and be processed later.
+- transactions: Every index keeps model updates for its own `rollback_depth` levels instead of the most advanced index deciding for all of them.
+
 ## [8.6.1] - 2026-08-03
 
 ### Fixed
@@ -850,7 +861,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.6.1...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.6.2...HEAD
+[8.6.2]: https://github.com/dipdup-io/dipdup/compare/8.6.1...8.6.2
 [8.6.1]: https://github.com/dipdup-io/dipdup/compare/8.6.0...8.6.1
 [8.6.0]: https://github.com/dipdup-io/dipdup/compare/8.5.2...8.6.0
 [8.5.2]: https://github.com/dipdup-io/dipdup/compare/8.5.1...8.5.2

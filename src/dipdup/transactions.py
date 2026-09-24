@@ -79,9 +79,17 @@ class TransactionManager:
         """Cleanup outdated model updates"""
         if not self._depth:
             return
-        most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
-        if not most_recent_index:
+        indexes = await dipdup.models.Index.filter()
+        if not indexes:
             return
 
-        last_level = most_recent_index.level - self._depth
-        await dipdup.models.ModelUpdate.filter(level__lt=last_level).delete()
+        # NOTE: Every index is rolled back on its own; a shared watermark would let the index
+        # NOTE: with the highest level cut the rollback window of the ones lagging behind it.
+        for index in indexes:
+            await dipdup.models.ModelUpdate.filter(
+                index=index.name,
+                level__lt=index.level - self._depth,
+            ).delete()
+
+        # NOTE: Updates of indexes missing from the state table can never be reverted.
+        await dipdup.models.ModelUpdate.filter(index__not_in=[index.name for index in indexes]).delete()

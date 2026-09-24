@@ -57,3 +57,15 @@ async def test_rollback(buffer: MessageBuffer) -> None:
     assert buffer.rollback(TezosTzktMessageType.head, 3, 1) is True
     assert buffer.rollback(TezosTzktMessageType.operation, 1, 0) is False
     assert buffer.rollback(TezosTzktMessageType.head, 1, 0) is False
+
+
+async def test_rollback_drops_every_message_of_level(buffer: MessageBuffer) -> None:
+    # NOTE: TzKT splits operations of a single level into several messages
+    buffer.add(TezosTzktMessageType.operation, 2, [{'id': 1}])
+    buffer.add(TezosTzktMessageType.operation, 2, [{'id': 2}])
+    buffer.add(TezosTzktMessageType.head, 2, {})
+
+    assert buffer.rollback(TezosTzktMessageType.operation, 2, 1) is True
+
+    messages = [m for m in buffer._messages[2] if m.type == TezosTzktMessageType.operation]
+    assert messages == []
