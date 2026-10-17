@@ -44,27 +44,40 @@ class TransactionManager:
         index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
+        body_exc: BaseException | None = None
         try:
             watchdog.heartbeat(WatchdogTrigger.transaction)
             original_conn = get_connection()
-            async with in_transaction() as conn:
-                set_connection(conn)
+            try:
+                async with in_transaction() as conn:
+                    try:
+                        set_connection(conn)
 
-                if self._transaction:
-                    raise ValueError('Transaction is already started')
+                        if self._transaction:
+                            raise ValueError('Transaction is already started')
 
-                if level and index and self._depth:
-                    if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.VersionedTransaction(
-                            level,
-                            index,
-                            self._immune_tables,
-                        )
+                        if level and index and self._depth:
+                            if not sync_level or sync_level - level <= self._depth:
+                                self._transaction = dipdup.models.VersionedTransaction(
+                                    level,
+                                    index,
+                                    self._immune_tables,
+                                )
 
-                yield
+                        yield
 
-                if self._transaction:
-                    await self._commit()
+                        if self._transaction:
+                            await self._commit()
+                    except BaseException as e:
+                        body_exc = e
+                        raise
+            except BaseException as e:
+                # NOTE: If the connection is lost mid-transaction, Tortoise fails to
+                # NOTE: rollback and that secondary error masks the original one.
+                # NOTE: Surface the original failure instead. See #1332.
+                if body_exc is not None and e is not body_exc:
+                    raise body_exc from None
+                raise
         finally:
             self._transaction = None
             set_connection(original_conn)
