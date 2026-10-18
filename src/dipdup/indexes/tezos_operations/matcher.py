@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import deque
+from itertools import zip_longest
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -72,7 +73,12 @@ def prepare_operation_handler_args(
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[TezosOperationsHandlerArgumentU] = deque()
     # NOTE: There can be more pattern items than matched operations; some of them are optional.
-    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=False):
+    # NOTE: Missing trailing arguments are padded with None so the callback always receives
+    # NOTE: one argument per pattern item (see #1279).
+    for pattern_config, operation_data in zip_longest(handler_config.pattern, matched_operations):
+        if pattern_config is None:
+            raise FrameworkException('More matched operations than pattern items')
+
         if operation_data is None:
             args.append(None)
 
