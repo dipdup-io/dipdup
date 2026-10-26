@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    {
+      "name": "DipDup: Attach to debugger",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        // Update if you have set `DEBUGPY_PORT` to a different value
+        "port": 5678
+      },
+      "justMyCode": false
+    }
+    ]
+}
