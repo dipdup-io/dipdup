@@ -1223,6 +1223,8 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
 
     async def _on_message(self, type_: TezosTzktMessageType, message: list[dict[str, Any]]) -> None:  # type: ignore[override]
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""
+        self._heartbeat()
+
         # NOTE: Parse messages and either buffer or yield data
         for item in message:
             action = TezosTzktMessageAction(item['type'])
