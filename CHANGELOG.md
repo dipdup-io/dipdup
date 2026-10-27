@@ -15,14 +15,16 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- watchdog: A long-running callback is no longer hidden by other callbacks finishing theirs; hooks running as daemon jobs are not watched, and `ctx.watchdog.heartbeat(trigger)` inside them does nothing.
+- watchdog: A long-running callback is no longer hidden by other callbacks starting or finishing.
+- watchdog: Hooks running as daemon jobs are no longer reported by the `callback` trigger, and `ctx.watchdog.heartbeat(WatchdogTrigger.callback)` inside them does nothing; an `atomic: true` daemon still runs in a transaction watched by the `transaction` trigger, and `ctx.watchdog.heartbeat(WatchdogTrigger.transaction)` inside it restarts that countdown.
 - watchdog: A transaction stuck in one index is no longer hidden by other indexes finishing theirs, so `action: exception` fires as configured.
-- watchdog: Callback and transaction warnings name the handler or hook, the index and the level that are stuck.
+- watchdog: Callback warnings name the stuck handler with its index, or the stuck hook; transaction warnings name the index and level when the transaction belongs to an index.
 
 ### Changed
 
 - watchdog: The `websocket` trigger is now armed by default: if an open realtime connection delivers no messages for its timeout (60 seconds unless configured), DipDup warns about it. Previously DipDup never armed it, so it did not fire. If you set `websocket: action: exception`, such a silence now stops the indexer.
-- watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name restart or stop the countdown of the callbacks and transactions running in the calling code and the tasks it spawns, not of every callback or transaction at once. Where nothing of that kind is running, such as a transaction heartbeat in a non-atomic hook, the heartbeat does nothing.
+- watchdog: A regular (non-daemon) job or hook that runs longer than the `callback` timeout is now reported, while previously any other callback starting or finishing hid it; an `atomic: true` one is also reported by the `transaction` trigger. To allow it, raise the timeout or call `ctx.watchdog.reset(WatchdogTrigger.callback)` inside it, plus `ctx.watchdog.reset(WatchdogTrigger.transaction)` for an atomic one.
+- watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name act on the callbacks or transactions of that trigger watched in the calling code and the tasks it spawns, not on every callback or transaction at once. Inside a watched callback or transaction with none of that kind running, a name-less heartbeat does nothing: for example, `heartbeat(WatchdogTrigger.transaction)` in a non-atomic hook or `heartbeat(WatchdogTrigger.websocket)` in any callback. Outside any watched callback or transaction, the trigger keeps a single countdown as before.
 
 ## [8.6.2] - 2026-09-23
 
