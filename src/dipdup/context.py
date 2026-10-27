@@ -5,7 +5,6 @@ import importlib
 import os
 import sys
 from contextlib import AsyncExitStack
-from contextlib import contextmanager
 from contextlib import suppress
 from logging import Logger
 from logging import getLogger
@@ -104,7 +103,6 @@ from dipdup.watchdog import watchdog
 if TYPE_CHECKING:
     from collections.abc import Awaitable
     from collections.abc import Iterable
-    from collections.abc import Iterator
     from types import ModuleType
 
     from mcp.server import Server as McpServer
@@ -711,7 +709,7 @@ class DipDupContext:
             handler_config=handler_config,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
-        with self._callback_wrapper(module):
+        with watchdog.watch(WatchdogTrigger.callback, f'handler `{name}` of index `{index}`'):
             fn = self.package.get_callback('handlers', name, name.split('.')[-1])
             await fn(new_ctx, *args)
 
@@ -742,7 +740,7 @@ class DipDupContext:
 
         async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
-                stack.enter_context(self._callback_wrapper(module))
+                stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`'))
                 if hook_config.atomic:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx.transactions.in_transaction())
@@ -805,12 +803,6 @@ class DipDupContext:
     execute_sql = execute_sql_script
     execute_script = execute_sql_script
     execute_query = execute_sql_query
-
-    @contextmanager
-    def _callback_wrapper(self, module: str) -> Iterator[None]:
-        watchdog.heartbeat(WatchdogTrigger.callback)
-        yield
-        watchdog.reset(WatchdogTrigger.callback)
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:

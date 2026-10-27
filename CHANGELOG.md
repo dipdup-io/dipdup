@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Added
+
+- watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
+
+### Fixed
+
+- watchdog: A transaction stuck in one index is no longer hidden by other indexes finishing theirs, so `action: exception` fires as configured.
+- watchdog: Callback and transaction warnings name the handler or hook, the index and the level that are stuck.
+- watchdog: The `websocket` trigger now reports a realtime connection that stays open but stops delivering messages.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed

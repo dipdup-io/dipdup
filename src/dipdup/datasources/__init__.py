@@ -15,6 +15,7 @@ from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config import WatchdogTrigger
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.exceptions import DatasourceError
@@ -29,6 +30,7 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
+from dipdup.watchdog import watchdog
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 ContractConfigT = TypeVar('ContractConfigT', bound=StarknetContractConfig | EvmContractConfig)
@@ -134,13 +136,27 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
+        self._heartbeat()
         # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
     async def _on_disconnected(self) -> None:
         self._logger.info('Realtime connection lost, resetting subscriptions')
+        watchdog.reset(WatchdogTrigger.websocket, self._watchdog_name)
         self._subscriptions.reset()
         await self.emit_disconnected()
+
+    @property
+    def _watchdog_name(self) -> str:
+        return f'datasource `{self.name}`'
+
+    def _heartbeat(self) -> None:
+        """Mark the realtime connection as delivering messages"""
+        watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
+
+    async def _on_ws_message(self, message: Message) -> None:
+        self._heartbeat()
+        await self._on_message(message)
 
     def _get_ws_client(self) -> WebsocketTransport:
         if self._ws_client:
@@ -154,7 +170,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         self._ws_client = WebsocketTransport(
             url=url,
             protocol=WebsocketProtocol(),
-            callback=self._on_message,
+            callback=self._on_ws_message,
             skip_negotiation=True,
             connection_timeout=self._http_config.connection_timeout,
         )
