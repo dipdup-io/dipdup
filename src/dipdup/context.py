@@ -750,8 +750,7 @@ class DipDupContext:
         async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
                 # NOTE: Daemon hooks never return by design
-                if not daemon:
-                    stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`'))
+                stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`', countdown=not daemon))
                 if hook_config.atomic:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx.transactions.in_transaction())

@@ -35,6 +35,8 @@ class Activity:
     task: asyncio.Task[object] | None = None
     reported: bool = False
     finished: bool = False
+    # NOTE: False for code that never returns by design, like a daemon job
+    countdown: bool = True
 
 
 # NOTE: Activities watched in the current context, outermost first; tasks spawned inside inherit them
@@ -132,15 +134,16 @@ class WatchdogManager:
         _logger.warning(msg)
 
     @contextmanager
-    def watch(self, trigger: WatchdogTrigger, name: str) -> Iterator[None]:
-        """Track an activity of the current task until the block exits"""
+    def watch(self, trigger: WatchdogTrigger, name: str, countdown: bool = True) -> Iterator[None]:
+        """Track an activity of the current task until the block exits; without `countdown`, never report it"""
         watchdog = self._watchdogs.get(trigger)
         if watchdog is None:
             yield
             return
 
-        activity = Activity(name, time.time(), asyncio.current_task())
-        watchdog.start(activity, activity)
+        activity = Activity(name, time.time(), asyncio.current_task(), countdown=countdown)
+        if countdown:
+            watchdog.start(activity, activity)
         outer = _current.get()
         _current.set((*outer, (trigger, activity)))
         try:
@@ -157,15 +160,16 @@ class WatchdogManager:
     def heartbeat(self, trigger: WatchdogTrigger, name: str = '') -> None:
         """Restart the countdown for `name`.
 
-        Without a name, restart the countdown of the callbacks or transactions being watched in the current context;
-        outside of them, the trigger has a single countdown.
+        Without a name, restart the countdown of the callbacks or transactions being watched in the current context,
+        if any: a daemon job or a hook without a transaction has none. Outside of them, the trigger has a single
+        countdown.
         """
         watchdog = self._watchdogs.get(trigger)
         if watchdog is None:
             return
-        if not name and (current := self._current_activities(trigger)):
-            for activity in current:
-                if not activity.finished:
+        if not name and _current.get():
+            for activity in self._current_activities(trigger):
+                if activity.countdown and not activity.finished:
                     activity.started_at, activity.reported = time.time(), False
                     watchdog.start(activity, activity)
             return

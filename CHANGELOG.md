@@ -15,14 +15,14 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
-- watchdog: A long-running callback is no longer hidden by other callbacks finishing theirs; hooks running as daemon jobs are not watched.
+- watchdog: A long-running callback is no longer hidden by other callbacks finishing theirs; hooks running as daemon jobs are not watched, and `ctx.watchdog.heartbeat(trigger)` inside them does nothing.
 - watchdog: A transaction stuck in one index is no longer hidden by other indexes finishing theirs, so `action: exception` fires as configured.
 - watchdog: Callback and transaction warnings name the handler or hook, the index and the level that are stuck.
-- watchdog: The `websocket` trigger now reports a realtime connection that stays open but stops delivering messages.
 
 ### Changed
 
-- watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name restart or stop the countdown of the callbacks and transactions running in the calling code and the tasks it spawns, not of every callback or transaction at once.
+- watchdog: The `websocket` trigger is now armed by default: if an open realtime connection delivers no messages for its timeout (60 seconds unless configured), DipDup warns about it. Previously DipDup never armed it, so it did not fire. If you set `websocket: action: exception`, such a silence now stops the indexer.
+- watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name restart or stop the countdown of the callbacks and transactions running in the calling code and the tasks it spawns, not of every callback or transaction at once. Where nothing of that kind is running, such as a transaction heartbeat in a non-atomic hook, the heartbeat does nothing.
 
 ## [8.6.2] - 2026-09-23
 

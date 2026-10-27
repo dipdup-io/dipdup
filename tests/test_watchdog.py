@@ -301,6 +301,43 @@ async def test_daemon_job_is_not_stuck_callback(ctx: DipDupContext) -> None:
             await scheduler_task
 
 
+async def daemon_keepalive_hook(ctx: HookContext) -> None:
+    ctx.watchdog.heartbeat(WatchdogTrigger.callback)
+    await asyncio.Event().wait()
+
+
+async def test_callback_heartbeat_in_daemon_job(ctx: DipDupContext) -> None:
+    """A daemon job is not watched, so a heartbeat inside it has no countdown to restart."""
+    scheduler = daemon_scheduler(ctx, daemon_keepalive_hook)
+
+    config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.exception, timeout=1)}
+    async with run_watchdog(config) as watchdog_task:
+        started = asyncio.Event()
+        started.set()
+        scheduler_task = asyncio.create_task(scheduler.run(ctx, started))
+        try:
+            done, _ = await asyncio.wait({watchdog_task, scheduler_task}, timeout=2)
+            assert not done, [task.exception() for task in done]
+        finally:
+            scheduler_task.cancel()
+            await scheduler_task
+
+
+async def test_transaction_heartbeat_in_hook_without_transaction(ctx: DipDupContext) -> None:
+    """A non-atomic hook runs no transaction, so a transaction heartbeat inside it has no countdown to restart."""
+
+    async def hook(ctx: HookContext) -> None:
+        ctx.watchdog.heartbeat(WatchdogTrigger.transaction)
+
+    add_hook(ctx, 'touch', hook)
+
+    config = {WatchdogTrigger.transaction: WatchdogConfig(action=WatchdogAction.exception, timeout=1)}
+    async with run_watchdog(config) as watchdog_task:
+        await ctx.fire_hook('touch')
+        done, _ = await asyncio.wait({watchdog_task}, timeout=1.5)
+        assert not done, [task.exception() for task in done]
+
+
 async def keepalive_hook(ctx: HookContext) -> None:
     for _ in range(12):
         ctx.watchdog.heartbeat(WatchdogTrigger.callback)
