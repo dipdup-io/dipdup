@@ -11,6 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Added
 
 - watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
+- watchdog: `ctx.watchdog.heartbeat` and `ctx.watchdog.reset` accept an optional `name` to keep a separate countdown for each name.
 
 ### Fixed
 
@@ -18,6 +19,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - watchdog: A transaction stuck in one index is no longer hidden by other indexes finishing theirs, so `action: exception` fires as configured.
 - watchdog: Callback and transaction warnings name the handler or hook, the index and the level that are stuck.
 - watchdog: The `websocket` trigger now reports a realtime connection that stays open but stops delivering messages.
+
+### Changed
+
+- watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name restart or stop the countdown of the callbacks and transactions running in the calling code and the tasks it spawns, not of every callback or transaction at once.
 
 ## [8.6.2] - 2026-09-23
 

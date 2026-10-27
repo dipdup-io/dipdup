@@ -5,6 +5,7 @@ import traceback
 from collections.abc import Hashable
 from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -25,7 +26,7 @@ DEFAULT_WATCHDOGS = {
 }
 
 
-@dataclass
+@dataclass(eq=False)
 class Activity:
     """Something the watchdog waits to finish (a callback, a transaction) or to show signs of life (a connection)"""
 
@@ -33,6 +34,11 @@ class Activity:
     started_at: float
     task: asyncio.Task[object] | None = None
     reported: bool = False
+    finished: bool = False
+
+
+# NOTE: Activities watched in the current context, outermost first; tasks spawned inside inherit them
+_current: ContextVar[tuple[tuple[WatchdogTrigger, Activity], ...]] = ContextVar('_current', default=())
 
 
 def format_task_stack(task: asyncio.Task[object]) -> str:
@@ -133,22 +139,47 @@ class WatchdogManager:
             yield
             return
 
-        key = object()
-        watchdog.start(key, Activity(name, time.time(), asyncio.current_task()))
+        activity = Activity(name, time.time(), asyncio.current_task())
+        watchdog.start(activity, activity)
+        outer = _current.get()
+        _current.set((*outer, (trigger, activity)))
         try:
             yield
         finally:
-            watchdog.stop(key)
+            _current.set(outer)
+            activity.finished = True
+            watchdog.stop(activity)
+
+    def _current_activities(self, trigger: WatchdogTrigger) -> list[Activity]:
+        """Activities watched in the current context, including finished ones a spawned task has outlived"""
+        return [activity for t, activity in _current.get() if t == trigger]
 
     def heartbeat(self, trigger: WatchdogTrigger, name: str = '') -> None:
-        """Restart the countdown for `name`; without a name, the trigger has a single countdown"""
-        if watchdog := self._watchdogs.get(trigger):
-            watchdog.start(name, Activity(name, time.time()))
+        """Restart the countdown for `name`.
+
+        Without a name, restart the countdown of the callbacks or transactions being watched in the current context;
+        outside of them, the trigger has a single countdown.
+        """
+        watchdog = self._watchdogs.get(trigger)
+        if watchdog is None:
+            return
+        if not name and (current := self._current_activities(trigger)):
+            for activity in current:
+                if not activity.finished:
+                    activity.started_at, activity.reported = time.time(), False
+                    watchdog.start(activity, activity)
+            return
+        watchdog.start(name, Activity(name, time.time()))
 
     def reset(self, trigger: WatchdogTrigger, name: str = '') -> None:
-        """Stop the countdown for `name`"""
-        if watchdog := self._watchdogs.get(trigger):
-            watchdog.stop(name)
+        """Stop the countdown for `name`; without a name, also stop watching the current callbacks or transactions"""
+        watchdog = self._watchdogs.get(trigger)
+        if watchdog is None:
+            return
+        if not name:
+            for activity in self._current_activities(trigger):
+                watchdog.stop(activity)
+        watchdog.stop(name)
 
 
 # NOTE: Use this singleton from everywhere

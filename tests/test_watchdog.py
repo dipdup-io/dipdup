@@ -7,6 +7,8 @@ condition for several consecutive checks.
 import asyncio
 import logging
 from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
@@ -19,6 +21,7 @@ from dipdup.config import JobConfig
 from dipdup.config import WatchdogAction
 from dipdup.config import WatchdogConfig
 from dipdup.config import WatchdogTrigger
+from dipdup.context import HookContext
 from dipdup.datasources.tezos_tzkt import TezosTzktMessageAction
 from dipdup.exceptions import WatchdogTimeoutError
 from dipdup.scheduler import SchedulerManager
@@ -210,3 +213,78 @@ async def test_daemon_job_is_not_stuck_callback() -> None:
             finally:
                 scheduler_task.cancel()
                 await scheduler_task
+
+
+async def keepalive_hook(ctx: HookContext) -> None:
+    for _ in range(12):
+        ctx.watchdog.heartbeat(WatchdogTrigger.callback)
+        await asyncio.sleep(0.2)
+
+
+async def keepalive_subtasks_hook(ctx: HookContext) -> None:
+    await asyncio.gather(keepalive_hook(ctx), keepalive_hook(ctx))
+
+
+async def unwatched_hook(ctx: HookContext) -> None:
+    ctx.watchdog.reset(WatchdogTrigger.callback)
+    await asyncio.sleep(1.5)
+
+
+@pytest.mark.parametrize('hook', [keepalive_hook, keepalive_subtasks_hook, unwatched_hook])
+async def test_callback_heartbeat_without_name(
+    hook: Callable[[HookContext], Awaitable[None]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """`ctx.watchdog.heartbeat(callback)` keeps the running callback alive, `reset` stops watching it."""
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    async with AsyncExitStack() as stack:
+        ctx = (await create_dummy_dipdup(config, stack))._ctx
+        ctx._hooks['long'] = HookConfig(callback='long')
+        ctx.package._callbacks['hookslonglong'] = hook
+
+        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+        async with run_watchdog(config) as watchdog_task:
+            await ctx.fire_hook('long')
+            during = watchdog_messages(caplog, WatchdogTrigger.callback)
+            caplog.clear()
+
+            # NOTE: The countdown is gone with the callback
+            await asyncio.sleep(1.5)
+            after = watchdog_messages(caplog, WatchdogTrigger.callback)
+            assert not watchdog_task.done()
+
+    assert (len(during), len(after)) == (0, 0), during + after
+
+
+async def test_callback_heartbeat_after_reset(caplog: pytest.LogCaptureFixture) -> None:
+    """A heartbeat after `reset` watches the callback again, but not once it has returned."""
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    background: list[asyncio.Task[None]] = []
+
+    async def outlive(ctx: HookContext) -> None:
+        await asyncio.sleep(0.2)
+        ctx.watchdog.heartbeat(WatchdogTrigger.callback)
+
+    async def hook(ctx: HookContext) -> None:
+        ctx.watchdog.reset(WatchdogTrigger.callback)
+        ctx.watchdog.heartbeat(WatchdogTrigger.callback)
+        await asyncio.sleep(1.5)
+        background.append(asyncio.create_task(outlive(ctx)))
+
+    async with AsyncExitStack() as stack:
+        ctx = (await create_dummy_dipdup(config, stack))._ctx
+        ctx._hooks['long'] = HookConfig(callback='long')
+        ctx.package._callbacks['hookslonglong'] = hook
+
+        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+        async with run_watchdog(config):
+            await ctx.fire_hook('long')
+            during = watchdog_messages(caplog, WatchdogTrigger.callback)
+            caplog.clear()
+
+            await background[0]
+            await asyncio.sleep(1.5)
+            after = watchdog_messages(caplog, WatchdogTrigger.callback)
+
+    assert during
+    assert not after, after
