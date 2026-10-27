@@ -136,7 +136,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help_atexit(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str | None) -> None:
     """Prints a helpful error message after the traceback"""
     import atexit
     import traceback
@@ -161,7 +161,8 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
             else:
                 echo(Error.default_help(), err=True)
 
-        echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
+        if report_id:
+            echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
 
     atexit.register(_print)
 
@@ -182,6 +183,18 @@ class CLIContext:
         setattr(self, key, value)
 
 
+def _save_report(ctx: click.Context, error: Exception | None) -> str | None:
+    """Saves a report on the way out; failing to write it must not replace the error or fail a clean exit"""
+    from dipdup.report import save_report
+
+    package = ctx.obj.config.package if ctx.obj else 'unknown'
+    try:
+        return save_report(package, error)
+    except OSError as e:
+        _logger.warning('Failed to save report: %s', e)
+        return None
+
+
 def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
     @wraps(fn)
     def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> None:
@@ -193,19 +206,13 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             if isinstance(e, click.UsageError):
                 raise
 
-            from dipdup.report import save_report
-
-            package = ctx.obj.config.package if ctx.obj else 'unknown'
-            report_id = save_report(package, e)
+            report_id = _save_report(ctx, e)
             _print_help_atexit(e, report_id)
             raise e
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
-            from dipdup.report import save_report
-
-            package = ctx.obj.config.package
-            save_report(package, None)
+            _save_report(ctx, None)
 
     return cast('WrappedCommandT', wrapper)
 
