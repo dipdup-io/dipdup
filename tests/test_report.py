@@ -4,6 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from typing import cast
 
 import pytest
 
@@ -13,6 +14,11 @@ from dipdup.cli import _cli_wrapper
 from dipdup.exceptions import DatasourceError
 from dipdup.report import save_report
 from dipdup.sentry import extract_event
+
+
+def _run_wrapped(fn: Callable[..., Any], ctx: Any) -> None:
+    # NOTE: Typed as the async command, but at runtime the wrapper is sync and drives the coroutine itself
+    cast('Callable[[Any], None]', _cli_wrapper(fn))(ctx)
 
 
 def _chained_error_with_tracebackless_cause() -> Exception:
@@ -76,7 +82,7 @@ def test_cli_wrapper_reraises_original_error_when_report_fails(
         raise error
 
     with caplog.at_level(logging.WARNING), pytest.raises(DatasourceError) as excinfo:
-        _cli_wrapper(index)(SimpleNamespace(obj=None))
+        _run_wrapped(index, SimpleNamespace(obj=None))
     assert excinfo.value is error
     assert excinfo.value.__context__ is None
     assert 'Failed to save report' in caplog.text
@@ -102,6 +108,6 @@ def test_cli_wrapper_graceful_stop_when_report_fails(
 
     ctx = SimpleNamespace(obj=SimpleNamespace(config=SimpleNamespace(package='demo')))
     with caplog.at_level(logging.WARNING):
-        _cli_wrapper(run)(ctx)
+        _run_wrapped(run, ctx)
     assert 'Failed to save report' in caplog.text
     assert not unwritable_reports_path.exists()
