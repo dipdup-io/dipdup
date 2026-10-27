@@ -1,19 +1,25 @@
-"""Watchdog stand: the real `watchdog.run()` loop observes real versioned transactions and a TzKT datasource.
+"""Watchdog stand: the real `watchdog.run()` loop observes real versioned transactions, hooks and realtime datasources.
 
 Timeouts are 1 second and the loop checks every 0.1 seconds, so every scenario holds the alarm
 condition for several consecutive checks.
 """
 
 import asyncio
+import itertools
+import json
 import logging
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
 from contextlib import AsyncExitStack
 from contextlib import asynccontextmanager
 from contextlib import suppress
+from dataclasses import dataclass
 
 import pytest
+from pysignalr.transport.abstract import ConnectionState
+from pysignalr.transport.websocket import WebsocketTransport
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HookConfig
@@ -21,16 +27,20 @@ from dipdup.config import JobConfig
 from dipdup.config import WatchdogAction
 from dipdup.config import WatchdogConfig
 from dipdup.config import WatchdogTrigger
+from dipdup.config.evm_node import EvmNodeDatasourceConfig
+from dipdup.context import DipDupContext
 from dipdup.context import HookContext
+from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.tezos_tzkt import TezosTzktMessageAction
 from dipdup.exceptions import WatchdogTimeoutError
 from dipdup.scheduler import SchedulerManager
+from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
-from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 from dipdup.test import create_dummy_dipdup
 from dipdup.transactions import TransactionManager
 from dipdup.watchdog import watchdog
 from tests import tzkt_replay
+from tests.test_datasources.test_evm_node import _head_json
 from tests.test_reorg import head_frame
 
 INTERVAL = 0.1
@@ -56,6 +66,26 @@ async def transactions() -> AsyncIterator[TransactionManager]:
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
         yield dipdup._transactions
+
+
+@pytest.fixture
+async def ctx() -> AsyncIterator[DipDupContext]:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        yield dipdup._ctx
+
+
+def add_hook(ctx: DipDupContext, name: str, fn: Callable[[HookContext], Awaitable[None]]) -> HookConfig:
+    ctx._hooks[name] = HookConfig(callback=name)
+    ctx.package._callbacks[f'hooks{name}{name}'] = fn
+    return ctx._hooks[name]
+
+
+def daemon_scheduler(ctx: DipDupContext, fn: Callable[[HookContext], Awaitable[None]]) -> SchedulerManager:
+    job = JobConfig(hook=add_hook(ctx, 'daemon', fn), daemon=True)
+    job._name = 'daemon'
+    return SchedulerManager({'daemon': job})
 
 
 async def fetch_metadata(reply: asyncio.Event) -> None:
@@ -140,25 +170,88 @@ async def test_transaction_timeout_shows_stack_once(
     assert 'in stuck_level' in stacks[0]
 
 
-async def test_websocket_silent_after_data(caplog: pytest.LogCaptureFixture) -> None:
-    """The connection stays up, but the head channel stops delivering blocks."""
-    config = {WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+@dataclass
+class RealtimeFeed:
+    """A realtime datasource driven through its transport: connection state changes and raw frames"""
 
-    async with tzkt_replay() as tzkt, run_watchdog(config):
+    name: str
+    transport: WebsocketTransport
+    send: Callable[[], Awaitable[None]]
+
+    async def connect(self) -> None:
+        await self.transport._set_state(ConnectionState.connecting)
+        await self.transport._set_state(ConnectionState.connected)
+
+    async def disconnect(self) -> None:
+        await self.transport._set_state(ConnectionState.reconnecting)
+
+
+@asynccontextmanager
+async def tzkt_feed() -> AsyncIterator[RealtimeFeed]:
+    """TzKT: SignalR invocations on the `head` channel"""
+    levels = itertools.count(1001)
+    async with tzkt_replay() as tzkt:
         tzkt._subscriptions.add(HeadSubscription())
         tzkt.set_sync_level(HeadSubscription(), 1000)
-        await tzkt._on_connected()
-        await tzkt._on_message(TezosTzktMessageType.head, [head_frame(TezosTzktMessageAction.DATA, 1001)])
+        transport = tzkt._get_signalr_client()._transport
+
+        async def send() -> None:
+            invocation = {
+                'type': 1,
+                'target': 'head',
+                'arguments': [head_frame(TezosTzktMessageAction.DATA, next(levels))],
+            }
+            await transport._on_raw_message(json.dumps(invocation) + '\x1e')
+
+        yield RealtimeFeed(tzkt.name, transport, send)
+
+
+@asynccontextmanager
+async def node_feed() -> AsyncIterator[RealtimeFeed]:
+    """EVM node: JSON-RPC notifications of a `newHeads` subscription"""
+    levels = itertools.count(1)
+    config = EvmNodeDatasourceConfig(kind='evm.node', url='http://localhost', ws_url='ws://localhost')
+    config._name = 'node'
+    node = EvmNodeDatasource(config)
+    node._subscription_ids['0x1'] = EvmNodeHeadSubscription()
+    transport = node._get_ws_client()
+
+    async def send() -> None:
+        level = next(levels)
+        params = {'subscription': '0x1', 'result': _head_json(f'0x{level:064x}', level)}
+        await transport._on_raw_message(json.dumps({'jsonrpc': '2.0', 'method': 'eth_subscription', 'params': params}))
+
+    yield RealtimeFeed(node.name, transport, send)
+
+
+@pytest.mark.parametrize('feed', [tzkt_feed, node_feed])
+async def test_websocket_messages_restart_countdown(
+    feed: Callable[[], AbstractAsyncContextManager[RealtimeFeed]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Every incoming message restarts the countdown; an open connection that falls silent is reported until it closes."""
+    config = {WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+
+    async with feed() as datasource, run_watchdog(config):
+        await datasource.connect()
+        for _ in range(10):
+            await datasource.send()
+            await asyncio.sleep(0.2)
+        flowing = watchdog_messages(caplog, WatchdogTrigger.websocket)
+        caplog.clear()
+
         await asyncio.sleep(1.5)
+        silent = watchdog_messages(caplog, WatchdogTrigger.websocket)
 
-        messages = watchdog_messages(caplog, WatchdogTrigger.websocket)
-        assert messages
-        assert all('tzkt' in msg for msg in messages), messages
-
-        await tzkt._on_disconnected()
+        await datasource.disconnect()
         caplog.clear()
         await asyncio.sleep(1.5)
-        assert not watchdog_messages(caplog, WatchdogTrigger.websocket)
+        closed = watchdog_messages(caplog, WatchdogTrigger.websocket)
+
+    assert not flowing, flowing
+    assert silent
+    assert all(f'datasource `{datasource.name}`' in msg for msg in silent), silent
+    assert not closed, closed
 
 
 async def test_heartbeat_without_name(caplog: pytest.LogCaptureFixture) -> None:
@@ -176,43 +269,36 @@ async def test_heartbeat_without_name(caplog: pytest.LogCaptureFixture) -> None:
         assert not watchdog_messages(caplog, WatchdogTrigger.websocket)
 
 
-async def test_daemon_job_is_not_stuck_callback() -> None:
+async def test_daemon_job_is_not_stuck_callback(ctx: DipDupContext) -> None:
     """A daemon job never returns by design; regular hooks running next to it are still watched."""
-    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
-    async with AsyncExitStack() as stack:
-        ctx = (await create_dummy_dipdup(config, stack))._ctx
-        stuck = asyncio.Event()
+    stuck = asyncio.Event()
 
-        async def daemon(ctx: object) -> None:
-            await asyncio.Event().wait()
+    async def daemon(ctx: HookContext) -> None:
+        await asyncio.Event().wait()
 
-        async def regular(ctx: object) -> None:
-            await stuck.wait()
+    async def regular(ctx: HookContext) -> None:
+        await stuck.wait()
 
-        for name, fn in (('daemon', daemon), ('regular', regular)):
-            ctx._hooks[name] = HookConfig(callback=name)
-            ctx.package._callbacks[f'hooks{name}{name}'] = fn
-        job = JobConfig(hook=ctx._hooks['daemon'], daemon=True)
-        job._name = 'daemon'
-        scheduler = SchedulerManager({'daemon': job})
+    scheduler = daemon_scheduler(ctx, daemon)
+    add_hook(ctx, 'regular', regular)
 
-        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.exception, timeout=1)}
-        async with run_watchdog(config) as watchdog_task:
-            started = asyncio.Event()
-            started.set()
-            scheduler_task = asyncio.create_task(scheduler.run(ctx, started))
-            try:
-                done, _ = await asyncio.wait({watchdog_task, scheduler_task}, timeout=2)
-                assert not done
+    config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.exception, timeout=1)}
+    async with run_watchdog(config) as watchdog_task:
+        started = asyncio.Event()
+        started.set()
+        scheduler_task = asyncio.create_task(scheduler.run(ctx, started))
+        try:
+            done, _ = await asyncio.wait({watchdog_task, scheduler_task}, timeout=2)
+            assert not done
 
-                regular_task = asyncio.create_task(ctx.fire_hook('regular'))
-                with pytest.raises(WatchdogTimeoutError, match='hook `regular`'):
-                    await asyncio.wait_for(asyncio.shield(watchdog_task), timeout=3)
-                stuck.set()
-                await regular_task
-            finally:
-                scheduler_task.cancel()
-                await scheduler_task
+            regular_task = asyncio.create_task(ctx.fire_hook('regular'))
+            with pytest.raises(WatchdogTimeoutError, match='hook `regular`'):
+                await asyncio.wait_for(asyncio.shield(watchdog_task), timeout=3)
+            stuck.set()
+            await regular_task
+        finally:
+            scheduler_task.cancel()
+            await scheduler_task
 
 
 async def keepalive_hook(ctx: HookContext) -> None:
@@ -232,33 +318,29 @@ async def unwatched_hook(ctx: HookContext) -> None:
 
 @pytest.mark.parametrize('hook', [keepalive_hook, keepalive_subtasks_hook, unwatched_hook])
 async def test_callback_heartbeat_without_name(
+    ctx: DipDupContext,
     hook: Callable[[HookContext], Awaitable[None]],
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """`ctx.watchdog.heartbeat(callback)` keeps the running callback alive, `reset` stops watching it."""
-    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
-    async with AsyncExitStack() as stack:
-        ctx = (await create_dummy_dipdup(config, stack))._ctx
-        ctx._hooks['long'] = HookConfig(callback='long')
-        ctx.package._callbacks['hookslonglong'] = hook
+    add_hook(ctx, 'long', hook)
 
-        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
-        async with run_watchdog(config) as watchdog_task:
-            await ctx.fire_hook('long')
-            during = watchdog_messages(caplog, WatchdogTrigger.callback)
-            caplog.clear()
+    config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+    async with run_watchdog(config) as watchdog_task:
+        await ctx.fire_hook('long')
+        during = watchdog_messages(caplog, WatchdogTrigger.callback)
+        caplog.clear()
 
-            # NOTE: The countdown is gone with the callback
-            await asyncio.sleep(1.5)
-            after = watchdog_messages(caplog, WatchdogTrigger.callback)
-            assert not watchdog_task.done()
+        # NOTE: The countdown is gone with the callback
+        await asyncio.sleep(1.5)
+        after = watchdog_messages(caplog, WatchdogTrigger.callback)
+        assert not watchdog_task.done()
 
     assert (len(during), len(after)) == (0, 0), during + after
 
 
-async def test_callback_heartbeat_after_reset(caplog: pytest.LogCaptureFixture) -> None:
+async def test_callback_heartbeat_after_reset(ctx: DipDupContext, caplog: pytest.LogCaptureFixture) -> None:
     """A heartbeat after `reset` watches the callback again, but not once it has returned."""
-    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
     background: list[asyncio.Task[None]] = []
 
     async def outlive(ctx: HookContext) -> None:
@@ -271,20 +353,17 @@ async def test_callback_heartbeat_after_reset(caplog: pytest.LogCaptureFixture) 
         await asyncio.sleep(1.5)
         background.append(asyncio.create_task(outlive(ctx)))
 
-    async with AsyncExitStack() as stack:
-        ctx = (await create_dummy_dipdup(config, stack))._ctx
-        ctx._hooks['long'] = HookConfig(callback='long')
-        ctx.package._callbacks['hookslonglong'] = hook
+    add_hook(ctx, 'long', hook)
 
-        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
-        async with run_watchdog(config):
-            await ctx.fire_hook('long')
-            during = watchdog_messages(caplog, WatchdogTrigger.callback)
-            caplog.clear()
+    config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+    async with run_watchdog(config):
+        await ctx.fire_hook('long')
+        during = watchdog_messages(caplog, WatchdogTrigger.callback)
+        caplog.clear()
 
-            await background[0]
-            await asyncio.sleep(1.5)
-            after = watchdog_messages(caplog, WatchdogTrigger.callback)
+        await background[0]
+        await asyncio.sleep(1.5)
+        after = watchdog_messages(caplog, WatchdogTrigger.callback)
 
     assert during
     assert not after, after
