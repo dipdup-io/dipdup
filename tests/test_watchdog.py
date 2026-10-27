@@ -38,7 +38,6 @@ from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 from dipdup.test import create_dummy_dipdup
 from dipdup.transactions import TransactionManager
-from dipdup.watchdog import _current
 from dipdup.watchdog import watchdog
 from tests import tzkt_replay
 from tests.test_datasources.test_evm_node import _head_json
@@ -427,6 +426,7 @@ async def test_callback_heartbeat_after_reset(ctx: DipDupContext, caplog: pytest
 
 async def test_sequential_callbacks_leave_nothing_watched(ctx: DipDupContext) -> None:
     """Callbacks awaited one after another in one task each stop being watched in that task once they return."""
+    from dipdup.watchdog import _current
 
     async def hook(ctx: HookContext) -> None:
         assert len(_current.get()) == (2 if ctx.hook_config.atomic else 1)
