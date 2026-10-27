@@ -101,10 +101,11 @@ class SchedulerManager:
                 hook_config=hook_config,
             )
             with suppress(asyncio.CancelledError):
-                await job_ctx.fire_hook(
+                await job_ctx._fire_hook(
                     name=hook_config.callback,
                     wait=True,
-                    **kwargs,
+                    kwargs=kwargs,
+                    daemon=job_config.daemon,
                 )
 
         if job_config.crontab:

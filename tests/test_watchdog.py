@@ -14,11 +14,14 @@ from contextlib import suppress
 import pytest
 
 from dipdup.config import DipDupConfig
+from dipdup.config import HookConfig
+from dipdup.config import JobConfig
 from dipdup.config import WatchdogAction
 from dipdup.config import WatchdogConfig
 from dipdup.config import WatchdogTrigger
 from dipdup.datasources.tezos_tzkt import TezosTzktMessageAction
 from dipdup.exceptions import WatchdogTimeoutError
+from dipdup.scheduler import SchedulerManager
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 from dipdup.test import create_dummy_dipdup
@@ -168,3 +171,42 @@ async def test_heartbeat_without_name(caplog: pytest.LogCaptureFixture) -> None:
         caplog.clear()
         await asyncio.sleep(0.3)
         assert not watchdog_messages(caplog, WatchdogTrigger.websocket)
+
+
+async def test_daemon_job_is_not_stuck_callback() -> None:
+    """A daemon job never returns by design; regular hooks running next to it are still watched."""
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    async with AsyncExitStack() as stack:
+        ctx = (await create_dummy_dipdup(config, stack))._ctx
+        stuck = asyncio.Event()
+
+        async def daemon(ctx: object) -> None:
+            await asyncio.Event().wait()
+
+        async def regular(ctx: object) -> None:
+            await stuck.wait()
+
+        for name, fn in (('daemon', daemon), ('regular', regular)):
+            ctx._hooks[name] = HookConfig(callback=name)
+            ctx.package._callbacks[f'hooks{name}{name}'] = fn
+        job = JobConfig(hook=ctx._hooks['daemon'], daemon=True)
+        job._name = 'daemon'
+        scheduler = SchedulerManager({'daemon': job})
+
+        config = {WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.exception, timeout=1)}
+        async with run_watchdog(config) as watchdog_task:
+            started = asyncio.Event()
+            started.set()
+            scheduler_task = asyncio.create_task(scheduler.run(ctx, started))
+            try:
+                done, _ = await asyncio.wait({watchdog_task, scheduler_task}, timeout=2)
+                assert not done
+
+                regular_task = asyncio.create_task(ctx.fire_hook('regular'))
+                with pytest.raises(WatchdogTimeoutError, match='hook `regular`'):
+                    await asyncio.wait_for(asyncio.shield(watchdog_task), timeout=3)
+                stuck.set()
+                await regular_task
+            finally:
+                scheduler_task.cancel()
+                await scheduler_task

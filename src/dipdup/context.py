@@ -725,6 +725,15 @@ class DipDupContext:
         :param wait: Wait for hook to finish or fire and forget
         :param kwargs: Hook arguments
         """
+        await self._fire_hook(name, wait, kwargs)
+
+    async def _fire_hook(
+        self,
+        name: str,
+        wait: bool,
+        kwargs: dict[str, Any],
+        daemon: bool = False,
+    ) -> None:
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
@@ -740,7 +749,9 @@ class DipDupContext:
 
         async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
-                stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`'))
+                # NOTE: Daemon hooks never return by design
+                if not daemon:
+                    stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`'))
                 if hook_config.atomic:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx.transactions.in_transaction())

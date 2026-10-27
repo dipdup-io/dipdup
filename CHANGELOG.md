@@ -14,6 +14,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Fixed
 
+- watchdog: A long-running callback is no longer hidden by other callbacks finishing theirs; hooks running as daemon jobs are not watched.
 - watchdog: A transaction stuck in one index is no longer hidden by other indexes finishing theirs, so `action: exception` fires as configured.
 - watchdog: Callback and transaction warnings name the handler or hook, the index and the level that are stuck.
 - watchdog: The `websocket` trigger now reports a realtime connection that stays open but stops delivering messages.
