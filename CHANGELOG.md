@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
+- datasources: `http.retry_count` limits consecutive realtime connection failures instead of failures over the whole lifetime of the process.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed

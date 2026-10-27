@@ -2,10 +2,12 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import TypeVar
 from unittest.mock import AsyncMock
+from unittest.mock import patch
 
 import orjson as json
 import pysignalr.exceptions
 import pytest
+from pysignalr.client import SignalRClient
 
 from dipdup.exceptions import DatasourceError
 from dipdup.exceptions import FrameworkException
@@ -230,3 +232,36 @@ async def test_signalr_client() -> None:
         with pytest.raises(DatasourceError):
             await tzkt.run()
         assert fail_mock.call_count == tzkt._http_config.retry_count
+
+
+async def test_signalr_server_error_reconnects() -> None:
+    server_error = pysignalr.exceptions.ServerError(
+        "Connection closed with an error. OperationCanceledException: Client hasn't sent a message/ping within the configured ClientTimeoutInterval."
+    )
+    fail_mock = AsyncMock(side_effect=server_error)
+
+    async with tzkt_replay(batch_size=1) as tzkt:
+        tzkt._http_config.retry_sleep = 0
+
+        with patch.object(SignalRClient, 'run', fail_mock), pytest.raises(DatasourceError):
+            await tzkt.run()
+        assert fail_mock.call_count == tzkt._http_config.retry_count
+
+
+async def test_signalr_retries_reset_after_connection() -> None:
+    async with tzkt_replay(batch_size=1) as tzkt:
+        tzkt._http_config.retry_sleep = 0
+        retry_count = tzkt._http_config.retry_count
+        calls = 0
+
+        # NOTE: Every run connects and then drops until the server goes away for good
+        async def run() -> None:
+            nonlocal calls
+            calls += 1
+            if calls <= retry_count * 2:
+                await tzkt._on_connected()
+            raise pysignalr.exceptions.ConnectionError(502)
+
+        with patch.object(SignalRClient, 'run', AsyncMock(side_effect=run)), pytest.raises(DatasourceError):
+            await tzkt.run()
+        assert calls == retry_count * 3

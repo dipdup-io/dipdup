@@ -9,6 +9,7 @@ from typing import TypeVar
 from uuid import uuid4
 
 from pysignalr.exceptions import ConnectionError
+from pysignalr.exceptions import ServerError
 from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DatasourceConfig
@@ -125,6 +126,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
     def __init__(self, config: DatasourceConfigT) -> None:
         super().__init__(config)
         self._ws_client: WebsocketTransport | None = None
+        self._ws_connected = False
 
     @abstractmethod
     async def _on_message(self, message: Message) -> None: ...
@@ -134,6 +136,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
+        self._ws_connected = True
         # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
@@ -165,19 +168,34 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
         return self._ws_client
 
+    def _reset_ws_client(self) -> None:
+        self._ws_client = None
+
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
-        client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
+        attempts = 0
 
-        for _ in range(1, self._http_config.retry_count + 1):
+        while attempts < self._http_config.retry_count:
+            self._ws_connected = False
             try:
-                await client.run()
+                await self._get_ws_client().run()
             except ConnectionError as e:
                 self._logger.error('Websocket connection error: %s', e)
                 await self.emit_disconnected()
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= self._http_config.retry_multiplier
+            except ServerError as e:
+                self._logger.error('Websocket connection closed by server: %s', e.message)
+                # NOTE: The transport is left in `connected` state and can't be run again
+                self._reset_ws_client()
+                await self._on_disconnected()
+
+            # NOTE: Only consecutive failures count towards `retry_count`
+            if self._ws_connected:
+                attempts, retry_sleep = 0, self._http_config.retry_sleep
+            else:
+                attempts += 1
+            await asyncio.sleep(retry_sleep)
+            retry_sleep *= self._http_config.retry_multiplier
 
         raise DatasourceError('Websocket connection failed', self.name)
 
