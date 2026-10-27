@@ -161,8 +161,16 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 )
             except safe_exceptions as e:
                 ratelimit_sleep: float | None = None
+                retryable = True
                 if isinstance(e, aiohttp.ClientResponseError):
                     metrics.set_http_error(self._url, e.status)
+
+                    # NOTE: Client errors won't go away on retry; 408 and 429 are the exceptions
+                    if 400 <= e.status < 500 and e.status not in (
+                        HTTPStatus.REQUEST_TIMEOUT,
+                        HTTPStatus.TOO_MANY_REQUESTS,
+                    ):
+                        retryable = False
 
                     # NOTE: Many gateways (e.g. nginx `limit_req`) shed load with 503 instead of 429
                     if e.status in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE):
@@ -177,7 +185,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, last_attempt, e)
                 metrics.set_http_errors_in_row(self._url, attempt)
-                if attempt == last_attempt:
+                if attempt == last_attempt or not retryable:
                     raise e
 
                 to_sleep = float(f'{ratelimit_sleep or retry_sleep:.1f}')

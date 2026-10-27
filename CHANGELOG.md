@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed
