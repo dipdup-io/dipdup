@@ -38,6 +38,7 @@ from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 from dipdup.test import create_dummy_dipdup
 from dipdup.transactions import TransactionManager
+from dipdup.watchdog import _current
 from dipdup.watchdog import watchdog
 from tests import tzkt_replay
 from tests.test_datasources.test_evm_node import _head_json
@@ -254,6 +255,24 @@ async def test_websocket_messages_restart_countdown(
     assert not closed, closed
 
 
+@pytest.mark.parametrize('feed', [tzkt_feed, node_feed])
+async def test_websocket_silent_from_connect(
+    feed: Callable[[], AbstractAsyncContextManager[RealtimeFeed]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A connection that opens and never delivers a message is reported after the timeout."""
+    config = {WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+
+    async with feed() as datasource, run_watchdog(config):
+        await datasource.connect()
+        await asyncio.sleep(1.5)
+        silent = watchdog_messages(caplog, WatchdogTrigger.websocket)
+        await datasource.disconnect()
+
+    assert silent
+    assert all(f'datasource `{datasource.name}`' in msg for msg in silent), silent
+
+
 async def test_heartbeat_without_name(caplog: pytest.LogCaptureFixture) -> None:
     """`ctx.watchdog.heartbeat(trigger)` keeps a single countdown for the trigger."""
     config = {WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
@@ -404,3 +423,23 @@ async def test_callback_heartbeat_after_reset(ctx: DipDupContext, caplog: pytest
 
     assert during
     assert not after, after
+
+
+async def test_sequential_callbacks_leave_nothing_watched(ctx: DipDupContext) -> None:
+    """Callbacks awaited one after another in one task each stop being watched in that task once they return."""
+
+    async def hook(ctx: HookContext) -> None:
+        assert len(_current.get()) == (2 if ctx.hook_config.atomic else 1)
+
+    add_hook(ctx, 'plain', hook)
+    add_hook(ctx, 'atomic', hook).atomic = True
+
+    config = {
+        WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1),
+        WatchdogTrigger.transaction: WatchdogConfig(action=WatchdogAction.warning, timeout=1),
+    }
+    async with run_watchdog(config):
+        for _ in range(3):
+            await ctx.fire_hook('plain')
+            await ctx.fire_hook('atomic')
+            assert _current.get() == ()
