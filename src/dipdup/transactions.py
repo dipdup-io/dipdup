@@ -46,29 +46,39 @@ class TransactionManager:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
         name = f'index `{index}` at level {level}' if index else 'transaction'
         with watchdog.watch(WatchdogTrigger.transaction, name):
-            try:
-                original_conn = get_connection()
-                async with in_transaction() as conn:
-                    set_connection(conn)
+            async with self._in_transaction(level, sync_level, index):
+                yield
 
-                    if self._transaction:
-                        raise ValueError('Transaction is already started')
+    @asynccontextmanager
+    async def _in_transaction(
+        self,
+        level: int | None,
+        sync_level: int | None,
+        index: str | None,
+    ) -> AsyncIterator[None]:
+        try:
+            original_conn = get_connection()
+            async with in_transaction() as conn:
+                set_connection(conn)
 
-                    if level and index and self._depth:
-                        if not sync_level or sync_level - level <= self._depth:
-                            self._transaction = dipdup.models.VersionedTransaction(
-                                level,
-                                index,
-                                self._immune_tables,
-                            )
+                if self._transaction:
+                    raise ValueError('Transaction is already started')
 
-                    yield
+                if level and index and self._depth:
+                    if not sync_level or sync_level - level <= self._depth:
+                        self._transaction = dipdup.models.VersionedTransaction(
+                            level,
+                            index,
+                            self._immune_tables,
+                        )
 
-                    if self._transaction:
-                        await self._commit()
-            finally:
-                self._transaction = None
-                set_connection(original_conn)
+                yield
+
+                if self._transaction:
+                    await self._commit()
+        finally:
+            self._transaction = None
+            set_connection(original_conn)
 
     async def _commit(self) -> None:
         """Save pending updates to DB in the same order as they were added"""
