@@ -97,3 +97,55 @@ async def test_retry_treats_503_as_ratelimit(status: int, expect_ratelimit: bool
     else:
         # NOTE: non-ratelimit errors use the plain retry_sleep
         assert sleeps[0] == 10.0
+
+
+@pytest.mark.parametrize(
+    ('status', 'expect_retry'),
+    [
+        (HTTPStatus.BAD_REQUEST, False),
+        (HTTPStatus.UNAUTHORIZED, False),
+        (HTTPStatus.FORBIDDEN, False),
+        (HTTPStatus.NOT_FOUND, False),
+        (HTTPStatus.UNPROCESSABLE_ENTITY, False),
+        (HTTPStatus.REQUEST_TIMEOUT, True),
+        (HTTPStatus.TOO_MANY_REQUESTS, True),
+        (HTTPStatus.INTERNAL_SERVER_ERROR, True),
+        (HTTPStatus.BAD_GATEWAY, True),
+        (HTTPStatus.SERVICE_UNAVAILABLE, True),
+        (HTTPStatus.GATEWAY_TIMEOUT, True),
+    ],
+)
+async def test_retry_skips_client_errors(status: int, expect_retry: bool) -> None:
+    config = HttpDatasourceConfig(
+        url='https://example.com',
+        http=HttpConfig(
+            replay=False,
+            retry_count=2,
+            retry_sleep=1.0,
+            ratelimit_sleep=1.0,
+        ),
+    )
+    config._name = 'test'
+    datasource = HttpDatasource(config)
+    gateway = datasource._http
+
+    sleeps: list[float] = []
+
+    async def _fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    request_mock = AsyncMock(side_effect=_response_error(status))
+    gateway._request = request_mock  # type: ignore[method-assign]
+
+    with patch('dipdup.http.asyncio.sleep', _fake_sleep):
+        with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+            await gateway._retry_request('get', '/endpoint')
+
+    assert exc_info.value.status == status
+    if expect_retry:
+        assert request_mock.await_count == 3
+        assert len(sleeps) == 2
+    else:
+        # NOTE: Definitive client errors are raised after a single request
+        assert request_mock.await_count == 1
+        assert sleeps == []
