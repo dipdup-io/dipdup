@@ -1,5 +1,7 @@
+from dipdup.subscriptions import SubscriptionManager
 from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 from dipdup.subscriptions.evm_node import EvmNodeLogsSubscription
+from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 
 
 def test_head_subscriptions_differ_but_share_params() -> None:
@@ -33,3 +35,15 @@ def test_logs_subscription_includes_topics() -> None:
 def test_logs_subscription_includes_both_filters() -> None:
     params = EvmNodeLogsSubscription(address=('0xabc',), topics=(('0xtopic',),)).get_params()
     assert params == ['logs', {'address': ('0xabc',), 'topics': (('0xtopic',),)}]
+
+
+def test_reset_keeps_datasource_sync_level() -> None:
+    subscriptions = SubscriptionManager()
+    subscriptions.set_sync_level(None, 100)
+    subscriptions.add(HeadSubscription())
+    subscriptions.set_sync_level(HeadSubscription(), 101)
+
+    subscriptions.reset()
+
+    assert subscriptions.missing_subscriptions == {HeadSubscription()}
+    assert subscriptions.get_sync_level(HeadSubscription()) == 100

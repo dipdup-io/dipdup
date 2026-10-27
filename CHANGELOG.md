@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
+- datasources: `http.retry_count` limits consecutive realtime connection failures instead of failures over the whole lifetime of the process.
+- datasources: A realtime connection is reconnected after a failed negotiation, such as an expired connection id or a refused connection, instead of crashing the indexer once pysignalr's own retry budget is spent.
+- tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
+- tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
+- tezos.tzkt: A subscription rejected by TzKT, e.g. with `Subscriptions limit exceeded`, fails with a `DatasourceError` naming the subscription instead of breaking the realtime connection.
+- tezos.tzkt: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
+- tezos.tzkt: The realtime connection uses `http.connection_timeout` instead of a hardcoded 30 seconds.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed

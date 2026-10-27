@@ -8,7 +8,8 @@ from typing import Generic
 from typing import TypeVar
 from uuid import uuid4
 
-from pysignalr.exceptions import ConnectionError
+from aiohttp import ClientError
+from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DatasourceConfig
@@ -37,6 +38,9 @@ ContractConfigT = TypeVar('ContractConfigT', bound=StarknetContractConfig | EvmC
 EmptyCallback = Callable[[], Awaitable[None]]
 RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awaitable[None]]
 AbiJson = dict[str, Any] | list[Any]
+
+# NOTE: Failures to establish or keep a realtime connection; anything else raised by the transport is a bug
+WEBSOCKET_CONNECTION_ERRORS = (HubError, ClientError, OSError)
 
 
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
@@ -125,6 +129,8 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
     def __init__(self, config: DatasourceConfigT) -> None:
         super().__init__(config)
         self._ws_client: WebsocketTransport | None = None
+        self._ws_connected = False
+        self._ws_failures = 0
 
     @abstractmethod
     async def _on_message(self, message: Message) -> None: ...
@@ -134,10 +140,17 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
+        self._ws_connected = True
+        # NOTE: Only consecutive failures count towards `retry_count`
+        self._ws_failures = 0
         # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
     async def _on_disconnected(self) -> None:
+        # NOTE: Called by the transport and by `_ws_loop`, as some failures bypass transport callbacks
+        if not self._ws_connected:
+            return
+        self._ws_connected = False
         self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
         await self.emit_disconnected()
@@ -157,6 +170,8 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
             callback=self._on_message,
             skip_negotiation=True,
             connection_timeout=self._http_config.connection_timeout,
+            # NOTE: Reconnects are handled by `_ws_loop`
+            retry_count=1,
         )
 
         self._ws_client.on_open(self._on_connected)
@@ -165,19 +180,29 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
         return self._ws_client
 
+    def _reset_ws_client(self) -> None:
+        self._ws_client = None
+
     async def _ws_loop(self) -> None:
         self._logger.info('Establishing realtime connection')
-        client = self._get_ws_client()
         retry_sleep = self._http_config.retry_sleep
+        self._ws_failures = 0
 
-        for _ in range(1, self._http_config.retry_count + 1):
+        while self._ws_failures < self._http_config.retry_count:
+            self._ws_failures += 1
             try:
-                await client.run()
-            except ConnectionError as e:
-                self._logger.error('Websocket connection error: %s', e)
-                await self.emit_disconnected()
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= self._http_config.retry_multiplier
+                await self._get_ws_client().run()
+            except WEBSOCKET_CONNECTION_ERRORS as e:
+                self._logger.warning('Realtime connection failed: %s', e.__cause__ or e)
+
+            # NOTE: The transport keeps the state of the failed connection and can't be run again
+            self._reset_ws_client()
+            await self._on_disconnected()
+
+            if not self._ws_failures:
+                retry_sleep = self._http_config.retry_sleep
+            await asyncio.sleep(retry_sleep)
+            retry_sleep *= self._http_config.retry_multiplier
 
         raise DatasourceError('Websocket connection failed', self.name)
 
