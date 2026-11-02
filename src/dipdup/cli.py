@@ -198,7 +198,7 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
             _print_help_atexit(e, report_id)
-            raise e
+            raise
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
