@@ -136,7 +136,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help_atexit(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str | None) -> None:
     """Prints a helpful error message after the traceback"""
     import atexit
     import traceback
@@ -161,7 +161,8 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
             else:
                 echo(Error.default_help(), err=True)
 
-        echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
+        if report_id:
+            echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
 
     atexit.register(_print)
 
@@ -189,16 +190,15 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             uvloop.run(fn(ctx, *args, **kwargs))
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
+        except click.UsageError:
+            raise
         except Exception as e:
-            if isinstance(e, click.UsageError):
-                raise
-
             from dipdup.report import save_report
 
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
             _print_help_atexit(e, report_id)
-            raise e
+            raise
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
