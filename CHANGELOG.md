@@ -11,7 +11,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Fixed
 
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
-- datasources: `http.retry_count` limits consecutive realtime connection failures instead of failures over the whole lifetime of the process.
+- datasources: `http.retry_count` limits consecutive realtime connection failures instead of failures over the whole lifetime of the process; a connection lost before all subscriptions are confirmed counts as failed.
 - datasources: A realtime connection is reconnected after a failed negotiation, such as an expired connection id or a refused connection, instead of crashing the indexer once pysignalr's own retry budget is spent.
 - tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
 - tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.

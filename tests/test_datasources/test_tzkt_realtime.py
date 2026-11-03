@@ -150,14 +150,14 @@ async def wait_until(predicate: Callable[[], bool], timeout: float) -> bool:
 
 
 @asynccontextmanager
-async def fake_tzkt() -> AsyncIterator[tuple[FakeTzkt, TezosTzktDatasource]]:
+async def fake_tzkt(retry_count: int = 30) -> AsyncIterator[tuple[FakeTzkt, TezosTzktDatasource]]:
     server = FakeTzkt()
     await server.start()
     config = TezosTzktDatasourceConfig(
         kind='tezos.tzkt',
         url=server.url,
         http=HttpConfig(
-            retry_count=30,
+            retry_count=retry_count,
             retry_sleep=0.01,
             retry_multiplier=1,
             connection_timeout=1,
@@ -201,9 +201,10 @@ async def resubscribe(tzkt: TezosTzktDatasource, timeout: float = 5) -> None:
 
 
 async def test_realtime_survives_repeated_drops() -> None:
-    async with fake_tzkt() as (server, tzkt):
+    # NOTE: More drops than `retry_count`; every connection confirms subscriptions before it is dropped
+    async with fake_tzkt(retry_count=3) as (server, tzkt):
         tzkt._subscriptions.add(HeadSubscription())
-        async with realtime(tzkt) as task:
+        async with asyncio.timeout(30), realtime(tzkt) as task:
             await resubscribe(tzkt)
 
             async def drop() -> None:
@@ -215,6 +216,33 @@ async def test_realtime_survives_repeated_drops() -> None:
                 await drop()
                 assert not task.done(), f'Realtime loop died after drop #{number}: {task.exception()!r}'
                 assert len(server.connections) == number + 1
+                await resubscribe(tzkt)
+
+
+async def test_realtime_fails_when_every_connection_drops_before_subscribing() -> None:
+    async with fake_tzkt(retry_count=3) as (server, tzkt):
+        tzkt._subscriptions.add(HeadSubscription())
+
+        async def flap() -> None:
+            # NOTE: Server accepts every connection and drops it right after it is open, forever
+            while True:
+                await wait_until(lambda: tzkt._ws_connected, 5)
+                if tzkt._ws_connected:
+                    server.connections[-1].abort()
+                await wait_until(lambda: not tzkt._ws_connected, 5)
+
+        flapper = asyncio.create_task(flap())
+        try:
+            async with realtime(tzkt) as task:
+                done, _ = await asyncio.wait({task}, timeout=10)
+                assert done, f'Realtime loop is still reconnecting after {len(server.connections)} dropped connections'
+                with pytest.raises(DatasourceError, match='Websocket connection failed'):
+                    await task
+                assert len(server.connections) == 3
+        finally:
+            flapper.cancel()
+            with suppress(asyncio.CancelledError):
+                await flapper
 
 
 async def test_realtime_survives_long_negotiation_outage() -> None:
