@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,8 @@ from dipdup.yaml import dump
 REPORTS_PATH = Path.home() / '.local' / 'share' / 'dipdup' / 'reports'
 REPORTS_LIMIT = 100
 
+_logger = logging.getLogger(__name__)
+
 
 class ReportHeader(TypedDict):
     id: str
@@ -21,8 +24,12 @@ class ReportHeader(TypedDict):
     content: str
 
 
-def save_report(package: str, error: Exception | None) -> str:
-    """Saves a crashdump file with Sentry error data, returns the path to the tempfile"""
+def save_report(package: str, error: Exception | None) -> str | None:
+    """Saves a crashdump file with Sentry error data and performance stats.
+
+    Best-effort: a report is a side effect of handling another error, so a filesystem error is logged
+    instead of raised. Returns the report ID, or None if the report could not be written.
+    """
 
     event: dict[str, Any] = {}
     content: list[str] = []
@@ -61,12 +68,14 @@ def save_report(package: str, error: Exception | None) -> str:
 
     event.pop('_meta', None)
 
-    crashdump_dir = REPORTS_PATH
-    crashdump_dir.mkdir(parents=True, exist_ok=True)
-    path = crashdump_dir / f'{report_id}.yaml'
-
     event_yaml = dump(event)
-    path.write_text(event_yaml)
+    path = REPORTS_PATH / f'{report_id}.yaml'
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(event_yaml)
+    except OSError as e:
+        _logger.warning('Report not saved: %s', e)
+        return None
     return report_id
 
 
