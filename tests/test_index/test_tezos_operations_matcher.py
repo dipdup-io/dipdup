@@ -1,6 +1,10 @@
+import signal
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC
 from datetime import datetime
 from pathlib import Path
+from types import FrameType
 
 import pytest
 
@@ -57,6 +61,21 @@ def handler(callback: str, *pattern: TransactionPattern) -> TezosOperationsHandl
     return TezosOperationsHandlerConfig(callback=callback, pattern=pattern)
 
 
+@contextmanager
+def time_limit(seconds: float) -> Iterator[None]:
+    # NOTE: A looping matcher grows memory without bound; fail the test instead of hanging the runner.
+    def _timeout(signum: int, frame: FrameType | None) -> None:
+        raise TimeoutError(f'matcher did not return within {seconds}s')
+
+    previous = signal.signal(signal.SIGALRM, _timeout)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
 def match(
     package: DipDupPackage,
     handlers: tuple[TezosOperationsHandlerConfig, ...],
@@ -64,7 +83,8 @@ def match(
     alt: bool = False,
 ) -> list[tuple[str, list[TezosOperationsHandlerArgumentU]]]:
     subgroup = OperationSubgroup(hash='op', counter=1, operations=operations)
-    matched = match_operation_subgroup(package, handlers, subgroup, alt=alt)
+    with time_limit(1):
+        matched = match_operation_subgroup(package, handlers, subgroup, alt=alt)
     return [(config.callback, list(args)) for config, args in matched]
 
 
