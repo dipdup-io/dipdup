@@ -1,5 +1,6 @@
 import logging
-from asyncio import Event
+from asyncio import Future
+from asyncio import get_running_loop
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
@@ -255,6 +256,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         self._on_events_callbacks: set[EventsCallback] = set()
 
         self._signalr_client: SignalRClient | None = None
+        self._subscription_requests: set[Future[None]] = set()
         self._channel_levels: defaultdict[TezosTzktMessageType, int | None] = defaultdict(lambda: None)
 
     async def __aenter__(self) -> None:
@@ -1074,32 +1076,49 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
 
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
-        if not missing_subscriptions:
+        # NOTE: Missing subscriptions are sent on the next call once the connection is restored
+        if not missing_subscriptions or not self._ws_connected:
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
         for subscription in missing_subscriptions:
             if not isinstance(subscription, TezosTzktSubscription):
                 raise FrameworkException(f'Expected TezosTzktSubscription, got {subscription}')
+            if not self._ws_connected:
+                break
             await self._subscribe(subscription)
-        self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
+
+        if left := len(self._subscriptions.missing_subscriptions):
+            self._logger.info('Realtime connection lost, %s channels left to subscribe', left)
+        else:
+            self._logger.info('Subscribed to %s channels', len(missing_subscriptions))
 
     async def _subscribe(self, subscription: TezosTzktSubscription) -> None:
         self._logger.debug('Subscribing to %s', subscription)
         method = subscription.method
         request: list[dict[str, Any]] = subscription.get_request()
 
-        event = Event()
+        # NOTE: Resolved by the completion, or by `_on_disconnected` if the connection is lost before it arrives
+        request_done: Future[None] = get_running_loop().create_future()
 
         async def _on_subscribe(message: CompletionMessage) -> None:
+            # NOTE: The waiter could have been cancelled or released by `_on_disconnected`
+            if request_done.done():
+                return
             if message.error:
-                await self._on_error(message)
+                error = DatasourceError(f'Failed to subscribe to {subscription}: {message.error}', self.name)
+                request_done.set_exception(error)
+                return
             level = cast('int', message.result)
             self._subscriptions.set_sync_level(subscription, level)
-            event.set()
+            request_done.set_result(None)
 
-        await self._send(method, request, _on_subscribe)
-        await event.wait()
+        self._subscription_requests.add(request_done)
+        try:
+            await self._send(method, request, _on_subscribe)
+            await request_done
+        finally:
+            self._subscription_requests.discard(request_done)
 
     async def _request_values_dict(self, *args: Any, **kwargs: Any) -> tuple[dict[str, Any], ...]:
         # NOTE: basically this function create dict from list of tuples request
@@ -1184,8 +1203,21 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             else:
                 offset += self.request_limit
 
+    async def _on_disconnected(self) -> None:
+        await super()._on_disconnected()
+        for request_done in self._subscription_requests:
+            if not request_done.done():
+                request_done.set_result(None)
+
+    async def _on_error(self, message: CompletionMessage) -> None:
+        # NOTE: Every invocation is sent with a callback that handles its errors; see `_subscribe`
+        return
+
     def _get_ws_client(self) -> WebsocketTransport:
         return self._get_signalr_client()  # type: ignore[return-value]
+
+    def _reset_ws_client(self) -> None:
+        self._signalr_client = None
 
     def _get_signalr_client(self) -> SignalRClient:
         """Create SignalR client, register message callbacks"""
@@ -1196,7 +1228,9 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         self._signalr_client = SignalRClient(
             url=f'{self._http._url}/v1/ws',
             max_size=None,
-            connection_timeout=30,
+            connection_timeout=self._http_config.connection_timeout,
+            # NOTE: Reconnects are handled by `_ws_loop`
+            retry_count=1,
         )
 
         self._signalr_client.on_open(self._on_connected)

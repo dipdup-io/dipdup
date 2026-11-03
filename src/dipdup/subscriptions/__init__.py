@@ -29,7 +29,10 @@ class SubscriptionManager:
             self._subscriptions.pop(subscription)
 
     def reset(self) -> None:
-        self._subscriptions = dict.fromkeys(self._subscriptions, None)
+        # NOTE: Datasource-wide sync level stays known; subscriptions fall back to it until confirmed again
+        for subscription in self._subscriptions:
+            if subscription is not None:
+                self._subscriptions[subscription] = None
 
     def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
         if subscription not in self._subscriptions:
