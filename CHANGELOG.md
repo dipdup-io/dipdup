@@ -12,6 +12,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
+- transactions: A rollback that fails after the database connection is lost no longer replaces the error that caused it; the rollback error is attached to it as a note.
 
 ## [8.6.2] - 2026-09-23
 
