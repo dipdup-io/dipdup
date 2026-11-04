@@ -269,7 +269,8 @@ class HasuraGateway(HTTPGateway):
             except HasuraError as e:
                 # NOTE: A reverse proxy in front of Hasura answers 404 until the backend is up
                 cause = e.__cause__
-                if not (isinstance(cause, ClientResponseError) and cause.status == HTTPStatus.NOT_FOUND) or not retry_count:
+                not_found = isinstance(cause, ClientResponseError) and cause.status == HTTPStatus.NOT_FOUND
+                if not not_found or not retry_count:
                     raise
             self._logger.info('Hasura is not ready yet; waiting %s seconds', retry_sleep)
             await asyncio.sleep(retry_sleep)

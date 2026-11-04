@@ -1,9 +1,9 @@
 import asyncio
 import time
-from email.utils import formatdate
 from collections.abc import AsyncIterator
 from collections.abc import Callable
 from contextlib import asynccontextmanager
+from email.utils import formatdate
 from http import HTTPStatus
 from unittest.mock import ANY
 from unittest.mock import AsyncMock
