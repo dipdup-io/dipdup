@@ -5,16 +5,19 @@ from typing import Any
 
 import orjson as json
 import pytest
+from aiohttp import ClientResponseError
 from aiohttp import web
 from aiohttp.pytest_plugin import AiohttpClient
 from tortoise import Tortoise
 
 from dipdup.config import DipDupConfig
 from dipdup.config import HasuraConfig
+from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ReindexingAction
 from dipdup.config import ReindexingReason
 from dipdup.database import tortoise_wrapper
+from dipdup.exceptions import HasuraError
 from dipdup.exceptions import UnsupportedAPIError
 from dipdup.hasura import HasuraGateway
 from dipdup.test import create_dummy_dipdup
@@ -91,3 +94,51 @@ async def test_unsupported_versions(hasura_version: str, aiohttp_client: Aiohttp
             async with tortoise_wrapper('sqlite://:memory:', 'demo_tezos_nft_marketplace.models'):
                 await Tortoise.generate_schemas()
                 await hasura_gateway.configure()
+
+
+async def _healthcheck(statuses: list[int], hits: list[int], aiohttp_client: AiohttpClient) -> None:
+    """Run the startup healthcheck against a server answering `statuses` in order, then 200; record served statuses in `hits`"""
+
+    async def version_response(request: web.Request) -> web.Response:
+        status = statuses[len(hits)] if len(hits) < len(statuses) else 200
+        hits.append(status)
+        if status != 200:
+            return web.Response(status=status, text='404 page not found')
+        return web.json_response({'version': 'v2.40.0'})
+
+    fake_api = web.Application()
+    fake_api.router.add_get('/v1/version', version_response)
+    fake_client: TestClient[Any, Any] = await aiohttp_client(fake_api)
+
+    hasura_gateway = HasuraGateway(
+        'demo_tezos_nft_marketplace',
+        HasuraConfig(url=f'http://{fake_client.server.host}:{fake_client.server.port}'),
+        PostgresDatabaseConfig(kind='postgres', host='localhost'),
+        HttpConfig(retry_sleep=0.01, retry_multiplier=1.0),
+    )
+    async with hasura_gateway:
+        await hasura_gateway._healthcheck()
+
+
+async def test_healthcheck_waits_for_hasura(aiohttp_client: AiohttpClient) -> None:
+    # NOTE: A reverse proxy answers 404 until Hasura behind it is up
+    hits: list[int] = []
+    await _healthcheck([404, 404, 502, 503, 404], hits, aiohttp_client)
+    assert hits == [404, 404, 502, 503, 404, 200]
+
+
+async def test_healthcheck_gives_up_on_404(aiohttp_client: AiohttpClient) -> None:
+    hits: list[int] = []
+    with pytest.raises(HasuraError) as exc_info:
+        await _healthcheck([404] * 100, hits, aiohttp_client)
+    assert isinstance(exc_info.value.__cause__, ClientResponseError)
+    assert exc_info.value.__cause__.status == 404
+    assert hits == [404] * 21
+
+
+@pytest.mark.parametrize('status', [401, 403])
+async def test_healthcheck_fails_fast_on_auth_error(status: int, aiohttp_client: AiohttpClient) -> None:
+    hits: list[int] = []
+    with pytest.raises(HasuraError):
+        await _healthcheck([status] * 100, hits, aiohttp_client)
+    assert hits == [status]

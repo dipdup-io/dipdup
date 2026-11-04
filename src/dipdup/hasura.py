@@ -1,9 +1,11 @@
+import asyncio
 import hashlib
 import inspect
 import logging
 import re
 from collections.abc import Iterable
 from collections.abc import Iterator
+from http import HTTPStatus
 from typing import Any
 from typing import TextIO
 from typing import cast
@@ -259,7 +261,21 @@ class HasuraGateway(HTTPGateway):
 
     async def _healthcheck(self) -> None:
         self._logger.info('Connecting to Hasura instance')
-        version_json = await self._hasura_request('version', retry_count=20)
+        retry_count, retry_sleep = 20, self._http_config.retry_sleep
+        while True:
+            try:
+                version_json = await self._hasura_request('version', retry_count=retry_count)
+                break
+            except HasuraError as e:
+                # NOTE: A reverse proxy in front of Hasura answers 404 until the backend is up
+                cause = e.__cause__
+                not_found = isinstance(cause, ClientResponseError) and cause.status == HTTPStatus.NOT_FOUND
+                if not not_found or not retry_count:
+                    raise
+            self._logger.info('Hasura is not ready yet; waiting %s seconds', retry_sleep)
+            await asyncio.sleep(retry_sleep)
+            retry_count -= 1
+            retry_sleep *= self._http_config.retry_multiplier
         version = version_json['version']
         if version.startswith('v1'):
             raise UnsupportedAPIError(
