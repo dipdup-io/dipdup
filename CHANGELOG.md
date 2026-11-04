@@ -18,6 +18,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
+- tezos.operations: The address/code-hash prefilter no longer drops an operation only when it misses both filters; an operation is now dropped when it matches neither non-empty filter, so address-only and code-hash-only projects are actually prefiltered. Projects with an open transaction pattern or an unfiltered index keep the prefilter open.
 
 ## [8.6.2] - 2026-09-23
 
