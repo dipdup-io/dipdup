@@ -40,7 +40,8 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
         interval: CoinbaseCandleInterval,
         ticker: str,
     ) -> list[CoinbaseCandleData]:
-        candles = []
+        # NOTE: Pages share a boundary and Coinbase includes both `start` and `end`, so a candle can come twice.
+        candles: dict[datetime, CoinbaseCandleData] = {}
         for _since, _until in self._split_candle_requests(since, until, interval):
             candles_json = await self.request(
                 'get',
@@ -51,8 +52,10 @@ class CoinbaseDatasource(Datasource[CoinbaseDatasourceConfig]):
                     'granularity': interval.seconds,
                 },
             )
-            candles += [CoinbaseCandleData.from_json(c) for c in candles_json]
-        return sorted(candles, key=lambda c: c.timestamp)
+            for candle_json in candles_json:
+                candle = CoinbaseCandleData.from_json(candle_json)
+                candles[candle.timestamp] = candle
+        return sorted(candles.values(), key=lambda c: c.timestamp)
 
     def _split_candle_requests(
         self,
