@@ -38,6 +38,7 @@ from dipdup.config.starknet import StarknetIndexConfig
 from dipdup.config.substrate import SubstrateIndexConfig
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos import TezosIndexConfig
+from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
 from dipdup.context import DipDupContext
 from dipdup.context import MetadataCursor
 from dipdup.database import generate_schema
@@ -64,6 +65,7 @@ from dipdup.indexes.tezos_events.index import TezosEventsIndex
 from dipdup.indexes.tezos_head.index import TezosHeadIndex
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.indexes.tezos_operations.index import extract_operation_subgroups
+from dipdup.indexes.tezos_operations.index import has_open_transaction_pattern
 from dipdup.indexes.tezos_token_transfers.index import TezosTokenTransfersIndex
 from dipdup.models import Contract
 from dipdup.models import ContractKind
@@ -114,6 +116,10 @@ class IndexDispatcher:
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        # NOTE: Once any index needs every operation (unfiltered index or an
+        # open transaction pattern), the realtime address/code-hash prefilter
+        # stays open for all indexes.
+        self._realtime_filter_open: bool = False
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
@@ -352,8 +358,15 @@ class IndexDispatcher:
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
-        self._address_filter.update(addresses)
-        self._code_hash_filter.update(code_hashes)
+        config = index._config
+        if isinstance(config, TezosOperationsUnfilteredIndexConfig) or has_open_transaction_pattern(config.handlers):
+            self._address_filter.clear()
+            self._code_hash_filter.clear()
+            self._realtime_filter_open = True
+            return
+        if not self._realtime_filter_open:
+            self._address_filter.update(addresses)
+            self._code_hash_filter.update(code_hashes)
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
