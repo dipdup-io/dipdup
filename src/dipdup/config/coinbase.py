@@ -30,4 +30,4 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
 
     @property
     def url(self) -> str:  # type: ignore[override]
-        return 'https://api.pro.coinbase.com'
+        return 'https://api.exchange.coinbase.com'
