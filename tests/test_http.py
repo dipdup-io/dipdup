@@ -1,6 +1,8 @@
 import asyncio
 import time
+from email.utils import formatdate
 from collections.abc import AsyncIterator
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from http import HTTPStatus
 from unittest.mock import ANY
@@ -180,8 +182,15 @@ async def _serve(*responses: tuple[int, dict[str, str], str]) -> AsyncIterator[t
             yield datasource, hits
 
 
-async def test_retry_after_beyond_cap_fails_fast() -> None:
-    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': '900'}, 'slow down')
+@pytest.mark.parametrize(
+    'retry_after',
+    [
+        pytest.param(lambda: '900', id='seconds'),
+        pytest.param(lambda: formatdate(time.time() + 900, usegmt=True), id='http-date'),
+    ],
+)
+async def test_retry_after_beyond_cap_fails_fast(retry_after: Callable[[], str]) -> None:
+    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': retry_after()}, 'slow down')
     async with _serve(too_many) as (datasource, hits):
         async with asyncio.timeout(10):
             with pytest.raises(aiohttp.ClientResponseError) as exc_info:
@@ -192,8 +201,16 @@ async def test_retry_after_beyond_cap_fails_fast() -> None:
     assert hits == [HTTPStatus.TOO_MANY_REQUESTS]
 
 
-async def test_retry_after_within_cap_is_honored() -> None:
-    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': '1'}, 'slow down')
+@pytest.mark.parametrize(
+    ('retry_after', 'min_elapsed'),
+    [
+        pytest.param(lambda: '1', 0.9, id='seconds'),
+        # NOTE: HTTP-date has whole-second precision, so +3s means a 2-3s wait
+        pytest.param(lambda: formatdate(time.time() + 3, usegmt=True), 1.8, id='http-date'),
+    ],
+)
+async def test_retry_after_within_cap_is_honored(retry_after: Callable[[], str], min_elapsed: float) -> None:
+    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': retry_after()}, 'slow down')
     ok = (HTTPStatus.OK, {'Content-Type': 'application/json'}, '{"ok": true}')
     async with _serve(too_many, ok) as (datasource, hits):
         started_at = time.monotonic()
@@ -203,5 +220,27 @@ async def test_retry_after_within_cap_is_honored() -> None:
 
     assert res == {'ok': True}
     assert hits == [HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.OK]
-    # NOTE: Retry-After: 1 overrides ratelimit_sleep (0.1), randomized by ±10%
-    assert elapsed >= 0.9
+    # NOTE: Retry-After overrides ratelimit_sleep (0.1), randomized by ±10%
+    assert elapsed >= min_elapsed
+
+
+@pytest.mark.parametrize(
+    'retry_after',
+    [
+        pytest.param(lambda: formatdate(time.time() - 60, usegmt=True), id='past-http-date'),
+        pytest.param(lambda: 'soon', id='garbage'),
+    ],
+)
+async def test_retry_after_falls_back_to_ratelimit_sleep(retry_after: Callable[[], str]) -> None:
+    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': retry_after()}, 'slow down')
+    ok = (HTTPStatus.OK, {'Content-Type': 'application/json'}, '{"ok": true}')
+    async with _serve(too_many, ok) as (datasource, hits):
+        started_at = time.monotonic()
+        async with asyncio.timeout(10):
+            res = await datasource.get('/endpoint')
+        elapsed = time.monotonic() - started_at
+
+    assert res == {'ok': True}
+    assert hits == [HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.OK]
+    # NOTE: ratelimit_sleep is 0.1
+    assert elapsed < 0.5
