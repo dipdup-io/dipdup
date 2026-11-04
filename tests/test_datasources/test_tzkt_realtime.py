@@ -12,6 +12,8 @@ from typing import Any
 
 import orjson as json
 import pytest
+from aiohttp import ClientConnectorError
+from aiohttp import ClientError
 from aiohttp import WSMsgType
 from aiohttp import web
 
@@ -283,7 +285,7 @@ async def test_realtime_survives_connection_refused() -> None:
             assert server.connections
 
 
-async def test_rejected_subscription_fails_subscribe() -> None:
+async def test_rejected_subscription_fails_realtime() -> None:
     async with fake_tzkt() as (server, tzkt):
 
         async def invocation_hook(connection: Connection, invocation: dict[str, Any]) -> None:
@@ -297,16 +299,19 @@ async def test_rejected_subscription_fails_subscribe() -> None:
         tzkt.set_sync_level(None, LEVEL)
         tzkt._subscriptions.add(HeadSubscription())
         tzkt._subscriptions.add(TransactionSubscription(address='KT1PDrBE59Zmxnb8vXRgRAG1XmvTMTs5EDHU'))
-        async with realtime(tzkt) as task:
+        async with asyncio.timeout(10), realtime(tzkt) as task:
             assert await wait_until(lambda: bool(server.connections), 5)
 
+            # NOTE: Like `DipDup.run`: the first failed task stops the others, including the dispatcher
+            subscribing = asyncio.create_task(tzkt.subscribe())
             with pytest.raises(DatasourceError, match='Subscriptions limit exceeded'):
-                await subscribe(tzkt)
-            assert not task.done(), f'Realtime loop died: {task.exception()!r}'
+                await asyncio.gather(task, subscribing)
+            assert task.done(), 'Rejected subscription did not stop realtime'
+            assert isinstance(task.exception(), DatasourceError)
 
-            # NOTE: The connection is still alive and delivers messages
-            await server.connections[-1].push('head', LEVEL + 1, {})
-            assert await wait_until(lambda: tzkt.get_channel_level(TezosTzktMessageType.head) == LEVEL + 1, 5)
+            subscribing.cancel()
+            with suppress(asyncio.CancelledError):
+                await subscribing
 
 
 async def test_late_completion_after_cancelled_subscribe() -> None:
@@ -408,3 +413,57 @@ async def test_sync_level_kept_on_disconnect() -> None:
         tzkt.set_sync_level(transactions, LEVEL + 2)
         await tzkt._on_message(TezosTzktMessageType.operation, [{'type': 1, 'state': LEVEL + 2, 'data': []}])
         assert tzkt.get_channel_level(TezosTzktMessageType.operation) == LEVEL + 2
+
+
+def tzkt_head(level: int) -> dict[str, Any]:
+    quotes = {f'quote{currency}': 1.0 for currency in ('Btc', 'Eur', 'Usd', 'Cny', 'Jpy', 'Krw', 'Eth', 'Gbp')}
+    return {
+        'chain': 'mainnet',
+        'chainId': 'NetXdQprcVkpaWU',
+        'cycle': 1,
+        'level': level,
+        'hash': 'B' * 51,
+        'protocol': 'P' * 51,
+        'nextProtocol': 'P' * 51,
+        'timestamp': '2026-01-01T00:00:00Z',
+        'votingEpoch': 1,
+        'votingPeriod': 1,
+        'knownLevel': level,
+        'lastSync': '2026-01-01T00:00:00Z',
+        'synced': True,
+        'quoteLevel': level,
+        **quotes,
+    }
+
+
+@pytest.mark.parametrize(
+    'error',
+    [OSError('database is gone'), ClientError('request failed'), ValueError('bug in handler')],
+    ids=['os', 'aiohttp', 'other'],
+)
+async def test_callback_error_is_not_a_connection_error(error: Exception) -> None:
+    # NOTE: An error from indexer code must stop the datasource as is, not be retried as a network failure
+    async with fake_tzkt(retry_count=3) as (server, tzkt):
+
+        async def on_head(*args: Any) -> None:
+            raise error
+
+        tzkt.call_on_head(on_head)
+        tzkt._subscriptions.add(HeadSubscription())
+        async with asyncio.timeout(10), realtime(tzkt) as task:
+            await resubscribe(tzkt)
+            await server.connections[-1].push('head', LEVEL + 1, tzkt_head(LEVEL + 1))
+
+            await asyncio.wait({task}, timeout=2)
+            assert task.done(), f'Realtime loop is still running after {len(server.connections)} connections'
+            assert task.exception() is error
+            assert len(server.connections) == 1
+
+
+async def test_realtime_failure_is_chained_to_connection_error() -> None:
+    async with fake_tzkt(retry_count=2) as (server, tzkt):
+        await server.go_down()
+        async with asyncio.timeout(10):
+            with pytest.raises(DatasourceError, match='Websocket connection failed') as exc_info:
+                await tzkt.run()
+        assert isinstance(exc_info.value.__cause__, ClientConnectorError)

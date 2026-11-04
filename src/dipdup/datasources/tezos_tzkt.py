@@ -1106,9 +1106,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             if request_done.done():
                 return
             if message.error:
-                error = DatasourceError(f'Failed to subscribe to {subscription}: {message.error}', self.name)
-                request_done.set_exception(error)
-                return
+                await self._on_error(message)
             level = cast('int', message.result)
             self._subscriptions.set_sync_level(subscription, level)
             request_done.set_result(None)
@@ -1209,10 +1207,6 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             if not request_done.done():
                 request_done.set_result(None)
 
-    async def _on_error(self, message: CompletionMessage) -> None:
-        # NOTE: Every invocation is sent with a callback that handles its errors; see `_subscribe`
-        return
-
     def _get_ws_client(self) -> WebsocketTransport:
         return self._get_signalr_client()  # type: ignore[return-value]
 
@@ -1233,16 +1227,19 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             retry_count=1,
         )
 
-        self._signalr_client.on_open(self._on_connected)
-        self._signalr_client.on_close(self._on_disconnected)
-        self._signalr_client.on_error(self._on_error)
+        self._signalr_client.on_open(self._ws_callback(self._on_connected))
+        self._signalr_client.on_close(self._ws_callback(self._on_disconnected))
+        self._signalr_client.on_error(self._ws_callback(self._on_error))
 
-        self._signalr_client.on('operations', partial(self._on_message, TezosTzktMessageType.operation))
-        self._signalr_client.on('transfers', partial(self._on_message, TezosTzktMessageType.token_transfer))
-        self._signalr_client.on('balances', partial(self._on_message, TezosTzktMessageType.token_balance))
-        self._signalr_client.on('bigmaps', partial(self._on_message, TezosTzktMessageType.big_map))
-        self._signalr_client.on('head', partial(self._on_message, TezosTzktMessageType.head))
-        self._signalr_client.on('events', partial(self._on_message, TezosTzktMessageType.event))
+        for target, type_ in (
+            ('operations', TezosTzktMessageType.operation),
+            ('transfers', TezosTzktMessageType.token_transfer),
+            ('balances', TezosTzktMessageType.token_balance),
+            ('bigmaps', TezosTzktMessageType.big_map),
+            ('head', TezosTzktMessageType.head),
+            ('events', TezosTzktMessageType.event),
+        ):
+            self._signalr_client.on(target, self._ws_callback(partial(self._on_message, type_)))
 
         return self._signalr_client
 
@@ -1253,7 +1250,9 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         on_invocation: Callable[[CompletionMessage], Awaitable[None]] | None = None,
     ) -> None:
         client = self._get_signalr_client()
-        await client.send(method, arguments, on_invocation)  # type: ignore[arg-type]
+        if on_invocation:
+            on_invocation = self._ws_callback(on_invocation)
+        await client.send(method, arguments, on_invocation)
 
     async def _on_message(self, type_: TezosTzktMessageType, message: list[dict[str, Any]]) -> None:  # type: ignore[override]
         """Parse message received from Websocket, ensure it's correct in the current context and yield data."""

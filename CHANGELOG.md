@@ -12,14 +12,17 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
-- datasources: `http.retry_count` limits consecutive realtime connection failures instead of failures over the whole lifetime of the process; a connection lost before all subscriptions are confirmed counts as failed.
 - datasources: A realtime connection is reconnected after a failed negotiation, such as an expired connection id or a refused connection, instead of crashing the indexer once pysignalr's own retry budget is spent.
+- subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
-- tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
 - tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
-- tezos.tzkt: A subscription rejected by TzKT, e.g. with `Subscriptions limit exceeded`, fails with a `DatasourceError` naming the subscription instead of breaking the realtime connection.
-- tezos.tzkt: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
-- tezos.tzkt: The realtime connection uses `http.connection_timeout` instead of a hardcoded 30 seconds.
+- tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
+
+### Changed
+
+- datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
+- datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process; a connection lost before all subscriptions are confirmed counts as failed.
+- tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 
 ## [8.6.2] - 2026-09-23
 

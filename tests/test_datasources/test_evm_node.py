@@ -3,11 +3,16 @@ from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import AsyncMock
 
+import pytest
+from aiohttp import web
+
+from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources.evm_node import NODE_LEVEL_TIMEOUT
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeHeadData
+from dipdup.pysignalr import Message
 from dipdup.subscriptions.evm_node import EvmNodeHeadSubscription
 
 if TYPE_CHECKING:
@@ -144,3 +149,49 @@ async def test_head_announced_again_during_emit_is_ignored() -> None:
     assert recorder.rollbacks == []
     assert dict(datasource._level_data) == {}
     datasource.get_block_by_level.assert_awaited_once_with(block_number=42, full_transactions=True)  # type: ignore[attr-defined]
+
+
+async def test_callback_error_is_not_a_connection_error() -> None:
+    # NOTE: An error raised while handling a message must stop the datasource as is, not trigger a reconnect
+    error = OSError('database is gone')
+    connections = 0
+
+    async def ws_handler(request: web.Request) -> web.WebSocketResponse:
+        nonlocal connections
+        connections += 1
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
+        await ws.send_json({'jsonrpc': '2.0', 'method': 'eth_subscription', 'params': {}})
+        async for _ in ws:
+            pass
+        return ws
+
+    app = web.Application()
+    app.router.add_get('/', ws_handler)
+    runner = web.AppRunner(app, handle_signals=False, shutdown_timeout=0.1)
+    await runner.setup()
+    site = web.TCPSite(runner, '127.0.0.1', 0)
+    await site.start()
+    host, port = runner.addresses[0]
+
+    config = EvmNodeDatasourceConfig(
+        kind='evm.node',
+        url=f'http://{host}:{port}',
+        ws_url=f'ws://{host}:{port}',
+        http=HttpConfig(retry_count=3, retry_sleep=0.01, retry_multiplier=1, connection_timeout=1),
+    )
+    config._name = 'node'
+    datasource = EvmNodeDatasource(config)
+
+    async def on_message(message: Message) -> None:
+        raise error
+
+    datasource._on_message = on_message  # type: ignore[method-assign]
+    try:
+        async with asyncio.timeout(10):
+            with pytest.raises(OSError) as exc_info:
+                await datasource._ws_loop()
+        assert exc_info.value is error
+        assert connections == 1
+    finally:
+        await runner.cleanup()
