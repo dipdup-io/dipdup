@@ -106,6 +106,25 @@ def code_hash_filter(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> set[
     return code_hashes
 
 
+def has_open_transaction_pattern(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> bool:
+    """True if any transaction pattern matches regardless of address or code hash.
+
+    Such a pattern (neither `source` nor `destination` contributes an address
+    or a code hash) must keep the address/code-hash prefilter open, otherwise
+    operations it should match would be dropped before matching.
+    """
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, TransactionPatternConfig):
+                continue
+            for contract in (pattern_config.source, pattern_config.destination):
+                if contract is not None and (contract.address or contract.resolved_code_hash):
+                    break
+            else:
+                return True
+    return False
+
+
 def extract_operation_subgroups(
     operations: Iterable[TezosOperationData],
     addresses: set[str],
@@ -125,9 +144,9 @@ def extract_operation_subgroups(
                 filtered += 1
                 continue
 
-            wrong_address = addresses and not {op.sender_address, op.target_address} & addresses
-            wrong_code_hash = code_hashes and not {op.sender_code_hash, op.target_code_hash} & code_hashes
-            if wrong_address and wrong_code_hash:
+            matches_address = bool({op.sender_address, op.target_address} & addresses)
+            matches_code_hash = bool({op.sender_code_hash, op.target_code_hash} & code_hashes)
+            if (addresses or code_hashes) and not (matches_address or matches_code_hash):
                 filtered += 1
                 continue
 
@@ -178,11 +197,16 @@ class TezosOperationsIndex(
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
             return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
-        for code_hash in code_hash_filter(self._config.handlers):
-            self._code_hash_filter.add(code_hash)
-
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)
-        self._address_filter = address_filter(self._config.handlers)
+        if has_open_transaction_pattern(self._config.handlers):
+            # NOTE: An open pattern matches any address/code hash, so this
+            # index must not narrow the prefilter for itself or, via the
+            # realtime union filter, for any other index.
+            self._address_filter = set()
+            self._code_hash_filter = set()
+        else:
+            self._address_filter = address_filter(self._config.handlers)
+            self._code_hash_filter = code_hash_filter(self._config.handlers)
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
