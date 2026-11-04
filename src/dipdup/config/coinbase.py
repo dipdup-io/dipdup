@@ -15,9 +15,9 @@ class CoinbaseDatasourceConfig(DatasourceConfig):
     """Coinbase datasource config
 
     :param kind: always 'coinbase'
-    :param api_key: API key
-    :param secret_key: API secret key
-    :param passphrase: API passphrase
+    :param api_key: Not used; the datasource calls only public endpoints
+    :param secret_key: Not used; the datasource calls only public endpoints
+    :param passphrase: Not used; the datasource calls only public endpoints
     :param http: HTTP client configuration
     """
 
