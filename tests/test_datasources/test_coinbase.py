@@ -2,9 +2,12 @@ from datetime import UTC
 from datetime import datetime
 from pathlib import Path
 
+import pytest
+
 from dipdup.config import HttpConfig
 from dipdup.config.coinbase import CoinbaseDatasourceConfig
 from dipdup.datasources.coinbase import CoinbaseDatasource
+from dipdup.exceptions import UnsupportedFeatureError
 from dipdup.models.coinbase import CoinbaseCandleInterval
 
 
@@ -61,3 +64,17 @@ async def test_coinbase_candles_multiple_pages() -> None:
     assert len(candles) == 15 * 24 + 1
     assert timestamps[0] == since
     assert timestamps[-1] == until
+
+
+async def test_coinbase_oracle_prices_retired() -> None:
+    config = CoinbaseDatasourceConfig(kind='coinbase')
+    config._name = 'coinbase'
+    coinbase = CoinbaseDatasource(config)
+
+    async def no_request(*args: object, **kwargs: object) -> None:
+        raise AssertionError('get_oracle_prices must not reach the network')
+
+    coinbase.request = no_request  # type: ignore[method-assign]
+
+    with pytest.raises(UnsupportedFeatureError, match='Price Oracle API'):
+        await coinbase.get_oracle_prices()
