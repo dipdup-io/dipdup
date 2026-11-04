@@ -205,6 +205,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
         while self._ws_failures < self._http_config.retry_count:
             self._ws_failures += 1
+            self._ws_callback_error = None
             try:
                 await self._get_ws_client().run()
             except WEBSOCKET_CONNECTION_ERRORS as e:

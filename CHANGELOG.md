@@ -12,10 +12,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
-- datasources: A realtime connection is reconnected after a failed negotiation, such as an expired connection id or a refused connection, instead of crashing the indexer once pysignalr's own retry budget is spent.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
 - tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
+- tezos.tzkt: A realtime connection is reconnected after a failed negotiation instead of crashing the indexer: a refused connection crashed it at once, an expired connection id after about ten drops.
 - tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
 
 ### Changed
