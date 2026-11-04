@@ -1224,8 +1224,8 @@
         },
         "url": {
           "$ref": "#/$defs/Url",
-          "default": "https://ipfs.io/ipfs",
-          "description": "IPFS node URL, e.g. https://ipfs.io/ipfs/",
+          "default": "https://ipfs.filebase.io/ipfs",
+          "description": "IPFS gateway URL; the default public gateway (https://ipfs.filebase.io/ipfs) is for testing and light usage only",
           "title": "url"
         }
       },
