@@ -241,8 +241,6 @@ def answers_from_terminal(package: str | None = None) -> Answers:
         value=answers['email'],
     )
 
-    big_yellow_echo('Now choose versions of software you want to use.')
-
     _, answers['postgres_image'] = prompt_anyof(
         question='Choose PostgreSQL version. Try TimescaleDB when working with time series.',
         options=(
