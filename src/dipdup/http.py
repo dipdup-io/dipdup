@@ -35,6 +35,9 @@ safe_exceptions = (
     aiohttp.ClientPayloadError,
 )
 
+# NOTE: Longest `Retry-After` worth waiting for (or `ratelimit_sleep`, if larger)
+RETRY_AFTER_MAX = 120.0
+
 
 class HTTPGateway(AbstractAsyncContextManager[None]):
     """Base class for datasources which connect to remote HTTP endpoints"""
@@ -178,6 +181,15 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                         # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
                             ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))  # type: ignore[index]
+                        # NOTE: Retrying earlier than the server asked is pointless; fail now instead of hanging
+                        retry_after_max = max(RETRY_AFTER_MAX, self._config.ratelimit_sleep)
+                        if ratelimit_sleep > retry_after_max:
+                            self._logger.error(
+                                'Server asked to retry in %s seconds, more than %s allowed; giving up',
+                                ratelimit_sleep,
+                                retry_after_max,
+                            )
+                            retryable = False
                         # randomize to avoid thundering herd
                         ratelimit_sleep *= 1 + (random() - 0.5) / 5
                 else:

@@ -1,3 +1,7 @@
+import asyncio
+import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from http import HTTPStatus
 from unittest.mock import ANY
 from unittest.mock import AsyncMock
@@ -6,6 +10,8 @@ from unittest.mock import patch
 
 import aiohttp
 import pytest
+from aiohttp import web
+from aiohttp.test_utils import TestServer
 from multidict import CIMultiDict
 from multidict import CIMultiDictProxy
 from yarl import URL
@@ -149,3 +155,53 @@ async def test_retry_skips_client_errors(status: int, expect_retry: bool) -> Non
         # NOTE: Definitive client errors are raised after a single request
         assert request_mock.await_count == 1
         assert sleeps == []
+
+
+@asynccontextmanager
+async def _serve(*responses: tuple[int, dict[str, str], str]) -> AsyncIterator[tuple[HttpDatasource, list[int]]]:
+    """Answer requests with `responses` in order (the last one repeats); yield a datasource pointed at the server"""
+    hits: list[int] = []
+
+    async def _handler(request: web.Request) -> web.Response:
+        status, headers, text = responses[min(len(hits), len(responses) - 1)]
+        hits.append(status)
+        return web.Response(status=status, headers=headers, text=text)
+
+    app = web.Application()
+    app.router.add_get('/endpoint', _handler)
+    async with TestServer(app) as server:
+        config = HttpDatasourceConfig(
+            url=str(server.make_url('')),
+            http=HttpConfig(replay=False, retry_count=10, retry_sleep=0.1, ratelimit_sleep=0.1),
+        )
+        config._name = 'test'
+        datasource = HttpDatasource(config)
+        async with datasource:
+            yield datasource, hits
+
+
+async def test_retry_after_beyond_cap_fails_fast() -> None:
+    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': '900'}, 'slow down')
+    async with _serve(too_many) as (datasource, hits):
+        async with asyncio.timeout(10):
+            with pytest.raises(aiohttp.ClientResponseError) as exc_info:
+                await datasource.get('/endpoint')
+
+    assert exc_info.value.status == HTTPStatus.TOO_MANY_REQUESTS
+    # NOTE: The server asked for 15 minutes; waiting for it would only burn retries
+    assert hits == [HTTPStatus.TOO_MANY_REQUESTS]
+
+
+async def test_retry_after_within_cap_is_honored() -> None:
+    too_many = (HTTPStatus.TOO_MANY_REQUESTS, {'Retry-After': '1'}, 'slow down')
+    ok = (HTTPStatus.OK, {'Content-Type': 'application/json'}, '{"ok": true}')
+    async with _serve(too_many, ok) as (datasource, hits):
+        started_at = time.monotonic()
+        async with asyncio.timeout(10):
+            res = await datasource.get('/endpoint')
+        elapsed = time.monotonic() - started_at
+
+    assert res == {'ok': True}
+    assert hits == [HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.OK]
+    # NOTE: Retry-After: 1 overrides ratelimit_sleep (0.1), randomized by ±10%
+    assert elapsed >= 0.9
