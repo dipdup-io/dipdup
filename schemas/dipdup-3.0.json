@@ -127,7 +127,7 @@
             }
           ],
           "default": null,
-          "description": "API key",
+          "description": "Not used; the datasource calls only public endpoints",
           "title": "api_key"
         },
         "http": {
@@ -160,7 +160,7 @@
             }
           ],
           "default": null,
-          "description": "API passphrase",
+          "description": "Not used; the datasource calls only public endpoints",
           "title": "passphrase"
         },
         "secret_key": {
@@ -173,7 +173,7 @@
             }
           ],
           "default": null,
-          "description": "API secret key",
+          "description": "Not used; the datasource calls only public endpoints",
           "title": "secret_key"
         }
       },
@@ -1224,8 +1224,8 @@
         },
         "url": {
           "$ref": "#/$defs/Url",
-          "default": "https://ipfs.io/ipfs",
-          "description": "IPFS node URL, e.g. https://ipfs.io/ipfs/",
+          "default": "https://ipfs.filebase.io/ipfs",
+          "description": "IPFS gateway URL; the default public gateway (https://ipfs.filebase.io/ipfs) is for testing and light usage only",
           "title": "url"
         }
       },
