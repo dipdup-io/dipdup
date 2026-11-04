@@ -34,3 +34,30 @@ async def test_coinbase_candles() -> None:
     for candle in candles:
         assert candle.low <= min(candle.open, candle.close)
         assert candle.high >= max(candle.open, candle.close)
+
+
+async def test_coinbase_candles_multiple_pages() -> None:
+    config = CoinbaseDatasourceConfig(
+        kind='coinbase',
+        http=HttpConfig(
+            replay_path=str(Path(__file__).parent.parent / 'replays'),
+        ),
+    )
+    config._name = 'coinbase'
+    coinbase = CoinbaseDatasource(config)
+    since = datetime(2026, 9, 1, tzinfo=UTC)
+    until = datetime(2026, 9, 16, tzinfo=UTC)
+
+    async with coinbase:
+        candles = await coinbase.get_candles(
+            since=since,
+            until=until,
+            interval=CoinbaseCandleInterval.ONE_HOUR,
+            ticker='BTC-USD',
+        )
+
+    timestamps = [candle.timestamp for candle in candles]
+    assert len(set(timestamps)) == len(timestamps)
+    assert len(candles) == 15 * 24 + 1
+    assert timestamps[0] == since
+    assert timestamps[-1] == until
