@@ -234,6 +234,8 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
             self._reset_ws_client()
             await self._on_disconnected()
 
+            if self._ws_failures >= self._http_config.retry_count:
+                break
             if not self._ws_failures:
                 retry_sleep = self._http_config.retry_sleep
             await asyncio.sleep(retry_sleep)

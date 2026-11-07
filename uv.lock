@@ -546,6 +546,7 @@ dependencies = [
     { name = "tortoise-orm" },
     { name = "uvloop" },
     { name = "web3" },
+    { name = "websockets" },
 ]
 
 [package.optional-dependencies]
@@ -613,6 +614,7 @@ requires-dist = [
     { name = "tortoise-orm", specifier = "==0.25.3" },
     { name = "uvloop", specifier = "~=0.20" },
     { name = "web3", specifier = "~=7.2" },
+    { name = "websockets", specifier = ">=15.0.1,<18" },
 ]
 provides-extras = ["migrations"]
 

@@ -15,7 +15,6 @@ from typing import Any
 from typing import NamedTuple
 from typing import cast
 
-from pysignalr.client import SignalRClient
 from pysignalr.messages import CompletionMessage
 
 from dipdup.config import DipDupConfig
@@ -41,6 +40,7 @@ from dipdup.models.tezos import TezosOperationData
 from dipdup.models.tezos import TezosQuoteData
 from dipdup.models.tezos import TezosTokenBalanceData
 from dipdup.models.tezos import TezosTokenTransferData
+from dipdup.pysignalr import SignalRClient
 from dipdup.pysignalr import WebsocketTransport
 from dipdup.subscriptions.tezos_tzkt import HeadSubscription
 from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType

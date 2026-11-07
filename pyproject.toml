@@ -84,6 +84,7 @@ dependencies = [
     "tortoise-orm==0.25.3", # pinned
     "uvloop~=0.20",
     "web3~=7.2",
+    "websockets>=15.0.1,<18",
 ]
 
 [project.optional-dependencies]

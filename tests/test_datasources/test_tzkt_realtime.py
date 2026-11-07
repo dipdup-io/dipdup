@@ -247,6 +247,17 @@ async def test_realtime_fails_when_every_connection_drops_before_subscribing() -
                 await flapper
 
 
+async def test_realtime_fails_when_tzkt_goes_down_after_subscribing() -> None:
+    # NOTE: pysignalr reconnects by itself once negotiated; every attempt must count towards `retry_count`
+    async with fake_tzkt(retry_count=3) as (server, tzkt):
+        tzkt._subscriptions.add(HeadSubscription())
+        async with asyncio.timeout(10), realtime(tzkt) as task:
+            await resubscribe(tzkt)
+            await server.go_down()
+            with pytest.raises(DatasourceError, match='Websocket connection failed'):
+                await task
+
+
 async def test_realtime_survives_long_negotiation_outage() -> None:
     async with fake_tzkt() as (server, tzkt):
         failed = 0
