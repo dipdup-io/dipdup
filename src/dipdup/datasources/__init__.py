@@ -11,6 +11,7 @@ from uuid import uuid4
 from aiohttp import ClientError
 from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
+from websockets.exceptions import WebSocketException
 
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
@@ -40,7 +41,7 @@ RollbackCallback = Callable[['IndexDatasource[Any]', MessageType, int, int], Awa
 AbiJson = dict[str, Any] | list[Any]
 
 # NOTE: Failures to establish or keep a realtime connection; anything else raised by the transport is a bug
-WEBSOCKET_CONNECTION_ERRORS = (HubError, ClientError, OSError)
+WEBSOCKET_CONNECTION_ERRORS = (HubError, ClientError, OSError, WebSocketException)
 
 
 class Datasource(HTTPGateway, Generic[DatasourceConfigT]):
@@ -198,6 +199,10 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         self._ws_client = None
 
     async def _ws_loop(self) -> None:
+        """Keep the realtime connection; fail after `http.retry_count` failed connections in a row
+
+        A connection is failed unless all subscriptions were confirmed before it was lost.
+        """
         self._logger.info('Establishing realtime connection')
         retry_sleep = self._http_config.retry_sleep
         self._ws_failures = 0

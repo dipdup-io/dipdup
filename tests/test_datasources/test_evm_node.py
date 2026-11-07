@@ -1,4 +1,9 @@
 import asyncio
+import socket
+from collections.abc import AsyncIterator
+from collections.abc import Awaitable
+from collections.abc import Callable
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 from typing import Any
 from unittest.mock import AsyncMock
@@ -10,6 +15,7 @@ from dipdup.config import HttpConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.datasources.evm_node import NODE_LEVEL_TIMEOUT
 from dipdup.datasources.evm_node import EvmNodeDatasource
+from dipdup.exceptions import DatasourceError
 from dipdup.models import MessageType
 from dipdup.models.evm_node import EvmNodeHeadData
 from dipdup.pysignalr import Message
@@ -151,19 +157,18 @@ async def test_head_announced_again_during_emit_is_ignored() -> None:
     datasource.get_block_by_level.assert_awaited_once_with(block_number=42, full_transactions=True)  # type: ignore[attr-defined]
 
 
-async def test_callback_error_is_not_a_connection_error() -> None:
-    # NOTE: An error raised while handling a message must stop the datasource as is, not trigger a reconnect
-    error = OSError('database is gone')
-    connections = 0
+@asynccontextmanager
+async def _node_server(
+    on_connect: Callable[[web.WebSocketResponse], Awaitable[None]],
+) -> AsyncIterator[tuple[EvmNodeDatasource, list[int]]]:
+    """Node datasource on a local websocket server; yields it with a counter of accepted connections"""
+    connections: list[int] = []
 
     async def ws_handler(request: web.Request) -> web.WebSocketResponse:
-        nonlocal connections
-        connections += 1
+        connections.append(1)
         ws = web.WebSocketResponse()
         await ws.prepare(request)
-        await ws.send_json({'jsonrpc': '2.0', 'method': 'eth_subscription', 'params': {}})
-        async for _ in ws:
-            pass
+        await on_connect(ws)
         return ws
 
     app = web.Application()
@@ -173,25 +178,63 @@ async def test_callback_error_is_not_a_connection_error() -> None:
     site = web.TCPSite(runner, '127.0.0.1', 0)
     await site.start()
     host, port = runner.addresses[0]
+    try:
+        yield _ws_datasource(f'ws://{host}:{port}'), connections
+    finally:
+        await runner.cleanup()
 
+
+def _ws_datasource(ws_url: str) -> EvmNodeDatasource:
     config = EvmNodeDatasourceConfig(
         kind='evm.node',
-        url=f'http://{host}:{port}',
-        ws_url=f'ws://{host}:{port}',
+        url='http://localhost',
+        ws_url=ws_url,
         http=HttpConfig(retry_count=3, retry_sleep=0.01, retry_multiplier=1, connection_timeout=1),
     )
     config._name = 'node'
     datasource = EvmNodeDatasource(config)
+    datasource._subscriptions.add(PLAIN_HEAD)
+    return datasource
+
+
+async def test_callback_error_is_not_a_connection_error() -> None:
+    # NOTE: An error raised while handling a message must stop the datasource as is, not trigger a reconnect
+    error = OSError('database is gone')
+
+    async def on_connect(ws: web.WebSocketResponse) -> None:
+        await ws.send_json({'jsonrpc': '2.0', 'method': 'eth_subscription', 'params': {}})
+        async for _ in ws:
+            pass
 
     async def on_message(message: Message) -> None:
         raise error
 
-    datasource._on_message = on_message  # type: ignore[method-assign]
-    try:
-        async with asyncio.timeout(10):
-            with pytest.raises(OSError) as exc_info:
-                await datasource._ws_loop()
-        assert exc_info.value is error
-        assert connections == 1
-    finally:
-        await runner.cleanup()
+    async with _node_server(on_connect) as (datasource, connections), asyncio.timeout(10):
+        datasource._on_message = on_message  # type: ignore[method-assign]
+        with pytest.raises(OSError) as exc_info:
+            await datasource._ws_loop()
+    assert exc_info.value is error
+    assert len(connections) == 1
+
+
+async def test_dropped_connection_fails_after_retry_count() -> None:
+    # NOTE: A connection lost before its subscriptions are confirmed is a failed attempt
+    async def on_connect(ws: web.WebSocketResponse) -> None:
+        await ws.close()
+
+    async with _node_server(on_connect) as (datasource, connections), asyncio.timeout(10):
+        with pytest.raises(DatasourceError):
+            await datasource._ws_loop()
+    assert len(connections) == 3
+
+
+async def test_refused_connection_fails_after_retry_count() -> None:
+    with socket.socket() as sock:
+        sock.bind(('127.0.0.1', 0))
+        _, port = sock.getsockname()
+    datasource = _ws_datasource(f'ws://127.0.0.1:{port}')
+
+    async with asyncio.timeout(10):
+        with pytest.raises(DatasourceError) as exc_info:
+            await datasource._ws_loop()
+    assert isinstance(exc_info.value.__cause__, OSError)
