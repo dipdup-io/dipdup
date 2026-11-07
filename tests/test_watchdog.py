@@ -215,6 +215,7 @@ async def node_feed() -> AsyncIterator[RealtimeFeed]:
     config = EvmNodeDatasourceConfig(kind='evm.node', url='http://localhost', ws_url='ws://localhost')
     config._name = 'node'
     node = EvmNodeDatasource(config)
+    node._subscriptions.add(EvmNodeHeadSubscription())
     node._subscription_ids['0x1'] = EvmNodeHeadSubscription()
     transport = node._get_ws_client()
 
@@ -450,3 +451,40 @@ async def test_sequential_callbacks_leave_nothing_watched(ctx: DipDupContext) ->
 def test_importable_first() -> None:
     """`dipdup.watchdog` must not depend on another `dipdup` module having been imported before it."""
     subprocess.run([sys.executable, '-c', 'import dipdup.watchdog'], check=True, capture_output=True, timeout=60)
+
+
+async def test_exception_has_stack_after_warning_on_same_task() -> None:
+    """A warning that already printed the stack must not take it away from the exception that stops the indexer."""
+    config = {
+        WatchdogTrigger.callback: WatchdogConfig(action=WatchdogAction.warning, timeout=1),
+        WatchdogTrigger.transaction: WatchdogConfig(action=WatchdogAction.exception, timeout=1),
+    }
+
+    async def stuck() -> None:
+        with (
+            watchdog.watch(WatchdogTrigger.transaction, 'index `i` at level 1'),
+            watchdog.watch(WatchdogTrigger.callback, 'handler `h` of index `i`'),
+        ):
+            await asyncio.Event().wait()
+
+    async with run_watchdog(config) as task:
+        stuck_task = asyncio.create_task(stuck())
+        with pytest.raises(WatchdogTimeoutError) as e:
+            await asyncio.wait_for(asyncio.shield(task), 5)
+        stuck_task.cancel()
+
+    assert 'is awaiting' in e.value.msg, e.value.msg
+
+
+async def test_websocket_without_subscriptions_is_not_watched(caplog: pytest.LogCaptureFixture) -> None:
+    """A `realtime: true` datasource no index uses has nothing to receive, so its silence is not an anomaly."""
+    config = {WatchdogTrigger.websocket: WatchdogConfig(action=WatchdogAction.warning, timeout=1)}
+    datasource_config = EvmNodeDatasourceConfig(kind='evm.node', url='http://localhost', ws_url='ws://localhost')
+    datasource_config._name = 'node'
+    node = EvmNodeDatasource(datasource_config)
+
+    async with run_watchdog(config):
+        await node._on_connected()
+        await asyncio.sleep(1.5)
+
+    assert not watchdog_messages(caplog, WatchdogTrigger.websocket)

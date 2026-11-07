@@ -179,7 +179,9 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     def _heartbeat(self) -> None:
         """Mark the realtime connection as delivering messages"""
-        dipdup.watchdog.watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
+        # NOTE: Without subscriptions there is nothing to receive, e.g. `realtime: true` datasource no index uses
+        if not self._subscriptions.empty:
+            dipdup.watchdog.watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
 
     async def _on_ws_message(self, message: Message) -> None:
         self._heartbeat()

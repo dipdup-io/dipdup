@@ -121,8 +121,8 @@ class WatchdogManager:
         if action not in (WatchdogAction.warning, WatchdogAction.exception):
             raise NotImplementedError(f'Unsupported watchdog action: {action}')
 
-        # NOTE: Show where the task is stuck once per activity, not on every check
-        if oldest.task and not oldest.reported:
+        # NOTE: Show where the task is stuck once per activity, not on every check; an exception is always the last report
+        if oldest.task and (action == WatchdogAction.exception or not oldest.reported):
             msg += f'\n`{oldest.task.get_name()}` is awaiting:\n{format_task_stack(oldest.task)}'
             for watchdog in self._watchdogs.values():
                 for activity in watchdog.activities():
