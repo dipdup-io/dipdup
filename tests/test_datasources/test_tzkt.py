@@ -251,13 +251,16 @@ async def test_signalr_retries_reset_after_connection() -> None:
         tzkt._http_config.retry_sleep = 0
         retry_count = tzkt._http_config.retry_count
         calls = 0
+        subscription = HeadSubscription()
+        tzkt._subscriptions.add(subscription)
 
-        # NOTE: Every run connects and then drops until the server goes away for good
+        # NOTE: Every run connects, confirms the subscription and then drops until the server goes away for good
         async def run() -> None:
             nonlocal calls
             calls += 1
             if calls <= retry_count * 2:
                 await tzkt._on_connected()
+                tzkt.set_sync_level(subscription, calls)
             raise pysignalr.exceptions.ConnectionError(502)
 
         with patch.object(SignalRClient, 'run', AsyncMock(side_effect=run)), pytest.raises(DatasourceError):

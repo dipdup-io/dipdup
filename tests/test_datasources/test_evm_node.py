@@ -160,6 +160,7 @@ async def test_head_announced_again_during_emit_is_ignored() -> None:
 @asynccontextmanager
 async def _node_server(
     on_connect: Callable[[web.WebSocketResponse], Awaitable[None]],
+    subscribed: bool = True,
 ) -> AsyncIterator[tuple[EvmNodeDatasource, list[int]]]:
     """Node datasource on a local websocket server; yields it with a counter of accepted connections"""
     connections: list[int] = []
@@ -179,12 +180,12 @@ async def _node_server(
     await site.start()
     host, port = runner.addresses[0]
     try:
-        yield _ws_datasource(f'ws://{host}:{port}'), connections
+        yield _ws_datasource(f'ws://{host}:{port}', subscribed), connections
     finally:
         await runner.cleanup()
 
 
-def _ws_datasource(ws_url: str) -> EvmNodeDatasource:
+def _ws_datasource(ws_url: str, subscribed: bool = True) -> EvmNodeDatasource:
     config = EvmNodeDatasourceConfig(
         kind='evm.node',
         url='http://localhost',
@@ -193,7 +194,8 @@ def _ws_datasource(ws_url: str) -> EvmNodeDatasource:
     )
     config._name = 'node'
     datasource = EvmNodeDatasource(config)
-    datasource._subscriptions.add(PLAIN_HEAD)
+    if subscribed:
+        datasource._subscriptions.add(PLAIN_HEAD)
     return datasource
 
 
@@ -217,12 +219,13 @@ async def test_callback_error_is_not_a_connection_error() -> None:
     assert len(connections) == 1
 
 
-async def test_dropped_connection_fails_after_retry_count() -> None:
-    # NOTE: A connection lost before its subscriptions are confirmed is a failed attempt
+@pytest.mark.parametrize('subscribed', [True, False])
+async def test_dropped_connection_fails_after_retry_count(subscribed: bool) -> None:
+    # NOTE: A connection lost before its subscriptions are confirmed, or without any, is a failed attempt
     async def on_connect(ws: web.WebSocketResponse) -> None:
         await ws.close()
 
-    async with _node_server(on_connect) as (datasource, connections), asyncio.timeout(10):
+    async with _node_server(on_connect, subscribed) as (datasource, connections), asyncio.timeout(10):
         with pytest.raises(DatasourceError):
             await datasource._ws_loop()
     assert len(connections) == 3

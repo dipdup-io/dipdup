@@ -152,7 +152,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
             return
         self._ws_connected = False
         # NOTE: Only consecutive failures count towards `retry_count`; confirming every subscription is a success
-        if not self._subscriptions.missing_subscriptions:
+        if self._subscriptions.confirmed:
             self._ws_failures = 0
         self._logger.info('Realtime connection lost, resetting subscriptions')
         self._subscriptions.reset()
@@ -201,7 +201,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
     async def _ws_loop(self) -> None:
         """Keep the realtime connection; fail after `http.retry_count` failed connections in a row
 
-        A connection is failed unless all subscriptions were confirmed before it was lost.
+        A connection is failed unless it had subscriptions and all of them were confirmed before it was lost.
         """
         self._logger.info('Establishing realtime connection')
         retry_sleep = self._http_config.retry_sleep
