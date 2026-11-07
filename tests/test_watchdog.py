@@ -8,6 +8,8 @@ import asyncio
 import itertools
 import json
 import logging
+import subprocess
+import sys
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
 from collections.abc import Callable
@@ -443,3 +445,8 @@ async def test_sequential_callbacks_leave_nothing_watched(ctx: DipDupContext) ->
             await ctx.fire_hook('plain')
             await ctx.fire_hook('atomic')
             assert _current.get() == ()
+
+
+def test_importable_first() -> None:
+    """`dipdup.watchdog` must not depend on another `dipdup` module having been imported before it."""
+    subprocess.run([sys.executable, '-c', 'import dipdup.watchdog'], check=True, capture_output=True, timeout=60)

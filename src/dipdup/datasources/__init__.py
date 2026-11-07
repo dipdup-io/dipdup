@@ -14,6 +14,7 @@ from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
 from websockets.exceptions import WebSocketException
 
+import dipdup.watchdog
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
@@ -33,7 +34,6 @@ from dipdup.pysignalr import WebsocketTransport
 from dipdup.subscriptions import Subscription
 from dipdup.subscriptions import SubscriptionManager
 from dipdup.utils import FormattedLogger
-from dipdup.watchdog import watchdog
 
 DatasourceConfigT = TypeVar('DatasourceConfigT', bound=DatasourceConfig)
 ContractConfigT = TypeVar('ContractConfigT', bound=StarknetContractConfig | EvmContractConfig)
@@ -169,7 +169,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         if self._subscriptions.confirmed:
             self._ws_failures = 0
         self._logger.info('Realtime connection lost, resetting subscriptions')
-        watchdog.reset(WatchdogTrigger.websocket, self._watchdog_name)
+        dipdup.watchdog.watchdog.reset(WatchdogTrigger.websocket, self._watchdog_name)
         self._subscriptions.reset()
         await self.emit_disconnected()
 
@@ -179,7 +179,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     def _heartbeat(self) -> None:
         """Mark the realtime connection as delivering messages"""
-        watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
+        dipdup.watchdog.watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
 
     async def _on_ws_message(self, message: Message) -> None:
         self._heartbeat()
