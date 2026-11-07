@@ -27,7 +27,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Changed
 
 - datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
-- datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
+- datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
 - tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 
 ## [8.6.2] - 2026-09-23
