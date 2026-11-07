@@ -3,6 +3,7 @@ import time
 from abc import abstractmethod
 from collections.abc import Awaitable
 from collections.abc import Callable
+from contextlib import suppress
 from typing import Any
 from typing import Generic
 from typing import TypeVar
@@ -130,9 +131,19 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
     def __init__(self, config: DatasourceConfigT) -> None:
         super().__init__(config)
         self._ws_client: WebsocketTransport | None = None
-        self._ws_connected = False
+        self._ws_connected_event = asyncio.Event()
         self._ws_failures = 0
         self._ws_callback_error: Exception | None = None
+
+    @property
+    def _ws_connected(self) -> bool:
+        return self._ws_connected_event.is_set()
+
+    async def _wait_ws_connected(self) -> bool:
+        """Wait for the realtime connection, which `subscribe` can outrun (e.g. with `early_realtime`)"""
+        with suppress(TimeoutError):
+            await asyncio.wait_for(self._ws_connected_event.wait(), self._http_config.connection_timeout)
+        return self._ws_connected
 
     @abstractmethod
     async def _on_message(self, message: Message) -> None: ...
@@ -142,7 +153,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
 
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
-        self._ws_connected = True
+        self._ws_connected_event.set()
         # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
@@ -150,7 +161,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         # NOTE: Called by the transport and by `_ws_loop`, as some failures bypass transport callbacks
         if not self._ws_connected:
             return
-        self._ws_connected = False
+        self._ws_connected_event.clear()
         # NOTE: Only consecutive failures count towards `retry_count`; confirming every subscription is a success
         if self._subscriptions.confirmed:
             self._ws_failures = 0

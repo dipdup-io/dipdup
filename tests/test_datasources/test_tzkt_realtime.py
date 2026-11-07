@@ -369,7 +369,8 @@ async def test_subscribe_released_when_connection_lost(close: str) -> None:
 
 
 async def test_subscribe_while_disconnected() -> None:
-    async with fake_tzkt() as (server, tzkt):
+    # NOTE: Every `subscribe` waits for the connection timeout; the outage must fit into the retry budget
+    async with fake_tzkt(retry_count=1000) as (server, tzkt):
         status: int | None = None
 
         async def negotiate_hook(request: web.Request) -> web.StreamResponse | None:
@@ -392,6 +393,16 @@ async def test_subscribe_while_disconnected() -> None:
             await resubscribe(tzkt)
             assert len(server.connections) == 2
             assert not task.done(), f'Realtime loop died: {task.exception()!r}'
+
+
+async def test_subscribe_before_connection_waits_for_it() -> None:
+    # NOTE: With `early_realtime` the dispatcher calls `subscribe` once, before the connection is up, then syncs for long
+    async with fake_tzkt() as (_, tzkt):
+        tzkt._subscriptions.add(HeadSubscription())
+        async with realtime(tzkt):
+            assert not tzkt._ws_connected
+            await subscribe(tzkt)
+            assert not tzkt._subscriptions.missing_subscriptions
 
 
 async def test_sync_level_kept_on_disconnect() -> None:

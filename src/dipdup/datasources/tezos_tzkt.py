@@ -1077,7 +1077,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
     async def subscribe(self) -> None:
         missing_subscriptions = self._subscriptions.missing_subscriptions
         # NOTE: Missing subscriptions are sent on the next call once the connection is restored
-        if not missing_subscriptions or not self._ws_connected:
+        if not missing_subscriptions or not await self._wait_ws_connected():
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
