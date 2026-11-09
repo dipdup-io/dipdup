@@ -33,7 +33,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Performance
 
-- index: Indexes that match nothing at a level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
+- index: Indexes that match nothing at a realtime level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
 
 ## [8.6.2] - 2026-09-23
 

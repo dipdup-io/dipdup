@@ -357,7 +357,7 @@ class IndexDispatcher:
         self._code_hash_filter.update(code_hashes)
 
     async def _save_idle_levels(self) -> None:
-        """Save levels that indexes reached without matching anything, in one statement."""
+        """Save realtime levels that indexes reached without matching anything, in one statement."""
         # NOTE: Runs between `process` calls, so no index moves its level meanwhile. Indexes rolled back by
         # NOTE: `ctx.rollback` have the reverted level in the database already; `process` reloads it.
         indexes = [

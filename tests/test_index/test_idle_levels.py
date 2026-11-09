@@ -1,7 +1,8 @@
-"""Levels an index reaches without matching anything are kept in memory and saved by the dispatcher in one batch."""
+"""Realtime levels an index reaches without matching anything are saved by the dispatcher in one batch."""
 
 from collections import deque
 from collections.abc import AsyncIterator
+from collections.abc import Iterator
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,7 @@ from dipdup.dipdup import DipDup
 from dipdup.index import Index
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
+from dipdup.performance import queues
 from dipdup.subscriptions.tezos_tzkt import TezosTzktMessageType
 from dipdup.test import create_dummy_dipdup
 from dipdup.test import spawn_index
@@ -33,8 +35,10 @@ async def saved_level(name: str) -> int:
 
 
 async def idle(index: Index[Any, Any, Any], *levels: int) -> None:
+    """Process realtime messages of levels that match nothing"""
     for level in levels:
-        await index._process_level_data((Item(level),), level)
+        index.push_realtime_message((Item(level),))
+    await index._process_queue()
 
 
 @pytest.fixture
@@ -110,6 +114,7 @@ async def test_restart_refetches_idle_levels(dipdup: DipDup, monkeypatch: pytest
     # NOTE: Crash before the dispatcher saved anything: the next process starts from the database
     state = await models.Index.get(name=index.name)
     assert state.level == 1002
+    queues.remove_queue(f'{index.name}:realtime')
     restarted = await dipdup._ctx._spawn_index(index.name, state=state)
     restarted.datasources[0].set_sync_level(None, 1004)
 
@@ -155,9 +160,9 @@ async def test_rollback_checks_in_memory_level(dipdup: DipDup) -> None:
 
 async def test_save_keeps_rolled_back_level(dipdup: DipDup) -> None:
     index = get_index(dipdup)
-    await idle(index, 1001, 1002, 1003)
-    await index._update_state(level=1003)
-    await idle(index, 1004)
+    await idle(index, 1001, 1002, 1003, 1004)
+    assert index.state.level == 1004
+    assert await saved_level(index.name) == 1000
 
     # NOTE: `ctx.rollback` called outside `on_index_rollback`; the index reloads the level on its next `process`
     await dipdup._ctx.rollback(index=index.name, from_level=1004, to_level=1001)
@@ -166,3 +171,34 @@ async def test_save_keeps_rolled_back_level(dipdup: DipDup) -> None:
 
     await index.process()
     assert index.state.level == 1001
+
+
+async def test_sync_saves_idle_levels(dipdup: DipDup, monkeypatch: pytest.MonkeyPatch) -> None:
+    """`_synchronize` doesn't return to the dispatcher until it's done, so it can't leave levels to it."""
+    import dipdup.indexes.tezos_operations.index as operations_index
+
+    index = get_index(dipdup)
+    index.datasources[0].set_sync_level(None, 1500)
+
+    class CrashingFetcher:
+        async def fetch_by_level(self) -> AsyncIterator[tuple[int, tuple[Item]]]:
+            for level in range(1001, 1301):
+                yield level, (Item(level),)
+            raise RuntimeError('crash in the middle of sync')
+
+    async def create_fetcher(first_level: int, sync_level: int) -> CrashingFetcher:
+        assert (first_level, sync_level) == (1001, 1500)
+        return CrashingFetcher()
+
+    def extract_operation_subgroups(operations: tuple[Item], **kwargs: Any) -> Iterator[Item]:
+        return iter(operations)
+
+    monkeypatch.setattr(index, '_create_fetcher', create_fetcher)
+    monkeypatch.setattr(operations_index, 'extract_operation_subgroups', extract_operation_subgroups)
+
+    with pytest.raises(RuntimeError, match='crash in the middle of sync'):
+        await index.process()
+
+    # NOTE: A restart resumes after the last synced level instead of fetching the whole range again
+    assert index.state.status == IndexStatus.syncing
+    assert await saved_level(index.name) == 1300

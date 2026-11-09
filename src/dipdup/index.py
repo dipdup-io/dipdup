@@ -114,12 +114,13 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
-            await self._process_level_data(message, message_level)
+            await self._process_level_data(message, message_level, realtime=True)
 
     async def _process_level_data(
         self,
         level_data: Any,
         sync_level: int,
+        realtime: bool = False,
     ) -> None:
         from dipdup.index import MatchedHandler
 
@@ -140,12 +141,15 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         metrics.handlers_matched[self.name] += total_matched
         metrics.time_in_matcher[self.name] += time.time() - started_at
 
-        # NOTE: Nothing to write at this level. The dispatcher saves levels of all idle indexes in one statement
-        # NOTE: after every loop; until then a restart resumes from an older level and refetches levels that
-        # NOTE: matched nothing.
+        # NOTE: Nothing to write at this level. In realtime, the dispatcher saves levels of all idle indexes in one
+        # NOTE: statement after every loop; until then a restart resumes from an older level and refetches levels
+        # NOTE: that matched nothing. Sync doesn't return to the dispatcher until it's done, so it saves every level.
         if not matched_handlers:
-            self.state.level = batch_level
-            self._level_unsaved = True
+            if realtime:
+                self.state.level = batch_level
+                self._level_unsaved = True
+            else:
+                await self._update_state(level=batch_level)
             metrics.objects_indexed += len(level_data)
             return
 
