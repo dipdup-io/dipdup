@@ -234,7 +234,7 @@ async def dedicated_connection(config: 'DatabaseConfigU') -> AsyncIterator[Suppo
     if isinstance(conn, TransactionalDBClient):
         raise FrameworkException(
             'SQL on a dedicated connection would not be rolled back with the current transaction; '
-            'use it from a non-atomic hook or job'
+            'call it outside one, e.g. in a non-atomic hook fired from a handler with `wait=False`'
         )
     if not isinstance(conn, AsyncpgClient):
         yield conn
