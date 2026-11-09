@@ -1088,7 +1088,7 @@
             }
           ],
           "default": null,
-          "description": "Number of retries after request failed before giving up",
+          "description": "Number of retries after request failed before giving up; for realtime, number of failed connections in a row",
           "title": "retry_count"
         },
         "retry_multiplier": {

@@ -188,7 +188,7 @@ class PostgresDatabaseConfig:
 class HttpConfig:
     """Advanced configuration of HTTP client
 
-    :param retry_count: Number of retries after request failed before giving up
+    :param retry_count: Number of retries after request failed before giving up; for realtime, number of failed connections in a row
     :param retry_sleep: Sleep time between retries
     :param retry_multiplier: Multiplier for sleep time between retries
     :param ratelimit_rate: Number of requests per period ("drops" in leaky bucket)

@@ -854,6 +854,7 @@ websockets==15.0.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:e8b56bdcdb4505c8078cb6c7157d9811a85790f2f2b3632c7d1462ab5783d215 \
     --hash=sha256:f7a866fbc1e97b5c617ee4116daaa09b722101d4a3c170c787450ba409f9736f
     # via
+    #   dipdup
     #   pysignalr
     #   starknet-py
     #   web3
