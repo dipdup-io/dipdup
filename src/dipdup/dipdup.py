@@ -163,6 +163,7 @@ class IndexDispatcher:
                 tasks.append(index.process())
 
             indexes_processed = any(await gather(*tasks))
+            await self._save_idle_levels()
             indexes_spawned = False
 
             while not self._ctx._pending_indexes.empty():
@@ -354,6 +355,25 @@ class IndexDispatcher:
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
         self._code_hash_filter.update(code_hashes)
+
+    async def _save_idle_levels(self) -> None:
+        """Save levels that indexes reached without matching anything, in one statement."""
+        # NOTE: Runs between `process` calls, so no index moves its level meanwhile. Indexes rolled back by
+        # NOTE: `ctx.rollback` have the reverted level in the database already; `process` reloads it.
+        indexes = [
+            index
+            for index in self._indexes.values()
+            if index._level_unsaved and index.name not in self._ctx._rolled_back_indexes
+        ]
+        if not indexes:
+            return
+        await IndexState.bulk_update(
+            [index.state for index in indexes],
+            fields=('level', 'updated_at'),
+            batch_size=1000,
+        )
+        for index in indexes:
+            index._level_unsaved = False
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -597,8 +617,9 @@ class IndexDispatcher:
         metrics._datasource_rollbacks[datasource.name] += 1
 
         # NOTE: Choose action for each index
+        # NOTE: The in-memory level is the authoritative one: idle indexes save it with a delay, so the
+        # NOTE: database level can be lower, never higher.
         for index_name, index in self._indexes.items():
-            await index.state.refresh_from_db()
             index_level = index.state.level
 
             if index.message_type != type_:

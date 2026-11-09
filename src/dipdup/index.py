@@ -65,6 +65,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
+        # NOTE: `state.level` is ahead of the database; see `IndexDispatcher._save_idle_levels`
+        self._level_unsaved = False
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(name={self.state.name}, level={self.state.level}, status={self.state.status}, queue={len(self.queue)})>'
@@ -138,9 +140,12 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         metrics.handlers_matched[self.name] += total_matched
         metrics.time_in_matcher[self.name] += time.time() - started_at
 
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        # NOTE: Nothing to write at this level. The dispatcher saves levels of all idle indexes in one statement
+        # NOTE: after every loop; until then a restart resumes from an older level and refetches levels that
+        # NOTE: matched nothing.
         if not matched_handlers:
-            await self._update_state(level=batch_level)
+            self.state.level = batch_level
+            self._level_unsaved = True
             metrics.objects_indexed += len(level_data)
             return
 
@@ -314,6 +319,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         state.status = status or state.status
         state.level = level or state.level
         await state.save()
+        self._level_unsaved = False
 
     async def _rollback(
         self,
@@ -340,3 +346,6 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
             return
 
         await self._update_state(level=to_level)
+        # NOTE: The level in the database is the one just saved; reloading it in `process` would drop levels
+        # NOTE: this index has advanced since without saving.
+        self._ctx._rolled_back_indexes.discard(self.name)

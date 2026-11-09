@@ -31,6 +31,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
 - tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 
+### Performance
+
+- index: Indexes that match nothing at a level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed
