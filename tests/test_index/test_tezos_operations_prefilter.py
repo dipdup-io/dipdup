@@ -41,7 +41,14 @@ def _remove_spawned_queues() -> Iterator[None]:
         queues.remove_queue(name)
 
 
-def transaction(id_: int, target: str, target_code_hash: int | None = None) -> TezosOperationData:
+def transaction(
+    id_: int,
+    target: str,
+    target_code_hash: int | None = None,
+    sender: str = 'tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a',
+    sender_code_hash: int | None = None,
+    entrypoint: str | None = 'transfer',
+) -> TezosOperationData:
     return TezosOperationData(
         type='transaction',
         id=id_,
@@ -49,7 +56,7 @@ def transaction(id_: int, target: str, target_code_hash: int | None = None) -> T
         timestamp=datetime.now(UTC),
         hash=f'op{id_}',
         counter=id_,
-        sender_address='tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a',
+        sender_address=sender,
         target_address=target,
         initiator_address=None,
         amount=0,
@@ -61,7 +68,7 @@ def transaction(id_: int, target: str, target_code_hash: int | None = None) -> T
         nonce=None,
         target_alias=None,
         initiator_alias=None,
-        entrypoint='transfer',
+        entrypoint=entrypoint,
         parameter_json=None,
         originated_contract_address=None,
         originated_contract_alias=None,
@@ -71,7 +78,7 @@ def transaction(id_: int, target: str, target_code_hash: int | None = None) -> T
         delegate_address=None,
         delegate_alias=None,
         target_code_hash=target_code_hash,
-        sender_code_hash=None,
+        sender_code_hash=sender_code_hash,
     )
 
 
@@ -141,6 +148,15 @@ def open_index(name: str) -> TezosOperationsIndex:
     return make_index(name, config)
 
 
+def source_index(name: str, source: TezosContractConfig) -> TezosOperationsIndex:
+    """Index with a transaction pattern that has only `source`, like a deposits index watching one sender"""
+    config = TezosOperationsIndexConfig(
+        datasources=(TezosTzktDatasourceConfig(),),
+        handlers=(TezosOperationsHandlerConfig(callback='on_sent', pattern=(TransactionPattern(source=source),)),),
+    )
+    return make_index(name, config)
+
+
 def unfiltered_index(name: str) -> TezosOperationsIndex:
     config = TezosOperationsUnfilteredIndexConfig(
         datasources=(TezosTzktDatasourceConfig(),),
@@ -169,6 +185,42 @@ def received(index: TezosOperationsIndex) -> set[int]:
 async def test_realtime_drops_transactions_of_no_index() -> None:
     index = filtered_index('mine', TezosContractConfig(address=MINE))
     await dispatch([index], (transaction(1, MINE), transaction(2, UNRELATED)))
+    assert received(index) == {1}
+
+
+@pytest.mark.parametrize(
+    ('make_index_', 'every_transaction'),
+    [
+        (lambda: open_index('open'), True),
+        (lambda: unfiltered_index('open'), True),
+        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), False),
+        (lambda: source_index('sent', TezosContractConfig(address=MINE)), False),
+    ],
+    ids=['open-pattern', 'unfiltered', 'filtered', 'source-only'],
+)
+async def test_index_tells_whether_it_needs_every_transaction(make_index_: Any, every_transaction: bool) -> None:
+    index = make_index_()
+    # NOTE: guard, callers outside the framework unpack exactly three filters
+    _, _, _ = await index.get_filters()
+    assert index.needs_every_transaction is every_transaction
+
+
+@pytest.mark.parametrize(
+    ('source', 'sent'),
+    [
+        (TezosContractConfig(address=MINE), transaction(1, UNRELATED, sender=MINE, entrypoint=None)),
+        (
+            TezosContractConfig(code_hash=MINE_CODE_HASH),
+            transaction(1, UNRELATED, sender_code_hash=MINE_CODE_HASH, entrypoint=None),
+        ),
+    ],
+    ids=['source-address', 'source-code-hash'],
+)
+async def test_realtime_source_only_pattern_keeps_prefilter(
+    source: TezosContractConfig, sent: TezosOperationData
+) -> None:
+    index = source_index('sent', source)
+    await dispatch([index], (sent, transaction(2, UNRELATED, entrypoint=None)))
     assert received(index) == {1}
 
 

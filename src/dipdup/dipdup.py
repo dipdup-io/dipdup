@@ -351,11 +351,11 @@ class IndexDispatcher:
         return msg
 
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
-        entrypoints, addresses, code_hashes, every_transaction = await index.get_filters()
+        entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
         self._code_hash_filter.update(code_hashes)
-        self._address_prefilter_open |= every_transaction
+        self._address_prefilter_open |= index.needs_every_transaction
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
