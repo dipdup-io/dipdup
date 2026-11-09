@@ -44,27 +44,39 @@ class TransactionManager:
         index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
+        error: Exception | None = None
         try:
             watchdog.heartbeat(WatchdogTrigger.transaction)
             original_conn = get_connection()
             async with in_transaction() as conn:
-                set_connection(conn)
+                try:
+                    set_connection(conn)
 
-                if self._transaction:
-                    raise ValueError('Transaction is already started')
+                    if self._transaction:
+                        raise ValueError('Transaction is already started')
 
-                if level and index and self._depth:
-                    if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.VersionedTransaction(
-                            level,
-                            index,
-                            self._immune_tables,
-                        )
+                    if level and index and self._depth:
+                        if not sync_level or sync_level - level <= self._depth:
+                            self._transaction = dipdup.models.VersionedTransaction(
+                                level,
+                                index,
+                                self._immune_tables,
+                            )
 
-                yield
+                    yield
 
-                if self._transaction:
-                    await self._commit()
+                    if self._transaction:
+                        await self._commit()
+                except Exception as e:
+                    error = e
+                    raise
+        except Exception as e:
+            # NOTE: A lost connection fails the rollback too; raise the error that caused it, not the rollback one.
+            # NOTE: The rollback error stays attached as `__context__`; `from` would claim it caused the original.
+            if error is None or e is error:
+                raise
+            error.add_note(f'Transaction rollback failed too: {e!r}')
+            raise error  # noqa: B904
         finally:
             self._transaction = None
             set_connection(original_conn)

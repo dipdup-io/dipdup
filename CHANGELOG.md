@@ -23,6 +23,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
 - tezos.tzkt: A realtime connection is reconnected after a failed negotiation instead of crashing the indexer: a refused connection crashed it at once, an expired connection id after about ten drops.
 - tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
+- transactions: A rollback that fails after the database connection is lost no longer replaces the error that caused it; the rollback error is attached to it as a note.
 
 ### Changed
 
