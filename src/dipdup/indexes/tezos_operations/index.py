@@ -183,13 +183,15 @@ class TezosOperationsIndex(
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        self._every_transaction = False
 
-    async def get_filters(self) -> tuple[set[str], set[str], set[int]]:
+    async def get_filters(self) -> tuple[set[str], set[str], set[int], bool]:
+        """Entrypoints, addresses and code hashes to prefilter transactions with; the flag means every transaction is needed"""
         if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
-            return set(), set(), set()
+            return set(), set(), set(), True
 
         if self._entrypoint_filter or self._address_filter or self._code_hash_filter:
-            return self._entrypoint_filter, self._address_filter, self._code_hash_filter
+            return self._entrypoint_filter, self._address_filter, self._code_hash_filter, self._every_transaction
 
         for code_hash in code_hash_filter(self._config.handlers):
             self._code_hash_filter.add(code_hash)
@@ -197,12 +199,12 @@ class TezosOperationsIndex(
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)
         self._address_filter = address_filter(self._config.handlers)
 
-        # NOTE: Empty address and code hash filters mean "keep every transaction"
-        if has_open_transaction_pattern(self._config.handlers):
+        self._every_transaction = has_open_transaction_pattern(self._config.handlers)
+        if self._every_transaction:
             self._address_filter.clear()
             self._code_hash_filter.clear()
 
-        return self._entrypoint_filter, self._address_filter, self._code_hash_filter
+        return self._entrypoint_filter, self._address_filter, self._code_hash_filter, self._every_transaction
 
     async def _create_fetcher(
         self,
