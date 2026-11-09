@@ -8,6 +8,10 @@ import pytest
 
 from dipdup.config.tezos import TezosContractConfig
 from dipdup.config.tezos_operations import TezosOperationsHandlerConfig
+from dipdup.config.tezos_operations import TezosOperationsHandlerOriginationPatternConfig as OriginationPattern
+from dipdup.config.tezos_operations import (
+    TezosOperationsHandlerSmartRollupExecutePatternConfig as SmartRollupExecutePattern,
+)
 from dipdup.config.tezos_operations import TezosOperationsHandlerTransactionPatternConfig as TransactionPattern
 from dipdup.config.tezos_operations import TezosOperationsIndexConfig
 from dipdup.config.tezos_operations import TezosOperationsUnfilteredIndexConfig
@@ -17,6 +21,7 @@ from dipdup.dipdup import IndexDispatcher
 from dipdup.indexes.tezos_operations.index import TezosOperationsIndex
 from dipdup.indexes.tezos_operations.index import extract_operation_subgroups
 from dipdup.models.tezos import TezosOperationData
+from dipdup.models.tezos import TezosOperationType
 from dipdup.performance import queues
 
 MINE = 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton'
@@ -195,3 +200,81 @@ async def test_realtime_open_index_next_to_address_and_code_hash_filters(open_fi
 
     await dispatch(indexes, (transaction(1, MINE), transaction(2, UNRELATED)))
     assert received(open_) == {1, 2}
+
+
+def no_transactions_index(name: str, pattern: Any) -> TezosOperationsIndex:
+    config = TezosOperationsIndexConfig(
+        datasources=(TezosTzktDatasourceConfig(),),
+        types=(TezosOperationType.origination, TezosOperationType.sr_execute),
+        handlers=(TezosOperationsHandlerConfig(callback='on_other', pattern=(pattern,)),),
+    )
+    return make_index(name, config)
+
+
+@pytest.mark.parametrize(
+    'pattern',
+    [
+        OriginationPattern(source=TezosContractConfig(address=OTHER)),
+        SmartRollupExecutePattern(source=TezosContractConfig(address=OTHER)),
+    ],
+    ids=['origination-by-source', 'sr-execute-by-source'],
+)
+async def test_realtime_index_without_transaction_patterns_keeps_prefilter(pattern: Any) -> None:
+    """guard: the prefilter worked with both filters set before, an index that needs no transactions must not open it"""
+    filtered = filtered_index(
+        'mine',
+        TezosContractConfig(address=OTHER),
+        TezosContractConfig(code_hash=MINE_CODE_HASH),
+    )
+    other = no_transactions_index('other', pattern)
+
+    await dispatch([filtered, other], (transaction(1, OTHER), transaction(2, UNRELATED)))
+    assert received(filtered) == {1}
+
+
+async def test_realtime_code_hash_pattern_keeps_prefilter() -> None:
+    index = filtered_index('mine', TezosContractConfig(code_hash=MINE_CODE_HASH))
+
+    await dispatch([index], (transaction(1, MINE, MINE_CODE_HASH), transaction(2, UNRELATED)))
+    assert received(index) == {1}
+
+
+@pytest.mark.parametrize(
+    ('make_index_', 'expected'),
+    [
+        (lambda: open_index('open'), {1, 2}),
+        # NOTE: guard, own filters of a filtered index still apply
+        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), {1}),
+    ],
+    ids=['open-pattern', 'guard-filtered'],
+)
+async def test_sync_open_index_keeps_every_transaction(
+    make_index_: Any,
+    expected: set[int],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    index = make_index_()
+    await dispatch([index], ())
+
+    class Fetcher:
+        async def fetch_by_level(self) -> Any:
+            yield 1, (transaction(1, MINE), transaction(2, UNRELATED))
+
+    processed: set[int] = set()
+
+    async def process_level_data(subgroups: Any, sync_level: int) -> None:
+        processed.update(op.id for subgroup in subgroups for op in subgroup.operations)
+
+    async def noop(*args: Any) -> Any:
+        return 0
+
+    async def create_fetcher(*args: Any) -> Fetcher:
+        return Fetcher()
+
+    monkeypatch.setattr(index, '_enter_sync_state', noop)
+    monkeypatch.setattr(index, '_exit_sync_state', noop)
+    monkeypatch.setattr(index, '_create_fetcher', create_fetcher)
+    monkeypatch.setattr(index, '_process_level_data', process_level_data)
+
+    await index._synchronize(1)
+    assert processed == expected
