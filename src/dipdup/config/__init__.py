@@ -131,6 +131,10 @@ class SqliteDatabaseConfig:
         # NOTE: Fail immediately
         return 1
 
+    @property
+    def server_settings(self) -> dict[str, str]:
+        return {}
+
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class PostgresDatabaseConfig:
@@ -145,6 +149,7 @@ class PostgresDatabaseConfig:
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
     :param connection_timeout: Connection timeout
+    :param server_settings: Postgres session settings applied to every connection (e.g. `synchronous_commit`, `work_mem`)
     """
 
     kind: Literal['postgres'] = 'postgres'
@@ -156,11 +161,14 @@ class PostgresDatabaseConfig:
     password: str = Field(default='', repr=False)
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
+    server_settings: dict[str, str] = Field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for table in self.immune_tables:
             if table.startswith('dipdup'):
                 raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
+        if 'search_path' in self.server_settings:
+            raise ConfigurationError('`search_path` is set by DipDup; use `schema_name` instead')
 
     @property
     def connection_string(self) -> str:

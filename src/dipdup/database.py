@@ -56,7 +56,11 @@ def set_connection(conn: SupportedClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
-def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[str, Any]:
+def get_tortoise_config(
+    db_url: str,
+    project_models: str | None = None,
+    server_settings: dict[str, str] | None = None,
+) -> dict[str, Any]:
     """Get Tortoise config for the given URL and internal, aerich and project models"""
     from tortoise.backends.base.config_generator import generate_config
 
@@ -79,7 +83,10 @@ def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[
 
     app_modules['models'] = models
 
-    return generate_config(db_url=db_url, app_modules=app_modules)
+    config = generate_config(db_url=db_url, app_modules=app_modules, connection_label=DEFAULT_CONNECTION_NAME)
+    if server_settings:
+        config['connections'][DEFAULT_CONNECTION_NAME]['credentials']['server_settings'] = dict(server_settings)
+    return config
 
 
 @asynccontextmanager
@@ -89,6 +96,7 @@ async def tortoise_wrapper(
     timeout: int = 60,
     decimal_precision: int | None = None,
     unsafe_sqlite: bool = False,
+    server_settings: dict[str, str] | None = None,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     if ':memory' in url:
@@ -104,7 +112,7 @@ async def tortoise_wrapper(
     try:
         for attempt in range(timeout):
             try:
-                await Tortoise.init(config=get_tortoise_config(url, models))
+                await Tortoise.init(config=get_tortoise_config(url, models, server_settings))
 
                 conn = get_connection()
                 try:

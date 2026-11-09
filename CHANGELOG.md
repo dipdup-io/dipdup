@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- database: Postgres session settings like `synchronous_commit` or `work_mem` can be set in `database.server_settings` and apply to every DipDup connection, including indexing transactions that a `SET` from a hook never reaches; `search_path` is rejected, use `schema_name` instead.
+
 ### Fixed
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
