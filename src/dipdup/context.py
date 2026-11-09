@@ -6,6 +6,7 @@ import os
 import sys
 from contextlib import AsyncExitStack
 from contextlib import contextmanager
+from contextlib import nullcontext
 from contextlib import suppress
 from logging import Logger
 from logging import getLogger
@@ -760,6 +761,7 @@ class DipDupContext:
         self,
         name: str,
         *args: Any,
+        dedicated_connection: bool = False,
         **kwargs: Any,
     ) -> None:
         """Executes SQL script(s) with given name.
@@ -768,19 +770,22 @@ class DipDupContext:
 
         :param name: File or directory within project's `sql` directory
         :param args: Positional arguments to pass to the script
+        :param dedicated_connection: Run on a separate short-lived connection in autocommit, so indexing is not blocked; not allowed inside a transaction, ignored on SQLite
         :param kwargs: Keyword arguments to pass to the script
         """
         # NOTE: Modified `package_path` breaks SQL discovery.
         if env.TEST:
             return
 
-        await self.database.execute_script(
-            sql=None,
-            args=args,
-            kwargs=kwargs,
-            path=self._get_sql_path(name),
-            conn=None,
-        )
+        connection = self.database.dedicated_connection(self.config.database) if dedicated_connection else nullcontext()
+        async with connection as conn:
+            await self.database.execute_script(
+                sql=None,
+                args=args,
+                kwargs=kwargs,
+                path=self._get_sql_path(name),
+                conn=conn,
+            )
 
     # TODO: named arguments
     async def execute_sql_query(

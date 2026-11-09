@@ -8,6 +8,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ## [Unreleased]
 
+### Added
+
+- context: `ctx.execute_sql_script(..., dedicated_connection=True)` runs the scripts on a separate PostgreSQL connection, so a long statement like `REFRESH MATERIALIZED VIEW` in a job no longer pauses indexing.
+
 ### Fixed
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
