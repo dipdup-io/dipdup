@@ -14,10 +14,21 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - coinbase: The datasource calls `api.exchange.coinbase.com`, so `get_candles` works again; the retired `api.pro.coinbase.com` answered every request with 503.
 - coinbase: `get_candles` no longer returns the same candle twice when the range spans more than 300 candles.
 - coinbase: `get_oracle_prices` raises `UnsupportedFeatureError` without making a request, since Coinbase has deprecated its Price Oracle API.
+- datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
+- subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
+- tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
+- tezos.tzkt: A realtime connection is reconnected after a failed negotiation instead of crashing the indexer: a refused connection crashed it at once, an expired connection id after about ten drops.
+- tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
+
+### Changed
+
+- datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
+- datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
+- tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 
 ## [8.6.2] - 2026-09-23
 
