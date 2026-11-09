@@ -71,8 +71,7 @@ def prepare_operation_handler_args(
 ) -> deque[TezosOperationsHandlerArgumentU]:
     """Prepare handler arguments, parse parameter and storage."""
     args: deque[TezosOperationsHandlerArgumentU] = deque()
-    # NOTE: There can be more pattern items than matched operations; some of them are optional.
-    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=False):
+    for pattern_config, operation_data in zip(handler_config.pattern, matched_operations, strict=True):
         if operation_data is None:
             args.append(None)
 
@@ -253,17 +252,23 @@ def match_operation_subgroup(
                 subgroup_index += 1
 
             if pattern_index == len(handler_config.pattern):
-                _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
+                if any(matched_operations):
+                    _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
-                args = prepare_operation_handler_args(package, handler_config, matched_operations)
-                matched_handlers.append((handler_config, args))
+                    args = prepare_operation_handler_args(package, handler_config, matched_operations)
+                    matched_handlers.append((handler_config, args))
+                else:
+                    # NOTE: All-optional pattern skipped every item; this operation matches none of them.
+                    subgroup_index += 1
 
                 matched_operations.clear()
                 pattern_index = 0
 
-        if len(matched_operations) >= sum(0 if x.optional else 1 for x in handler_config.pattern):
+        unmatched_tail = handler_config.pattern[pattern_index:]
+        if any(matched_operations) and all(x.optional for x in unmatched_tail):
             _logger.debug('%s: `%s` handler matched!', operation_subgroup.hash, handler_config.callback)
 
+            matched_operations.extend(None for _ in unmatched_tail)
             args = prepare_operation_handler_args(package, handler_config, matched_operations)
             matched_handlers.append((handler_config, args))
 
@@ -274,7 +279,7 @@ def match_operation_subgroup(
     index_list = list(range(len(matched_handlers)))
     id_list = []
     for handler in matched_handlers:
-        last_operation = handler[1][-1]
+        last_operation = next(arg for arg in reversed(handler[1]) if arg is not None)
         if isinstance(last_operation, TezosOperationData):
             id_list.append(last_operation.id)
         elif isinstance(last_operation, TezosOrigination):
