@@ -14,6 +14,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - coinbase: The datasource calls `api.exchange.coinbase.com`, so `get_candles` works again; the retired `api.pro.coinbase.com` answered every request with 503.
 - coinbase: `get_candles` no longer returns the same candle twice when the range spans more than 300 candles.
 - coinbase: `get_oracle_prices` raises `UnsupportedFeatureError` without making a request, since Coinbase has deprecated its Price Oracle API.
+- context: A database connection lost in the middle of a rollback no longer leaves the reverted data under the old index level, which made the index skip the new branch after a restart.
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
