@@ -114,6 +114,7 @@ class IndexDispatcher:
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        self._address_prefilter_open = False
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
@@ -352,6 +353,9 @@ class IndexDispatcher:
     async def _apply_filters(self, index: TezosOperationsIndex) -> None:
         entrypoints, addresses, code_hashes = await index.get_filters()
         self._entrypoint_filter.update(entrypoints)
+        # NOTE: Empty sets mean the index needs every transaction; indexes spawned later must not close the filter
+        if not (addresses or code_hashes):
+            self._address_prefilter_open = True
         self._address_filter.update(addresses)
         self._code_hash_filter.update(code_hashes)
 
@@ -534,9 +538,9 @@ class IndexDispatcher:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
-                addresses=self._address_filter,
+                addresses=set() if self._address_prefilter_open else self._address_filter,
                 entrypoints=self._entrypoint_filter,
-                code_hashes=self._code_hash_filter,
+                code_hashes=set() if self._address_prefilter_open else self._code_hash_filter,
             )
         )
 

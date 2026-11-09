@@ -106,6 +106,18 @@ def code_hash_filter(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> set[
     return code_hashes
 
 
+def has_open_transaction_pattern(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> bool:
+    """Whether any transaction pattern matches regardless of sender and target addresses and code hashes"""
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if not isinstance(pattern_config, TransactionPatternConfig):
+                continue
+            contracts = (pattern_config.source, pattern_config.destination)
+            if not any(c and (c.address or c.resolved_code_hash) for c in contracts):
+                return True
+    return False
+
+
 def extract_operation_subgroups(
     operations: Iterable[TezosOperationData],
     addresses: set[str],
@@ -125,9 +137,10 @@ def extract_operation_subgroups(
                 filtered += 1
                 continue
 
-            wrong_address = addresses and not {op.sender_address, op.target_address} & addresses
-            wrong_code_hash = code_hashes and not {op.sender_code_hash, op.target_code_hash} & code_hashes
-            if wrong_address and wrong_code_hash:
+            if (addresses or code_hashes) and not (
+                {op.sender_address, op.target_address} & addresses
+                or {op.sender_code_hash, op.target_code_hash} & code_hashes
+            ):
                 filtered += 1
                 continue
 
@@ -183,6 +196,11 @@ class TezosOperationsIndex(
 
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)
         self._address_filter = address_filter(self._config.handlers)
+
+        # NOTE: Empty address and code hash filters mean "keep every transaction"
+        if has_open_transaction_pattern(self._config.handlers):
+            self._address_filter.clear()
+            self._code_hash_filter.clear()
 
         return self._entrypoint_filter, self._address_filter, self._code_hash_filter
 
