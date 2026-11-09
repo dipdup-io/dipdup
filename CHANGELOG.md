@@ -10,7 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
-- database: Postgres session settings like `synchronous_commit` or `work_mem` can be set in `database.server_settings` and apply to every DipDup connection, including indexing transactions that a `SET` from a hook never reaches; `search_path` is rejected, use `schema_name` instead.
+- database: Postgres session settings like `synchronous_commit` or `work_mem` can be set in `database.server_settings` and apply to every DipDup connection, including indexing transactions that a `SET` from a hook never reaches; values can be strings, numbers or booleans (`on`/`off`); `search_path` (use `schema_name` instead) and `client_encoding` are rejected in any letter case.
 
 ### Fixed
 

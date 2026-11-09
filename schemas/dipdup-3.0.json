@@ -1388,9 +1388,22 @@
         },
         "server_settings": {
           "additionalProperties": {
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
           },
-          "description": "Postgres session settings applied to every connection (e.g. `synchronous_commit`, `work_mem`)",
+          "description": "Postgres session settings applied to every connection (e.g. `synchronous_commit`, `work_mem`); `standard_conforming_strings`, `TimeZone` and `session_replication_role` change how queries and triggers behave, set them with care",
           "title": "server_settings",
           "type": "object"
         },
