@@ -770,7 +770,7 @@ class DipDupContext:
 
         :param name: File or directory within project's `sql` directory
         :param args: Positional arguments to pass to the script
-        :param dedicated_connection: Run on a separate short-lived connection in autocommit, so indexing is not blocked; not allowed inside a transaction, ignored on SQLite
+        :param dedicated_connection: Run on a separate short-lived connection in autocommit, keeping the shared one free for indexing; not allowed inside a transaction, ignored on SQLite
         :param kwargs: Keyword arguments to pass to the script
         """
         # NOTE: Modified `package_path` breaks SQL discovery.
