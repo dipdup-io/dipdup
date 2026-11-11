@@ -259,6 +259,10 @@ async def dedicated_connection(config: 'DatabaseConfigU') -> AsyncIterator[Suppo
         return
 
     credentials = expand_db_url(config.connection_string)['credentials']
+    if config.server_settings:
+        credentials['server_settings'] = {
+            key: _format_server_setting(value) for key, value in config.server_settings.items()
+        }
     dedicated = AsyncpgClient(connection_name='dedicated', **credentials)
     await dedicated.create_connection(with_db=True)
     try:
