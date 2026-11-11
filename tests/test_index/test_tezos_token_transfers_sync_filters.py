@@ -189,3 +189,18 @@ async def test_request_omits_empty_filters() -> None:
     params = request.call_args.kwargs['params']
     filters = {k: v for k, v in params.items() if k.endswith('.in')}
     assert filters == {'token.contract.in': TOKEN}
+
+
+async def test_request_filters_by_token_id_of_contract() -> None:
+    config = TezosTzktDatasourceConfig()
+    config._name = 'tzkt'
+    datasource = TezosTzktDatasource(config)
+    request = AsyncMock(return_value=())
+    datasource._request_values_dict = request  # type: ignore[method-assign]
+
+    await datasource.get_token_transfers({TOKEN}, {152}, set(), set(), 1, 10)
+
+    params = request.call_args.kwargs['params']
+    filters = {k: v for k, v in params.items() if k.endswith('.in')}
+    # NOTE: `token.id` is TzKT internal ID of the token, not the one handlers filter by
+    assert filters == {'token.contract.in': TOKEN, 'token.tokenId.in': '152'}
