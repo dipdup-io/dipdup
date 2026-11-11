@@ -1,6 +1,9 @@
 import asyncio
 from contextlib import AsyncExitStack
 from datetime import datetime
+from types import SimpleNamespace
+from typing import Any
+from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 from tortoise.expressions import F
@@ -536,3 +539,40 @@ async def test_realtime_pass_is_bounded() -> None:
 
                 while index.queue:
                     await process_queue(index)
+
+
+async def test_dispatcher_does_not_idle_with_backlog() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.initialize()
+
+    async def slow_handler(*args: Any, **kwargs: Any) -> None:
+        await asyncio.sleep(0.01)
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1000)
+        index.random_datasource.set_sync_level(None, 1000)
+        dispatcher = dipdup._index_dispatcher
+
+        for level in range(1001, 1006):
+            index.push_realtime_message(SimpleNamespace(level=level))
+
+        # NOTE: One message per pass; an idle interval after each pass would take 50 seconds
+        with (
+            patch.object(dispatcher, '_load_index_state', AsyncMock()),
+            patch.object(dispatcher, '_subscribe_to_datasource_events', AsyncMock()),
+            patch.object(type(index.random_datasource), 'subscribe', AsyncMock()),
+            patch.object(dipdup._ctx, 'fire_handler', slow_handler),
+            patch('dipdup.indexes.tezos_head.index.REALTIME_PASS_BUDGET', 0.001),
+            patch('dipdup.dipdup.INDEX_DISPATCHER_INTERVAL', 10),
+        ):
+            start_datasources_event, start_scheduler_event = asyncio.Event(), asyncio.Event()
+            start_datasources_event.set()
+            task = asyncio.create_task(dispatcher.run(start_datasources_event, start_scheduler_event))
+            try:
+                async with asyncio.timeout(5):
+                    while index.state.level < 1005:
+                        await asyncio.sleep(0.01)
+            finally:
+                task.cancel()

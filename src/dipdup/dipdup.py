@@ -196,7 +196,9 @@ class IndexDispatcher:
                 on_synchronized_fired = False
                 on_realtime_fired = False
 
-            await asyncio.sleep(INDEX_DISPATCHER_INTERVAL)
+            # NOTE: An index that left messages in its queue must not wait; it would fall behind forever
+            has_backlog = any(index._queue for index in self._indexes.values())
+            await asyncio.sleep(0 if has_backlog else INDEX_DISPATCHER_INTERVAL)
 
     def is_oneshot(self) -> bool:
         from dipdup.config.tezos_head import TezosHeadIndexConfig
