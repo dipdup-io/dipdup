@@ -291,26 +291,17 @@ async def test_realtime_code_hash_pattern_keeps_prefilter() -> None:
     assert received(index) == {1}
 
 
-@pytest.mark.parametrize(
-    ('make_index_', 'expected'),
-    [
-        (lambda: open_index('open'), {1, 2}),
-        # NOTE: guard, own filters of a filtered index still apply
-        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), {1}),
-    ],
-    ids=['open-pattern', 'guard-filtered'],
-)
-async def test_sync_open_index_keeps_every_transaction(
-    make_index_: Any,
-    expected: set[int],
+async def synchronize(
+    index: TezosOperationsIndex,
+    operations: tuple[TezosOperationData, ...],
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    index = make_index_()
+) -> set[int]:
+    """Ids of operations that reach matching when the level is fetched during sync"""
     await dispatch([index], ())
 
     class Fetcher:
         async def fetch_by_level(self) -> Any:
-            yield 1, (transaction(1, MINE), transaction(2, UNRELATED))
+            yield 1, operations
 
     processed: set[int] = set()
 
@@ -329,4 +320,105 @@ async def test_sync_open_index_keeps_every_transaction(
     monkeypatch.setattr(index, '_process_level_data', process_level_data)
 
     await index._synchronize(1)
-    assert processed == expected
+    return processed
+
+
+@pytest.mark.parametrize(
+    ('make_index_', 'expected'),
+    [
+        (lambda: open_index('open'), {1, 2}),
+        # NOTE: guard, own filters of a filtered index still apply
+        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), {1}),
+    ],
+    ids=['open-pattern', 'guard-filtered'],
+)
+async def test_sync_open_index_keeps_every_transaction(
+    make_index_: Any,
+    expected: set[int],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    operations = (transaction(1, MINE), transaction(2, UNRELATED))
+    assert await synchronize(make_index_(), operations, monkeypatch) == expected
+
+
+def any_entrypoint_index(name: str) -> TezosOperationsIndex:
+    """Index with a transaction pattern item that has no `entrypoint`, next to an item that names one"""
+    mine = TezosContractConfig(address=MINE)
+    config = TezosOperationsIndexConfig(
+        datasources=(TezosTzktDatasourceConfig(),),
+        handlers=(
+            TezosOperationsHandlerConfig(callback='on_call', pattern=(TransactionPattern(destination=mine),)),
+            TezosOperationsHandlerConfig(
+                callback='on_mint',
+                pattern=(TransactionPattern(destination=mine, entrypoint='mint'),),
+            ),
+        ),
+    )
+    return make_index(name, config)
+
+
+# NOTE: A plain tez transfer has no entrypoint
+CALLS_TO_MINE = (
+    transaction(1, MINE, entrypoint='transfer'),
+    transaction(2, MINE, entrypoint='mint'),
+    transaction(3, MINE, entrypoint=None),
+    transaction(4, MINE, entrypoint='burn'),
+)
+
+
+@pytest.mark.parametrize(
+    ('make_index_', 'every_entrypoint'),
+    [
+        (lambda: any_entrypoint_index('any'), True),
+        (lambda: unfiltered_index('any'), True),
+        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), False),
+        (lambda: no_transactions_index('other', OriginationPattern(source=TezosContractConfig(address=OTHER))), False),
+    ],
+    ids=['no-entrypoint', 'unfiltered', 'filtered', 'no-transactions'],
+)
+async def test_index_tells_whether_it_needs_every_entrypoint(make_index_: Any, every_entrypoint: bool) -> None:
+    index = make_index_()
+    # NOTE: guard, callers outside the framework unpack exactly three filters
+    _, _, _ = await index.get_filters()
+    assert index.needs_every_entrypoint is every_entrypoint
+
+
+@pytest.mark.parametrize(
+    ('make_index_', 'expected'),
+    [
+        (lambda: any_entrypoint_index('any'), {1, 2, 3, 4}),
+        # NOTE: guard, an index that names every entrypoint still gets only those
+        (lambda: filtered_index('mine', TezosContractConfig(address=MINE)), {1}),
+    ],
+    ids=['no-entrypoint', 'guard-filtered'],
+)
+async def test_sync_item_without_entrypoint_keeps_every_entrypoint(
+    make_index_: Any,
+    expected: set[int],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert await synchronize(make_index_(), CALLS_TO_MINE, monkeypatch) == expected
+
+
+@pytest.mark.parametrize('any_first', [True, False], ids=['any-first', 'any-spawned-later'])
+@pytest.mark.parametrize(
+    'make_any',
+    [any_entrypoint_index, unfiltered_index],
+    ids=['no-entrypoint', 'unfiltered'],
+)
+async def test_realtime_any_entrypoint_index_keeps_every_entrypoint(make_any: Any, any_first: bool) -> None:
+    filtered = filtered_index('other', TezosContractConfig(address=OTHER))
+    any_ = make_any('any')
+    indexes = [any_, filtered] if any_first else [filtered, any_]
+
+    await dispatch(indexes, CALLS_TO_MINE)
+    assert received(any_) == {1, 2, 3, 4}
+
+
+async def test_realtime_index_without_transaction_patterns_keeps_entrypoint_prefilter() -> None:
+    """guard: an index that needs no transactions returns empty filters too, it must not open the prefilter"""
+    filtered = filtered_index('mine', TezosContractConfig(address=MINE))
+    other = no_transactions_index('other', OriginationPattern(source=TezosContractConfig(address=OTHER)))
+
+    await dispatch([filtered, other], CALLS_TO_MINE)
+    assert received(filtered) == {1}
