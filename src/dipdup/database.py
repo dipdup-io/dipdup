@@ -20,6 +20,8 @@ import asyncpg.exceptions  # type: ignore[import-untyped]
 import sqlparse
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
+from tortoise.backends.base.client import TransactionalDBClient
+from tortoise.backends.base.config_generator import expand_db_url
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
@@ -36,6 +38,8 @@ from dipdup.utils import sorted_glob
 
 if TYPE_CHECKING:
     from types import ModuleType
+
+    from dipdup.config import DatabaseConfigU
 
 
 _logger = logging.getLogger(__name__)
@@ -221,6 +225,28 @@ async def execute_script(
             await _execute(read_sql_file(file))
     else:
         raise Exception
+
+
+@asynccontextmanager
+async def dedicated_connection(config: 'DatabaseConfigU') -> AsyncIterator[SupportedClient]:
+    """Open a short-lived PostgreSQL connection in autocommit next to the shared one; on SQLite, yield the shared one"""
+    conn = get_connection()
+    if isinstance(conn, TransactionalDBClient):
+        raise FrameworkException(
+            'SQL on a dedicated connection would not be rolled back with the current transaction; '
+            'call it outside one, e.g. in a non-atomic hook fired from a handler with `wait=False`'
+        )
+    if not isinstance(conn, AsyncpgClient):
+        yield conn
+        return
+
+    credentials = expand_db_url(config.connection_string)['credentials']
+    dedicated = AsyncpgClient(connection_name='dedicated', **credentials)
+    await dedicated.create_connection(with_db=True)
+    try:
+        yield dedicated
+    finally:
+        await dedicated.close()
 
 
 async def execute_query(
