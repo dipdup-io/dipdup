@@ -1,4 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable first-line-h1 table-column-style -->
 | name | description | type |
 |-|-|-|
 | dipdup_datasource_head_updated_timestamp | Timestamp of the last head update | Gauge |

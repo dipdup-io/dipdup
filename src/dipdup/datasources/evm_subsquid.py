@@ -1,11 +1,12 @@
 from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
-from typing import Any
 
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.datasources._subsquid import AbstractSubsquidDatasource
 from dipdup.datasources._subsquid import AbstractSubsquidWorker
+from dipdup.datasources._subsquid import SubsquidDatasourceConfigT
+from dipdup.datasources._subsquid import _ArchiveTransport
 from dipdup.models.evm import EvmEventData
 from dipdup.models.evm import EvmTransactionData
 from dipdup.models.evm_subsquid import FieldSelection
@@ -15,6 +16,10 @@ from dipdup.models.evm_subsquid import TransactionRequest
 
 _LOG_FIELDS: FieldSelection = {
     'block': {
+        # NOTE: Portal returns only requested block fields; v2.archive always included
+        # number/hash, so request them explicitly — the parser needs all three.
+        'number': True,
+        'hash': True,
         'timestamp': True,
     },
     'log': {
@@ -28,6 +33,9 @@ _LOG_FIELDS: FieldSelection = {
 }
 _TRANSACTION_FIELDS: FieldSelection = {
     'block': {
+        # NOTE: see _LOG_FIELDS — Portal only returns requested block fields.
+        'number': True,
+        'hash': True,
         'timestamp': True,
     },
     'transaction': {
@@ -63,15 +71,8 @@ class _EvmSubsquidWorker(AbstractSubsquidWorker[Query]):
     pass
 
 
-class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConfig, Query]):
-    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
-        super().__init__(config)
-
-    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
-        return _EvmSubsquidWorker(await self._fetch_worker(level))
-
-    async def query_worker(self, query: Query, current_level: int) -> list[dict[str, Any]]:
-        return await super().query_worker(query, current_level)
+class _AbstractEvmSubsquidDatasource(AbstractSubsquidDatasource[SubsquidDatasourceConfigT, Query]):
+    """EVM chain logic (query build + parse) shared by the v2.archive and Portal transports."""
 
     async def iter_events(
         self,
@@ -102,6 +103,12 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
             }
             response = await self.query_worker(query, current_level)
 
+            # NOTE: Portal's `/finalized-stream` returns an empty body once no blocks in
+            # [current_level, last_level] match the query. `current_level` only advances inside
+            # the loop below, so without this guard an empty response re-queries forever.
+            if not response:
+                break
+
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
                 logs: deque[EvmEventData] = deque()
@@ -121,15 +128,21 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
         filters: tuple[TransactionRequest, ...],
     ) -> AsyncIterator[tuple[EvmTransactionData, ...]]:
         current_level = first_level
+        transaction_request = list(filters)
 
         while current_level <= last_level:
             query: Query = {
                 'fields': _TRANSACTION_FIELDS,
                 'fromBlock': current_level,
                 'toBlock': last_level,
-                'transactions': list(filters),
+                'transactions': transaction_request,
             }
             response = await self.query_worker(query, current_level)
+
+            # NOTE: see `iter_events` — an empty Portal stream means the range is exhausted;
+            # break instead of re-querying the same range forever.
+            if not response:
+                break
 
             for level_item in response:
                 current_level = level_item['header']['number'] + 1
@@ -144,3 +157,14 @@ class EvmSubsquidDatasource(AbstractSubsquidDatasource[EvmSubsquidDatasourceConf
                     if transaction.status != 0:
                         transactions.append(transaction)
                 yield tuple(transactions)
+
+
+class EvmSubsquidDatasource(
+    _AbstractEvmSubsquidDatasource[EvmSubsquidDatasourceConfig],
+    _ArchiveTransport[EvmSubsquidDatasourceConfig, Query],
+):
+    def __init__(self, config: EvmSubsquidDatasourceConfig) -> None:
+        super().__init__(config)
+
+    async def _get_worker(self, level: int) -> _EvmSubsquidWorker:
+        return _EvmSubsquidWorker(await self._fetch_worker(level))

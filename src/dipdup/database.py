@@ -8,6 +8,7 @@ import logging
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from functools import cache
@@ -17,12 +18,15 @@ from typing import Any
 from typing import cast
 
 import asyncpg.exceptions  # type: ignore[import-untyped]
-import sqlparse  # type: ignore[import-untyped]
+import sqlparse
 from tortoise import Tortoise
 from tortoise.backends.asyncpg.client import AsyncpgDBClient
+from tortoise.backends.base.client import TransactionalDBClient
+from tortoise.backends.base.config_generator import expand_db_url
 from tortoise.backends.base.executor import EXECUTOR_CACHE
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
+from tortoise.exceptions import OperationalError
 from tortoise.fields import DecimalField
 from tortoise.models import Model as TortoiseModel
 from tortoise.utils import get_schema_sql
@@ -35,6 +39,8 @@ from dipdup.utils import sorted_glob
 
 if TYPE_CHECKING:
     from types import ModuleType
+
+    from dipdup.config import DatabaseConfigU
 
 
 _logger = logging.getLogger(__name__)
@@ -55,7 +61,11 @@ def set_connection(conn: SupportedClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
-def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[str, Any]:
+def get_tortoise_config(
+    db_url: str,
+    project_models: str | None = None,
+    server_settings: Mapping[str, str | int | float | bool] | None = None,
+) -> dict[str, Any]:
     """Get Tortoise config for the given URL and internal, aerich and project models"""
     from tortoise.backends.base.config_generator import generate_config
 
@@ -78,7 +88,19 @@ def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[
 
     app_modules['models'] = models
 
-    return generate_config(db_url=db_url, app_modules=app_modules)
+    config = generate_config(db_url=db_url, app_modules=app_modules, connection_label=DEFAULT_CONNECTION_NAME)
+    if server_settings:
+        config['connections'][DEFAULT_CONNECTION_NAME]['credentials']['server_settings'] = {
+            key: _format_server_setting(value) for key, value in server_settings.items()
+        }
+    return config
+
+
+def _format_server_setting(value: str | int | float | bool) -> str:
+    # NOTE: asyncpg accepts only strings; `bool` is a subclass of `int`, so check it first
+    if isinstance(value, bool):
+        return 'on' if value else 'off'
+    return str(value)
 
 
 @asynccontextmanager
@@ -88,6 +110,7 @@ async def tortoise_wrapper(
     timeout: int = 60,
     decimal_precision: int | None = None,
     unsafe_sqlite: bool = False,
+    server_settings: Mapping[str, str | int | float | bool] | None = None,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     if ':memory' in url:
@@ -103,7 +126,7 @@ async def tortoise_wrapper(
     try:
         for attempt in range(timeout):
             try:
-                await Tortoise.init(config=get_tortoise_config(url, models))
+                await Tortoise.init(config=get_tortoise_config(url, models, server_settings))
 
                 conn = get_connection()
                 try:
@@ -222,6 +245,32 @@ async def execute_script(
         raise Exception
 
 
+@asynccontextmanager
+async def dedicated_connection(config: 'DatabaseConfigU') -> AsyncIterator[SupportedClient]:
+    """Open a short-lived PostgreSQL connection in autocommit next to the shared one; on SQLite, yield the shared one"""
+    conn = get_connection()
+    if isinstance(conn, TransactionalDBClient):
+        raise FrameworkException(
+            'SQL on a dedicated connection would not be rolled back with the current transaction; '
+            'call it outside one, e.g. in a non-atomic hook fired from a handler with `wait=False`'
+        )
+    if not isinstance(conn, AsyncpgClient):
+        yield conn
+        return
+
+    credentials = expand_db_url(config.connection_string)['credentials']
+    if config.server_settings:
+        credentials['server_settings'] = {
+            key: _format_server_setting(value) for key, value in config.server_settings.items()
+        }
+    dedicated = AsyncpgClient(connection_name='dedicated', **credentials)
+    await dedicated.create_connection(with_db=True)
+    try:
+        yield dedicated
+    finally:
+        await dedicated.close()
+
+
 async def execute_query(
     sql: str | None = None,
     args: Any | None = None,
@@ -304,8 +353,16 @@ async def _pg_wipe_schema(
         for table in immune_tables:
             await _pg_move_table(conn, table, schema_name, immune_schema_name)
 
-    await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
-
+    try:
+        await conn.execute_script(f"SELECT dipdup_wipe('{schema_name}')")
+    except OperationalError as e:
+        if 'function dipdup_wipe' not in str(e):
+            raise
+        _logger.warning('`dipdup_wipe` function is not defined in the database.')
+        _logger.info(
+            'Either the schema is empty already or you are connecting to the wrong database. No actions were performed.'
+        )
+        return
     if immune_tables:
         for table in immune_tables:
             await _pg_move_table(conn, table, immune_schema_name, schema_name)

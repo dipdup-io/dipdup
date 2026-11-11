@@ -1,8 +1,9 @@
 import time
 from collections.abc import AsyncIterator
+from typing import Any
 
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
+from dipdup.datasources.evm_subsquid import _AbstractEvmSubsquidDatasource
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import EvmSubsquidFetcher
@@ -13,7 +14,7 @@ class EvmSubsquidEventFetcher(EvmSubsquidFetcher[EvmEventData]):
     def __init__(
         self,
         name: str,
-        datasources: tuple[EvmSubsquidDatasource, ...],
+        datasources: tuple[_AbstractEvmSubsquidDatasource[Any], ...],
         first_level: int,
         last_level: int,
         topics: tuple[tuple[str | None, str], ...],
@@ -65,7 +66,7 @@ class EvmNodeEventFetcher(EvmNodeFetcher[EvmEventData]):
 
         while batch_first_level <= self._last_level:
             node = self.random_datasource
-            batch_size = self.get_next_batch_size(batch_size, ratelimited)
+            batch_size = min(node._http_config.batch_size - 1, self.get_next_batch_size(batch_size, ratelimited))
             ratelimited = False
 
             started = time.time()

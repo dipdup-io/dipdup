@@ -27,7 +27,7 @@ def extract_root_outer_type(storage_type: type[BaseModel]) -> type[BaseModel]:
     """Extract Pydantic __root__ type"""
     root_field = storage_type.model_fields['root']
     if not root_field.is_required():
-        # NOTE: Optional is a magic _SpecialForm
+        # NOTE: Optional is a magic _SpecialForm that handles None/Union edge cases
         return cast('type[BaseModel]', Optional[root_field.annotation])  # noqa: UP045
 
     return root_field.annotation  # type: ignore[return-value]

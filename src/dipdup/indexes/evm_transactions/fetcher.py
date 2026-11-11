@@ -1,8 +1,9 @@
 import random
 import time
 from collections.abc import AsyncIterator
+from typing import Any
 
-from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
+from dipdup.datasources.evm_subsquid import _AbstractEvmSubsquidDatasource
 from dipdup.indexes.evm_node import MIN_BATCH_SIZE
 from dipdup.indexes.evm_node import EvmNodeFetcher
 from dipdup.indexes.evm_subsquid import EvmSubsquidFetcher
@@ -16,7 +17,7 @@ class EvmSubsquidTransactionFetcher(EvmSubsquidFetcher[EvmTransactionData]):
     def __init__(
         self,
         name: str,
-        datasources: tuple[EvmSubsquidDatasource, ...],
+        datasources: tuple[_AbstractEvmSubsquidDatasource[Any], ...],
         first_level: int,
         last_level: int,
         filters: tuple[TransactionRequest, ...],
@@ -52,7 +53,7 @@ class EvmNodeTransactionFetcher(EvmNodeFetcher[EvmTransactionData]):
 
         while batch_first_level <= self._last_level:
             node = random.choice(self._datasources)
-            batch_size = self.get_next_batch_size(batch_size, ratelimited)
+            batch_size = min(node._http_config.batch_size - 1, self.get_next_batch_size(batch_size, ratelimited))
             ratelimited = False
 
             started = time.time()

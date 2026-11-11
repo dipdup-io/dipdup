@@ -1,4 +1,4 @@
-<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable first-line-h1 table-column-style -->
 | name | description |
 |-|-|
 | `DIPDUP_DEBUG` | Enable debug logging and additional checks |

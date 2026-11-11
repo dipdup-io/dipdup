@@ -1,4 +1,3 @@
-import os
 from collections.abc import Awaitable
 from collections.abc import Callable
 from contextlib import AsyncExitStack
@@ -9,11 +8,14 @@ import pytest
 from tortoise.functions import Sum
 
 import demo_tezos_etherlink.models
+from dipdup.database import get_tables
 from dipdup.database import tortoise_wrapper
 from dipdup.models.tezos import TezosOperationType
 from dipdup.test import run_in_tmp
+from dipdup.test import run_postgres_container
 from dipdup.test import tmp_project
 from tests import TEST_CONFIGS
+from tests import has_api_keys
 
 
 async def assert_run_token() -> None:
@@ -241,12 +243,14 @@ test_params = (
     # NOTE: EVM indexes
     ('demo_evm_events', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_events', 'demo_evm_events', 'init', None),
+    # NOTE: EVM events via SQD Portal (public, no key) instead of v2.archive
+    ('demo_evm_events_portal', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
     ('demo_evm_transactions', 'demo_evm_transactions', 'init', None),
     # NOTE: EVM indexes (node only)
     ('demo_evm_events_node', 'demo_evm_events', 'run', assert_run_evm_events),
     ('demo_evm_transactions_node', 'demo_evm_transactions', 'run', assert_run_evm_transactions),
-    # NOTE: Starknet indexes
+    # NOTE: Starknet indexes (node only — subsquid decommissioned the `starknet-mainnet` v2.archive dataset)
     ('demo_starknet_events', 'demo_starknet_events', 'run', assert_run_starknet_events),
     ('demo_starknet_events', 'demo_starknet_events', 'init', None),
     # NOTE: Substrate indexes
@@ -286,12 +290,25 @@ async def test_run_init(
 
     config_paths.append(TEST_CONFIGS / 'common_sqlite.yaml')
 
-    if 'evm' in config and not {'ALCHEMY_API_KEY', 'ETHERSCAN_API_KEY'} <= set(os.environ):
+    if 'evm' in config and not has_api_keys('ALCHEMY_API_KEY', 'ETHERSCAN_API_KEY'):
         pytest.skip('EVM tests require ALCHEMY_API_KEY and ETHERSCAN_API_KEY environment variables')
-    if 'starknet' in config and not {'ALCHEMY_API_KEY'} <= set(os.environ):
+    if 'starknet' in config and not has_api_keys('ALCHEMY_API_KEY'):
         pytest.skip('Starknet tests require ALCHEMY_API_KEY environment variable')
-    if 'substrate' in config and not {'ONFINALITY_API_KEY'} <= set(os.environ):
+    if 'substrate' in config and not has_api_keys('ONFINALITY_API_KEY'):
         pytest.skip('Substrate tests require ONFINALITY_API_KEY environment variable')
+    if 'substrate' in config and cmd == 'init' and not has_api_keys('SUBSCAN_API_KEY'):
+        pytest.skip('Substrate init tests require SUBSCAN_API_KEY environment variable')
+    if (
+        # NOTE: starknet demo is node-only (subsquid decommissioned its v2.archive dataset), so it needs no key here
+        any(chain in config for chain in ('evm', 'substrate'))
+        and not config.endswith('_node')
+        and 'portal' not in config
+        and cmd == 'run'
+        and not has_api_keys('SUBSQUID_API_KEY')
+    ):
+        pytest.skip(
+            'Subsquid run tests require SUBSQUID_API_KEY environment variable (v2.archive gateways need a key since 2026-05-19)'
+        )
 
     async with AsyncExitStack() as stack:
         tmp_package_path, env = await stack.enter_async_context(
@@ -312,3 +329,45 @@ async def test_run_init(
             )
         )
         await assert_fn()
+
+
+async def test_skip_on_empty_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    # NOTE: An unavailable secret arrives as an empty string, not as a missing variable.
+    monkeypatch.setenv('ALCHEMY_API_KEY', '')
+    monkeypatch.setenv('ETHERSCAN_API_KEY', '')
+
+    with pytest.raises(pytest.skip.Exception):
+        await test_run_init('demo_evm_events', 'demo_evm_events', 'init', None)
+
+
+async def test_run_dex_postgres() -> None:
+    package = 'demo_tezos_dex'
+    config_paths = [
+        TEST_CONFIGS / 'demo_tezos_dex.yaml',
+        TEST_CONFIGS / 'common_tezos.yaml',
+        TEST_CONFIGS / 'common_postgres.yaml',
+    ]
+
+    async with AsyncExitStack() as stack:
+        database_config = (await run_postgres_container()).config
+        tmp_package_path, env = await stack.enter_async_context(
+            tmp_project(
+                config_paths,
+                package,
+                exists=True,
+                env={'POSTGRES_HOST': database_config.host, 'POSTGRES_PORT': str(database_config.port)},
+            ),
+        )
+        await run_in_tmp(tmp_package_path, env, 'run')
+
+        await stack.enter_async_context(
+            tortoise_wrapper(
+                database_config.connection_string,
+                f'{package}.models',
+            )
+        )
+        await assert_run_dex()
+
+        # NOTE: Postgres-specific sanity check — the aerich migration table proves the PG migration path ran
+        tables = await get_tables()
+        assert 'aerich' in tables

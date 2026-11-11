@@ -18,6 +18,15 @@ class SubscriptionManager:
     def missing_subscriptions(self) -> set[Subscription]:
         return {k for k, v in self._subscriptions.items() if k is not None and v is None}
 
+    @property
+    def confirmed(self) -> bool:
+        """Whether there is at least one subscription and every one has a sync level"""
+        return len(self._subscriptions) > 1 and not self.missing_subscriptions
+
+    @property
+    def empty(self) -> bool:
+        return self._subscriptions.keys() == {None}
+
     def add(self, subscription: Subscription) -> None:
         if subscription not in self._subscriptions:
             self._subscriptions[subscription] = None
@@ -29,7 +38,10 @@ class SubscriptionManager:
             self._subscriptions.pop(subscription)
 
     def reset(self) -> None:
-        self._subscriptions = dict.fromkeys(self._subscriptions, None)
+        # NOTE: Datasource-wide sync level stays known; subscriptions fall back to it until confirmed again
+        for subscription in self._subscriptions:
+            if subscription is not None:
+                self._subscriptions[subscription] = None
 
     def set_sync_level(self, subscription: Subscription | None, level: int) -> None:
         if subscription not in self._subscriptions:

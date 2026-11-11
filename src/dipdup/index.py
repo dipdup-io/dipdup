@@ -65,6 +65,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         self._logger = FormattedLogger(__name__, fmt=f'{config.name}: ' + '{}')
         self._state: models.Index | None = None
+        # NOTE: `state.level` is ahead of the database; see `IndexDispatcher._save_idle_levels`
+        self._level_unsaved = False
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(name={self.state.name}, level={self.state.level}, status={self.state.status}, queue={len(self.queue)})>'
@@ -112,12 +114,13 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
                 self._logger.debug('Skipping outdated message: %s <= %s', message_level, self.state.level)
                 continue
 
-            await self._process_level_data(message, message_level)
+            await self._process_level_data(message, message_level, realtime=True)
 
     async def _process_level_data(
         self,
         level_data: Any,
         sync_level: int,
+        realtime: bool = False,
     ) -> None:
         from dipdup.index import MatchedHandler
 
@@ -138,9 +141,15 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         metrics.handlers_matched[self.name] += total_matched
         metrics.time_in_matcher[self.name] += time.time() - started_at
 
-        # NOTE: We still need to bump index level but don't care if it will be done in existing transaction
+        # NOTE: Nothing to write at this level. In realtime, the dispatcher saves levels of all idle indexes in one
+        # NOTE: statement after every loop; until then a restart resumes from an older level and refetches levels
+        # NOTE: that matched nothing. Sync doesn't return to the dispatcher until it's done, so it saves every level.
         if not matched_handlers:
-            await self._update_state(level=batch_level)
+            if realtime:
+                self.state.level = batch_level
+                self._level_unsaved = True
+            else:
+                await self._update_state(level=batch_level)
             metrics.objects_indexed += len(level_data)
             return
 
@@ -266,7 +275,11 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         if index_level < sync_level:
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
-            self.queue.clear()
+            # NOTE: Data messages are fetched again by the sync; a rollback is not, and must be applied first
+            while self.queue:
+                message = self.queue.popleft()
+                if isinstance(message, RollbackMessage):
+                    await self._rollback(message.from_level, message.to_level)
 
             with metrics._index_total_sync_duration.time():
                 await self._synchronize(sync_level)
@@ -314,16 +327,33 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         state.status = status or state.status
         state.level = level or state.level
         await state.save()
+        self._level_unsaved = False
 
     async def _rollback(
         self,
         from_level: int,
         to_level: int,
     ) -> None:
+        # NOTE: Index level is only known for sure when the message is dequeued; realtime
+        # NOTE: messages processed in the meantime could have moved it above `to_level`.
+        if to_level >= self.state.level:
+            self._logger.debug('Skipping outdated rollback: %s >= %s', to_level, self.state.level)
+            return
+
         await self._ctx.fire_hook(
             name='on_index_rollback',
             index=self,
             from_level=from_level,
             to_level=to_level,
         )
+
+        # NOTE: Nothing was reverted, so rewinding the index would replay levels onto rows
+        # NOTE: that are still there.
+        if self.name in self._ctx._skipped_rollbacks:
+            self._ctx._skipped_rollbacks.discard(self.name)
+            return
+
         await self._update_state(level=to_level)
+        # NOTE: The level in the database is the one just saved; reloading it in `process` would drop levels
+        # NOTE: this index has advanced since without saving.
+        self._ctx._rolled_back_indexes.discard(self.name)

@@ -16,6 +16,7 @@ from dipdup.config.evm_blockvision import EvmBlockvisionDatasourceConfig
 from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
+from dipdup.config.evm_sqd_portal import EvmPortalDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.exceptions import ConfigurationError
 
@@ -24,6 +25,7 @@ EVM_ADDRESS_LENGTH = 42
 
 type EvmDatasourceConfigU = (
     EvmSubsquidDatasourceConfig
+    | EvmPortalDatasourceConfig
     | EvmNodeDatasourceConfig
     | EvmSourcifyDatasourceConfig
     | EvmBlockvisionDatasourceConfig

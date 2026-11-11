@@ -5,6 +5,7 @@ from typing import Any
 from dipdup.config.evm_events import EvmEventsHandlerConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
+from dipdup.datasources.evm_sqd_portal import EvmPortalDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.exceptions import FrameworkException
 from dipdup.indexes.evm import EvmIndex
@@ -17,7 +18,7 @@ from dipdup.models.evm import EvmEventData
 from dipdup.performance import metrics
 
 QueueItem = tuple[EvmEventData, ...] | RollbackMessage
-EvmDatasource = EvmSubsquidDatasource | EvmNodeDatasource
+EvmDatasource = EvmSubsquidDatasource | EvmPortalDatasource | EvmNodeDatasource
 
 
 class EvmEventsIndex(

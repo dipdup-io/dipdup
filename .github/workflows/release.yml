@@ -16,9 +16,9 @@ jobs:
             arch: amd64
           - os: ubuntu-latest
             arch: arm64
-          - os: macos-latest
+          - os: macos-15
             arch: amd64          
-          - os: macos-latest
+          - os: macos-15
             arch: arm64
     steps:
       - name: Check out the repo
@@ -38,12 +38,11 @@ jobs:
         env:
           ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-          ONFINALITY_API_KEY: ${{ secrets.ONFINALITY_API_KEY }}
 
   release:
     name: Release
     needs: release_test
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_NAME: ${{ github.repository }}

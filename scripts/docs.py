@@ -680,7 +680,7 @@ def dump_ref_tables() -> None:
     metrics = sorted(metrics, key=lambda x: x[0])
 
     lines = [
-        '<!-- markdownlint-disable first-line-h1 -->',
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
         '| name | description | type |',
         '|-|-|-|',
         *(f'| {name} | {description} | {type_} |' for name, description, type_ in metrics),
@@ -690,7 +690,7 @@ def dump_ref_tables() -> None:
     Path('docs/5.advanced/_metrics_table.md').write_text('\n'.join(lines))
 
     lines = [
-        '<!-- markdownlint-disable first-line-h1 -->',
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
         '| name | description |',
         '|-|-|',
         *(f'| `{name}` | {description} |' for name, description in env.extract_docstrings().items()),
@@ -728,7 +728,7 @@ def dump_demos() -> None:
     demos = sorted(demos, key=lambda x: (x[1], x[0]))
 
     lines = [
-        '<!-- markdownlint-disable first-line-h1 -->',
+        '<!-- markdownlint-disable first-line-h1 table-column-style -->',
         '| name | network | description | source |',
         '|-|-|-|-|',
         *(

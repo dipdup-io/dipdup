@@ -5,7 +5,7 @@ import importlib
 import os
 import sys
 from contextlib import AsyncExitStack
-from contextlib import contextmanager
+from contextlib import nullcontext
 from contextlib import suppress
 from logging import Logger
 from logging import getLogger
@@ -53,6 +53,7 @@ from dipdup.datasources.evm_blockvision import EvmBlockvisionDatasource
 from dipdup.datasources.evm_etherscan import EvmEtherscanDatasource
 from dipdup.datasources.evm_node import EvmNodeDatasource
 from dipdup.datasources.evm_sourcify import EvmSourcifyDatasource
+from dipdup.datasources.evm_sqd_portal import EvmPortalDatasource
 from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
 from dipdup.datasources.http import HttpDatasource
 from dipdup.datasources.ipfs import IpfsDatasource
@@ -103,7 +104,6 @@ from dipdup.watchdog import watchdog
 if TYPE_CHECKING:
     from collections.abc import Awaitable
     from collections.abc import Iterable
-    from collections.abc import Iterator
     from types import ModuleType
 
     from mcp.server import Server as McpServer
@@ -173,6 +173,7 @@ class DipDupContext:
         self._pending_indexes: asyncio.Queue[Any] = asyncio.Queue()
         self._pending_hooks: asyncio.Queue[Awaitable[None]] = asyncio.Queue()
         self._rolled_back_indexes: set[str] = set()
+        self._skipped_rollbacks: set[str] = set()
         self._handlers: dict[tuple[str, str], HandlerConfig] = {}
         self._hooks: dict[str, HookConfig] = {}
 
@@ -340,6 +341,7 @@ class DipDupContext:
         new_ctx._pending_indexes = self._pending_indexes
         new_ctx._pending_hooks = self._pending_hooks
         new_ctx._rolled_back_indexes = self._rolled_back_indexes
+        new_ctx._skipped_rollbacks = self._skipped_rollbacks
         new_ctx._handlers = self._handlers
         new_ctx._hooks = self._hooks
 
@@ -523,6 +525,10 @@ class DipDupContext:
         """Get `evm.subsquid` datasource by name"""
         return self.get_datasource(name, EvmSubsquidDatasource)
 
+    def get_evm_portal_datasource(self, name: str) -> EvmPortalDatasource:
+        """Get `evm.sqd_portal` datasource by name"""
+        return self.get_datasource(name, EvmPortalDatasource)
+
     def get_evm_node_datasource(self, name: str) -> EvmNodeDatasource:
         """Get `evm.node` datasource by name"""
         return self.get_datasource(name, EvmNodeDatasource)
@@ -541,6 +547,7 @@ class DipDupContext:
         self, name: str
     ) -> (
         EvmSubsquidDatasource
+        | EvmPortalDatasource
         | EvmNodeDatasource
         | EvmEtherscanDatasource
         | EvmSourcifyDatasource
@@ -550,6 +557,7 @@ class DipDupContext:
         return self.get_datasource(
             name,
             EvmSubsquidDatasource,
+            EvmPortalDatasource,
             EvmNodeDatasource,
             EvmEtherscanDatasource,
             EvmSourcifyDatasource,
@@ -618,11 +626,26 @@ class DipDupContext:
                 to_level=to_level,
                 rollback_depth=rollback_depth,
             )
+            # NOTE: `reindex` returned instead of raising, so the action is `ignore` and the database
+            # NOTE: was left as is. Rewinding the index would replay levels that were never reverted.
+            self.logger.error(
+                'Rollback of `%s` to level %s is not possible; run `dipdup schema approve` to dismiss',
+                index,
+                to_level,
+            )
+            schema = await Schema.filter(name=self.config.schema_name).get()
+            if not schema.reindex:
+                schema.reindex = ReindexingReason.rollback
+                await schema.save()
+            self._skipped_rollbacks.add(index)
+            return
 
         models = importlib.import_module(f'{self.config.package}.models')
         async with self.transactions.in_transaction():
+            # NOTE: `from_level` belongs to the datasource channel and can lag behind the index
+            # NOTE: itself; revert everything above `to_level` or the index would keep changes
+            # NOTE: made at levels it's about to process again.
             updates = await ModelUpdate.filter(
-                level__lte=from_level,
                 level__gt=to_level,
                 index=index,
             ).order_by('-id')
@@ -633,7 +656,9 @@ class DipDupContext:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
 
-        await Index.filter(name=index).update(level=to_level)
+            # NOTE: Rewind in the same transaction, or a lost connection leaves reverted rows under the old level
+            await Index.filter(name=index).update(level=to_level)
+
         self._rolled_back_indexes.add(index)
 
     async def _hooks_loop(self) -> None:
@@ -687,7 +712,7 @@ class DipDupContext:
             handler_config=handler_config,
         )
         # NOTE: Handlers are not atomic, levels are. Do not open transaction here.
-        with self._callback_wrapper(module):
+        with watchdog.watch(WatchdogTrigger.callback, f'handler `{name}` of index `{index}`'):
             fn = self.package.get_callback('handlers', name, name.split('.')[-1])
             await fn(new_ctx, *args)
 
@@ -703,6 +728,15 @@ class DipDupContext:
         :param wait: Wait for hook to finish or fire and forget
         :param kwargs: Hook arguments
         """
+        await self._fire_hook(name, wait, kwargs)
+
+    async def _fire_hook(
+        self,
+        name: str,
+        wait: bool,
+        kwargs: dict[str, Any],
+        daemon: bool = False,
+    ) -> None:
         module = f'{self.package.name}.hooks.{name}'
         hook_config = self._get_hook(name)
 
@@ -718,7 +752,8 @@ class DipDupContext:
 
         async def _wrapper() -> None:
             async with AsyncExitStack() as stack:
-                stack.enter_context(self._callback_wrapper(module))
+                # NOTE: Daemon hooks never return by design
+                stack.enter_context(watchdog.watch(WatchdogTrigger.callback, f'hook `{name}`', countdown=not daemon))
                 if hook_config.atomic:
                     # NOTE: Do not use versioned transactions here
                     await stack.enter_async_context(new_ctx.transactions.in_transaction())
@@ -736,6 +771,7 @@ class DipDupContext:
         self,
         name: str,
         *args: Any,
+        dedicated_connection: bool = False,
         **kwargs: Any,
     ) -> None:
         """Executes SQL script(s) with given name.
@@ -744,19 +780,22 @@ class DipDupContext:
 
         :param name: File or directory within project's `sql` directory
         :param args: Positional arguments to pass to the script
+        :param dedicated_connection: Run on a separate short-lived connection in autocommit, keeping the shared one free for indexing; not allowed inside a transaction; on SQLite, runs on the shared connection
         :param kwargs: Keyword arguments to pass to the script
         """
         # NOTE: Modified `package_path` breaks SQL discovery.
         if env.TEST:
             return
 
-        await self.database.execute_script(
-            sql=None,
-            args=args,
-            kwargs=kwargs,
-            path=self._get_sql_path(name),
-            conn=None,
-        )
+        connection = self.database.dedicated_connection(self.config.database) if dedicated_connection else nullcontext()
+        async with connection as conn:
+            await self.database.execute_script(
+                sql=None,
+                args=args,
+                kwargs=kwargs,
+                path=self._get_sql_path(name),
+                conn=conn,
+            )
 
     # TODO: named arguments
     async def execute_sql_query(
@@ -781,12 +820,6 @@ class DipDupContext:
     execute_sql = execute_sql_script
     execute_script = execute_sql_script
     execute_query = execute_sql_query
-
-    @contextmanager
-    def _callback_wrapper(self, module: str) -> Iterator[None]:
-        watchdog.heartbeat(WatchdogTrigger.callback)
-        yield
-        watchdog.reset(WatchdogTrigger.callback)
 
     def _get_handler(self, name: str, index: str) -> HandlerConfig:
         try:

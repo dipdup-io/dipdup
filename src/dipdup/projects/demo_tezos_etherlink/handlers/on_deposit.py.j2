@@ -1,0 +1,30 @@
+from dipdup.context import HandlerContext
+from dipdup.models.tezos import TezosTransaction
+
+from {{ project.package }}.models import Deposit
+from {{ project.package }}.types.rollup.tezos_parameters.default import DefaultParameter as RollupDefaultParameter
+from {{ project.package }}.types.rollup.tezos_storage import RollupStorage
+from {{ project.package }}.types.ticket_helper.tezos_parameters.default import DefaultParameter
+from {{ project.package }}.types.ticket_helper.tezos_storage import TicketHelperStorage
+from {{ project.package }}.types.ticketer.tezos_parameters.deposit import DepositParameter
+from {{ project.package }}.types.ticketer.tezos_storage import Fa2
+from {{ project.package }}.types.ticketer.tezos_storage import TicketerStorage
+from {{ project.package }}.types.ticketer.tezos_storage import Token
+from {{ project.package }}.types.ticketer.tezos_storage import Token1
+
+
+async def on_deposit(
+    ctx: HandlerContext,
+    deposit: TezosTransaction[DepositParameter, TicketerStorage],
+    default: TezosTransaction[DefaultParameter, TicketHelperStorage],
+    rollup_default: TezosTransaction[RollupDefaultParameter, RollupStorage],
+) -> None:
+    match deposit.storage.token:
+        case Token(fa12=str(address)):
+            pass
+        case Token1(fa2=Fa2(address=str(address))):
+            pass
+        case _:
+            raise ValueError
+
+    await Deposit.create(level=deposit.data.level, token=address, amount=default.parameter.amount)

@@ -74,7 +74,7 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
 
     def __init__(self, config: EvmNodeDatasourceConfig, merge_subscriptions: bool = False) -> None:
         super().__init__(config)
-        self._web3_client: AsyncWeb3 | None = None
+        self._web3_client: AsyncWeb3 | None = None  # type: ignore[type-arg]
         self._ws_client: WebsocketTransport | None = None
         self._requests: dict[str, tuple[asyncio.Event, Any]] = {}
         self._subscription_ids: dict[str, EvmNodeSubscription] = {}
@@ -88,7 +88,7 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
         self._on_syncing_callbacks: set[SyncingCallback] = set()
 
     @property
-    def web3(self) -> 'AsyncWeb3':
+    def web3(self) -> 'AsyncWeb3':  # type: ignore[type-arg]
         if not self._web3_client:
             raise FrameworkException('web3 client is not initialized; is datasource running?')
         return self._web3_client
@@ -161,6 +161,33 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
 
             del self._level_data[head.hash]
 
+    async def _jsonrpc_request(
+        self,
+        method: str,
+        params: Any,
+        raw: bool = False,
+        ws: bool = False,
+    ) -> Any:
+        attempt = 1
+        retry_sleep = self._http_config.retry_sleep
+        retry_count = self._http_config.retry_count
+        last_attempt = retry_count + 1
+
+        while True:
+            try:
+                return await super()._jsonrpc_request(method, params, raw=raw, ws=ws)
+            except DatasourceError as e:
+                # NOTE: Special case: node is out of sync, but we don't track
+                # `syncing` events, so just retry as a safe HTTP exception.
+                if 'invalid block range params' not in str(e) or attempt == last_attempt:
+                    raise
+
+                self._logger.warning('JSON-RPC request `%s` failed, retrying: %s', method, e)
+                to_sleep = float(f'{retry_sleep:.1f}')
+                self._logger.info('Waiting %s seconds before retry', to_sleep)
+                await asyncio.sleep(to_sleep)
+                attempt += 1
+
     @property
     def ws_available(self) -> bool:
         return self._config.ws_url is not None
@@ -170,7 +197,8 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
             return
 
         missing_subscriptions = self._subscriptions.missing_subscriptions
-        if not missing_subscriptions:
+        # NOTE: Missing subscriptions are sent on the next call once the connection is restored
+        if not missing_subscriptions or not await self._wait_ws_connected():
             return
 
         self._logger.info('Subscribing to %s channels', len(missing_subscriptions))
@@ -263,10 +291,14 @@ class EvmNodeDatasource(JsonRpcDatasource[EvmNodeDatasourceConfig]):
     async def _handle_subscription(self, subscription: EvmNodeSubscription, data: Any) -> None:
         if isinstance(subscription, EvmNodeHeadSubscription):
             level_data = self._level_data[data['hash']]
+            # NOTE: Node can announce the same head more than once before the emitter drains
+            # the queue; both announcements share one LevelData, so queue it only once.
+            already_queued = level_data.head is not None
             level_data.head = data
             if subscription.transactions:
                 level_data.fetch_transactions = True
-            self._emitter_queue.put_nowait(level_data)
+            if not already_queued:
+                self._emitter_queue.put_nowait(level_data)
         elif isinstance(subscription, EvmNodeLogsSubscription):
             level_data = self._level_data[data['blockHash']]
             level_data.events.append(data)

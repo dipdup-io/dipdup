@@ -97,6 +97,11 @@ type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
 
 _logger = logging.getLogger(__name__)
 
+FORBIDDEN_SERVER_SETTINGS = {
+    'search_path': 'DipDup sets it from `schema_name`; use `schema_name` instead',
+    'client_encoding': 'asyncpg requires UTF8; other encodings corrupt non-ASCII text',
+}
+
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class SqliteDatabaseConfig:
@@ -131,6 +136,10 @@ class SqliteDatabaseConfig:
         # NOTE: Fail immediately
         return 1
 
+    @property
+    def server_settings(self) -> dict[str, str | int | float | bool]:
+        return {}
+
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class PostgresDatabaseConfig:
@@ -145,6 +154,7 @@ class PostgresDatabaseConfig:
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
     :param connection_timeout: Connection timeout
+    :param server_settings: Postgres session settings applied to every connection (e.g. `synchronous_commit`, `work_mem`); `standard_conforming_strings`, `TimeZone` and `session_replication_role` change how queries and triggers behave, set them with care
     """
 
     kind: Literal['postgres'] = 'postgres'
@@ -156,11 +166,15 @@ class PostgresDatabaseConfig:
     password: str = Field(default='', repr=False)
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
+    server_settings: dict[str, str | int | float | bool] = Field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for table in self.immune_tables:
             if table.startswith('dipdup'):
                 raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
+        for key in self.server_settings:
+            if reason := FORBIDDEN_SERVER_SETTINGS.get(key.lower()):
+                raise ConfigurationError(f"`server_settings.{key}` can't be set: {reason}")
 
     @property
     def connection_string(self) -> str:
@@ -188,7 +202,7 @@ class PostgresDatabaseConfig:
 class HttpConfig:
     """Advanced configuration of HTTP client
 
-    :param retry_count: Number of retries after request failed before giving up
+    :param retry_count: Number of retries after request failed before giving up; for realtime, number of failed connections in a row
     :param retry_sleep: Sleep time between retries
     :param retry_multiplier: Multiplier for sleep time between retries
     :param ratelimit_rate: Number of requests per period ("drops" in leaky bucket)
@@ -728,6 +742,9 @@ class DipDupConfig(InteractiveMixin):
         self._paths: list[Path] = []
         self._environment: dict[str, str] = {}
         self._json = DipDupYAMLConfig()
+        # NOTE: Validation writes the effective value back to `advanced.rollback_depth`; keep what
+        # NOTE: the user actually declared so a second `initialize()` doesn't mistake it for input.
+        self._declared_rollback_depth: int | None = self.advanced.rollback_depth
 
     @property
     def schema_name(self) -> str:
@@ -1097,7 +1114,7 @@ class DipDupConfig(InteractiveMixin):
 
             if not isinstance(datasource_config, TezosTzktDatasourceConfig):
                 continue
-            if datasource_config.buffer_size and self.advanced.rollback_depth:
+            if datasource_config.buffer_size and self._declared_rollback_depth:
                 raise ConfigurationError(
                     f'`{name}`: `buffer_size` option is incompatible with `advanced.rollback_depth`'
                 )
@@ -1148,8 +1165,8 @@ class DipDupConfig(InteractiveMixin):
         new_index_config.parent = template
         new_index_config._name = template_config.name
         if not isinstance(new_index_config, TezosHeadIndexConfig):
-            new_index_config.first_level |= template_config.first_level
-            new_index_config.last_level |= template_config.last_level
+            new_index_config.first_level = template_config.first_level or new_index_config.first_level
+            new_index_config.last_level = template_config.last_level or new_index_config.last_level
         self.indexes[template_config.name] = new_index_config
 
     def _resolve_templates(self) -> None:
@@ -1326,6 +1343,7 @@ from dipdup.config.evm_etherscan import EvmEtherscanDatasourceConfig
 from dipdup.config.evm_events import EvmEventsIndexConfig
 from dipdup.config.evm_node import EvmNodeDatasourceConfig
 from dipdup.config.evm_sourcify import EvmSourcifyDatasourceConfig
+from dipdup.config.evm_sqd_portal import EvmPortalDatasourceConfig
 from dipdup.config.evm_subsquid import EvmSubsquidDatasourceConfig
 from dipdup.config.evm_transactions import EvmTransactionsIndexConfig
 from dipdup.config.http import HttpDatasourceConfig
@@ -1366,6 +1384,7 @@ DatasourceConfigU = (
     | HttpDatasourceConfig
     | IpfsDatasourceConfig
     | EvmSubsquidDatasourceConfig
+    | EvmPortalDatasourceConfig
     | EvmNodeDatasourceConfig
     | TzipMetadataDatasourceConfig
     | TezosTzktDatasourceConfig

@@ -5,6 +5,9 @@ import platform
 import time
 from contextlib import AbstractAsyncContextManager
 from contextlib import suppress
+from datetime import UTC
+from datetime import datetime
+from email.utils import parsedate_to_datetime
 from http import HTTPStatus
 from json import JSONDecodeError
 from pathlib import Path
@@ -34,6 +37,19 @@ safe_exceptions = (
     aiohttp.ClientResponseError,
     aiohttp.ClientPayloadError,
 )
+
+# NOTE: Longest `Retry-After` worth waiting for (or `ratelimit_sleep`, if larger)
+RETRY_AFTER_MAX = 120.0
+
+
+def _parse_retry_after(value: str) -> float:
+    """Parse `Retry-After` header value, either delay in seconds or HTTP-date; raise `ValueError` if it's neither"""
+    with suppress(ValueError):
+        return int(value)
+    retry_at = parsedate_to_datetime(value)
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=UTC)
+    return max((retry_at - datetime.now(UTC)).total_seconds(), 0.0)
 
 
 class HTTPGateway(AbstractAsyncContextManager[None]):
@@ -161,14 +177,32 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
                 )
             except safe_exceptions as e:
                 ratelimit_sleep: float | None = None
+                retryable = True
                 if isinstance(e, aiohttp.ClientResponseError):
                     metrics.set_http_error(self._url, e.status)
 
-                    if e.status == HTTPStatus.TOO_MANY_REQUESTS:
+                    # NOTE: Client errors won't go away on retry; 408 and 429 are the exceptions
+                    if 400 <= e.status < 500 and e.status not in (
+                        HTTPStatus.REQUEST_TIMEOUT,
+                        HTTPStatus.TOO_MANY_REQUESTS,
+                    ):
+                        retryable = False
+
+                    # NOTE: Many gateways (e.g. nginx `limit_req`) shed load with 503 instead of 429
+                    if e.status in (HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.SERVICE_UNAVAILABLE):
                         ratelimit_sleep = self._config.ratelimit_sleep
-                        # TODO: Parse Retry-After in UTC date format
                         with suppress(KeyError, ValueError):
-                            ratelimit_sleep = max(ratelimit_sleep, int(e.headers['Retry-After']))  # type: ignore[index]
+                            retry_after = _parse_retry_after(e.headers['Retry-After'])  # type: ignore[index]
+                            ratelimit_sleep = max(ratelimit_sleep, retry_after)
+                        # NOTE: Retrying earlier than the server asked is pointless; fail now instead of hanging
+                        retry_after_max = max(RETRY_AFTER_MAX, self._config.ratelimit_sleep)
+                        if ratelimit_sleep > retry_after_max:
+                            self._logger.error(
+                                'Server asked to retry in %.0f seconds, more than %.0f allowed; giving up',
+                                ratelimit_sleep,
+                                retry_after_max,
+                            )
+                            retryable = False
                         # randomize to avoid thundering herd
                         ratelimit_sleep *= 1 + (random() - 0.5) / 5
                 else:
@@ -176,7 +210,7 @@ class _HTTPGateway(AbstractAsyncContextManager[None]):
 
                 self._logger.warning('HTTP request attempt %s/%s failed: %s', attempt, last_attempt, e)
                 metrics.set_http_errors_in_row(self._url, attempt)
-                if attempt == last_attempt:
+                if attempt == last_attempt or not retryable:
                     raise e
 
                 to_sleep = float(f'{ratelimit_sleep or retry_sleep:.1f}')

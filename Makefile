@@ -66,7 +66,7 @@ docs_serve:     ## Build docs and start frontend server
 docs_watch:     ## Build docs and watch for changes
 	python scripts/docs.py build --source docs --destination ${FRONTEND_PATH}/content/docs --watch
 
-docs_publish:   ## Tag and push `docs-next` ref
+docs_publish:   ## Tag and push `docs` ref
 	git tag -d docs && git tag docs && git push --force origin docs
 
 docs_publish_dev:   ## Tag and push `docs-next` ref
@@ -93,7 +93,7 @@ demos:          ## Recreate demo projects from templates
 	DIPDUP_NO_SYMLINK=1 python scripts/demos.py init ${DEMO}
 
 demos_refresh:  ## Run `init --force` in all demo projects
-	for demo in `ls src | grep demo | grep -v etherlink`; do DIPDUP_NO_SYMLINK=1 dipdup -c src/$$demo init --force --no-types; done
+	for demo in `ls src | grep demo`; do DIPDUP_NO_SYMLINK=1 dipdup -c src/$$demo init --force --no-types; done
 
 before_release: ## Prepare for a new release after updating version in pyproject.toml
 	make format lint update demos test docs

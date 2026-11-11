@@ -2,9 +2,11 @@ datasources:
   subsquid:
     kind: substrate.subsquid
     url: https://v2.archive.subsquid.io/network/asset-hub-polkadot
+    api_key: ${SUBSQUID_API_KEY:-}
   subscan:
     kind: substrate.subscan
     url: https://assethub-polkadot.api.subscan.io/api
+    api_key: ${SUBSCAN_API_KEY:-}
   node:
     kind: substrate.node
     url: https://statemint.api.onfinality.io/rpc?apikey=${ONFINALITY_API_KEY:-''}

@@ -87,8 +87,8 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
         release=release,
         environment=environment,
         server_name=server_name,
-        # NOTE: Increase __repr__ length limit
-        max_value_length=sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH * 10,
+        # NOTE: Increase __repr__ length limit; sentry's default is 1024 (None since sentry-sdk 2.61)
+        max_value_length=(sentry_sdk.consts.DEFAULT_MAX_VALUE_LENGTH or 1024) * 10,
     )
 
     # NOTE: Setting session tags
@@ -102,8 +102,11 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
         'server_name': server_name,
     }
     _logger.debug('Sentry tags: %s', ', '.join(f'{k}={v}' for k, v in tags.items()))
+    # NOTE: Set on the global scope, which is merged into every event regardless of the
+    # NOTE: capture context. The top-level `set_tag` writes to the isolation scope instead,
+    # NOTE: so the tags never reached crashes captured via excepthook or forked tasks (#1289).
     for tag, value in tags.items():
-        sentry_sdk.set_tag(f'dipdup.{tag}', value)
+        sentry_sdk.get_global_scope().set_tag(f'dipdup.{tag}', value)
 
     # NOTE: User ID allows to track release adoption. It's sent on every session,
     # NOTE: but obfuscated below, so it's not a privacy issue. However, randomly
@@ -114,6 +117,7 @@ def init_sentry(config: 'SentryConfig', package: str) -> None:
         user_id = hashlib.sha256(user_id.encode()).hexdigest()[:8]
     _logger.debug('Sentry user_id: %s', user_id)
 
-    sentry_sdk.set_user({'id': user_id})
+    # NOTE: Global scope for the same reason as the tags above (#1289).
+    sentry_sdk.get_global_scope().set_user({'id': user_id})
     sentry_sdk.Hub.current.start_session()
     fire_and_forget(_heartbeat())

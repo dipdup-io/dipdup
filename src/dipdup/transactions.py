@@ -44,31 +44,53 @@ class TransactionManager:
         index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
-        try:
-            watchdog.heartbeat(WatchdogTrigger.transaction)
-            original_conn = get_connection()
-            async with in_transaction() as conn:
-                set_connection(conn)
-
-                if self._transaction:
-                    raise ValueError('Transaction is already started')
-
-                if level and index and self._depth:
-                    if not sync_level or sync_level - level <= self._depth:
-                        self._transaction = dipdup.models.VersionedTransaction(
-                            level,
-                            index,
-                            self._immune_tables,
-                        )
-
+        name = f'index `{index}` at level {level}' if index else 'transaction'
+        with watchdog.watch(WatchdogTrigger.transaction, name):
+            async with self._in_transaction(level, sync_level, index):
                 yield
 
-                if self._transaction:
-                    await self._commit()
+    @asynccontextmanager
+    async def _in_transaction(
+        self,
+        level: int | None,
+        sync_level: int | None,
+        index: str | None,
+    ) -> AsyncIterator[None]:
+        error: Exception | None = None
+        try:
+            original_conn = get_connection()
+            async with in_transaction() as conn:
+                try:
+                    set_connection(conn)
+
+                    if self._transaction:
+                        raise ValueError('Transaction is already started')
+
+                    if level and index and self._depth:
+                        if not sync_level or sync_level - level <= self._depth:
+                            self._transaction = dipdup.models.VersionedTransaction(
+                                level,
+                                index,
+                                self._immune_tables,
+                            )
+
+                    yield
+
+                    if self._transaction:
+                        await self._commit()
+                except Exception as e:
+                    error = e
+                    raise
+        except Exception as e:
+            # NOTE: A lost connection fails the rollback too; raise the error that caused it, not the rollback one.
+            # NOTE: The rollback error stays attached as `__context__`; `from` would claim it caused the original.
+            if error is None or e is error:
+                raise
+            error.add_note(f'Transaction rollback failed too: {e!r}')
+            raise error  # noqa: B904
         finally:
             self._transaction = None
             set_connection(original_conn)
-            watchdog.reset(WatchdogTrigger.transaction)
 
     async def _commit(self) -> None:
         """Save pending updates to DB in the same order as they were added"""
@@ -79,9 +101,17 @@ class TransactionManager:
         """Cleanup outdated model updates"""
         if not self._depth:
             return
-        most_recent_index = await dipdup.models.Index.filter().order_by('-level').first()
-        if not most_recent_index:
+        indexes = await dipdup.models.Index.filter()
+        if not indexes:
             return
 
-        last_level = most_recent_index.level - self._depth
-        await dipdup.models.ModelUpdate.filter(level__lt=last_level).delete()
+        # NOTE: Every index is rolled back on its own; a shared watermark would let the index
+        # NOTE: with the highest level cut the rollback window of the ones lagging behind it.
+        for index in indexes:
+            await dipdup.models.ModelUpdate.filter(
+                index=index.name,
+                level__lt=index.level - self._depth,
+            ).delete()
+
+        # NOTE: Updates of indexes missing from the state table can never be reverted.
+        await dipdup.models.ModelUpdate.filter(index__not_in=[index.name for index in indexes]).delete()

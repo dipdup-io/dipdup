@@ -69,7 +69,7 @@ def set_up_process() -> None:
 
 def set_up_debugger() -> None:
     """Set up debugger for the process"""
-    import debugpy  # type: ignore[import-untyped]
+    import debugpy
 
     port = int(os.environ.get('DEBUGPY_PORT', 5678))
     debugpy.listen(('0.0.0.0', port))

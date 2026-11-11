@@ -114,6 +114,8 @@ class IndexDispatcher:
         self._entrypoint_filter: set[str] = set()
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
+        self._address_prefilter_open = False
+        self._entrypoint_prefilter_open = False
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
@@ -163,6 +165,7 @@ class IndexDispatcher:
                 tasks.append(index.process())
 
             indexes_processed = any(await gather(*tasks))
+            await self._save_idle_levels()
             indexes_spawned = False
 
             while not self._ctx._pending_indexes.empty():
@@ -354,6 +357,27 @@ class IndexDispatcher:
         self._entrypoint_filter.update(entrypoints)
         self._address_filter.update(addresses)
         self._code_hash_filter.update(code_hashes)
+        self._address_prefilter_open |= index.needs_every_transaction
+        self._entrypoint_prefilter_open |= index.needs_every_entrypoint
+
+    async def _save_idle_levels(self) -> None:
+        """Save realtime levels that indexes reached without matching anything, in one statement."""
+        # NOTE: Runs between `process` calls, so no index moves its level meanwhile. Indexes rolled back by
+        # NOTE: `ctx.rollback` have the reverted level in the database already; `process` reloads it.
+        indexes = [
+            index
+            for index in self._indexes.values()
+            if index._level_unsaved and index.name not in self._ctx._rolled_back_indexes
+        ]
+        if not indexes:
+            return
+        await IndexState.bulk_update(
+            [index.state for index in indexes],
+            fields=('level', 'updated_at'),
+            batch_size=1000,
+        )
+        for index in indexes:
+            index._level_unsaved = False
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -534,9 +558,9 @@ class IndexDispatcher:
         operation_subgroups = tuple(
             extract_operation_subgroups(
                 operations,
-                addresses=self._address_filter,
-                entrypoints=self._entrypoint_filter,
-                code_hashes=self._code_hash_filter,
+                addresses=set() if self._address_prefilter_open else self._address_filter,
+                entrypoints=set() if self._entrypoint_prefilter_open else self._entrypoint_filter,
+                code_hashes=set() if self._address_prefilter_open else self._code_hash_filter,
             )
         )
 
@@ -597,8 +621,9 @@ class IndexDispatcher:
         metrics._datasource_rollbacks[datasource.name] += 1
 
         # NOTE: Choose action for each index
+        # NOTE: The in-memory level is the authoritative one: idle indexes save it with a delay, so the
+        # NOTE: database level can be lower, never higher.
         for index_name, index in self._indexes.items():
-            await index.state.refresh_from_db()
             index_level = index.state.level
 
             if index.message_type != type_:
@@ -607,7 +632,9 @@ class IndexDispatcher:
             elif datasource not in index.datasources:
                 _logger.debug('%s: different datasource, skipping', index_name)
 
-            elif to_level >= index_level:
+            # NOTE: Queued messages are not applied yet, so index level could be higher than
+            # NOTE: the persisted one; let the index decide when it reaches this message.
+            elif to_level >= index_level and not index.queue:
                 _logger.debug('%s: level is too low, skipping', index_name)
 
             else:
@@ -773,7 +800,16 @@ class DipDup:
             )
 
             if tasks:
-                await gather(*tasks)
+                try:
+                    await gather(*tasks)
+                finally:
+                    # NOTE: Cancel the survivors while the loop is running; otherwise `asyncio.run` tears them down
+                    # NOTE: after it stopped, and `shutdown_asyncgens()` collides with a websocket close still in
+                    # NOTE: flight, logging a spurious `RuntimeError: aclose()` next to the real error.
+                    for task in tasks:
+                        task.cancel()
+                    with suppress(CancelledError):
+                        await gather(*tasks, return_exceptions=True)
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():
@@ -849,6 +885,7 @@ class DipDup:
                 timeout=self._config.database.connection_timeout,
                 decimal_precision=self._config.advanced.decimal_precision,
                 unsafe_sqlite=self._config.advanced.unsafe_sqlite,
+                server_settings=self._config.database.server_settings,
             )
         )
 
@@ -1036,9 +1073,13 @@ class DipDup:
 
         migrations_dir = self._ctx.package.migrations
         try:
-            from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+            from aerich import Command as AerichCommand
 
-            tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
+            tortoise_config = get_tortoise_config(
+                self._config.database.connection_string,
+                self._config.package,
+                self._config.database.server_settings,
+            )
             aerich_command = AerichCommand(
                 tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
             )

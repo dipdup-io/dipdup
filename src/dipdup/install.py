@@ -131,6 +131,39 @@ def uninstall(quiet: bool) -> NoReturn:
     done('Done! DipDup is uninstalled.')
 
 
+def is_uv_tool(package: str) -> bool:
+    """Whether `package` is installed as a `uv tool` — the only kind `self update` can upgrade.
+
+    Determined from `uv tool dir`, which holds exactly one directory per installed tool. This is
+    more robust across uv versions than parsing `uv tool list` output or guessing from `$PATH`.
+    """
+    result = subprocess.run(
+        ('uv', 'tool', 'dir'),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return False
+    return (Path(result.stdout.strip()) / package).is_dir()
+
+
+def fail_not_uv_tool() -> NoReturn:
+    """Explain why `self update` can't proceed and how to update instead."""
+    dipdup_path = which('dipdup')
+    location = f' at `{dipdup_path}`' if dipdup_path else ''
+    echo(f'Found DipDup{location}, but it is not managed by `uv tool`.', Colors.RED)
+    echo(
+        '`dipdup self update` can only upgrade a `uv tool` installation. Update it the way it was installed:',
+        Colors.YELLOW,
+    )
+    print('    - project virtualenv:   uv pip install -U dipdup')
+    print('                            (or: uv sync --upgrade-package dipdup)')
+    print('    - pipx:                 pipx upgrade dipdup')
+    print('    - switch to uv tool:    uv tool install --force dipdup   # then `dipdup self update` will work')
+    sys.exit(1)
+
+
 def install(
     quiet: bool,
     force: bool,
@@ -158,27 +191,27 @@ def install(
     if editable:
         uv_tool_args.append('-e')
 
-    dipdup_path = which(
-        'dipdup',
-        path=os.environ['PATH'].replace('.venv', 'NULL'),
-    )
-
-    if dipdup_path is not None:
-        if version:
-            run_cmd('uv', 'tool', 'install', f'dipdup=={version}', *uv_tool_args)
-        elif update:
-            run_cmd('uv', 'tool', 'upgrade', 'dipdup', *uv_tool_args)
-    elif path:
+    # NOTE: Each branch maps to exactly one deterministic `uv` command. Order is by specificity:
+    # an explicit source (path/ref/version) wins; `update` upgrades an existing tool; else fresh install.
+    if path:
         echo(f'Installing DipDup from `{path}`')
         run_cmd('uv', 'tool', 'install', path, *uv_tool_args)
     elif ref:
         url = f'git+{GITHUB}@{ref}'
         echo(f'Installing DipDup from `{url}`')
         run_cmd('uv', 'tool', 'install', url, *uv_tool_args)
+    elif version:
+        echo(f'Installing DipDup {version}')
+        run_cmd('uv', 'tool', 'install', f'dipdup=={version}', *uv_tool_args)
+    elif update:
+        # NOTE: `uv tool upgrade` only works on a `uv tool` install; bail out with guidance otherwise.
+        if not is_uv_tool('dipdup'):
+            fail_not_uv_tool()
+        echo('Updating DipDup')
+        run_cmd('uv', 'tool', 'upgrade', 'dipdup', *uv_tool_args)
     else:
         echo('Installing DipDup from PyPI')
-        pkg = 'dipdup' if not version else f'dipdup=={version}'
-        run_cmd('uv', 'tool', 'install', pkg, *uv_tool_args)
+        run_cmd('uv', 'tool', 'install', 'dipdup', *uv_tool_args)
 
     done('Done! DipDup is ready to use. Run `dipdup` see available commands.')
 

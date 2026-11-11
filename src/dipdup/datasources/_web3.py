@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from dipdup.datasources.evm_node import EvmNodeDatasource
 
 
-async def create_web3_client(datasource: 'EvmNodeDatasource') -> 'AsyncWeb3':
+async def create_web3_client(datasource: 'EvmNodeDatasource') -> 'AsyncWeb3':  # type: ignore[type-arg]
     from web3 import AsyncWeb3
     from web3.providers.async_base import AsyncJSONBaseProvider
 

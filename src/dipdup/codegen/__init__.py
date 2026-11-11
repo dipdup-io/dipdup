@@ -205,14 +205,17 @@ class CodeGenerator(_BaseCodeGenerator, ABC):
 
         import datamodel_code_generator as dmcg
 
+        # NOTE: Not re-exported from the package root; import from the module it's defined in.
+        from datamodel_code_generator.enums import DataModelType
+
         class_name = self.get_typeclass_name(schema_path)
         self._logger.info('Generating type `%s`', class_name)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         # TODO: make it configurable
         if 'substrate' in str(output_path):
-            model_type = dmcg.DataModelType.TypingTypedDict
+            model_type = DataModelType.TypingTypedDict
         else:
-            model_type = dmcg.DataModelType.PydanticV2BaseModel
+            model_type = DataModelType.PydanticV2BaseModel
         dmcg.generate(
             input_=schema_path,
             output=output_path,

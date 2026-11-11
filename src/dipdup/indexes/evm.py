@@ -7,7 +7,7 @@ from typing import TypeVar
 
 from dipdup.config.evm import EvmContractConfig
 from dipdup.datasources.evm_node import EvmNodeDatasource
-from dipdup.datasources.evm_subsquid import EvmSubsquidDatasource
+from dipdup.datasources.evm_subsquid import _AbstractEvmSubsquidDatasource
 from dipdup.exceptions import ConfigurationError
 from dipdup.index import IndexQueueItemT
 from dipdup.indexes._subsquid import SubsquidIndex
@@ -57,6 +57,6 @@ class EvmIndex(
         datasources: tuple[DatasourceT, ...],
     ) -> None:
         super().__init__(ctx, config, datasources)
-        self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, EvmSubsquidDatasource))
+        self.subsquid_datasources = tuple(d for d in datasources if isinstance(d, _AbstractEvmSubsquidDatasource))
         self.node_datasources = tuple(d for d in datasources if isinstance(d, EvmNodeDatasource))
         self._abis = ctx.package._evm_abis

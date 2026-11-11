@@ -136,7 +136,7 @@ def red_echo(message: str) -> None:
     echo(message, err=True, fg='red')
 
 
-def _print_help_atexit(error: Exception, report_id: str) -> None:
+def _print_help_atexit(error: Exception, report_id: str | None) -> None:
     """Prints a helpful error message after the traceback"""
     import atexit
     import traceback
@@ -161,7 +161,8 @@ def _print_help_atexit(error: Exception, report_id: str) -> None:
             else:
                 echo(Error.default_help(), err=True)
 
-        echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
+        if report_id:
+            echo(f'Report saved; run `dipdup report show {report_id}` to view it', err=True)
 
     atexit.register(_print)
 
@@ -189,16 +190,15 @@ def _cli_wrapper(fn: WrappedCommandT) -> WrappedCommandT:
             uvloop.run(fn(ctx, *args, **kwargs))
         except (KeyboardInterrupt, asyncio.CancelledError):
             pass
+        except click.UsageError:
+            raise
         except Exception as e:
-            if isinstance(e, click.UsageError):
-                raise
-
             from dipdup.report import save_report
 
             package = ctx.obj.config.package if ctx.obj else 'unknown'
             report_id = save_report(package, e)
             _print_help_atexit(e, report_id)
-            raise e
+            raise
 
         # NOTE: If indexing was interrupted by signal, save report with just performance metrics.
         if fn.__name__ == 'run' and not env.TEST:
@@ -690,6 +690,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
                 url=config.database.connection_string,
                 models=config.package,
                 timeout=config.database.connection_timeout,
+                server_settings=config.database.server_settings,
             )
         )
         await stack.enter_async_context(hasura_gateway)
@@ -730,11 +731,15 @@ async def schema(ctx: click.Context) -> None:
             Run `dipdup schema init` or `dipdup run` to the run the indexer and it'll be initialized automatically."""
         )
 
-    from aerich import Command as AerichCommand  # type: ignore[import-untyped]
+    from aerich import Command as AerichCommand
 
     from dipdup.database import get_tortoise_config
 
-    tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
+    tortoise_config = get_tortoise_config(
+        config.database.connection_string,
+        config.package,
+        config.database.server_settings,
+    )
     aerich_command = AerichCommand(tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix())
     await aerich_command.init()
 
@@ -761,13 +766,13 @@ def _approve_schema_after(command: click.Command) -> click.Command:
 # NOTE: Saving 0.45s on imports and hiding from reference
 if 'schema' in sys.argv:
     try:
-        from aerich.cli import cli as aerich_cli  # type: ignore[import-untyped]
+        from aerich.cli import cli as aerich_cli
 
-        schema.add_command(aerich_cli.commands['history'])
-        schema.add_command(aerich_cli.commands['heads'])
-        schema.add_command(aerich_cli.commands['migrate'])
-        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))
-        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))
+        schema.add_command(aerich_cli.commands['history'])  # type: ignore
+        schema.add_command(aerich_cli.commands['heads'])  # type: ignore
+        schema.add_command(aerich_cli.commands['migrate'])  # type: ignore
+        schema.add_command(_approve_schema_after(aerich_cli.commands['upgrade']))  # type: ignore
+        schema.add_command(_approve_schema_after(aerich_cli.commands['downgrade']))  # type: ignore
     except ImportError:
         _logger.debug('aerich is not installed, skipping database migration commands')
 
@@ -793,6 +798,7 @@ async def schema_approve(ctx: click.Context) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        server_settings=config.database.server_settings,
     ):
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
@@ -827,6 +833,10 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
     immune_tables = set() if immune else config.database.immune_tables
 
     if isinstance(config.database, SqliteDatabaseConfig):
+        if config.database.path == ':memory:':
+            _logger.warning('Attempted to wipe in-memory database; no action required')
+            return
+
         message = 'Support for immune tables in SQLite is experimental and requires `advanced.unsafe_sqlite` flag set'
         if config.advanced.unsafe_sqlite:
             immune_tables = immune_tables | ALWAYS_IMMUNE_TABLES
@@ -864,6 +874,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
         unsafe_sqlite=config.advanced.unsafe_sqlite,
+        server_settings=config.database.server_settings,
     ):
         conn = get_connection()
         await wipe_schema(
@@ -942,6 +953,7 @@ async def schema_export(ctx: click.Context) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        server_settings=config.database.server_settings,
     ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
