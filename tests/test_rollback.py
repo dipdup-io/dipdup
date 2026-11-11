@@ -6,6 +6,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
+import pytest
 from tortoise.expressions import F
 
 import demo_tezos_domains.models as domains_models
@@ -239,6 +240,29 @@ async def test_rollback_stops_on_ignored_reindex() -> None:
 
         schema = await Schema.filter(name=config.database.schema_name).get()
         assert schema.reindex == ReindexingReason.rollback
+
+
+async def test_rollback_is_atomic_when_connection_is_lost() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        await Index.create(name='test', type=IndexType.tezos_operations, config_hash='', level=1001)
+        async with dipdup._transactions.in_transaction(level=1001, index='test'):
+            await hen_models.Holder(address='tz1deadbeaf').save()
+
+        # NOTE: The connection is lost when the index level is rewound
+        with patch('dipdup.context.Index') as index_model:
+            index_model.filter.side_effect = ConnectionError
+            with pytest.raises(ConnectionError):
+                await dipdup._ctx.rollback(index='test', from_level=1001, to_level=1000)
+
+        # NOTE: Either everything is reverted or nothing is; reverted rows under level 1001 would be skipped on restart
+        holders = await hen_models.Holder.filter().count()
+        updates = await ModelUpdate.filter().count()
+        level = (await Index.filter(name='test').get()).level
+        assert (holders, updates, level) == (1, 1, 1001)
 
 
 async def test_optionals() -> None:

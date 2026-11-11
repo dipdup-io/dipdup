@@ -44,9 +44,20 @@ class TransactionManager:
         index: str | None = None,
     ) -> AsyncIterator[None]:
         """Enforce using transaction for all queries inside wrapped block. Works for a single DB only."""
+        name = f'index `{index}` at level {level}' if index else 'transaction'
+        with watchdog.watch(WatchdogTrigger.transaction, name):
+            async with self._in_transaction(level, sync_level, index):
+                yield
+
+    @asynccontextmanager
+    async def _in_transaction(
+        self,
+        level: int | None,
+        sync_level: int | None,
+        index: str | None,
+    ) -> AsyncIterator[None]:
         error: Exception | None = None
         try:
-            watchdog.heartbeat(WatchdogTrigger.transaction)
             original_conn = get_connection()
             async with in_transaction() as conn:
                 try:
@@ -80,7 +91,6 @@ class TransactionManager:
         finally:
             self._transaction = None
             set_connection(original_conn)
-            watchdog.reset(WatchdogTrigger.transaction)
 
     async def _commit(self) -> None:
         """Save pending updates to DB in the same order as they were added"""

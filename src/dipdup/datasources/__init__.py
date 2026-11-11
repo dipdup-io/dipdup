@@ -14,10 +14,12 @@ from pysignalr.exceptions import HubError
 from pysignalr.messages import CompletionMessage
 from websockets.exceptions import WebSocketException
 
+import dipdup.watchdog
 from dipdup.config import DatasourceConfig
 from dipdup.config import HttpConfig
 from dipdup.config import IndexConfig
 from dipdup.config import ResolvedHttpConfig
+from dipdup.config import WatchdogTrigger
 from dipdup.config.evm import EvmContractConfig
 from dipdup.config.starknet import StarknetContractConfig
 from dipdup.exceptions import DatasourceError
@@ -154,6 +156,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
     async def _on_connected(self) -> None:
         self._logger.info('Realtime connection established')
         self._ws_connected_event.set()
+        self._heartbeat()
         # NOTE: Subscribing here will block WebSocket loop, don't do it.
         await self.emit_connected()
 
@@ -166,8 +169,23 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         if self._subscriptions.confirmed:
             self._ws_failures = 0
         self._logger.info('Realtime connection lost, resetting subscriptions')
+        dipdup.watchdog.watchdog.reset(WatchdogTrigger.websocket, self._watchdog_name)
         self._subscriptions.reset()
         await self.emit_disconnected()
+
+    @property
+    def _watchdog_name(self) -> str:
+        return f'datasource `{self.name}`'
+
+    def _heartbeat(self) -> None:
+        """Mark the realtime connection as delivering messages"""
+        # NOTE: Without subscriptions there is nothing to receive, e.g. `realtime: true` datasource no index uses
+        if not self._subscriptions.empty:
+            dipdup.watchdog.watchdog.heartbeat(WatchdogTrigger.websocket, self._watchdog_name)
+
+    async def _on_ws_message(self, message: Message) -> None:
+        self._heartbeat()
+        await self._on_message(message)
 
     def _ws_callback(self, fn: Callable[..., Awaitable[None]]) -> Callable[..., Awaitable[None]]:
         """Wrap a callback passed to the transport, so that `_ws_loop` doesn't mistake its errors for connection failures"""
@@ -193,7 +211,7 @@ class WebsocketDatasource(IndexDatasource[DatasourceConfigT]):
         self._ws_client = WebsocketTransport(
             url=url,
             protocol=WebsocketProtocol(),
-            callback=self._ws_callback(self._on_message),
+            callback=self._ws_callback(self._on_ws_message),
             skip_negotiation=True,
             connection_timeout=self._http_config.connection_timeout,
             # NOTE: Reconnects are handled by `_ws_loop`
