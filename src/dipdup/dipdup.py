@@ -115,6 +115,7 @@ class IndexDispatcher:
         self._address_filter: set[str] = set()
         self._code_hash_filter: set[int] = set()
         self._address_prefilter_open = False
+        self._entrypoint_prefilter_open = False
         # NOTE: Monitoring purposes
         self._initial_levels: defaultdict[str, int] = defaultdict(int)
         self._previous_levels: defaultdict[str, int] = defaultdict(int)
@@ -356,6 +357,7 @@ class IndexDispatcher:
         self._address_filter.update(addresses)
         self._code_hash_filter.update(code_hashes)
         self._address_prefilter_open |= index.needs_every_transaction
+        self._entrypoint_prefilter_open |= index.needs_every_entrypoint
 
     def _every_index_is(self, status: IndexStatus) -> bool:
         if not self._indexes:
@@ -537,7 +539,7 @@ class IndexDispatcher:
             extract_operation_subgroups(
                 operations,
                 addresses=set() if self._address_prefilter_open else self._address_filter,
-                entrypoints=self._entrypoint_filter,
+                entrypoints=set() if self._entrypoint_prefilter_open else self._entrypoint_filter,
                 code_hashes=set() if self._address_prefilter_open else self._code_hash_filter,
             )
         )

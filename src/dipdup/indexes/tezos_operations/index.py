@@ -49,7 +49,8 @@ def entrypoint_filter(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> set
         for pattern_config in handler_config.pattern:
             if not isinstance(pattern_config, TransactionPatternConfig):
                 continue
-            entrypoints.add(pattern_config.entrypoint or DEFAULT_ENTRYPOINT)
+            if pattern_config.entrypoint:
+                entrypoints.add(pattern_config.entrypoint)
 
     return entrypoints
 
@@ -114,6 +115,15 @@ def has_open_transaction_pattern(handlers: tuple[TezosOperationsHandlerConfig, .
                 continue
             contracts = (pattern_config.source, pattern_config.destination)
             if not any(c and (c.address or c.resolved_code_hash) for c in contracts):
+                return True
+    return False
+
+
+def has_any_entrypoint_pattern(handlers: tuple[TezosOperationsHandlerConfig, ...]) -> bool:
+    """Whether any transaction pattern matches regardless of entrypoint"""
+    for handler_config in handlers:
+        for pattern_config in handler_config.pattern:
+            if isinstance(pattern_config, TransactionPatternConfig) and not pattern_config.entrypoint:
                 return True
     return False
 
@@ -191,6 +201,13 @@ class TezosOperationsIndex(
             return True
         return has_open_transaction_pattern(self._config.handlers)
 
+    @property
+    def needs_every_entrypoint(self) -> bool:
+        """Whether the index needs transactions regardless of their entrypoint"""
+        if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
+            return True
+        return has_any_entrypoint_pattern(self._config.handlers)
+
     async def get_filters(self) -> tuple[set[str], set[str], set[int]]:
         """Entrypoints, addresses and code hashes to prefilter transactions with"""
         if isinstance(self._config, TezosOperationsUnfilteredIndexConfig):
@@ -204,6 +221,9 @@ class TezosOperationsIndex(
 
         self._entrypoint_filter = entrypoint_filter(self._config.handlers)
         self._address_filter = address_filter(self._config.handlers)
+
+        if self.needs_every_entrypoint:
+            self._entrypoint_filter.clear()
 
         if self.needs_every_transaction:
             self._address_filter.clear()
