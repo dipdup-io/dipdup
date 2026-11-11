@@ -656,7 +656,9 @@ class DipDupContext:
                 model = getattr(models, update.model_name)
                 await update.revert(model)
 
-        await Index.filter(name=index).update(level=to_level)
+            # NOTE: Rewind in the same transaction, or a lost connection leaves reverted rows under the old level
+            await Index.filter(name=index).update(level=to_level)
+
         self._rolled_back_indexes.add(index)
 
     async def _hooks_loop(self) -> None:
