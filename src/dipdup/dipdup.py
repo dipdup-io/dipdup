@@ -864,6 +864,7 @@ class DipDup:
                 timeout=self._config.database.connection_timeout,
                 decimal_precision=self._config.advanced.decimal_precision,
                 unsafe_sqlite=self._config.advanced.unsafe_sqlite,
+                server_settings=self._config.database.server_settings,
             )
         )
 
@@ -1053,7 +1054,11 @@ class DipDup:
         try:
             from aerich import Command as AerichCommand
 
-            tortoise_config = get_tortoise_config(self._config.database.connection_string, self._config.package)
+            tortoise_config = get_tortoise_config(
+                self._config.database.connection_string,
+                self._config.package,
+                self._config.database.server_settings,
+            )
             aerich_command = AerichCommand(
                 tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix()
             )

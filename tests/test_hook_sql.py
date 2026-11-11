@@ -68,6 +68,25 @@ async def test_dedicated_connection_does_not_wait_for_shared_one(
         assert await _probe_ids() == [1, 2]
 
 
+async def test_dedicated_connection_gets_server_settings(
+    sql_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    database = (await run_postgres_container()).config
+    database.schema_name = SCHEMA_NAME
+    database.server_settings = {'work_mem': '7MB'}
+    (sql_dir / '03_setting.sql').write_text(
+        "CREATE TABLE probe_setting AS SELECT current_setting('work_mem') AS value;"
+    )
+
+    async with AsyncExitStack() as stack:
+        ctx = await _create_ctx(database, stack, sql_dir, monkeypatch)
+        await ctx.execute_sql_script('probe', dedicated_connection=True)
+
+        _, rows = await get_connection().execute_query(f'SELECT value FROM {SCHEMA_NAME}.probe_setting')
+        assert rows[0]['value'] == '7MB'
+
+
 async def test_dedicated_connection_refused_inside_transaction(
     sql_dir: Path,
     monkeypatch: pytest.MonkeyPatch,

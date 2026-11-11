@@ -8,6 +8,7 @@ import logging
 from collections.abc import AsyncIterator
 from collections.abc import Iterable
 from collections.abc import Iterator
+from collections.abc import Mapping
 from contextlib import asynccontextmanager
 from contextlib import suppress
 from functools import cache
@@ -60,7 +61,11 @@ def set_connection(conn: SupportedClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
-def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[str, Any]:
+def get_tortoise_config(
+    db_url: str,
+    project_models: str | None = None,
+    server_settings: Mapping[str, str | int | float | bool] | None = None,
+) -> dict[str, Any]:
     """Get Tortoise config for the given URL and internal, aerich and project models"""
     from tortoise.backends.base.config_generator import generate_config
 
@@ -83,7 +88,19 @@ def get_tortoise_config(db_url: str, project_models: str | None = None) -> dict[
 
     app_modules['models'] = models
 
-    return generate_config(db_url=db_url, app_modules=app_modules)
+    config = generate_config(db_url=db_url, app_modules=app_modules, connection_label=DEFAULT_CONNECTION_NAME)
+    if server_settings:
+        config['connections'][DEFAULT_CONNECTION_NAME]['credentials']['server_settings'] = {
+            key: _format_server_setting(value) for key, value in server_settings.items()
+        }
+    return config
+
+
+def _format_server_setting(value: str | int | float | bool) -> str:
+    # NOTE: asyncpg accepts only strings; `bool` is a subclass of `int`, so check it first
+    if isinstance(value, bool):
+        return 'on' if value else 'off'
+    return str(value)
 
 
 @asynccontextmanager
@@ -93,6 +110,7 @@ async def tortoise_wrapper(
     timeout: int = 60,
     decimal_precision: int | None = None,
     unsafe_sqlite: bool = False,
+    server_settings: Mapping[str, str | int | float | bool] | None = None,
 ) -> AsyncIterator[None]:
     """Initialize Tortoise with internal and project models, close connections when done"""
     if ':memory' in url:
@@ -108,7 +126,7 @@ async def tortoise_wrapper(
     try:
         for attempt in range(timeout):
             try:
-                await Tortoise.init(config=get_tortoise_config(url, models))
+                await Tortoise.init(config=get_tortoise_config(url, models, server_settings))
 
                 conn = get_connection()
                 try:
@@ -241,6 +259,10 @@ async def dedicated_connection(config: 'DatabaseConfigU') -> AsyncIterator[Suppo
         return
 
     credentials = expand_db_url(config.connection_string)['credentials']
+    if config.server_settings:
+        credentials['server_settings'] = {
+            key: _format_server_setting(value) for key, value in config.server_settings.items()
+        }
     dedicated = AsyncpgClient(connection_name='dedicated', **credentials)
     await dedicated.create_connection(with_db=True)
     try:

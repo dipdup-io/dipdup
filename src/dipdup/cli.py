@@ -690,6 +690,7 @@ async def hasura_configure(ctx: click.Context, force: bool) -> None:
                 url=config.database.connection_string,
                 models=config.package,
                 timeout=config.database.connection_timeout,
+                server_settings=config.database.server_settings,
             )
         )
         await stack.enter_async_context(hasura_gateway)
@@ -734,7 +735,11 @@ async def schema(ctx: click.Context) -> None:
 
     from dipdup.database import get_tortoise_config
 
-    tortoise_config = get_tortoise_config(config.database.connection_string, config.package)
+    tortoise_config = get_tortoise_config(
+        config.database.connection_string,
+        config.package,
+        config.database.server_settings,
+    )
     aerich_command = AerichCommand(tortoise_config=tortoise_config, app='models', location=migrations_dir.as_posix())
     await aerich_command.init()
 
@@ -793,6 +798,7 @@ async def schema_approve(ctx: click.Context) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        server_settings=config.database.server_settings,
     ):
         await Schema.filter(name=config.schema_name).update(
             reindex=None,
@@ -868,6 +874,7 @@ async def schema_wipe(ctx: click.Context, immune: bool, force: bool) -> None:
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
         unsafe_sqlite=config.advanced.unsafe_sqlite,
+        server_settings=config.database.server_settings,
     ):
         conn = get_connection()
         await wipe_schema(
@@ -946,6 +953,7 @@ async def schema_export(ctx: click.Context) -> None:
         models=models,
         timeout=config.database.connection_timeout,
         decimal_precision=config.advanced.decimal_precision,
+        server_settings=config.database.server_settings,
     ):
         conn = get_connection()
         output = get_schema_sql(conn, False) + '\n'
