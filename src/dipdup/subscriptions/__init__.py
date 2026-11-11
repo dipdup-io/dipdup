@@ -23,6 +23,10 @@ class SubscriptionManager:
         """Whether there is at least one subscription and every one has a sync level"""
         return len(self._subscriptions) > 1 and not self.missing_subscriptions
 
+    @property
+    def empty(self) -> bool:
+        return self._subscriptions.keys() == {None}
+
     def add(self, subscription: Subscription) -> None:
         if subscription not in self._subscriptions:
             self._subscriptions[subscription] = None
