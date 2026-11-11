@@ -584,6 +584,7 @@ async def test_realtime_pass_is_bounded() -> None:
         dipdup = await create_dummy_dipdup(config, stack)
         index = await spawn_index(dipdup, 'mainnet_head')
         await index._update_state(status=IndexStatus.realtime, level=1000)
+        index.random_datasource.set_sync_level(None, 1000)
 
         # NOTE: Both the shared loop and the one `tezos.head` overrides must return before the queue is empty
         for process_queue in (BaseIndex._process_queue, type(index)._process_queue):
@@ -600,6 +601,34 @@ async def test_realtime_pass_is_bounded() -> None:
 
                 while index.queue:
                     await process_queue(index)
+
+
+async def test_realtime_pass_continues_below_sync_level() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.initialize()
+
+    async def slow_handler(*args: Any, **kwargs: Any) -> None:
+        await asyncio.sleep(0.01)
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1000)
+        # NOTE: The datasource has resubscribed at 1003 while the index was working through its queue
+        index.random_datasource.set_sync_level(None, 1003)
+
+        for level in range(1001, 1007):
+            index.push_realtime_message(SimpleNamespace(level=level))
+
+        with (
+            patch.object(dipdup._ctx, 'fire_handler', slow_handler),
+            patch('dipdup.indexes.tezos_head.index.REALTIME_PASS_BUDGET', 0.001),
+        ):
+            await index._process_queue()
+
+        # NOTE: Stopping earlier would make the next pass resync to 1003 and drop the queued 1002 and 1003
+        assert index.state.level == 1003
+        assert len(index.queue) == 3
 
 
 async def test_dispatcher_does_not_idle_with_backlog() -> None:

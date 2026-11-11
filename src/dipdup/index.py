@@ -97,12 +97,16 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         level_data: Any,
     ) -> deque[Any]: ...
 
+    def _is_pass_over(self, deadline: float) -> bool:
+        # NOTE: Below the sync level, the next pass would resync and drop the messages left in the queue
+        return time.monotonic() >= deadline and self.state.level >= self.get_sync_level()
+
     async def _process_queue(self) -> None:
         """Process WebSocket queue"""
         if self.queue:
             self._logger.debug('Processing websocket queue')
         deadline = time.monotonic() + REALTIME_PASS_BUDGET
-        while self.queue and time.monotonic() < deadline:
+        while self.queue and not self._is_pass_over(deadline):
             message = self.queue.popleft()
             if not message:
                 raise FrameworkException('Empty message in the queue')

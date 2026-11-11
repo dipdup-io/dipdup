@@ -25,7 +25,7 @@ class TezosHeadIndex(
     # FIXME: Use method from Index
     async def _process_queue(self) -> None:
         deadline = time.monotonic() + REALTIME_PASS_BUDGET
-        while self._queue and time.monotonic() < deadline:
+        while self._queue and not self._is_pass_over(deadline):
             message = self._queue.popleft()
             if isinstance(message, RollbackMessage):
                 await self._rollback(message.from_level, message.to_level)
