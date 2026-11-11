@@ -1,5 +1,7 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
+from unittest.mock import AsyncMock
+from unittest.mock import patch
 
 from tortoise.expressions import F
 
@@ -504,3 +506,26 @@ async def test_outdated_rollback() -> None:
         await index._process_queue()
 
         assert index.state.level == 1000
+
+
+async def test_rollback_survives_resync() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.advanced.rollback_depth = 2
+    config.initialize()
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1000)
+
+        # NOTE: A reorg is queued, then the datasource resubscribes above the index level
+        index.push_realtime_message(RollbackMessage(1000, 998))
+        for subscription in index._config.get_subscriptions():
+            index.random_datasource.set_sync_level(subscription, 1005)
+
+        with patch.object(index, '_rollback', AsyncMock(wraps=index._rollback)) as rollback:
+            await index.process()
+
+        rollback.assert_awaited_once_with(1000, 998)
+        assert index.state.level == 1005
+        assert not index.queue
