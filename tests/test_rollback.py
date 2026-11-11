@@ -1,5 +1,6 @@
 from contextlib import AsyncExitStack
 from datetime import datetime
+from typing import Any
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
@@ -509,13 +510,20 @@ async def test_outdated_rollback() -> None:
 
 
 async def test_rollback_survives_resync() -> None:
-    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_nft_marketplace.yaml'])
     config.advanced.rollback_depth = 2
+    # NOTE: An index with `last_level` is oneshot and never reads the queue
+    config.indexes['hen_mainnet'].last_level = 0  # type: ignore[misc]
     config.initialize()
 
     async with AsyncExitStack() as stack:
         dipdup = await create_dummy_dipdup(config, stack)
-        index = await spawn_index(dipdup, 'mainnet_head')
+        index = await spawn_index(dipdup, 'hen_mainnet')
+        in_transaction = dipdup._transactions.in_transaction
+
+        for level in (998, 999, 1000):
+            async with in_transaction(level=level, index=index.name):
+                await hen_models.Holder(address=str(level)).save()
         await index._update_state(status=IndexStatus.realtime, level=1000)
 
         # NOTE: A reorg is queued, then the datasource resubscribes above the index level
@@ -523,9 +531,16 @@ async def test_rollback_survives_resync() -> None:
         for subscription in index._config.get_subscriptions():
             index.random_datasource.set_sync_level(subscription, 1005)
 
-        with patch.object(index, '_rollback', AsyncMock(wraps=index._rollback)) as rollback:
+        synced_from: dict[str, Any] = {}
+
+        async def synchronize(sync_level: int) -> None:
+            synced_from['level'] = index.state.level
+            synced_from['holders'] = sorted(await hen_models.Holder.all().values_list('address', flat=True))
+            await index._update_state(status=IndexStatus.realtime, level=sync_level)
+
+        with patch.object(index, '_synchronize', AsyncMock(side_effect=synchronize)):
             await index.process()
 
-        rollback.assert_awaited_once_with(1000, 998)
+        assert synced_from == {'level': 998, 'holders': ['998']}
         assert index.state.level == 1005
         assert not index.queue
