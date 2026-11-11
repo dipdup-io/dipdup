@@ -270,7 +270,11 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         if index_level < sync_level:
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
-            self.queue.clear()
+            # NOTE: Data messages are fetched again by the sync; a rollback is not, and must be applied first
+            while self.queue:
+                message = self.queue.popleft()
+                if isinstance(message, RollbackMessage):
+                    await self._rollback(message.from_level, message.to_level)
 
             with metrics._index_total_sync_duration.time():
                 await self._synchronize(sync_level)

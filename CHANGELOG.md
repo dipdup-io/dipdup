@@ -23,6 +23,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
+- index: A chain reorg received while the index is falling behind the datasource is no longer dropped when the index resyncs, which left the data of the orphaned blocks in the database.
 - index: An index that can't keep up with the chain in realtime no longer holds back all other indexes; it yields to them after a second of processing its queue and continues on the next pass.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
