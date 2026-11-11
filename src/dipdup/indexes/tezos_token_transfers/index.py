@@ -17,19 +17,21 @@ class TezosTokenTransfersIndex(
     message_type=TezosTzktMessageType.token_transfer,
 ):
     def _create_fetcher(self, first_level: int, last_level: int) -> TokenTransferFetcher:
-        token_addresses: set[str] = set()
-        token_ids: set[int] = set()
-        from_addresses: set[str] = set()
-        to_addresses: set[str] = set()
-        for handler_config in self._config.handlers:
-            if handler_config.contract:
-                token_addresses.add(handler_config.contract.get_address())
-            if handler_config.token_id is not None:
-                token_ids.add(handler_config.token_id)
-            if handler_config.from_:
-                from_addresses.add(handler_config.from_.get_address())
-            if handler_config.to:
-                to_addresses.add(handler_config.to.get_address())
+        handlers = self._config.handlers
+        token_addresses = {h.contract.get_address() for h in handlers if h.contract}
+        token_ids = {h.token_id for h in handlers if h.token_id is not None}
+        from_addresses = {h.from_.get_address() for h in handlers if h.from_}
+        to_addresses = {h.to.get_address() for h in handlers if h.to}
+
+        # NOTE: TzKT combines filters with AND; one is valid only when every handler sets that field
+        if not all(h.contract for h in handlers):
+            token_addresses = set()
+        if not all(h.token_id is not None for h in handlers):
+            token_ids = set()
+        if not all(h.from_ for h in handlers):
+            from_addresses = set()
+        if not all(h.to for h in handlers):
+            to_addresses = set()
 
         return TokenTransferFetcher(
             name=self.name,
