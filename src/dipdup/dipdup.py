@@ -199,7 +199,7 @@ class IndexDispatcher:
                 on_realtime_fired = False
 
             # NOTE: An index that left messages in its queue must not wait; it would fall behind forever
-            has_backlog = any(index._queue for index in self._indexes.values())
+            has_backlog = any(index._queue and index.is_active for index in self._indexes.values())
             await asyncio.sleep(0 if has_backlog else INDEX_DISPATCHER_INTERVAL)
 
     def is_oneshot(self) -> bool:

@@ -637,3 +637,34 @@ async def test_dispatcher_does_not_idle_with_backlog() -> None:
                         await asyncio.sleep(0.01)
             finally:
                 task.cancel()
+
+
+async def test_dispatcher_idles_with_backlog_of_disabled_index() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.initialize()
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.disabled, level=1000)
+        dispatcher = dipdup._index_dispatcher
+
+        # NOTE: Datasources push to disabled indexes too, and nothing reads their queues
+        index.push_realtime_message(SimpleNamespace(level=1001))
+
+        subscribe = AsyncMock()
+        with (
+            patch.object(dispatcher, '_load_index_state', AsyncMock()),
+            patch.object(dispatcher, '_subscribe_to_datasource_events', AsyncMock()),
+            patch.object(dispatcher, 'is_oneshot', lambda: False),
+            patch.object(type(index.random_datasource), 'subscribe', subscribe),
+            patch('dipdup.dipdup.INDEX_DISPATCHER_INTERVAL', 0.05),
+        ):
+            start_datasources_event, start_scheduler_event = asyncio.Event(), asyncio.Event()
+            start_datasources_event.set()
+            task = asyncio.create_task(dispatcher.run(start_datasources_event, start_scheduler_event))
+            await asyncio.sleep(0.5)
+            task.cancel()
+
+        # NOTE: One call per dispatcher pass; a loop that never idles makes thousands
+        assert subscribe.await_count < 50
