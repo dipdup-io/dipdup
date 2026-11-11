@@ -1,8 +1,10 @@
+import time
 from collections import deque
 from typing import Any
 
 from dipdup.config.tezos_head import TezosHeadIndexConfig
 from dipdup.exceptions import FrameworkException
+from dipdup.index import REALTIME_PASS_BUDGET
 from dipdup.indexes.tezos_tzkt import TezosIndex
 from dipdup.models import IndexStatus
 from dipdup.models import RollbackMessage
@@ -22,7 +24,8 @@ class TezosHeadIndex(
 
     # FIXME: Use method from Index
     async def _process_queue(self) -> None:
-        while self._queue:
+        deadline = time.monotonic() + REALTIME_PASS_BUDGET
+        while self._queue and time.monotonic() < deadline:
             message = self._queue.popleft()
             if isinstance(message, RollbackMessage):
                 await self._rollback(message.from_level, message.to_level)

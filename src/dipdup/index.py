@@ -31,6 +31,9 @@ IndexConfigT = TypeVar('IndexConfigT', bound=ResolvedIndexConfigU)
 IndexQueueItemT = TypeVar('IndexQueueItemT', bound=Any)
 IndexDatasourceT = TypeVar('IndexDatasourceT', bound=IndexDatasource[Any])
 
+# NOTE: The dispatcher waits for every index, so one that can't keep up must not drain its queue forever
+REALTIME_PASS_BUDGET = 1.0
+
 
 @dataclass
 class MatchedHandler:
@@ -98,7 +101,8 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         """Process WebSocket queue"""
         if self.queue:
             self._logger.debug('Processing websocket queue')
-        while self.queue:
+        deadline = time.monotonic() + REALTIME_PASS_BUDGET
+        while self.queue and time.monotonic() < deadline:
             message = self.queue.popleft()
             if not message:
                 raise FrameworkException('Empty message in the queue')

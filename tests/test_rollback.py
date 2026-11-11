@@ -1,5 +1,7 @@
+import asyncio
 from contextlib import AsyncExitStack
 from datetime import datetime
+from unittest.mock import patch
 
 from tortoise.expressions import F
 
@@ -9,6 +11,7 @@ from dipdup.config import DipDupConfig
 from dipdup.config import ReindexingAction
 from dipdup.config import ReindexingReason
 from dipdup.context import HookContext
+from dipdup.index import Index as BaseIndex
 from dipdup.models import Index
 from dipdup.models import IndexStatus
 from dipdup.models import IndexType
@@ -504,3 +507,32 @@ async def test_outdated_rollback() -> None:
         await index._process_queue()
 
         assert index.state.level == 1000
+
+
+async def test_realtime_pass_is_bounded() -> None:
+    config = DipDupConfig.load([TEST_CONFIGS / 'demo_tezos_head.yaml'])
+    config.initialize()
+
+    async def slow_rollback(from_level: int, to_level: int) -> None:
+        await asyncio.sleep(0.02)
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        index = await spawn_index(dipdup, 'mainnet_head')
+        await index._update_state(status=IndexStatus.realtime, level=1000)
+
+        # NOTE: Both the shared loop and the one `tezos.head` overrides must return before the queue is empty
+        for process_queue in (BaseIndex._process_queue, type(index)._process_queue):
+            for _ in range(10):
+                index.push_realtime_message(RollbackMessage(1005, 1002))
+
+            with (
+                patch.object(index, '_rollback', slow_rollback),
+                patch('dipdup.index.REALTIME_PASS_BUDGET', 0.05),
+                patch('dipdup.indexes.tezos_head.index.REALTIME_PASS_BUDGET', 0.05),
+            ):
+                await process_queue(index)
+                assert 0 < len(index.queue) < 10
+
+                while index.queue:
+                    await process_queue(index)
