@@ -54,6 +54,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - watchdog: The `websocket` trigger is now armed by default: if an open realtime connection delivers no messages for its timeout (60 seconds unless configured), DipDup warns about it; a datasource without subscriptions is not watched. Previously DipDup never armed it, so it did not fire. If you set `websocket: action: exception`, such a silence now stops the indexer.
 - watchdog: `ctx.watchdog.heartbeat(trigger)` and `ctx.watchdog.reset(trigger)` without a name act on the callbacks or transactions of that trigger watched in the calling code and the tasks it spawns, not on every callback or transaction at once. Inside a watched callback or transaction with none of that kind running, a name-less heartbeat does nothing: for example, `heartbeat(WatchdogTrigger.transaction)` in a non-atomic hook or `heartbeat(WatchdogTrigger.websocket)` in any callback. Outside any watched callback or transaction, the trigger keeps a single countdown as before.
 
+### Performance
+
+- index: Indexes that match nothing at a realtime level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
+
 ## [8.6.2] - 2026-09-23
 
 ### Fixed
