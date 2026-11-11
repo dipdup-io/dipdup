@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
+- context: `ctx.execute_sql_script(..., dedicated_connection=True)` runs the scripts on a separate PostgreSQL connection, so a long statement like `REFRESH MATERIALIZED VIEW` in a job no longer pauses indexing.
 - watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
 - watchdog: `ctx.watchdog.heartbeat` and `ctx.watchdog.reset` accept an optional `name` to keep a separate countdown for each name.
 
