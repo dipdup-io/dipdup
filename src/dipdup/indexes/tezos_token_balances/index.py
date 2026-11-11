@@ -24,12 +24,15 @@ class TezosTokenBalancesIndex(
         """Retrieve data for the current level"""
         # TODO: think about logging and metrics
 
-        addresses, token_ids = set(), set()
-        for handler in self._config.handlers:
-            if handler.contract and handler.contract.address is not None:
-                addresses.add(handler.contract.address)
-            if handler.token_id is not None:
-                token_ids.add(handler.token_id)
+        handlers = self._config.handlers
+        addresses = {h.contract.address for h in handlers if h.contract and h.contract.address is not None}
+        token_ids = {h.token_id for h in handlers if h.token_id is not None}
+
+        # NOTE: TzKT combines filters with AND; one is valid only when every handler sets that field
+        if not all(h.contract and h.contract.address is not None for h in handlers):
+            addresses = set()
+        if not all(h.token_id is not None for h in handlers):
+            token_ids = set()
 
         async with self._ctx.transactions.in_transaction(head_level, head_level, self.name):
             # NOTE: If index is out of date fetch balances as of the current head.

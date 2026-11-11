@@ -945,6 +945,12 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         limit: int | None = None,
     ) -> tuple[TezosTokenTransferData, ...]:
         """Get token transfers for contract"""
+        filters = {
+            'token.contract.in': ','.join(token_addresses),
+            'token.tokenId.in': ','.join(str(token_id) for token_id in token_ids),
+            'from.in': ','.join(from_addresses),
+            'to.in': ','.join(to_addresses),
+        }
         params = self._get_request_params(
             first_level,
             last_level,
@@ -953,12 +959,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             select=TOKEN_TRANSFER_FIELDS,
             values=True,
             cursor=True,
-            **{
-                'token.contract.in': ','.join(token_addresses),
-                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
-                'from.in': ','.join(from_addresses),
-                'to.in': ','.join(to_addresses),
-            },
+            **{name: value for name, value in filters.items() if value},
         )
         raw_token_transfers = await self._request_values_dict('get', url='v1/tokens/transfers', params=params)
         return tuple(TezosTokenTransferData.from_json(item) for item in raw_token_transfers)
@@ -994,6 +995,10 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
         offset: int | None = None,
         limit: int | None = None,
     ) -> tuple[TezosTokenBalanceData, ...]:
+        filters = {
+            'token.contract.in': ','.join(token_addresses),
+            'token.tokenId.in': ','.join(str(token_id) for token_id in token_ids),
+        }
         params = self._get_request_params(
             first_level,
             last_level,
@@ -1002,10 +1007,7 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             select=TOKEN_BALANCE_FIELDS,
             values=True,
             cursor=True,
-            **{
-                'token.contract.in': ','.join(token_addresses),
-                'token.id.in': ','.join(str(token_id) for token_id in token_ids),
-            },
+            **{name: value for name, value in filters.items() if value},
         )
         raw_token_balances = await self._request_values_dict('get', url='v1/tokens/balances', params=params)
         return tuple(TezosTokenBalanceData.from_json(item) for item in raw_token_balances)
