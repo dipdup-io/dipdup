@@ -97,6 +97,11 @@ type WsUrl = Annotated[str, BeforeValidator(lambda v: _valid_url(v, ws=True))]
 
 _logger = logging.getLogger(__name__)
 
+FORBIDDEN_SERVER_SETTINGS = {
+    'search_path': 'DipDup sets it from `schema_name`; use `schema_name` instead',
+    'client_encoding': 'asyncpg requires UTF8; other encodings corrupt non-ASCII text',
+}
+
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class SqliteDatabaseConfig:
@@ -131,6 +136,10 @@ class SqliteDatabaseConfig:
         # NOTE: Fail immediately
         return 1
 
+    @property
+    def server_settings(self) -> dict[str, str | int | float | bool]:
+        return {}
+
 
 @dataclass(config=ConfigDict(extra='forbid', defer_build=True), kw_only=True)
 class PostgresDatabaseConfig:
@@ -145,6 +154,7 @@ class PostgresDatabaseConfig:
     :param schema_name: Schema name
     :param immune_tables: List of tables to preserve during reindexing
     :param connection_timeout: Connection timeout
+    :param server_settings: Postgres session settings applied to every connection (e.g. `synchronous_commit`, `work_mem`); `standard_conforming_strings`, `TimeZone` and `session_replication_role` change how queries and triggers behave, set them with care
     """
 
     kind: Literal['postgres'] = 'postgres'
@@ -156,11 +166,15 @@ class PostgresDatabaseConfig:
     password: str = Field(default='', repr=False)
     immune_tables: set[str] = Field(default_factory=set)
     connection_timeout: int = 60
+    server_settings: dict[str, str | int | float | bool] = Field(default_factory=dict)
 
     def __post_init__(self) -> None:
         for table in self.immune_tables:
             if table.startswith('dipdup'):
                 raise ConfigurationError("Tables with `dipdup` prefix can't be immune")
+        for key in self.server_settings:
+            if reason := FORBIDDEN_SERVER_SETTINGS.get(key.lower()):
+                raise ConfigurationError(f"`server_settings.{key}` can't be set: {reason}")
 
     @property
     def connection_string(self) -> str:
