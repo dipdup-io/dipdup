@@ -10,6 +10,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Added
 
+- context: `ctx.execute_sql_script(..., dedicated_connection=True)` runs the scripts on a separate PostgreSQL connection, so a long statement like `REFRESH MATERIALIZED VIEW` in a job no longer pauses indexing.
 - watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
 - watchdog: `ctx.watchdog.heartbeat` and `ctx.watchdog.reset` accept an optional `name` to keep a separate countdown for each name.
 
@@ -27,6 +28,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
+- tezos.operations: Handlers with a pattern item without `entrypoint` are called for any entrypoint of the contract, not only `default`; a `tezos.operations_unfiltered` index next to a filtered one gets every transaction in realtime, not only those with the neighbours' entrypoints. Affected projects start getting handler calls that were silently skipped before; levels already indexed are not revisited, so reindex to get the missed ones.
+- tezos.operations: Transactions unrelated to any indexed address or code hash are skipped before matching also when only addresses or only code hashes are set; a transaction pattern without `source` and `destination` gets every transaction with any combination of filters.
 - tezos.tzkt: A TzKT outage after realtime has started no longer crashes the indexer with `RuntimeError: The socket was never run`.
 - tezos.tzkt: A realtime connection is reconnected after a failed negotiation instead of crashing the indexer: a refused connection crashed it at once, an expired connection id after about ten drops.
 - tezos.tzkt: A subscription request lost with a dropped realtime connection is sent again after reconnecting instead of blocking the indexer forever.
