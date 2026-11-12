@@ -80,6 +80,9 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
+        # NOTE: Nothing reads the queue of an index that is disabled or failed
+        if self._state and not self.is_active:
+            return
         self.queue.append(message)
 
         metrics._levels_to_realtime[self._config.name] = len(self.queue)
