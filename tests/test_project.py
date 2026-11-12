@@ -1,11 +1,14 @@
 import json
 from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from ruamel.yaml import YAML
 
 from dipdup import env
+from dipdup.cli import _cli_unwrapper
+from dipdup.cli import new
 from dipdup.exceptions import ConfigurationError
 from dipdup.package import DipDupPackage
 from dipdup.project import TEMPLATES
@@ -37,6 +40,13 @@ def _answers(**kwargs: str) -> Answers:
     answers = get_default_answers(PACKAGE)
     answers.update(kwargs)  # type: ignore[typeddict-item]
     return answers
+
+
+async def _new(replay_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # NOTE: `uv lock` needs network; `new` skips it when `uv` is not found
+    monkeypatch.setattr('shutil.which', lambda _: None)
+    ctx = SimpleNamespace(obj=None)
+    await _cli_unwrapper(new)(ctx, quiet=False, force=False, replay=replay_path, template=None, name=None)
 
 
 def _write_replay(path: Path, **kwargs: str) -> Path:
@@ -173,7 +183,30 @@ def test_template_package_name(project_path: Path, template: str) -> None:
     assert yaml.load((project_path / 'dipdup.yaml').read_text())['package'] == PACKAGE
 
 
-def test_replay_without_new_keys(tmp_path: Path) -> None:
+async def test_new_creates_symlink(project_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    await _new(_write_replay(project_path.parent / 'replay.yaml'), monkeypatch)
+
+    symlink = project_path / PACKAGE
+    assert symlink.is_symlink()
+    assert str(symlink.readlink()) == '.'
+
+
+async def test_new_keeps_package_named_directory(
+    project_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    (project_path / PACKAGE).mkdir(parents=True)
+
+    await _new(_write_replay(project_path.parent / 'replay.yaml'), monkeypatch)
+
+    assert (project_path / 'dipdup.yaml').is_file()
+    assert (project_path / PACKAGE).is_dir()
+    assert not (project_path / PACKAGE).is_symlink()
+    assert 'Symlink to the package root was not created' in caplog.text
+
+
+def test_replay_without_addon_keys(tmp_path: Path) -> None:
     answers = answers_from_replay(_write_replay(tmp_path / 'replay.yaml'))
 
     assert answers['ci'] == 'none'

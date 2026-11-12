@@ -11,7 +11,7 @@
             "console": "integratedTerminal",
             "justMyCode": false
         },
-        // Start the indexer with `DIPDUP_DEBUG=1` set in the process environment (an env file passed with `-e` or `dipdup.env` is loaded too late to enable the debugger); the port follows `DEBUGPY_PORT`
+        // Start the indexer with `DIPDUP_DEBUG=1` set in the process environment (an env file passed with `-e` or `dipdup.env` is loaded too late to enable the debugger); the port is 5678 by default, change it here if `DEBUGPY_PORT` is set
         {
             "name": "DipDup: attach",
             "type": "debugpy",
