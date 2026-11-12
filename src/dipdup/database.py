@@ -24,6 +24,7 @@ from tortoise.backends.asyncpg.client import AsyncpgDBClient
 from tortoise.backends.base.client import TransactionalDBClient
 from tortoise.backends.base.config_generator import expand_db_url
 from tortoise.backends.base.executor import EXECUTOR_CACHE
+from tortoise.backends.base_postgres.client import translate_exceptions
 from tortoise.backends.sqlite.client import SqliteClient
 from tortoise.connection import connections
 from tortoise.exceptions import OperationalError
@@ -57,7 +58,7 @@ def get_connection() -> SupportedClient:
     return cast('SupportedClient', connections.get(DEFAULT_CONNECTION_NAME))
 
 
-def set_connection(conn: SupportedClient) -> None:
+def set_connection(conn: SupportedClient | TransactionalDBClient) -> None:
     connections.set(DEFAULT_CONNECTION_NAME, conn)
 
 
@@ -86,7 +87,8 @@ def get_tortoise_config(
         if importlib.util.find_spec('aerich') is not None:
             models.append('aerich.models')
 
-    app_modules['models'] = models
+    if models:
+        app_modules['models'] = models
 
     config = generate_config(db_url=db_url, app_modules=app_modules, connection_label=DEFAULT_CONNECTION_NAME)
     if server_settings:
@@ -287,7 +289,22 @@ async def execute_query(
     else:
         raise Exception
 
+    if isinstance(conn, AsyncpgClient):
+        return await _pg_execute_query(conn, query, args)
     return await conn.execute_query(query, args)
+
+
+@translate_exceptions
+async def _pg_execute_query(conn: AsyncpgClient, query: str, args: Any | None) -> tuple[int, list[Any]]:
+    # NOTE: Tortoise sends any INSERT/UPDATE/DELETE through `execute()`, which drops `RETURNING` rows.
+    # NOTE: Here only statements starting with `UPDATE`/`DELETE` return a rowcount; others return fetched rows.
+    async with conn.acquire_connection() as connection:
+        params = [query, *args] if args else [query]
+        if query.startswith(('UPDATE', 'DELETE')):
+            status = await connection.execute(*params)
+            return int(status.split(' ')[1]), []
+        rows = await connection.fetch(*params)
+        return len(rows), rows
 
 
 async def generate_schema(
@@ -413,11 +430,11 @@ async def wipe_schema(
     """Truncate schema and remove migrations directory preserving immune tables. Executes in a transaction"""
     import shutil
 
-    async with conn._in_transaction() as conn:
-        if isinstance(conn, SqliteClient):
-            await _sqlite_wipe_schema(conn, schema_name, immune_tables)
-        elif isinstance(conn, AsyncpgClient):
-            await _pg_wipe_schema(conn, schema_name, immune_tables)
+    async with conn._in_transaction() as transaction:
+        if isinstance(transaction, SqliteClient):
+            await _sqlite_wipe_schema(transaction, schema_name, immune_tables)
+        elif isinstance(transaction, AsyncpgClient):
+            await _pg_wipe_schema(transaction, schema_name, immune_tables)
         else:
             raise NotImplementedError
 

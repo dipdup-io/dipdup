@@ -14,6 +14,7 @@ import orjson
 from aiohttp import ClientResponseError
 from humps import main as humps
 from pydantic.dataclasses import dataclass
+from tortoise.models import Model as TortoiseModel
 
 from dipdup import env
 from dipdup import fields
@@ -413,7 +414,7 @@ class HasuraGateway(HTTPGateway):
 
             for field in model._meta.fields_map.values():
                 if isinstance(field, fields.relational.ForeignKeyFieldInstance):
-                    related_table_name = model_tables.get(field.model_name)
+                    related_table_name = model_tables.get(self._get_model_key(field.model_name))
                     if not related_table_name:
                         continue
 
@@ -434,7 +435,7 @@ class HasuraGateway(HTTPGateway):
                         )
 
                 elif isinstance(field, fields.relational.ManyToManyFieldInstance):
-                    related_table_name = model_tables.get(field.model_name)
+                    related_table_name = model_tables.get(self._get_model_key(field.model_name))
                     if not related_table_name:
                         continue
 
@@ -729,6 +730,12 @@ class HasuraGateway(HTTPGateway):
                 'limit': self._hasura_config.select_limit,
             },
         }
+
+    def _get_model_key(self, model_name: str | type[TortoiseModel]) -> str:
+        # NOTE: Since Tortoise 1.0 a relation can reference the model class instead of an `app.Model` string
+        if isinstance(model_name, str):
+            return model_name
+        return f'{model_name._meta.app}.{model_name.__name__}'
 
     def _get_relation_source_field(self, field: RelationalFieldT) -> str:
         if source_field := field.source_field:

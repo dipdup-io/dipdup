@@ -51,8 +51,11 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Changed
 
+- database: Schema SQL no longer has `DEFAULT` clauses for fields with a Python-side `default` or `auto_now`/`auto_now_add`; the ORM fills these values itself. The schema hash changes with it, so an existing database reports `Schema hash mismatch` on the first start after the update; run `dipdup schema approve` once, no reindexing is needed.
 - datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
 - datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
+- models: A naive datetime assigned to a model field or passed to `.update()` is stored as UTC with a `RuntimeWarning`; on PostgreSQL it used to be stored as the host's local time. Pass timezone-aware datetimes.
+- models: Datetimes read from the database have `zoneinfo.ZoneInfo('UTC')` as `tzinfo` instead of `pytz.UTC`. `pytz` is no longer installed with DipDup; add it to your project dependencies if you import it.
 - tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 - watchdog: A regular (non-daemon) job or hook that runs longer than the `callback` timeout is now reported, while previously any other callback starting or finishing hid it; an `atomic: true` one is also reported by the `transaction` trigger. To allow it, raise the timeout or call `ctx.watchdog.reset(WatchdogTrigger.callback)` inside it, plus `ctx.watchdog.reset(WatchdogTrigger.transaction)` for an atomic one.
 - watchdog: The `websocket` trigger is now armed by default: if an open realtime connection delivers no messages for its timeout (60 seconds unless configured), DipDup warns about it; a datasource without subscriptions is not watched. Previously DipDup never armed it, so it did not fire. If you set `websocket: action: exception`, such a silence now stops the indexer.
@@ -61,6 +64,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Performance
 
 - index: Indexes that match nothing at a realtime level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
+
+### Other
+
+- deps: `tortoise-orm` updated to 1.1.9; the `migrations` extra requires `aerich` 0.9.3 or a later 0.9 release.
 
 ## [8.6.2] - 2026-09-23
 
