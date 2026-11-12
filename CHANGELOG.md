@@ -24,6 +24,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - config: `first_level` and `last_level` set both in a template and where it is used (an `indexes` entry or `ctx.add_index`) no longer produce a level that is neither of the two (500 and 1001 gave 1021, skipping blocks); the value set where the template is used wins.
 - context: A database connection lost in the middle of a rollback no longer leaves the reverted data under the old index level, which made the index skip the new branch after a restart.
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
+- hasura: Views created without reindexing (e.g. by an `on_restart` SQL script) appear in the GraphQL API after the next start instead of only after `hasura configure --force`.
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - index: A chain reorg received while the index is falling behind the datasource is no longer dropped when the index resyncs, which left the data of the orphaned blocks in the database.

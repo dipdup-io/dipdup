@@ -1,3 +1,4 @@
+import logging
 from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -16,6 +17,7 @@ from dipdup.config import HttpConfig
 from dipdup.config import PostgresDatabaseConfig
 from dipdup.config import ReindexingAction
 from dipdup.config import ReindexingReason
+from dipdup.database import get_connection
 from dipdup.database import tortoise_wrapper
 from dipdup.exceptions import HasuraError
 from dipdup.exceptions import UnsupportedAPIError
@@ -28,7 +30,7 @@ if TYPE_CHECKING:
     from aiohttp.test_utils import TestClient
 
 
-async def test_configure_hasura() -> None:
+async def _setup_hasura(stack: AsyncExitStack) -> HasuraGateway:
     config_path = Path(__file__).parent / 'configs' / 'demo_tezos_nft_marketplace.yaml'
 
     config = DipDupConfig.load([config_path])
@@ -39,30 +41,60 @@ async def test_configure_hasura() -> None:
     config.advanced.reindex[ReindexingReason.schema_modified] = ReindexingAction.ignore
     config.initialize()
 
+    dipdup = await create_dummy_dipdup(config, stack)
+
+    # NOTE: Hasura connects to Postgres from inside its own container, where 127.0.0.1 points at
+    # NOTE: Hasura itself — so its source must use the container bridge IP. The host keeps its
+    # NOTE: already-open connection (via the published port), and Hasura reaches Postgres
+    # NOTE: container-to-container. Both paths hold on Linux, Docker Desktop and WSL alike, so this
+    # NOTE: test no longer needs an OS-based skip.
+    config.database = PostgresDatabaseConfig(
+        kind='postgres',
+        host=postgres.internal_host,
+        port=5432,
+        user='test',
+        database='test',
+        password='test',
+    )
+
+    hasura_gateway = await dipdup._set_up_hasura(stack)
+    assert isinstance(hasura_gateway, HasuraGateway)
+    return hasura_gateway
+
+
+async def test_configure_hasura() -> None:
     async with AsyncExitStack() as stack:
-        dipdup = await create_dummy_dipdup(config, stack)
-
-        # NOTE: Hasura connects to Postgres from inside its own container, where 127.0.0.1 points at
-        # NOTE: Hasura itself — so its source must use the container bridge IP. The host keeps its
-        # NOTE: already-open connection (via the published port), and Hasura reaches Postgres
-        # NOTE: container-to-container. Both paths hold on Linux, Docker Desktop and WSL alike, so this
-        # NOTE: test no longer needs an OS-based skip.
-        config.database = PostgresDatabaseConfig(
-            kind='postgres',
-            host=postgres.internal_host,
-            port=5432,
-            user='test',
-            database='test',
-            password='test',
-        )
-
-        hasura_gateway = await dipdup._set_up_hasura(stack)
-        assert isinstance(hasura_gateway, HasuraGateway)
+        hasura_gateway = await _setup_hasura(stack)
 
         await hasura_gateway.configure(force=True)
 
-        config.hasura.camel_case = True
+        hasura_gateway._hasura_config.camel_case = True
         await hasura_gateway.configure(force=True)
+
+
+async def test_configure_hasura_tracks_new_view(caplog: pytest.LogCaptureFixture) -> None:
+    async with AsyncExitStack() as stack:
+        hasura_gateway = await _setup_hasura(stack)
+        source_name = hasura_gateway._hasura_config.source
+
+        async def tracked_tables() -> set[str]:
+            metadata = await hasura_gateway._fetch_metadata()
+            source = hasura_gateway._get_source(metadata, source_name)
+            assert source
+            return {t['table']['name'] for t in source['tables']}
+
+        await hasura_gateway.configure()
+        assert 'new_view' not in await tracked_tables()
+
+        # NOTE: A view created without reindexing, e.g. by an `on_restart` SQL script
+        await get_connection().execute_script('CREATE VIEW new_view AS SELECT 1 AS id')
+        await hasura_gateway.configure()
+        assert 'new_view' in await tracked_tables()
+
+        caplog.clear()
+        with caplog.at_level(logging.INFO, logger='dipdup.hasura'):
+            await hasura_gateway.configure()
+        assert 'Metadata is up to date, no action required' in caplog.messages
 
 
 @pytest.mark.parametrize('hasura_version', ['v1.0.0', 'v2.15.0'])

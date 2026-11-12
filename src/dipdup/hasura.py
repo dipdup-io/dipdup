@@ -143,14 +143,21 @@ class HasuraGateway(HTTPGateway):
         hasura_schema, _ = await Schema.get_or_create(name=hasura_schema_name, defaults={'hash': ''})
         metadata = await self._fetch_metadata()
         metadata_hash = self._hash_metadata(metadata)
+        source_name = self._hasura_config.source
+        tables_metadata = await self._generate_source_tables_metadata()
 
+        # NOTE: Views and model tables created without reindexing don't change Hasura metadata; track them too.
         if not force and hasura_schema.hash == metadata_hash:
-            self._logger.info('Metadata is up to date, no action required')
-            return
+            source = self._get_source(metadata, source_name)
+            tracked = {t['table']['name'] for t in source['tables']} if source else set()
+            untracked = sorted({t['table']['name'] for t in tables_metadata} - tracked)
+            if not untracked:
+                self._logger.info('Metadata is up to date, no action required')
+                return
+            names = f': {", ".join(untracked)}' if len(untracked) <= 5 else ''
+            self._logger.info('Found %s untracked tables and views%s', len(untracked), names)
 
         # NOTE: Find chosen source and overwrite its tables, create if missing and allowed.
-        source_name = self._hasura_config.source
-
         if (source := self._get_source(metadata, source_name)) is None:
             if not self._hasura_config.create_source:
                 raise HasuraError(
@@ -162,7 +169,7 @@ class HasuraGateway(HTTPGateway):
             if (source := self._get_source(metadata, source_name)) is None:
                 raise HasuraError(f'Source `{source_name}` not found in metadata after creation.')
 
-        source['tables'] = await self._generate_source_tables_metadata()
+        source['tables'] = tables_metadata
 
         # NOTE: Don't forget to invalidate old queries, customization will fail otherwise.
         metadata['query_collections'] = []
