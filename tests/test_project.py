@@ -7,6 +7,8 @@ from ruamel.yaml import YAML
 
 from dipdup import env
 from dipdup.exceptions import ConfigurationError
+from dipdup.package import DipDupPackage
+from dipdup.project import TEMPLATES
 from dipdup.project import Answers
 from dipdup.project import answers_from_replay
 from dipdup.project import get_default_answers
@@ -17,6 +19,7 @@ PACKAGE = 'test_indexer'
 WORKFLOWS = ('.github/workflows/test.yml', '.github/workflows/build.yml')
 DEPENDABOT = '.github/dependabot.yml'
 LAUNCH = '.vscode/launch.json'
+REPLAY = 'configs/replay.yaml'
 
 yaml = YAML(typ='safe')
 
@@ -80,11 +83,15 @@ def test_ci_github_non_uv_skips_test_workflow(project_path: Path, capsys: pytest
     assert (project_path / DEPENDABOT).is_file()
     assert 'uv projects only' in capsys.readouterr().out
 
+    render_base(_answers(ci='github', package_manager='poetry'))
+    assert not (project_path / '.github/workflows/test.yml').exists()
+    assert 'uv projects only' not in capsys.readouterr().out
+
 
 def test_render_base_adopts_addons(project_path: Path) -> None:
     render_project(_answers())
-    replay_path = project_path / 'configs' / 'replay.yaml'
-    replay_path.write_text(replay_path.read_text().replace('ci: none', 'ci: github'))
+    replay_path = project_path / REPLAY
+    replay_path.write_text(replay_path.read_text() + '  ci: github\n')
 
     render_base(answers_from_replay(replay_path))
 
@@ -113,6 +120,57 @@ def test_render_base_include(project_path: Path) -> None:
         assert (project_path / path).read_text() != '# edited\n'
     for path in (LAUNCH, 'Makefile'):
         assert (project_path / path).read_text() == '# edited\n'
+
+
+def test_replay_omits_none_addons(project_path: Path) -> None:
+    render_project(_answers(package_manager='none'))
+
+    lines = (project_path / REPLAY).read_text().splitlines()
+    assert '  package_manager: none' in lines
+    assert not [line for line in lines if line.startswith(('  ci:', '  ide:'))]
+
+
+def test_replay_keeps_selected_addons(project_path: Path) -> None:
+    render_project(_answers(ci='github', ide='vscode'))
+
+    lines = (project_path / REPLAY).read_text().splitlines()
+    assert '  ci: github' in lines
+    assert '  ide: vscode' in lines
+
+
+@pytest.mark.parametrize('addons', [{}, {'ci': 'github'}, {'ci': 'github', 'ide': 'vscode'}])
+def test_replay_round_trip(project_path: Path, addons: dict[str, str]) -> None:
+    render_project(_answers(**addons))
+    replay_path = project_path / REPLAY
+    content = replay_path.read_text()
+
+    answers = answers_from_replay(replay_path)
+    assert answers == _answers(**addons)
+
+    render_base(answers, force=True)
+    assert replay_path.read_text() == content
+
+
+def test_create_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / PACKAGE
+    root.mkdir()
+
+    monkeypatch.setattr(env, 'NO_SYMLINK', True)
+    DipDupPackage(root).create_symlink()
+    assert not (root / PACKAGE).exists()
+
+    monkeypatch.setattr(env, 'NO_SYMLINK', False)
+    DipDupPackage(root).create_symlink()
+    DipDupPackage(root).create_symlink()
+    assert (root / PACKAGE).is_symlink()
+    assert (root / PACKAGE).resolve() == root.resolve()
+
+
+@pytest.mark.parametrize('template', [t for templates in TEMPLATES.values() for t in templates])
+def test_template_package_name(project_path: Path, template: str) -> None:
+    render_project(_answers(template=template))
+
+    assert yaml.load((project_path / 'dipdup.yaml').read_text())['package'] == PACKAGE
 
 
 def test_replay_without_new_keys(tmp_path: Path) -> None:

@@ -16,5 +16,3 @@ replay:
   hasura_image: hasura/graphql-engine:latest
   line_length: 120
   package_manager: uv
-  ci: none
-  ide: none

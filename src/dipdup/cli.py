@@ -997,6 +997,7 @@ async def new(
 
     from dipdup.config import DipDupConfig
     from dipdup.package import ROOT_CONFIG
+    from dipdup.package import DipDupPackage
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import get_default_answers
@@ -1038,6 +1039,9 @@ async def new(
         }
         path = env.get_package_path(config_dict['package']) / ROOT_CONFIG
         path.write_text(DipDupYAMLConfig(**config_dict).dump())
+
+    # NOTE: `init` runs outside of the project root and skips the symlink; linter and mypy need it to resolve package imports
+    DipDupPackage(env.get_package_path(answers['package']), quiet=True).create_symlink()
 
     _logger.info('Initializing project')
     config = DipDupConfig.load([Path(answers['package'])])

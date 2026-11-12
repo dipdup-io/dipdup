@@ -298,7 +298,8 @@ def render_project(
     # NOTE: Common base
     _render_templates(answers, Path('base'), force)
 
-    _render_addons(answers, force)
+    for skipped in _render_addons(answers, force):
+        echo(f'`{skipped}` is generated for uv projects only; skipping', fg='yellow')
 
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
@@ -347,17 +348,18 @@ def _render_addons(
     force: bool = False,
     include: set[str] | None = None,
     exists: bool = False,
-) -> None:
-    """Render optional files selected by `ci` and `ide` answers"""
+) -> set[str]:
+    """Render optional files selected by `ci` and `ide` answers; returns files skipped for non-uv projects"""
+    skipped: set[str] = set()
     if answers['ci'] != 'none':
-        exclude = None
         if answers['package_manager'] != 'uv':
-            exclude = {'.github/workflows/test.yml'}
-            echo('`.github/workflows/test.yml` is generated for uv projects only; skipping', fg='yellow')
-        _render_templates(answers, Path('addons') / answers['ci'], force, include, exists, exclude)
+            skipped = {'.github/workflows/test.yml'}
+        _render_templates(answers, Path('addons') / answers['ci'], force, include, exists, skipped)
 
     if answers['ide'] != 'none':
         _render_templates(answers, Path('addons') / answers['ide'], force, include, exists)
+
+    return skipped
 
 
 def _render_templates(
