@@ -143,7 +143,7 @@ class DecimalField(Field[Decimal], Decimal):
         return f'DECIMAL({self.max_digits},{self.decimal_places})'
 
     def __copy__(self) -> Self:
-        # NOTE: Both bases define `__copy__`; a field must be copied as a field, not as a `Decimal` value
+        # NOTE: For type checkers only; both declared bases define `__copy__` with different signatures
         return cast('Self', Field.__copy__(self))
 
     # class _db_sqlite:

@@ -131,6 +131,11 @@ async def test_execute_query_returns_rows_postgres() -> None:
         count, rows = await execute_query(sql="UPDATE raw_sql SET value = 'd'")
         assert (count, rows) == (2, [])
 
+        count, rows = await execute_query(
+            sql="UPDATE raw_sql SET value = 'e'; CREATE INDEX raw_sql_value ON raw_sql (value)"
+        )
+        assert (count, rows) == (0, [])
+
 
 async def test_server_settings_cli() -> None:
     package = 'demo_tezos_domains'

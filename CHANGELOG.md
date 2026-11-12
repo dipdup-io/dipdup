@@ -51,7 +51,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 ### Changed
 
-- database: Schema SQL no longer has `DEFAULT` clauses for fields with a Python-side `default` or `auto_now`/`auto_now_add`; the ORM fills these values itself. The schema hash changes with it, so an existing database reports `Schema hash mismatch` on the first start after the update; run `dipdup schema approve` once, no reindexing is needed.
+- database: Schema SQL no longer has `DEFAULT` clauses for fields with a Python-side `default` or `auto_now`/`auto_now_add`; the ORM fills these values itself. The schema hash changes with it, so on the first start after the update an existing database is treated as having a modified schema: with the default `advanced.reindex.schema_modified: exception` DipDup stops with `Schema hash mismatch`, and with `wipe` it drops the data. Run `dipdup schema approve` once after updating and before starting the indexer; no reindexing is needed.
 - datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
 - datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
 - models: A naive datetime assigned to a model field or passed to `.update()` is stored as UTC with a `RuntimeWarning`; on PostgreSQL it used to be stored as the host's local time. Pass timezone-aware datetimes.

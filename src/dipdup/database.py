@@ -302,7 +302,11 @@ async def _pg_execute_query(conn: AsyncpgClient, query: str, args: Any | None) -
         params = [query, *args] if args else [query]
         if query.startswith(('UPDATE', 'DELETE')):
             status = await connection.execute(*params)
-            return int(status.split(' ')[1]), []
+            try:
+                return int(status.split(' ')[1]), []
+            except (ValueError, IndexError):
+                # NOTE: Several statements in one query; the status belongs to the last one
+                return 0, []
         rows = await connection.fetch(*params)
         return len(rows), rows
 
