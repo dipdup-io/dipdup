@@ -220,8 +220,13 @@ class DipDupPackage:
                 act(f'`{path}` not found. Have you created a project with `dipdup new` command?')
 
     def _post_init(self) -> None:
-        # NOTE: Allows plain package structure to be imported
-        if env.NO_SYMLINK or self.root != Path.cwd():
+        if self.root != Path.cwd():
+            return
+        self.create_symlink()
+
+    def create_symlink(self) -> None:
+        """Create `<package> -> .` symlink in the package root to allow plain package structure to be imported"""
+        if env.NO_SYMLINK:
             return
 
         symlink_path = self.root.joinpath(self.name)

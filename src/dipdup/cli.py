@@ -996,7 +996,9 @@ async def new(
     from survey._widgets import Escape  # type: ignore[import-untyped]
 
     from dipdup.config import DipDupConfig
+    from dipdup.exceptions import ProjectPackageError
     from dipdup.package import ROOT_CONFIG
+    from dipdup.package import DipDupPackage
     from dipdup.project import answers_from_replay
     from dipdup.project import answers_from_terminal
     from dipdup.project import get_default_answers
@@ -1038,6 +1040,12 @@ async def new(
         }
         path = env.get_package_path(config_dict['package']) / ROOT_CONFIG
         path.write_text(DipDupYAMLConfig(**config_dict).dump())
+
+    # NOTE: `init` runs outside of the project root and skips the symlink; linter and mypy need it to resolve package imports
+    try:
+        DipDupPackage(env.get_package_path(answers['package']), quiet=True).create_symlink()
+    except ProjectPackageError as e:
+        _logger.warning('Symlink to the package root was not created: %s', e.msg)
 
     _logger.info('Initializing project')
     config = DipDupConfig.load([Path(answers['package'])])

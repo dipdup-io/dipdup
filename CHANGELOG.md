@@ -12,12 +12,14 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - context: `ctx.execute_sql_script(..., dedicated_connection=True)` runs the scripts on a separate PostgreSQL connection, so a long statement like `REFRESH MATERIALIZED VIEW` in a job no longer pauses indexing.
 - database: Postgres session settings like `synchronous_commit` or `work_mem` can be set in `database.server_settings` and apply to every DipDup connection, including indexing transactions that a `SET` from a hook never reaches; values can be strings, numbers or booleans (`on`/`off`); `search_path` (use `schema_name` instead) and `client_encoding` are rejected in any letter case.
+- project: `dipdup new` can add GitHub Actions workflows (lint, config check, Docker image build) and a VS Code debugger config; existing projects get them by setting `ci: github` or `ide: vscode` in `configs/replay.yaml` and running `dipdup init`.
 - watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
 - watchdog: `ctx.watchdog.heartbeat` and `ctx.watchdog.reset` accept an optional `name` to keep a separate countdown for each name.
 
 ### Fixed
 
 - cli: A crash report that cannot be written (read-only or full disk) no longer replaces the actual error; DipDup logs a warning and skips the report.
+- cli: `dipdup new` creates the `<package> -> .` symlink in the new project, so `mypy` resolves package imports and handlers are formatted the same as by a later `make format lint` in the project root.
 - coinbase: The datasource calls `api.exchange.coinbase.com`, so `get_candles` works again; the retired `api.pro.coinbase.com` answered every request with 503.
 - coinbase: `get_candles` no longer returns the same candle twice when the range spans more than 300 candles.
 - coinbase: `get_oracle_prices` raises `UnsupportedFeatureError` without making a request, since Coinbase has deprecated its Price Oracle API.
@@ -28,6 +30,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - index: A chain reorg received while the index is falling behind the datasource is no longer dropped when the index resyncs, which left the data of the orphaned blocks in the database.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
+- project: A project created with `dipdup new` from the `demo_tezos_etherlink` template uses the chosen package name in `dipdup.yaml`.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
 - tezos.operations: Handlers with a pattern item without `entrypoint` are called for any entrypoint of the contract, not only `default`; a `tezos.operations_unfiltered` index next to a filtered one gets every transaction in realtime, not only those with the neighbours' entrypoints. Affected projects start getting handler calls that were silently skipped before; levels already indexed are not revisited, so reindex to get the missed ones.
