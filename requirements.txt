@@ -612,10 +612,6 @@ pytokens==0.4.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:5ad948d085ed6c16413eb5fec6b3e02fa00dc29a2534f088d3302c47eb59adf9 \
     --hash=sha256:6d6c4268598f762bc8e91f5dbf2ab2f61f7b95bdc07953b602db879b3c8c18e1
     # via black
-pytz==2026.3.post1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:2211d3fcf9a797d3405cac96ac7f61d80e6a644f72a3309607282fe8a2010c5d \
-    --hash=sha256:dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815
-    # via tortoise-orm
 pyunormalize==17.0.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:0949a3e56817e287febcaf1b0cc4b5adf0bb107628d379335938040947eec792 \
     --hash=sha256:f0d93b076f938db2b26d319d04f2b58505d1cd7a80b5b72badbe7d1aa4d2a31c
@@ -768,9 +764,9 @@ toolz==1.1.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') o
     # via
     #   cytoolz
     #   eth-utils
-tortoise-orm==0.25.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:3c52a53c41f4137aee9ffb3f3de01f30b52ad7767157f9bd9586a910fe839ca3 \
-    --hash=sha256:b6dedd388393624628ec46228c93df361533ceb3925986fa2d1d22debc838a7d
+tortoise-orm==1.1.9 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:0399e1aa9518620f8b9c455598ac06ab890332c03e335cfca4b73b48d4e6abaa \
+    --hash=sha256:9304796aef7406cfd2b9d8e2c42598e56df015fb61a2718bb0df08901d2253ce
     # via
     #   aerich
     #   dipdup

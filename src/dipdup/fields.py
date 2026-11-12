@@ -7,7 +7,9 @@ from enum import Enum
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import Self
 from typing import TypeVar
+from typing import cast
 
 import orjson
 from tortoise.contrib.postgres.fields import ArrayField as ArrayField
@@ -139,6 +141,10 @@ class DecimalField(Field[Decimal], Decimal):
     @property
     def SQL_TYPE(self) -> str:  # type: ignore[override]
         return f'DECIMAL({self.max_digits},{self.decimal_places})'
+
+    def __copy__(self) -> Self:
+        # NOTE: For type checkers only; both declared bases define `__copy__` with different signatures
+        return cast('Self', Field.__copy__(self))
 
     # class _db_sqlite:
     #     SQL_TYPE = 'VARCHAR(40)'

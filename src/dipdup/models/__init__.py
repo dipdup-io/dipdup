@@ -285,7 +285,13 @@ class BulkUpdateQuery(TortoiseBulkUpdateQuery):  # type: ignore[type-arg]
 
 
 class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
-    async def _execute_many(self, insert_sql: str, insert_sql_all: str) -> None:
+    async def _execute_many(
+        self,
+        insert_sql: str,
+        insert_sql_all: str,
+        effective_columns: list[str],
+        effective_columns_all: list[str],
+    ) -> None:
         for model in self._objects:
             if update := ModelUpdate.from_model(
                 cast('Model', model),
@@ -293,7 +299,7 @@ class BulkCreateQuery(TortoiseBulkCreateQuery):  # type: ignore[type-arg]
             ):
                 get_pending_updates().append(update)
 
-        await super()._execute_many(insert_sql, insert_sql_all)
+        await super()._execute_many(insert_sql, insert_sql_all, effective_columns, effective_columns_all)
 
         # NOTE: A bug; raises "You should first call .save()..." otherwise
         for model in self._objects:

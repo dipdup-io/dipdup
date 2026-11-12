@@ -563,7 +563,6 @@ docs = [
 ]
 lint = [
     { name = "mypy" },
-    { name = "types-pytz" },
     { name = "types-tabulate" },
 ]
 perf = [
@@ -580,7 +579,7 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aerich", marker = "extra == 'migrations'", specifier = "~=0.9.0" },
+    { name = "aerich", marker = "extra == 'migrations'", specifier = "~=0.9.3" },
     { name = "aiohttp", specifier = "~=3.10" },
     { name = "aiolimiter", specifier = "~=1.1" },
     { name = "aiosubstrate", specifier = "~=0.1.0" },
@@ -611,7 +610,7 @@ requires-dist = [
     { name = "strict-rfc3339", specifier = "~=0.7" },
     { name = "survey", specifier = "~=5.4" },
     { name = "tabulate", specifier = "~=0.9" },
-    { name = "tortoise-orm", specifier = "==0.25.3" },
+    { name = "tortoise-orm", specifier = "==1.1.9" },
     { name = "uvloop", specifier = "~=0.20" },
     { name = "web3", specifier = "~=7.2" },
     { name = "websockets", specifier = ">=15.0.1,<18" },
@@ -627,7 +626,6 @@ docs = [
 ]
 lint = [
     { name = "mypy" },
-    { name = "types-pytz" },
     { name = "types-tabulate" },
 ]
 perf = [{ name = "scalene" }]
@@ -1587,15 +1585,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pytz"
-version = "2026.3.post1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fb/48/fb042503b6ca6cd271261dc559fd6432f7d8c713153e9ec5c591af4dfc1c/pytz-2026.3.post1.tar.gz", hash = "sha256:2211d3fcf9a797d3405cac96ac7f61d80e6a644f72a3309607282fe8a2010c5d", size = 319745, upload-time = "2026-07-25T15:12:07.385Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0f/7b/39c34ca613b0b198cb866466651b26b045e2009864c5183c979a3b83f383/pytz-2026.3.post1-py2.py3-none-any.whl", hash = "sha256:dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815", size = 508283, upload-time = "2026-07-25T15:12:05.782Z" },
-]
-
-[[package]]
 name = "pyunormalize"
 version = "17.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2061,18 +2050,17 @@ wheels = [
 
 [[package]]
 name = "tortoise-orm"
-version = "0.25.3"
+version = "1.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiosqlite" },
     { name = "anyio" },
     { name = "iso8601" },
     { name = "pypika-tortoise" },
-    { name = "pytz" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/be/0fdfcd8295f4f02a280f33bdda99c3edba450f9a212149232f2fbb6afa96/tortoise_orm-0.25.3.tar.gz", hash = "sha256:b6dedd388393624628ec46228c93df361533ceb3925986fa2d1d22debc838a7d", size = 250872, upload-time = "2025-12-24T01:14:30.502Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/19/b26db2d0cc5599715e15409ee63af51b4d637faae21a98fe26d58354ac2b/tortoise_orm-1.1.9.tar.gz", hash = "sha256:0399e1aa9518620f8b9c455598ac06ab890332c03e335cfca4b73b48d4e6abaa", size = 410828, upload-time = "2026-10-14T05:49:04.459Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/30/76b564cf89a1d01d4c281f7006e9c72c8eb68acae4325ce6ff5780e4e7e9/tortoise_orm-0.25.3-py3-none-any.whl", hash = "sha256:3c52a53c41f4137aee9ffb3f3de01f30b52ad7767157f9bd9586a910fe839ca3", size = 206897, upload-time = "2025-12-24T01:14:29.221Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/69/45787b25cadada61593ac4ea483f793b66497f7b29b51c3158ac7fe4c5a6/tortoise_orm-1.1.9-py3-none-any.whl", hash = "sha256:9304796aef7406cfd2b9d8e2c42598e56df015fb61a2718bb0df08901d2253ce", size = 282165, upload-time = "2026-10-14T05:49:03.03Z" },
 ]
 
 [[package]]
@@ -2085,15 +2073,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b4/de/4420db493fa8fc0856d5e5c1b159c63a323d2de2317babe36b01568928e8/typeguard-4.6.0.tar.gz", hash = "sha256:e7414f09111317de3e335de92cd397c5c0ca00b1cc1676de12e1d444a79b3f21", size = 82330, upload-time = "2026-07-26T08:40:23.207Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/eb/461d5f167b6f5c7d97696f397c82f82e3480e003fce3f0a1cd1dd26e2eb2/typeguard-4.6.0-py3-none-any.whl", hash = "sha256:79878165bb86f2cf5d41d159a0ff1792a796cf496882d2fe1b1c6c7049b9cdd7", size = 36884, upload-time = "2026-07-26T08:40:21.868Z" },
-]
-
-[[package]]
-name = "types-pytz"
-version = "2026.3.1.20260727"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b1/cf/eae96172a036b942e0ad0ec49512108b4ef4b97cd6c2aed5677540a597e7/types_pytz-2026.3.1.20260727.tar.gz", hash = "sha256:4364075b6867dd15b210bb8c1d29727d609917129b45600defe1d4b3eda5ecb9", size = 10914, upload-time = "2026-07-27T05:36:32.389Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9c/24/a654176875944981c75516857cd8750600eeb9ff7fc07a2b82573619a57c/types_pytz-2026.3.1.20260727-py3-none-any.whl", hash = "sha256:42ac44e83645bfceb46597342c8fb8ec028a1407e2feae9c5c539986eab6b57a", size = 10132, upload-time = "2026-07-27T05:36:31.52Z" },
 ]
 
 [[package]]
