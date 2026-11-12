@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "DipDup: run",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "dipdup",
+            "args": ["run"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        // Start the indexer with `DIPDUP_DEBUG=1` set in the process environment (an env file passed with `-e` or `dipdup.env` is loaded too late to enable the debugger); the port follows `DEBUGPY_PORT`
+        {
+            "name": "DipDup: attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "justMyCode": false
+        }
+    ]
+}

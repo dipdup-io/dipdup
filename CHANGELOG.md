@@ -12,6 +12,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - context: `ctx.execute_sql_script(..., dedicated_connection=True)` runs the scripts on a separate PostgreSQL connection, so a long statement like `REFRESH MATERIALIZED VIEW` in a job no longer pauses indexing.
 - database: Postgres session settings like `synchronous_commit` or `work_mem` can be set in `database.server_settings` and apply to every DipDup connection, including indexing transactions that a `SET` from a hook never reaches; values can be strings, numbers or booleans (`on`/`off`); `search_path` (use `schema_name` instead) and `client_encoding` are rejected in any letter case.
+- project: `dipdup new` can add GitHub Actions workflows (lint, config check, Docker image build) and a VS Code debugger config; existing projects get them by setting `ci: github` or `ide: vscode` in `configs/replay.yaml` and running `dipdup init`.
 - watchdog: The first warning about a stuck callback or transaction includes the chain of coroutines the task is waiting on.
 - watchdog: `ctx.watchdog.heartbeat` and `ctx.watchdog.reset` accept an optional `name` to keep a separate countdown for each name.
 

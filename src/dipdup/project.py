@@ -9,9 +9,11 @@ import re
 from itertools import chain
 from pathlib import Path
 from typing import Any
+from typing import Literal
 
 from pydantic import ConfigDict
 from pydantic import TypeAdapter
+from pydantic import ValidationError
 from pydantic.dataclasses import dataclass
 from pydantic.fields import FieldInfo
 from typing_extensions import TypedDict
@@ -23,6 +25,7 @@ from dipdup.cli import echo
 from dipdup.config import DipDupConfig
 from dipdup.config import ToStr
 from dipdup.config._mixin import TerminalOptions
+from dipdup.exceptions import ConfigurationError
 from dipdup.utils import load_template
 from dipdup.utils import write
 from dipdup.yaml import DipDupYAMLConfig
@@ -90,6 +93,8 @@ class Answers(TypedDict):
     hasura_image: str
     line_length: ToStr
     package_manager: str
+    ci: Literal['none', 'github']
+    ide: Literal['none', 'vscode']
 
 
 def get_default_answers(package: str | None = None) -> Answers:
@@ -107,6 +112,8 @@ def get_default_answers(package: str | None = None) -> Answers:
         hasura_image='hasura/graphql-engine:latest',
         line_length='120',
         package_manager='uv',
+        ci='none',
+        ide='none',
     )
 
 
@@ -262,6 +269,11 @@ def answers_from_terminal(package: str | None = None) -> Answers:
             fg='yellow',
         )
 
+    if prompt_bool('Add GitHub Actions workflows (lint and Docker image)?'):
+        answers['ci'] = 'github'
+    if prompt_bool('Add VS Code debugger config?'):
+        answers['ide'] = 'vscode'
+
     return answers
 
 
@@ -271,7 +283,11 @@ def answers_from_replay(path: Path) -> Answers:
         **get_default_answers(),
         **yaml_config['replay'],
     }
-    return TypeAdapter(ReplayConfig).validate_python(yaml_config).replay
+    try:
+        return TypeAdapter(ReplayConfig).validate_python(yaml_config).replay
+    except ValidationError as e:
+        errors = '\n'.join(f'- {".".join(str(i) for i in error["loc"])}: {error["msg"]}' for error in e.errors())
+        raise ConfigurationError(f'Replay file `{path}` is invalid:\n\n{errors}') from e
 
 
 def render_project(
@@ -281,6 +297,8 @@ def render_project(
     """Render project from template"""
     # NOTE: Common base
     _render_templates(answers, Path('base'), force)
+
+    _render_addons(answers, force)
 
     # NOTE: Config and handlers
     _render_templates(answers, Path(answers['template']), force)
@@ -309,6 +327,12 @@ def render_base(
         include=include,
         exists=True,
     )
+    _render_addons(
+        answers=answers,
+        force=force,
+        include=include,
+        exists=True,
+    )
     # NOTE: Don't forget to update replay.yaml with new values
     _render(
         answers=answers,
@@ -318,12 +342,31 @@ def render_base(
     )
 
 
+def _render_addons(
+    answers: Answers,
+    force: bool = False,
+    include: set[str] | None = None,
+    exists: bool = False,
+) -> None:
+    """Render optional files selected by `ci` and `ide` answers"""
+    if answers['ci'] != 'none':
+        exclude = None
+        if answers['package_manager'] != 'uv':
+            exclude = {'.github/workflows/test.yml'}
+            echo('`.github/workflows/test.yml` is generated for uv projects only; skipping', fg='yellow')
+        _render_templates(answers, Path('addons') / answers['ci'], force, include, exists, exclude)
+
+    if answers['ide'] != 'none':
+        _render_templates(answers, Path('addons') / answers['ide'], force, include, exists)
+
+
 def _render_templates(
     answers: Answers,
     path: Path,
     force: bool = False,
     include: set[str] | None = None,
     exists: bool = False,
+    exclude: set[str] | None = None,
 ) -> None:
     from jinja2 import Template
 
@@ -331,11 +374,18 @@ def _render_templates(
     project_templates = set(project_path.glob('**/*.j2'))
     project_files = set(project_path.glob('**/*')) - project_templates
 
+    def _skip(relative_path: str) -> bool:
+        if exclude and relative_path in exclude:
+            return True
+        if include:
+            return not any(relative_path.startswith(i) for i in include)
+        return False
+
     for path in project_templates:
         template_path = path.relative_to(Path(__file__).parent)
-        relative_path = str(Path(*template_path.parts[2:]))[:-3]
+        relative_path = path.relative_to(project_path).as_posix()[:-3]
 
-        if include and not any(relative_path.startswith(i) for i in include):
+        if _skip(relative_path):
             continue
 
         output_base = env.get_package_path(answers['package']) if exists else Path(answers['package'])
@@ -351,6 +401,8 @@ def _render_templates(
     # NOTE: If there are files without .j2 extension, just copy them
     for path in project_files:
         if path.is_dir() or path.name == 'replay.yaml':
+            continue
+        if _skip(path.relative_to(project_path).as_posix()):
             continue
         output_path = Path(
             env.get_package_path(answers['package']),

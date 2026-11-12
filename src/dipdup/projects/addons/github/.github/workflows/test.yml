@@ -1,0 +1,40 @@
+name: Test
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install project
+        run: make install
+
+      - name: Validate config
+        run: uv run dipdup -c . config export --full > /dev/null
+
+      # NOTE: `format` and `lint` targets fix files in place; fail if they changed anything
+      - name: Check formatting and linting
+        run: |
+          uv run make format lint
+          git diff --exit-code
+
+      # NOTE: Add a step to run tests here once the project has them, e.g. `uv run pytest`
