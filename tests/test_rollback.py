@@ -568,3 +568,18 @@ async def test_rollback_survives_resync() -> None:
         assert synced_from == {'level': 998, 'holders': ['998']}
         assert index.state.level == 1005
         assert not index.queue
+
+
+async def test_bulk_create_from_generator() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_domains')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with in_transaction(level=1000, index='test'):
+            await domains_models.TLD.bulk_create(domains_models.TLD(id=str(i), owner='test') for i in range(3))
+
+        assert await domains_models.TLD.all().count() == 3
+        assert await ModelUpdate.filter(action=ModelUpdateAction.INSERT).count() == 3
