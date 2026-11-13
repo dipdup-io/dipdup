@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
-## [Unreleased]
+## [8.6.3] - 2026-11-13
 
 ### Added
 
@@ -66,6 +66,10 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 ### Performance
 
 - index: Indexes that match nothing at a realtime level no longer save their level one by one; the levels of all such indexes are saved in a single statement after every dispatcher loop.
+
+### Security
+
+- deps: Updated `aiohttp` to 3.14.5 and `msgpack` to 1.2.4 to fix published advisories, including unbounded memory use in both ([GHSA-2g87-pp6c-29x5](https://github.com/advisories/GHSA-2g87-pp6c-29x5), [GHSA-j586-36cw-2gc2](https://github.com/advisories/GHSA-j586-36cw-2gc2)).
 
 ## [8.6.2] - 2026-09-23
 
@@ -922,7 +926,8 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 [semantic versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- Versions -->
-[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.6.2...HEAD
+[Unreleased]: https://github.com/dipdup-io/dipdup/compare/8.6.3...HEAD
+[8.6.3]: https://github.com/dipdup-io/dipdup/compare/8.6.2...8.6.3
 [8.6.2]: https://github.com/dipdup-io/dipdup/compare/8.6.1...8.6.2
 [8.6.1]: https://github.com/dipdup-io/dipdup/compare/8.6.0...8.6.1
 [8.6.0]: https://github.com/dipdup-io/dipdup/compare/8.5.2...8.6.0

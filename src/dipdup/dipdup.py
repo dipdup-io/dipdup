@@ -997,7 +997,9 @@ class DipDup:
         index_dispatcher = self._index_dispatcher
 
         def _add_task(coro: Coroutine[Any, Any, None]) -> None:
-            tasks.add(create_task(coro, name=f'loop:{coro.__name__.strip("_")}'))
+            # NOTE: The `Coroutine` protocol has no `__name__`; coroutine objects do
+            name = getattr(coro, '__name__', 'task')
+            tasks.add(create_task(coro, name=f'loop:{name.strip("_")}'))
 
         # NOTE: The main loop; cancels other tasks on exit.
         _add_task(index_dispatcher.run(start_datasources_event, start_scheduler_event, early_realtime))

@@ -53,9 +53,9 @@ annotated-types==0.8.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7 \
     --hash=sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0
     # via pydantic
-anyio==4.15.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:6152fdbbf9a77fdec97731721bebf7c4c44f7c29b424b0065826173efc7ed101 \
-    --hash=sha256:9f28306018cbd6d329e64a36d58256edff76dd996fe423bc957326e578b82a94
+anyio==4.16.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:59bb03251907983d1603d27c3087ddb1e93299ea2163adcdba37899a4fb12ffb \
+    --hash=sha256:c66ae634e0b8228396b801741beb3294326d4b6102f7bba4041c0dfb58c29026
     # via
     #   aerich
     #   dipdup
@@ -76,26 +76,26 @@ argcomplete==3.7.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:6029205678bdd9c1c728a155f5f9ecf5812393f969eef58807641a2bc2aa5b19 \
     --hash=sha256:aad8b69a0b9969edb62db0d1752354c0d50717b10e0cbb00e2a958381b9fc6b9
     # via datamodel-code-generator
-asgiref==3.12.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340 \
-    --hash=sha256:fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094
+asgiref==3.13.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:034cc8cbf72d00553b4be256703ac545120b4e50af13b49dec99da899aeeecb4 \
+    --hash=sha256:f9596a2434512686473d50f96ff6207fbba49ae1a785dfac614df4aeb085674d
     # via starknet-py
-async-lru==2.3.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:89bdb258a0140d7313cf8f4031d816a042202faa61d0ab310a0a538baa1c24b6 \
-    --hash=sha256:eea27b01841909316f2cc739807acea1c623df2be8c5cfad7583286397bb8315
+async-lru==2.4.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:1b46a96419ef91fe11431d58db98d792c9b4250001427191a40faf1031934212 \
+    --hash=sha256:b0b0077d9b7596615b3c12d0aad4f6aeccaaa0ac75ceae472608ede89e764c08
     # via dipdup
 asyncclick==8.4.2.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:8f259376ae8d4fcd91961c8ad3e85e9b63c9cf181a122201c7dfed3d7f6024b8 \
     --hash=sha256:dbd533769c4e3ce831c05394027ea1cd606c09688e18abab13dbcfbf7dc5a142
     # via aerich
-asyncpg==0.31.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:0c89ccf741c067614c9b5fc7f1fc6f3b61ab05ae4aaa966e6fd6b93097c7d20d \
-    --hash=sha256:12b3b2e39dc5470abd5e98c8d3373e4b1d1234d9fbdedf538798b2c13c64460a \
-    --hash=sha256:3df118d94f46d85b2e434fd62c84cb66d5834d5a890725fe625f498e72e4d5ec \
-    --hash=sha256:aad7a33913fb8bcb5454313377cc330fbb19a0cd5faa7272407d8a0c4257b671 \
-    --hash=sha256:b44c31e1efc1c15188ef183f287c728e2046abb1d26af4d20858215d50d91fad \
-    --hash=sha256:bd5b6efff3c17c3202d4b37189969acf8927438a238c6257f66be3c426beba20 \
-    --hash=sha256:c989386c83940bfbd787180f2b1519415e2d3d6277a70d9d0f0145ac73500735
+asyncpg==0.32.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:14ff79ca2574182ce258159c48978a086f9026fc121d935017b5d10c64fa3c72 \
+    --hash=sha256:45e64e56714d888330b884aad1dfb363d0bf43fb343e3d1a8968525f3bade478 \
+    --hash=sha256:4dbe0982cb3ded878de0867dfaeae3116faf471d484ea28b3e3da942f01fb778 \
+    --hash=sha256:54851411bee2aa51a30d0911524201fbb05f82cc0f7c248b140203db637c723d \
+    --hash=sha256:643d8d6e955a355045dddfe827d74f4f0d1dc4a18e06963a08260af838fbf093 \
+    --hash=sha256:7cb31f7a8472ddc6b6f5c9da1290e901d5c77c8441c7213bd13b13ef6fe6359c \
+    --hash=sha256:8592f0ed9c315b2117dbdc707cf3292f09a89d5b07661016a84dd881326965cf
     # via dipdup
 attrs==26.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309 \
@@ -108,63 +108,67 @@ base58==2.1.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:11a36f4d3ce51dfc1043f3218591ac4eb1ceb172919cebe05b52a5bcc8d245c2 \
     --hash=sha256:c5d0cb3f5b6e81e8e35da5754388ddcc6d0d14b6c6a132cb93d69ed580a7278c
     # via scalecodec
-bitarray==3.11.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:301763ffde9d288c5a58dda51c5290bc1081c2bc0faf266c4aef227ca59004d5 \
-    --hash=sha256:3889cf12ae0c04076772c8be66655bfe5925003b44dec056b569a68a121f7e93 \
-    --hash=sha256:3a1093eb1a756f08c7bdeb22969fb463aa62f036dc191ad371af5e292108c611 \
-    --hash=sha256:52741a1d24a3723a8151259906cf1befeaf3d4ccf7d3e27e8be4334590b59bcd \
-    --hash=sha256:664f02e6e2c63fcc1c02718d2daa21b04f77a18ef3850a9b348597c0c8a0f222 \
-    --hash=sha256:823638d0a900cea53c173fb31f5f1f4b913065a92fa3406d9b20eb7b7ebf189d \
-    --hash=sha256:93a7f9f9f848ec79f19fdd39f3b8f750d9abf8e65cd6fb3a045df192de23855d \
-    --hash=sha256:9db61968efb834dacda6bcd7ef1f8a033253a53ac31426a684a28a7e4c9f2f29 \
-    --hash=sha256:ab0988829e4ed10fa971842e9fbf77595b8a4557a078a3589b0754f06417ddff \
-    --hash=sha256:bf19437ec00ec3d40aef82eaeedc14cf4000be9b635c4f5049796506e6630dd8 \
-    --hash=sha256:c4cabc2439ab3ce76881037741bf41e9fafda217ff721fdee92701e5fe3c8b9c
+bitarray==3.12.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:00c446e4740dbc20dd11cf2ddd92ffd43b1c9c68cc2ecc79f8b085d4ed92d43f \
+    --hash=sha256:02dc4101849186d81c8d15a12b0d3ce8cca5601b520ff7e4cffa2e8c52db0006 \
+    --hash=sha256:0b11cf0cba845328de6115f45e49311bb8e8ff9e5374875466dc7983f10496f7 \
+    --hash=sha256:0deedbf40d051a077d57b3be9f025b41d76ed4f8af891b0d1117196c85daeb80 \
+    --hash=sha256:20e7b588ce52ef74c31a76aa0f0f5a676edfb7bc9cacde171bb2d85c92466452 \
+    --hash=sha256:48c166ebef048439a49ea6a721aba183e5ebabd9bbff6bb3b1629d415a49295d \
+    --hash=sha256:52faf65ff5e3b60980a44e70b0f626c05fe117a4474597811dfe38654a9f107c \
+    --hash=sha256:7b60df187419252469bceaaaf77b411b3124e4c6d65cd06ab795f3020e4ed2f0 \
+    --hash=sha256:8a32e10bd3c7e287df1e4c3da73efda5585a56ec59337b1467245f53dd469a99 \
+    --hash=sha256:910b4131f32ac864846196923655338c920b35c68b5547042052c50bde921baa \
+    --hash=sha256:919e35a951c0a551631b94bf568f3f5e38d004e0c60866cb2ca51bd8c4778fec \
+    --hash=sha256:9c5dfba2b068a54915f274adb7b4ab2852d2ba28f02151c0927b1135d75bf8dd \
+    --hash=sha256:c91c06bb1a369fd3092e10380578ba33370d1b9130f405f9bc6b18f07767aa82 \
+    --hash=sha256:cb531a814f0933028eb380747234bf1f417fd0c1f5ad4cf706261b77ccdb4c29 \
+    --hash=sha256:f7e8d4978f2731519ba26230183e29add3b76f9491681f5bdb9f96c518bb9fa3
     # via eth-account
-black==26.5.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:3915f256e75a2d7cf88d8953d37f780455dc586cc72dee059c528fe77f581217 \
-    --hash=sha256:4ad6fa01f941920f54f2bbb35f3df7673428a0ef98a0b0840c2eaef3b110efa8 \
-    --hash=sha256:4ed7f7da04046d2e488437170797d3b4a4ad83906683bcb7dfc68b673bbce5e2 \
-    --hash=sha256:9d98d4137277c75dfb898ec8d846c4fd68ba1e9cf77f95e2865c203dc18f4c3d \
-    --hash=sha256:dd321f668053961824bcc1be1cc1df748b2d7e4fa28086b08331e577b0100a73
+black==26.10.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:182f6c32be38074b16d378498c498b32cb51928178ee611485344972c35ec9c6 \
+    --hash=sha256:28842f9a8207cc1df6eb983a35a14c5a0dfcd603d214fe82d84bef552afd2e3a \
+    --hash=sha256:5f9f83beae62437e060dafd53d7f1fc327e3d3494f74d72ee5c2b73eb90fc4e7 \
+    --hash=sha256:b5347d760f0c02bb00dd249384cab71c3bf828b4f68d5b401eb116e0390f147d \
+    --hash=sha256:fe85fc4019bee59bc495c0f2a8ee76c5cd02c7015508d94a967ba2376f39a52c
     # via datamodel-code-generator
-certifi==2026.7.22 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775 \
-    --hash=sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55
+certifi==2026.10.23 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd \
+    --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
     # via
     #   httpcore
     #   httpx
     #   requests
     #   sentry-sdk
-charset-normalizer==3.5.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:1d1c7a53a6c2103925cdd6d7229f8c567379f211c869793df679f2e9f738c369 \
-    --hash=sha256:2f293479cce755c75f1697e87c409b7ae4c555c7dfecb6e988ad13abba943031 \
-    --hash=sha256:343fb4f2821043bd87095f7b08a1a181febc8e36ac64212143bbfd0a0e1bc235 \
-    --hash=sha256:3588e376b3ea2eea84976f67273d679f229e24c66dce7b82ae45aef04ff6e072 \
-    --hash=sha256:36047af20e17097c3bb9476c2b7655f2f7aa51322c0ba58c07695bedf755a950 \
-    --hash=sha256:41876ee62a3dddf48ff1121ad8f0798032aa03f2fd35f21f34a4cab14f18d8d2 \
-    --hash=sha256:4582c27e8c889d64811987b5967fbd3ae0c823fe1fd933b543d55ac20bb475fa \
-    --hash=sha256:4abdc5f9ad448c1ecbfae2974b820535d6bc6e7eef63babbab3d81cf46968c71 \
-    --hash=sha256:4b599739b93b2cbeded49645ae3c8d1405c29ddfbceac1545c87a3f9580a9e96 \
-    --hash=sha256:4c4fb141a727957c93edfe5c32a26ceb6b5f6461d67146e2d39f51e16170bea8 \
-    --hash=sha256:5b6d1386bf0096d26d3a863dc0a487a5b4eb9aa93cf5ba69683d29dde6b9d60f \
-    --hash=sha256:5d8531a6569d025f68e2321e7638fb7978f23db58e5f69f56913837aae03816e \
-    --hash=sha256:6117b84ea48435e5356dc737f5121485c30920ba43375fa7b434fd753df0eac3 \
-    --hash=sha256:6df0ec430f9a831772c23ca5a224cba36517a58a84bb32c32bb59a9fa67c47f6 \
-    --hash=sha256:7235dc28fc6dd9d832ac7c7bce95367dedb85929f17368a0c2bee1e080b9acbf \
-    --hash=sha256:7c0c10730342b0c9b35dd1d619beb8214e520bd96a1f870f452680b238aab3e0 \
-    --hash=sha256:96fef3e886d6a9874b14f27fc193fbdc69d5d8035783d86aa4e1cea594e695f9 \
-    --hash=sha256:a2028475ba855475b8b4d3cfeb4994269c967aea8b9892dfba907f4263a863a3 \
-    --hash=sha256:a6dac12ff6b846103483683f60c5f8fee205121adc58ffd87e90a90a3af69e99 \
-    --hash=sha256:aae2ee51122d3ae968a3837d97dc24a0aeebb0dea23694422cd172bd30017cd6 \
-    --hash=sha256:ae4a097991662cd4fff0ddc74e0fe7874f82e00042fa0ea00855645ed0c79598 \
-    --hash=sha256:b39b69b347e5e47a3b5b8cfc005c68c1ba347474e3960236c4944a8ecd174962 \
-    --hash=sha256:b9af956078716df40d985fb0dfeb2c2120c5ca92ba4ff4b388acfd01cdc14d08 \
-    --hash=sha256:ba501e667c17d8411f98e67a022d9604ef179aff0e459b7e292c796837c13573 \
-    --hash=sha256:cee5dd7c6fb5dd52a0fe2a740f9bc6e3593f5f8b1788bde49de02086f30182b2 \
-    --hash=sha256:e199fb99720074809a7720f1c0b4d919eea8b87e88713e0f8f602f7bef543d9d \
-    --hash=sha256:e6621fb2a4988d6e53eedc455e5903e2679f3967b8acb3d639f1b63c14a2e893 \
-    --hash=sha256:f9f8405c2c758532c74fed975dbee57be1f31a6e865c031870c79a6ed3212ada
+charset-normalizer==3.5.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:01077390b03f7988f11d700a2194e69b119741a86b1a638b1db88891e3eced8e \
+    --hash=sha256:0774bf9bf620249fee3e0b8b9fd3065de213be30f3aa94ce2494b3b638949e26 \
+    --hash=sha256:0fed1d06615f022ee3b13caf5e8b180cfea32bb2c5aded8a9d44277afc040f93 \
+    --hash=sha256:11a4d68a6ecda3292cb1e50239e111543ba5d709bb62a6b4ea1afcfa729d8875 \
+    --hash=sha256:1c50fe28bbc2ced33386f298650d91218076c05420e6cbd790b913adc41659e7 \
+    --hash=sha256:1db38f4c5496827c1a501846d64d14c3b80c7e6714e406cd7dc36a9899fa1011 \
+    --hash=sha256:23851fb4e1b85ed3f6c2a27b777cdfe2e19fb5b38429a8faf38c7542b7665869 \
+    --hash=sha256:2ce45c6627b22c47e390bc91a41c3d13032192e699fa0bea96e9671b373d69b0 \
+    --hash=sha256:304d8e4d493af723536393eee0c689eb7813f4a474c8b479dee63f1fdd98f621 \
+    --hash=sha256:355ad8011081dec5412240c087a9a0c9d4d5039f3ed11a3f13e18c2b29b56c51 \
+    --hash=sha256:38a873987f3be698494da8b2e3085e29da02da7b633dce73e79c699a113d7bf0 \
+    --hash=sha256:39de2a259fc954455c57274dc94c79d5842774e1247a016aff30bc0efed0f4ef \
+    --hash=sha256:3d31298449090ab8d47b7b1b2a555ff73cac7ed438a08b7ac160980c7ebed649 \
+    --hash=sha256:4275811936e2f06feff5e598fb42a1b7ae852da8e39605211892b56b81a34efd \
+    --hash=sha256:5cde776b7cc66e4f6c99612cea4aa7269aa65863f7a15841b2c264f103822f4e \
+    --hash=sha256:7e841fb9010836c992c9f12fcbd43a831de93a5f726fc1ccd8ca1d0268c5014c \
+    --hash=sha256:838dcc90063569a0448120554591a1d6c4a4ffe11babf048908793154ab86ade \
+    --hash=sha256:9b7f416ff0978e2f2249330527f0ad6fa02f4932e6199692d3b52da2048c19e4 \
+    --hash=sha256:9cae88599c7219005d879f98e5ed53341e9a122af585e1091200358a3003d2a0 \
+    --hash=sha256:a815775b6c38d4e0ff7bcffbeba67feded90202bb6a226b8dd35f1c855217413 \
+    --hash=sha256:ae4f5fea5b8b8ccff88238cc8569303e5ee95efae67fa62922a311397a71f346 \
+    --hash=sha256:b6b751274acb69d77b3323d6b7dbaa3c7fdfc1eb829b7eb61d262f32e1af9685 \
+    --hash=sha256:b91363207bd9dc966a691e959bb47f64b30f7ac4b072be9968b366982f7db77c \
+    --hash=sha256:d19fbd981a488e22cd04883659ca6b08f50b5974f9fd7c95655ef6a043e5893f \
+    --hash=sha256:d6734d2ef8a50fbf8445c139477da401f50d62a0606bf00e20ec6d87773fefb1 \
+    --hash=sha256:ed2a239c0ea213acc1908150a3037257083c7c083128f1a4cec2ec4b97dca491 \
+    --hash=sha256:ee21e28f0430bd6dc9086c6e525d5e818a44a5ad19720c8a0ef766792f3eb5e5 \
+    --hash=sha256:f7d486c83842422badd511868fd8a9a20e9407ace71564b6af47ce7e60a336c1
     # via requests
 ckzg==2.1.8 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:10339d23e36b8a0a4e6fda7f6c72d6b2fd4e1506f7b64a661ba8c706ee33f335 \
@@ -176,9 +180,9 @@ ckzg==2.1.8 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:a4d2581df10bdfaec00fec6daefdeaa438e66582364e1d1b705710e9d749fc47 \
     --hash=sha256:d7bef6b425dca6995457fc59fc5b30211d9b28cbbeee0e7a7bef1372e13f29ca
     # via eth-account
-click==8.5.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360 \
-    --hash=sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34
+click==8.5.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37 \
+    --hash=sha256:9bbfada76703fd1d784b83eea012e3e8c6a001a876543ef104fa56aaaeb072b4
     # via
     #   black
     #   dipdup
@@ -197,25 +201,30 @@ crypto-cpp-py==1.4.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:e82a7143682f23e1b1507d0cfd8a8d7263e2b876a04d29160abb57ca5e66ea81 \
     --hash=sha256:ebfbd1e31a2b77cdd1b3a00e492f4f76433e307d5c3fd749d80122b5413f5167
     # via starknet-py
-cytoolz==1.1.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux') \
-    --hash=sha256:0a6f44cf9319c30feb9a50aa513d777ef51efec16f31c404409e7deb8063df64 \
-    --hash=sha256:13a7bf254c3c0d28b12e2290b82aed0f0977a4c2a2bf84854fcdc7796a29f3b0 \
-    --hash=sha256:257905ec050d04f2f856854620d1e25556fd735064cebd81b460f54939b9f9d5 \
-    --hash=sha256:25db9e4862f22ea0ae2e56c8bec9fc9fd756b655ae13e8c7b5625d7ed1c582d4 \
-    --hash=sha256:3b5c5a192abda123ad45ef716ec9082b4cf7d95e9ada8291c5c2cc5558be858b \
-    --hash=sha256:5291b117d71652a817ec164e7011f18e6a51f8a352cc9a70ed5b976c51102fda \
-    --hash=sha256:5b399ce7d967b1cb6280250818b786be652aa8ddffd3c0bb5c48c6220d945ab5 \
-    --hash=sha256:7d3e405e435320e08c5a1633afaf285a392e2d9cef35c925d91e2a31dfd7a688 \
-    --hash=sha256:80d6da158f7d20c15819701bbda1c041f0944ede2f564f5c739b1bc80a9ffb8b \
-    --hash=sha256:82779049f352fb3ab5e8c993ab45edbb6e02efb1f17f0b50f4972c706cc51d76 \
-    --hash=sha256:8caef62f846a9011676c51bda9189ae394cdd6bb17f2946ecaedc23243268320 \
-    --hash=sha256:923df8f5591e0d20543060c29909c149ab1963a7267037b39eee03a83dbc50a8 \
-    --hash=sha256:945580dc158c557172fca899a35a99a16fbcebf6db0c77cb6621084bc82189f9 \
-    --hash=sha256:99f8e134c9be11649342853ec8c90837af4089fc8ff1e8f9a024a57d1fa08514 \
-    --hash=sha256:c7a98deb11ccd8e5d9f9441ef2ff3352aab52226a2b7d04756caaa53cd612363 \
-    --hash=sha256:dce4ee9fc99104bc77efdea80f32ca5a650cd653bcc8a1d984a931153d3d9b58 \
-    --hash=sha256:de425c5a8e3be7bb3a195e19191d28d9eb3c2038046064a92edc4505033ec9cb \
-    --hash=sha256:e7e29a1a03f00b4322196cfe8e2c38da9a6c8d573566052c586df83aacc5663c
+cytoolz==1.2.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux') \
+    --hash=sha256:0b3f663bfa65d4d38acd3b98b8cfc82b0ca2914ccb8285d60435d5f7d7e7727e \
+    --hash=sha256:12796227b954cd8fd9e264b4a4a3bc4036b4ca73fe35b5737481e78879d9cbaf \
+    --hash=sha256:132ef98602b3d4ec2d83bb0e073de280ca69538841e4b2ff1079fedb07882324 \
+    --hash=sha256:2d0164d7d418e7099501de66bb40068e53585e35341469dc7548a39f320c7ab1 \
+    --hash=sha256:3fefc24a365673fa77c0bc10c4314d8761a1d4153edc912d834f3abfa0928eea \
+    --hash=sha256:5418e99f53aa0be404cf7fa2f1f1915bd0bd6340bcba38cdde6d2164cebaf0ac \
+    --hash=sha256:558889d8cc6c6c9da71c4c3219d8ce83f0b64346e5a9822454ddb5410312e82e \
+    --hash=sha256:7b5b620748488cfc379e5376b845dbd5116429882ca0d1aa954afaa636ffb9d9 \
+    --hash=sha256:84784c3ba3a6676f4498c85eac60ba4be90b3afd5a292e2664024e105055d436 \
+    --hash=sha256:8750d01346b2daee5084766b5b0e306c105e877b8bbe74a8e68682c4c29bbebc \
+    --hash=sha256:958b793f01a4ab5d9df91aba30dbde225b8acf1d83dd0394b159030b2ad82972 \
+    --hash=sha256:9ba345986e31edc60276061c33533f839b0f5b165a160b7e0235dc019fe3eaa4 \
+    --hash=sha256:a088a9c2922ce596a6e4d971e6781f23f594ded8399f143328d406da2f03b8a4 \
+    --hash=sha256:ad70512f0c2abd9e209efe479b123dfdd775c77ace703f414445f0a640ef7b1f \
+    --hash=sha256:afb91aa6cba01311e2ad16c5e707c8f4db08fad78d95d19b30c59eb659039d7a \
+    --hash=sha256:b7bb3afc573cd848bbf647a29f0b71b867346a5c572f99dbad5050e320e53c11 \
+    --hash=sha256:b9c213a8e100c4a89eb9c2166c030e0e1be13e18dd46616b075f1d3005b5af15 \
+    --hash=sha256:e5a1b7790ec8ab8e226b599a39fcf5170a022354c245b29d7cf615bd5cb1c5ee \
+    --hash=sha256:ef469b837877b1cc067ef5e24833bc3545a3ea34614be5b4c0b2cff3dec9e9ad \
+    --hash=sha256:f0e9b425255b228e1e960ac053b9355b2d41c33e4c24a3065aec689dc83648ed \
+    --hash=sha256:f89a57f79f4647b220d947e4612b24a12f5bec3613e2eb965aecdc29873576a5 \
+    --hash=sha256:f99e8e1f1e84522257c4c762ed194106b6b40eeca5a5d181b180fdeb3e927ef5 \
+    --hash=sha256:fdd8ded8a93e1be009577fccddaacf78aa21cbe7dc6ec53c229def0198a1ffa5
     # via eth-utils
 datamodel-code-generator==0.71.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:680b68338d59e98a0559eeb54d8e5ca33c35b3ec0bef922ec2cc783f2cb28e9a \
@@ -344,9 +353,9 @@ idna==3.20 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     #   httpx
     #   requests
     #   yarl
-inflect==7.5.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:2aea70e5e70c35d8350b8097396ec155ffd68def678c7ff97f51aa69c1d92344 \
-    --hash=sha256:faf19801c3742ed5a05a8ce388e0d8fe1a07f8d095c82201eb904f5d27ad571f
+inflect==7.6.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:9fefad5c0c174d8a38f8c33d3033817e38fca8475f7f226c62efc39d46c83e8a \
+    --hash=sha256:b46875b50534a7cd5fcfb5a7c971bb93fe68948c43ca53e9833bd1e1a69221bd
     # via datamodel-code-generator
 iso8601==2.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:6b1d3829ee8921c4301998c909f7829fa9ed3cbdac0d3b16af2d743aed1ba8df \
@@ -356,6 +365,10 @@ isort==8.0.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:171ac4ff559cdc060bcfff550bc8404a486fee0caab245679c2abe7cb253c78d \
     --hash=sha256:28b89bc70f751b559aeca209e6120393d43fbe2490de0559662be7a9787e3d75
     # via datamodel-code-generator
+jaraco-functools==4.6.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:880c577ec9720b3a052d5bc611fb9f2269b3d87902ef42440df443b88e443280 \
+    --hash=sha256:99e3dc0060c5cbe8fcd1cdb36258e2a65ca40f1566b2033b12abb1bb44dd3c30
+    # via inflect
 jinja2==3.1.6 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d \
     --hash=sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
@@ -384,16 +397,20 @@ lru-dict==1.4.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:e2c07ecb6d42494e45d00c2541e6b0ae7659fc3cf89681521ba94b15c682d4fe \
     --hash=sha256:e47040421a13de8bc6404557b3700c33f1f2683cbcce22fe5cacec4c938ce54b
     # via dipdup
-markupsafe==3.0.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:1872df69a4de6aead3491198eaf13810b565bdbeec3ae2dc8780f14458ec73ce \
-    --hash=sha256:3a7e8ae81ae39e62a41ec302f972ba6ae23a5c5396c8e60113e9066ef893da0d \
-    --hash=sha256:722695808f4b6457b320fdc131280796bdceb04ab50fe1795cd540799ebe1698 \
-    --hash=sha256:77f0643abe7495da77fb436f50f8dab76dbc6e5fd25d39589a0f1fe6548bfa2b \
-    --hash=sha256:83891d0e9fb81a825d9a6d61e3f07550ca70a076484292a70fde82c4b807286f \
-    --hash=sha256:94c6f0bb423f739146aec64595853541634bde58b2135f27f61c1ffd1cd4d16a \
-    --hash=sha256:be8813b57049a7dc738189df53d69395eba14fb99345e0a5994914a3864c8a4b \
-    --hash=sha256:d53197da72cc091b024dd97249dfc7794d6a56530370992a5e1a08983ad9230e \
-    --hash=sha256:d6dd0be5b5b189d31db7cda48b91d7e0a9795f31430b7f271219ab30f1d3ac9d
+markupsafe==3.0.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:0930db9bdc62d22944e10b066448bb65dc9abe9112880c7cab8da54db4284d5f \
+    --hash=sha256:1e1451fab512d1bcc3dc26988ec1edb0b82c2db909132872cd9356070a6b63df \
+    --hash=sha256:2e9ad7dd851bf45fab9f75cbff4cb493fee9979e8d8c7c9c3ee119022518edd6 \
+    --hash=sha256:61631e08084be9e21a8967ec3139c7616ed7c5e9368e05c86d1b39562c8a57b6 \
+    --hash=sha256:64511c54db4e4987aef4c41923235927428729e8174c5dba488429be70a998ed \
+    --hash=sha256:6a45c3d514f2436064db00d7fc8778d888f0236ebfed649b53d13a59e69ad51b \
+    --hash=sha256:8e124f974786f831d6043728e38296969d3579db8896fe004682f5758e613581 \
+    --hash=sha256:9f098115c247e11d138ab83a28fa0323c77015007ea2df73ba5fd714dfefd67c \
+    --hash=sha256:bd3ce56ae2cbae3ba82b683bc425cd7e48d2ed8b10f3e818186b6f5646d9271c \
+    --hash=sha256:c02e8f18bdedba082cef725942ac823b9b60656db07f7e265cb31618dfd00d77 \
+    --hash=sha256:c9a7f43c0b202b334cc9184af09bb8f21d3a209e038efaf106936fb69e6b026e \
+    --hash=sha256:d5f93ebbeb8032d47e349328ec8662d973d9b05a70b3c35df1f91fe419b84749 \
+    --hash=sha256:e1a622f13970d81f95d0c72f9dc090dce9085fccfa4c9f2174377ee32bd15786
     # via jinja2
 marshmallow==3.26.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:013fa8a3c4c276c24d26d84ce934dc964e2aa794345a0f8c7e5a7191482c8a73 \
@@ -414,11 +431,12 @@ mcp==1.12.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:0765585e9a3a5916a3c3ab8659330e493adc7bd8b2ca6120c2d7a0c43e034ca5 \
     --hash=sha256:7aa884648969fab8e78b89399d59a683202972e12e6bc9a1c88ce7eda7743789
     # via dipdup
-more-itertools==11.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:48e8f4d9e7e5878571ecf6f2b4e57634f93cd474cc8cfbd2376f2d11b396e30d \
-    --hash=sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192
+more-itertools==11.2.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:35a7377edd1dd6608dcb2cdf534ded55ea32d49448875ad042cd3f879fb1ded0 \
+    --hash=sha256:cbf08fd0af284dc69718b9b76a8e6203df624d70209ea511e4219d350c856f63
     # via
     #   inflect
+    #   jaraco-functools
     #   scalecodec
 mpmath==1.3.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f \
@@ -435,45 +453,45 @@ msgpack==1.2.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:c4d5bbdbea8f5669b3a734d6c226772804fb120848f99cbe63a0ddee63b049c9 \
     --hash=sha256:cbb8a677da3e845713925e9a203b8a120b1e9da9989836890ba4a4a187902701
     # via pysignalr
-multidict==6.9.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:0f06e60fa190aa7abd0914c2a766736fdc8e9f34878c4346338534b73d1b20e2 \
-    --hash=sha256:0f2ce963299d42fa3f22a90adc0fdf174792ffef5ff4c7ffb68260548fb05580 \
-    --hash=sha256:19e31815d41cefc365489e591d105d2baceb2f65aa75d29471fbdbda8651e006 \
-    --hash=sha256:1a53de2772cfb74559df2eb4456ec4eeb908435ec55a84b69370d9d745d62aa8 \
-    --hash=sha256:1a8adfcaf96f587ab138476eaddef95f29b8a2a8a9afbfea8d2fd62180995d02 \
-    --hash=sha256:29138fef49828542e859828107e42e50d0e587c513b7eb4b2d92bade2b0860fe \
-    --hash=sha256:35fc236507fb1b3138f0af5ecd5f94ed752d4d6d826248eae425f86204013eea \
-    --hash=sha256:3c95601ed98fad3f6e2f8fe809c3b526b0fab31ef525e00a155e227f3d17f58a \
-    --hash=sha256:5b30ddf7234e611ca877575b62840e6af5977f92f1f9d532eedbb05a44ff8004 \
-    --hash=sha256:637f4ae36264bd7b8d9a60193acddc1d735ad52e8ed53a19931ea6d921fea8e5 \
-    --hash=sha256:63ada7ee2e9345695f9e9bc4c65d72222253f07b1ac94fd0e37555cc6f3c7f60 \
-    --hash=sha256:6ed30be8918e18c8bed0a2e8b70639ecf02feb61ed00ca2e41cfcb2a50fa3f42 \
-    --hash=sha256:7bf6478188f4e47bf5686e8a33da4ae28bf43b1b2528d9ee144d28492bfac60b \
-    --hash=sha256:95052e8777a86bae87c0bd0b5ab22d809e3d1d02bf69e3e66ddda5ba75a05805 \
-    --hash=sha256:976fd7689d69ec78d67d31d38d396d8adb562f7e8368279f76aed4aa451fa06d \
-    --hash=sha256:b5f8771aaaed7f80e84a4e471d2f29ab6721e4595075e54d03ae1ed951b2000a \
-    --hash=sha256:c148e8b596000dd3e4bfe206e70f3e666be18d72032e0012555f2373c52e35d6 \
-    --hash=sha256:d35a4f1c63f07fbb8c8f9946dea98b21eddf6c57421585f71d91864be3ba2a24 \
-    --hash=sha256:e58952f04772f59f11c6e007471449809a30165188669bca8fdb19dde40a8f24
+multidict==7.2.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:08ea94663d9e7c25d14d78222f7aee906c472d4837766bec62477c38f6e419dc \
+    --hash=sha256:0eb7fa012ab47b13e96bffc1369642f520adcc4e3d3e170d7f1a2b39fb953bce \
+    --hash=sha256:1fb8c1a3480c130c3a6422d5f16f3cad6552bf08c2089dd288ba7134649183b5 \
+    --hash=sha256:2c4e6a97f79699f33e6dc13bddb5631781ee79a4a94c1822116d100e7d5c136c \
+    --hash=sha256:2f3cf710144b1859f4128051cc27ea86eee83caac5648cf2ca0c1b835261cbbe \
+    --hash=sha256:5324411117bdb67cfaeb3d1d28fb783710fcca3d88b855696af99044d7219e4b \
+    --hash=sha256:a3d28ac22fe658ad7486d1532b3a9084fbf65b428db31f47212c5b0b6da826f1 \
+    --hash=sha256:b4821bd30b38144d8ab75df56af0b07e9d71327c9cf94c0c7a1965f865bb9615 \
+    --hash=sha256:b81ff0f2d375988152614eaea4d5023c98ecb08f77df4bb1d96762504bb86fca \
+    --hash=sha256:c85a0a54a19429a17ef449e967baffe7b5089cb4f6ef2894c9168a69fa024d05 \
+    --hash=sha256:cb43bb34346155d479acdc5423afccdff79ce1fc66adfcc9de995cbec8a13acf \
+    --hash=sha256:d37773029ba034a2cc970b6eeb67dad3bff9d894393c51f6bb1c6b4f563a032c \
+    --hash=sha256:d615377a8e7bfc4f1983ede3f411c2ac2b0f7c3053f262d0437b7d8bcc4485e3 \
+    --hash=sha256:dbda2baafe08f8431fd3333be02c261023fd454607e3bde5e7dc00565f7bebcb \
+    --hash=sha256:e8af3e6f1bdbc31fd762b094133b478b89988eaebc63cbe82b1d9e3bbd15cede \
+    --hash=sha256:eb5c4a5b1281985271b6c29be53f2c1a9decf11e30a0e2733439c4d9d61b9ebb \
+    --hash=sha256:f278f118f9fdb5faba5a6792be397fbda094d1568efa4dfe8c3595ce4ce89eea \
+    --hash=sha256:f9e78d98a29e969a001e953eb09167a48bbc71249e804dae5db987ee7e6531c9 \
+    --hash=sha256:fa0ecd064b0ae18d235283abb5adbc4e07304dba8f2aa7c0d61f28bebcc70d4c
     # via
     #   aiohttp
     #   yarl
-mypy-extensions==1.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:1be4cccdb0f2482337c4743e60421de3a356cd97508abadd57d47403e94f5505 \
-    --hash=sha256:52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558
+mypy-extensions==1.2.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:993e7a20aa5671eb41a7132cf555af30062da99729601601b9a8382b11cae768 \
+    --hash=sha256:c6e275a07f1c2fc096b62940452d0eaa3f3af7de45d704787866240a7c6d5a51
     # via
     #   black
     #   typing-inspect
-orjson==3.12.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:1192a7021b6d071aaf909864f6e924d6a2675ca360485b972b8401749311750b \
-    --hash=sha256:11edb4660a6680abee9788a3a9072208a2c96538cc1322bd79542065229d8e54 \
-    --hash=sha256:2d3a9da945a4d96ae758fdaaca56742e6b73b6fd554c5d8876f252a6dad70b83 \
-    --hash=sha256:532ff8cd4bd59a327a953a7dcde922c7fc25b85e29721bb8633265430d3a3873 \
-    --hash=sha256:53c0c474a9d9aff9aebfc0c88de1f28f843d940e6e3a80729abdf6a20274356f \
-    --hash=sha256:92ffc09e07233a6ab6d4e067f7841edcbcc134cb4812155cf171ea5255a421d7 \
-    --hash=sha256:aa3e43a6846e91d7bde3d5a9c66090fcd8744f569a9b6cffc5e1ca38f6a461c0 \
-    --hash=sha256:bf44e374aadde77b1f6109f1030be51433eb61984379852766b6f4e187db7b1e \
-    --hash=sha256:d14203fb1aae2ad9b3d52f8a0e82aeb10197ef1c9bc61da7f358bd70b00123d5
+orjson==3.13.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:4329c19b8a25693f60a77b867c9d2a3ab637b20e36f5b7bea7f5acb492b44b15 \
+    --hash=sha256:65c4e0e106ccc7265b488385659117a6805c37d042f737558ecd68aa0c67ad8f \
+    --hash=sha256:6ff2a2c67f35202f7d823753d38ad371a9b7fc297567cdfff4420e763cb9f6f8 \
+    --hash=sha256:ae1d895cf7bbfd50ef34bb63bb727b14514f259f3e3f8dd010783bd38e864c6e \
+    --hash=sha256:b74c30e56346aad067937d766846ee74c231d1d18aad3f324e9b9261de3b2d5e \
+    --hash=sha256:bceadfd314bd238f584fc229a4bbaf0e573597e7a026dec5429fbf29fd66c641 \
+    --hash=sha256:d1de5eb04485110c5da4c657e49168995d55e076b1ce60f1a042e254f4186c4f \
+    --hash=sha256:fb8644dc6d705e1269ed2842bf4dbe2b4e50d670de503bf79d5cef3a5148a4c7 \
+    --hash=sha256:fbbad6b9b1da43f25c1f5b20cd5a268e028a2fc95d5a8d1ade6059973bc71584
     # via
     #   aiosubstrate
     #   dipdup
@@ -492,9 +510,9 @@ pathspec==1.1.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a \
     --hash=sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189
     # via black
-platformdirs==4.11.12 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:b1ba966ac76153d9985a0787ffab951e7c18416189873d4e4ddb2c8a04a0a254 \
-    --hash=sha256:e8dc1cb58f1153fd7f61db1374317770baababec2480b37b8f01c6cc25b45267
+platformdirs==4.14.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:32e9921db7385aa8169bee4fe9501923e5715ba9fb7ea3b9c69b0d8e0639f7a1 \
+    --hash=sha256:8e778c6fa421516f4d3369449f8df3b0e1b72c0e0005fe88e3ec772d0a14e750
     # via black
 poseidon-py==0.1.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:06c07b1e2ad273d50b243121b1e94b28bf893bd4942fe1808f98d33cd2de2790 \
@@ -534,16 +552,14 @@ propcache==0.5.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     # via
     #   aiohttp
     #   yarl
-pycryptodome==3.23.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:156df9667ad9f2ad26255926524e1c136d6664b741547deb0a86a9acf5ea631f \
-    --hash=sha256:187058ab80b3281b1de11c2e6842a357a1f71b42cb1e15bce373f3d238135c27 \
-    --hash=sha256:447700a657182d60338bab09fdb27518f8856aecd80ae4c6bdddb67ff5da44ef \
-    --hash=sha256:53ecbafc2b55353edcebd64bf5da94a2a2cdf5090a6915bcca6eca6cc452585a \
-    --hash=sha256:67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490 \
-    --hash=sha256:aa0698f65e5b570426fc31b8162ed4603b0c2841cbb9088e2b01641e3065915b \
-    --hash=sha256:c8987bd3307a39bc03df5c8e0e3d8be0c4c3518b7f044b0f4c15d1aa78f52575 \
-    --hash=sha256:cfb5cd445280c5b0a4e6187a7ce8de5a07b5f3f897f235caa11f1f435f182843 \
-    --hash=sha256:dea827b4d55ee390dc89b2afe5927d4308a8b538ae91d9c6f7a5090f397af1aa
+pycryptodome==3.24.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:3f9e74444c0ecbec7af232a95d282c74b114d53212ce075ed17b7fd7dca32bb3 \
+    --hash=sha256:558b9233ff2afb42f92115ae9b4414d08c0e567790619e878cf72947d7c38a11 \
+    --hash=sha256:5cac508283b5a1126945816613748a92395fbcdc70044b2c0cf2151caac5cdc9 \
+    --hash=sha256:5f0036f664f5ae5f092a0acb8a8afc4b719f60f7c88aad69984a65e49b4a32a4 \
+    --hash=sha256:93619c3117a8f14ea1267b427e465d152a66c89c3d3c643262070c05b2855aae \
+    --hash=sha256:9f8a311825b56b6d60169d75e71b68f11d882a77f1d1b042b8f35a80b4943cbd \
+    --hash=sha256:a089e49fcaa978302447b2e63118b2b0f366a25e914c5d7ac8c30b3e5cc61e3a
     # via
     #   dipdup
     #   eth-hash
@@ -574,9 +590,9 @@ pydantic-core==2.27.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:de3cd1899e2c279b140adde9357c4495ed9d47131b4a4eaff9052f23398076b3 \
     --hash=sha256:eb026e5a4c1fee05726072337ff51d1efb6f59090b7da90d30ea58625b1ffb39
     # via pydantic
-pydantic-settings==2.15.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:0ba092c291c94baceb5eff768aa0d56400a457585bc0175925a5a5510303da42 \
-    --hash=sha256:694b793e84f766ba76a90ebdefc01d0a9a045dab0382bee70393da93712ad117
+pydantic-settings==2.16.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:10e36f616623ebb586c05ca3d3cd22927146869db413d4f14c20c514442a1337 \
+    --hash=sha256:d1db16a2d34006323a1b42c0640898da58adfbad7ec30baaa9e2b18aafc08999
     # via mcp
 pyhumps==3.8.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:060e1954d9069f428232a1adda165db0b9d8dfdce1d265d36df7fbff540acfd6 \
@@ -586,13 +602,13 @@ pypika-tortoise==0.6.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:64d96c9b88450f6360ad22a7063933b6a90961a7317f04b2b63c98fd5d705506 \
     --hash=sha256:9194ac6ce6ac9bdfc6e959c831c5788ef05ee1371e82ba281b0eb75f4a2bd4f1
     # via tortoise-orm
-pysignalr==1.3.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:423c91b0d1dc8387f37118ac2d1dc87ed6b9e01993a04612eab8452193f40344 \
-    --hash=sha256:ca2e4372f213d82148fa2f060f0fefd096f1f66fca1107ac05e76ec6abd4cf52
+pysignalr==1.3.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:5012af69a812eb0b8d725b1b8ca075ec1cc8633706da4239012ab7a76b83b23b \
+    --hash=sha256:d5bb0676f087a06e0ae8177b5791bf060f0f6546658707bb7de290c92da3052b
     # via dipdup
-python-dotenv==1.2.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:904552145e8bfed22162c09dab1c2b9b54fefa7b23ba780f4f26ca0316b0f0d9 \
-    --hash=sha256:a20a594dabeaa385725aa239d5244871c143ecb356add8a20fcf23773a6c3a35
+python-dotenv==1.2.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc \
+    --hash=sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0
     # via
     #   dipdup
     #   pydantic-settings
@@ -600,9 +616,9 @@ python-json-logger==2.0.7 ; sys_platform == 'darwin' or sys_platform == 'linux' 
     --hash=sha256:23e7ec02d34237c5aa1e29a070193a4ea87583bb4e7f8fd06d3de8264c4b2e1c \
     --hash=sha256:f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd
     # via dipdup
-python-multipart==0.0.32 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e \
-    --hash=sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23
+python-multipart==0.0.33 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:8f16c07b36add9da6b2ee87d3efcaf0a45a6de9c3d0a5dd94e9ccf7675a7bc45 \
+    --hash=sha256:b8112424a6abd162ec08d390565dd113ad699f2fe6fef3c987b8bbcbfe9e390d
     # via mcp
 pytokens==0.4.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:140709331e846b728475786df8aeb27d24f48cbcf7bcd449f8de75cae7a45083 \
@@ -612,13 +628,13 @@ pytokens==0.4.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:5ad948d085ed6c16413eb5fec6b3e02fa00dc29a2534f088d3302c47eb59adf9 \
     --hash=sha256:6d6c4268598f762bc8e91f5dbf2ab2f61f7b95bdc07953b602db879b3c8c18e1
     # via black
-pytz==2026.3.post1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:2211d3fcf9a797d3405cac96ac7f61d80e6a644f72a3309607282fe8a2010c5d \
-    --hash=sha256:dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815
+pytz==2026.6 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:3b0fc2727707663d6e517936f444fd8a8b240f1fc32f4bf7ee03274245945284 \
+    --hash=sha256:7fed3fee8fd6bd4a2b7b75a8d56021d0624127bf69bd5691f115db929ac570b3
     # via tortoise-orm
-pyunormalize==17.0.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:0949a3e56817e287febcaf1b0cc4b5adf0bb107628d379335938040947eec792 \
-    --hash=sha256:f0d93b076f938db2b26d319d04f2b58505d1cd7a80b5b72badbe7d1aa4d2a31c
+pyunormalize==18.0.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:2b2e65201e688bb38c66ab66ef1071cc07b32e9840e5ae07aab716db6ede7d6d \
+    --hash=sha256:cdc571ab761c2bd905275c9f3e3cf386d10b4f9bc8d55b32d410cc635e684ba8
     # via web3
 pyyaml==6.0.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:41715c910c881bc081f1e8872880d3c650acf13dfa8214bad49ed4cede7c34ea \
@@ -636,21 +652,21 @@ referencing==0.37.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     # via
     #   jsonschema
     #   jsonschema-specifications
-regex==2026.9.10 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:032da15431c890d376f53547f0a6219f4f4cd19f3e4f11bdc321453b5bd207e4 \
-    --hash=sha256:0c32480f3371b75068decaf9e5da72c224e953830dd71e36e06cf80e30ea39d8 \
-    --hash=sha256:1562aabd9d4eb09bd88a62ad97ed06800094b529ac43419e43020b9cefec79b0 \
-    --hash=sha256:1e321e2c84f0e52c457f5ea5944f796d6e8e09cb99738ea98dcc1bfe402a128d \
-    --hash=sha256:23ac9a28180f274d7dd7651fa131ad5b02d343b75df4b040737f0356223895dd \
-    --hash=sha256:2479171edccced52ef02b899558f88ab2c235fe05b93180fdcae1670aacd89e1 \
-    --hash=sha256:2e67f8843f0e4b931f1fa860bf3bbe4134b714c0155cc5c7c0d7ea450230aae0 \
-    --hash=sha256:4c66d54042a14a503907d81861b8a5235e6d1f03d4fbc1d8767f652eaf957ac1 \
-    --hash=sha256:866de9f98df0611d7b62b3a8729d3284a64c0cc6edd90bb95a533e443a4939cb \
-    --hash=sha256:880ac684c27176464c00c3fdc456116364f5ebc70da07aad0c2d4a7ba45e98db \
-    --hash=sha256:b9d36b03dc362aa40ffaaec9d9bd75e87763529563ec008c43b0e07782f5be7a \
-    --hash=sha256:bb7774924f8cd69f49cba0b3c2d679a6326f777e0e67d130ad5203e4df53f0d3 \
-    --hash=sha256:c014641157e9049b0603b8daa5343bd408d9b757b709aaa0f373cd3fab2d7944 \
-    --hash=sha256:d2d377fd1cad611b806cdd732d86b65f536c768209890cb442556548daa65a23
+regex==2026.11.9 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:16165b67939c4fbaff46bb0380828d4fdda6936d92861baa47257399459145a4 \
+    --hash=sha256:1e2513028297550486dffc6e0799f24f194957418b75cd0ac2c7ad484e0d12a2 \
+    --hash=sha256:2255e173ffb8da59f26ec3529bf7e8531320e71575b27c3fb062747eb3a12e1f \
+    --hash=sha256:316a70fbd70e999c9664681cb0eb5b4982b2cc0f623c7c86a8a112e1bd4c6277 \
+    --hash=sha256:9538d0bc19f87d273c2a5397a08fcd2646d02ace31ba7974483d997e36654dcf \
+    --hash=sha256:a5ac0114fa49c175803fce562ed243bfaf7f6943edf4b2a01ef82f0f61e7e397 \
+    --hash=sha256:a919f782789b9b3460bc51a1c69125551bb6164a0e401865a037397b219705b1 \
+    --hash=sha256:ab4a0c5cd3df4b93841ba4a419a5438b2a4c78a4e418682fc674e3f50d56b857 \
+    --hash=sha256:ad0795929a24ad49f096c464f0ff7fb4d66488c6f20c2b1da724e2067e3d5c2d \
+    --hash=sha256:b47bd645e6305d22a31dc063635de40796e93e72cfeb9a86108dfa806ce866fa \
+    --hash=sha256:b7073a7a0134621c5cfcf2c63b55cfd569cd88a6417c08cf829babba200b989d \
+    --hash=sha256:e3fe4474aeaa34535077bd3cdee6294756e99f4ed498b09712b5f3dc0b2947a5 \
+    --hash=sha256:e6f945b6fcbf1a51760ab41b61159dba8bbcf3614ed921bd175d62529be5ec26 \
+    --hash=sha256:f1ed6b50f54b8467bb3085fb6d701f3eb77c9ad81071da498cdc7725b4867f92
     # via parsimonious
 requests==2.34.2 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0 \
@@ -664,20 +680,32 @@ rlp==5.0.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     # via
     #   eth-account
     #   eth-rlp
-rpds-py==2026.6.3 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:127565fead0a10943b282957bd5447804ff3160ad79f2ad2635e6d249e380680 \
-    --hash=sha256:1cebd1337c242e4ec2293e541f712b2da849b29f48f0c293684b71c0632625d4 \
-    --hash=sha256:270b293dae9058fc9fcedab50f13cebf46fb8ed1d1d54e0521a9da5d6b211975 \
-    --hash=sha256:2c99f7e8ccb3dd6e3e4bfeac657a7b208c9bac8075f4b078c02d7404c34107fa \
-    --hash=sha256:538949e262e46caa31ac01bdb3c1e8f642622922cacbabbae6a8445d9dc33eaf \
-    --hash=sha256:55927d532399c2c646100ff7feb48eaa940ad70f42cd68e1328f3ded9f81ca24 \
-    --hash=sha256:58eadac9cd119677b60e1cf8ac4052f35949d71b8a9e5556efccbe82533cf22a \
-    --hash=sha256:62698275682bf121181861295c9181e789030a2d516071f5b8f3c23c170cd0fc \
-    --hash=sha256:7491ee23305ac3eb59e492b6945881f5cd77a6f731061a3f25b77fd40f9e99a4 \
-    --hash=sha256:a0811d33247c3d6128a3001d763f2aa056bb3425204335400ac54f89eec3a0d0 \
-    --hash=sha256:a214c993455f99a89aaeadc9b21241900037adc9d97203e374d75513c5911822 \
-    --hash=sha256:ecabd69db66de867690f9797f2f8fa27ba501bbc24540cbdbdc649cd15888ba6 \
-    --hash=sha256:f56f1695bc5c0871cbc33dc0130fcf503aab0c57dcc5a6700a4f49eba4f2652e
+rpds-py==2026.9.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:01445c8d194aa032a08e944f16567672da1c62dbdbefd8b6d0693032e290cf68 \
+    --hash=sha256:10e208f2425d973938afcd56e28a7c4be32e27b6a60b5d381f49fb9d8acf9759 \
+    --hash=sha256:2693b2728bbcc48d09a981a356954b0c47c53ff25b545856f28a889ea619f69a \
+    --hash=sha256:3890a6aa36e6baa53d5258a2a25d3ef8b37ad165a6ab27a892d7c3e3a432cd69 \
+    --hash=sha256:3b5a6f40f0a1486b4b36c888123afc67acdbd9f33235927acf5ff295429a0ba3 \
+    --hash=sha256:46d80bc76b51a6c24f9944368c28d38b8bcbcea1da4f2f8d3ebc31a67e8c6ec6 \
+    --hash=sha256:4793ef7f78268b124b73fa933440f01d258bbae01de9fa53e9080c9ab0425a12 \
+    --hash=sha256:492e5e428cbe126221611f47e068f01660352feec4ad18bc0f5ea9b2ae88fb14 \
+    --hash=sha256:50906f5aea24b5a865cbd0a589698288631d9f3a54c3a937c83aefa95a0d14af \
+    --hash=sha256:56c6952a9b15047466d0c2347c446a761d4527f89976156341e68f0ce5cc08b0 \
+    --hash=sha256:684fd492fff4fead00587544e059be2bbcb6f93454f21fa2a91b66fc7508be82 \
+    --hash=sha256:6b5b393eda5ea42cca1c1a6665f2a4882b4fd5d1777e41ce0545a107fb008c9d \
+    --hash=sha256:6b9bf3135b4ad5981df9a73d71a35272d650a2985ae9c2746357b24d59de2448 \
+    --hash=sha256:6c0dbbcc19735fe5f8b0a54c07659d154a9e69f47e15d0a6ab7299215daf62cb \
+    --hash=sha256:6cdc537c8633d7fd92a82e2e0d2ab74320a3f63d5e59fb9cf08711e08fe151c4 \
+    --hash=sha256:815d26356930846a40c7bc1366e7b1b0320ab8a063e66c11298a208bed0fd237 \
+    --hash=sha256:8601470267d938bcb7f3ab1a336100af51a4fd5b6ed030ef52461bb3ef5e7e07 \
+    --hash=sha256:88b5268892fde430d5531f95bc560b6efbbd67c929662c586afd729a96e7461c \
+    --hash=sha256:addeda51556dac7c1a2f14cda62db8b621cd12afba3091d03a96c72932387eab \
+    --hash=sha256:b242c27c8f836305a4a72df9cdd564386ac57b807bd252a063223331c9316b37 \
+    --hash=sha256:b5b8b0753718d258fd454283fbd57e14545d3b40583fa672e27cb4f987626bcc \
+    --hash=sha256:d1028417bb44037eb3069c1009bd7b7277212876cda22fbe565b0bca9fab6d2c \
+    --hash=sha256:d9edf30457d74eebfd76b045535e36f1cd89062566a128a0db2145ca042d787e \
+    --hash=sha256:e21c1429e205828ea886a2293a4a2c8e01f4c25d9893ca330e97a6cf73f52e7b \
+    --hash=sha256:eef6a03b0b6d08d0835ccfa8ec8d1bc70525e3801387567137b50c557695e6da
     # via
     #   jsonschema
     #   referencing
@@ -718,32 +746,32 @@ scalecodec==1.2.12 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:aa54cc901970289fe64ae01edf076f25f60f8d7e4682979b827cab73dde74393 \
     --hash=sha256:b9de1a2d3d98b9e4285804478d8f5f13b3787ebc4d05625eb0054add7feebe45
     # via aiosubstrate
-semver==3.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:14bc073439513d7773662a338f4db9829cf16c12b74b9568e2d2689975fbd7fc \
-    --hash=sha256:6e4998f8b4762acdfea85f9bfd5b4032e0bb50038dc04bf82011b42d5d1145c5
+semver==3.1.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:149b26cabada6f63212f97e94505d21578cb1d280cf714827f328d5e70765fea \
+    --hash=sha256:c00cf7dac88a352bc6a4a997d6ac0bf95ba835c589bc0c54f7b76f9e2a45123a
     # via starknet-py
-sentry-sdk==2.70.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:27e4b512f47be93136645dbe8f02d430473ee73a389ce430b2b7104baa66cf75 \
-    --hash=sha256:89600e8bb5fc5239cad5c4434217f453204f2207ad29399ea58947460b37a62e
+sentry-sdk==2.75.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:9a10e97de2cbd42ad7e4a6e02a0d5af19de9811eb02445077d41ba14c08e170c \
+    --hash=sha256:c38ac2d4b2435c11da821e173bb9d9088c98f41ae92f559ce0e424170a8e1a29
     # via dipdup
 six==1.17.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
     # via ecdsa
-sqlparse==0.6.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:113c35c75365ab9cc9c7231d68c6428fb11c085fc8e9eb1ad659b7ddbf6cd2b9 \
-    --hash=sha256:b861c0288ce2fa56209a9a6412d2e066ac664b3873b89c26c9d8415e8e32996f
+sqlparse==0.6.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:3be5a72d04c873d690d7c6dedd33d6fae2ef82759881ceec02fc2efd0cba564f \
+    --hash=sha256:ca722573f848ff2d30e40ea30f53a104b7dea7635ea9285891263eb2c58fb6e7
     # via dipdup
-sse-starlette==3.4.11 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:1bae716c02f3e6f294be41ff333220692dae7c3cbab077c900f159676719dade \
-    --hash=sha256:c7b2244bdff016fe7f64e10075e89a3e6bbf899649cc89b0fe884b5545042453
+sse-starlette==3.7.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:326416da2ab52e9a41b3f409d3ff897eda45aa68c9f3b7b17d0913aab8d219c3 \
+    --hash=sha256:f1d3136caa12d129284fca3d2ded79bc9af943320b6472712955fea52a6d3eea
     # via mcp
 starknet-py==0.28.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:6fff24e2ecb113a67fbbbb9cb9a191b5646c5a7bcc727b529a9b0d81c86bedda
     # via dipdup
-starlette==1.7.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:67f8e99895493dd2911a03f11314af6ceebeae4e704bb9f43dfc6a9db151c93e \
-    --hash=sha256:c79f74ea63cff761804fbbfb182f1e0b440c2d07b164d24700c5a1bab5d6ff5d
+starlette==1.10.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4 \
+    --hash=sha256:b8399098d4c1e3522734f7235dc79b1fc967f96cf139c81e0fa30479e0685f9b
     # via
     #   mcp
     #   sse-starlette
@@ -762,9 +790,9 @@ tabulate==0.10.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d \
     --hash=sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3
     # via dipdup
-toolz==1.1.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'pypy' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux') or (implementation_name == 'pypy' and sys_platform == 'linux') \
-    --hash=sha256:15ccc861ac51c53696de0a5d6d4607f99c210739caf987b5d2054f3efed429d8 \
-    --hash=sha256:27a5c770d068c110d9ed9323f24f1543e83b2f300a687b7891c1a6d56b697b5b
+toolz==1.2.0 ; (implementation_name == 'cpython' and sys_platform == 'darwin') or (implementation_name == 'pypy' and sys_platform == 'darwin') or (implementation_name == 'cpython' and sys_platform == 'linux') or (implementation_name == 'pypy' and sys_platform == 'linux') \
+    --hash=sha256:890f820b1cb8152785aaf9386d8707770110809035800985ca65cb24ce1120ef \
+    --hash=sha256:9667a038e9d6ecba37995e26cb2f59ec6420b6ad8dd9677de59db9b956b08490
     # via
     #   cytoolz
     #   eth-utils
@@ -780,9 +808,9 @@ typeguard==4.6.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     # via
     #   inflect
     #   marshmallow-dataclass
-types-requests==2.33.0.20260906 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:76ab8a0fb736744a0c3deee7aa57b2927e301f078d9e61f5391b3e92002416b9 \
-    --hash=sha256:9f53622652bd921ead7a54d665be1b8d518165c8b51cc9d68d944cd6b6bfa8fb
+types-requests==2.33.0.20261030 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:06cfc2e92399bf46eda78a65cd0e2203d29ebbeede78b4ab0a5922f749ce1492 \
+    --hash=sha256:42d75eb02ed0f8220904c8fc08d3129742e7fce42fd5cf706395c8bb4c0ad990
     # via web3
 typing-extensions==4.16.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
@@ -794,6 +822,7 @@ typing-extensions==4.16.0 ; sys_platform == 'darwin' or sys_platform == 'linux' 
     #   eth-typing
     #   pydantic
     #   pydantic-core
+    #   pydantic-settings
     #   referencing
     #   starknet-py
     #   starlette
@@ -805,13 +834,13 @@ typing-inspect==0.9.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:9ee6fc59062311ef8547596ab6b955e1b8aa46242d854bfc78f4f6b0eff35f9f \
     --hash=sha256:b23fc42ff6f6ef6954e4852c1fb512cdd18dbea03134f91f856a95ccc9461f78
     # via marshmallow-dataclass
-typing-inspection==0.4.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:547274fa6b0a561ccf549cc9524b999a578e737d015d8709d021f9d0d13bea47 \
-    --hash=sha256:65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147
+typing-inspection==0.4.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:7f16c411e7930dc79596d42ab44672a3fe5f60eb34b781a1647e7872363120c7 \
+    --hash=sha256:bc210535442b39e1bf2805e0c7a17dfd6a4ace760c84c7f7d16245d23a6b1c39
     # via pydantic-settings
-tzlocal==5.4.4 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:8dbb8660838688a7b6ba4fed31d18dedf842afb4d47ca050d6d891c2c15f3be4 \
-    --hash=sha256:aae09f0126a8a86fa736be266eb4a471380d26a0de3bc14844e7821fee3e2a15
+tzlocal==5.4.5 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:ba976898bad27945178c9ca25c222c19e322b30c10342b9f40b46714f70d2d5f \
+    --hash=sha256:ecab534f6d65d9deb4c4ea52c121ab6dd5958e9b878e71dcb102578269752454
     # via apscheduler
 urllib3==2.8.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3 \
@@ -820,18 +849,18 @@ urllib3==2.8.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     #   requests
     #   sentry-sdk
     #   types-requests
-uvicorn==0.53.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:a9356f0cb89b3b8621529c5d5eebd69bfe154f4c3f68b4cf2de47e45fa855c2e \
-    --hash=sha256:e8dca71ec86dce5f04e333f0d56cdedf942446e6643b9cea1af0d6d3a02cb03e
+uvicorn==0.54.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf \
+    --hash=sha256:a2e33cbfaa0306f8e6b0c13e0cb89d7d7a2da3e62b90c66e18c33d9807b28620
     # via mcp
-uvloop==0.22.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:512fec6815e2dd45161054592441ef76c830eddaad55c8aa30952e6fe1ed07c0 \
-    --hash=sha256:51eb9bd88391483410daad430813d982010f9c9c89512321f5b60e2cddbdddd6 \
-    --hash=sha256:6c84bae345b9147082b17371e3dd5d42775bddce91f885499017f4607fdaf39f \
-    --hash=sha256:700e674a166ca5778255e0e1dc4e9d79ab2acc57b9171b79e65feba7184b3370 \
-    --hash=sha256:7b5b1ac819a3f946d3b2ee07f09149578ae76066d70b44df3fa990add49a82e4 \
-    --hash=sha256:e047cc068570bac9866237739607d1313b9253c3051ad84738cbb095be0537b2 \
-    --hash=sha256:fe94b4564e865d968414598eea1a6de60adba0c040ba4ed05ac1300de402cd42
+uvloop==0.23.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:090865d8ce7a03986755a3ce711b7dd0d4b44eb14ab74368b717f3fad1180208 \
+    --hash=sha256:28d160f51ab4da3b187063652e643dea6831072add4adc1e6d62afbe73b6be27 \
+    --hash=sha256:4448e9124537620f9c25d004c227bb5104440b58955c19bbd312d910af919a63 \
+    --hash=sha256:93935ab27b6eaef4c3e5489aebc84284f0644592f7ab516df60ee1b27eaf5eb3 \
+    --hash=sha256:a6ac96da66c35bf789bdcde78a88dc7d56b7907d8379648c54adc1c61594575d \
+    --hash=sha256:bd6f2f81c7b9da99d301c0b16b82044e76fe887086e42e1590ecf520b94dbdac \
+    --hash=sha256:f7548ede3ee908cfabc0d068106e303a9a2d811af959cdf6ab85676344cedcda
     # via dipdup
 web3==7.16.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:760b2718c473980d70708c3593d9d28395db4b482f45e38a63a36fa028178f51 \
@@ -858,29 +887,34 @@ websockets==15.0.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     #   pysignalr
     #   starknet-py
     #   web3
-xxhash==4.0.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
-    --hash=sha256:0163b5d259de23ae9e07b7eabf435ce4704f6f205589a2b154e6af4be985ce1b \
-    --hash=sha256:06713a5aaf1d0905c5579416c020c02e42b3ceb931e86c7d3b7fb85403dee3f3 \
-    --hash=sha256:1642907941ee4b75aacc3db688af52ea02ca2305ab22af7ee686ed726b332684 \
-    --hash=sha256:1ee523f51718e41753f04f7102bb4dc55a18d2ea5cbaceef8ec7ca08571bd428 \
-    --hash=sha256:237b8f63a2a0fcfb1ffc06e21dad23add44e6d354b2b014364a1d41e419a4dee \
-    --hash=sha256:31d86f9e81f3e84e00131ac7c54caf5119ae4ddd82c09c31cff597c813ce1ee2 \
-    --hash=sha256:4a76345f5aceb4ec404918edf9c7f2b5507db864dc0d7455982009ac0890b57b \
-    --hash=sha256:4af350bc3f329970c0e3a59af84a8a30998bf8a9167eb50cd48e59baaa1d7bec \
-    --hash=sha256:515a822c73abbf6a0b7c70976d9662be342835c9d78b8dc7c023411f39c35dbc \
-    --hash=sha256:5f1ea31d61bcd2cd2f3ec4ca80a64187bbd7948f490b63cf0dcbc6e717b4c1e9 \
-    --hash=sha256:81507a68ba84c55241fb61cce1469f473a5da4205fc8ef6f698e5948eea8dd88 \
-    --hash=sha256:8ba782ca3bf1e81492611152b9a0d5264971339e95e34d69de0ac2c926be496d \
-    --hash=sha256:96d8de55029d42251945531f6aa7590c32b48163c66a43bf29d8657d7446a377 \
-    --hash=sha256:c10b9206753b64aa791b35b201485477525b26fdec5bf86e8364c388a03e2592 \
-    --hash=sha256:c6fc415b5568bd9accc7187f1729a99707330c0a67a8b9f93c1149ed573ed75d \
-    --hash=sha256:d55bf4ef10eb09b8b6866790e083d26d087d84caa3cc0946ba87c3ca7ecaf7b7 \
-    --hash=sha256:da0264844a09b538c894e5eff25313d941deb4dedec2131b98418a71a3c9944e \
-    --hash=sha256:deca2a30d983d240b8375ec2ee0a4288e72042827fc61df2f7671f8467e4cb2f \
-    --hash=sha256:e8cda075b10bb3917b002c74a04f9e02b7d13b5bf732571404d51c52b11c7329 \
-    --hash=sha256:f3e1a44af01b6692de0ec6caba5f0bf93ceb36896e02b7fc00952c6ea7ef39e1 \
-    --hash=sha256:f5d031f35962e5483a613214e61f09fe24ab523062c3646d592dc16c4a217451 \
-    --hash=sha256:ff48915bf1871a1f19f74c11834c6329443d306cedc0c05fe7fe617810422a80
+xxhash==4.1.0 ; sys_platform == 'darwin' or sys_platform == 'linux' \
+    --hash=sha256:01cb3dc9601772fdf7a21b4384c9508d671f5d74b549cfd86cca0ebf8019ed32 \
+    --hash=sha256:05bf1466e7eab5980d21bd4b40613d551ab0076543fb82d7568222e11641712d \
+    --hash=sha256:09b78ce392272a9d121feb2fe6cb48d9538aa882bf8210485da4623e408b5b86 \
+    --hash=sha256:0e8aedb5a086b9c65e8eb28f9c9448fb9ec78b1e3d05f006d36c08d7f1e98a50 \
+    --hash=sha256:110087e3fb60c49a849b50aad0830d9025efe3dd76ec8a286e181c7db7e165d1 \
+    --hash=sha256:13447184b2366346fcb26efc0b1cebd385c7bf32bbcb40dd3b4c7de96f856b27 \
+    --hash=sha256:149940775d6a279baed5d90f1166a6c549443a3d4e922b3d6ded8bc6f491aae1 \
+    --hash=sha256:163e47667ae6449ddbcb58aff4b9a32e937473cdca927fe74e0685919b226d88 \
+    --hash=sha256:209ebf5566ae704a931782527a0143e7676d7fbc9a4df4ff91431730691aff0d \
+    --hash=sha256:34b86625dc36b54403b525e1d7b74a64343d9b65cee6e94872c6bd70722267ac \
+    --hash=sha256:3974257e8704f0a10f5f884bcdaac51b1f235c2673548372ea96a31ce184ebcf \
+    --hash=sha256:4412e8ab944d019411713ceada7cb4cb6891f7f8202ada33fc904d10b6270455 \
+    --hash=sha256:5a46ad49e39949f7036b59b63a76ecf699cbc883f68c709c215a409845e293c5 \
+    --hash=sha256:5d3579df3d7cc8ca602bdb74fe2b1ac25ee477aea2c7783a103a777c3c55ebcf \
+    --hash=sha256:603ff2f537328c225b1fb2e585c86bbc14eeecf9807434597a2c2beb7754d5d3 \
+    --hash=sha256:61ae63632bf7aaab0e7fd53f669c1f33a2bdd4ffa2a2dbf836b9ef1f1b4337d8 \
+    --hash=sha256:71e444112ff3207c51b5b499c1d61a75ebc4c08c6a763e0e250fe9565e05b62d \
+    --hash=sha256:9022c73e4744f691d9861e595d9b34cad40747ff56ed4d16e79bdc2730cc8c85 \
+    --hash=sha256:af116cb3e71c397597cbde664dd759280d783a7116685c06203a86d6ccff4b72 \
+    --hash=sha256:c9b288e4c1f5dae54417bc8a05e6f6daf505783d916b4783f4dd2f2e7d5db486 \
+    --hash=sha256:ca7b167cdf6b2c2729cbd2bd6c33e4c1c1ab799890345ce38117b31dcacfea3a \
+    --hash=sha256:cc55a793d4c31372fbb08ef7666b28d5145f52df393c0ca2e9efdb4a0e7c9b41 \
+    --hash=sha256:cf96dbe95b72c769be20bf2d8fb2b9e08a90b690761b310d52502a59e9dd0de0 \
+    --hash=sha256:d065c2f85f7e259825fab08c897719098bcc4bc6228cbe6eb980d3bcff776352 \
+    --hash=sha256:d69de1abef8cdd90e914b8723588954b3055175db2b5874ed3cfbc8ddfaf77b5 \
+    --hash=sha256:f599d8f001d093746ea1c8adeded9a09811f25405b2f3d23ccdcb45ba97593ae \
+    --hash=sha256:f7595ad7102309d686d8aa4fdad9b7f7fe80240cb041d580dae2a01986436009
     # via aiosubstrate
 yarl==1.25.1 ; sys_platform == 'darwin' or sys_platform == 'linux' \
     --hash=sha256:03dd38de09bc213e9a8b29761eec33ee1d5318dac0e49d8af36e4d27830e23a7 \
