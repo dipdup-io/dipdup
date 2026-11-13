@@ -24,6 +24,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - coinbase: `get_candles` no longer returns the same candle twice when the range spans more than 300 candles.
 - coinbase: `get_oracle_prices` raises `UnsupportedFeatureError` without making a request, since Coinbase has deprecated its Price Oracle API.
 - config: `first_level` and `last_level` set both in a template and where it is used (an `indexes` entry or `ctx.add_index`) no longer produce a level that is neither of the two (500 and 1001 gave 1021, skipping blocks); the value set where the template is used wins.
+- config: `tezos.head` and `tezos.operations_unfiltered` indexes created from a template (in `indexes` or with `ctx.add_index`) no longer fail with `handlers: Unexpected keyword argument`.
 - context: A database connection lost in the middle of a rollback no longer leaves the reverted data under the old index level, which made the index skip the new branch after a restart.
 - datasources: A realtime connection closed by the server with an error (e.g. TzKT's `ClientTimeoutInterval`) is reconnected instead of crashing the indexer with `FrozenInstanceError`.
 - hasura: Views created without reindexing (e.g. by an `on_restart` SQL script) appear in the GraphQL API after the next start instead of only after `hasura configure --force`.
