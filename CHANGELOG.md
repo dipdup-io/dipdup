@@ -30,8 +30,14 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - index: A chain reorg received while the index is falling behind the datasource is no longer dropped when the index resyncs, which left the data of the orphaned blocks in the database.
+- index: An index that reached its `last_level` no longer keeps the other indexes from switching to realtime and no longer collects realtime messages.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
-- models: `bulk_create` called with a generator writes the objects; it wrote nothing while the rollback journal recorded them as inserted.
+<<<<<<< HEAD
+- models: `bulk_create` called with a generator inserts the objects instead of nothing.
+||||||| 122c463e
+=======
+- metrics: Progress is no longer stuck at `estimating...` for indexes that skip history or when an index is added while others are syncing, and no longer goes negative after a rollback.
+>>>>>>> origin/next
 - project: A project created with `dipdup new` from the `demo_tezos_etherlink` template uses the chosen package name in `dipdup.yaml`.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
@@ -54,6 +60,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 
 - datasources: Realtime connection failures are logged at `WARNING` level as `Realtime connection failed: ...` instead of `ERROR` as `Websocket connection error: ...`; alerts on the old message no longer fire.
 - datasources: The realtime `http.retry_count` limit counts consecutive connection failures instead of failures over the whole lifetime of the process, and also applies to `evm.node` and to `substrate.node`, which used to reconnect forever; a connection lost before all subscriptions are confirmed counts as failed.
+- metrics: Progress in the status line and in `dipdup_progress`, `dipdup_levels_indexed_total`, `dipdup_levels_total` covers the whole range of every index, from its `first_level` to the head, instead of the levels left at the start of the current run; after a restart at 90% of the history it continues from 90% instead of starting from zero.
 - tezos.tzkt: The realtime connection uses `http.connection_timeout` (60 seconds by default) instead of a hardcoded 30 seconds.
 - watchdog: A regular (non-daemon) job or hook that runs longer than the `callback` timeout is now reported, while previously any other callback starting or finishing hid it; an `atomic: true` one is also reported by the `transaction` trigger. To allow it, raise the timeout or call `ctx.watchdog.reset(WatchdogTrigger.callback)` inside it, plus `ctx.watchdog.reset(WatchdogTrigger.transaction)` for an atomic one.
 - watchdog: The `websocket` trigger is now armed by default: if an open realtime connection delivers no messages for its timeout (60 seconds unless configured), DipDup warns about it; a datasource without subscriptions is not watched. Previously DipDup never armed it, so it did not fire. If you set `websocket: action: exception`, such a silence now stops the indexer.

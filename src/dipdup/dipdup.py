@@ -7,7 +7,6 @@ from asyncio import Event
 from asyncio import Task
 from asyncio import create_task
 from asyncio import gather
-from collections import defaultdict
 from collections import deque
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
@@ -117,8 +116,8 @@ class IndexDispatcher:
         self._address_prefilter_open = False
         self._entrypoint_prefilter_open = False
         # NOTE: Monitoring purposes
-        self._initial_levels: defaultdict[str, int] = defaultdict(int)
-        self._previous_levels: defaultdict[str, int] = defaultdict(int)
+        self._previous_levels: dict[str, int] = {}
+        self._levels_processed: int = 0
         self._last_levels_nonempty: int = 0
         self._last_objects_indexed: int = 0
 
@@ -231,7 +230,7 @@ class IndexDispatcher:
             await self._ctx.transactions.cleanup()
 
     async def _update_metrics(self) -> None:
-        if not self._indexes or not all(i.state.level for i in self._indexes.values()):
+        if not self._indexes:
             return
 
         active, synced, realtime = 0, 0, 0
@@ -253,16 +252,16 @@ class IndexDispatcher:
             if index._config.last_level:
                 sync_level = min(sync_level, index._config.last_level)
 
-            initial_level = self._initial_levels[index.name]
-            if not initial_level:
-                self._initial_levels[index.name] = index.state.level
-                continue
+            # NOTE: Progress is counted over the whole range of the index, so it survives restarts
+            index_total = max(sync_level - index._config.first_level, 0)
+            levels_total += index_total
+            levels_indexed += min(max(index.state.level - index._config.first_level, 0), index_total)
 
-            levels_interval += index.state.level - self._previous_levels[index.name]
-            levels_indexed += index.state.level - initial_level
-            levels_total += sync_level - initial_level
-
+            # NOTE: Speed is counted over what was processed since the start of this run
+            levels_interval += index.state.level - self._previous_levels.get(index.name, index.state.level)
             self._previous_levels[index.name] = index.state.level
+
+        self._levels_processed += levels_interval
 
         metrics._indexes_total['active'] = active
         metrics._indexes_total['synced'] = synced
@@ -275,15 +274,12 @@ class IndexDispatcher:
         batch_objects = metrics.objects_indexed - self._last_objects_indexed
 
         levels_speed = levels_interval / update_interval
-        levels_speed_average = levels_indexed / (time.time() - self._started_at)
+        levels_speed_average = self._levels_processed / (time.time() - self._started_at)
         time_passed = time.time() - self._started_at
 
-        time_left = (levels_total - levels_indexed) / levels_speed_average if levels_speed_average else 0.0
-        progress = levels_indexed / levels_total if levels_total else 0.0
-
-        # FIXME: Only with Etherlink demo. Why?
-        if levels_total <= 0:
-            return
+        time_left = (levels_total - levels_indexed) / levels_speed_average if levels_speed_average > 0 else 0.0
+        # NOTE: Nothing to sync when every index starts at or above the current head
+        progress = levels_indexed / levels_total if levels_total else 1.0
 
         metrics.levels_indexed = levels_indexed
         metrics.levels_total = levels_total
@@ -322,7 +318,7 @@ class IndexDispatcher:
     def _get_status(self) -> str:
         total, indexed = int(metrics.levels_total), int(metrics.levels_indexed)
         progress, left = float(metrics.progress) * 100, total - indexed
-        scanned_levels = int(metrics.levels_indexed) or int(metrics.levels_nonempty)
+        scanned_levels = self._levels_processed or int(metrics.levels_nonempty)
 
         if metrics.realtime_at:
             return f'realtime: {scanned_levels} levels indexed and counting'
@@ -383,7 +379,7 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        statuses = {i.state.status for i in self._indexes.values()}
+        statuses = {i.state.status for i in self._indexes.values() if i.state.status != IndexStatus.disabled}
         return statuses == {status}
 
     async def _fetch_contracts(self) -> None:
