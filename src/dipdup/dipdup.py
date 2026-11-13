@@ -383,7 +383,6 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        # NOTE: Disabled indexes stay in the mapping forever and never change their status
         statuses = {i.state.status for i in self._indexes.values() if i.state.status != IndexStatus.disabled}
         return statuses == {status}
 

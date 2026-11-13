@@ -80,7 +80,7 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
     def push_realtime_message(self, message: IndexQueueItemT) -> None:
         """Push message to the queue"""
-        # NOTE: A disabled index is not processed anymore, so nothing reads its queue
+        # NOTE: Nothing reads the queue of a disabled index
         if self._state and self._state.status == IndexStatus.disabled:
             return
         self.queue.append(message)
@@ -316,7 +316,6 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
         self._logger.info('Index is synchronized to level %s', last_level)
         metrics._levels_to_sync[self._config.name] = 0
         await self._update_state(status=IndexStatus.disabled, level=last_level)
-        # NOTE: Drop realtime messages collected during the sync
         self.queue.clear()
         metrics._levels_to_realtime[self._config.name] = 0
 

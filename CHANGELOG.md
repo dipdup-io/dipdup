@@ -27,8 +27,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - http: Requests rejected with a 4xx status (except 408 and 429) are no longer retried, so errors like 404 or 400 reach the caller immediately instead of after the full retry backoff.
 - http: `Retry-After` on 429 and 503 responses is honored both as seconds and as an HTTP date; when it is longer than two minutes (or `ratelimit_sleep`, if larger), the request fails right away instead of waiting that long between every retry.
 - index: A chain reorg received while the index is falling behind the datasource is no longer dropped when the index resyncs, which left the data of the orphaned blocks in the database.
-- index: An index that reached its `last_level` no longer collects realtime messages that nothing reads, which grew memory without bound.
-- index: An index that reached its `last_level` no longer keeps the other indexes from switching to realtime: datasources are subscribed, `on_synchronized` fires and jobs start; with `early_realtime` only the hook and the jobs were held back.
+- index: An index that reached its `last_level` no longer keeps the other indexes from switching to realtime and no longer collects realtime messages.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
