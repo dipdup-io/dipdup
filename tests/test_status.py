@@ -10,6 +10,7 @@ import pytest
 import dipdup.dipdup as dipdup_module
 from dipdup.dipdup import IndexDispatcher
 from dipdup.exceptions import FrameworkException
+from dipdup.models import Meta
 from dipdup.performance import metrics
 
 _STATUS_METRICS = ('levels_indexed', 'levels_total', 'progress', 'realtime_at', 'synchronized_at', 'time_left')
@@ -38,7 +39,7 @@ def dispatcher() -> Iterator[IndexDispatcher]:
     dispatcher._started_at = time.time() - 10
     with (
         patch.object(dipdup_module, 'fire_and_forget', MagicMock()),
-        patch.object(dipdup_module.Meta, 'update_or_create', MagicMock()),
+        patch.object(Meta, 'update_or_create', MagicMock()),
     ):
         yield dispatcher
     for name, value in saved.items():
