@@ -15,6 +15,7 @@ inheritance.
 
 from __future__ import annotations
 
+import dataclasses
 import importlib
 import inspect
 import logging.config
@@ -1159,8 +1160,10 @@ class DipDupConfig(InteractiveMixin):
                 f'{template_config.name} index config is missing required template value {missing_value.group(0)}'
             )
 
+        # NOTE: Serialized config also carries attributes derived in `__post_init__`; pass only init fields
         json_template = orjson.loads(raw_template)
-        new_index_config = template.__class__(**json_template)
+        init_fields = {field.name for field in dataclasses.fields(template) if field.init}
+        new_index_config = template.__class__(**{k: v for k, v in json_template.items() if k in init_fields})
         new_index_config._template_values = template_config.values
         new_index_config.parent = template
         new_index_config._name = template_config.name
