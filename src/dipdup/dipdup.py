@@ -384,7 +384,7 @@ class IndexDispatcher:
             return False
 
         # NOTE: Disabled indexes stay in the mapping forever and never change their status
-        statuses = {i.state.status for i in self._indexes.values() if i.is_active}
+        statuses = {i.state.status for i in self._indexes.values() if i.state.status != IndexStatus.disabled}
         return statuses == {status}
 
     async def _fetch_contracts(self) -> None:

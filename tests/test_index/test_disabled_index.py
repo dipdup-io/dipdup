@@ -72,3 +72,24 @@ async def test_disabled_index_gets_no_realtime_messages(dipdup: DipDup) -> None:
 
     assert len(running.queue) == 1
     assert len(finished.queue) == 0
+
+
+async def test_messages_collected_during_sync_are_dropped_on_disable(dipdup: DipDup) -> None:
+    index = dipdup._index_dispatcher._indexes['running']
+    await index._update_state(status=IndexStatus.syncing, level=900)
+    index.push_realtime_message(())
+    assert len(index.queue) == 1
+
+    await index._enter_disabled_state(1000)
+
+    assert len(index.queue) == 0
+
+
+async def test_failed_index_keeps_its_realtime_messages(dipdup: DipDup) -> None:
+    # NOTE: Only disabled indexes are skipped by the dispatcher; any other status is still processed
+    index = dipdup._index_dispatcher._indexes['running']
+    await index._update_state(status=IndexStatus.failed, level=1000)
+
+    index.push_realtime_message(())
+
+    assert len(index.queue) == 1
