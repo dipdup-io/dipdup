@@ -337,7 +337,8 @@ class IndexDispatcher:
 
         levels_speed, objects_speed = float(metrics.levels_nonempty_speed), float(metrics.objects_speed)
         msg = 'last mile' if metrics.synchronized_at else 'indexing'
-        msg += f': {progress:5.1f}% done, {left} levels left'
+        # NOTE: Don't round up to 100% while there are levels left
+        msg += f': {min(progress, 99.9) if left else progress:5.1f}% done, {left} levels left'
 
         # NOTE: Resulting message is about 80 chars with the current logging format
         msg += ' ' * (48 - len(msg))

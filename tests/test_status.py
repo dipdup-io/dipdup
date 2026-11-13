@@ -155,3 +155,9 @@ async def test_realtime_status_counts_levels_of_this_run(dispatcher: IndexDispat
     index.state.level = index.sync_level = 1_000_100
     metrics.realtime_at = time.time()
     assert (await _tick(dispatcher, index))[2] == 'realtime: 100 levels indexed and counting'
+
+
+async def test_status_is_not_rounded_up_to_100(dispatcher: IndexDispatcher) -> None:
+    index = FakeIndex(level=15_799_000, sync_level=15_799_875)
+
+    assert ' 99.9% done, 875 levels left' in (await _tick(dispatcher, index))[2]
