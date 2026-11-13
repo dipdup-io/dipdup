@@ -379,7 +379,7 @@ class IndexDispatcher:
         if not self._indexes:
             return False
 
-        statuses = {i.state.status for i in self._indexes.values()}
+        statuses = {i.state.status for i in self._indexes.values() if i.state.status != IndexStatus.disabled}
         return statuses == {status}
 
     async def _fetch_contracts(self) -> None:
