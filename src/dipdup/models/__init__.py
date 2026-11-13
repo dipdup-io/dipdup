@@ -453,7 +453,8 @@ class Model(TortoiseModel):
         return BulkCreateQuery(
             db=using_db or cls._choose_db(True),
             model=cls,
-            objects=objects,
+            # NOTE: Objects are iterated more than once, a generator would be exhausted on the first pass
+            objects=list(objects),
             batch_size=batch_size,
             ignore_conflicts=ignore_conflicts,
             update_fields=update_fields,

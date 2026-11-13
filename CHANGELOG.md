@@ -33,6 +33,7 @@ Releases prior to 7.0 has been removed from this file to declutter search result
 - index: An index that reached its `last_level` no longer keeps the other indexes from switching to realtime and no longer collects realtime messages.
 - ipfs: The default `url` is now `https://ipfs.filebase.io/ipfs`, since `ipfs.io` no longer serves requests; it is a public gateway for testing and light usage, so set your own `url` for production.
 - metrics: Progress is no longer stuck at `estimating...` for indexes that skip history or when an index is added while others are syncing, and no longer goes negative after a rollback.
+- models: `bulk_create` called with a generator inserts the objects instead of nothing.
 - project: A project created with `dipdup new` from the `demo_tezos_etherlink` template uses the chosen package name in `dipdup.yaml`.
 - subscriptions: The datasource sync level is kept on disconnect, so the indexer no longer crashes with `Neither current nor sync level is known` and metrics no longer freeze while reconnecting.
 - tezos.operations: Handlers get `None` for every missing `optional` pattern item, including trailing ones, instead of failing with `TypeError`; a handler whose required item is missing at the end of a group is no longer called; a pattern of only optional items is no longer called when none of them matched and no longer hangs the indexer.
