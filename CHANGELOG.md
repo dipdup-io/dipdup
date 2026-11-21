@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- cli: A crashed `dipdup run` no longer hangs when a task is stuck on a database connection that went silent; DipDup stops waiting for cancelled tasks after 5 seconds, logs a warning naming them, and exits with the original error once the connection pool is closed, about 15 seconds after the crash.
+
 ## [8.6.3] - 2026-11-13
 
 ### Added

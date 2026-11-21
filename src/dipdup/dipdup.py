@@ -7,6 +7,7 @@ from asyncio import Event
 from asyncio import Task
 from asyncio import create_task
 from asyncio import gather
+from asyncio import wait
 from collections import deque
 from collections.abc import AsyncIterator
 from collections.abc import Awaitable
@@ -101,6 +102,7 @@ STATUS_INTERVAL = 1.0 if env.DEBUG else 5.0
 CLEANUP_INTERVAL = 60.0 * 5
 INDEX_DISPATCHER_INTERVAL = 0.1
 WATCHDOG_INTERVAL = 5
+SHUTDOWN_TIMEOUT = 5.0
 
 _logger = logging.getLogger(__name__)
 
@@ -805,8 +807,16 @@ class DipDup:
                     # NOTE: flight, logging a spurious `RuntimeError: aclose()` next to the real error.
                     for task in tasks:
                         task.cancel()
+                    # NOTE: A cancelled task can keep running: asyncpg rolling back on a connection whose server is gone
+                    # NOTE: waits for a confirmation that never comes. Stop waiting so the error reaches the caller; the
+                    # NOTE: database teardown that follows terminates the pool after its close timeout, releasing the task.
                     with suppress(CancelledError):
-                        await gather(*tasks, return_exceptions=True)
+                        await wait(tasks, timeout=SHUTDOWN_TIMEOUT)
+                    running = sorted(task.get_name() for task in tasks if not task.done())
+                    if running:
+                        _logger.warning(
+                            'Cancelled tasks are still running, not waiting for them: %s', ', '.join(running)
+                        )
 
     async def _create_datasources(self) -> None:
         for name, config in self._config.datasources.items():
