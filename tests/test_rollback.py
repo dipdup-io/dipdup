@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from tortoise.expressions import F
 
+import demo_evm_events.models as evm_models
 import demo_tezos_domains.models as domains_models
 import demo_tezos_nft_marketplace.models as hen_models
 from dipdup.config import DipDupConfig
@@ -583,3 +584,73 @@ async def test_bulk_create_from_generator() -> None:
 
         assert await domains_models.TLD.all().count() == 3
         assert await ModelUpdate.filter(action=ModelUpdateAction.INSERT).count() == 3
+
+
+async def test_rollback_of_object_saved_at_two_levels() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with in_transaction(level=1000, index='test'):
+            holder = hen_models.Holder(address='tz1deadbeaf')
+            await holder.save()
+            await hen_models.Swap(
+                creator=holder,
+                price=1,
+                amount=1,
+                amount_left=1,
+                level=1000,
+                status=hen_models.SwapStatus.ACTIVE,
+                timestamp=datetime(1970, 1, 1),
+            ).save()
+
+        # NOTE: The same object is saved at two levels, like one kept in a cache
+        swap = await hen_models.Swap.get(id=1)
+
+        async with in_transaction(level=1001, index='test'):
+            swap.amount_left = 2
+            await swap.save()
+
+        async with in_transaction(level=1002, index='test'):
+            swap.amount_left = 3
+            await swap.save()
+
+        await HookContext.rollback(
+            self=dipdup._ctx,
+            index='test',
+            from_level=1002,
+            to_level=1001,
+        )
+
+        assert (await hen_models.Swap.get(id=1)).amount_left == 2
+
+
+async def test_rollback_clears_cached_models() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_evm_events')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+        evm_models.Holder.clear()
+
+        async with in_transaction(level=1000, index='test'):
+            await evm_models.Holder(address='0xdeadbeaf', tx_count=1).save()
+
+        async with in_transaction(level=1001, index='test'):
+            holder = await evm_models.Holder.cached_get('0xdeadbeaf')
+            holder.tx_count = 2
+            await holder.save()
+
+        await HookContext.rollback(
+            self=dipdup._ctx,
+            index='test',
+            from_level=1001,
+            to_level=1000,
+        )
+
+        assert (await evm_models.Holder.get(address='0xdeadbeaf')).tx_count == 1
+        assert (await evm_models.Holder.cached_get('0xdeadbeaf')).tx_count == 1
