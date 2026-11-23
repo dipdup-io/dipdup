@@ -738,8 +738,9 @@ class TezosTzktDatasource(WebsocketDatasource[TezosTzktDatasourceConfig]):
             self.get_transactions,
             field,
             addresses,
-            first_level,
-            last_level,
+            code_hashes=None,
+            first_level=first_level,
+            last_level=last_level,
         ):
             yield batch
 
