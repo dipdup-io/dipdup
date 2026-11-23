@@ -266,3 +266,16 @@ async def test_signalr_retries_reset_after_connection() -> None:
         with patch.object(SignalRClient, 'run', AsyncMock(side_effect=run)), pytest.raises(DatasourceError):
             await tzkt.run()
         assert calls == retry_count * 3
+
+
+async def test_iter_transactions_filters_by_address_and_level_range() -> None:
+    address = 'KT1V5XKmeypanMS9pR65REpqmVejWBZURuuT'
+    async with tzkt_replay() as tzkt:
+        request = AsyncMock(return_value=[])
+        with patch.object(tzkt, '_request_values_dict', request):
+            batches = [batch async for batch in tzkt.iter_transactions('target', {address}, 100, 200)]
+
+    assert batches == []
+    params = request.call_args.kwargs['params']
+    assert params['target.in'] == address
+    assert (params['level.ge'], params['level.le']) == (100, 200)
