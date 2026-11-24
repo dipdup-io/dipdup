@@ -374,6 +374,19 @@ class Model(TortoiseModel):
         """Get versioned data of the model at the time of creation"""
         return self._original_versioned_data
 
+    def _refresh_original_versioned_data(self, update_fields: Iterable[str] | None) -> None:
+        # NOTE: After a save the row holds the saved values, so the next journal entry must
+        # NOTE: describe them, not the values the object was loaded with.
+        current = self.versioned_data
+        if update_fields is None:
+            self._original_versioned_data = current
+            return
+        saved = set(update_fields)
+        self._original_versioned_data = {
+            key: current[key] if key in saved or key.removesuffix('_id') in saved else value
+            for key, value in self._original_versioned_data.items()
+        }
+
     @property
     def versioned_data(self) -> dict[str, Any]:
         """Get versioned data of the model at the current time"""
@@ -415,6 +428,7 @@ class Model(TortoiseModel):
 
         if update := ModelUpdate.from_model(self, action):
             get_pending_updates().append(update)
+        self._refresh_original_versioned_data(update_fields)
 
     @classmethod
     def filter(cls, *args: Any, **kwargs: Any) -> TortoiseQuerySet:  # type: ignore[type-arg]

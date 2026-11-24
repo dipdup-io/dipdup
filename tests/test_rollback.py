@@ -138,6 +138,100 @@ async def test_model_updates() -> None:
         assert model_updates == 0
 
 
+@pytest.mark.parametrize('reload', [False, True])
+async def test_rollback_of_object_saved_at_two_levels(reload: bool) -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with in_transaction(level=1000, index='test'):
+            holder = hen_models.Holder(address='tz1deadbeaf')
+            await holder.save()
+            await hen_models.Swap(
+                creator=holder,
+                price=1,
+                amount=1,
+                amount_left=1,
+                level=1000,
+                status=hen_models.SwapStatus.ACTIVE,
+                timestamp=datetime(1970, 1, 1),
+            ).save()
+
+        swap = await hen_models.Swap.get(id=1)
+
+        async with in_transaction(level=1001, index='test'):
+            swap.amount_left = 2
+            await swap.save()
+
+        if reload:
+            swap = await hen_models.Swap.get(id=1)
+
+        async with in_transaction(level=1002, index='test'):
+            swap.amount_left = 3
+            await swap.save()
+
+        updates = await ModelUpdate.filter(model_name='Swap', level=1002).all()
+        assert [update.data for update in updates] == [{'amount_left': 2}]
+
+        await HookContext.rollback(
+            self=dipdup._ctx,
+            index='test',
+            from_level=1002,
+            to_level=1001,
+        )
+
+        assert (await hen_models.Swap.get(id=1)).amount_left == 2
+
+
+async def test_rollback_after_partial_save_keeps_unsaved_fields() -> None:
+    config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
+    config.advanced.rollback_depth = 2
+
+    async with AsyncExitStack() as stack:
+        dipdup = await create_dummy_dipdup(config, stack)
+        in_transaction = dipdup._transactions.in_transaction
+
+        async with in_transaction(level=1000, index='test'):
+            holder = hen_models.Holder(address='tz1deadbeaf')
+            await holder.save()
+            await hen_models.Swap(
+                creator=holder,
+                price=1,
+                amount=1,
+                amount_left=1,
+                level=1000,
+                status=hen_models.SwapStatus.ACTIVE,
+                timestamp=datetime(1970, 1, 1),
+            ).save()
+
+        swap = await hen_models.Swap.get(id=1)
+
+        # NOTE: `price` changes in memory but only `amount_left` is written
+        async with in_transaction(level=1001, index='test'):
+            swap.amount_left = 2
+            swap.price = 5
+            await swap.save(update_fields=['amount_left'])
+
+        async with in_transaction(level=1002, index='test'):
+            await swap.save()
+
+        updates = await ModelUpdate.filter(model_name='Swap', level=1002).all()
+        assert [update.data for update in updates] == [{'price': 1}]
+
+        await HookContext.rollback(
+            self=dipdup._ctx,
+            index='test',
+            from_level=1002,
+            to_level=1001,
+        )
+
+        swap = await hen_models.Swap.get(id=1)
+        assert (swap.amount_left, swap.price) == (2, 1)
+
+
 async def test_cleanup_and_filtering() -> None:
     config = DipDupConfig(spec_version='3.0', package='demo_tezos_nft_marketplace')
     config.advanced.rollback_depth = 2
