@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 Releases prior to 7.0 has been removed from this file to declutter search results; see the [archived copy](https://github.com/dipdup-io/dipdup/blob/8.0.0b5/CHANGELOG.md) for the full list.
 
+## [Unreleased]
+
+### Fixed
+
+- index: A realtime message for a level above the sync target is no longer dropped when the index starts another sync; before, a log announced by the node while a Subsquid sync ran was lost if the next node sync stopped below its level.
+
 ## [8.6.3] - 2026-11-13
 
 ### Added

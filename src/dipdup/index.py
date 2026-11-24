@@ -278,11 +278,18 @@ class Index(ABC, Generic[IndexConfigT, IndexQueueItemT, IndexDatasourceT]):
 
         if index_level < sync_level:
             self._logger.info('Index is behind the datasource level, syncing: %s -> %s', index_level, sync_level)
-            # NOTE: Data messages are fetched again by the sync; a rollback is not, and must be applied first
+            # NOTE: Data messages up to `sync_level` are fetched again by the sync; a rollback is not, and must be
+            # NOTE: applied first. A message above `sync_level` (a head that arrived while the previous sync ran)
+            # NOTE: is out of the sync's reach, so it stays queued for realtime processing.
+            pending: deque[IndexQueueItemT] = deque()
             while self.queue:
                 message = self.queue.popleft()
                 if isinstance(message, RollbackMessage):
                     await self._rollback(message.from_level, message.to_level)
+                    pending = deque(m for m in pending if m[0].level <= message.to_level)
+                elif message and message[0].level > sync_level:
+                    pending.append(message)
+            self.queue.extend(pending)
 
             with metrics._index_total_sync_duration.time():
                 await self._synchronize(sync_level)
